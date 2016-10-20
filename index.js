@@ -139,7 +139,7 @@ export default class Database {
                         WebNodeHelper.representObject(error))
                 }
         // endregion
-        services.database.connection:PouchDB = new PouchDB(Tools.stringFormat(
+        services.database.connection = new PouchDB(Tools.stringFormat(
             configuration.database.url,
             `${configuration.database.user.name}:` +
             `${configuration.database.user.password}@`
