@@ -37,7 +37,8 @@
   },
   "devDependencies": {
     "documentation-website": "latest",
-    "qunit-cli": "latest"
+    "qunit-cli": "latest",
+    "source-map-support": "latest"
   },
   "scripts": {
     "build": "webOptimizer build",
