@@ -1,0 +1,164 @@
+{
+  "name": "databasewebnodeplugin",
+  "version": "1.0.4",
+  "description": "A database server, model instance conflict handler, rest api, authentication, session management, schema validator and model relation guarantee for webNode.",
+  "documentationWebsite": {
+    "name": "databaseWebNodePlugin",
+    "trackingCode": "TODO"
+  },
+  "homepage": "http://torben.website/databaseWebNodePlugin",
+  "license": "CC-BY-3.0",
+  "main": "index.compiled.js",
+  "keywords": [
+    "web",
+    "backend",
+    "rest",
+    "api",
+    "database",
+    "model",
+    "schema",
+    "validation",
+    "authorisation",
+    "authentication",
+    "user",
+    "roles",
+    "session"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thaibault/databaseWebNodePlugin.git"
+  },
+  "dependencies": {
+    "clientnode": "latest",
+    "node-fetch": "latest",
+    "pouchdb": "latest",
+    "pouchdb-server": "latest",
+    "web-node": "latest"
+  },
+  "devDependencies": {
+    "documentation-website": "latest"
+  },
+  "scripts": {
+    "build": "webOptimizer build",
+    "buildDLL": "webOptimizer buildDLL",
+    "clear": "webOptimizer clear && rm --force log.txt &>/dev/null",
+    "document": "webOptimizer document",
+    "lint": "webOptimizer typeCheck && webOptimizer lint",
+    "prepublish": "npm run build",
+    "serve": "webNode",
+    "start": "npm run serve",
+    "test": "webOptimizer test",
+    "update": "npm version patch && npm publish",
+    "updateDocumentation": "documentationWebsite --log-level info",
+    "watch": "webOptimizer build --watch",
+    "watchDLL": "webOptimizer buildDLL --watch"
+  },
+  "webNode": {
+    "database": {
+      "configFilePath": {
+        "__evaluate__": "`./${self.database.path}/database.json`"
+      },
+      "httpd/host": {
+        "__evaluate__": "self.server.application.hostName"
+      },
+      "log/file": "/dev/stdout",
+      "log/level": "info",
+      "path": "database",
+      "port": 5984,
+      "security": {
+        "admins": {
+          "names": [],
+          "roles": []
+        },
+        "members": {
+          "names": [],
+          "roles": ["users"]
+        }
+      },
+      "url": {
+        "__evaluate__": "`http://{1}${self.server.application.hostName}:${self.database.port}`"
+      },
+      "user": {
+        "name": "admin",
+        "password": "admin"
+      }
+    },
+    "modelConfiguration": {
+      "defaultPropertySpecification": {
+        "conflictingConstraintEvaluation": null,
+        "conflictingConstraintExpression": null,
+        "constraintEvaluation": null,
+        "constraintExpression": null,
+        "default": null,
+        "maximum": {"__evaluate__": "Infinity"},
+        "minimum": {"__evaluate__": "-Infinity"},
+        "mutable": true,
+        "nullable": true,
+        "onCreateEvaluation": null,
+        "onCreateExpression": null,
+        "onUpdateEvaluation": null,
+        "onUpdateExpression": null,
+        "regularExpressionPattern": null,
+        "type": "string",
+        "writable": true
+      },
+      "reservedPropertyNames": ["_id", "_rev", "_revisions", "_deleted"],
+      "specialPropertyNames": {
+        "allowedRoles": "_allowedRoles",
+        "extend": "_extends",
+        "type": "_type",
+        "typeNameRegularExpressionPattern": "^[A-Z][a-z0-9]+$",
+        "validatedDocumentsCache": "_validatedDocuments"
+      },
+      "updateStrategy": "fillUp",
+      "models": {
+        "_base": {
+          "_id": {
+            "nullable": false,
+            "mutable": false
+          },
+          "_rev": {
+            "nullable": false,
+            "writable": false
+          },
+          "_revisions": {
+            "writable": false
+          },
+          "creationDateTime": {
+            "type": "DateTime",
+            "onCreateEvaluation": "new Date().getTime()",
+            "minimum": {
+              "__evaluate__": "new Date().getTime()"
+            },
+            "mutable": false,
+            "nullable": false
+          },
+          "updateDateType": {
+            "type": "DateTime",
+            "onUpdateEvaluation": "new Date().getTime()",
+            "minimum": {
+              "__evaluate__": "new Date().getTime()"
+            },
+            "nullable": false
+          },
+          "lastUser": {
+            "onUpdateEvaluation": "userContext._id",
+            "nullable": false
+          },
+          "_type": {
+            "regularExpressionPattern": {
+              "__evaluate__": "self.modelConfiguration.specialPropertyNames.typeNameRegularExpressionPattern"
+            },
+            "nullable": false,
+            "minimum": 1,
+            "maximum": 999,
+            "mutable": false
+          },
+          "_allowedRoles": [
+            "users"
+          ]
+        }
+      }
+    }
+  }
+}
