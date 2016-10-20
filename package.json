@@ -9,6 +9,12 @@
   "homepage": "http://torben.website/databaseWebNodePlugin",
   "license": "CC-BY-3.0",
   "main": "index.compiled.js",
+  "files": [
+    "index.js",
+    "helper.js",
+    "helper.compiled.js",
+    "type.js"
+  ],
   "keywords": [
     "web",
     "backend",
