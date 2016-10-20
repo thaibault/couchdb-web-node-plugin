@@ -27,8 +27,11 @@ import type {
 import configuration from 'web-node/configurator'
 import WebNodeHelper from 'web-node/helper'
 
-import Helper from './helper'
+import Helper from '.../helper'
 // endregion
+QUnit.module('helper')
+QUnit.load()
+// region tests
 QUnit.test('authenticate', (assert:Object):void => {
     for (const test:Array<any> of [
         [{}],
@@ -58,7 +61,7 @@ QUnit.test('ensureValidationDocumentPresence', async (
             ...test))
     done()
 })
-// region model
+// / region model
 QUnit.test('determineAllowedModelRolesMapping', (assert:Object):void => {
     for (const test:Array<any> of [
         [{}, {}],
@@ -1143,6 +1146,7 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
     }
     // endregion
 })
+// / endregion
 // endregion
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
