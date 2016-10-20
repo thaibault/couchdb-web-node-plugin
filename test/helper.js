@@ -21,13 +21,13 @@ import * as QUnit from 'qunit-cli'
 try {
     module.require('source-map-support/register')
 } catch (error) {}
-import type {
-    DatabaseForbiddenError, ModelConfiguration, Models, Plugin, UpdateStrategy
-} from './type'
 import configuration from 'web-node/configurator'
 import WebNodeHelper from 'web-node/helper'
 
-import Helper from '.../helper'
+import Helper from '../helper'
+import type {
+    DatabaseForbiddenError, ModelConfiguration, Models, Plugin, UpdateStrategy
+} from '../type'
 // endregion
 QUnit.module('helper')
 QUnit.load()
