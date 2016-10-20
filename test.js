@@ -24,8 +24,8 @@ try {
 import type {
     DatabaseForbiddenError, ModelConfiguration, Models, Plugin, UpdateStrategy
 } from './type'
-import configuration from 'webNode/configurator'
-import WebNodeHelper from 'webNode/helper'
+import configuration from 'web-node/configurator'
+import WebNodeHelper from 'web-node/helper'
 
 import Helper from './helper'
 // endregion
