@@ -1,6 +1,6 @@
 {
   "name": "databasewebnodeplugin",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "A database server, model instance conflict handler, rest api, authentication, session management, schema validator and model relation guarantee for webNode.",
   "documentationWebsite": {
     "name": "databaseWebNodePlugin",
@@ -180,7 +180,5 @@
       }
     }
   },
-  "webOptimizer": {
-
-  }
+  "webOptimizer": {}
 }
