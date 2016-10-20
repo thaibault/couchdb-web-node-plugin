@@ -14,16 +14,18 @@
 */
 // region imports
 import Tools from 'clientnode'
-import type {
-    AllowedModelRolesMapping, Model, ModelConfiguration, Models,
-    PropertySpecification, SimpleModelConfiguration
-} from './type'
-import type {Configuration, Plugin} from 'webNode/type'
 import type {PlainObject} from 'weboptimizer/type'
+import type {Configuration, Plugin} from 'web-node/type'
+import WebNodeHelper from 'web-node/helper'
 // NOTE: Only needed for debugging this file.
 try {
     require('source-map-support/register')
 } catch (error) {}
+
+import type {
+    AllowedModelRolesMapping, Model, ModelConfiguration, Models,
+    PropertySpecification, SimpleModelConfiguration
+} from './type'
 // endregion
 // region methods
 /**
@@ -111,7 +113,8 @@ export default class Helper {
                 else
                     console.info(
                         `${description} couldn't be updated: "` +
-                        `${Helper.representObject(error)}" create new one.`)
+                        `${WebNodeHelper.representObject(error)}" create new` +
+                        ` one.`)
             try {
                 await databaseConnection.put({
                     _id: `_design/${documentName}`,
@@ -125,7 +128,7 @@ export default class Helper {
             } catch (error) {
                 throw new Error(
                     `${description} couldn't be installed/updated: "` +
-                    `${Helper.representObject(error)}".`)
+                    `${WebNodeHelper.representObject(error)}".`)
             }
         }
     }

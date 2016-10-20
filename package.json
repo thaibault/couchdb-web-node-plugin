@@ -36,7 +36,8 @@
     "web-node": "latest"
   },
   "devDependencies": {
-    "documentation-website": "latest"
+    "documentation-website": "latest",
+    "qunit-cli": "latest"
   },
   "scripts": {
     "build": "webOptimizer build",

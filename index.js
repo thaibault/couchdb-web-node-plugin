@@ -26,10 +26,13 @@ import PouchDB from 'pouchdb'
 try {
     require('source-map-support/register')
 } catch (error) {}
-import WebNodeHelper from 'webnode/helper'
+import WebNodeHelper from 'web-node/helper'
+import type {Configuration} from 'web-node/type'
 import WebOptimizerHelper from 'weboptimizer/helper'
+import type {PlainObject} from 'weboptimizer/type'
 
 import Helper from './helper'
+import type {ModelConfiguration, Models} from './type'
 // endregion
 // region plugins/classes
 /**
