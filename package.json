@@ -94,27 +94,38 @@
       }
     },
     "modelConfiguration": {
-      "defaultPropertySpecification": {
-        "conflictingConstraintEvaluation": null,
-        "conflictingConstraintExpression": null,
-        "constraintEvaluation": null,
-        "constraintExpression": null,
-        "default": null,
-        "maximum": {
-          "__evaluate__": "Infinity"
+      "default": {
+        "attachements": {
+          "name": {
+            "minimum": 1,
+            "maximum": 32000
+          },
+          "minimum": 0,
+          "maximum": {"__evaluate__": "Infinity"}
         },
-        "minimum": {
-          "__evaluate__": "-Infinity"
-        },
-        "mutable": true,
-        "nullable": true,
-        "onCreateEvaluation": null,
-        "onCreateExpression": null,
-        "onUpdateEvaluation": null,
-        "onUpdateExpression": null,
-        "regularExpressionPattern": null,
-        "type": "string",
-        "writable": true
+        "propertySpecification": {
+          "attachements": null,
+          "conflictingConstraintEvaluation": null,
+          "conflictingConstraintExpression": null,
+          "constraintEvaluation": null,
+          "constraintExpression": null,
+          "default": null,
+          "maximum": {
+            "__evaluate__": "Infinity"
+          },
+          "minimum": {
+            "__evaluate__": "-Infinity"
+          },
+          "mutable": true,
+          "nullable": true,
+          "onCreateEvaluation": null,
+          "onCreateExpression": null,
+          "onUpdateEvaluation": null,
+          "onUpdateExpression": null,
+          "regularExpressionPattern": null,
+          "type": "string",
+          "writable": true
+        }
       },
       "reservedPropertyNames": [
         "_attachments",

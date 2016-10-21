@@ -19,6 +19,10 @@ import type {PlainObject} from 'weboptimizer/type'
 // / region model
 export type AllowedModelRolesMapping = {[key:string]:Array<string>}
 export type PropertySpecification = {
+    attachements:?{
+      minimum:number;
+      maximum:number;
+    };
     conflictingConstraintEvaluation:?string;
     conflictingConstraintExpression:?string;
     constraintEvaluation:?string;
