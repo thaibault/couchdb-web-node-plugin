@@ -123,6 +123,7 @@
           "onUpdateEvaluation": null,
           "onUpdateExpression": null,
           "regularExpressionPattern": null,
+          "selection": null,
           "type": "string",
           "writable": true
         }
