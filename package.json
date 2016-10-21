@@ -158,18 +158,18 @@
           },
           "creationDateTime": {
             "type": "DateTime",
-            "onCreateEvaluation": "new Date().getTime()",
+            "onCreateEvaluation": "(new Date()).getTime()",
             "minimum": {
-              "__evaluate__": "new Date().getTime()"
+              "__evaluate__": "(new Date()).getTime()"
             },
             "mutable": false,
             "nullable": false
           },
           "updateDateType": {
             "type": "DateTime",
-            "onUpdateEvaluation": "new Date().getTime()",
+            "onUpdateEvaluation": "(new Date()).getTime()",
             "minimum": {
-              "__evaluate__": "new Date().getTime()"
+              "__evaluate__": "(new Date()).getTime()"
             },
             "nullable": false
           },
