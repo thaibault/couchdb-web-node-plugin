@@ -136,6 +136,7 @@
       ],
       "specialPropertyNames": {
         "allowedRoles": "_allowedRoles",
+        "consraints": "_constraints",
         "extend": "_extends",
         "type": "_type",
         "typeNameRegularExpressionPattern": "^[A-Z][a-z0-9]+$",
