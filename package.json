@@ -117,10 +117,11 @@
         "writable": true
       },
       "reservedPropertyNames": [
+        "_attachments",
+        "_deleted",
         "_id",
         "_rev",
-        "_revisions",
-        "_deleted"
+        "_revisions"
       ],
       "specialPropertyNames": {
         "allowedRoles": "_allowedRoles",
