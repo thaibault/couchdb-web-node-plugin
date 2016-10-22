@@ -413,6 +413,19 @@ export default class Helper {
                         }
                         /* eslint-disable no-throw-literal */
                 // endregion
+                // region selection
+                if (!([undefined, null].includes(
+                    propertySpecification.selection
+                ) || propertySpecification.selection.includes(newValue)))
+                    /* eslint-enable no-throw-literal */
+                    throw {
+                        forbidden: `Selection: Property "${name}" (type ` +
+                            `${propertySpecification.type}) should be one of` +
+                            `"${propertySpecification.selection.join(", ")}"` +
+                            `. But is "${newValue}".`
+                    }
+                    /* eslint-disable no-throw-literal */
+                // endregion
                 // region pattern
                 if (!([undefined, null].includes(
                     propertySpecification.regularExpressionPattern
@@ -432,7 +445,7 @@ export default class Helper {
                 // endregion
                 // region generic constraint
                 for (const type:string of [
-                    'constraintEvaluation', 'constraintExpression'
+                    'constraintExpression', 'constraintExecution'
                 ])
                     if (propertySpecification[type]) {
                         let hook:Function
@@ -444,7 +457,7 @@ export default class Helper {
                                 'model', 'checkDocument',
                                 'checkPropertyContent', 'newValue', 'name',
                                 'propertySpecification', 'oldValue', (
-                                    type.endsWith('Evaluation') ? 'return ' :
+                                    type.endsWith('Expression') ? 'return ' :
                                     ''
                                 ) + propertySpecification[type])
                         } catch (error) {
@@ -501,7 +514,7 @@ export default class Helper {
                         model[propertyName]
                     if (!oldDocument)
                         for (const type:string of [
-                            'onCreateEvaluation', 'onCreateExpression'
+                            'onCreateExpression', 'onCreateExecution'
                         ])
                             if (propertySpecification[type]) {
                                 let hook:Function
@@ -516,7 +529,7 @@ export default class Helper {
                                         'checkDocument',
                                         'checkPropertyContent',
                                         'propertySpecification', (
-                                            type.endsWith('Evaluation') ?
+                                            type.endsWith('Expression') ?
                                             'return ' : ''
                                         ) + propertySpecification[type])
                                 } catch (error) {
@@ -549,7 +562,7 @@ export default class Helper {
                                 }
                             }
                     for (const type:string of [
-                        'onUpdateEvaluation', 'onUpdateExpression'
+                        'onUpdateExpression', 'onUpdateExecution'
                     ])
                         if (propertySpecification[type]) {
                             let hook:Function
@@ -561,7 +574,7 @@ export default class Helper {
                                     'serialize', 'modelName', 'model',
                                     'checkDocument', 'checkPropertyContent',
                                     'propertySpecification', (type.endsWith(
-                                        'Evaluation'
+                                        'Expression'
                                     ) ? 'return ' : '') +
                                     propertySpecification[type])
                             } catch (error) {
@@ -795,6 +808,69 @@ export default class Helper {
                             delete newDocument[propertyName]
                     }
                 }
+                // region generic constraint
+                for (
+                    let type:string in
+                    modelConfiguration.specialPropertyNames.constraints
+                )
+                    if (
+                        modelConfiguration.specialPropertyNames.constraints
+                            .hasOwnProperty(type) &&
+                        (type = modelConfiguration.specialPropertyNames
+                            .constraints[type]) &&
+                        model.hasOwnProperty(type) &&
+                        Array.isArray(model[type]) && model[type].length
+                    )
+                        for (const constraint:string of model[type]) {
+                            let hook:Function
+                            try {
+                                hook = new Function(
+                                    'newDocument', 'oldDocument',
+                                    'userContext', 'securitySettings',
+                                    'models', 'modelConfiguration',
+                                    'serialize', 'modelName', 'model',
+                                    'checkDocument', 'checkPropertyContent', (
+                                        type.endsWith(
+                                            'Expression'
+                                    ) ? 'return ' : '') + constraint)
+                            } catch (error) {
+                                /* eslint-enable no-throw-literal */
+                                throw {
+                                    forbidden: `Compilation: Hook "${type}" ` +
+                                        `has invalid code "${constraint}": ` +
+                                        serialize(error)
+                                }
+                                /* eslint-disable no-throw-literal */
+                            }
+                            let satisfied:boolean = false
+                            try {
+                                // IgnoreTypeCheck
+                                satisfied = hook(
+                                    newDocument, oldDocument, userContext,
+                                    securitySettings, models,
+                                    modelConfiguration, serialize, modelName,
+                                    model, checkDocument, checkPropertyContent)
+                            } catch (error) {
+                                /* eslint-disable no-throw-literal */
+                                throw {
+                                    forbidden: `Runtime: Hook "${type}" has ` +
+                                        'throw an error with code "' +
+                                        `${constraint}": ${serialize(error)}`
+                                }
+                                /* eslint-enable no-throw-literal */
+                            }
+                            if (!satisfied)
+                                /* eslint-disable no-throw-literal */
+                                throw {
+                                    forbidden: type.charAt(0).toUpperCase(
+                                    ) + type.substring(1) + ': Model "' +
+                                    `${modelName}" should satisfy constraint` +
+                                    ` "${constraint}" (given "` +
+                                    `${serialize(newDocument)}").`
+                                }
+                                /* eslint-enable no-throw-literal */
+                        }
+                // endregion
             // endregion
             return newDocument
         }

@@ -105,10 +105,10 @@
         },
         "propertySpecification": {
           "attachements": null,
-          "conflictingConstraintEvaluation": null,
           "conflictingConstraintExpression": null,
-          "constraintEvaluation": null,
+          "conflictingConstraintExecution": null,
           "constraintExpression": null,
+          "constraintExecution": null,
           "default": null,
           "maximum": {
             "__evaluate__": "Infinity"
@@ -118,10 +118,10 @@
           },
           "mutable": true,
           "nullable": true,
-          "onCreateEvaluation": null,
           "onCreateExpression": null,
-          "onUpdateEvaluation": null,
+          "onCreateExecution": null,
           "onUpdateExpression": null,
+          "onUpdateExecution": null,
           "regularExpressionPattern": null,
           "selection": null,
           "type": "string",
@@ -137,7 +137,10 @@
       ],
       "specialPropertyNames": {
         "allowedRoles": "_allowedRoles",
-        "consraints": "_constraints",
+        "constraints": {
+            "expression": "_constraintExpressions",
+            "execution": "_constraintExecutions"
+        },
         "extend": "_extends",
         "type": "_type",
         "typeNameRegularExpressionPattern": "^[A-Z][a-z0-9]+$",
@@ -159,7 +162,7 @@
           },
           "creationDateTime": {
             "type": "DateTime",
-            "onCreateEvaluation": "(new Date()).getTime()",
+            "onCreateExpression": "(new Date()).getTime()",
             "minimum": {
               "__evaluate__": "(new Date()).getTime()"
             },
@@ -168,14 +171,14 @@
           },
           "updateDateType": {
             "type": "DateTime",
-            "onUpdateEvaluation": "(new Date()).getTime()",
+            "onUpdateExpression": "(new Date()).getTime()",
             "minimum": {
               "__evaluate__": "(new Date()).getTime()"
             },
             "nullable": false
           },
           "lastUser": {
-            "onUpdateEvaluation": "userContext._id",
+            "onUpdateExpression": "userContext._id",
             "nullable": false
           },
           "_type": {

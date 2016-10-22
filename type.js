@@ -23,19 +23,19 @@ export type PropertySpecification = {
       minimum:number;
       maximum:number;
     };
-    conflictingConstraintEvaluation:?string;
     conflictingConstraintExpression:?string;
-    constraintEvaluation:?string;
+    conflictingConstraintExecution:?string;
     constraintExpression:?string;
+    constraintExecution:?string;
     default:any;
     maximum:number;
     minimum:number;
     mutable:boolean;
     nullable:boolean;
-    onCreateEvaluation:?string;
     onCreateExpression:?string;
-    onUpdateEvaluation:?string;
+    onCreateExecution:?string;
     onUpdateExpression:?string;
+    onUpdateExecution:?string;
     regularExpressionPattern:?string;
     type:string;
     writable:boolean;
@@ -48,6 +48,10 @@ export type Model = {
 export type Models = {[key:string]:Model}
 export type SpecialPropertyNames = {
     allowedRoles:string;
+    constraints:{
+        expression:string;
+        execution:string;
+    },
     extend:string;
     type:string;
     typeNameRegularExpressionPattern:string;
