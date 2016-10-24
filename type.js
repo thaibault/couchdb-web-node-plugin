@@ -13,7 +13,7 @@
     endregion
 */
 // region imports
-import type {PlainObject} from 'weboptimizer/type'
+import type {PlainObject} from 'clientnode'
 // endregion
 // region exports
 // / region model
@@ -147,17 +147,6 @@ export type DatabaseForbiddenError = {
 }
 export type DatabaseError = DatabaseAuthorisationError|DatabaseForbiddenError
 // / endregion
-export type Plugin = {
-    api:?Function;
-    apiFilePath:?string;
-    apiFileLoadTimestamp:?number;
-    configuration:?PlainObject;
-    configurationFilePath:?string;
-    configurationFileLoadTimestamp:?number;
-    name:string;
-    path:string;
-    scope:?Object;
-}
 // endregion
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:

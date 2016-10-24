@@ -14,7 +14,7 @@
 */
 // region imports
 import Tools from 'clientnode'
-import type {PlainObject} from 'weboptimizer/type'
+import type {PlainObject} from 'clientnode'
 import type {Configuration, Plugin} from 'web-node/type'
 // NOTE: Only needed for debugging this file.
 try {
