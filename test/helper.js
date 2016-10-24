@@ -22,7 +22,6 @@ try {
     module.require('source-map-support/register')
 } catch (error) {}
 import {webNode as configuration} from '../package'
-import WebNodeHelper from 'web-node/helper'
 
 import Helper from '../helper'
 import type {
@@ -492,7 +491,7 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                         console.log(
                             `Error "${error.forbidden}" doesn't start with "` +
                             `${test[2]}:". Given arguments: "` +
-                            parameter.map(WebNodeHelper.representObject).join(
+                            parameter.map(Tools.representObject).join(
                                 '", "'
                             ) + '".')
                     return result

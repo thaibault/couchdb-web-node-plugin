@@ -36,7 +36,6 @@
   },
   "dependencies": {
     "clientnode": "latest",
-    "node-fetch": "latest",
     "pouchdb": "latest",
     "pouchdb-server": "latest",
     "web-node": "latest"

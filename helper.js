@@ -16,7 +16,6 @@
 import Tools from 'clientnode'
 import type {PlainObject} from 'weboptimizer/type'
 import type {Configuration, Plugin} from 'web-node/type'
-import WebNodeHelper from 'web-node/helper'
 // NOTE: Only needed for debugging this file.
 try {
     require('source-map-support/register')
@@ -30,12 +29,8 @@ import type {
 // region methods
 /**
  * A dumm plugin interface with all available hooks.
- * @property static:closeEventNames - Process event names which indicates that
- * a process has finished.
  */
 export default class Helper {
-    static closeEventNames:Array<string> = [
-        'exit', 'close', 'uncaughtException', 'SIGINT', 'SIGTERM', 'SIGQUIT']
     /**
      * Authenticates given document update against given mapping of allowed
      * roles for writing into corresponding model instances.
@@ -113,8 +108,7 @@ export default class Helper {
                 else
                     console.info(
                         `${description} couldn't be updated: "` +
-                        `${WebNodeHelper.representObject(error)}" create new` +
-                        ` one.`)
+                        `${Tools.representObject(error)}" create new one.`)
             try {
                 await databaseConnection.put({
                     _id: `_design/${documentName}`,
@@ -128,7 +122,7 @@ export default class Helper {
             } catch (error) {
                 throw new Error(
                     `${description} couldn't be installed/updated: "` +
-                    `${WebNodeHelper.representObject(error)}".`)
+                    `${Tools.representObject(error)}".`)
             }
         }
     }
