@@ -37,6 +37,7 @@ export type PropertySpecification = {
     onUpdateExpression:?string;
     onUpdateExecution:?string;
     regularExpressionPattern:?string;
+    selection:?Array<any>;
     type:string;
     writable:boolean;
 }

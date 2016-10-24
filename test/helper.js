@@ -21,11 +21,12 @@ import * as QUnit from 'qunit-cli'
 try {
     module.require('source-map-support/register')
 } catch (error) {}
-import {webNode as configuration} from '../package'
+import type {Plugin} from 'web-node/type'
 
+import {webNode as configuration} from '../package'
 import Helper from '../helper'
 import type {
-    DatabaseForbiddenError, ModelConfiguration, Models, Plugin, UpdateStrategy
+    DatabaseForbiddenError, ModelConfiguration, Models, UpdateStrategy
 } from '../type'
 // endregion
 QUnit.module('helper')
@@ -491,9 +492,9 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                         console.log(
                             `Error "${error.forbidden}" doesn't start with "` +
                             `${test[2]}:". Given arguments: "` +
-                            parameter.map(Tools.representObject).join(
-                                '", "'
-                            ) + '".')
+                            parameter.map((value:any):string =>
+                                Tools.representObject(value)
+                            ).join('", "') + '".')
                     return result
                 }
                 // IgnoreTypeCheck

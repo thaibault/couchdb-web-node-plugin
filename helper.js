@@ -408,9 +408,10 @@ export default class Helper {
                         /* eslint-disable no-throw-literal */
                 // endregion
                 // region selection
-                if (!([undefined, null].includes(
-                    propertySpecification.selection
-                ) || propertySpecification.selection.includes(newValue)))
+                if (
+                    propertySpecification.selection &&
+                    !propertySpecification.selection.includes(newValue)
+                )
                     /* eslint-enable no-throw-literal */
                     throw {
                         forbidden: `Selection: Property "${name}" (type ` +
