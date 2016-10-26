@@ -1,6 +1,6 @@
 {
   "name": "databasewebnodeplugin",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "A database server, model instance conflict handler, rest api, authentication, session management, schema validator and model relation guarantee for webNode.",
   "documentationWebsite": {
     "name": "databaseWebNodePlugin",
@@ -100,7 +100,9 @@
             "maximum": 32000
           },
           "minimum": 0,
-          "maximum": {"__evaluate__": "Infinity"}
+          "maximum": {
+            "__evaluate__": "Infinity"
+          }
         },
         "propertySpecification": {
           "attachements": null,
@@ -137,8 +139,8 @@
       "specialPropertyNames": {
         "allowedRoles": "_allowedRoles",
         "constraints": {
-            "expression": "_constraintExpressions",
-            "execution": "_constraintExecutions"
+          "expression": "_constraintExpressions",
+          "execution": "_constraintExecutions"
         },
         "extend": "_extends",
         "type": "_type",
