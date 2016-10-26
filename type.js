@@ -60,7 +60,14 @@ export type SpecialPropertyNames = {
 }
 export type UpdateStrategy = ''|'fillUp'|'incremental'|'migrate'
 export type ModelConfiguration = {
-    defaultPropertySpecification:PropertySpecification;
+    default:{
+        attachments:{
+            maximum:number;
+            minimum:number;
+            name:PropertySpecification;
+        };
+        propertySpecification:PropertySpecification;
+    },
     models:Models;
     reservedPropertyNames:Array<string>;
     specialPropertyNames:SpecialPropertyNames;

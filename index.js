@@ -26,7 +26,7 @@ import PouchDB from 'pouchdb'
 try {
     require('source-map-support/register')
 } catch (error) {}
-import type {Configuration} from 'web-node/type'
+import type {Configuration, Services} from 'web-node/type'
 
 import Helper from './helper'
 import type {ModelConfiguration, Models} from './type'
@@ -174,7 +174,7 @@ export default class Database {
         // endregion
         const modelConfiguration:ModelConfiguration =
             Tools.copyLimitedRecursively(configuration.modelConfiguration)
-        delete modelConfiguration.defaultPropertySpecification
+        delete modelConfiguration.default
         delete modelConfiguration.models
         const models:Models = Helper.extendModels(
             configuration.modelConfiguration)
