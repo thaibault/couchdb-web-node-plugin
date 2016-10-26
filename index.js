@@ -20,16 +20,13 @@
 // region  imports
 import {spawn as spawnChildProcess} from 'child_process'
 import Tools from 'clientnode'
-import fetch from 'node-fetch'
+import type {PlainObject} from 'clientnode'
 import PouchDB from 'pouchdb'
 // NOTE: Only needed for debugging this file.
 try {
     require('source-map-support/register')
 } catch (error) {}
-import WebNodeHelper from 'web-node/helper'
 import type {Configuration} from 'web-node/type'
-import WebOptimizerHelper from 'weboptimizer/helper'
-import type {PlainObject} from 'weboptimizer/type'
 
 import Helper from './helper'
 import type {ModelConfiguration, Models} from './type'
@@ -58,26 +55,31 @@ export default class Database {
     static async preLoadService(
         services:{[key:string]:Object}, configuration:Configuration
     ):{[key:string]:Object} {
-        services.database = {}
-        // region start database server
-        services.database.serverProcess = spawnChildProcess(
-            'pouchdb-server', [
-                '--port', `${configuration.database.port}`,
-                '--dir', configuration.database.path,
-                '--config', configuration.database.configFilePath
-            ], {
-                cwd: process.cwd(),
-                env: process.env,
-                shell: true,
-                stdio: 'inherit'
-            })
-        for (const closeEventName:string of WebNodeHelper.closeEventNames)
-            services.database.serverProcess.on(
-                closeEventName, WebOptimizerHelper.getProcessCloseHandler(
-                    Tools.noop, Tools.noop, closeEventName))
-        await WebNodeHelper.checkReachability(
-            Tools.stringFormat(configuration.database.url, ''), true)
-        // endregion
+        if (!services.hasOwnProperty('database'))
+            services.database = {}
+        if (!services.database.hasOwnProperty('serverProcess')) {
+            // region start database server
+            services.database.serverProcess = spawnChildProcess(
+                'pouchdb-server', [
+                    '--port', `${configuration.database.port}`,
+                    '--dir', configuration.database.path,
+                    '--config', configuration.database.configFilePath
+                ], {
+                    cwd: process.cwd(),
+                    env: process.env,
+                    shell: true,
+                    stdio: 'inherit'
+                })
+            for (const closeEventName:string of Tools.closeEventNames)
+                services.database.serverProcess.on(
+                    closeEventName, Tools.getProcessCloseHandler(
+                        Tools.noop, Tools.noop, closeEventName))
+            await Tools.checkReachability(
+                Tools.stringFormat(configuration.database.url, ''), true)
+            // endregion
+        }
+        if (services.database.hasOwnProperty('connection'))
+            return services
         // region ensure presence of global admin user
         const unauthenticatedUserDatabaseConnection:PouchDB = new PouchDB(
             `${Tools.stringFormat(configuration.database.url, '')}/_users`)
@@ -87,8 +89,8 @@ export default class Database {
                 'No admin user available. Automatically creating admin user "' +
                 `${configuration.database.user.name}".`)
             await fetch(
-                `${Tools.stringFormat(configuration.database.url, '')}/_config/` +
-                `admins/${configuration.database.user.name}`,
+                `${Tools.stringFormat(configuration.database.url, '')}/` +
+                `_config/admins/${configuration.database.user.name}`,
                 {
                     method: 'PUT',
                     body: `"${configuration.database.user.password}"`
@@ -107,7 +109,7 @@ export default class Database {
                     console.error(
                         `Can't login as existing admin user "` +
                         `${configuration.database.user.name}": "` +
-                        `${WebNodeHelper.representObject(error)}".`)
+                        `${Tools.representObject(error)}".`)
                 } finally {
                     authenticatedUserDatabaseConnection.close()
                 }
@@ -115,7 +117,7 @@ export default class Database {
                 console.error(
                     `Can't create new admin user "` +
                     `${configuration.database.user.name}": "` +
-                    `${WebNodeHelper.representObject(error)}".`)
+                    `${Tools.representObject(error)}".`)
         } finally {
             unauthenticatedUserDatabaseConnection.close()
         }
@@ -139,7 +141,7 @@ export default class Database {
                         `Configuration "${configurationPath}" couldn't be ` +
                         'applied to "' +
                         `${configuration.database[configurationPath]}": ` +
-                        WebNodeHelper.representObject(error))
+                        Tools.representObject(error))
                 }
         // endregion
         services.database.connection = new PouchDB(Tools.stringFormat(
@@ -167,14 +169,15 @@ export default class Database {
         } catch (error) {
             console.error(
                 `Security object couldn't be applied.: ` +
-                WebNodeHelper.representObject(error))
+                Tools.representObject(error))
         }
         // endregion
-        const modelConfiguration:ModelConfiguration = Tools.copyLimitedRecursively(
-            configuration.modelConfiguration)
+        const modelConfiguration:ModelConfiguration =
+            Tools.copyLimitedRecursively(configuration.modelConfiguration)
         delete modelConfiguration.defaultPropertySpecification
         delete modelConfiguration.models
-        const models:Models = Helper.extendModels(configuration.modelConfiguration)
+        const models:Models = Helper.extendModels(
+            configuration.modelConfiguration)
         // region generate/update authentication/validation code
         let validationCode = Helper.validateDocumentUpdate.toString()
         validationCode = 'function(\n' +
@@ -191,7 +194,7 @@ export default class Database {
         if (configuration.debug)
             console.info(
                 'Specification \n\n"' +
-                WebNodeHelper.representObject(configuration.modelConfiguration) +
+                Tools.representObject(configuration.modelConfiguration) +
                 `" has generated validation code: \n\n"${validationCode}".`)
         await Helper.ensureValidationDocumentPresence(
             services.database.connection, 'validation', validationCode,
@@ -242,9 +245,9 @@ export default class Database {
                         ), models, migrationModelConfiguration)
                 } catch (error) {
                     throw new Error(
-                        `Document "${WebNodeHelper.representObject(document)}" ` +
+                        `Document "${Tools.representObject(document)}" ` +
                         `doesn't satisfy its schema: ` +
-                        WebNodeHelper.representObject(error))
+                        Tools.representObject(error))
                 }
                 /*
                     NOTE: If a property is missing and a default one could be

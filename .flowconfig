@@ -3,6 +3,8 @@
 .*/\.git
 .*/_.*\.js
 .*/.+\.compiled\(\.js\)?
+# Ignore all webOptimizer modules except "browserAPI" and "type".
+\(.*/\)?node_modules/weboptimizer/\(\([^tb].*\)\|\(t[^y].*\)\|\(ty[^p].*\)\|\(typ[^e].*\)\|\(type.+\)\|\(..?.?\)\|\(......?.?.?.?\)\|\(brow\)\|\(b[^r].*\)\|\(br[^o].*\)\|\(bro[^w].*\)\|\(brow[^s].*\)\|\(brows[^e].*\)\|\(browse[^r].*\)\|\(browser[^A].*\)\|\(browserA[^P].*\)\|\(browserAP[^I].*\)\|\(browserAPI.+\)\)\.js
 
 # temporary excludes
 .*/documentation-website/.*
@@ -14,7 +16,7 @@
 esproposal.class_static_fields=enable
 
 module.name_mapper='^\./index\.compiled$' -> './index'
-module.name_mapper='^script!qunitjs$' -> 'qunitjs'
+module.name_mapper='web-node/configurator\.compiled$' -> 'web-node/configurator'
 
 module.file_ext=.js
 module.file_ext=.compiled.js

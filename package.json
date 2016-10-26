@@ -36,7 +36,6 @@
   },
   "dependencies": {
     "clientnode": "latest",
-    "node-fetch": "latest",
     "pouchdb": "latest",
     "pouchdb-server": "latest",
     "web-node": "latest"
@@ -67,7 +66,7 @@
         "__evaluate__": "`./${self.database.path}/database.json`"
       },
       "httpd/host": {
-        "__evaluate__": "self.server.application.hostName"
+        "__evaluate__": "self.hasOwnProperty('server') && self.server.application.hostName || '127.0.0.1'"
       },
       "log/file": "/dev/stdout",
       "log/level": "info",
@@ -86,7 +85,7 @@
         }
       },
       "url": {
-        "__evaluate__": "`http://{1}${self.server.application.hostName}:${self.database.port}`"
+        "__evaluate__": "`http://{1}${self.database['httpd/host']}:${self.database.port}`"
       },
       "user": {
         "name": "admin",
@@ -94,36 +93,53 @@
       }
     },
     "modelConfiguration": {
-      "defaultPropertySpecification": {
-        "conflictingConstraintEvaluation": null,
-        "conflictingConstraintExpression": null,
-        "constraintEvaluation": null,
-        "constraintExpression": null,
-        "default": null,
-        "maximum": {
-          "__evaluate__": "Infinity"
+      "default": {
+        "attachements": {
+          "name": {
+            "minimum": 1,
+            "maximum": 32000
+          },
+          "minimum": 0,
+          "maximum": {"__evaluate__": "Infinity"}
         },
-        "minimum": {
-          "__evaluate__": "-Infinity"
-        },
-        "mutable": true,
-        "nullable": true,
-        "onCreateEvaluation": null,
-        "onCreateExpression": null,
-        "onUpdateEvaluation": null,
-        "onUpdateExpression": null,
-        "regularExpressionPattern": null,
-        "type": "string",
-        "writable": true
+        "propertySpecification": {
+          "attachements": null,
+          "conflictingConstraintExpression": null,
+          "conflictingConstraintExecution": null,
+          "constraintExpression": null,
+          "constraintExecution": null,
+          "default": null,
+          "maximum": {
+            "__evaluate__": "Infinity"
+          },
+          "minimum": {
+            "__evaluate__": "-Infinity"
+          },
+          "mutable": true,
+          "nullable": true,
+          "onCreateExpression": null,
+          "onCreateExecution": null,
+          "onUpdateExpression": null,
+          "onUpdateExecution": null,
+          "regularExpressionPattern": null,
+          "selection": null,
+          "type": "string",
+          "writable": true
+        }
       },
       "reservedPropertyNames": [
+        "_attachments",
+        "_deleted",
         "_id",
         "_rev",
-        "_revisions",
-        "_deleted"
+        "_revisions"
       ],
       "specialPropertyNames": {
         "allowedRoles": "_allowedRoles",
+        "constraints": {
+            "expression": "_constraintExpressions",
+            "execution": "_constraintExecutions"
+        },
         "extend": "_extends",
         "type": "_type",
         "typeNameRegularExpressionPattern": "^[A-Z][a-z0-9]+$",
@@ -145,23 +161,23 @@
           },
           "creationDateTime": {
             "type": "DateTime",
-            "onCreateEvaluation": "new Date().getTime()",
+            "onCreateExpression": "(new Date()).getTime()",
             "minimum": {
-              "__evaluate__": "new Date().getTime()"
+              "__evaluate__": "(new Date()).getTime()"
             },
             "mutable": false,
             "nullable": false
           },
           "updateDateType": {
             "type": "DateTime",
-            "onUpdateEvaluation": "new Date().getTime()",
+            "onUpdateExpression": "(new Date()).getTime()",
             "minimum": {
-              "__evaluate__": "new Date().getTime()"
+              "__evaluate__": "(new Date()).getTime()"
             },
             "nullable": false
           },
           "lastUser": {
-            "onUpdateEvaluation": "userContext._id",
+            "onUpdateExpression": "userContext._id",
             "nullable": false
           },
           "_type": {

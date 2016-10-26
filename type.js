@@ -13,26 +13,31 @@
     endregion
 */
 // region imports
-import type {PlainObject} from 'weboptimizer/type'
+import type {PlainObject} from 'clientnode'
 // endregion
 // region exports
 // / region model
 export type AllowedModelRolesMapping = {[key:string]:Array<string>}
 export type PropertySpecification = {
-    conflictingConstraintEvaluation:?string;
+    attachements:?{
+      minimum:number;
+      maximum:number;
+    };
     conflictingConstraintExpression:?string;
-    constraintEvaluation:?string;
+    conflictingConstraintExecution:?string;
     constraintExpression:?string;
+    constraintExecution:?string;
     default:any;
     maximum:number;
     minimum:number;
     mutable:boolean;
     nullable:boolean;
-    onCreateEvaluation:?string;
     onCreateExpression:?string;
-    onUpdateEvaluation:?string;
+    onCreateExecution:?string;
     onUpdateExpression:?string;
+    onUpdateExecution:?string;
     regularExpressionPattern:?string;
+    selection:?Array<any>;
     type:string;
     writable:boolean;
 }
@@ -44,6 +49,10 @@ export type Model = {
 export type Models = {[key:string]:Model}
 export type SpecialPropertyNames = {
     allowedRoles:string;
+    constraints:{
+        expression:string;
+        execution:string;
+    },
     extend:string;
     type:string;
     typeNameRegularExpressionPattern:string;
@@ -139,17 +148,6 @@ export type DatabaseForbiddenError = {
 }
 export type DatabaseError = DatabaseAuthorisationError|DatabaseForbiddenError
 // / endregion
-export type Plugin = {
-    api:?Function;
-    apiFilePath:?string;
-    apiFileLoadTimestamp:?number;
-    configuration:?PlainObject;
-    configurationFilePath:?string;
-    configurationFileLoadTimestamp:?number;
-    name:string;
-    path:string;
-    scope:?Object;
-}
 // endregion
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
