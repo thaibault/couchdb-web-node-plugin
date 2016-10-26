@@ -55,26 +55,31 @@ export default class Database {
     static async preLoadService(
         services:{[key:string]:Object}, configuration:Configuration
     ):{[key:string]:Object} {
-        services.database = {}
-        // region start database server
-        services.database.serverProcess = spawnChildProcess(
-            'pouchdb-server', [
-                '--port', `${configuration.database.port}`,
-                '--dir', configuration.database.path,
-                '--config', configuration.database.configFilePath
-            ], {
-                cwd: process.cwd(),
-                env: process.env,
-                shell: true,
-                stdio: 'inherit'
-            })
-        for (const closeEventName:string of Tools.closeEventNames)
-            services.database.serverProcess.on(
-                closeEventName, Tools.getProcessCloseHandler(
-                    Tools.noop, Tools.noop, closeEventName))
-        await Tools.checkReachability(
-            Tools.stringFormat(configuration.database.url, ''), true)
-        // endregion
+        if (!services.hasOwnProperty('database'))
+            services.database = {}
+        if (!services.database.hasOwnProperty('serverProcess')) {
+            // region start database server
+            services.database.serverProcess = spawnChildProcess(
+                'pouchdb-server', [
+                    '--port', `${configuration.database.port}`,
+                    '--dir', configuration.database.path,
+                    '--config', configuration.database.configFilePath
+                ], {
+                    cwd: process.cwd(),
+                    env: process.env,
+                    shell: true,
+                    stdio: 'inherit'
+                })
+            for (const closeEventName:string of Tools.closeEventNames)
+                services.database.serverProcess.on(
+                    closeEventName, Tools.getProcessCloseHandler(
+                        Tools.noop, Tools.noop, closeEventName))
+            await Tools.checkReachability(
+                Tools.stringFormat(configuration.database.url, ''), true)
+            // endregion
+        }
+        if (services.database.hasOwnProperty('connection'))
+            return services
         // region ensure presence of global admin user
         const unauthenticatedUserDatabaseConnection:PouchDB = new PouchDB(
             `${Tools.stringFormat(configuration.database.url, '')}/_users`)

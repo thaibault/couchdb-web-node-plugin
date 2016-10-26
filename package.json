@@ -66,7 +66,7 @@
         "__evaluate__": "`./${self.database.path}/database.json`"
       },
       "httpd/host": {
-        "__evaluate__": "self.server.application.hostName"
+        "__evaluate__": "self.hasOwnProperty('server') && self.server.application.hostName || '127.0.0.1'"
       },
       "log/file": "/dev/stdout",
       "log/level": "info",
@@ -85,7 +85,7 @@
         }
       },
       "url": {
-        "__evaluate__": "`http://{1}${self.server.application.hostName}:${self.database.port}`"
+        "__evaluate__": "`http://{1}${self.database['httpd/host']}:${self.database.port}`"
       },
       "user": {
         "name": "admin",

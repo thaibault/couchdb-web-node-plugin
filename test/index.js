@@ -30,9 +30,8 @@ QUnit.load()
 QUnit.test('exit', (assert:Object):void => {
     assert.deepEqual(Index.exit({}), {})
 })
-QUnit.test('preLoadService', (assert:Object):void => {
-    assert.deepEqual(Index.preLoadService({}, configuration), {})
-})
+QUnit.test('preLoadService', (assert:Object):void => assert.deepEqual(
+    Index.preLoadService({database: {serverProcess: {}}}, configuration), {}))
 // endregion
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
