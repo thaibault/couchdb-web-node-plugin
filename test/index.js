@@ -21,6 +21,7 @@ try {
     module.require('source-map-support/register')
 } catch (error) {}
 import configuration from 'web-node/configurator.compiled'
+import type {Services} from 'web-node/type'
 
 import Index from '../index'
 // endregion
@@ -28,10 +29,17 @@ QUnit.module('index')
 QUnit.load()
 // region tests
 QUnit.test('exit', (assert:Object):void => {
-    assert.deepEqual(Index.exit({}), {})
+    let testValue:boolean = false
+    const services:Services = {database: {connection: {close: ():void => {
+        testValue = true
+    }}}}
+    assert.deepEqual(Index.exit(services), services)
+    assert.ok(testValue)
 })
-QUnit.test('preLoadService', (assert:Object):void => assert.deepEqual(
-    Index.preLoadService({database: {serverProcess: {}}}, configuration), {}))
+QUnit.test('preLoadService', async (assert:Object):Promise<void> =>
+    assert.deepEqual(await Index.preLoadService(
+        {database: {connection: {}, serverProcess: {}}}, configuration
+    ), {database: {connection: {}, serverProcess: {}}}))
 // endregion
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:

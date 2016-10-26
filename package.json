@@ -94,7 +94,7 @@
     },
     "modelConfiguration": {
       "default": {
-        "attachements": {
+        "attachments": {
           "name": {
             "minimum": 1,
             "maximum": 32000
@@ -105,7 +105,7 @@
           }
         },
         "propertySpecification": {
-          "attachements": null,
+          "attachments": null,
           "conflictingConstraintExpression": null,
           "conflictingConstraintExecution": null,
           "constraintExpression": null,
@@ -150,6 +150,9 @@
       "updateStrategy": "fillUp",
       "models": {
         "_base": {
+          "_allowedRoles": [
+            "users"
+          ],
           "_id": {
             "nullable": false,
             "mutable": false
@@ -160,6 +163,15 @@
           },
           "_revisions": {
             "writable": false
+          },
+          "_type": {
+            "regularExpressionPattern": {
+              "__evaluate__": "self.modelConfiguration.specialPropertyNames.typeNameRegularExpressionPattern"
+            },
+            "nullable": false,
+            "minimum": 1,
+            "maximum": 999,
+            "mutable": false
           },
           "creationDateTime": {
             "type": "DateTime",
@@ -181,19 +193,7 @@
           "lastUser": {
             "onUpdateExpression": "userContext._id",
             "nullable": false
-          },
-          "_type": {
-            "regularExpressionPattern": {
-              "__evaluate__": "self.modelConfiguration.specialPropertyNames.typeNameRegularExpressionPattern"
-            },
-            "nullable": false,
-            "minimum": 1,
-            "maximum": 999,
-            "mutable": false
-          },
-          "_allowedRoles": [
-            "users"
-          ]
+          }
         }
       }
     }

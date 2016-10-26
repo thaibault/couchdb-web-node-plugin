@@ -476,7 +476,7 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 true, {}, defaultModelSpecification, test[1]))
             const modelConfiguration:ModelConfiguration = Tools.extendObject(
                 true, {}, defaultModelSpecification, test[1])
-            delete modelConfiguration.defaultPropertySpecification
+            delete modelConfiguration.default
             delete modelConfiguration.models
             const parameter:Array<any> = test[0].concat([null, {}, {}].slice(
                 test[0].length - 1
@@ -1121,7 +1121,7 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 true, {}, defaultModelSpecification, test[1]))
             const modelConfiguration:ModelConfiguration = Tools.extendObject(
                 true, {}, defaultModelSpecification, test[1])
-            delete modelConfiguration.defaultPropertySpecification
+            delete modelConfiguration.default
             delete modelConfiguration.models
             assert.deepEqual(Helper.validateDocumentUpdate(...test[0].concat([
                 null, {}, {}
@@ -1173,7 +1173,7 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
             true, {}, defaultModelSpecification, test[1]))
         const modelConfiguration:ModelConfiguration = Tools.extendObject(
             true, {}, defaultModelSpecification, test[1])
-        delete modelConfiguration.defaultPropertySpecification
+        delete modelConfiguration.default
         delete modelConfiguration.models
         assert.deepEqual(Helper.validateDocumentUpdate(...test[0].concat([
             null, {}, {}

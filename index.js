@@ -26,7 +26,7 @@ import PouchDB from 'pouchdb'
 try {
     require('source-map-support/register')
 } catch (error) {}
-import type {Configuration} from 'web-node/type'
+import type {Configuration, Services} from 'web-node/type'
 
 import Helper from './helper'
 import type {ModelConfiguration, Models} from './type'
@@ -42,7 +42,7 @@ export default class Database {
      * @param services - An object with stored service instances.
      * @returns Given object of services.
      */
-    static exit(services:{[key:string]:Object}):{[key:string]:Object} {
+    static exit(services:Services):Services {
         services.database.connection.close()
         return services
     }
@@ -53,8 +53,8 @@ export default class Database {
      * @returns Given and extended object of services.
      */
     static async preLoadService(
-        services:{[key:string]:Object}, configuration:Configuration
-    ):{[key:string]:Object} {
+        services:Services, configuration:Configuration
+    ):Services {
         if (!services.hasOwnProperty('database'))
             services.database = {}
         if (!services.database.hasOwnProperty('serverProcess')) {
@@ -174,7 +174,7 @@ export default class Database {
         // endregion
         const modelConfiguration:ModelConfiguration =
             Tools.copyLimitedRecursively(configuration.modelConfiguration)
-        delete modelConfiguration.defaultPropertySpecification
+        delete modelConfiguration.default
         delete modelConfiguration.models
         const models:Models = Helper.extendModels(
             configuration.modelConfiguration)

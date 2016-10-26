@@ -191,11 +191,13 @@ export default class Helper {
      * @returns Models with extended specific specifications.
      */
     static extendModels(modelConfiguration:PlainObject):Models {
-        modelConfiguration = Tools.extendObject(true, {specialPropertyNames: {
-            defaultPropertySpecification: {},
-            specialPropertyNames: {extend: '_extends'},
-            typeNameRegularExpressionPattern: '^[A-Z][a-z0-9]+$'
-        }}, modelConfiguration)
+        modelConfiguration = Tools.extendObject(true, {
+            default: {propertySpecification: {}},
+            specialPropertyNames: {
+                extend: '_extends',
+                typeNameRegularExpressionPattern: '^[A-Z][a-z0-9]+$'
+            }
+        }, modelConfiguration)
         const models:Models = {}
         for (const modelName:string in Tools.copyLimitedRecursively(
             modelConfiguration.models
@@ -222,7 +224,7 @@ export default class Helper {
                     if (models[modelName].hasOwnProperty(propertyName))
                         models[modelName][propertyName] = Tools.extendObject(
                             true, {},
-                            modelConfiguration.defaultPropertySpecification,
+                            modelConfiguration.default.propertySpecification,
                             models[modelName][propertyName])
         return models
     }
