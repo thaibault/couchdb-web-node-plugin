@@ -15,7 +15,6 @@
 // region imports
 import Tools from 'clientnode'
 import type {PlainObject} from 'clientnode'
-import type {Configuration, Plugin} from 'web-node/type'
 // NOTE: Only needed for debugging this file.
 try {
     require('source-map-support/register')
@@ -416,8 +415,9 @@ export default class Helper {
                     throw {
                         forbidden: `Selection: Property "${name}" (type ` +
                             `${propertySpecification.type}) should be one of` +
-                            `"${propertySpecification.selection.join(", ")}"` +
-                            `. But is "${newValue}".`
+                            '"' +
+                            propertySpecification.selection.join('", "') +
+                            `". But is "${newValue}".`
                     }
                     /* eslint-disable no-throw-literal */
                 // endregion
@@ -803,69 +803,68 @@ export default class Helper {
                             delete newDocument[propertyName]
                     }
                 }
-                // region generic constraint
-                for (
-                    let type:string in
+            // / region generic constraint
+            for (
+                let type:string in
+                modelConfiguration.specialPropertyNames.constraints
+            )
+                if (
                     modelConfiguration.specialPropertyNames.constraints
+                        .hasOwnProperty(type) &&
+                    (type = modelConfiguration.specialPropertyNames
+                        .constraints[type]) &&
+                    model.hasOwnProperty(type) &&
+                    Array.isArray(model[type]) && model[type].length
                 )
-                    if (
-                        modelConfiguration.specialPropertyNames.constraints
-                            .hasOwnProperty(type) &&
-                        (type = modelConfiguration.specialPropertyNames
-                            .constraints[type]) &&
-                        model.hasOwnProperty(type) &&
-                        Array.isArray(model[type]) && model[type].length
-                    )
-                        for (const constraint:string of model[type]) {
-                            let hook:Function
-                            try {
-                                hook = new Function(
-                                    'newDocument', 'oldDocument',
-                                    'userContext', 'securitySettings',
-                                    'models', 'modelConfiguration',
-                                    'serialize', 'modelName', 'model',
-                                    'checkDocument', 'checkPropertyContent', (
-                                        type.endsWith(
-                                            'Expression'
-                                    ) ? 'return ' : '') + constraint)
-                            } catch (error) {
-                                /* eslint-enable no-throw-literal */
-                                throw {
-                                    forbidden: `Compilation: Hook "${type}" ` +
-                                        `has invalid code "${constraint}": ` +
-                                        serialize(error)
-                                }
-                                /* eslint-disable no-throw-literal */
+                    for (const constraint:string of model[type]) {
+                        let hook:Function
+                        try {
+                            hook = new Function(
+                                'newDocument', 'oldDocument', 'userContext',
+                                'securitySettings', 'models',
+                                'modelConfiguration', 'serialize', 'modelName',
+                                'model', 'checkDocument',
+                                'checkPropertyContent', (type.endsWith(
+                                    'Expression'
+                                ) ? 'return ' : '') + constraint)
+                        } catch (error) {
+                            /* eslint-enable no-throw-literal */
+                            throw {
+                                forbidden: `Compilation: Hook "${type}" has ` +
+                                    `invalid code "${constraint}": ` +
+                                    serialize(error)
                             }
-                            let satisfied:boolean = false
-                            try {
-                                // IgnoreTypeCheck
-                                satisfied = hook(
-                                    newDocument, oldDocument, userContext,
-                                    securitySettings, models,
-                                    modelConfiguration, serialize, modelName,
-                                    model, checkDocument, checkPropertyContent)
-                            } catch (error) {
-                                /* eslint-disable no-throw-literal */
-                                throw {
-                                    forbidden: `Runtime: Hook "${type}" has ` +
-                                        'throw an error with code "' +
-                                        `${constraint}": ${serialize(error)}`
-                                }
-                                /* eslint-enable no-throw-literal */
-                            }
-                            if (!satisfied)
-                                /* eslint-disable no-throw-literal */
-                                throw {
-                                    forbidden: type.charAt(0).toUpperCase(
-                                    ) + type.substring(1) + ': Model "' +
-                                    `${modelName}" should satisfy constraint` +
-                                    ` "${constraint}" (given "` +
-                                    `${serialize(newDocument)}").`
-                                }
-                                /* eslint-enable no-throw-literal */
+                            /* eslint-disable no-throw-literal */
                         }
-                // endregion
+                        let satisfied:boolean = false
+                        try {
+                            // IgnoreTypeCheck
+                            satisfied = hook(
+                                newDocument, oldDocument, userContext,
+                                securitySettings, models, modelConfiguration,
+                                serialize, modelName, model, checkDocument,
+                                checkPropertyContent)
+                        } catch (error) {
+                            /* eslint-disable no-throw-literal */
+                            throw {
+                                forbidden: `Runtime: Hook "${type}" has ` +
+                                    `throw an error with code "${constraint}` +
+                                    `": ${serialize(error)}`
+                            }
+                            /* eslint-enable no-throw-literal */
+                        }
+                        if (!satisfied)
+                            /* eslint-disable no-throw-literal */
+                            throw {
+                                forbidden: type.charAt(0).toUpperCase(
+                                ) + `${type.substring(1)}: Model "` +
+                                `${modelName}" should satisfy constraint` +
+                                ` "${constraint}" (given "` +
+                                `${serialize(newDocument)}").`
+                            }
+                            /* eslint-enable no-throw-literal */
+                    }
+            // / endregion
             // endregion
             return newDocument
         }

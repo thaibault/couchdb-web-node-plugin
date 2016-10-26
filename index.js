@@ -20,13 +20,13 @@
 // region  imports
 import {spawn as spawnChildProcess} from 'child_process'
 import Tools from 'clientnode'
+import type {PlainObject} from 'clientnode'
 import PouchDB from 'pouchdb'
 // NOTE: Only needed for debugging this file.
 try {
     require('source-map-support/register')
 } catch (error) {}
 import type {Configuration} from 'web-node/type'
-import type {PlainObject} from 'weboptimizer/type'
 
 import Helper from './helper'
 import type {ModelConfiguration, Models} from './type'
@@ -84,8 +84,8 @@ export default class Database {
                 'No admin user available. Automatically creating admin user "' +
                 `${configuration.database.user.name}".`)
             await fetch(
-                `${Tools.stringFormat(configuration.database.url, '')}/_config/` +
-                `admins/${configuration.database.user.name}`,
+                `${Tools.stringFormat(configuration.database.url, '')}/` +
+                `_config/admins/${configuration.database.user.name}`,
                 {
                     method: 'PUT',
                     body: `"${configuration.database.user.password}"`
@@ -167,11 +167,12 @@ export default class Database {
                 Tools.representObject(error))
         }
         // endregion
-        const modelConfiguration:ModelConfiguration = Tools.copyLimitedRecursively(
-            configuration.modelConfiguration)
+        const modelConfiguration:ModelConfiguration =
+            Tools.copyLimitedRecursively(configuration.modelConfiguration)
         delete modelConfiguration.defaultPropertySpecification
         delete modelConfiguration.models
-        const models:Models = Helper.extendModels(configuration.modelConfiguration)
+        const models:Models = Helper.extendModels(
+            configuration.modelConfiguration)
         // region generate/update authentication/validation code
         let validationCode = Helper.validateDocumentUpdate.toString()
         validationCode = 'function(\n' +
