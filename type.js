@@ -19,7 +19,7 @@ import type {PlainObject} from 'clientnode'
 // / region model
 export type AllowedModelRolesMapping = {[key:string]:Array<string>}
 export type PropertySpecification = {
-    attachements:?{
+    attachments:?{
       minimum:number;
       maximum:number;
     };

@@ -42,7 +42,7 @@ export default class Database {
      * @param services - An object with stored service instances.
      * @returns Given object of services.
      */
-    static exit(services:{[key:string]:Object}):{[key:string]:Object} {
+    static exit(services:Services):Services {
         services.database.connection.close()
         return services
     }
@@ -53,8 +53,8 @@ export default class Database {
      * @returns Given and extended object of services.
      */
     static async preLoadService(
-        services:{[key:string]:Object}, configuration:Configuration
-    ):{[key:string]:Object} {
+        services:Services, configuration:Configuration
+    ):Services {
         if (!services.hasOwnProperty('database'))
             services.database = {}
         if (!services.database.hasOwnProperty('serverProcess')) {
