@@ -52,7 +52,7 @@
     "document": "webOptimizer document",
     "lint": "webOptimizer typeCheck && webOptimizer lint",
     "prepublish": "npm run build",
-    "serve": "webNode",
+    "serve": "npm run build && webNode",
     "start": "npm run serve",
     "test": "webOptimizer test",
     "update": "npm version patch && npm publish",
