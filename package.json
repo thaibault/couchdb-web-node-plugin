@@ -198,5 +198,11 @@
       }
     }
   },
-  "webOptimizer": {}
+  "webOptimizer": {
+    "module": {
+      "aliases": {
+        "web-node/configurator$": "web-node/configurator.compiled"
+      }
+    }
+  }
 }
