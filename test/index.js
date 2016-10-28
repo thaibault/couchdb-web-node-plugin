@@ -28,8 +28,8 @@ import Index from '../index'
 QUnit.module('index')
 QUnit.load()
 // region tests
-QUnit.test('exit', async (assert:Object):void => {
-    done = assert.async()
+QUnit.test('exit', async (assert:Object):Promise<void> => {
+    const done:Function = assert.async()
     let testValue:number = 0
     const services:Services = {database: {
         connection: {close: ():void => {
@@ -39,15 +39,24 @@ QUnit.test('exit', async (assert:Object):void => {
             testValue += 1
         }}
     }}
-    assert.deepEqual(await Index.exit(services, configuration), services)
+    try {
+        assert.deepEqual(await Index.exit(services, configuration), services)
+    } catch (error) {
+        console.error(error)
+    }
     assert.deepEqual(services, {})
     assert.strictEqual(testValue, 2)
     done()
 })
-QUnit.test('preLoadService', async (assert:Object):Promise<void> =>
-    assert.deepEqual(await Index.preLoadService(
-        {database: {connection: {}, serverProcess: {}}}, configuration
-    ), {database: {connection: {}, serverProcess: {}}}))
+QUnit.test('preLoadService', async (assert:Object):Promise<void> => {
+    try {
+        assert.deepEqual(await Index.preLoadService(
+            {database: {connection: {}, serverProcess: {}}}, configuration
+        ), {database: {connection: {}, serverProcess: {}}})
+    } catch (error) {
+        console.error(error)
+    }
+})
 // endregion
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
