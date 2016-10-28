@@ -21,6 +21,7 @@
 import {spawn as spawnChildProcess} from 'child_process'
 import Tools from 'clientnode'
 import type {PlainObject} from 'clientnode'
+import path from 'path'
 import PouchDB from 'pouchdb'
 // NOTE: Only needed for debugging this file.
 try {
@@ -66,24 +67,43 @@ export default class Database {
             services.database = {}
         if (!services.database.hasOwnProperty('serverProcess')) {
             // region start database server
-            services.database.serverProcess = spawnChildProcess(
-                // TODO find binary in node_modules fodler
-                'pouchdb-server', [
-                    '--port', `${configuration.database.port}`,
-                    '--dir', configuration.database.path,
-                    '--config', configuration.database.configFilePath
-                ], {
-                    cwd: process.cwd(),
-                    env: process.env,
-                    shell: true,
-                    stdio: 'inherit'
-                })
-            for (const closeEventName:string of Tools.closeEventNames)
-                services.database.serverProcess.on(
-                    closeEventName, Tools.getProcessCloseHandler(
-                        Tools.noop, Tools.noop, closeEventName))
-            await Tools.checkReachability(
-                Tools.stringFormat(configuration.database.url, ''), true)
+            let binaryFound:boolean = false
+            for (
+                const filePath:string of
+                configuration.database.binary.locations
+            ) {
+                const binaryFilePath:string = path.resolve(
+                    filePath, configuration.database.binary.name)
+                if (await Tools.isFile(binaryFilePath)) {
+                    binaryFound = true
+                    services.database.serverProcess = spawnChildProcess(
+                        binaryFilePath, [
+                            '--port', `${configuration.database.port}`,
+                            '--dir', path.resolve(configuration.database.path),
+                            '--config', configuration.database.configFilePath
+                        ], {
+                            cwd: eval('process').cwd(),
+                            env: eval('process').env,
+                            shell: true,
+                            stdio: 'inherit'
+                        })
+                    break
+                }
+            }
+            if (binaryFound) {
+                for (const closeEventName:string of Tools.closeEventNames)
+                    services.database.serverProcess.on(
+                        closeEventName, Tools.getProcessCloseHandler(
+                            Tools.noop, Tools.noop, closeEventName))
+                await Tools.checkReachability(
+                    Tools.stringFormat(configuration.database.url, ''), true)
+            } else
+                throw new Error(
+                    'No binary file name "' +
+                    `${configuration.database.binary.name}" in one of the ` +
+                    'following locations found: "' +
+                    `${configuration.database.binary.locations.join('", "')}` +
+                    '".')
             // endregion
         }
         if (services.database.hasOwnProperty('connection'))
