@@ -21,7 +21,7 @@ import * as QUnit from 'qunit-cli'
 try {
     module.require('source-map-support/register')
 } catch (error) {}
-import configuration from 'web-node/configurator.compiled'
+import configuration from 'web-node/configurator'
 
 import Helper from '../helper'
 import type {
