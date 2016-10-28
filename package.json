@@ -1,6 +1,6 @@
 {
   "name": "databasewebnodeplugin",
-  "version": "1.0.17",
+  "version": "1.0.18",
   "description": "A database server, model instance conflict handler, rest api, authentication, session management, schema validator and model relation guarantee for webNode.",
   "documentationWebsite": {
     "name": "databaseWebNodePlugin",
@@ -64,7 +64,10 @@
   "webNode": {
     "database": {
       "binary": {
-        "locations": ["node_modules/.bin/", "../.bin/"],
+        "locations": [
+          "node_modules/.bin/",
+          "../.bin/"
+        ],
         "name": "pouchdb-server"
       },
       "configFilePath": {
