@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+## Generic
+
 # Generated documentations
 documentation/build
 api
@@ -16,6 +18,9 @@ log.txt
 # Temporary compile files
 *.compiled.*
 *.compiled
+!/api/**/*
+*Bundle.*
+!/data/**/*
 .dynamicConfiguration-*.json
 *.dll-manifest.json
 
@@ -23,7 +28,6 @@ log.txt
 *.profile
 
 # Packages
-.SRCINFO
 *.egg
 *.egg-info
 dist
@@ -76,7 +80,9 @@ nosetests.xml
 # Temporary windows files
 *Thumbs.db
 
-# NPM's runtime files
+# NPM/yarn's runtime files
+yarn-error.log
+yarn.lock
 node_modules/
 .npm/
 .v8flags.*

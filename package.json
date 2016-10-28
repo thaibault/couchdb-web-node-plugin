@@ -38,7 +38,8 @@
     "clientnode": "latest",
     "pouchdb": "latest",
     "pouchdb-server": "latest",
-    "web-node": "latest"
+    "web-node": "latest",
+    "weboptimizer": "latest"
   },
   "devDependencies": {
     "documentation-website": "latest",
