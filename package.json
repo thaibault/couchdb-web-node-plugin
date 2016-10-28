@@ -63,6 +63,10 @@
   },
   "webNode": {
     "database": {
+      "binary": {
+        "locations": ["node_modules/.bin/", "../.bin/"],
+        "name": "pouchdb-server"
+      },
       "configFilePath": {
         "__evaluate__": "`./${self.database.path}/database.json`"
       },
