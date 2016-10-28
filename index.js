@@ -40,10 +40,17 @@ export default class Database {
     /**
      * Application will be closed soon.
      * @param services - An object with stored service instances.
+     * @param configuration - Mutable by plugins extended configuration object.
      * @returns Given object of services.
      */
-    static exit(services:Services):Services {
+    static async exit(
+        services:Services, configuration:Configuration
+    ):Services {
         services.database.connection.close()
+        services.database.serverProcess.kill('SIGINT')
+        await Tools.checkUnreachability(
+            Tools.stringFormat(configuration.database.url, ''), true)
+        delete services.database
         return services
     }
     /**

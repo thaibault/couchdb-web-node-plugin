@@ -28,13 +28,21 @@ import Index from '../index'
 QUnit.module('index')
 QUnit.load()
 // region tests
-QUnit.test('exit', (assert:Object):void => {
-    let testValue:boolean = false
-    const services:Services = {database: {connection: {close: ():void => {
-        testValue = true
-    }}}}
-    assert.deepEqual(Index.exit(services), services)
-    assert.ok(testValue)
+QUnit.test('exit', async (assert:Object):void => {
+    done = assert.async()
+    let testValue:number = 0
+    const services:Services = {database: {
+        connection: {close: ():void => {
+            testValue += 1
+        }},
+        serverProcess: {kill: ():void => {
+            testValue += 1
+        }}
+    }}
+    assert.deepEqual(await Index.exit(services, configuration), services)
+    assert.deepEqual(services, {})
+    assert.strictEqual(testValue, 2)
+    done()
 })
 QUnit.test('preLoadService', async (assert:Object):Promise<void> =>
     assert.deepEqual(await Index.preLoadService(
