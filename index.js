@@ -60,6 +60,7 @@ export default class Database {
         if (!services.database.hasOwnProperty('serverProcess')) {
             // region start database server
             services.database.serverProcess = spawnChildProcess(
+                // TODO find binary in node_modules fodler
                 'pouchdb-server', [
                     '--port', `${configuration.database.port}`,
                     '--dir', configuration.database.path,
