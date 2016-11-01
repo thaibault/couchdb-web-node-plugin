@@ -467,7 +467,62 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
             ],
             [[{_type: 'Test', a: 'b'}], {models: {Test: {a: {
                 constraintExpression: 'newValue === "a"'
-            }}}}, 'ConstraintExpression']
+            }}}}, 'ConstraintExpression'],
+            // endregion
+            // region attachments
+            [
+                [{_type: 'Test', _attachments: {}}], {models: {Test: {}}},
+                'Attachment'
+            ],
+            [
+                [{_type: 'Test', _attachments: null}],
+                {models: {Test: {_attachments: {}}}}, 'AttachmentPresence'
+            ],
+            [
+                [{_type: 'Test', _attachments: {
+                    a: {data: '', content_type: 'text/plain'},
+                    b: {data: '', content_type: 'text/plain'}
+                }}],
+                {models: {Test: {_attachments: {maximum: 1}}}},
+                'AttachmentMaximum'
+            ],
+            [
+                [{_type: 'Test', _attachments: {}}],
+                {models: {Test: {_attachments: {minimum: 1}}}},
+                'AttachmentMinimum'
+            ],
+            [
+                [{_type: 'Test', _attachments: {test: {
+                    data: '', content_type: 'text/plain'
+                }}}],
+                {models: {Test: {_attachments: {minimum: 2}}}},
+                'AttachmentMinimum'
+            ],
+            [
+                [{_type: 'Test', _attachments: {a: {
+                    data: '', content_type: 'text/plain'
+                }}}],
+                {models: {Test: {_attachments: {
+                    nameRegularExpressionPattern: /b/g
+                }}}}, 'AttachmentName'
+            ],
+            [
+                [{_type: 'Test', _attachments: {
+                    a: {data: '', content_type: 'text/plain'},
+                    b: {data: '', content_type: 'text/plain'}
+                }}],
+                {models: {Test: {_attachments: {
+                    nameRegularExpressionPattern: /a/
+                }}}}, 'AttachmentName'
+            ],
+            [
+                [{_type: 'Test', _attachments: {
+                    a: {data: '', content_type: 'text/plain'},
+                    b: {data: '', content_type: 'image/jpg'}
+                }}],
+                {models: {Test: {_attachments: {contentType: /text\/plain/}}}},
+                'AttachmentContentType'
+            ]
             // endregion
         ]) {
             if (test.length < 3)
@@ -481,6 +536,7 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
             const parameter:Array<any> = test[0].concat([null, {}, {}].slice(
                 test[0].length - 1
             )).concat([models, modelConfiguration])
+            console.log(parameter, test[2])
             assert.throws(():Object => Helper.validateDocumentUpdate(
                 ...parameter
             ), (error:DatabaseForbiddenError):boolean => {
