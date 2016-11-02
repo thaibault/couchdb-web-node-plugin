@@ -1252,10 +1252,7 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 a: {data: '', content_type: 'image/png'}
             }}, {_type: 'Test', _attachments: {
                 b: {data: '', content_type: 'image/jpeg'}
-            }}], {models: {Test: {_attachments: {
-                contentTypeRegularExpressionPattern: /image\/.+/,
-                regularExpressionPattern: 'a|b'
-            }}}}, {
+            }}], {models: {Test: {_attachments: {}}}}, {
                 fillUp: {_type: 'Test', _attachments: {
                     a: {data: '', content_type: 'image/png'},
                     b: {data: '', content_type: 'image/jpeg'}
@@ -1271,13 +1268,19 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 _type: 'Test', _attachments: {a: {
                     data: '', content_type: 'image/jpeg'
                 }}
-            }], {models: {Test: {_attachments: {
-                contentTypeRegularExpressionPattern: /image\/jpeg/,
-                regularExpressionPattern: 'a'
-            }}}}, {
-                fillUp: {_type: 'Test', _attachments: {}},
-                incremental: {_attachments: {}},
-                '': {_type: 'Test', _attachments: {}}
+            }], {models: {Test: {_attachments: {}}}}, {
+                fillUp: {_type: 'Test'},
+                incremental: {},
+                '': {_type: 'Test'}
+            }],
+            [[{_type: 'Test'}, {_type: 'Test', _attachments: {a: {
+                data: '', content_type: 'image/jpeg'
+            }}}], {models: {Test: {_attachments: {}}}}, {
+                fillUp: {_type: 'Test', _attachments: {a: {
+                    data: '', content_type: 'image/jpeg'
+                }}},
+                incremental: {},
+                '': {_type: 'Test'}
             }]
             // endregion
         ]) {

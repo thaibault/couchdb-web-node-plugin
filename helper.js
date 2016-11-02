@@ -871,7 +871,6 @@ export default class Helper {
             // / region attachments
             const name:string = modelConfiguration.specialPropertyNames
                 .attachments
-            // TODO doesn't work with all update strategies.
             if (newDocument.hasOwnProperty(name)) {
                 const newAttachments:any = newDocument[name]
                 if (
@@ -897,7 +896,7 @@ export default class Helper {
                         ) === Object.prototype
                     )
                         for (const fileName:string in oldAttachments)
-                            if (oldAttachments.hasOwnProperty(fileName))
+                            if (oldAttachments.hasOwnProperty(fileName)) {
                                 if (
                                     modelConfiguration.updateStrategy ===
                                         'fillUp' &&
@@ -909,12 +908,19 @@ export default class Helper {
                                     modelConfiguration.updateStrategy ===
                                         'incremental' &&
                                     newAttachments.hasOwnProperty(fileName) &&
-                                    newAttachments[fileName].content_type ===
-                                    oldAttachments[fileName].content_type &&
-                                    newAttachments[fileName].data ===
-                                    oldAttachments[fileName].data
+                                    (
+                                        newAttachments[fileName] === null ||
+                                        newAttachments[
+                                            fileName
+                                        ].content_type === oldAttachments[
+                                            fileName
+                                        ].content_type &&
+                                        newAttachments[fileName].data ===
+                                        oldAttachments[fileName].data
+                                    )
                                 )
                                     delete newAttachments[fileName]
+                            }
                 }
                 for (const fileName:string in newAttachments)
                     if (newAttachments.hasOwnProperty(fileName) && [
@@ -923,6 +929,8 @@ export default class Helper {
                         delete newAttachments[fileName]
                 // endregion
                 const numberOfAttachments = Object.keys(newAttachments).length
+                if (numberOfAttachments === 0)
+                    delete newDocument[name]
                 if (numberOfAttachments > model[name].maximum)
                     /* eslint-disable no-throw-literal */
                     throw {
