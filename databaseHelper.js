@@ -839,16 +839,7 @@ export default class DatabaseHelper {
                             }
                             /* eslint-enable no-throw-literal */
                     }
-            } else if (model.hasOwnProperty(name) && model[name] && 0 < model[
-                name
-            ].minimum)
-                /* eslint-disable no-throw-literal */
-                throw {
-                    forbidden: 'AttachmentPresence: No given attachments ' +
-                    `available which doesn't satisfy specified minimum of ` +
-                    `${model[name].minimum}.`
-                }
-                /* eslint-enable no-throw-literal */
+            }
             // / endregion
             // endregion
             return newDocument
