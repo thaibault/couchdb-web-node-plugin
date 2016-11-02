@@ -21,6 +21,7 @@
 import {spawn as spawnChildProcess} from 'child_process'
 import Tools from 'clientnode'
 import type {PlainObject} from 'clientnode'
+import fileSystem from 'fs'
 import path from 'path'
 import PouchDB from 'pouchdb'
 // NOTE: Only needed for debugging this file.
@@ -29,8 +30,11 @@ try {
 } catch (error) {}
 import type {Configuration, Services} from 'web-node/type'
 
+import DatabaseHelper from './databaseHelper'
 import Helper from './helper'
-import type {ModelConfiguration, Models} from './type'
+import type {
+    Document, ModelConfiguration, Models, RetrievedDocument
+} from './type'
 // endregion
 // region plugins/classes
 /**
@@ -46,7 +50,11 @@ export default class Database {
      */
     static async exit(
         services:Services, configuration:Configuration
-    ):Services {
+    ):Promise<Services> {
+        if (await Tools.isFile('log.txt'))
+            await new Promise((resolve:Function, reject:Function):void =>
+                fileSystem.unlink('log.txt', (error:?Error) =>
+                    error ? reject(error) : resolve()))
         services.database.connection.close()
         services.database.serverProcess.kill('SIGINT')
         await Tools.checkUnreachability(
@@ -62,7 +70,7 @@ export default class Database {
      */
     static async preLoadService(
         services:Services, configuration:Configuration
-    ):Services {
+    ):Promise<Services> {
         if (!services.hasOwnProperty('database'))
             services.database = {}
         if (!services.database.hasOwnProperty('serverProcess')) {
@@ -95,7 +103,7 @@ export default class Database {
                     services.database.serverProcess.on(
                         closeEventName, Tools.getProcessCloseHandler(
                             Tools.noop, Tools.noop, closeEventName))
-                await Tools.checkReachability(
+                await Tools .checkReachability(
                     Tools.stringFormat(configuration.database.url, ''), true)
             } else
                 throw new Error(
@@ -206,69 +214,95 @@ export default class Database {
         delete modelConfiguration.models
         const models:Models = Helper.extendModels(
             configuration.modelConfiguration)
+        const databaseHelperCode:string = await new Promise((
+            resolve:Function, reject:Function
+        ):void => fileSystem.readFile(
+            './databaseHelper.compiled.js',
+            {encoding: (configuration.encoding:string), flag: 'r'},
+            (error:?Error, data:string):void =>
+                error ? reject(error) : resolve(data)))
         // region generate/update authentication/validation code
-        let validationCode = Helper.validateDocumentUpdate.toString()
-        validationCode = 'function(\n' +
-            '    newDocument, oldDocument, userContext, securitySettings\n' +
-            ')\n {\n' +
-            `const models = ${JSON.stringify(models)}\n` +
-            `const modelConfiguration = ` +
-            `${JSON.stringify(modelConfiguration)}\n` +
-            validationCode.substring(
-                validationCode.indexOf('{') + 1,
-                validationCode.lastIndexOf('}')
-            ).trim().replace(/^ {12}/gm, '') +
-            '\n}'
+        // / region validation
+        const validationCode:string = 'function(...parameter) {\n' +
+            `    return require('helper').default.validateDocumentUpdate(` +
+                    '...parameter.concat([' +
+                    JSON.stringify(models) + ', ' +
+                    JSON.stringify(modelConfiguration) + ']))\n' +
+            '}'
+        try {
+            new Function(`return ${validationCode}`)
+        } catch (error) {
+            throw new Error(
+                `Generated validation code "${validationCode}" doesn't ` +
+                `compile: ${Tools.representObject(error)}`)
+        }
         if (configuration.debug)
             console.info(
                 'Specification \n\n"' +
                 Tools.representObject(configuration.modelConfiguration) +
                 `" has generated validation code: \n\n"${validationCode}".`)
         await Helper.ensureValidationDocumentPresence(
-            services.database.connection, 'validation', validationCode,
-            'Model specification')
-        let authenticationCode = Helper.authenticate.toString()
-        authenticationCode = 'function(\n' +
-            '    newDocument, oldDocument, userContext, securitySettings\n' +
-            ')\n {\n' +
-            'const allowedModelRolesMapping = ' +
-            JSON.stringify(Helper.determineAllowedModelRolesMapping(
-                configuration.modelConfiguration
-            )) + '\n' +
-            `const typePropertyName = '` +
-            `${configuration.modelConfiguration.specialPropertyNames.type}'` +
-            `\n` + authenticationCode.substring(
-                authenticationCode.indexOf('{') + 1,
-                authenticationCode.lastIndexOf('}')
-            ).trim().replace(/^ {12}/gm, '') +
-            '\n}'
+            services.database.connection, 'validation', {
+                helper: databaseHelperCode,
+                /* eslint-disable camelcase */
+                validate_doc_update: validationCode
+                /* eslint-enable camelcase */
+            }, 'Model specification')
+        // / endregion
+        // / region authentication
+        const authenticationCode:string = 'function(...parameter) {\n' +
+            `    return require('helper').default.authenticate(` +
+                    '...parameter.concat([' +
+                    JSON.stringify(Helper.determineAllowedModelRolesMapping(
+                        configuration.modelConfiguration
+                    )) + ", '" + configuration.modelConfiguration
+                        .specialPropertyNames.type + "']))\n" +
+            '}'
+        try {
+            new Function(`return ${authenticationCode}`)
+        } catch (error) {
+            throw new Error(
+                `Generated authentication code "${authenticationCode}" ` +
+                `doesn't compile: ${Tools.representObject(error)}`)
+        }
         if (configuration.debug)
             console.info(
                 `Authentication code "${authenticationCode}" generated.`)
         await Helper.ensureValidationDocumentPresence(
-            services.database.connection, 'authentication', authenticationCode,
-            'Authentication logic')
+            services.database.connection, 'authentication', {
+                helper: databaseHelperCode,
+                /* eslint-disable camelcase */
+                validate_doc_update: authenticationCode
+                /* eslint-enable camelcase */
+            }, 'Authentication logic')
+        // / endregion
         // endregion
         // region ensure all constraints to have a consistent initial state
         // TODO run migrations scripts if there exists some.
-        for (const document:PlainObject of (
+        for (let retrievedDocument:RetrievedDocument of (
             await services.database.connection.allDocs({
                 /* eslint-disable camelcase */
                 include_docs: true
                 /* eslint-enable camelcase */
             })
         ).rows)
-            if (!(typeof document.id === 'string' && document.id.startsWith(
-                '_design/'
-            ))) {
+            if (!(
+                typeof retrievedDocument.id === 'string' &&
+                retrievedDocument.id.startsWith('_design/')
+            )) {
+                const document:Document = retrievedDocument.doc
                 let newDocument:?PlainObject = null
                 const migrationModelConfiguration:ModelConfiguration =
                     Tools.copyLimitedRecursively(modelConfiguration)
                 // NOTE: Will remove not specified properties.
                 migrationModelConfiguration.updateStrategy = 'migrate'
                 try {
-                    newDocument = Helper.validateDocumentUpdate(
-                        document, null, {}, Tools.copyLimitedRecursively(
+                    newDocument = DatabaseHelper.validateDocumentUpdate(
+                        document, null, {
+                            db: configuration.name,
+                            name: configuration.database.user.name,
+                            roles: ['_admin']
+                        }, Tools.copyLimitedRecursively(
                             configuration.database.security
                         ), models, migrationModelConfiguration)
                 } catch (error) {
