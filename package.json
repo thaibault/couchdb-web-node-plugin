@@ -102,18 +102,7 @@
     },
     "modelConfiguration": {
       "default": {
-        "attachments": {
-          "name": {
-            "minimum": 1,
-            "maximum": 32000
-          },
-          "minimum": 0,
-          "maximum": {
-            "__evaluate__": "Infinity"
-          }
-        },
         "propertySpecification": {
-          "attachments": null,
           "conflictingConstraintExpression": null,
           "conflictingConstraintExecution": null,
           "constraintExpression": null,
@@ -138,7 +127,6 @@
         }
       },
       "reservedPropertyNames": [
-        "_attachments",
         "_deleted",
         "_id",
         "_rev",
@@ -146,6 +134,7 @@
       ],
       "specialPropertyNames": {
         "allowedRoles": "_allowedRoles",
+        "attachments": "_attachments",
         "constraints": {
           "expression": "_constraintExpressions",
           "execution": "_constraintExecutions"
@@ -161,6 +150,12 @@
           "_allowedRoles": [
             "users"
           ],
+          "_attachments": {
+            "contentTypeRegularExpressionPattern": ".+/.+",
+            "maximum": 0,
+            "minimum": 0,
+            "type": "_attachments"
+          },
           "_id": {
             "nullable": false,
             "mutable": false
