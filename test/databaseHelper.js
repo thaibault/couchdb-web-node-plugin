@@ -383,13 +383,15 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
             ],
             [
                 [{'-type': 'Test'}],
-                {models: {Test: {_attachments: {minimum: 1}}}},
-                'AttachmentPresence'
+                {models: {Test: {_attachments: {
+                    minimum: 1, nullable: false
+                }}}}, 'MissingProperty'
             ],
             [
                 [{'-type': 'Test', _attachments: null}],
-                {models: {Test: {_attachments: {minimum: 1}}}},
-                'AttachmentPresence'
+                {models: {Test: {_attachments: {
+                    minimum: 1, nullable: false
+                }}}}, 'NotNull'
             ],
             [
                 [{'-type': 'Test', _attachments: {
@@ -401,8 +403,9 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
             ],
             [
                 [{'-type': 'Test', _attachments: {}}],
-                {models: {Test: {_attachments: {minimum: 1}}}},
-                'AttachmentMinimum'
+                {models: {Test: {_attachments: {
+                    minimum: 1, nullable: false
+                }}}}, 'AttachmentMinimum'
             ],
             [
                 [{'-type': 'Test', _attachments: {test: {
@@ -1082,6 +1085,13 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
             }],
             // endregion
             // region attachments
+            [[{'-type': 'Test'}], {models: {Test: {_attachments: {
+                minimum: 1
+            }}}}, {
+                fillUp: {'-type': 'Test'},
+                incremental: {'-type': 'Test'},
+                '': {'-type': 'Test'}
+            }],
             [[{'-type': 'Test', _attachments: {test: {
                 data: '', content_type: 'text/plain'
             }}}], {models: {Test: {_attachments: {maximum: 1}}}}, {
