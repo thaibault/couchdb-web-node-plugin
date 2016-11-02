@@ -22,7 +22,7 @@ try {
 // NOTE: Remove when "fetch" is supported by node.
 import type {
     AllowedModelRolesMapping, Model, Models, PropertySpecification,
-    SimpleModelConfiguration
+    SecuritySettings, SimpleModelConfiguration, UserContext
 } from './type'
 // endregion
 /**
@@ -43,8 +43,8 @@ export default class DatabaseHelper {
      * document belongs to.
      */
     static authenticate(
-        newDocument:Object, oldDocument:?Object, userContext:?Object,
-        securitySettings:?Object,
+        newDocument:Object, oldDocument:?Object, userContext:?UserContext,
+        securitySettings:?SecuritySettings,
         allowedModelRolesMapping:AllowedModelRolesMapping,
         typePropertyName:string
     ):?true {
@@ -83,8 +83,8 @@ export default class DatabaseHelper {
      * @returns Modified given new document.
      */
     static validateDocumentUpdate(
-        newDocument:Object, oldDocument:?Object, userContext:Object = {},
-        securitySettings:Object = {}, models:Models,
+        newDocument:Object, oldDocument:?Object, userContext:UserContext = {},
+        securitySettings:SecuritySettings = {}, models:Models,
         modelConfiguration:SimpleModelConfiguration, toJSON:?Function = null
     ):Object {
         // region ensure needed environment

@@ -136,7 +136,7 @@
         "_revisions"
       ],
       "specialPropertyNames": {
-        "allowedRoles": "-allowedRoles",
+        "allowedRoles": "_allowedRoles",
         "attachments": "_attachments",
         "constraints": {
           "expression": "_constraintExpressions",
@@ -197,9 +197,12 @@
             "nullable": false
           },
           "lastUser": {
-            "onUpdateExpression": "userContext._id",
+            "onUpdateExpression": "userContext.name",
             "nullable": false
           }
+        },
+        "Test": {
+            "a": {}
         }
       }
     }

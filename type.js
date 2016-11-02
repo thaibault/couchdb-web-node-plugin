@@ -44,6 +44,15 @@ export type Model = {
     [key:string]:PropertySpecification;
 }
 export type Models = {[key:string]:Model}
+export type Document = {
+    _id:string;
+    _rev:string;
+    {[key:string]:any};
+}
+export type RetrievedDocument = {
+    id:string;
+    doc:Document;
+}
 export type SpecialPropertyNames = {
     allowedRoles:string;
     attachments:string;
@@ -78,9 +87,18 @@ export type SimpleModelConfiguration = {
 }
 // / endregion
 // / region configuration
+export type UserContext = {
+    db:string;
+    name:string;
+    roles:Array<string>;
+}
 export type DatabaseUserConfiguration = {
     names:Array<string>;
     roles:Array<string>;
+}
+export type SecuritySettings = {
+    admins:DatabaseUserConfiguration;
+    members:DatabaseUserConfiguration;
 }
 export type Configuration = {
     context:{
@@ -94,10 +112,7 @@ export type Configuration = {
         'log/level':string;
         path:string;
         port:number;
-        security:{
-            admins:DatabaseUserConfiguration;
-            members:DatabaseUserConfiguration;
-        };
+        security:SecuritySettings;
         url:string;
         user:{
             name:string;

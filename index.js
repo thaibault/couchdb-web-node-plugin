@@ -30,8 +30,11 @@ try {
 } catch (error) {}
 import type {Configuration, Services} from 'web-node/type'
 
+import DatabaseHelper from './databaseHelper'
 import Helper from './helper'
-import type {ModelConfiguration, Models} from './type'
+import type {
+    Document, ModelConfiguration, Models, RetrievedDocument
+} from './type'
 // endregion
 // region plugins/classes
 /**
@@ -100,7 +103,7 @@ export default class Database {
                     services.database.serverProcess.on(
                         closeEventName, Tools.getProcessCloseHandler(
                             Tools.noop, Tools.noop, closeEventName))
-                await Tools.checkReachability(
+                await Tools .checkReachability(
                     Tools.stringFormat(configuration.database.url, ''), true)
             } else
                 throw new Error(
@@ -276,24 +279,30 @@ export default class Database {
         // endregion
         // region ensure all constraints to have a consistent initial state
         // TODO run migrations scripts if there exists some.
-        for (const document:PlainObject of (
+        for (let retrievedDocument:RetrievedDocument of (
             await services.database.connection.allDocs({
                 /* eslint-disable camelcase */
                 include_docs: true
                 /* eslint-enable camelcase */
             })
         ).rows)
-            if (!(typeof document.id === 'string' && document.id.startsWith(
-                '_design/'
-            ))) {
+            if (!(
+                typeof retrievedDocument.id === 'string' &&
+                retrievedDocument.id.startsWith('_design/')
+            )) {
+                const document:Document = retrievedDocument.doc
                 let newDocument:?PlainObject = null
                 const migrationModelConfiguration:ModelConfiguration =
                     Tools.copyLimitedRecursively(modelConfiguration)
                 // NOTE: Will remove not specified properties.
                 migrationModelConfiguration.updateStrategy = 'migrate'
                 try {
-                    newDocument = Helper.validateDocumentUpdate(
-                        document, null, {}, Tools.copyLimitedRecursively(
+                    newDocument = DatabaseHelper.validateDocumentUpdate(
+                        document, null, {
+                            db: configuration.name,
+                            name: configuration.database.user.name,
+                            roles: ['_admin']
+                        }, Tools.copyLimitedRecursively(
                             configuration.database.security
                         ), models, migrationModelConfiguration)
                 } catch (error) {
