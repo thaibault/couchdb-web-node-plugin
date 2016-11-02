@@ -217,7 +217,9 @@ export default class Database {
         const databaseHelperCode:string = await new Promise((
             resolve:Function, reject:Function
         ):void => fileSystem.readFile(
-            './databaseHelper.compiled.js',
+            /* eslint-disable no-eval */
+            eval('require.resolve')('./databaseHelper.compiled'),
+            /* eslint-enable no-eval */
             {encoding: (configuration.encoding:string), flag: 'r'},
             (error:?Error, data:string):void =>
                 error ? reject(error) : resolve(data)))
