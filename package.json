@@ -13,6 +13,8 @@
     "index.js",
     "helper.js",
     "helper.compiled.js",
+    "databaseHelper.js",
+    "databaseHelper.compiled.js",
     "type.js"
   ],
   "keywords": [
@@ -203,10 +205,35 @@
     }
   },
   "webOptimizer": {
+    "assetPattern": {
+      "javaScript": {
+        "excludeFilePathRegularExpression": {
+          "__evaluate__": "2 < self.givenCommandLineArguments.length && self.givenCommandLineArguments[2] === 'test' ? '^$' : '.+'"
+        }
+      }
+    },
+    "exportFormat": {
+      "external": "commonjs2",
+      "self": "commonjs2"
+    },
+    "injection": {
+      "internal": {
+        "__evaluate__": "2 < self.givenCommandLineArguments.length && self.givenCommandLineArguments[2] === 'test' ? 'test' : {databaseHelper: 'databaseHelper', helper: 'helper', index: 'index'}"
+      }
+    },
+    "inPlace": {
+      "externalLibrary": {"normal": {
+        "__evaluate__": "!(2 < self.givenCommandLineArguments.length && self.givenCommandLineArguments[2] === 'test')"
+      }}
+    },
     "module": {
       "aliases": {
         "web-node/configurator$": "web-node/configurator.compiled"
+      },
+      "skipParseRegularExpressions": {
+        "__evaluate__": "/(bindings\\/bindings|encoding\\/lib\\/iconv-loader|colors\\/lib\\/colors|colors\\/lib\\/extendStringPrototype)\\.js(?:\\?.+|$)/"
       }
-    }
+    },
+    "targetTechnology": "node"
   }
 }
