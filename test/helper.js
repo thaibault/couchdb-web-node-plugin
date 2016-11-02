@@ -472,11 +472,17 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
             // region attachments
             [
                 [{_type: 'Test', _attachments: {}}], {models: {Test: {}}},
-                'Attachment'
+                'Property'
+            ],
+            [
+                [{_type: 'Test'}],
+                {models: {Test: {_attachments: {minimum: 1}}}},
+                'AttachmentPresence'
             ],
             [
                 [{_type: 'Test', _attachments: null}],
-                {models: {Test: {_attachments: {}}}}, 'AttachmentPresence'
+                {models: {Test: {_attachments: {minimum: 1}}}},
+                'AttachmentPresence'
             ],
             [
                 [{_type: 'Test', _attachments: {
@@ -503,7 +509,7 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                     data: '', content_type: 'text/plain'
                 }}}],
                 {models: {Test: {_attachments: {
-                    nameRegularExpressionPattern: /b/g
+                    regularExpressionPattern: /b/g
                 }}}}, 'AttachmentName'
             ],
             [
@@ -512,7 +518,7 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                     b: {data: '', content_type: 'text/plain'}
                 }}],
                 {models: {Test: {_attachments: {
-                    nameRegularExpressionPattern: /a/
+                    regularExpressionPattern: /a/
                 }}}}, 'AttachmentName'
             ],
             [
@@ -520,8 +526,9 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                     a: {data: '', content_type: 'text/plain'},
                     b: {data: '', content_type: 'image/jpg'}
                 }}],
-                {models: {Test: {_attachments: {contentType: /text\/plain/}}}},
-                'AttachmentContentType'
+                {models: {Test: {_attachments: {
+                    contentTypeRegularExpressionPattern: /text\/plain/
+                }}}}, 'AttachmentContentType'
             ]
             // endregion
         ]) {
@@ -536,7 +543,6 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
             const parameter:Array<any> = test[0].concat([null, {}, {}].slice(
                 test[0].length - 1
             )).concat([models, modelConfiguration])
-            console.log(parameter, test[2])
             assert.throws(():Object => Helper.validateDocumentUpdate(
                 ...parameter
             ), (error:DatabaseForbiddenError):boolean => {
@@ -1170,6 +1176,108 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 fillUp: {_type: 'Test', a: 'a'},
                 incremental: {_type: 'Test', a: 'a'},
                 '': {_type: 'Test', a: 'a'}
+            }],
+            // endregion
+            // region attachments
+            [[{_type: 'Test', _attachments: {test: {
+                data: '', content_type: 'text/plain'
+            }}}], {models: {Test: {_attachments: {maximum: 1}}}}, {
+                fillUp: {_type: 'Test', _attachments: {test: {
+                    content_type: 'text/plain', data: ''
+                }}},
+                incremental: {_type: 'Test', _attachments: {test: {
+                    content_type: 'text/plain', data: ''
+                }}},
+                '': {_type: 'Test', _attachments: {test: {
+                    content_type: 'text/plain', data: ''
+                }}}
+            }],
+            [[{_type: 'Test', _attachments: {
+                a: {data: '', content_type: 'text/plain'},
+                b: {data: '', content_type: 'text/plain'}
+            }}], {models: {Test: {_attachments: {maximum: 2, minimum: 2}}}}, {
+                fillUp: {_type: 'Test', _attachments: {
+                    a: {data: '', content_type: 'text/plain'},
+                    b: {data: '', content_type: 'text/plain'}
+                }},
+                incremental: {_type: 'Test', _attachments: {
+                    a: {data: '', content_type: 'text/plain'},
+                    b: {data: '', content_type: 'text/plain'}
+                }},
+                '': {_type: 'Test', _attachments: {
+                    a: {data: '', content_type: 'text/plain'},
+                    b: {data: '', content_type: 'text/plain'}
+                }}
+            }],
+            [[{_type: 'Test', _attachments: {
+                a: {data: '', content_type: 'text/plain'},
+                b: {data: '', content_type: 'text/plain'}
+            }}], {models: {Test: {_attachments: {
+                maximum: 2, regularExpressionPattern: 'a|b'
+            }}}}, {
+                fillUp: {_type: 'Test', _attachments: {
+                    a: {data: '', content_type: 'text/plain'},
+                    b: {data: '', content_type: 'text/plain'}
+                }},
+                incremental: {_type: 'Test', _attachments: {
+                    a: {data: '', content_type: 'text/plain'},
+                    b: {data: '', content_type: 'text/plain'}
+                }},
+                '': {_type: 'Test', _attachments: {
+                    a: {data: '', content_type: 'text/plain'},
+                    b: {data: '', content_type: 'text/plain'}
+                }}
+            }],
+            [[{_type: 'Test', _attachments: {
+                a: {data: '', content_type: 'image/png'},
+                b: {data: '', content_type: 'image/jpeg'}
+            }}], {models: {Test: {_attachments: {
+                contentTypeRegularExpressionPattern: /image\/.+/,
+                regularExpressionPattern: 'a|b'
+            }}}}, {
+                fillUp: {_type: 'Test', _attachments: {
+                    a: {data: '', content_type: 'image/png'},
+                    b: {data: '', content_type: 'image/jpeg'}
+                }},
+                incremental: {_type: 'Test', _attachments: {
+                    a: {data: '', content_type: 'image/png'},
+                    b: {data: '', content_type: 'image/jpeg'}
+                }},
+                '': {_type: 'Test', _attachments: {
+                    a: {data: '', content_type: 'image/png'},
+                    b: {data: '', content_type: 'image/jpeg'}
+                }}
+            }],
+            [[{_type: 'Test', _attachments: {
+                a: {data: '', content_type: 'image/png'}
+            }}, {_type: 'Test', _attachments: {
+                b: {data: '', content_type: 'image/jpeg'}
+            }}], {models: {Test: {_attachments: {
+                contentTypeRegularExpressionPattern: /image\/.+/,
+                regularExpressionPattern: 'a|b'
+            }}}}, {
+                fillUp: {_type: 'Test', _attachments: {
+                    a: {data: '', content_type: 'image/png'},
+                    b: {data: '', content_type: 'image/jpeg'}
+                }},
+                incremental: {_attachments: {
+                    a: {data: '', content_type: 'image/png'}
+                }},
+                '': {_type: 'Test', _attachments: {
+                    a: {data: '', content_type: 'image/png'}
+                }}
+            }],
+            [[{_type: 'Test', _attachments: {a: null}}, {
+                _type: 'Test', _attachments: {a: {
+                    data: '', content_type: 'image/jpeg'
+                }}
+            }], {models: {Test: {_attachments: {
+                contentTypeRegularExpressionPattern: /image\/jpeg/,
+                regularExpressionPattern: 'a'
+            }}}}, {
+                fillUp: {_type: 'Test', _attachments: {}},
+                incremental: {_attachments: {}},
+                '': {_type: 'Test', _attachments: {}}
             }]
             // endregion
         ]) {

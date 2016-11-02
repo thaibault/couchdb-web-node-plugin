@@ -127,7 +127,6 @@
         }
       },
       "reservedPropertyNames": [
-        "_attachments",
         "_deleted",
         "_id",
         "_rev",
@@ -155,7 +154,7 @@
             "contentTypeRegularExpressionPattern": ".+/.+",
             "maximum": 0,
             "minimum": 0,
-            "nameRegularExpressionPattern": "[a-zA-Z0-9_-.]+"
+            "type": "_attachments"
           },
           "_id": {
             "nullable": false,

@@ -220,11 +220,7 @@ export default class Helper {
         for (const modelName:string in models)
             if (models.hasOwnProperty(modelName))
                 for (const propertyName:string in models[modelName])
-                    if (
-                        propertyName !== modelConfiguration
-                            .specialPropertyNames.attachments &&
-                        models[modelName].hasOwnProperty(propertyName)
-                    )
+                    if (models[modelName].hasOwnProperty(propertyName))
                         models[modelName][propertyName] = Tools.extendObject(
                             true, {},
                             modelConfiguration.default.propertySpecification,
@@ -506,9 +502,8 @@ export default class Helper {
             // region run hooks and check for presence of needed data
             for (const propertyName:string in model)
                 if (
-                    propertyName !== modelConfiguration.specialPropertyNames
-                        .allowedRoles &&
-                    model.hasOwnProperty(propertyName)
+                    modelConfiguration.specialPropertyNames.allowedRoles !==
+                    propertyName && model.hasOwnProperty(propertyName)
                 ) {
                     const propertySpecification:PropertySpecification =
                         model[propertyName]
@@ -797,7 +792,10 @@ export default class Helper {
                                 newDocument[propertyName].splice(index, 1)
                             index += 1
                         }
-                    } else {
+                    } else if (
+                        propertyName !==
+                        modelConfiguration.specialPropertyNames.attachments
+                    ) {
                         newDocument[propertyName] = checkPropertyContent(
                             newDocument[propertyName], propertyName,
                             propertySpecification,
@@ -871,104 +869,127 @@ export default class Helper {
                     }
             // / endregion
             // / region attachments
-            if (newDocument.hasOwnProperty(
-                modelConfiguration.specialPropertyNames.attachments
-            ))
+            const name:string = modelConfiguration.specialPropertyNames
+                .attachments
+            // TODO doesn't work with all update strategies.
+            if (newDocument.hasOwnProperty(name)) {
+                const newAttachments:any = newDocument[name]
                 if (
-                    model[modelConfiguration.specialPropertyNames.attachments]
-                ) {
-                    const attachments:any = newDocument[
-                        modelConfiguration.specialPropertyNames.attachments]
-                    if (
-                        typeof attachments !== 'object' ||
-                        attachments === null ||
-                        Object.getPrototypeOf(attachments) !== Object.prototype
-                    )
-                        /* eslint-disable no-throw-literal */
-                        throw {
-                            forbidden: 'AttachmentPresence: given ' +
-                                'attachment has invalid type.'
-                        }
-                        /* eslint-enable no-throw-literal */
-                    const numberOfAttachments = Object.keys(newDocument[
-                        modelConfiguration.specialPropertyNames.attachments
-                    ]).length
-                    if (numberOfAttachments > model[
-                        modelConfiguration.specialPropertyNames.attachments
-                    ].maximum)
-                        /* eslint-disable no-throw-literal */
-                        throw {
-                            forbidden: 'AttachmentMaximum: given number of ' +
-                                `attachments (${numberOfAttachments}) ` +
-                                `doesn't satisfy specified maximum of ` +
-                                model[modelConfiguration.specialPropertyNames
-                                    .attachments
-                                ].maximum + '.'
-                        }
-                        /* eslint-enable no-throw-literal */
-                    if (numberOfAttachments < model[
-                        modelConfiguration.specialPropertyNames.attachments
-                    ].minimum)
-                        /* eslint-disable no-throw-literal */
-                        throw {
-                            forbidden: 'AttachmentMinimum: given number of ' +
-                                `attachments (${numberOfAttachments}) ` +
-                                `doesn't satisfy specified minimum of ` +
-                                model[modelConfiguration.specialPropertyNames
-                                    .attachments
-                                ].minimum + '.'
-                        }
-                        /* eslint-enable no-throw-literal */
-                    for (const name:string in attachments)
-                        if (attachments.hasOwnProperty(name)) {
-                            if (!(new RegExp(
-                                model[modelConfiguration.specialPropertyNames
-                                    .attachments
-                                ].nameRegularExpressionPattern
-                            )).test(name))
-                                /* eslint-disable no-throw-literal */
-                                throw {
-                                    forbidden: 'AttachmentName: given ' +
-                                        `attachment name "${name}" doesn't ` +
-                                        'satisfy specified regular ' +
-                                        'expression pattern "' + model[
-                                            modelConfiguration
-                                            .specialPropertyNames.attachments
-                                        ].nameRegularExpressionPattern + '".'
-                                }
-                                /* eslint-enable no-throw-literal */
-                            console.log(
-                                attachments[name],
-                                model[modelConfiguration.specialPropertyNames
-                                    .attachments
-                                ].contentTypeRegularExpressionPattern)
-                            if (!(attachments[name].hasOwnProperty(
-                                'content_type'
-                            ) && attachments[name].content_type && (new RegExp(
-                                model[modelConfiguration.specialPropertyNames
-                                    .attachments
-                                ].contentTypeRegularExpressionPattern
-                            )).test(attachments[name].content_type)))
-                                /* eslint-disable no-throw-literal */
-                                throw {
-                                    forbidden: 'AttachmentContentType: given' +
-                                        ' attachment content type "' +
-                                        `${attachments[name].content_type}" ` +
-                                        `doesn't satisfy specified regular ` +
-                                        'expression pattern "' + model[
-                                            modelConfiguration
-                                            .specialPropertyNames.attachments
-                                        ].nameRegularExpressionPattern + '".'
-                                }
-                                /* eslint-enable no-throw-literal */
-                        }
-                } else
+                    typeof newAttachments !== 'object' ||
+                    Object.getPrototypeOf(newAttachments) !== Object.prototype
+                )
                     /* eslint-disable no-throw-literal */
                     throw {
-                        forbidden: `Attachment: given attachments aren't ` +
-                            `specified for model "${modelName}".`
+                        forbidden: 'AttachmentPresence: given ' +
+                            'attachment has invalid type.'
                     }
                     /* eslint-enable no-throw-literal */
+                // region migrate old attachments
+                if (oldDocument && oldDocument.hasOwnProperty(
+                    name
+                ) && modelConfiguration.updateStrategy) {
+                    const oldAttachments:any = oldDocument[name]
+                    if (
+                        oldAttachments !== null &&
+                        typeof oldAttachments === 'object' &&
+                        Object.getPrototypeOf(
+                            oldAttachments
+                        ) === Object.prototype
+                    )
+                        for (const fileName:string in oldAttachments)
+                            if (oldAttachments.hasOwnProperty(fileName))
+                                if (
+                                    modelConfiguration.updateStrategy ===
+                                        'fillUp' &&
+                                    !newAttachments.hasOwnProperty(fileName)
+                                )
+                                    newAttachments[fileName] = oldAttachments[
+                                        fileName]
+                                else if (
+                                    modelConfiguration.updateStrategy ===
+                                        'incremental' &&
+                                    newAttachments.hasOwnProperty(fileName) &&
+                                    newAttachments[fileName].content_type ===
+                                    oldAttachments[fileName].content_type &&
+                                    newAttachments[fileName].data ===
+                                    oldAttachments[fileName].data
+                                )
+                                    delete newAttachments[fileName]
+                }
+                for (const fileName:string in newAttachments)
+                    if (newAttachments.hasOwnProperty(fileName) && [
+                        undefined, null
+                    ].includes(newAttachments[fileName]))
+                        delete newAttachments[fileName]
+                // endregion
+                const numberOfAttachments = Object.keys(newAttachments).length
+                if (numberOfAttachments > model[name].maximum)
+                    /* eslint-disable no-throw-literal */
+                    throw {
+                        forbidden: 'AttachmentMaximum: given number of ' +
+                            `attachments (${numberOfAttachments}) ` +
+                            `doesn't satisfy specified maximum of ` +
+                            `${model[name].maximum}.`
+                    }
+                    /* eslint-enable no-throw-literal */
+                if (numberOfAttachments < model[name].minimum)
+                    /* eslint-disable no-throw-literal */
+                    throw {
+                        forbidden: 'AttachmentMinimum: given number of ' +
+                            `attachments (${numberOfAttachments}) ` +
+                            `doesn't satisfy specified minimum of ` +
+                            `${model[name].minimum}.`
+                    }
+                    /* eslint-enable no-throw-literal */
+                for (const fileName:string in newAttachments)
+                    if (newAttachments.hasOwnProperty(fileName)) {
+                        if (!([null, undefined].includes(
+                            model[name].regularExpressionPattern
+                        ) || (new RegExp(
+                            model[name].regularExpressionPattern
+                        )).test(fileName)))
+                            /* eslint-disable no-throw-literal */
+                            throw {
+                                forbidden: 'AttachmentName: given ' +
+                                    `attachment name "${fileName}" ` +
+                                    `doesn't satisfy specified regular ` +
+                                    'expression pattern "' + model[
+                                        name
+                                    ].regularExpressionPattern + '".'
+                            }
+                            /* eslint-enable no-throw-literal */
+                        if (!([null, undefined].includes(model[
+                            name
+                        ].contentTypeRegularExpressionPattern) ||
+                        newAttachments[fileName].hasOwnProperty(
+                            'content_type'
+                        ) && newAttachments[fileName].content_type && (
+                            new RegExp(model[
+                                name
+                            ].contentTypeRegularExpressionPattern)
+                        ).test(newAttachments[fileName].content_type)))
+                            /* eslint-disable no-throw-literal */
+                            throw {
+                                forbidden: 'AttachmentContentType: given' +
+                                    ' attachment content type "' +
+                                    newAttachments[fileName].content_type +
+                                    `" doesn't satisfy specified regular` +
+                                    ' expression pattern "' + model[
+                                        name
+                                    ].regularExpressionPattern + '".'
+                            }
+                            /* eslint-enable no-throw-literal */
+                    }
+            } else if (model.hasOwnProperty(name) && model[name] && 0 < model[
+                name
+            ].minimum)
+                /* eslint-disable no-throw-literal */
+                throw {
+                    forbidden: 'AttachmentPresence: No given attachments ' +
+                    `available which doesn't satisfy specified minimum of ` +
+                    `${model[name].minimum}.`
+                }
+                /* eslint-enable no-throw-literal */
             // / endregion
             // endregion
             return newDocument
