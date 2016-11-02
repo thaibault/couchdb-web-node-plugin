@@ -136,14 +136,14 @@
         "_revisions"
       ],
       "specialPropertyNames": {
-        "allowedRoles": "_allowedRoles",
+        "allowedRoles": "-allowedRoles",
         "attachments": "_attachments",
         "constraints": {
           "expression": "_constraintExpressions",
           "execution": "_constraintExecutions"
         },
         "extend": "_extends",
-        "type": "_type",
+        "type": "-type",
         "typeNameRegularExpressionPattern": "^[A-Z][a-z0-9]+$",
         "validatedDocumentsCache": "_validatedDocuments"
       },
@@ -170,7 +170,7 @@
           "_revisions": {
             "writable": false
           },
-          "_type": {
+          "-type": {
             "regularExpressionPattern": {
               "__evaluate__": "self.modelConfiguration.specialPropertyNames.typeNameRegularExpressionPattern"
             },
@@ -212,6 +212,7 @@
         }
       }
     },
+    "development": {"tool": false},
     "exportFormat": {
       "external": "commonjs2",
       "self": "commonjs2"

@@ -25,7 +25,6 @@ import type {
     SimpleModelConfiguration
 } from './type'
 // endregion
-// region methods
 /**
  * A dumm plugin interface with all available hooks.
  */
@@ -144,7 +143,7 @@ export default class DatabaseHelper {
                 throw {
                     forbidden: 'Model: Given model "' + newDocument[
                         modelConfiguration.specialPropertyNames.type
-                    ] + ' is not specified.'
+                    ] + '" is not specified.'
                 }
                 /* eslint-enable no-throw-literal */
             // endregion
@@ -861,7 +860,6 @@ export default class DatabaseHelper {
         return newDocument
     }
 }
-// endregion
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
 // vim: foldmethod=marker foldmarker=region,endregion:

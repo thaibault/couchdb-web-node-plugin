@@ -211,20 +211,26 @@ export default class Database {
         delete modelConfiguration.models
         const models:Models = Helper.extendModels(
             configuration.modelConfiguration)
+        const databaseHelperCode:string = await new Promise((
+            resolve:Function, reject:Function
+        ):void => fileSystem.readFile(
+            './databaseHelper.compiled.js',
+            {encoding: (configuration.encoding:string), flag: 'r'},
+            (error:?Error, data:string):void =>
+                error ? reject(error) : resolve(data)))
         // region generate/update authentication/validation code
-        /* TODO
+        // / region validation
         const validationCode:string = 'function(...parameter) {\n' +
-            `    const models = ${JSON.stringify(models)}\n` +
-            `    const modelConfiguration = ` +
-                `${JSON.stringify(modelConfiguration)}\n` +
-            `    return require('./helper.compiled').default.` +
-                     'validateDocumentUpdate(...parameter)\n' +
+            `    return require('helper').default.validateDocumentUpdate(` +
+                    '...parameter.concat([' +
+                    JSON.stringify(models) + ', ' +
+                    JSON.stringify(modelConfiguration) + ']))\n' +
             '}'
         try {
-            new Function(`return ${authenticationCode}`)
+            new Function(`return ${validationCode}`)
         } catch (error) {
             throw new Error(
-                `Generated validation code "${authenticationCode}" doesn't ` +
+                `Generated validation code "${validationCode}" doesn't ` +
                 `compile: ${Tools.representObject(error)}`)
         }
         if (configuration.debug)
@@ -233,20 +239,14 @@ export default class Database {
                 Tools.representObject(configuration.modelConfiguration) +
                 `" has generated validation code: \n\n"${validationCode}".`)
         await Helper.ensureValidationDocumentPresence(
-            services.database.connection, 'validation', validationCode,
-            'Model specification')
-        const authenticationCode:string = 'function(...parameter) {\n' +
-            '    const allowedModelRolesMapping = ' +
-                JSON.stringify(Helper.determineAllowedModelRolesMapping(
-                    configuration.modelConfiguration
-                )) + '\n' +
-            `    const typePropertyName = '` +
-            `${configuration.modelConfiguration.specialPropertyNames.type}'` +
-            '\n' +
-            `    return require('./helper.compiled').default.authenticate(` +
-                     '...parameter)\n' +
-            '}'
-        */
+            services.database.connection, 'validation', {
+                helper: databaseHelperCode,
+                /* eslint-disable camelcase */
+                validate_doc_update: validationCode
+                /* eslint-enable camelcase */
+            }, 'Model specification')
+        // / endregion
+        // / region authentication
         const authenticationCode:string = 'function(...parameter) {\n' +
             `    return require('helper').default.authenticate(` +
                     '...parameter.concat([' +
@@ -267,23 +267,12 @@ export default class Database {
                 `Authentication code "${authenticationCode}" generated.`)
         await Helper.ensureValidationDocumentPresence(
             services.database.connection, 'authentication', {
-                helper: fileSystem.readFileSync('./helper.compiled.js', {
-                    encoding: (configuration.encoding:string)}),
+                helper: databaseHelperCode,
                 /* eslint-disable camelcase */
                 validate_doc_update: authenticationCode
                 /* eslint-enable camelcase */
             }, 'Authentication logic')
-        // TODO
-        try {
-            await services.database.connection.put({
-                _id: 'jau',
-                _type: 'Test',
-                data: 2
-            })
-        } catch (error) {
-            throw error
-        }
-        return services
+        // / endregion
         // endregion
         // region ensure all constraints to have a consistent initial state
         // TODO run migrations scripts if there exists some.
