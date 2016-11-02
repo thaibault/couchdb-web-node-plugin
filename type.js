@@ -47,7 +47,7 @@ export type Models = {[key:string]:Model}
 export type Document = {
     _id:string;
     _rev:string;
-    {[key:string]:any};
+    [key:string]:any;
 }
 export type RetrievedDocument = {
     id:string;

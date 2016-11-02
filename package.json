@@ -200,9 +200,6 @@
             "onUpdateExpression": "userContext.name",
             "nullable": false
           }
-        },
-        "Test": {
-          "a": {}
         }
       }
     }

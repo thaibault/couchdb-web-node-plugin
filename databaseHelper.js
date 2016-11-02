@@ -83,9 +83,14 @@ export default class DatabaseHelper {
      * @returns Modified given new document.
      */
     static validateDocumentUpdate(
-        newDocument:Object, oldDocument:?Object, userContext:UserContext = {},
-        securitySettings:SecuritySettings = {}, models:Models,
-        modelConfiguration:SimpleModelConfiguration, toJSON:?Function = null
+        newDocument:Object, oldDocument:?Object, userContext:UserContext = {
+            db: 'dummy',
+            name: 'admin',
+            roles: ['_admin']
+        }, securitySettings:SecuritySettings = {
+            admins: {names: [], roles: []}, members: {names: [], roles: []}
+        }, models:Models, modelConfiguration:SimpleModelConfiguration,
+        toJSON:?Function = null
     ):Object {
         // region ensure needed environment
         if (newDocument.hasOwnProperty('_deleted') && newDocument._deleted)
