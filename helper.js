@@ -20,11 +20,13 @@ try {
     require('source-map-support/register')
 } catch (error) {}
 
+import fetch from 'node-fetch'
 import type {
     AllowedModelRolesMapping, Model, ModelConfiguration, Models,
     PropertySpecification, SimpleModelConfiguration
 } from './type'
 // endregion
+global.fetch = fetch
 // region methods
 /**
  * A dumm plugin interface with all available hooks.
