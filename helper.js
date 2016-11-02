@@ -26,6 +26,7 @@ import type {
     PropertySpecification, SimpleModelConfiguration
 } from './type'
 // endregion
+// NOTE: Remove when "fetch" is supported by node.
 global.fetch = fetch
 // region methods
 /**
@@ -877,6 +878,7 @@ export default class Helper {
                 const newAttachments:any = newDocument[name]
                 if (
                     typeof newAttachments !== 'object' ||
+                    // IgnoreTypeCheck
                     Object.getPrototypeOf(newAttachments) !== Object.prototype
                 )
                     /* eslint-disable no-throw-literal */
@@ -895,6 +897,7 @@ export default class Helper {
                         typeof oldAttachments === 'object' &&
                         Object.getPrototypeOf(
                             oldAttachments
+                        // IgnoreTypeCheck
                         ) === Object.prototype
                     )
                         for (const fileName:string in oldAttachments)
@@ -955,6 +958,7 @@ export default class Helper {
                     if (newAttachments.hasOwnProperty(fileName)) {
                         if (!([null, undefined].includes(
                             model[name].regularExpressionPattern
+                        // IgnoreTypeCheck
                         ) || (new RegExp(
                             model[name].regularExpressionPattern
                         )).test(fileName)))
@@ -963,6 +967,7 @@ export default class Helper {
                                 forbidden: 'AttachmentName: given ' +
                                     `attachment name "${fileName}" ` +
                                     `doesn't satisfy specified regular ` +
+                                    // IgnoreTypeCheck
                                     'expression pattern "' + model[
                                         name
                                     ].regularExpressionPattern + '".'
@@ -974,6 +979,7 @@ export default class Helper {
                         newAttachments[fileName].hasOwnProperty(
                             'content_type'
                         ) && newAttachments[fileName].content_type && (
+                            // IgnoreTypeCheck
                             new RegExp(model[
                                 name
                             ].contentTypeRegularExpressionPattern)

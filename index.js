@@ -21,6 +21,7 @@
 import {spawn as spawnChildProcess} from 'child_process'
 import Tools from 'clientnode'
 import type {PlainObject} from 'clientnode'
+import fileSystem from 'fs'
 import path from 'path'
 import PouchDB from 'pouchdb'
 // NOTE: Only needed for debugging this file.
@@ -46,7 +47,11 @@ export default class Database {
      */
     static async exit(
         services:Services, configuration:Configuration
-    ):Services {
+    ):Promise<Services> {
+        if (await Tools.isFile('log.txt'))
+            await new Promise((resolve:Function, reject:Function):void =>
+                fileSystem.unlink('log.txt', (error:?Error) =>
+                    error ? reject(error) : resolve()))
         services.database.connection.close()
         services.database.serverProcess.kill('SIGINT')
         await Tools.checkUnreachability(
@@ -62,7 +67,7 @@ export default class Database {
      */
     static async preLoadService(
         services:Services, configuration:Configuration
-    ):Services {
+    ):Promise<Services> {
         if (!services.hasOwnProperty('database'))
             services.database = {}
         if (!services.database.hasOwnProperty('serverProcess')) {
