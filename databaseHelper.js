@@ -724,15 +724,14 @@ export default class DatabaseHelper {
                         if (!satisfied) {
                             const errorName:string = type.replace(
                                 /^[^a-zA-Z]+/, '')
-                            console.log('AA', constraint.description)
                             /* eslint-disable no-throw-literal */
                             throw {forbidden: errorName.charAt(0).toUpperCase(
                             ) + `${errorName.substring(1)}: ` + (
                                 // IgnoreTypeCheck
                                 constraint.description ? (new Function(
                                     ...constraintParameterNames.concat(
-                                        constraint.description))
-                                )(...values) : `Model "${modelName}" should ` +
+                                        `return ${constraint.description}`)
+                                ))(...values) : `Model "${modelName}" should ` +
                                 `satisfy constraint "${code}" (given "` +
                                 `${serialize(newDocument)}").`)}
                             /* eslint-enable no-throw-literal */
