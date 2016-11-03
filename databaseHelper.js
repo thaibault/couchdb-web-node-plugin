@@ -716,7 +716,7 @@ export default class DatabaseHelper {
                             /* eslint-disable no-throw-literal */
                             throw {
                                 forbidden: `Runtime: Hook "${type}" has ` +
-                                    `throw an error with code "${code}": ` +
+                                    `thrown an error with code "${code}": ` +
                                     serialize(error)
                             }
                             /* eslint-enable no-throw-literal */
@@ -724,6 +724,7 @@ export default class DatabaseHelper {
                         if (!satisfied) {
                             const errorName:string = type.replace(
                                 /^[^a-zA-Z]+/, '')
+                            console.log('AA', constraint.description)
                             /* eslint-disable no-throw-literal */
                             throw {forbidden: errorName.charAt(0).toUpperCase(
                             ) + `${errorName.substring(1)}: ` + (
