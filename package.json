@@ -197,7 +197,7 @@
             "nullable": false
           },
           "lastUser": {
-            "onUpdateExpression": "userContext.name",
+            "onUpdateExpression": "userContext.name || 'admin'",
             "nullable": false
           }
         }
