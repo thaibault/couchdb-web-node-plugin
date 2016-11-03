@@ -293,7 +293,19 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
             [
                 [{'-type': 'Test', a: 'b', b: {'-type': 'Test', a: 'a'}}],
                 {models: {Test: {
-                    a: {constraintExpression: 'newValue === "b"'},
+                    a: {constraintExpression: {
+                        evaluation: 'newValue === "b"'
+                    }},
+                    b: {type: 'Test'}
+                }}}, 'ConstraintExpression'
+            ],
+            [
+                [{'-type': 'Test', a: 'b', b: {'-type': 'Test', a: 'a'}}],
+                {models: {Test: {
+                    a: {constraintExpression: {
+                        description: '`Value "b" given but: "${newValue}".`'
+                        evaluation: 'newValue === "b"'
+                    }},
                     b: {type: 'Test'}
                 }}}, 'ConstraintExpression'
             ],
@@ -349,31 +361,32 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
             // region property constraint
             [
                 [{'-type': 'Test', a: 'b'}],
-                {models: {Test: {a: {constraintExpression: 'false'}}}},
-                'ConstraintExpression'
+                {models: {Test: {a: {constraintExpression: {
+                    evaluation: 'false'
+                }}}}}, 'ConstraintExpression'
             ],
             [
                 [{'-type': 'Test', a: 'b'}],
-                {models: {Test: {a: {constraintExecution: 'false'}}}},
-                'ConstraintExecution'
+                {models: {Test: {a: {constraintExecution: {
+                    evaluation: 'false'
+                }}}}}, 'ConstraintExecution'
             ],
             [
                 [{'-type': 'Test', a: 'b'}],
-                {models: {Test: {a: {constraintExpression: '+'}}}},
+                {models: {Test: {a: {constraintExpression: {
+                    evaluation: '+'
+                }}}}},
                 'Compilation'
             ],
-            [
-                [{'-type': 'Test', a: 'b'}], {models: {Test: {a: {
-                    constraintExpression: 'undefinedVariableName'
-                }}}}, 'Runtime'
-            ],
-            [
-                [{'-type': 'Test', a: 'b'}], {models: {Test: {a: {
-                    constraintExecution: 'return undefinedVariableName'
-                }}}}, 'Runtime'
-            ],
             [[{'-type': 'Test', a: 'b'}], {models: {Test: {a: {
-                constraintExpression: 'newValue === "a"'
+                constraintExpression: {evaluation: 'undefinedVariableName'}
+            }}}}, 'Runtime'],
+            [[{'-type': 'Test', a: 'b'}], {models: {Test: {a: {
+                constraintExecution: {
+                    evaluation: 'return undefinedVariableName'
+            }}}}}, 'Runtime'],
+            [[{'-type': 'Test', a: 'b'}], {models: {Test: {a: {
+                constraintExpression: {evaluation: 'newValue === "a"'}
             }}}}, 'ConstraintExpression'],
             // endregion
             // region attachments
@@ -973,7 +986,9 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
             // // region property constraint
             [[{'-type': 'Test', a: 'b', b: {'-type': 'Test', a: 'b'}}], {
                 models: {Test: {
-                    a: {constraintExpression: 'newValue === "b"'},
+                    a: {constraintExpression: {
+                        evaluation: 'newValue === "b"'
+                    }},
                     b: {type: 'Test'}
                 }
             }}, {
@@ -1063,21 +1078,31 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
             // endregion
             // region property constraint
             [[{'-type': 'Test', a: 'b'}], {models: {Test: {a: {
-                constraintExpression: 'true'
+                constraintExpression: {evaluation: 'true'}
             }}}}, {
                 fillUp: {'-type': 'Test', a: 'b'},
                 incremental: {'-type': 'Test', a: 'b'},
                 '': {'-type': 'Test', a: 'b'}
             }],
             [[{'-type': 'Test', a: 'a'}], {models: {Test: {a: {
-                constraintExpression: 'newValue === "a"'
+                constraintExpression: {evaluation: 'newValue === "a"'}
             }}}}, {
                 fillUp: {'-type': 'Test', a: 'a'},
                 incremental: {'-type': 'Test', a: 'a'},
                 '': {'-type': 'Test', a: 'a'}
             }],
             [[{'-type': 'Test', a: 'a'}], {models: {Test: {a: {
-                constraintExecution: 'return newValue === "a"'
+                constraintExecution: {evaluation: 'return newValue === "a"'}
+            }}}}, {
+                fillUp: {'-type': 'Test', a: 'a'},
+                incremental: {'-type': 'Test', a: 'a'},
+                '': {'-type': 'Test', a: 'a'}
+            }],
+            [[{'-type': 'Test', a: 'a'}], {models: {Test: {a: {
+                constraintExecution: {
+                    description: '`Value have to be "a" not "${newValue}".`',
+                    evaluation: 'return newValue === "a"'
+                }
             }}}}, {
                 fillUp: {'-type': 'Test', a: 'a'},
                 incremental: {'-type': 'Test', a: 'a'},

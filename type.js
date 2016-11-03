@@ -18,11 +18,15 @@ import type {PlainObject} from 'clientnode'
 // region exports
 // / region model
 export type AllowedModelRolesMapping = {[key:string]:Array<string>}
+export type Constraint = {
+    description:?string;
+    evaluation:string;
+}
 export type PropertySpecification = {
-    conflictingConstraintExpression:?string;
-    conflictingConstraintExecution:?string;
-    constraintExpression:?string;
-    constraintExecution:?string;
+    conflictingConstraintExpression:?Constraint;
+    conflictingConstraintExecution:?Constraint;
+    constraintExpression:?Constraint;
+    constraintExecution:?Constraint;
     contentTypeRegularExpressionPattern:?string;
     default:any;
     maximum:number;
@@ -41,6 +45,8 @@ export type PropertySpecification = {
 export type Model = {
     _allowedRoles:?Array<string>;
     _extends:?Array<string>;
+    _constraintExpressions:?Array<Constraint>;
+    _constraintExecutions:?Array<Constraint>;
     [key:string]:PropertySpecification;
 }
 export type Models = {[key:string]:Model}

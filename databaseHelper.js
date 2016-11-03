@@ -291,24 +291,25 @@ export default class DatabaseHelper {
                 ])
                     if (propertySpecification[type]) {
                         let hook:Function
+                        const code:string = (type.endsWith(
+                            'Expression'
+                        ) ? 'return ' : '') + propertySpecification[type].evaluation
                         try {
                             hook = new Function(
-                                'newDocument', 'oldDocument', 'userContext',
-                                'securitySettings', 'models',
-                                'modelConfiguration', 'serialize', 'modelName',
-                                'model', 'checkDocument',
-                                'checkPropertyContent', 'newValue', 'name',
-                                'propertySpecification', 'oldValue', (
-                                    type.endsWith('Expression') ? 'return ' :
-                                    ''
-                                ) + propertySpecification[type])
+                                'checkDocument', 'checkPropertyContent',
+                                'code', 'model', 'modelConfiguration',
+                                'modelName', 'models', 'name', 'newDocument',
+                                'newValue', 'oldDocument', 'oldValue',
+                                'propertySpecification', 'securitySettings',
+                                'serialize', 'userContext', code)
                         } catch (error) {
+                            const message:string ?
                             /* eslint-enable no-throw-literal */
                             throw {
                                 forbidden: `Compilation: Hook "${type}" has ` +
-                                    `invalid code "` +
-                                    `${propertySpecification[type]}": ` +
-                                    serialize(error)
+                                    `invalid code "${code}": "` + serialize(
+                                        error
+                                    ) + '".'
                             }
                             /* eslint-disable no-throw-literal */
                         }
@@ -316,18 +317,17 @@ export default class DatabaseHelper {
                         try {
                             // IgnoreTypeCheck
                             satisfied = hook(
-                                newDocument, oldDocument, userContext,
-                                securitySettings, models, modelConfiguration,
-                                serialize, modelName, model, checkDocument,
-                                checkPropertyContent, newValue, name,
-                                propertySpecification, oldValue)
+                                checkDocument, checkPropertyContent, code,
+                                model, modelConfiguration, modelName, models,
+                                name, newDocument, newValue, oldDocument,
+                                oldValue, propertySpecification,
+                                securitySettings, serialize, userContext)
                         } catch (error) {
                             /* eslint-disable no-throw-literal */
                             throw {
                                 forbidden: `Runtime: Hook "${type}" has ` +
-                                    'throw an error with code "' +
-                                    `${propertySpecification[type]}": ` +
-                                    serialize(error)
+                                    `throw an error with code "${code}": "` +
+                                    `${serialize(error)}".`
                             }
                             /* eslint-enable no-throw-literal */
                         }
