@@ -33,7 +33,7 @@ import type {Configuration, Services} from 'web-node/type'
 import DatabaseHelper from './databaseHelper'
 import Helper from './helper'
 import type {
-    Document, ModelConfiguration, Models, RetrievedDocument
+    Constraint, Document, ModelConfiguration, Models, RetrievedDocument
 } from './type'
 // endregion
 // region plugins/classes
@@ -289,19 +289,27 @@ export default class Database {
                                 .expression,
                             configuration.specialPropertyNames.constraints
                                 .execution
-                        ].includes(name) &&
-                        models[modelName][name].hasOwnProperty('description'))
-                            try {
-                                new Function(
-                                    models[modelName][name].description)
-                            } catch (error) {
-                                throw new Error(
-                                    `Specified constraint description "` +
-                                    `${models[modelName][name].description}"` +
-                                    ` for model "${modelName}" doesn't ` +
-                                    `compile: "` +
-                                    `${Tools.representObject(error)}".`)
-                            }
+                        ].includes(name))
+                            // IgnoreTypeCheck
+                            for (const constraint:Constraint of models[
+                                modelName
+                            ][name])
+                                if (
+                                    constraint.hasOwnProperty('description') &&
+                                    constraint.description
+                                )
+                                    try {
+                                        new Function(constraint.description)
+                                    } catch (error) {
+                                        throw new Error(
+                                            `Specified constraint ` +
+                                            `description "` +
+                                            `${constraint.description}" for ` +
+                                            `model "${modelName}" doesn't ` +
+                                            `compile: "` +
+                                            `${Tools.representObject(error)}".`
+                                        )
+                                    }
                         else
                             for (const type:string of [
                                 'conflictingConstraintExpression',
@@ -323,8 +331,8 @@ export default class Database {
                                             `Specified constraint ` +
                                             `description "` + models[
                                                 modelName
-                                            ][name][type].description '" for' +
-                                            ` model "${modelName}" in ` +
+                                            ][name][type].description + '" ' +
+                                            `for model "${modelName}" in ` +
                                             `property "${name}" as "${type}"` +
                                             ` doesn't compile: "` +
                                             `${Tools.representObject(error)}".`
