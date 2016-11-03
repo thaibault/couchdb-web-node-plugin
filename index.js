@@ -279,7 +279,7 @@ export default class Database {
             }, 'Authentication logic')
         // / endregion
         // endregion
-        // region check that all constraint descriptions compile
+        // region check if all constraint descriptions compile
         for (const modelName:string in models)
             if (models.hasOwnProperty(modelName))
                 for (const name:string in models[modelName])
@@ -299,7 +299,8 @@ export default class Database {
                                     constraint.description
                                 )
                                     try {
-                                        new Function(constraint.description)
+                                        new Function(
+                                            `return ${constraint.description}`)
                                     } catch (error) {
                                         throw new Error(
                                             `Specified constraint ` +

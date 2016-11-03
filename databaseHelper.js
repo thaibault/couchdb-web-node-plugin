@@ -716,7 +716,7 @@ export default class DatabaseHelper {
                             /* eslint-disable no-throw-literal */
                             throw {
                                 forbidden: `Runtime: Hook "${type}" has ` +
-                                    `throw an error with code "${code}": ` +
+                                    `thrown an error with code "${code}": ` +
                                     serialize(error)
                             }
                             /* eslint-enable no-throw-literal */
@@ -730,8 +730,8 @@ export default class DatabaseHelper {
                                 // IgnoreTypeCheck
                                 constraint.description ? (new Function(
                                     ...constraintParameterNames.concat(
-                                        constraint.description))
-                                )(...values) : `Model "${modelName}" should ` +
+                                        `return ${constraint.description}`)
+                                ))(...values) : `Model "${modelName}" should ` +
                                 `satisfy constraint "${code}" (given "` +
                                 `${serialize(newDocument)}").`)}
                             /* eslint-enable no-throw-literal */
