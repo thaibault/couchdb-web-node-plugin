@@ -285,9 +285,9 @@ export default class Database {
                 for (const name:string in models[modelName])
                     if (models[modelName].hasOwnProperty(name))
                         if ([
-                            configuration.specialPropertyNames.constraints
+                            modelConfiguration.specialPropertyNames.constraints
                                 .expression,
-                            configuration.specialPropertyNames.constraints
+                            modelConfiguration.specialPropertyNames.constraints
                                 .execution
                         ].includes(name))
                             // IgnoreTypeCheck
