@@ -1145,7 +1145,7 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 fillUp: {'-type': 'Test', a: 'a', b: 'b'},
                 incremental: {'-type': 'Test', a: 'a', b: 'b'},
                 '': {'-type': 'Test', a: 'a', b: 'b'}
-            }]/*,
+            }],
             [[{'-type': 'Test', a: 'a', b: 'b'}], {models: {Test: {
                 _constraintExecutions: [{
                     description: '`Always valid: "${newDocument.a}".`',
@@ -1168,7 +1168,7 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 fillUp: {'-type': 'Test', a: 'a', b: 'a'},
                 incremental: {'-type': 'Test', a: 'a', b: 'a'},
                 '': {'-type': 'Test', a: 'a', b: 'a'}
-            }]*/,
+            }],
             // endregion
             // region attachments
             [[{'-type': 'Test'}], {models: {Test: {_attachments: {
