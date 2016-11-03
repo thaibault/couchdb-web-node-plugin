@@ -303,7 +303,7 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 [{'-type': 'Test', a: 'b', b: {'-type': 'Test', a: 'a'}}],
                 {models: {Test: {
                     a: {constraintExpression: {
-                        description: '`Value "b" given but: "${newValue}".`'
+                        description: '`Value "b" given but: "${newValue}".`',
                         evaluation: 'newValue === "b"'
                     }},
                     b: {type: 'Test'}
@@ -388,6 +388,33 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
             [[{'-type': 'Test', a: 'b'}], {models: {Test: {a: {
                 constraintExpression: {evaluation: 'newValue === "a"'}
             }}}}, 'ConstraintExpression'],
+            // endregion
+            // region constraint
+            [[{'-type': 'Test', a: 'a', b: 'b'}], {models: {Test: {
+                _constraintExpressions: [{evaluation: 'false'}],
+                a: {},
+                b: {}
+            }}}, 'ConstraintExpressions'],
+            [[{'-type': 'Test', a: 'a', b: 'b'}], {models: {Test: {
+                _constraintExecutions: [{evaluation: 'return false'}],
+                a: {},
+                b: {}
+            }}}, 'ConstraintExecutions'],
+            [[{'-type': 'Test', a: 'a', b: 'b'}], {models: {Test: {
+                _constraintExecutions: [{
+                    description: '`Fails always!`', evaluation: 'return false'
+                }],
+                a: {},
+                b: {}
+            }}}, 'ConstraintExecutions'],
+            [[{'-type': 'Test', a: 'a', b: 'b'}], {models: {Test: {
+                _constraintExecutions: [{
+                    description: '`a: ${newDocument.a} failed!`',
+                    evaluation: 'return newDocument.a === newDocument.b'
+                }],
+                a: {},
+                b: {}
+            }}}, 'ConstraintExecutions'],
             // endregion
             // region attachments
             [
@@ -1108,6 +1135,40 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 incremental: {'-type': 'Test', a: 'a'},
                 '': {'-type': 'Test', a: 'a'}
             }],
+            // endregion
+            // region constraint
+            [[{'-type': 'Test', a: 'a', b: 'b'}], {models: {Test: {
+                _constraintExpressions: [{evaluation: 'true'}],
+                a: {},
+                b: {}
+            }}}, {
+                fillUp: {'-type': 'Test', a: 'a', b: 'b'},
+                incremental: {'-type': 'Test', a: 'a', b: 'b'},
+                '': {'-type': 'Test', a: 'a', b: 'b'}
+            }]/*,
+            [[{'-type': 'Test', a: 'a', b: 'b'}], {models: {Test: {
+                _constraintExecutions: [{
+                    description: '`Always valid: "${newDocument.a}".`',
+                    evaluation: 'return true'
+                }],
+                a: {},
+                b: {}
+            }}}, {
+                fillUp: {'-type': 'Test', a: 'a', b: 'b'},
+                incremental: {'-type': 'Test', a: 'a', b: 'b'},
+                '': {'-type': 'Test', a: 'a', b: 'b'}
+            }],
+            [[{'-type': 'Test', a: 'a', b: 'a'}], {models: {Test: {
+                _constraintExpressions: [{
+                    evaluation: 'newDocument.a === newDocument.b'
+                }],
+                a: {},
+                b: {}
+            }}}, {
+                fillUp: {'-type': 'Test', a: 'a', b: 'a'},
+                incremental: {'-type': 'Test', a: 'a', b: 'a'},
+                '': {'-type': 'Test', a: 'a', b: 'a'}
+            }]*/,
             // endregion
             // region attachments
             [[{'-type': 'Test'}], {models: {Test: {_attachments: {

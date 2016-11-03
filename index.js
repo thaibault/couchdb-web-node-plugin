@@ -280,6 +280,7 @@ export default class Database {
         // / endregion
         // endregion
         // region ensure all constraints to have a consistent initial state
+        // TODO Check if all constraint descriptions compile.
         // TODO run migrations scripts if there exists some.
         for (let retrievedDocument:RetrievedDocument of (
             await services.database.connection.allDocs({
