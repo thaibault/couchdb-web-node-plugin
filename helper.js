@@ -131,8 +131,9 @@ export default class Helper {
                 modelName
             ][extendPropertyName]))
                 models[modelName] = Tools.extendObject(
-                    true, models[modelName], Helper.extendModel(
-                        modelNameToExtend, models, extendPropertyName))
+                    true, {}, Helper.extendModel(
+                        modelNameToExtend, models, extendPropertyName
+                    ), models[modelName])
             delete models[modelName][extendPropertyName]
         }
         return models[modelName]
@@ -151,9 +152,7 @@ export default class Helper {
             }
         }, modelConfiguration)
         const models:Models = {}
-        for (const modelName:string in Tools.copyLimitedRecursively(
-            modelConfiguration.models
-        ))
+        for (const modelName:string in modelConfiguration.models)
             if (modelConfiguration.models.hasOwnProperty(
                 modelName
             ) && !modelName.startsWith('_')) {
