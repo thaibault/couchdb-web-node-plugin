@@ -653,6 +653,7 @@ export default class DatabaseHelper {
                     }
                 }
             // / region generic constraint
+            // TODO Test
             for (
                 let type:string in
                 modelConfiguration.specialPropertyNames.constraints
