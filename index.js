@@ -279,8 +279,59 @@ export default class Database {
             }, 'Authentication logic')
         // / endregion
         // endregion
+        // region check that all constraint descriptions compile
+        for (const modelName:string in models)
+            if (models.hasOwnProperty(modelName))
+                for (const name:string in models[modelName])
+                    if (models[modelName].hasOwnProperty(name))
+                        if ([
+                            configuration.specialPropertyNames.constraints
+                                .expression,
+                            configuration.specialPropertyNames.constraints
+                                .execution
+                        ].includes(name) &&
+                        models[modelName][name].hasOwnProperty('description'))
+                            try {
+                                new Function(
+                                    models[modelName][name].description)
+                            } catch (error) {
+                                throw new Error(
+                                    `Specified constraint description "` +
+                                    `${models[modelName][name].description}"` +
+                                    ` for model "${modelName}" doesn't ` +
+                                    `compile: "` +
+                                    `${Tools.representObject(error)}".`)
+                            }
+                        else
+                            for (const type:string of [
+                                'conflictingConstraintExpression',
+                                'conflictingConstraintExecution',
+                                'constraintExpression',
+                                'constraintExecution'
+                            ])
+                                if (
+                                    models[modelName][name][type] &&
+                                    models[modelName][name][type]
+                                        .hasOwnProperty('description')
+                                )
+                                    try {
+                                        new Function(models[modelName][name][
+                                            type
+                                        ].description)
+                                    } catch (error) {
+                                        throw new Error(
+                                            `Specified constraint ` +
+                                            `description "` + models[
+                                                modelName
+                                            ][name][type].description '" for' +
+                                            ` model "${modelName}" in ` +
+                                            `property "${name}" as "${type}"` +
+                                            ` doesn't compile: "` +
+                                            `${Tools.representObject(error)}".`
+                                        )
+                                    }
+        // endregion
         // region ensure all constraints to have a consistent initial state
-        // TODO Check if all constraint descriptions compile.
         // TODO run migrations scripts if there exists some.
         for (let retrievedDocument:RetrievedDocument of (
             await services.database.connection.allDocs({
