@@ -89,7 +89,7 @@ export type SimpleModelConfiguration = {
 // / region configuration
 export type UserContext = {
     db:string;
-    name:string;
+    name:?string;
     roles:Array<string>;
 }
 export type DatabaseUserConfiguration = {

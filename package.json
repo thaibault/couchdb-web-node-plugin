@@ -197,7 +197,9 @@
             "nullable": false
           },
           "lastUser": {
-            "onUpdateExpression": "userContext.name || 'admin'",
+            "onUpdateExpression": {
+              "__evaluate__": "`userContext.name || '${self.database.user.name}'`"
+            },
             "nullable": false
           }
         }
