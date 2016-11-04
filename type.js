@@ -107,10 +107,6 @@ export type SecuritySettings = {
     members:DatabaseUserConfiguration;
 }
 export type Configuration = {
-    context:{
-        path:string;
-        type:string;
-    };
     database:{
         configFilePath:string;
         'httpd/host':string;
@@ -125,42 +121,7 @@ export type Configuration = {
             password:string;
         };
     };
-    debug:boolean;
-    encoding:string;
     modelConfiguration:ModelConfiguration;
-    name:string;
-    package:PlainObject;
-    plugin:{
-        configurationPropertyNames:Array<string>;
-        directories:{
-            internal:{
-                path:string;
-                nameRegularExpressionPattern:string;
-            };
-            external:{
-                path:string;
-                nameRegularExpressionPattern:string;
-            };
-        };
-    };
-    server:{
-        application:{
-            rootPath:string;
-            options:PlainObject;
-            port:number;
-            hostName:string;
-        };
-        proxy:{
-            logFilePath:{
-                access:string;
-                error:string;
-            };
-        };
-    };
-    template:{
-        extensions:Array<string>;
-        options:PlainObject;
-    }
 }
 // / endregion
 // / region database error

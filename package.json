@@ -41,6 +41,7 @@
     "node-fetch": "latest",
     "pouchdb": "latest",
     "pouchdb-server": "latest",
+    "rimraf": "latest",
     "web-node": "latest",
     "weboptimizer": "latest"
   },
@@ -52,7 +53,7 @@
   "scripts": {
     "build": "webOptimizer build",
     "buildDLL": "webOptimizer buildDLL",
-    "clear": "webOptimizer clear && rm --force log.txt &>/dev/null",
+    "clear": "webOptimizer clear && rimraf log.txt",
     "document": "webOptimizer document",
     "lint": "webOptimizer typeCheck && webOptimizer lint",
     "prepublish": "npm run build",
