@@ -224,7 +224,7 @@
     },
     "injection": {
       "internal": {
-        "__evaluate__": "2 < self.givenCommandLineArguments.length && self.givenCommandLineArguments[2] === 'test' ? 'test' : {databaseHelper: 'databaseHelper', helper: 'helper', index: 'index'}"
+        "__evaluate__": "2 < self.givenCommandLineArguments.length && self.givenCommandLineArguments[2] === 'test' ? 'test' : {databaseHelper: './databaseHelper', helper: './helper', index: './index'}"
       }
     },
     "inPlace": {
