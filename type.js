@@ -108,7 +108,7 @@ export type SecuritySettings = {
 }
 export type Configuration = {
     database:{
-        configFilePath:string;
+        configurationFilePath:string;
         'httpd/host':string;
         'log/file':string;
         'log/level':string;

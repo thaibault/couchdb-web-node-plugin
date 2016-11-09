@@ -48,11 +48,20 @@ QUnit.test('exit', async (assert:Object):Promise<void> => {
     assert.strictEqual(testValue, 2)
     done()
 })
+QUnit.test('loadService', async (assert:Object):Promise<void> => {
+    try {
+        assert.deepEqual(await Index.loadService(
+            {database: {connection: null, server: {}}}, configuration
+        ), null)
+    } catch (error) {
+        console.error(error)
+    }
+})
 QUnit.test('preLoadService', async (assert:Object):Promise<void> => {
     try {
         assert.deepEqual(await Index.preLoadService(
-            {database: {connection: {}, serverProcess: {}}}, configuration
-        ), {database: {connection: {}, serverProcess: {}}})
+            {}, configuration
+        ), {database: {connection: {}, server: {}}})
     } catch (error) {
         console.error(error)
     }
