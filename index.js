@@ -84,6 +84,7 @@ export default class Database {
                     filePath, configuration.database.binary.name)
                 if (await Tools.isFile(binaryFilePath))
                     services.database.server.binaryFilePath = binaryFilePath
+            }
             if (!services.database.server.hasOwnProperty('binaryFilePath'))
                 throw new Error(
                     'No binary file name "' +
@@ -92,6 +93,7 @@ export default class Database {
                     `${configuration.database.binary.locations.join('", "')}` +
                     '".')
             // endregion
+        }
         return services
     }
     /**
@@ -106,7 +108,7 @@ export default class Database {
     static async loadService(
         servicePromises:{[key:string]:Promise<Object>}, services:Services
     ):Promise<?Promise<Object>> {
-        let result:?Promise = null
+        let result:?Promise<string> = null
         if (services.database.server.hasOwnProperty('binaryFilePath')) {
             services.database.server.process = spawnChildProcess(
                 services.database.server.binaryFilePath, [
@@ -119,9 +121,7 @@ export default class Database {
                     shell: true,
                     stdio: 'inherit'
                 })
-            result:Promise<string> = new Promise((
-                resolve:Function, reject:Function
-            ):void => {
+            result = new Promise((resolve:Function, reject:Function):void => {
                 for (const closeEventName:string of Tools.closeEventNames)
                     services.database.serverProcess.on(
                         closeEventName, Tools.getProcessCloseHandler(
