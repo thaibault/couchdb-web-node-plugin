@@ -48,7 +48,7 @@ export default class Database {
      * @param configuration - Mutable by plugins extended configuration object.
      * @returns Given object of services.
      */
-    static async exit(
+    static async shouldExit(
         services:Services, configuration:Configuration
     ):Promise<Services> {
         if (await Tools.isFile('log.txt'))
@@ -73,39 +73,19 @@ export default class Database {
     ):Promise<Services> {
         if (!services.hasOwnProperty('database'))
             services.database = {}
-        if (!services.database.hasOwnProperty('serverProcess')) {
-            // region start database server
-            let binaryFound:boolean = false
+        if (!services.database.hasOwnProperty('server')) {
+            services.database.server = {}
+            // region search for binary file to start database server
             for (
                 const filePath:string of
                 configuration.database.binary.locations
             ) {
                 const binaryFilePath:string = path.resolve(
                     filePath, configuration.database.binary.name)
-                if (await Tools.isFile(binaryFilePath)) {
-                    binaryFound = true
-                    services.database.serverProcess = spawnChildProcess(
-                        binaryFilePath, [
-                            '--port', `${configuration.database.port}`,
-                            '--dir', path.resolve(configuration.database.path),
-                            '--config', configuration.database.configFilePath
-                        ], {
-                            cwd: eval('process').cwd(),
-                            env: eval('process').env,
-                            shell: true,
-                            stdio: 'inherit'
-                        })
-                    break
-                }
+                if (await Tools.isFile(binaryFilePath))
+                    services.database.server.binaryFilePath = binaryFilePath
             }
-            if (binaryFound) {
-                for (const closeEventName:string of Tools.closeEventNames)
-                    services.database.serverProcess.on(
-                        closeEventName, Tools.getProcessCloseHandler(
-                            Tools.noop, Tools.noop, closeEventName))
-                await Tools .checkReachability(
-                    Tools.stringFormat(configuration.database.url, ''), true)
-            } else
+            if (!services.database.server.hasOwnProperty('binaryFilePath'))
                 throw new Error(
                     'No binary file name "' +
                     `${configuration.database.binary.name}" in one of the ` +
@@ -114,8 +94,49 @@ export default class Database {
                     '".')
             // endregion
         }
+        return services
+    }
+    /**
+     * Start database's child process and return a Promise which observes this
+     * service.
+     * @param servicePromises - An object with stored service promise
+     * instances.
+     * @param services - An object with stored service instances.
+     * @param configuration - Mutable by plugins extended configuration object.
+     * @returns A promise which correspond to the plugin specific continues
+     * service.
+     */
+    static async loadService(
+        servicePromises:{[key:string]:Promise<Object>}, services:Services,
+        configuration:Configuration
+    ):Promise<?Promise<Object>> {
+        let result:?Promise<Object> = null
+        if (services.database.server.hasOwnProperty('binaryFilePath')) {
+            services.database.server.process = spawnChildProcess(
+                services.database.server.binaryFilePath, [
+                    '--port', `${configuration.database.port}`,
+                    '--dir', path.resolve(configuration.database.path),
+                    '--config', configuration.database.configurationFilePath
+                ], {
+                    cwd: eval('process').cwd(),
+                    env: eval('process').env,
+                    shell: true,
+                    stdio: 'inherit'
+                })
+            result = new Promise((resolve:Function, reject:Function):void => {
+                for (const closeEventName:string of Tools.closeEventNames)
+                    services.database.serverProcess.on(
+                        closeEventName, Tools.getProcessCloseHandler(
+                            resolve, reject, {
+                                reason: closeEventName,
+                                process: services.database.serverProcess
+                            }))
+            })
+            await Tools.checkReachability(
+                Tools.stringFormat(configuration.database.url, ''), true)
+        }
         if (services.database.hasOwnProperty('connection'))
-            return services
+            return result
         // region ensure presence of global admin user
         const unauthenticatedUserDatabaseConnection:PouchDB = new PouchDB(
             `${Tools.stringFormat(configuration.database.url, '')}/_users`)
@@ -381,10 +402,10 @@ export default class Database {
                 if (newDocument !== document)
                     services.database.connection.put(newDocument)
             }
-        // TODO check conflicting constraints and mark if necessary (check how
-        // couchdb deals with "id" conflicts)
+        // TODO check conflicting constraints and mark them if necessary (check
+        // how couchdb deals with "id" conflicts)
         // endregion
-        return services
+        return result
     }
 }
 // endregion

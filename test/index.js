@@ -28,7 +28,7 @@ import Index from '../index'
 QUnit.module('index')
 QUnit.load()
 // region tests
-QUnit.test('exit', async (assert:Object):Promise<void> => {
+QUnit.test('shouldExit', async (assert:Object):Promise<void> => {
     const done:Function = assert.async()
     let testValue:number = 0
     const services:Services = {database: {
@@ -40,7 +40,8 @@ QUnit.test('exit', async (assert:Object):Promise<void> => {
         }}
     }}
     try {
-        assert.deepEqual(await Index.exit(services, configuration), services)
+        assert.deepEqual(
+            await Index.shouldExit(services, configuration), services)
     } catch (error) {
         console.error(error)
     }
@@ -48,11 +49,19 @@ QUnit.test('exit', async (assert:Object):Promise<void> => {
     assert.strictEqual(testValue, 2)
     done()
 })
+QUnit.test('loadService', async (assert:Object):Promise<void> => {
+    try {
+        assert.deepEqual(await Index.loadService(
+            {}, {database: {connection: null, server: {}}}, configuration
+        ), null)
+    } catch (error) {
+        console.error(error)
+    }
+})
 QUnit.test('preLoadService', async (assert:Object):Promise<void> => {
     try {
-        assert.deepEqual(await Index.preLoadService(
-            {database: {connection: {}, serverProcess: {}}}, configuration
-        ), {database: {connection: {}, serverProcess: {}}})
+        assert.strictEqual(typeof (await Index.preLoadService({
+        }, configuration)).database.server.binaryFilePath, 'string')
     } catch (error) {
         console.error(error)
     }
