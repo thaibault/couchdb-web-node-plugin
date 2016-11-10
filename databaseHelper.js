@@ -13,7 +13,6 @@
     endregion
 */
 // region imports
-import type {PlainObject} from 'clientnode'
 // NOTE: Only needed for debugging this file.
 try {
     require('source-map-support/register')
@@ -768,7 +767,7 @@ export default class DatabaseHelper {
                         ) === Object.prototype
                     )
                         for (const fileName:string in oldAttachments)
-                            if (oldAttachments.hasOwnProperty(fileName)) {
+                            if (oldAttachments.hasOwnProperty(fileName))
                                 if (
                                     modelConfiguration.updateStrategy ===
                                         'fillUp' &&
@@ -792,7 +791,6 @@ export default class DatabaseHelper {
                                     )
                                 )
                                     delete newAttachments[fileName]
-                            }
                 }
                 for (const fileName:string in newAttachments)
                     if (newAttachments.hasOwnProperty(fileName) && [

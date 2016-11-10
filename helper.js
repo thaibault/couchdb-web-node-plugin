@@ -40,6 +40,7 @@ export default class Helper {
      * @param documentName - Design document name.
      * @param documentData - Design document data.
      * @param description - Used to produce semantic logging messages.
+     * @param libraries - Mapping of library names to their code as string.
      * @param log - Enables logging.
      * @returns Promise which will be resolved after given document has updated
      * successfully.
