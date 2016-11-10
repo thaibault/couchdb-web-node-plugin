@@ -102,13 +102,15 @@ export default class Database {
      * @param servicePromises - An object with stored service promise
      * instances.
      * @param services - An object with stored service instances.
+     * @param configuration - Mutable by plugins extended configuration object.
      * @returns A promise which correspond to the plugin specific continues
      * service.
      */
     static async loadService(
-        servicePromises:{[key:string]:Promise<Object>}, services:Services
+        servicePromises:{[key:string]:Promise<Object>}, services:Services,
+        configuration:Configuration
     ):Promise<?Promise<Object>> {
-        let result:?Promise<string> = null
+        let result:?Promise<Object> = null
         if (services.database.server.hasOwnProperty('binaryFilePath')) {
             services.database.server.process = spawnChildProcess(
                 services.database.server.binaryFilePath, [
@@ -125,7 +127,10 @@ export default class Database {
                 for (const closeEventName:string of Tools.closeEventNames)
                     services.database.serverProcess.on(
                         closeEventName, Tools.getProcessCloseHandler(
-                            resolve, reject, closeEventName))
+                            resolve, reject, {
+                                reason: closeEventName,
+                                process: services.database.serverProcess
+                            }))
             })
             await Tools.checkReachability(
                 Tools.stringFormat(configuration.database.url, ''), true)
