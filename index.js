@@ -53,7 +53,7 @@ export default class Database {
     ):Promise<Services> {
         if (await Tools.isFile('log.txt'))
             await new Promise((resolve:Function, reject:Function):void =>
-                fileSystem.unlink('log.txt', (error:?Error) =>
+                fileSystem.unlink('log.txt', (error:?Error):void =>
                     error ? reject(error) : resolve()))
         services.database.connection.close()
         services.database.serverProcess.kill('SIGINT')
@@ -278,8 +278,8 @@ export default class Database {
                     '...parameter.concat([' +
                     JSON.stringify(Helper.determineAllowedModelRolesMapping(
                         configuration.modelConfiguration
-                    )) + ", '" + configuration.modelConfiguration
-                        .specialPropertyNames.type + "']))\n" +
+                    )) + `, '` + configuration.modelConfiguration
+                        .specialPropertyNames.type + `']))\n` +
             '}'
         try {
             new Function(`return ${authenticationCode}`)
@@ -314,7 +314,7 @@ export default class Database {
                             // IgnoreTypeCheck
                             for (const constraint:Constraint of models[
                                 modelName
-                            ][name])
+                            ][name]) {
                                 if (
                                     constraint.hasOwnProperty('description') &&
                                     constraint.description
@@ -332,6 +332,7 @@ export default class Database {
                                             `${Tools.representObject(error)}".`
                                         )
                                     }
+                            }
                         else
                             for (const type:string of [
                                 'conflictingConstraintExpression',
