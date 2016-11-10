@@ -130,7 +130,7 @@ export default class Database {
                         closeEventName, Tools.getProcessCloseHandler(
                             resolve, reject, {
                                 reason: closeEventName,
-                                process: services.database.serverProcess
+                                process: services.database.server.process
                             }))
             })
             await Tools.checkReachability(
