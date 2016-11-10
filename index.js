@@ -51,12 +51,13 @@ export default class Database {
     static async shouldExit(
         services:Services, configuration:Configuration
     ):Promise<Services> {
-        if (await Tools.isFile('log.txt'))
+        const logFilePath:string = 'log.txt'
+        if (await Tools.isFile(logFilePath))
             await new Promise((resolve:Function, reject:Function):void =>
-                fileSystem.unlink('log.txt', (error:?Error):void =>
+                fileSystem.unlink(logFilePath, (error:?Error):void =>
                     error ? reject(error) : resolve()))
         services.database.connection.close()
-        services.database.serverProcess.kill('SIGINT')
+        services.database.server.process.kill('SIGINT')
         await Tools.checkUnreachability(
             Tools.stringFormat(configuration.database.url, ''), true)
         delete services.database
@@ -109,8 +110,8 @@ export default class Database {
     static async loadService(
         servicePromises:{[key:string]:Promise<Object>}, services:Services,
         configuration:Configuration
-    ):Promise<?Promise<Object>> {
-        let result:?Promise<Object> = null
+    ):Promise<{promise:?Promise<Object>}> {
+        let promise:?Promise<Object> = null
         if (services.database.server.hasOwnProperty('binaryFilePath')) {
             services.database.server.process = spawnChildProcess(
                 services.database.server.binaryFilePath, [
@@ -123,9 +124,9 @@ export default class Database {
                     shell: true,
                     stdio: 'inherit'
                 })
-            result = new Promise((resolve:Function, reject:Function):void => {
+            promise = new Promise((resolve:Function, reject:Function):void => {
                 for (const closeEventName:string of Tools.closeEventNames)
-                    services.database.serverProcess.on(
+                    services.database.server.process.on(
                         closeEventName, Tools.getProcessCloseHandler(
                             resolve, reject, {
                                 reason: closeEventName,
@@ -136,7 +137,7 @@ export default class Database {
                 Tools.stringFormat(configuration.database.url, ''), true)
         }
         if (services.database.hasOwnProperty('connection'))
-            return result
+            return {promise}
         // region ensure presence of global admin user
         const unauthenticatedUserDatabaseConnection:PouchDB = new PouchDB(
             `${Tools.stringFormat(configuration.database.url, '')}/_users`)
@@ -406,7 +407,7 @@ export default class Database {
         // TODO check conflicting constraints and mark them if necessary (check
         // how couchdb deals with "id" conflicts)
         // endregion
-        return result
+        return {promise}
     }
 }
 // endregion
