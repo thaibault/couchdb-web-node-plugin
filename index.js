@@ -311,11 +311,11 @@ export default class Database {
                                 .expression,
                             modelConfiguration.specialPropertyNames.constraints
                                 .execution
-                        ].includes(name))
+                        ].includes(name)) {
                             // IgnoreTypeCheck
                             for (const constraint:Constraint of models[
                                 modelName
-                            ][name]) {
+                            ][name])
                                 if (
                                     constraint.hasOwnProperty('description') &&
                                     constraint.description
@@ -333,8 +333,7 @@ export default class Database {
                                             `${Tools.representObject(error)}".`
                                         )
                                     }
-                            }
-                        else
+                        } else
                             for (const type:string of [
                                 'conflictingConstraintExpression',
                                 'conflictingConstraintExecution',
@@ -407,7 +406,7 @@ export default class Database {
         // TODO check conflicting constraints and mark them if necessary (check
         // how couchdb deals with "id" conflicts)
         // endregion
-        return {promise}
+        return {name: 'database', promise}
     }
 }
 // endregion
