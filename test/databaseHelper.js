@@ -383,7 +383,8 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
             [[{'-type': 'Test', a: 'b'}], {models: {Test: {a: {
                 constraintExecution: {
                     evaluation: 'return undefinedVariableName'
-            }}}}}, 'Runtime'],
+                }
+            }}}}, 'Runtime'],
             [[{'-type': 'Test', a: 'b'}], {models: {Test: {a: {
                 constraintExpression: {evaluation: 'newValue === "a"'}
             }}}}, 'ConstraintExpression'],
@@ -624,8 +625,8 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 '': {'-type': 'Test', a: '2'}
             }],
             [[{'-type': 'Test', a: '1'}, {'-type': 'Test', a: '2'}], {models: {
-                Test: {a: {onUpdateExpression: `'2'`
-            }}}}, {
+                Test: {a: {onUpdateExpression: `'2'`}}
+            }}, {
                 fillUp: {'-type': 'Test', a: '2'},
                 incremental: {},
                 '': {'-type': 'Test', a: '2'}
@@ -1027,8 +1028,8 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                         evaluation: 'newValue === "b"'
                     }},
                     b: {type: 'Test'}
-                }
-            }}, {
+                }}
+            }, {
                 fillUp: {'-type': 'Test', a: 'b', b: {
                     '-type': 'Test', a: 'b'
                 }},
