@@ -353,149 +353,232 @@ export default class DatabaseHelper {
                 // endregion
                 return newValue
             }
-            // region run hooks and check for presence of needed data
-            for (const propertyName:string in model)
-                if (model.hasOwnProperty(propertyName) && ![
-                    modelConfiguration.specialPropertyNames.allowedRoles,
-                    modelConfiguration.specialPropertyNames.constraints
-                        .expression,
-                    modelConfiguration.specialPropertyNames.constraints
-                        .execution
-                ].includes(propertyName)) {
-                    const propertySpecification:PropertySpecification =
-                        model[propertyName]
-                    if (!oldDocument)
-                        for (const type:string of [
-                            'onCreateExpression', 'onCreateExecution'
-                        ])
-                            if (propertySpecification[type]) {
-                                let hook:Function
-                                try {
-                                    hook = newDocument[
-                                        propertyName
-                                    ] = new Function(
-                                        'newDocument', 'oldDocument',
-                                        'userContext', 'securitySettings',
-                                        'name', 'models', 'modelConfiguration',
-                                        'serialize', 'modelName', 'model',
-                                        'checkDocument',
-                                        'checkPropertyContent',
-                                        'propertySpecification', (
-                                            type.endsWith('Expression') ?
-                                            'return ' : ''
-                                        ) + propertySpecification[type])
-                                } catch (error) {
-                                    /* eslint-disable no-throw-literal */
-                                    throw {
-                                        forbidden: 'Compilation: Hook "' +
-                                            `${type}" has invalid code "` +
-                                            `${propertySpecification[type]}"` +
-                                            `: ${serialize(error)}`
-                                    }
-                                    /* eslint-enable no-throw-literal */
-                                }
-                                try {
-                                    newDocument[propertyName] = hook(
-                                        newDocument, oldDocument, userContext,
-                                        securitySettings, propertyName, models,
-                                        modelConfiguration, serialize,
-                                        modelName, model, checkDocument,
-                                        checkPropertyContent,
-                                        propertySpecification)
-                                } catch (error) {
-                                    /* eslint-disable no-throw-literal */
-                                    throw {
-                                        forbidden: `Runtime: Hook "${type}" ` +
-                                            'has throw an error with code "' +
-                                            `${propertySpecification[type]}"` +
-                                            `: ${serialize(error)}`
-                                    }
-                                    /* eslint-enable no-throw-literal */
-                                }
-                            }
+            const runHooks:Function = (
+                propertySpecification:PropertySpecification,
+                newDocument:PlainObject, oldDocument:PlainObject, name:string
+            ):any => {
+                if (!oldDocument)
                     for (const type:string of [
-                        'onUpdateExpression', 'onUpdateExecution'
+                        'onCreateExpression', 'onCreateExecution'
                     ])
                         if (propertySpecification[type]) {
                             let hook:Function
                             try {
                                 hook = new Function(
                                     'newDocument', 'oldDocument',
-                                    'userContext', 'securitySettings', 'name',
-                                    'models', 'modelConfiguration',
+                                    'userContext', 'securitySettings',
+                                    'name', 'models', 'modelConfiguration',
                                     'serialize', 'modelName', 'model',
-                                    'checkDocument', 'checkPropertyContent',
-                                    'propertySpecification', (type.endsWith(
-                                        'Expression'
-                                    ) ? 'return ' : '') +
-                                    propertySpecification[type])
+                                    'checkDocument',
+                                    'checkPropertyContent',
+                                    'propertySpecification', (
+                                        type.endsWith('Expression') ?
+                                        'return ' : ''
+                                    ) + propertySpecification[type])
                             } catch (error) {
                                 /* eslint-disable no-throw-literal */
                                 throw {
                                     forbidden: `Compilation: Hook "${type}" ` +
-                                        `has invalid code "` +
-                                        `${propertySpecification[type]}": ` +
+                                        'has invalid code "' +
+                                        `${propertySpecification[type]}" for` +
+                                        ` property "${name}": ` +
                                         serialize(error)
                                 }
                                 /* eslint-enable no-throw-literal */
                             }
                             try {
-                                newDocument[propertyName] = hook(
+                                newDocument[name] = hook(
                                     newDocument, oldDocument, userContext,
-                                    securitySettings, propertyName, models,
+                                    securitySettings, name, models,
                                     modelConfiguration, serialize, modelName,
                                     model, checkDocument, checkPropertyContent,
                                     propertySpecification)
                             } catch (error) {
                                 /* eslint-disable no-throw-literal */
                                 throw {
-                                    forbidden: `Runtime: Hook "${type}" ` +
-                                        'has throw an error with code "' +
-                                        `${propertySpecification[type]}": ` +
+                                    forbidden: `Runtime: Hook "${type}" has ` +
+                                        'throw an error with code "' +
+                                        `${propertySpecification[type]}" ` +
+                                        `for property "${name}": ` +
                                         serialize(error)
                                 }
                                 /* eslint-enable no-throw-literal */
                             }
                         }
-                    if ([undefined, null].includes(
-                        propertySpecification.default
-                    )) {
-                        if (!(propertySpecification.nullable || (
-                            newDocument.hasOwnProperty(propertyName) ||
-                            oldDocument && oldDocument.hasOwnProperty(
-                                propertyName)
-                        )))
+                for (const type:string of [
+                    'onUpdateExpression', 'onUpdateExecution'
+                ])
+                    if (propertySpecification[type]) {
+                        let hook:Function
+                        try {
+                            hook = new Function(
+                                'newDocument', 'oldDocument', 'userContext',
+                                'securitySettings', 'name', 'models',
+                                'modelConfiguration', 'serialize', 'modelName',
+                                'model', 'checkDocument',
+                                'checkPropertyContent',
+                                'propertySpecification', (type.endsWith(
+                                    'Expression'
+                                ) ? 'return ' : '') +
+                                propertySpecification[type])
+                        } catch (error) {
                             /* eslint-disable no-throw-literal */
                             throw {
-                                forbidden: 'MissingProperty: Missing ' +
-                                    `property "${propertyName}".`
+                                forbidden: `Compilation: Hook "${type}" has ` +
+                                    `invalid code "` +
+                                    `${propertySpecification[type]}" for ` +
+                                    `property "${name}": ${serialize(error)}`
                             }
                             /* eslint-enable no-throw-literal */
-                        if (!newDocument.hasOwnProperty(
-                            propertyName
-                        ) && oldDocument && oldDocument.hasOwnProperty(
-                            propertyName
-                        ) && modelConfiguration.updateStrategy === 'fillUp')
-                            newDocument[propertyName] = oldDocument[
-                                propertyName]
-                    } else if (!newDocument.hasOwnProperty(
-                        propertyName
-                    ) || newDocument[propertyName] === null)
-                        if (modelConfiguration.updateStrategy === 'fillUp')
+                        }
+                        try {
+                            newDocument[name] = hook(
+                                newDocument, oldDocument, userContext,
+                                securitySettings, name, models,
+                                modelConfiguration, serialize, modelName,
+                                model, checkDocument, checkPropertyContent,
+                                propertySpecification)
+                        } catch (error) {
+                            /* eslint-disable no-throw-literal */
+                            throw {
+                                forbidden: `Runtime: Hook "${type}" has ` +
+                                    'throw an error with code "' +
+                                    `${propertySpecification[type]}" for ` +
+                                    `property "${name}": ${serialize(error)}`
+                            }
+                            /* eslint-enable no-throw-literal */
+                        }
+                    }
+            }
+            for (const name:string in model)
+                if (model.hasOwnProperty(name) && ![
+                    modelConfiguration.specialPropertyNames.allowedRoles,
+                    modelConfiguration.specialPropertyNames.constraints
+                        .expression,
+                    modelConfiguration.specialPropertyNames.constraints
+                        .execution
+                ].includes(name))
+                    // region run hooks and check for presence of needed data
+                    if (
+                        modelConfiguration.specialPropertyNames.attachments ===
+                        name
+                    )
+                        for (const type:string in model[name]) {
+                            if (!newDocument.hasOwnProperty(name))
+                                newDocument[name] = {}
+                            if (oldDocument && !oldDocument.hasOwnProperty(
+                                name
+                            ))
+                                oldDocument[name] = {}
+                            runHooks(
+                                model[name][type], newDocument[name],
+                                oldDocumen[name], type)
+                            const filter:Function = (new RegExp()).test.bind(
+                                new RegExp(type))
+                            const newFileNames:Array<string> = Object.keys(
+                                newDocument[name]
+                            ).filter(filter)
+                            let oldFileNames:Array<string> = []
                             if (oldDocument)
-                                newDocument[propertyName] = oldDocument[
-                                    propertyName]
-                            else
-                                newDocument[propertyName] =
-                                    propertySpecification.default
-                        else if (
-                            modelConfiguration.updateStrategy === 'migrate' ||
-                            !oldDocument
-                        )
-                            newDocument[propertyName] =
-                                propertySpecification.default
-                }
-            // endregion
+                                oldFileNames = Object.keys(
+                                    oldDocument[name]
+                                ).filter(filter)
+                            if ([undefined, null].includes(
+                                model[name][type].default
+                            )) {
+                                if (!(model[name][type].nullable || (
+                                    newFileNames.length > 0 ||
+                                    oldFileNames.length > 0
+                                )))
+                                    /* eslint-disable no-throw-literal */
+                                    throw {
+                                        forbidden: 'MissingAttachment: ' +
+                                            'Missing attachment for type "' +
+                                            `${type}".`
+                                    }
+                                    /* eslint-enable no-throw-literal */
+                                if (
+                                    modelConfiguration.updateStrategy ===
+                                    'fillUp' &&
+                                    newFileNames.length === 0 && oldDocument &&
+                                    oldFileNames.length > 0
+                                )
+                                    for (const fileName:string in oldFileNames)
+                                        newDocument[name][fileName] =
+                                            oldDocument[name][fileName]
+                            } else if (newFileNames.length === 0)
+                                if (
+                                    modelConfiguration.updateStrategy ===
+                                    'fillUp'
+                                )
+                                    if (oldDocument && oldFileNames.length > 0)
+                                        for (
+                                            const fileName:string of
+                                            oldFileNames
+                                        )
+                                            newDocument[name][fileName] =
+                                                oldDocument[name][fileName]
+                                    else
+                                        for (const fileName:string in model[
+                                            name
+                                        ][type].default)
+                                            if (model[name][
+                                                type
+                                            ].default.hasOwnProperty(fileName))
+                                                newDocument[name][fileName] =
+                                                    model[name][type].default[
+                                                        fileName]
+                                else if (
+                                    modelConfiguration.updateStrategy ===
+                                        'migrate' ||
+                                    !oldDocument
+                                )
+                                    for (const fileName:string in model[
+                                        name
+                                    ][type].default)
+                                        if (model[name][
+                                            type
+                                        ].default.hasOwnProperty(fileName))
+                                            newDocument[name][fileName] =
+                                                model[name][type].default[
+                                                    fileName]
+                        }
+                    else {
+                        runHooks(model[name], newDocument, oldDocument, name)
+                        if ([undefined, null].includes(model[name].default)) {
+                            if (!(model[name].nullable || (
+                                newDocument.hasOwnProperty(name) ||
+                                oldDocument && oldDocument.hasOwnProperty(name)
+                            )))
+                                /* eslint-disable no-throw-literal */
+                                throw {
+                                    forbidden: 'MissingProperty: Missing ' +
+                                        `property "${name}".`
+                                }
+                                /* eslint-enable no-throw-literal */
+                            if (!newDocument.hasOwnProperty(
+                                name
+                            ) && oldDocument && oldDocument.hasOwnProperty(
+                                name
+                            ) && modelConfiguration.updateStrategy === 'fillUp'
+                            )
+                                newDocument[name] = oldDocument[name]
+                        } else if (!newDocument.hasOwnProperty(
+                            name
+                        ) || newDocument[name] === null)
+                            if (modelConfiguration.updateStrategy === 'fillUp')
+                                if (oldDocument)
+                                    newDocument[name] = oldDocument[name]
+                                else
+                                    newDocument[name] = model[name].default
+                            else if (
+                                modelConfiguration.updateStrategy ===
+                                    'migrate' ||
+                                !oldDocument
+                            )
+                                newDocument[name] = model[name].default
+                    }
+                    // endregion
             // region check given data
             if (
                 oldDocument &&
