@@ -798,34 +798,65 @@ export default class DatabaseHelper {
                     ].includes(newAttachments[fileName]))
                         delete newAttachments[fileName]
                 // endregion
-                const numberOfAttachments = Object.keys(newAttachments).length
-                if (numberOfAttachments === 0)
+                if (Object.keys(newAttachments).length === 0)
                     delete newDocument[name]
-                if (numberOfAttachments > model[name].maximum)
-                    /* eslint-disable no-throw-literal */
-                    throw {
-                        forbidden: 'AttachmentMaximum: given number of ' +
-                            `attachments (${numberOfAttachments}) ` +
-                            `doesn't satisfy specified maximum of ` +
-                            `${model[name].maximum}.`
-                    }
-                    /* eslint-enable no-throw-literal */
-                if (numberOfAttachments < model[name].minimum)
-                    /* eslint-disable no-throw-literal */
-                    throw {
-                        forbidden: 'AttachmentMinimum: given number of ' +
-                            `attachments (${numberOfAttachments}) ` +
-                            `doesn't satisfy specified minimum of ` +
-                            `${model[name].minimum}.`
-                    }
-                    /* eslint-enable no-throw-literal */
-                for (const fileName:string in newAttachments)
-                    if (newAttachments.hasOwnProperty(fileName)) {
+                const attachmentToTypeMapping:{[key:string]:Array<string>} = {}
+                for (const attachmentName:string in newAttachments) {
+                    let matched:boolean = false
+                    for (const type:string in model[name])
+                        if ((new RegExp(type)).test(attachmentName)) {
+                            if (attachmentToTypeMapping.hasOwnProperty(type))
+                                attachmentToTypeMapping[type].push(
+                                    attachmentName)
+                            else
+                                attachmentToTypeMapping[type] = [
+                                    attachmentName]
+                            matched = true
+                            break
+                        }
+                    if (!matched)
+                        /* eslint-disable no-throw-literal */
+                        throw {
+                            forbidden: 'AttachmentTypeMatch: None of the ' +
+                                'specified attachment types ("' +
+                                Object.keys(model[name]).join('", "') +
+                                `") matches given one ("${attachmentName}").`
+                        }
+                        /* eslint-enable no-throw-literal */
+                }
+                for (const type:string in attachmentToTypeMapping) {
+                    if (!attachmentToTypeMapping.hasOwnProperty(type))
+                        continue
+                    const numberOfAttachments:number = Object.keys(
+                        attachmentToTypeMapping[type])
+                    if (numberOfAttachments > model[name][type].maximum)
+                        /* eslint-disable no-throw-literal */
+                        throw {
+                            forbidden: 'AttachmentMaximum: given number of ' +
+                                `attachments (${numberOfAttachments}) ` +
+                                `doesn't satisfy specified maximum of ` +
+                                `${model[name][type].maximum} from type "` +
+                                `${type}".`
+                        }
+                        /* eslint-enable no-throw-literal */
+                    if (numberOfAttachments < model[name][type].minimum)
+                        /* eslint-disable no-throw-literal */
+                        throw {
+                            forbidden: 'AttachmentMinimum: given number of ' +
+                                `attachments (${numberOfAttachments}) ` +
+                                `doesn't satisfy specified minimum of ` +
+                                `${model[name][type].minimum} from type "` +
+                                `${type}".`
+                        }
+                        /* eslint-enable no-throw-literal */
+                    for (const fileName:string of attachmentToTypeMapping[
+                        type
+                    ]) {
                         if (!([null, undefined].includes(
-                            model[name].regularExpressionPattern
+                            model[name][type].regularExpressionPattern
                         // IgnoreTypeCheck
                         ) || (new RegExp(
-                            model[name].regularExpressionPattern
+                            model[name][type].regularExpressionPattern
                         )).test(fileName)))
                             /* eslint-disable no-throw-literal */
                             throw {
@@ -833,20 +864,21 @@ export default class DatabaseHelper {
                                     `attachment name "${fileName}" ` +
                                     `doesn't satisfy specified regular ` +
                                     // IgnoreTypeCheck
-                                    'expression pattern "' + model[
-                                        name
-                                    ].regularExpressionPattern + '".'
+                                    'expression pattern "' + model[name][
+                                        type
+                                    ].regularExpressionPattern + '" from ' +
+                                    `type "${type}".`
                             }
                             /* eslint-enable no-throw-literal */
                         if (!([null, undefined].includes(model[
                             name
-                        ].contentTypeRegularExpressionPattern) ||
+                        ][type].contentTypeRegularExpressionPattern) ||
                         newAttachments[fileName].hasOwnProperty(
                             'content_type'
                         ) && newAttachments[fileName].content_type && (
                             // IgnoreTypeCheck
-                            new RegExp(model[
-                                name
+                            new RegExp(model[name][
+                                type
                             ].contentTypeRegularExpressionPattern)
                         ).test(newAttachments[fileName].content_type)))
                             /* eslint-disable no-throw-literal */
@@ -855,12 +887,14 @@ export default class DatabaseHelper {
                                     ' attachment content type "' +
                                     newAttachments[fileName].content_type +
                                     `" doesn't satisfy specified regular` +
-                                    ' expression pattern "' + model[
-                                        name
-                                    ].regularExpressionPattern + '".'
+                                    ' expression pattern "' + model[name][
+                                        type
+                                    ].regularExpressionPattern + '" from ' +
+                                    `type "${type}".`
                             }
                             /* eslint-enable no-throw-literal */
                     }
+                }
             }
             // / endregion
             // endregion

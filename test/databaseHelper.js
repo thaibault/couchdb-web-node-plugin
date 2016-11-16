@@ -423,15 +423,15 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
             ],
             [
                 [{'-type': 'Test'}],
-                {models: {Test: {_attachments: {
+                {models: {Test: {_attachments: {'.+': {
                     minimum: 1, nullable: false
-                }}}}, 'MissingProperty'
+                }}}}}, 'MissingProperty'
             ],
             [
                 [{'-type': 'Test', _attachments: null}],
-                {models: {Test: {_attachments: {
+                {models: {Test: {_attachments: {'.+': {
                     minimum: 1, nullable: false
-                }}}}, 'NotNull'
+                }}}}}, 'NotNull'
             ],
             [
                 [{'-type': 'Test', _attachments: {
@@ -440,14 +440,14 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                     b: {data: '', content_type: 'text/plain'}
                     /* eslint-enable camelcase */
                 }}],
-                {models: {Test: {_attachments: {maximum: 1}}}},
+                {models: {Test: {_attachments: {'.+': {maximum: 1}}}}},
                 'AttachmentMaximum'
             ],
             [
                 [{'-type': 'Test', _attachments: {}}],
-                {models: {Test: {_attachments: {
+                {models: {Test: {_attachments: {'.+': {
                     minimum: 1, nullable: false
-                }}}}, 'AttachmentMinimum'
+                }}}}}, 'AttachmentMinimum'
             ],
             [
                 [{'-type': 'Test', _attachments: {test: {
@@ -455,7 +455,7 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                     data: '', content_type: 'text/plain'
                     /* eslint-enable camelcase */
                 }}}],
-                {models: {Test: {_attachments: {minimum: 2}}}},
+                {models: {Test: {_attachments: {'.+': {minimum: 2}}}}},
                 'AttachmentMinimum'
             ],
             [
@@ -464,9 +464,9 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                     data: '', content_type: 'text/plain'
                     /* eslint-enable camelcase */
                 }}}],
-                {models: {Test: {_attachments: {
+                {models: {Test: {_attachments: {'.+': {
                     regularExpressionPattern: /b/g
-                }}}}, 'AttachmentName'
+                }}}}}, 'AttachmentName'
             ],
             [
                 [{'-type': 'Test', _attachments: {
@@ -475,9 +475,9 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                     b: {data: '', content_type: 'text/plain'}
                     /* eslint-enable camelcase */
                 }}],
-                {models: {Test: {_attachments: {
+                {models: {Test: {_attachments: {'.+': {
                     regularExpressionPattern: /a/
-                }}}}, 'AttachmentName'
+                }}}}}, 'AttachmentName'
             ],
             [
                 [{'-type': 'Test', _attachments: {
@@ -486,9 +486,9 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                     b: {data: '', content_type: 'image/jpg'}
                     /* eslint-enable camelcase */
                 }}],
-                {models: {Test: {_attachments: {
+                {models: {Test: {_attachments: {'.+': {
                     contentTypeRegularExpressionPattern: /text\/plain/
-                }}}}, 'AttachmentContentType'
+                }}}}}, 'AttachmentContentType'
             ]
             // endregion
         ]) {
@@ -1182,9 +1182,9 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
             }],
             // endregion
             // region attachments
-            [[{'-type': 'Test'}], {models: {Test: {_attachments: {
+            [[{'-type': 'Test'}], {models: {Test: {_attachments: {'.+': {
                 minimum: 1
-            }}}}, {
+            }}}}}, {
                 fillUp: {'-type': 'Test'},
                 incremental: {'-type': 'Test'},
                 '': {'-type': 'Test'}
@@ -1193,7 +1193,7 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 /* eslint-disable camelcase */
                 data: '', content_type: 'text/plain'
                 /* eslint-enable camelcase */
-            }}}], {models: {Test: {_attachments: {maximum: 1}}}}, {
+            }}}], {models: {Test: {_attachments: {'.+': {maximum: 1}}}}}, {
                 fillUp: {'-type': 'Test', _attachments: {test: {
                     /* eslint-disable camelcase */
                     content_type: 'text/plain', data: ''
@@ -1215,7 +1215,9 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 a: {data: '', content_type: 'text/plain'},
                 b: {data: '', content_type: 'text/plain'}
                 /* eslint-enable camelcase */
-            }}], {models: {Test: {_attachments: {maximum: 2, minimum: 2}}}}, {
+            }}], {models: {Test: {_attachments: {'.+': {
+                maximum: 2, minimum: 2
+            }}}}}, {
                 fillUp: {'-type': 'Test', _attachments: {
                     /* eslint-disable camelcase */
                     a: {data: '', content_type: 'text/plain'},
@@ -1240,9 +1242,9 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 a: {data: '', content_type: 'text/plain'},
                 b: {data: '', content_type: 'text/plain'}
                 /* eslint-enable camelcase */
-            }}], {models: {Test: {_attachments: {
+            }}], {models: {Test: {_attachments: {'.+': {
                 maximum: 2, regularExpressionPattern: 'a|b'
-            }}}}, {
+            }}}}}, {
                 fillUp: {'-type': 'Test', _attachments: {
                     /* eslint-disable camelcase */
                     a: {data: '', content_type: 'text/plain'},
@@ -1267,10 +1269,10 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 a: {data: '', content_type: 'image/png'},
                 b: {data: '', content_type: 'image/jpeg'}
                 /* eslint-enable camelcase */
-            }}], {models: {Test: {_attachments: {
+            }}], {models: {Test: {_attachments: {'.+': {
                 contentTypeRegularExpressionPattern: /image\/.+/,
                 regularExpressionPattern: 'a|b'
-            }}}}, {
+            }}}}}, {
                 fillUp: {'-type': 'Test', _attachments: {
                     /* eslint-disable camelcase */
                     a: {data: '', content_type: 'image/png'},
@@ -1298,7 +1300,7 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 /* eslint-disable camelcase */
                 b: {data: '', content_type: 'image/jpeg'}
                 /* eslint-enable camelcase */
-            }}], {models: {Test: {_attachments: {}}}}, {
+            }}], {models: {Test: {_attachments: {'.+': {}}}}}, {
                 fillUp: {'-type': 'Test', _attachments: {
                     /* eslint-disable camelcase */
                     a: {data: '', content_type: 'image/png'},
@@ -1322,7 +1324,7 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                     data: '', content_type: 'image/jpeg'
                     /* eslint-enable camelcase */
                 }}
-            }], {models: {Test: {_attachments: {}}}}, {
+            }], {models: {Test: {_attachments: {'.+': {}}}}}, {
                 fillUp: {'-type': 'Test'},
                 incremental: {},
                 '': {'-type': 'Test'}
@@ -1331,7 +1333,7 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 /* eslint-disable camelcase */
                 data: '', content_type: 'image/jpeg'
                 /* eslint-enable camelcase */
-            }}}], {models: {Test: {_attachments: {}}}}, {
+            }}}], {models: {Test: {_attachments: {'.+': {}}}}}, {
                 fillUp: {'-type': 'Test', _attachments: {a: {
                     /* eslint-disable camelcase */
                     data: '', content_type: 'image/jpeg'
