@@ -14,6 +14,7 @@
 */
 // region imports
 // NOTE: Only needed for debugging this file.
+import type {PlainObject} from 'clientnode'
 try {
     require('source-map-support/register')
 } catch (error) {}
@@ -42,8 +43,8 @@ export default class DatabaseHelper {
      * document belongs to.
      */
     static authenticate(
-        newDocument:Object, oldDocument:?Object, userContext:?UserContext,
-        securitySettings:?SecuritySettings,
+        newDocument:PlainObject, oldDocument:?PlainObject,
+        userContext:?UserContext, securitySettings:?SecuritySettings,
         allowedModelRolesMapping:AllowedModelRolesMapping,
         typePropertyName:string
     ):?true {
@@ -82,7 +83,8 @@ export default class DatabaseHelper {
      * @returns Modified given new document.
      */
     static validateDocumentUpdate(
-        newDocument:Object, oldDocument:?Object, userContext:UserContext = {
+        newDocument:PlainObject, oldDocument:?PlainObject,
+        userContext:UserContext = {
             db: 'dummy',
             name: 'admin',
             roles: ['_admin']
@@ -90,7 +92,7 @@ export default class DatabaseHelper {
             admins: {names: [], roles: []}, members: {names: [], roles: []}
         }, models:Models, modelConfiguration:SimpleModelConfiguration,
         toJSON:?Function = null
-    ):Object {
+    ):PlainObject {
         // region ensure needed environment
         if (newDocument.hasOwnProperty('_deleted') && newDocument._deleted)
             return newDocument
@@ -127,8 +129,8 @@ export default class DatabaseHelper {
             throw new Error('Needed "serialize" function is not available.')
         // endregion
         const checkDocument:Function = (
-            newDocument:Object, oldDocument:?Object
-        ):Object => {
+            newDocument:PlainObject, oldDocument:?PlainObject
+        ):PlainObject => {
             // region check for model type
             if (!newDocument.hasOwnProperty(
                 modelConfiguration.specialPropertyNames.type
@@ -358,6 +360,7 @@ export default class DatabaseHelper {
                 newDocument:PlainObject, oldDocument:PlainObject, name:string
             ):any => {
                 if (!oldDocument)
+                    // region create
                     for (const type:string of [
                         'onCreateExpression', 'onCreateExecution'
                     ])
@@ -405,6 +408,8 @@ export default class DatabaseHelper {
                                 /* eslint-enable no-throw-literal */
                             }
                         }
+                // endregion
+                // region update
                 for (const type:string of [
                     'onUpdateExpression', 'onUpdateExecution'
                 ])
@@ -449,6 +454,7 @@ export default class DatabaseHelper {
                             /* eslint-enable no-throw-literal */
                         }
                     }
+                // endregion
             }
             for (const name:string in model)
                 if (model.hasOwnProperty(name) && ![
@@ -472,8 +478,8 @@ export default class DatabaseHelper {
                                 oldDocument[name] = {}
                             runHooks(
                                 model[name][type], newDocument[name],
-                                oldDocumen[name], type)
-                            const filter:Function = (new RegExp()).test.bind(
+                                oldDocument && oldDocument[name], type)
+                            const filter:Function = (new RegExp('')).test.bind(
                                 new RegExp(type))
                             const newFileNames:Array<string> = Object.keys(
                                 newDocument[name]
@@ -503,7 +509,7 @@ export default class DatabaseHelper {
                                     newFileNames.length === 0 && oldDocument &&
                                     oldFileNames.length > 0
                                 )
-                                    for (const fileName:string in oldFileNames)
+                                    for (const fileName:string of oldFileNames)
                                         newDocument[name][fileName] =
                                             oldDocument[name][fileName]
                             } else if (newFileNames.length === 0)
