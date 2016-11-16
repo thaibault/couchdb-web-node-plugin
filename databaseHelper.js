@@ -156,6 +156,7 @@ export default class DatabaseHelper {
             const modelName:string = newDocument[
                 modelConfiguration.specialPropertyNames.type]
             const model:Model = models[modelName]
+            // region functions
             const checkPropertyContent:Function = (
                 newValue:any, name:string,
                 propertySpecification:PropertySpecification, oldValue:?any
@@ -355,12 +356,12 @@ export default class DatabaseHelper {
                 // endregion
                 return newValue
             }
-            const runHooks:Function = (
+            // region create hook
+            const runCreateHook:Function = (
                 propertySpecification:PropertySpecification,
                 newDocument:PlainObject, oldDocument:PlainObject, name:string
             ):any => {
                 if (!oldDocument)
-                    // region create
                     for (const type:string of [
                         'onCreateExpression', 'onCreateExecution'
                     ])
@@ -408,8 +409,13 @@ export default class DatabaseHelper {
                                 /* eslint-enable no-throw-literal */
                             }
                         }
-                // endregion
-                // region update
+            }
+            // endregion
+            // region update hook
+            const runUpdateHook:Function = (
+                propertySpecification:PropertySpecification,
+                newDocument:PlainObject, oldDocument:PlainObject, name:string
+            ):any => {
                 for (const type:string of [
                     'onUpdateExpression', 'onUpdateExecution'
                 ])
@@ -454,8 +460,9 @@ export default class DatabaseHelper {
                             /* eslint-enable no-throw-literal */
                         }
                     }
-                // endregion
             }
+            // endregion
+            // endregion
             for (const name:string in model)
                 if (model.hasOwnProperty(name) && ![
                     modelConfiguration.specialPropertyNames.allowedRoles,
@@ -476,7 +483,7 @@ export default class DatabaseHelper {
                                 name
                             ))
                                 oldDocument[name] = {}
-                            runHooks(
+                            runCreateHook(
                                 model[name][type], newDocument[name],
                                 oldDocument && oldDocument[name], type)
                             const filter:Function = (new RegExp('')).test.bind(
@@ -489,6 +496,10 @@ export default class DatabaseHelper {
                                 oldFileNames = Object.keys(
                                     oldDocument[name]
                                 ).filter(filter)
+                            for (const fileName:string of newFileNames)
+                                runUpdateHook(
+                                    model[name][type], newDocument[name],
+                                    oldDocument && oldDocument[name], fileName)
                             if ([undefined, null].includes(
                                 model[name][type].default
                             )) {
@@ -550,7 +561,10 @@ export default class DatabaseHelper {
                                                     fileName]
                         }
                     else {
-                        runHooks(model[name], newDocument, oldDocument, name)
+                        runCreateHook(
+                            model[name], newDocument, oldDocument, name)
+                        runUpdateHook(
+                            model[name], newDocument, oldDocument, name)
                         if ([undefined, null].includes(model[name].default)) {
                             if (!(model[name].nullable || (
                                 newDocument.hasOwnProperty(name) ||
@@ -591,127 +605,149 @@ export default class DatabaseHelper {
                 modelConfiguration.updateStrategy === 'incremental'
             )
                 // region remove new data which already exists
-                for (const propertyName:string in newDocument)
+                for (const name:string in newDocument)
                     if (
-                        newDocument.hasOwnProperty(propertyName) &&
-                        propertyName !== modelConfiguration
-                            .specialPropertyNames.type &&
-                        oldDocument.hasOwnProperty(propertyName) &&
+                        newDocument.hasOwnProperty(name) &&
+                        name !== modelConfiguration.specialPropertyNames.type &&
+                        oldDocument.hasOwnProperty(name) &&
                         !modelConfiguration.reservedPropertyNames.includes(
-                            propertyName
+                            name
                         ) && (
-                            oldDocument[propertyName] === newDocument[
-                                propertyName
-                            ] || serialize(
-                                oldDocument[propertyName]
-                            ) === serialize(newDocument[propertyName])
+                            oldDocument[name] === newDocument[name] ||
+                                serialize(
+                                    oldDocument[name]
+                                ) === serialize(newDocument[name])
                         )
                     ) {
-                        delete newDocument[propertyName]
+                        delete newDocument[name]
                         continue
                     }
                 // endregion
-            for (const propertyName:string in newDocument)
+            for (const name:string in newDocument)
                 if (newDocument.hasOwnProperty(
-                    propertyName
+                    name
                 ) && !modelConfiguration.reservedPropertyNames.includes(
-                    propertyName
+                    name
                 )) {
-                    if (!model.hasOwnProperty(propertyName))
+                    if (!model.hasOwnProperty(name))
                         if (modelConfiguration.updateStrategy === 'migrate') {
-                            delete newDocument[propertyName]
+                            delete newDocument[name]
                             continue
                         } else
                             /* eslint-disable no-throw-literal */
                             throw {
                                 forbidden: 'Property: Given property "' +
-                                    `${propertyName}" isn't specified in ` +
+                                    `${name}" isn't specified in ` +
                                     `model "${modelName}".`
                             }
                             /* eslint-enable no-throw-literal */
-                    const propertySpecification:PropertySpecification =
-                        model[propertyName]
-                    // region writable/mutable
-                    if (!propertySpecification.writable)
-                        if (oldDocument)
-                            if (oldDocument.hasOwnProperty(
-                                propertyName
-                            ) && serialize(
-                                newDocument[propertyName]
-                            ) === serialize(oldDocument[propertyName])) {
+                    // region writable/mutable/nullable
+                    const checkWriteableMutableNullable:Function = (
+                        propertySpecification:PropertySpecification,
+                        newDocument:PlainObject, oldDocument:?PlainObject,
+                        name:string
+                    ):void => {
+                        // region writable
+                        if (!propertySpecification.writable)
+                            if (oldDocument)
+                                if (oldDocument.hasOwnProperty(
+                                    name
+                                ) && serialize(
+                                    newDocument[name]
+                                ) === serialize(oldDocument[name])) {
+                                    if (
+                                        name !== '_id' &&
+                                        modelConfiguration.updateStrategy ===
+                                            'incremental'
+                                    )
+                                        delete newDocument[name]
+                                    continue
+                                } else
+                                    /* eslint-disable no-throw-literal */
+                                    throw {
+                                        forbidden: 'Readonly: Property "' +
+                                            `${name}" is not writable (old ` +
+                                            `document "` +
+                                            `${serialize(oldDocument)}").`
+                                    }
+                                    /* eslint-enable no-throw-literal */
+                            else
+                                /* eslint-disable no-throw-literal */
+                                throw {
+                                    forbidden: `Readonly: Property "${name}"` +
+                                    ' is not writable.'
+                                }
+                                /* eslint-enable no-throw-literal */
+                        // endregion
+                        // region mutable
+                        if (
+                            !propertySpecification.mutable && oldDocument &&
+                            oldDocument.hasOwnProperty(name)
+                        )
+                            if (serialize(newDocument[name]) === serialize(
+                                oldDocument[name]
+                            )) {
                                 if (
-                                    propertyName !== '_id' &&
                                     modelConfiguration.updateStrategy ===
-                                        'incremental'
+                                        'incremental' &&
+                                    !modelConfiguration.reservedPropertyNames
+                                        .includes(name)
                                 )
-                                    delete newDocument[propertyName]
+                                    delete newDocument[name]
                                 continue
                             } else
                                 /* eslint-disable no-throw-literal */
                                 throw {
-                                    forbidden: 'Readonly: Property "' +
-                                        `${propertyName}" is not writable ` +
-                                        `(old document "` +
+                                    forbidden: `Immutable: Property "${name}` +
+                                        '" is not writable (old document "' +
                                         `${serialize(oldDocument)}").`
                                 }
                                 /* eslint-enable no-throw-literal */
-                        else
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden: 'Readonly: Property "' +
-                                    `${propertyName}" is not writable.`
-                            }
-                            /* eslint-enable no-throw-literal */
+                        // endregion
+                        // region nullable
+                        if (newDocument[name] === null)
+                            if (propertySpecification.nullable) {
+                                delete newDocument[name]
+                                continue
+                            } else
+                                /* eslint-disable no-throw-literal */
+                                throw {
+                                    forbidden: `NotNull: Property "${name}" ` +
+                                        'should not by "null".'
+                                }
+                                /* eslint-enable no-throw-literal */
+                        // endregion
+                    }
                     if (
-                        !propertySpecification.mutable && oldDocument &&
-                        oldDocument.hasOwnProperty(propertyName)
+                        modelConfiguration.specialPropertyNames.attachments ===
+                        name
                     )
-                        if (serialize(newDocument[propertyName]) === serialize(
-                            oldDocument[propertyName]
-                        )) {
-                            if (
-                                modelConfiguration.updateStrategy ===
-                                    'incremental' &&
-                                !modelConfiguration.reservedPropertyNames
-                                    .includes(propertyName)
-                            )
-                                delete newDocument[propertyName]
-                            continue
-                        } else
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden: 'Immutable: Property "' +
-                                    `${propertyName}" is not writable (old ` +
-                                    `document "${serialize(oldDocument)}").`
+                        for (const fileName:string of newDocument[name])
+                            for (const type:string in model[name]) {
+                                if (!model[name].hasOwnProperty(type))
+                                    continue
+                                if ((new RegExp(type)).test(fileName)) {
+                                    checkWriteableMutableNullable(
+                                        model[name][type], newDocument,
+                                        oldDocument, fileName)
+                                    break
+                                }
                             }
-                            /* eslint-enable no-throw-literal */
-                    // endregion
-                    // region nullable
-                    if (newDocument[propertyName] === null)
-                        if (propertySpecification.nullable) {
-                            delete newDocument[propertyName]
-                            continue
-                        } else
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden: 'NotNull: Property "' +
-                                    `${propertyName}" should not by "null".`
-                            }
-                            /* eslint-enable no-throw-literal */
+                    else
+                        checkWriteableMutableNullable(
+                            model[name], newDocument, oldDocument, name)
                     // endregion
                     if (
                         typeof propertySpecification.type === 'string' &&
                         propertySpecification.type.endsWith('[]')
                     ) {
-                        if (!Array.isArray(newDocument[propertyName]))
+                        if (!Array.isArray(newDocument[name]))
                             /* eslint-disable no-throw-literal */
                             throw {
                                 forbidden: 'PropertyType: Property "' +
-                                    `${propertyName}" isn't of type "array ` +
-                                    `-> ${propertySpecification.type}" (` +
-                                    `given "` +
-                                    `${serialize(newDocument[propertyName])}` +
-                                    '").'
+                                    `${name}" isn't of type "array -> ` +
+                                    `${propertySpecification.type}" (given "` +
+                                    `${serialize(newDocument[name])}").`
                             }
                             /* eslint-enable no-throw-literal */
                         // IgnoreTypeCheck
@@ -729,30 +765,25 @@ export default class DatabaseHelper {
                                     propertySpecificationCopy[key] =
                                         propertySpecification[key]
                         let index:number = 0
-                        for (const value:any of newDocument[
-                            propertyName
-                        ].slice()) {
-                            newDocument[propertyName][index] =
-                                checkPropertyContent(
-                                    value,
-                                    `${index + 1}. value in ${propertyName}`,
-                                    propertySpecificationCopy)
-                            if (newDocument[propertyName][index] === null)
-                                newDocument[propertyName].splice(index, 1)
+                        for (const value:any of newDocument[name].slice()) {
+                            newDocument[name][index] = checkPropertyContent(
+                                value, `${index + 1}. value in ${name}`,
+                                propertySpecificationCopy)
+                            if (newDocument[name][index] === null)
+                                newDocument[name].splice(index, 1)
                             index += 1
                         }
                     } else if (
-                        propertyName !==
+                        name !==
                         modelConfiguration.specialPropertyNames.attachments
                     ) {
-                        newDocument[propertyName] = checkPropertyContent(
-                            newDocument[propertyName], propertyName,
-                            propertySpecification,
+                        newDocument[name] = checkPropertyContent(
+                            newDocument[name], name, propertySpecification,
                             oldDocument && oldDocument.hasOwnProperty(
-                                propertyName
-                            ) && oldDocument[propertyName] || undefined)
-                        if (newDocument[propertyName] === null)
-                            delete newDocument[propertyName]
+                                name
+                            ) && oldDocument[name] || undefined)
+                        if (newDocument[name] === null)
+                            delete newDocument[name]
                     }
                 }
             // / region constraint
