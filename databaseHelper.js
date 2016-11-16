@@ -827,8 +827,8 @@ export default class DatabaseHelper {
                 for (const type:string in attachmentToTypeMapping) {
                     if (!attachmentToTypeMapping.hasOwnProperty(type))
                         continue
-                    const numberOfAttachments:number = Object.keys(
-                        attachmentToTypeMapping[type])
+                    const numberOfAttachments:number =
+                        attachmentToTypeMapping[type].length
                     if (numberOfAttachments > model[name][type].maximum)
                         /* eslint-disable no-throw-literal */
                         throw {
@@ -854,7 +854,6 @@ export default class DatabaseHelper {
                     ]) {
                         if (!([null, undefined].includes(
                             model[name][type].regularExpressionPattern
-                        // IgnoreTypeCheck
                         ) || (new RegExp(
                             model[name][type].regularExpressionPattern
                         )).test(fileName)))
@@ -863,7 +862,6 @@ export default class DatabaseHelper {
                                 forbidden: 'AttachmentName: given ' +
                                     `attachment name "${fileName}" ` +
                                     `doesn't satisfy specified regular ` +
-                                    // IgnoreTypeCheck
                                     'expression pattern "' + model[name][
                                         type
                                     ].regularExpressionPattern + '" from ' +
@@ -876,7 +874,6 @@ export default class DatabaseHelper {
                         newAttachments[fileName].hasOwnProperty(
                             'content_type'
                         ) && newAttachments[fileName].content_type && (
-                            // IgnoreTypeCheck
                             new RegExp(model[name][
                                 type
                             ].contentTypeRegularExpressionPattern)
