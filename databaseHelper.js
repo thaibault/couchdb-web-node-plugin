@@ -642,11 +642,12 @@ export default class DatabaseHelper {
                             }
                             /* eslint-enable no-throw-literal */
                     // region writable/mutable/nullable
+                    console.log('AA', name)
                     const checkWriteableMutableNullable:Function = (
                         propertySpecification:PropertySpecification,
                         newDocument:PlainObject, oldDocument:?PlainObject,
                         name:string
-                    ):void => {
+                    ):boolean => {
                         // region writable
                         if (!propertySpecification.writable)
                             if (oldDocument)
@@ -661,7 +662,7 @@ export default class DatabaseHelper {
                                             'incremental'
                                     )
                                         delete newDocument[name]
-                                    continue
+                                    return true
                                 } else
                                     /* eslint-disable no-throw-literal */
                                     throw {
@@ -694,7 +695,7 @@ export default class DatabaseHelper {
                                         .includes(name)
                                 )
                                     delete newDocument[name]
-                                continue
+                                return true
                             } else
                                 /* eslint-disable no-throw-literal */
                                 throw {
@@ -708,7 +709,7 @@ export default class DatabaseHelper {
                         if (newDocument[name] === null)
                             if (propertySpecification.nullable) {
                                 delete newDocument[name]
-                                continue
+                                return true
                             } else
                                 /* eslint-disable no-throw-literal */
                                 throw {
@@ -722,20 +723,25 @@ export default class DatabaseHelper {
                         modelConfiguration.specialPropertyNames.attachments ===
                         name
                     )
-                        for (const fileName:string of newDocument[name])
+                        for (const fileName:string of newDocument[name]) {
+                            let stop:boolean = false
                             for (const type:string in model[name]) {
                                 if (!model[name].hasOwnProperty(type))
                                     continue
                                 if ((new RegExp(type)).test(fileName)) {
-                                    checkWriteableMutableNullable(
+                                    stop = checkWriteableMutableNullable(
                                         model[name][type], newDocument,
                                         oldDocument, fileName)
                                     break
                                 }
                             }
-                    else
-                        checkWriteableMutableNullable(
-                            model[name], newDocument, oldDocument, name)
+                            if (stop)
+                                break
+                        }
+                    else if (checkWriteableMutableNullable(
+                        model[name], newDocument, oldDocument, name
+                    ))
+                        break
                     // endregion
                     if (
                         typeof propertySpecification.type === 'string' &&
