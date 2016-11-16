@@ -590,6 +590,7 @@ export default class DatabaseHelper {
                 oldDocument &&
                 modelConfiguration.updateStrategy === 'incremental'
             )
+                // region remove new data which already exists
                 for (const propertyName:string in newDocument)
                     if (
                         newDocument.hasOwnProperty(propertyName) &&
@@ -609,7 +610,7 @@ export default class DatabaseHelper {
                         delete newDocument[propertyName]
                         continue
                     }
-            console.log('A')
+                // endregion
             for (const propertyName:string in newDocument)
                 if (newDocument.hasOwnProperty(
                     propertyName
@@ -754,7 +755,6 @@ export default class DatabaseHelper {
                             delete newDocument[propertyName]
                     }
                 }
-            console.log('B')
             // / region constraint
             const constraintParameterNames:Array<string> = [
                 'checkDocument', 'checkPropertyContent', 'code', 'model',
