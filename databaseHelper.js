@@ -475,9 +475,11 @@ export default class DatabaseHelper {
                     if (
                         modelConfiguration.specialPropertyNames.attachments ===
                         name
-                    )
+                    ) {
                         for (const type:string in model[name]) {
-                            if (!newDocument.hasOwnProperty(name))
+                            if (!newDocument.hasOwnProperty(
+                                name
+                            ) || newDocument[name] === null)
                                 newDocument[name] = {}
                             if (oldDocument && !oldDocument.hasOwnProperty(
                                 name
@@ -560,7 +562,7 @@ export default class DatabaseHelper {
                                                 model[name][type].default[
                                                     fileName]
                         }
-                    else {
+                    } else {
                         runCreateHook(
                             model[name], newDocument, oldDocument, name)
                         runUpdateHook(
@@ -641,8 +643,9 @@ export default class DatabaseHelper {
                                     `model "${modelName}".`
                             }
                             /* eslint-enable no-throw-literal */
+                    const propertySpecification:PropertySpecification = model[
+                        name]
                     // region writable/mutable/nullable
-                    console.log('AA', name)
                     const checkWriteableMutableNullable:Function = (
                         propertySpecification:PropertySpecification,
                         newDocument:PlainObject, oldDocument:?PlainObject,
@@ -722,26 +725,24 @@ export default class DatabaseHelper {
                     if (
                         modelConfiguration.specialPropertyNames.attachments ===
                         name
-                    )
-                        for (const fileName:string of newDocument[name]) {
-                            let stop:boolean = false
-                            for (const type:string in model[name]) {
-                                if (!model[name].hasOwnProperty(type))
-                                    continue
-                                if ((new RegExp(type)).test(fileName)) {
-                                    stop = checkWriteableMutableNullable(
-                                        model[name][type], newDocument,
-                                        oldDocument, fileName)
-                                    break
-                                }
-                            }
-                            if (stop)
-                                break
-                        }
-                    else if (checkWriteableMutableNullable(
-                        model[name], newDocument, oldDocument, name
+                    ) {
+                        for (const fileName:string in newDocument[name])
+                            if (newDocument[name].hasOwnProperty(fileName))
+                                for (const type:string in model[name])
+                                    if (
+                                        model[name].hasOwnProperty(type) &&
+                                        (new RegExp(type)).test(fileName)
+                                    ) {
+                                        checkWriteableMutableNullable(
+                                            model[name][type], newDocument,
+                                            oldDocument, fileName)
+                                        break
+                                    }
+                        continue
+                    } else if (checkWriteableMutableNullable(
+                        propertySpecification, newDocument, oldDocument, name
                     ))
-                        break
+                        continue
                     // endregion
                     if (
                         typeof propertySpecification.type === 'string' &&
@@ -779,10 +780,7 @@ export default class DatabaseHelper {
                                 newDocument[name].splice(index, 1)
                             index += 1
                         }
-                    } else if (
-                        name !==
-                        modelConfiguration.specialPropertyNames.attachments
-                    ) {
+                    } else {
                         newDocument[name] = checkPropertyContent(
                             newDocument[name], name, propertySpecification,
                             oldDocument && oldDocument.hasOwnProperty(
@@ -930,29 +928,30 @@ export default class DatabaseHelper {
                 if (Object.keys(newAttachments).length === 0)
                     delete newDocument[name]
                 const attachmentToTypeMapping:{[key:string]:Array<string>} = {}
-                for (const attachmentName:string in newAttachments) {
-                    let matched:boolean = false
-                    for (const type:string in model[name])
-                        if ((new RegExp(type)).test(attachmentName)) {
-                            if (attachmentToTypeMapping.hasOwnProperty(type))
+                for (const type:string in model[name])
+                    if (model[name].hasOwnProperty(type))
+                        attachmentToTypeMapping[type] = []
+                for (const attachmentName:string in newAttachments)
+                    if (newAttachments.hasOwnProperty(attachmentName)) {
+                        let matched:boolean = false
+                        for (const type:string in model[name])
+                            if ((new RegExp(type)).test(attachmentName)) {
                                 attachmentToTypeMapping[type].push(
                                     attachmentName)
-                            else
-                                attachmentToTypeMapping[type] = [
-                                    attachmentName]
-                            matched = true
-                            break
-                        }
-                    if (!matched)
-                        /* eslint-disable no-throw-literal */
-                        throw {
-                            forbidden: 'AttachmentTypeMatch: None of the ' +
-                                'specified attachment types ("' +
-                                Object.keys(model[name]).join('", "') +
-                                `") matches given one ("${attachmentName}").`
-                        }
-                        /* eslint-enable no-throw-literal */
-                }
+                                matched = true
+                                break
+                            }
+                        if (!matched)
+                            /* eslint-disable no-throw-literal */
+                            throw {
+                                forbidden: 'AttachmentTypeMatch: None of the' +
+                                    ' specified attachment types ("' +
+                                    Object.keys(model[name]).join('", "') +
+                                    '") matches given one ("' +
+                                    `${attachmentName}").`
+                            }
+                            /* eslint-enable no-throw-literal */
+                    }
                 for (const type:string in attachmentToTypeMapping) {
                     if (!attachmentToTypeMapping.hasOwnProperty(type))
                         continue
