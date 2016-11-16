@@ -596,18 +596,20 @@ export default class DatabaseHelper {
                         propertyName !== modelConfiguration
                             .specialPropertyNames.type &&
                         oldDocument.hasOwnProperty(propertyName) &&
-                        oldDocument[propertyName] === newDocument[
+                        !modelConfiguration.reservedPropertyNames.includes(
                             propertyName
-                        ] || serialize(
-                            oldDocument[propertyName]
-                        ) === serialize(
-                            newDocument[propertyName]
-                        ) && !modelConfiguration.reservedPropertyNames
-                            .includes(propertyName)
+                        ) && (
+                            oldDocument[propertyName] === newDocument[
+                                propertyName
+                            ] || serialize(
+                                oldDocument[propertyName]
+                            ) === serialize(newDocument[propertyName])
+                        )
                     ) {
                         delete newDocument[propertyName]
                         continue
                     }
+            console.log('A')
             for (const propertyName:string in newDocument)
                 if (newDocument.hasOwnProperty(
                     propertyName
@@ -752,6 +754,7 @@ export default class DatabaseHelper {
                             delete newDocument[propertyName]
                     }
                 }
+            console.log('B')
             // / region constraint
             const constraintParameterNames:Array<string> = [
                 'checkDocument', 'checkPropertyContent', 'code', 'model',

@@ -421,75 +421,12 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 [{'-type': 'Test', _attachments: {}}], {models: {Test: {}}},
                 'Property'
             ],
-            [
-                [{'-type': 'Test'}],
-                {models: {Test: {_attachments: {'.+': {
-                    minimum: 1, nullable: false
-                }}}}}, 'MissingProperty'
-            ],
-            [
-                [{'-type': 'Test', _attachments: null}],
-                {models: {Test: {_attachments: {'.+': {
-                    minimum: 1, nullable: false
-                }}}}}, 'NotNull'
-            ],
-            [
-                [{'-type': 'Test', _attachments: {
-                    /* eslint-disable camelcase */
-                    a: {data: '', content_type: 'text/plain'},
-                    b: {data: '', content_type: 'text/plain'}
-                    /* eslint-enable camelcase */
-                }}],
-                {models: {Test: {_attachments: {'.+': {maximum: 1}}}}},
-                'AttachmentMaximum'
-            ],
-            [
-                [{'-type': 'Test', _attachments: {}}],
-                {models: {Test: {_attachments: {'.+': {
-                    minimum: 1, nullable: false
-                }}}}}, 'AttachmentMinimum'
-            ],
-            [
-                [{'-type': 'Test', _attachments: {test: {
-                    /* eslint-disable camelcase */
-                    data: '', content_type: 'text/plain'
-                    /* eslint-enable camelcase */
-                }}}],
-                {models: {Test: {_attachments: {'.+': {minimum: 2}}}}},
-                'AttachmentMinimum'
-            ],
-            [
-                [{'-type': 'Test', _attachments: {a: {
-                    /* eslint-disable camelcase */
-                    data: '', content_type: 'text/plain'
-                    /* eslint-enable camelcase */
-                }}}],
-                {models: {Test: {_attachments: {'.+': {
-                    regularExpressionPattern: /b/g
-                }}}}}, 'AttachmentName'
-            ],
-            [
-                [{'-type': 'Test', _attachments: {
-                    /* eslint-disable camelcase */
-                    a: {data: '', content_type: 'text/plain'},
-                    b: {data: '', content_type: 'text/plain'}
-                    /* eslint-enable camelcase */
-                }}],
-                {models: {Test: {_attachments: {'.+': {
-                    regularExpressionPattern: /a/
-                }}}}}, 'AttachmentName'
-            ],
-            [
-                [{'-type': 'Test', _attachments: {
-                    /* eslint-disable camelcase */
-                    a: {data: '', content_type: 'text/plain'},
-                    b: {data: '', content_type: 'image/jpg'}
-                    /* eslint-enable camelcase */
-                }}],
-                {models: {Test: {_attachments: {'.+': {
-                    contentTypeRegularExpressionPattern: /text\/plain/
-                }}}}}, 'AttachmentContentType'
-            ]
+            [[{'-type': 'Test'}], {models: {Test: {_attachments: {'.+': {
+                minimum: 1, nullable: false
+            }}}}}, 'MissingAttachment'],
+            [[{'-type': 'Test', _attachments: null}], {models: {Test: {
+                _attachments: {'.+': {minimum: 1, nullable: false}}
+            }}}, 'NotNull']
             // endregion
         ]) {
             if (test.length < 3)
@@ -1344,6 +1281,8 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
             }]
             // endregion
         ]) {
+            // TODO
+            break
             const models:Models = Helper.extendModels(Tools.extendObject(
                 true, {}, defaultModelSpecification, test[1]))
             const modelConfiguration:ModelConfiguration = Tools.extendObject(
