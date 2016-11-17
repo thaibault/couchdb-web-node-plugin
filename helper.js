@@ -174,10 +174,25 @@ export default class Helper {
             if (models.hasOwnProperty(modelName))
                 for (const propertyName:string in models[modelName])
                     if (models[modelName].hasOwnProperty(propertyName))
-                        models[modelName][propertyName] = Tools.extendObject(
-                            true, {},
-                            modelConfiguration.default.propertySpecification,
-                            models[modelName][propertyName])
+                        if (propertyName === modelConfiguration
+                            .specialPropertyNames.attachments
+                        )
+                            for (const type:string in models[modelName][
+                                propertyName
+                            ])
+                                models[modelName][propertyName][
+                                    type
+                                ] = Tools.extendObject(
+                                    true, {}, modelConfiguration.default
+                                        .propertySpecification,
+                                    models[modelName][propertyName][type])
+                        else
+                            models[modelName][
+                                propertyName
+                            ] = Tools.extendObject(
+                                true, {}, modelConfiguration.default
+                                    .propertySpecification,
+                                models[modelName][propertyName])
         return models
     }
     // endregion

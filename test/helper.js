@@ -113,6 +113,25 @@ QUnit.test('extendModels', (assert:Object):void => {
         [
             {models: {_base: {b: {}}, Test: {a: {}}}},
             {Test: {a: {}, b: {}}}
+        ],
+        [
+            {
+                default: {propertySpecification: {maximum: 3}},
+                models: {_base: {}, Test: {a: {}}}
+            },
+            {Test: {a: {maximum: 3}}}
+        ],
+        [
+            {models: {Test: {_attachments: {}}}},
+            {Test: {_attachments: {}}}
+        ],
+        [
+            {
+                default: {propertySpecification: {minimum: 1}},
+                models: {Test: {_attachments: {a: {}}}},
+                specialPropertyNames: {attachments: '_attachments'}
+            },
+            {Test: {_attachments: {a: {minimum: 1}}}}
         ]
     ])
         assert.deepEqual(Helper.extendModels(test[0]), test[1])

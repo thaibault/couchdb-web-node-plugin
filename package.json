@@ -154,12 +154,7 @@
           "_allowedRoles": [
             "users"
           ],
-          "_attachments": {
-            "contentTypeRegularExpressionPattern": ".+/.+",
-            "maximum": 0,
-            "minimum": 0,
-            "type": "_attachments"
-          },
+          "_attachments": {},
           "_id": {
             "nullable": false,
             "mutable": false

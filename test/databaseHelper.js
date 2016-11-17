@@ -421,74 +421,95 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 [{'-type': 'Test', _attachments: {}}], {models: {Test: {}}},
                 'Property'
             ],
-            [
-                [{'-type': 'Test'}],
-                {models: {Test: {_attachments: {
-                    minimum: 1, nullable: false
-                }}}}, 'MissingProperty'
-            ],
-            [
-                [{'-type': 'Test', _attachments: null}],
-                {models: {Test: {_attachments: {
-                    minimum: 1, nullable: false
-                }}}}, 'NotNull'
-            ],
+            [[{'-type': 'Test'}], {models: {Test: {_attachments: {'.*': {
+                minimum: 1, nullable: false
+            }}}}}, 'MissingAttachment'],
+            [[{'-type': 'Test', _attachments: {
+                a: {data: '', content_type: 'text/plain'}
+            }}], {models: {Test: {_attachments: {
+                a: {minimum: 1, nullable: false},
+                b: {minimum: 1, nullable: false}
+            }}}}, 'MissingAttachment'],
+            [[{'-type': 'Test'}], {models: {Test: {_attachments: {a: {
+                minimum: 1, nullable: false
+            }}}}}, 'MissingAttachment'],
+            [[{'-type': 'Test', _attachments: null}], {models: {Test: {
+                _attachments: {'.*': {minimum: 1, nullable: false}}
+            }}}, 'MissingAttachment'],
             [
                 [{'-type': 'Test', _attachments: {
-                    /* eslint-disable camelcase */
+                    // eslint-disable camelcase
                     a: {data: '', content_type: 'text/plain'},
                     b: {data: '', content_type: 'text/plain'}
-                    /* eslint-enable camelcase */
+                    // eslint-enable camelcase
                 }}],
-                {models: {Test: {_attachments: {maximum: 1}}}},
+                {models: {Test: {_attachments: {'.*': {maximum: 1}}}}},
                 'AttachmentMaximum'
             ],
             [
                 [{'-type': 'Test', _attachments: {}}],
-                {models: {Test: {_attachments: {
+                {models: {Test: {_attachments: {'.*': {
                     minimum: 1, nullable: false
-                }}}}, 'AttachmentMinimum'
+                }}}}}, 'MissingAttachment'
+            ],
+            [
+                [{'-type': 'Test', _attachments: {a: {
+                    // eslint-disable camelcase
+                    data: '', content_type: 'text/plain'
+                    // eslint-enable camelcase
+                }}}],
+                {models: {Test: {_attachments: {b: {}}}}},
+                'AttachmentTypeMatch'
+            ],
+            [
+                [{'-type': 'Test', _attachments: {a: {
+                    // eslint-disable camelcase
+                    data: '', content_type: 'text/plain'
+                    // eslint-enable camelcase
+                }}}],
+                {models: {Test: {_attachments: {b: {}, c: {}}}}},
+                'AttachmentTypeMatch'
             ],
             [
                 [{'-type': 'Test', _attachments: {test: {
-                    /* eslint-disable camelcase */
+                    // eslint-disable camelcase
                     data: '', content_type: 'text/plain'
-                    /* eslint-enable camelcase */
+                    // eslint-enable camelcase
                 }}}],
-                {models: {Test: {_attachments: {minimum: 2}}}},
+                {models: {Test: {_attachments: {'.*': {minimum: 2}}}}},
                 'AttachmentMinimum'
             ],
             [
                 [{'-type': 'Test', _attachments: {a: {
-                    /* eslint-disable camelcase */
+                    // eslint-disable camelcase
                     data: '', content_type: 'text/plain'
-                    /* eslint-enable camelcase */
+                    // eslint-enable camelcase
                 }}}],
-                {models: {Test: {_attachments: {
+                {models: {Test: {_attachments: {'.*': {
                     regularExpressionPattern: /b/g
-                }}}}, 'AttachmentName'
+                }}}}}, 'AttachmentName'
             ],
             [
                 [{'-type': 'Test', _attachments: {
-                    /* eslint-disable camelcase */
+                    // eslint-disable camelcase
                     a: {data: '', content_type: 'text/plain'},
                     b: {data: '', content_type: 'text/plain'}
-                    /* eslint-enable camelcase */
+                    // eslint-enable camelcase
                 }}],
-                {models: {Test: {_attachments: {
+                {models: {Test: {_attachments: {'.*': {
                     regularExpressionPattern: /a/
-                }}}}, 'AttachmentName'
+                }}}}}, 'AttachmentName'
             ],
             [
                 [{'-type': 'Test', _attachments: {
-                    /* eslint-disable camelcase */
+                    // eslint-disable camelcase
                     a: {data: '', content_type: 'text/plain'},
                     b: {data: '', content_type: 'image/jpg'}
-                    /* eslint-enable camelcase */
+                    // eslint-enable camelcase
                 }}],
-                {models: {Test: {_attachments: {
+                {models: {Test: {_attachments: {'.*': {
                     contentTypeRegularExpressionPattern: /text\/plain/
-                }}}}, 'AttachmentContentType'
+                }}}}}, 'AttachmentContentType'
             ]
             // endregion
         ]) {
@@ -510,7 +531,7 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                     const result:boolean = error.forbidden.startsWith(
                         `${test[2]}:`)
                     if (!result)
-                        console.log(
+                        console.error(
                             `Error "${error.forbidden}" doesn't start with "` +
                             `${test[2]}:". Given arguments: "` +
                             parameter.map((value:any):string =>
@@ -519,7 +540,7 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                     return result
                 }
                 // IgnoreTypeCheck
-                console.log(`Unexpeced error "${error}" was thrown.`)
+                console.error(`Unexpeced error "${error}" was thrown.`)
                 return false
             })
         }
@@ -543,7 +564,14 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 models: {Test: {}}
             }, {
                 fillUp: {'-type': 'Test', _rev: 1},
-                incremental: {},
+                incremental: {_rev: 1},
+                '': {'-type': 'Test', _rev: 1}
+            }],
+            [[{'-type': 'Test', _rev: 1}, {'-type': 'Test', _rev: 1}], {
+                models: {Test: {}}
+            }, {
+                fillUp: {'-type': 'Test', _rev: 1},
+                incremental: {_rev: 1},
                 '': {'-type': 'Test', _rev: 1}
             }],
             // endregion
@@ -594,12 +622,69 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 incremental: {'-type': 'Test', a: '2'},
                 '': {'-type': 'Test', a: '2'}
             }],
+            [[{'-type': 'Test', _attachments: {test: {
+                // eslint-disable camelcase
+                data: 'payload', content_type: 'text/plain'
+                // eslint-enable camelcase
+            }}}], {models: {Test: {_attachments: {'.*': {
+                onCreateExpression:
+                    `(newDocument[name].data += ' footer') && ` +
+                    'newDocument[name]'
+            }}}}}, {
+                fillUp: {'-type': 'Test', _attachments: {test: {
+                    // eslint-disable camelcase
+                    data: 'payload footer', content_type: 'text/plain'
+                    // eslint-enable camelcase
+                }}},
+                incremental: {'-type': 'Test', _attachments: {test: {
+                    // eslint-disable camelcase
+                    data: 'payload footer', content_type: 'text/plain'
+                    // eslint-enable camelcase
+                }}},
+                '': {'-type': 'Test', _attachments: {test: {
+                    // eslint-disable camelcase
+                    data: 'payload footer', content_type: 'text/plain'
+                    // eslint-enable camelcase
+                }}}
+            }],
+            [[{'-type': 'Test', _attachments: {test: {
+                // eslint-disable camelcase
+                data: 'payload', content_type: 'text/plain'
+                // eslint-enable camelcase
+            }}}, {'-type': 'Test'}], {models: {Test: {_attachments: {'.*': {
+                onCreateExpression:
+                    `(newDocument[name].data += ' footer') && ` +
+                    'newDocument[name]'
+            }}}}}, {
+                fillUp: {'-type': 'Test', _attachments: {test: {
+                    // eslint-disable camelcase
+                    data: 'payload', content_type: 'text/plain'
+                    // eslint-enable camelcase
+                }}},
+                incremental: {_attachments: {test: {
+                    // eslint-disable camelcase
+                    data: 'payload', content_type: 'text/plain'
+                    // eslint-enable camelcase
+                }}},
+                '': {'-type': 'Test', _attachments: {test: {
+                    // eslint-disable camelcase
+                    data: 'payload', content_type: 'text/plain'
+                    // eslint-enable camelcase
+                }}}
+            }],
             [[{'-type': 'Test', a: ''}], {models: {Test: {a: {
                 onCreateExecution: `return '2'`
             }}}}, {
                 fillUp: {'-type': 'Test', a: '2'},
                 incremental: {'-type': 'Test', a: '2'},
                 '': {'-type': 'Test', a: '2'}
+            }],
+            [[{'-type': 'Test', a: ''}, {'-type': 'Test', a: ''}], {models: {
+                Test: {a: {onCreateExecution: `return '2'`}}
+            }}, {
+                fillUp: {'-type': 'Test', a: ''},
+                incremental: {},
+                '': {'-type': 'Test', a: ''}
             }],
             [[{'-type': 'Test', a: ''}, {'-type': 'Test', a: ''}], {models: {
                 Test: {a: {onCreateExecution: `return '2'`}}
@@ -630,6 +715,66 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 fillUp: {'-type': 'Test', a: '2'},
                 incremental: {},
                 '': {'-type': 'Test', a: '2'}
+            }],
+            [[{'-type': 'Test', _attachments: {test: {
+                // eslint-disable camelcase
+                data: 'payload', content_type: 'text/plain'
+                // eslint-enable camelcase
+            }}}], {models: {Test: {_attachments: {'.*': {
+                onUpdateExpression:
+                    `(newDocument[name].data += ' footer') && ` +
+                    'newDocument[name]'
+            }}}}}, {
+                fillUp: {'-type': 'Test', _attachments: {test: {
+                    // eslint-disable camelcase
+                    data: 'payload footer', content_type: 'text/plain'
+                    // eslint-enable camelcase
+                }}},
+                incremental: {'-type': 'Test', _attachments: {test: {
+                    // eslint-disable camelcase
+                    data: 'payload footer', content_type: 'text/plain'
+                    // eslint-enable camelcase
+                }}},
+                '': {'-type': 'Test', _attachments: {test: {
+                    // eslint-disable camelcase
+                    data: 'payload footer', content_type: 'text/plain'
+                    // eslint-enable camelcase
+                }}}
+            }],
+            [[{'-type': 'Test', _attachments: {test: {
+                // eslint-disable camelcase
+                data: 'payload', content_type: 'text/plain'
+                // eslint-enable camelcase
+            }}}, {'-type': 'Test'}], {models: {Test: {_attachments: {'.*': {
+                onUpdateExpression:
+                    `(newDocument[name].data += ' footer') && ` +
+                    'newDocument[name]'
+            }}}}}, {
+                fillUp: {'-type': 'Test', _attachments: {test: {
+                    // eslint-disable camelcase
+                    data: 'payload footer', content_type: 'text/plain'
+                    // eslint-enable camelcase
+                }}},
+                incremental: {_attachments: {test: {
+                    // eslint-disable camelcase
+                    data: 'payload footer', content_type: 'text/plain'
+                    // eslint-enable camelcase
+                }}},
+                '': {'-type': 'Test', _attachments: {test: {
+                    // eslint-disable camelcase
+                    data: 'payload footer', content_type: 'text/plain'
+                    // eslint-enable camelcase
+                }}}
+            }],
+            [[{'-type': 'Test'}, {'-type': 'Test'}], {models: {Test: {
+                _attachments: {'.*': {onUpdateExpression:
+                    `(newDocument[name].data += ' footer') && ` +
+                    'newDocument[name]'
+                }}
+            }}}, {
+                fillUp: {'-type': 'Test'},
+                incremental: {},
+                '': {'-type': 'Test'}
             }],
             // / endregion
             // endregion
@@ -692,7 +837,31 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 incremental: {'-type': 'Test', a: '2'},
                 '': {'-type': 'Test', a: '2'}
             }],
-            // endregion
+            [[{'-type': 'Test'}], {models: {Test: {_attachments: {'.*': {
+                default: {test: {
+                    // eslint-disable camelcase
+                    data: '', content_type: 'text/plain'
+                    // eslint-enable camelcase
+                }},
+                nullable: false
+            }}}}}, {
+                fillUp: {'-type': 'Test', _attachments: {test: {
+                    // eslint-disable camelcase
+                    data: '', content_type: 'text/plain'
+                    // eslint-enable camelcase
+                }}},
+                incremental: {'-type': 'Test', _attachments: {test: {
+                    // eslint-disable camelcase
+                    data: '', content_type: 'text/plain'
+                    // eslint-enable camelcase
+                }}},
+                '': {'-type': 'Test', _attachments: {test: {
+                    // eslint-disable camelcase
+                    data: '', content_type: 'text/plain'
+                    // eslint-enable camelcase
+                }}}
+            }],
+            //  endregion
             // region property type
             [
                 [{'-type': 'Test', a: '2'}, {'-type': 'Test', a: '2'}],
@@ -1182,160 +1351,175 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
             }],
             // endregion
             // region attachments
-            [[{'-type': 'Test'}], {models: {Test: {_attachments: {
+            [[{'-type': 'Test'}], {models: {Test: {_attachments: {'.*': {
                 minimum: 1
-            }}}}, {
+            }}}}}, {
                 fillUp: {'-type': 'Test'},
                 incremental: {'-type': 'Test'},
                 '': {'-type': 'Test'}
             }],
             [[{'-type': 'Test', _attachments: {test: {
-                /* eslint-disable camelcase */
+                // eslint-disable camelcase
                 data: '', content_type: 'text/plain'
-                /* eslint-enable camelcase */
-            }}}], {models: {Test: {_attachments: {maximum: 1}}}}, {
+                // eslint-enable camelcase
+            }}}], {models: {Test: {_attachments: {'.*': {maximum: 1}}}}}, {
                 fillUp: {'-type': 'Test', _attachments: {test: {
-                    /* eslint-disable camelcase */
+                    // eslint-disable camelcase
                     content_type: 'text/plain', data: ''
-                    /* eslint-enable camelcase */
+                    // eslint-enable camelcase
                 }}},
                 incremental: {'-type': 'Test', _attachments: {test: {
-                    /* eslint-disable camelcase */
+                    // eslint-disable camelcase
                     content_type: 'text/plain', data: ''
-                    /* eslint-enable camelcase */
+                    // eslint-enable camelcase
                 }}},
                 '': {'-type': 'Test', _attachments: {test: {
-                    /* eslint-disable camelcase */
+                    // eslint-disable camelcase
                     content_type: 'text/plain', data: ''
-                    /* eslint-enable camelcase */
+                    // eslint-enable camelcase
                 }}}
             }],
             [[{'-type': 'Test', _attachments: {
-                /* eslint-disable camelcase */
+                // eslint-disable camelcase
                 a: {data: '', content_type: 'text/plain'},
                 b: {data: '', content_type: 'text/plain'}
-                /* eslint-enable camelcase */
-            }}], {models: {Test: {_attachments: {maximum: 2, minimum: 2}}}}, {
+                // eslint-enable camelcase
+            }}], {models: {Test: {_attachments: {'.*': {
+                maximum: 2, minimum: 2
+            }}}}}, {
                 fillUp: {'-type': 'Test', _attachments: {
-                    /* eslint-disable camelcase */
+                    // eslint-disable camelcase
                     a: {data: '', content_type: 'text/plain'},
                     b: {data: '', content_type: 'text/plain'}
-                    /* eslint-enable camelcase */
+                    // eslint-enable camelcase
                 }},
                 incremental: {'-type': 'Test', _attachments: {
-                    /* eslint-disable camelcase */
+                    // eslint-disable camelcase
                     a: {data: '', content_type: 'text/plain'},
                     b: {data: '', content_type: 'text/plain'}
-                    /* eslint-enable camelcase */
+                    // eslint-enable camelcase
                 }},
                 '': {'-type': 'Test', _attachments: {
-                    /* eslint-disable camelcase */
+                    // eslint-disable camelcase
                     a: {data: '', content_type: 'text/plain'},
                     b: {data: '', content_type: 'text/plain'}
-                    /* eslint-enable camelcase */
+                    // eslint-enable camelcase
                 }}
             }],
             [[{'-type': 'Test', _attachments: {
-                /* eslint-disable camelcase */
+                // eslint-disable camelcase
                 a: {data: '', content_type: 'text/plain'},
                 b: {data: '', content_type: 'text/plain'}
-                /* eslint-enable camelcase */
-            }}], {models: {Test: {_attachments: {
+                // eslint-enable camelcase
+            }}], {models: {Test: {_attachments: {'.*': {
                 maximum: 2, regularExpressionPattern: 'a|b'
-            }}}}, {
+            }}}}}, {
                 fillUp: {'-type': 'Test', _attachments: {
-                    /* eslint-disable camelcase */
+                    // eslint-disable camelcase
                     a: {data: '', content_type: 'text/plain'},
                     b: {data: '', content_type: 'text/plain'}
-                    /* eslint-enable camelcase */
+                    // eslint-enable camelcase
                 }},
                 incremental: {'-type': 'Test', _attachments: {
-                    /* eslint-disable camelcase */
+                    // eslint-disable camelcase
                     a: {data: '', content_type: 'text/plain'},
                     b: {data: '', content_type: 'text/plain'}
-                    /* eslint-enable camelcase */
+                    // eslint-enable camelcase
                 }},
                 '': {'-type': 'Test', _attachments: {
-                    /* eslint-disable camelcase */
+                    // eslint-disable camelcase
                     a: {data: '', content_type: 'text/plain'},
                     b: {data: '', content_type: 'text/plain'}
-                    /* eslint-enable camelcase */
+                    // eslint-enable camelcase
                 }}
             }],
             [[{'-type': 'Test', _attachments: {
-                /* eslint-disable camelcase */
+                // eslint-disable camelcase
                 a: {data: '', content_type: 'image/png'},
                 b: {data: '', content_type: 'image/jpeg'}
-                /* eslint-enable camelcase */
-            }}], {models: {Test: {_attachments: {
+                // eslint-enable camelcase
+            }}], {models: {Test: {_attachments: {'.*': {
                 contentTypeRegularExpressionPattern: /image\/.+/,
                 regularExpressionPattern: 'a|b'
-            }}}}, {
+            }}}}}, {
                 fillUp: {'-type': 'Test', _attachments: {
-                    /* eslint-disable camelcase */
+                    // eslint-disable camelcase
                     a: {data: '', content_type: 'image/png'},
                     b: {data: '', content_type: 'image/jpeg'}
-                    /* eslint-enable camelcase */
+                    // eslint-enable camelcase
                 }},
                 incremental: {'-type': 'Test', _attachments: {
-                    /* eslint-disable camelcase */
+                    // eslint-disable camelcase
                     a: {data: '', content_type: 'image/png'},
                     b: {data: '', content_type: 'image/jpeg'}
-                    /* eslint-enable camelcase */
+                    // eslint-enable camelcase
                 }},
                 '': {'-type': 'Test', _attachments: {
-                    /* eslint-disable camelcase */
+                    // eslint-disable camelcase
                     a: {data: '', content_type: 'image/png'},
                     b: {data: '', content_type: 'image/jpeg'}
-                    /* eslint-enable camelcase */
+                    // eslint-enable camelcase
                 }}
             }],
             [[{'-type': 'Test', _attachments: {
-                /* eslint-disable camelcase */
+                // eslint-disable camelcase
                 a: {data: '', content_type: 'image/png'}
-                /* eslint-enable camelcase */
+                // eslint-enable camelcase
             }}, {'-type': 'Test', _attachments: {
-                /* eslint-disable camelcase */
+                // eslint-disable camelcase
                 b: {data: '', content_type: 'image/jpeg'}
-                /* eslint-enable camelcase */
-            }}], {models: {Test: {_attachments: {}}}}, {
+                // eslint-enable camelcase
+            }}], {models: {Test: {_attachments: {'.*': {}}}}}, {
                 fillUp: {'-type': 'Test', _attachments: {
-                    /* eslint-disable camelcase */
+                    // eslint-disable camelcase
                     a: {data: '', content_type: 'image/png'},
                     b: {data: '', content_type: 'image/jpeg'}
-                    /* eslint-enable camelcase */
+                    // eslint-enable camelcase
                 }},
                 incremental: {_attachments: {
-                    /* eslint-disable camelcase */
+                    // eslint-disable camelcase
                     a: {data: '', content_type: 'image/png'}
-                    /* eslint-enable camelcase */
+                    // eslint-enable camelcase
                 }},
                 '': {'-type': 'Test', _attachments: {
-                    /* eslint-disable camelcase */
+                    // eslint-disable camelcase
                     a: {data: '', content_type: 'image/png'}
-                    /* eslint-enable camelcase */
+                    // eslint-enable camelcase
                 }}
             }],
             [[{'-type': 'Test', _attachments: {a: null}}, {
                 '-type': 'Test', _attachments: {a: {
-                    /* eslint-disable camelcase */
+                    // eslint-disable camelcase
                     data: '', content_type: 'image/jpeg'
-                    /* eslint-enable camelcase */
+                    // eslint-enable camelcase
                 }}
-            }], {models: {Test: {_attachments: {}}}}, {
+            }], {models: {Test: {_attachments: {'.*': {}}}}}, {
                 fillUp: {'-type': 'Test'},
                 incremental: {},
                 '': {'-type': 'Test'}
             }],
             [[{'-type': 'Test'}, {'-type': 'Test', _attachments: {a: {
-                /* eslint-disable camelcase */
+                // eslint-disable camelcase
                 data: '', content_type: 'image/jpeg'
-                /* eslint-enable camelcase */
-            }}}], {models: {Test: {_attachments: {}}}}, {
+                // eslint-enable camelcase
+            }}}], {models: {Test: {_attachments: {'.*': {}}}}}, {
                 fillUp: {'-type': 'Test', _attachments: {a: {
-                    /* eslint-disable camelcase */
+                    // eslint-disable camelcase
                     data: '', content_type: 'image/jpeg'
-                    /* eslint-enable camelcase */
+                    // eslint-enable camelcase
+                }}},
+                incremental: {},
+                '': {'-type': 'Test'}
+            }],
+            [[{'-type': 'Test'}, {'-type': 'Test', _attachments: {a: {
+                // eslint-disable camelcase
+                data: '', content_type: 'image/jpeg'
+                // eslint-enable camelcase
+            }}}], {models: {Test: {_attachments: {a: {}}}}}, {
+                fillUp: {'-type': 'Test', _attachments: {a: {
+                    // eslint-disable camelcase
+                    data: '', content_type: 'image/jpeg'
+                    // eslint-enable camelcase
                 }}},
                 incremental: {},
                 '': {'-type': 'Test'}
@@ -1392,6 +1576,30 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
         [
             [{'-type': 'Test', b: '3'}, {'-type': 'Test', a: '1'}],
             {models: {Test: {a: {default: '2'}}}}, {'-type': 'Test', a: '2'}
+        ],
+        [
+            [{'-type': 'Test'}, {'-type': 'Test', _attachments: {}}],
+            {models: {Test: {}}}, {'-type': 'Test'}
+        ],
+        [
+            [{'-type': 'Test'}, {'-type': 'Test', _attachments: {test: {
+                // eslint-disable camelcase
+                data: '', content_type: 'text/plain'
+                // eslint-enable camelcase
+            }}}],
+            {models: {Test: {}}}, {'-type': 'Test'}
+        ],
+        [
+            [{'-type': 'Test'}, {'-type': 'Test'}],
+            {models: {Test: {_attachments: {'.*': {default: {test: {
+                // eslint-disable camelcase
+                data: '', content_type: 'text/plain'
+                // eslint-enable camelcase
+            }}}}}}}, {'-type': 'Test', _attachments: {test: {
+                // eslint-disable camelcase
+                data: '', content_type: 'text/plain'
+                // eslint-enable camelcase
+            }}}
         ]
     ]) {
         const models:Models = Helper.extendModels(Tools.extendObject(
