@@ -162,8 +162,7 @@
             "mutable": false
           },
           "_rev": {
-            "nullable": false,
-            "writable": false
+            "mutable": false
           },
           "_revisions": {
             "writable": false
