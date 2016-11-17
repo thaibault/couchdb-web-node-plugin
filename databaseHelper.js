@@ -356,7 +356,7 @@ export default class DatabaseHelper {
                 // endregion
                 return newValue
             }
-            // region create hook
+            // / region create hook
             const runCreateHook:Function = (
                 propertySpecification:PropertySpecification,
                 newDocument:PlainObject, oldDocument:PlainObject, name:string
@@ -410,8 +410,8 @@ export default class DatabaseHelper {
                             }
                         }
             }
-            // endregion
-            // region update hook
+            // / endregion
+            // / region update hook
             const runUpdateHook:Function = (
                 propertySpecification:PropertySpecification,
                 newDocument:PlainObject, oldDocument:PlainObject, name:string
@@ -461,7 +461,7 @@ export default class DatabaseHelper {
                         }
                     }
             }
-            // endregion
+            // / endregion
             // endregion
             for (const name:string in model)
                 if (model.hasOwnProperty(name) && ![
@@ -530,7 +530,7 @@ export default class DatabaseHelper {
                                 if (
                                     modelConfiguration.updateStrategy ===
                                     'fillUp'
-                                )
+                                ) {
                                     if (oldFileNames.length > 0)
                                         for (
                                             const fileName:string of
@@ -548,10 +548,10 @@ export default class DatabaseHelper {
                                                 newDocument[name][fileName] =
                                                     model[name][type].default[
                                                         fileName]
-                                else if (
+                                } else if (
                                     modelConfiguration.updateStrategy ===
                                         'migrate' ||
-                                    !oldDocument
+                                    oldFileNames.length === 0
                                 )
                                     for (const fileName:string in model[
                                         name

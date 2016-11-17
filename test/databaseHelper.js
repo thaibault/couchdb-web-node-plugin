@@ -837,6 +837,30 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 incremental: {'-type': 'Test', a: '2'},
                 '': {'-type': 'Test', a: '2'}
             }],
+            [[{'-type': 'Test'}], {models: {Test: {_attachments: {'.*': {
+                default: {test: {
+                    // eslint-disable camelcase
+                    data: '', content_type: 'text/plain'
+                    // eslint-enable camelcase
+                }},
+                nullable: false
+            }}}}}, {
+                fillUp: {'-type': 'Test', _attachments: {test: {
+                    // eslint-disable camelcase
+                    data: '', content_type: 'text/plain'
+                    // eslint-enable camelcase
+                }}},
+                incremental: {'-type': 'Test', _attachments: {test: {
+                    // eslint-disable camelcase
+                    data: '', content_type: 'text/plain'
+                    // eslint-enable camelcase
+                }}},
+                '': {'-type': 'Test', _attachments: {test: {
+                    // eslint-disable camelcase
+                    data: '', content_type: 'text/plain'
+                    // eslint-enable camelcase
+                }}}
+            }],
             //  endregion
             // region property type
             [
@@ -1552,6 +1576,30 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
         [
             [{'-type': 'Test', b: '3'}, {'-type': 'Test', a: '1'}],
             {models: {Test: {a: {default: '2'}}}}, {'-type': 'Test', a: '2'}
+        ],
+        [
+            [{'-type': 'Test'}, {'-type': 'Test', _attachments: {}}],
+            {models: {Test: {}}}, {'-type': 'Test'}
+        ],
+        [
+            [{'-type': 'Test'}, {'-type': 'Test', _attachments: {test: {
+                // eslint-disable camelcase
+                data: '', content_type: 'text/plain'
+                // eslint-enable camelcase
+            }}}],
+            {models: {Test: {}}}, {'-type': 'Test'}
+        ],
+        [
+            [{'-type': 'Test'}, {'-type': 'Test'}],
+            {models: {Test: {_attachments: {'.*': {default: {test: {
+                // eslint-disable camelcase
+                data: '', content_type: 'text/plain'
+                // eslint-enable camelcase
+            }}}}}}}, {'-type': 'Test', _attachments: {test: {
+                // eslint-disable camelcase
+                data: '', content_type: 'text/plain'
+                // eslint-enable camelcase
+            }}}
         ]
     ]) {
         const models:Models = Helper.extendModels(Tools.extendObject(
