@@ -159,7 +159,6 @@
           ],
           "_attachments": {},
           "_id": {
-            "nullable": false,
             "mutable": false
           },
           "_rev": {
