@@ -129,7 +129,8 @@ export default class DatabaseHelper {
             throw new Error('Needed "serialize" function is not available.')
         // endregion
         const checkDocument:Function = (
-            newDocument:PlainObject, oldDocument:?PlainObject
+            newDocument:PlainObject, oldDocument:?PlainObject,
+            nested:boolean = false
         ):PlainObject => {
             // region check for model type
             if (!newDocument.hasOwnProperty(
@@ -140,6 +141,22 @@ export default class DatabaseHelper {
                     forbidden: 'Type: You have to specify a model type via ' +
                         `property "` +
                         `${modelConfiguration.specialPropertyNames.type}".`
+                }
+                /* eslint-enable no-throw-literal */
+            if (!(nested || (new RegExp(
+                modelConfiguration.specialPropertyNames
+                    .typeNameRegularExpressionPattern.public
+            )).test(newDocument[modelConfiguration.specialPropertyNames.type]))
+            )
+                /* eslint-disable no-throw-literal */
+                throw {
+                    forbidden: 'TypeName: You have to specify a model type ' +
+                        'which matches "' +
+                            modelConfiguration.specialPropertyNames
+                            .typeNameRegularExpressionPattern.public +
+                        '" as public type (given "' + newDocument[
+                            modelConfiguration.specialPropertyNames.type
+                        ] + '").'
                 }
                 /* eslint-enable no-throw-literal */
             if (!models.hasOwnProperty(
@@ -176,7 +193,7 @@ export default class DatabaseHelper {
                         newValue
                     // IgnoreTypeCheck
                     ) === Object.prototype) {
-                        newValue = checkDocument(newValue, oldValue)
+                        newValue = checkDocument(newValue, oldValue, true)
                         if (serialize(newValue) === serialize({}))
                             return null
                     } else

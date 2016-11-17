@@ -149,23 +149,31 @@ export default class Helper {
             default: {propertySpecification: {}},
             specialPropertyNames: {
                 extend: '_extends',
-                typeNameRegularExpressionPattern: '^[A-Z][a-z0-9]+$'
+                typeNameRegularExpressionPattern: {
+                    private: '^_[a-z][A-Za-z0-9]+$',
+                    public: '^[A-Z][A-Za-z0-9]+$'
+                }
             }
         }, modelConfiguration)
         const models:Models = {}
         for (const modelName:string in modelConfiguration.models)
             if (modelConfiguration.models.hasOwnProperty(
                 modelName
-            ) && !modelName.startsWith('_')) {
-                if (!modelName.match(new RegExp(
+            )) {
+                if (!((new RegExp(
                     modelConfiguration.specialPropertyNames
-                        .typeNameRegularExpressionPattern
-                )))
+                        .typeNameRegularExpressionPattern.public
+                )).test(modelName) || (new RegExp(
+                    modelConfiguration.specialPropertyNames
+                        .typeNameRegularExpressionPattern.private
+                )).test(modelName)))
                     throw new Error(
                         'Model names have to match "' +
                         modelConfiguration.specialPropertyNames
-                            .typeNameRegularExpressionPattern +
-                        `" (given name: "${modelName}").`)
+                            .typeNameRegularExpressionPattern.public +
+                        '" or "' + modelConfiguration.specialPropertyNames
+                            .typeNameRegularExpressionPattern.private +
+                        `" for private one (given name: "${modelName}").`)
                 models[modelName] = Helper.extendModel(
                     modelName, modelConfiguration.models,
                     modelConfiguration.specialPropertyNames.extend)

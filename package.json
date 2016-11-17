@@ -145,7 +145,10 @@
         },
         "extend": "_extends",
         "type": "-type",
-        "typeNameRegularExpressionPattern": "^[A-Z][a-z0-9]+$",
+        "typeNameRegularExpressionPattern": {
+            "public": "^[A-Z][A-Za-z0-9]+$",
+            "private": "^_[a-z][A-Za-z0-9]+$"
+        },
         "validatedDocumentsCache": "_validatedDocuments"
       },
       "updateStrategy": "fillUp",
@@ -168,7 +171,7 @@
           },
           "-type": {
             "regularExpressionPattern": {
-              "__evaluate__": "self.modelConfiguration.specialPropertyNames.typeNameRegularExpressionPattern"
+              "__evaluate__": "`(?:${self.modelConfiguration.specialPropertyNames.typeNameRegularExpressionPattern.public}|${self.modelConfiguration.specialPropertyNames.typeNameRegularExpressionPattern.private})`"
             },
             "nullable": false,
             "minimum": 1,
