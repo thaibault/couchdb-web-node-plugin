@@ -112,14 +112,14 @@ QUnit.test('extendModels', (assert:Object):void => {
         ],
         [
             {models: {_base: {b: {}}, Test: {a: {}}}},
-            {Test: {a: {}, b: {}}}
+            {_base: {b: {}}, Test: {a: {}, b: {}}}
         ],
         [
             {
                 default: {propertySpecification: {maximum: 3}},
                 models: {_base: {}, Test: {a: {}}}
             },
-            {Test: {a: {maximum: 3}}}
+            {_base: {}, Test: {a: {maximum: 3}}}
         ],
         [
             {models: {Test: {_attachments: {}}}},
@@ -137,9 +137,9 @@ QUnit.test('extendModels', (assert:Object):void => {
         assert.deepEqual(Helper.extendModels(test[0]), test[1])
     assert.throws(():Models => Helper.extendModels({models: {a: {}}}))
     assert.deepEqual(Helper.extendModels({
-        specialPropertyNames: {
-            typeNameRegularExpressionPattern: /a/
-        },
+        specialPropertyNames: {typeNameRegularExpressionPattern: {
+            public: 'a'
+        }},
         models: {a: {}}
     }), {a: {}})
 })

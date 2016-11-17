@@ -65,7 +65,10 @@ export type SpecialPropertyNames = {
     },
     extend:string;
     type:string;
-    typeNameRegularExpressionPattern:string;
+    typeNameRegularExpressionPattern:{
+        private:string;
+        public:string;
+    };
     validatedDocumentsCache:string;
 }
 export type UpdateStrategy = ''|'fillUp'|'incremental'|'migrate'

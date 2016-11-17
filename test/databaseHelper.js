@@ -77,7 +77,9 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
             // endregion
             // region model
             [[{}, {}], 'Type'],
-            [[{'-type': 'test'}], 'Model'],
+            [[{'-type': 'test'}], 'TypeName'],
+            [[{'-type': '_test'}], 'TypeName'],
+            [[{'-type': 'Test'}], 'Model'],
             // endregion
             // region hooks
             // / region on create
@@ -606,12 +608,19 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 '': {'-type': 'Test', a: '2'}
             }],
             [[{'-type': 'Test', a: '3'}, {'-type': 'Test', a: '2'}], {
-                models: {Test: {a: {}}}}, {
-                    fillUp: {a: '3', '-type': 'Test'},
-                    incremental: {a: '3'},
-                    '': {'-type': 'Test', a: '3'}
-                }
-            ],
+                models: {Test: {a: {}}}
+            }, {
+                fillUp: {a: '3', '-type': 'Test'},
+                incremental: {a: '3'},
+                '': {'-type': 'Test', a: '3'}
+            }],
+            [[{'-type': 'Test', a: {'-type': '_test'}}], {
+                models: {Test: {a: {type: '_test'}}, _test: {}}
+            }, {
+                fillUp: {'-type': 'Test', a: {'-type': '_test'}},
+                incremental: {'-type': 'Test', a: {'-type': '_test'}},
+                '': {'-type': 'Test', a: {'-type': '_test'}},
+            }],
             // endregion
             // region hooks
             // / region on create
