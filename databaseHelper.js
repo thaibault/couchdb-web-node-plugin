@@ -485,9 +485,6 @@ export default class DatabaseHelper {
                                 name
                             ))
                                 oldDocument[name] = {}
-                            runCreateHook(
-                                model[name][type], newDocument[name],
-                                oldDocument && oldDocument[name], type)
                             const filter:Function = (new RegExp('')).test.bind(
                                 new RegExp(type))
                             const newFileNames:Array<string> = Object.keys(
@@ -498,6 +495,10 @@ export default class DatabaseHelper {
                                 oldFileNames = Object.keys(
                                     oldDocument[name]
                                 ).filter(filter)
+                            for (const fileName:string of newFileNames)
+                                runCreateHook(
+                                    model[name][type], newDocument[name],
+                                    oldDocument && oldDocument[name], fileName)
                             for (const fileName:string of newFileNames)
                                 runUpdateHook(
                                     model[name][type], newDocument[name],
@@ -519,7 +520,7 @@ export default class DatabaseHelper {
                                 if (
                                     modelConfiguration.updateStrategy ===
                                     'fillUp' &&
-                                    newFileNames.length === 0 && oldDocument &&
+                                    newFileNames.length === 0 &&
                                     oldFileNames.length > 0
                                 )
                                     for (const fileName:string of oldFileNames)
@@ -530,7 +531,7 @@ export default class DatabaseHelper {
                                     modelConfiguration.updateStrategy ===
                                     'fillUp'
                                 )
-                                    if (oldDocument && oldFileNames.length > 0)
+                                    if (oldFileNames.length > 0)
                                         for (
                                             const fileName:string of
                                             oldFileNames
@@ -868,7 +869,7 @@ export default class DatabaseHelper {
             const name:string = modelConfiguration.specialPropertyNames
                 .attachments
             if (newDocument.hasOwnProperty(name)) {
-                const newAttachments:any = newDocument[name]
+                const newAttachments:PlainObject = newDocument[name]
                 if (
                     typeof newAttachments !== 'object' ||
                     // IgnoreTypeCheck
@@ -967,7 +968,9 @@ export default class DatabaseHelper {
                                 `${type}".`
                         }
                         /* eslint-enable no-throw-literal */
-                    if (numberOfAttachments < model[name][type].minimum)
+                    if (!(
+                        model[name][type].nullable && numberOfAttachments === 0
+                    ) && numberOfAttachments < model[name][type].minimum)
                         /* eslint-disable no-throw-literal */
                         throw {
                             forbidden: 'AttachmentMinimum: given number of ' +
