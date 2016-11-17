@@ -1,6 +1,6 @@
 {
   "name": "databasewebnodeplugin",
-  "version": "1.0.39",
+  "version": "1.0.40",
   "description": "A database server, model instance conflict handler, rest api, authentication, session management, schema validator and model relation guarantee for webNode.",
   "documentationWebsite": {
     "name": "databaseWebNodePlugin",
@@ -146,8 +146,8 @@
         "extend": "_extends",
         "type": "-type",
         "typeNameRegularExpressionPattern": {
-            "public": "^[A-Z][A-Za-z0-9]+$",
-            "private": "^_[a-z][A-Za-z0-9]+$"
+          "public": "^[A-Z][A-Za-z0-9]+$",
+          "private": "^_[a-z][A-Za-z0-9]+$"
         },
         "validatedDocumentsCache": "_validatedDocuments"
       },
