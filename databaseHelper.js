@@ -525,6 +525,7 @@ export default class DatabaseHelper {
                                 )
                                     for (const fileName:string of oldFileNames)
                                         newDocument[name][fileName] =
+                                            // IgnoreTypeCheck
                                             oldDocument[name][fileName]
                             } else if (newFileNames.length === 0)
                                 if (
@@ -537,6 +538,7 @@ export default class DatabaseHelper {
                                             oldFileNames
                                         )
                                             newDocument[name][fileName] =
+                                                // IgnoreTypeCheck
                                                 oldDocument[name][fileName]
                                     else
                                         for (const fileName:string in model[
@@ -722,6 +724,7 @@ export default class DatabaseHelper {
                                 }
                                 /* eslint-enable no-throw-literal */
                         // endregion
+                        return false
                     }
                     if (
                         modelConfiguration.specialPropertyNames.attachments ===
