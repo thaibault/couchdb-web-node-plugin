@@ -112,12 +112,8 @@
           "constraintExpression": null,
           "constraintExecution": null,
           "default": null,
-          "maximum": {
-            "__evaluate__": "Infinity"
-          },
-          "minimum": {
-            "__evaluate__": "-Infinity"
-          },
+          "maximum": null,
+          "minimum": null,
           "mutable": true,
           "nullable": true,
           "onCreateExpression": null,

@@ -569,9 +569,9 @@ export default class DatabaseHelper {
                                         'migrate' ||
                                     oldFileNames.length === 0
                                 )
-                                    for (const fileName:string in model[
-                                        name
-                                    ][type].default)
+                                    for (const fileName:string in model[name][
+                                        type
+                                    ].default)
                                         if (model[name][
                                             type
                                         ].default.hasOwnProperty(fileName))
@@ -975,7 +975,10 @@ export default class DatabaseHelper {
                         continue
                     const numberOfAttachments:number =
                         attachmentToTypeMapping[type].length
-                    if (numberOfAttachments > model[name][type].maximum)
+                    if (
+                        model[name][type].maximum !== null &&
+                        numberOfAttachments > model[name][type].maximum
+                    )
                         /* eslint-disable no-throw-literal */
                         throw {
                             forbidden: 'AttachmentMaximum: given number of ' +
@@ -987,7 +990,8 @@ export default class DatabaseHelper {
                         /* eslint-enable no-throw-literal */
                     if (!(
                         model[name][type].nullable && numberOfAttachments === 0
-                    ) && numberOfAttachments < model[name][type].minimum)
+                    ) && model[name][type].minimum !== null &&
+                    numberOfAttachments < model[name][type].minimum)
                         /* eslint-disable no-throw-literal */
                         throw {
                             forbidden: 'AttachmentMinimum: given number of ' +
@@ -1016,9 +1020,9 @@ export default class DatabaseHelper {
                                     `type "${type}".`
                             }
                             /* eslint-enable no-throw-literal */
-                        if (!([null, undefined].includes(model[
-                            name
-                        ][type].contentTypeRegularExpressionPattern) ||
+                        if (!([null, undefined].includes(model[name][
+                            type
+                        ].contentTypeRegularExpressionPattern) ||
                         newAttachments[fileName].hasOwnProperty(
                             'content_type'
                         ) && newAttachments[fileName].content_type && (
