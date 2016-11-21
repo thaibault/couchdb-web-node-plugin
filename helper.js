@@ -191,16 +191,18 @@ export default class Helper {
                                 models[modelName][propertyName][
                                     type
                                 ] = Tools.extendObject(
-                                    true, {}, modelConfiguration.default
-                                        .propertySpecification,
-                                    models[modelName][propertyName][type])
+                                    true, Tools.copyLimitedRecursively(
+                                        modelConfiguration.default
+                                        .propertySpecification
+                                    ), models[modelName][propertyName][type])
                         else
                             models[modelName][
                                 propertyName
                             ] = Tools.extendObject(
-                                true, {}, modelConfiguration.default
+                                true, Tools.copyLimitedRecursively(
+                                    modelConfiguration.default
                                     .propertySpecification,
-                                models[modelName][propertyName])
+                                ), models[modelName][propertyName])
         return models
     }
     // endregion
