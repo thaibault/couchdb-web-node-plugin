@@ -390,8 +390,6 @@ export default class DatabaseHelper {
                                     'userContext', 'securitySettings',
                                     'name', 'models', 'modelConfiguration',
                                     'serialize', 'modelName', 'model',
-                                    'checkDocument',
-                                    'checkPropertyContent',
                                     'propertySpecification', (
                                         type.endsWith('Expression') ?
                                         'return ' : ''
@@ -412,8 +410,7 @@ export default class DatabaseHelper {
                                     newDocument, oldDocument, userContext,
                                     securitySettings, name, models,
                                     modelConfiguration, serialize, modelName,
-                                    model, checkDocument, checkPropertyContent,
-                                    propertySpecification)
+                                    model, propertySpecification)
                             } catch (error) {
                                 /* eslint-disable no-throw-literal */
                                 throw {
