@@ -168,11 +168,11 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 {models: {Test: {a: {type: 'boolean[]'}}}}, 'PropertyType'
             ],
             [
-                [{'-type': 'Test', a: [1]}],
+                [{'-type': 'Test', a: '[1]'}],
                 {models: {Test: {a: {type: 'DateTime'}}}}, 'PropertyType'
             ],
             [
-                [{'-type': 'Test', a: ['a']}],
+                [{'-type': 'Test', a: '["a"]'}],
                 {models: {Test: {a: {type: 'DateTime[]'}}}}, 'PropertyType'
             ],
             // // endregion
@@ -902,6 +902,21 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                     fillUp: {'-type': 'Test', a: 1},
                     incremental: {},
                     '': {'-type': 'Test', a: 1}
+                }
+            ],
+            [
+                [
+                    {'-type': 'Test', a: '2016-01-01'},
+                    {'-type': 'Test', a: '2016-01-01'}
+                ],
+                {models: {Test: {a: {type: 'DateTime'}}}}, {
+                    fillUp: {
+                        '-type': 'Test', a: (new Date('2016-01-01')).getTime()
+                    },
+                    incremental: {},
+                    '': {
+                        '-type': 'Test', a: (new Date('2016-01-01')).getTime()
+                    }
                 }
             ],
             // / region array
