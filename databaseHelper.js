@@ -180,12 +180,15 @@ export default class DatabaseHelper {
             ):any => {
                 // region type
                 if (propertySpecification.type === 'DateTime') {
-                    if (typeof newValue !== 'number')
+                    const initialNewValue:any = newValue
+                    if (newValue !== null)
+                        newValue = (new Date(newValue)).getTime()
+                    if (typeof newValue !== 'number' || isNaN(newValue))
                         /* eslint-disable no-throw-literal */
                         throw {
                             forbidden: `PropertyType: Property "${name}" ` +
                                 `isn't of type "DateTime" (given "` +
-                                `${serialize(newValue)}").`
+                                `${serialize(initialNewValue)}").`
                         }
                         /* eslint-enable no-throw-literal */
                 } else if (models.hasOwnProperty(propertySpecification.type))
