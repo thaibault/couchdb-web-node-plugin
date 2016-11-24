@@ -228,7 +228,8 @@
     },
     "module": {
       "aliases": {
-        "web-node/configurator$": "web-node/configurator.compiled"
+        "web-node/configurator$": "web-node/configurator.compiled",
+        "web-node/pluginAPI$": "web-node/pluginAPI.compiled"
       },
       "skipParseRegularExpressions": {
         "__evaluate__": "/(bindings\\/bindings|encoding\\/lib\\/iconv-loader|colors\\/lib\\/colors|colors\\/lib\\/extendStringPrototype)\\.js(?:\\?.+|$)/"
