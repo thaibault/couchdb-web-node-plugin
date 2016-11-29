@@ -931,6 +931,8 @@ export default class DatabaseHelper {
                                         newAttachments[fileName] === null ||
                                         newAttachments[
                                             fileName
+                                        ].data === null || newAttachments[
+                                            fileName
                                         ].content_type === oldAttachments[
                                             fileName
                                         ].content_type &&
@@ -941,9 +943,10 @@ export default class DatabaseHelper {
                                     delete newAttachments[fileName]
                 }
                 for (const fileName:string in newAttachments)
-                    if (newAttachments.hasOwnProperty(fileName) && [
+                    if (newAttachments.hasOwnProperty(fileName) && ([
                         undefined, null
-                    ].includes(newAttachments[fileName]))
+                    ].includes(newAttachments[fileName]) ||
+                    newAttachments[fileName].data === null))
                         delete newAttachments[fileName]
                 // endregion
                 if (Object.keys(newAttachments).length === 0)

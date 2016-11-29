@@ -1522,6 +1522,17 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 incremental: {},
                 '': {'-type': 'Test'}
             }],
+            [[{'-type': 'Test', _attachments: {a: {data: null}}}, {
+                '-type': 'Test', _attachments: {a: {
+                    // eslint-disable camelcase
+                    data: '', content_type: 'image/jpeg'
+                    // eslint-enable camelcase
+                }}
+            }], {models: {Test: {_attachments: {'.*': {}}}}}, {
+                fillUp: {'-type': 'Test'},
+                incremental: {},
+                '': {'-type': 'Test'}
+            }],
             [[{'-type': 'Test'}, {'-type': 'Test', _attachments: {a: {
                 // eslint-disable camelcase
                 data: '', content_type: 'image/jpeg'
