@@ -391,7 +391,7 @@ export default class Database {
                             configuration.database.security
                         ), models, migrationModelConfiguration)
                 } catch (error) {
-                    throw new Error(
+                    console.warn(
                         `Document "${Tools.representObject(document)}" ` +
                         `doesn't satisfy its schema: ` +
                         Tools.representObject(error))
