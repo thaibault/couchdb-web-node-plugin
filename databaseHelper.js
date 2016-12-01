@@ -95,11 +95,11 @@ export default class DatabaseHelper {
     ):PlainObject {
         // region ensure needed environment
         if (
-            newDocument.hasOwnProperty('_deleted') && newDocument._deleted ||
+            newDocument.hasOwnProperty('_deleted') && newDocument._deleted/* ||
             newDocument.hasOwnProperty('type') &&
             newDocument.type === 'user' &&
             newDocument.hasOwnProperty('_id') &&
-            newDocument._id.startsWith('org.couchdb.user:')
+            newDocument._id.startsWith('org.couchdb.user:')*/
         )
             return newDocument
         if (securitySettings.hasOwnProperty(
