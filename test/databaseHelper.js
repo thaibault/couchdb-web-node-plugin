@@ -555,17 +555,17 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 incremental: {_deleted: true},
                 '': {_deleted: true}
             }],
-            [[{type: 'users', _id: 'org.couchdb.user:test'}], {}, {
-                fillUp: {type: 'users', _id: 'org.couchdb.user:test'},
-                incremental: {type: 'users', _id: 'org.couchdb.user:test'},
-                '': {type: 'users', _id: 'org.couchdb.user:test'}
+            [[{type: 'user', _id: 'org.couchdb.user:test'}], {}, {
+                fillUp: {type: 'user', _id: 'org.couchdb.user:test'},
+                incremental: {type: 'user', _id: 'org.couchdb.user:test'},
+                '': {type: 'user', _id: 'org.couchdb.user:test'}
             }],
-            [[{type: 'users', _id: 'org.couchdb.user:test'}, {
-                type: 'users', _id: 'org.couchdb.user:test'
+            [[{type: 'user', _id: 'org.couchdb.user:test'}, {
+                type: 'user', _id: 'org.couchdb.user:test'
             }], {}, {
-                fillUp: {type: 'users', _id: 'org.couchdb.user:test'},
-                incremental: {type: 'users', _id: 'org.couchdb.user:test'},
-                '': {type: 'users', _id: 'org.couchdb.user:test'}
+                fillUp: {type: 'user', _id: 'org.couchdb.user:test'},
+                incremental: {type: 'user', _id: 'org.couchdb.user:test'},
+                '': {type: 'user', _id: 'org.couchdb.user:test'}
             }],
             [[{_id: 1, _rev: 1}, null, {}, {_validatedDocuments: new Set(
                 ['1-1']
