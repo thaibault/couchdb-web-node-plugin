@@ -97,7 +97,7 @@ export default class DatabaseHelper {
         if (
             newDocument.hasOwnProperty('_deleted') && newDocument._deleted ||
             newDocument.hasOwnProperty('type') &&
-            newDocument.type === 'users' &&
+            newDocument.type === 'user' &&
             newDocument.hasOwnProperty('_id') &&
             newDocument._id.startsWith('org.couchdb.user:')
         )
