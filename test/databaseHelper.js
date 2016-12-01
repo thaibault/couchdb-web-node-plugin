@@ -554,7 +554,7 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 fillUp: {_deleted: true},
                 incremental: {_deleted: true},
                 '': {_deleted: true}
-            }],
+            }]/*,
             [[{type: 'user', _id: 'org.couchdb.user:test'}], {}, {
                 fillUp: {type: 'user', _id: 'org.couchdb.user:test'},
                 incremental: {type: 'user', _id: 'org.couchdb.user:test'},
@@ -566,7 +566,7 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 fillUp: {type: 'user', _id: 'org.couchdb.user:test'},
                 incremental: {type: 'user', _id: 'org.couchdb.user:test'},
                 '': {type: 'user', _id: 'org.couchdb.user:test'}
-            }],
+            }]*/,
             [[{_id: 1, _rev: 1}, null, {}, {_validatedDocuments: new Set(
                 ['1-1']
             )}], {}, {
