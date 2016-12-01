@@ -94,7 +94,13 @@ export default class DatabaseHelper {
         toJSON:?Function = null
     ):PlainObject {
         // region ensure needed environment
-        if (newDocument.hasOwnProperty('_deleted') && newDocument._deleted)
+        if (
+            newDocument.hasOwnProperty('_deleted') && newDocument._deleted ||
+            newDocument.hasOwnProperty('type') &&
+            newDocument.type === 'users' &&
+            newDocument.hasOwnProperty('_id') &&
+            newDocument._id.startsWith('org.couchdb.user:')
+        )
             return newDocument
         if (securitySettings.hasOwnProperty(
             modelConfiguration.specialPropertyNames.validatedDocumentsCache

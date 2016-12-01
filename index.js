@@ -144,8 +144,8 @@ export default class Database {
         try {
             await unauthenticatedUserDatabaseConnection.allDocs()
             console.info(
-                'No admin user available. Automatically creating admin user "' +
-                `${configuration.database.user.name}".`)
+                'No admin user available. Automatically creating admin user ' +
+                `"${configuration.database.user.name}".`)
             await fetch(
                 `${Tools.stringFormat(configuration.database.url, '')}/` +
                 `_config/admins/${configuration.database.user.name}`,
@@ -154,7 +154,9 @@ export default class Database {
                     body: `"${configuration.database.user.password}"`
                 })
         } catch (error) {
-            if (error.hasOwnProperty('name') && error.name === 'unauthorized') {
+            if (error.hasOwnProperty(
+                'name'
+            ) && error.name === 'unauthorized') {
                 const authenticatedUserDatabaseConnection = new PouchDB(
                     Tools.stringFormat(
                         configuration.database.url,
