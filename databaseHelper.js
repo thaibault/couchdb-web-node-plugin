@@ -513,16 +513,20 @@ export default class DatabaseHelper {
                                 name
                             ))
                                 oldDocument[name] = {}
-                            const filter:Function = (new RegExp('')).test.bind(
-                                new RegExp(type))
                             const newFileNames:Array<string> = Object.keys(
                                 newDocument[name]
-                            ).filter(filter)
+                            ).filter((fileName:string):boolean =>
+                                newDocument[name][fileName] && (new RegExp(
+                                    type
+                                )).test(name))
                             let oldFileNames:Array<string> = []
                             if (oldDocument)
                                 oldFileNames = Object.keys(
                                     oldDocument[name]
-                                ).filter(filter)
+                                ).filter((fileName:string):boolean =>
+                                    newDocument[name][fileName] && (new RegExp(
+                                        type
+                                    )).test(name))
                             for (const fileName:string of newFileNames)
                                 runCreateHook(
                                     model[name][type], newDocument[name],
