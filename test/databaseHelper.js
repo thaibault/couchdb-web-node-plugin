@@ -426,6 +426,12 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
             [[{'-type': 'Test'}], {models: {Test: {_attachments: {'.*': {
                 minimum: 1, nullable: false
             }}}}}, 'MissingAttachment'],
+            [[{'-type': 'Test', _attachments: {test: null}}], {models: {
+                Test: {_attachments: {'.*': {nullable: false}}}
+            }}, 'MissingAttachment'],
+            [[{'-type': 'Test', _attachments: {test: null}}], {models: {
+                Test: {_attachments: {'.*': {minimum: 1, nullable: false}}}
+            }}, 'MissingAttachment'],
             [[{'-type': 'Test', _attachments: {
                 a: {data: '', content_type: 'text/plain'}
             }}], {models: {Test: {_attachments: {
