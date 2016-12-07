@@ -231,6 +231,18 @@
         "web-node/configurator$": "web-node/configurator.compiled",
         "web-node/pluginAPI$": "web-node/pluginAPI.compiled"
       },
+      "optimizer": {
+        "babili": null
+      },
+      "preprocessor": {
+        "javaScript": {
+          "configuration": {
+            "presets": {
+              "__evaluate__": "(self.target === 'node' ? ['es2017-node7'] : [['modern-browsers', {loose: true}], 'es2017']).concat('stage-0')"
+            }
+          }
+        }
+      },
       "skipParseRegularExpressions": {
         "__evaluate__": "/(bindings\\/bindings|encoding\\/lib\\/iconv-loader|colors\\/lib\\/colors|colors\\/lib\\/extendStringPrototype)\\.js(?:\\?.+|$)/"
       }
