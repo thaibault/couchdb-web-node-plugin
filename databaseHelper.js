@@ -515,22 +515,21 @@ export default class DatabaseHelper {
                                 oldDocument[name] = {}
                             const newFileNames:Array<string> = Object.keys(
                                 newDocument[name]
-                            ).filter((fileName:string):boolean => ![
-                                undefined, null
-                            ].includes(newDocument[name][fileName].data) && (
-                                new RegExp(type)
-                            ).test(fileName))
+                            ).filter((fileName:string):boolean => newDocument[
+                                name
+                            ][fileName].data !== null && (new RegExp(
+                                type
+                            )).test(fileName))
                             let oldFileNames:Array<string> = []
                             if (oldDocument)
                                 oldFileNames = Object.keys(
                                     oldDocument[name]
                                 ).filter((fileName:string):boolean =>
-                                    newDocument[name][fileName] && ![
-                                        undefined, null
-                                    ].includes(newDocument[name][
-                                        fileName
-                                    ].data) && (new RegExp(type)).test(
-                                        fileName))
+                                    newDocument[name][fileName] && newDocument[
+                                        name
+                                    ][fileName].data !== null && (new RegExp(
+                                        type
+                                    )).test(fileName))
                             for (const fileName:string of newFileNames)
                                 runCreateHook(
                                     model[name][type], newDocument[name],
