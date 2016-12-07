@@ -524,9 +524,9 @@ export default class DatabaseHelper {
                                 oldFileNames = Object.keys(
                                     oldDocument[name]
                                 ).filter((fileName:string):boolean =>
-                                    newDocument[name][fileName] && (new RegExp(
-                                        type
-                                    )).test(fileName))
+                                    newDocument[name][fileName] !== null && (
+                                        new RegExp(type)
+                                    ).test(fileName))
                             for (const fileName:string of newFileNames)
                                 runCreateHook(
                                     model[name][type], newDocument[name],
@@ -551,18 +551,21 @@ export default class DatabaseHelper {
                                     /* eslint-enable no-throw-literal */
                                 if (
                                     modelConfiguration.updateStrategy ===
-                                    'fillUp' &&
+                                        'fillUp' &&
                                     newFileNames.length === 0 &&
                                     oldFileNames.length > 0
                                 )
                                     for (const fileName:string of oldFileNames)
-                                        newDocument[name][fileName] =
-                                            // IgnoreTypeCheck
-                                            oldDocument[name][fileName]
+                                        if (newDocument[name][
+                                            fileName
+                                        ] !== null)
+                                            newDocument[name][fileName] =
+                                                // IgnoreTypeCheck
+                                                oldDocument[name][fileName]
                             } else if (newFileNames.length === 0)
                                 if (
                                     modelConfiguration.updateStrategy ===
-                                    'fillUp'
+                                        'fillUp'
                                 ) {
                                     if (oldFileNames.length > 0)
                                         for (
@@ -787,8 +790,8 @@ export default class DatabaseHelper {
                         if (!Array.isArray(newDocument[name]))
                             /* eslint-disable no-throw-literal */
                             throw {
-                                forbidden: 'PropertyType: Property "' +
-                                    `${name}" isn't of type "array -> ` +
+                                forbidden: `PropertyType: Property "${name}"` +
+                                    ` isn't of type "array -> ` +
                                     `${propertySpecification.type}" (given "` +
                                     `${serialize(newDocument[name])}").`
                             }
