@@ -1406,7 +1406,7 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
             }],
             [[{'-type': 'Test', _attachments: {test: {
                 // eslint-disable camelcase
-                data: '', content_type: 'text/plain'
+                content_type: 'text/plain', data: ''
                 // eslint-enable camelcase
             }}}], {models: {Test: {_attachments: {'.*': {maximum: 1}}}}}, {
                 fillUp: {'-type': 'Test', _attachments: {test: {
@@ -1425,9 +1425,35 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                     // eslint-enable camelcase
                 }}}
             }],
+            [[{'-type': 'Test', _attachments: {'favicon.png': {
+                // eslint-disable camelcase
+                content_type: 'image/png', data: 'abc'
+                // eslint-enable camelcase
+            }}}], {models: {Test: {_attachments: {'.+\\.(?:jpe?g|png|svg)': {
+                contentTypeRegularExpressionPattern:
+                    'image/(?:p?jpe?g|png|svg)',
+                maximum: 1,
+                nullable: false
+            }}}}}, {
+                fillUp: {'-type': 'Test', _attachments: {'favicon.png': {
+                    // eslint-disable camelcase
+                    content_type: 'image/png', data: 'abc'
+                    // eslint-enable camelcase
+                }}},
+                incremental: {'-type': 'Test', _attachments: {'favicon.png': {
+                    // eslint-disable camelcase
+                    content_type: 'image/png', data: 'abc'
+                    // eslint-enable camelcase
+                }}},
+                '': {'-type': 'Test', _attachments: {'favicon.png': {
+                    // eslint-disable camelcase
+                    content_type: 'image/png', data: 'abc'
+                    // eslint-enable camelcase
+                }}}
+            }],
             [[{'-type': 'Test', _attachments: {test: {
                 // eslint-disable camelcase
-                data: '', content_type: 'text/plain'
+                content_type: 'text/plain', data: ''
                 // eslint-enable camelcase
             }}}], {models: {Test: {_attachments: {'.*': {
                 nullable: false
@@ -1450,62 +1476,62 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
             }],
             [[{'-type': 'Test', _attachments: {
                 // eslint-disable camelcase
-                a: {data: '', content_type: 'text/plain'},
-                b: {data: '', content_type: 'text/plain'}
+                a: {content_type: 'text/plain', data: ''},
+                b: {content_type: 'text/plain', data: ''}
                 // eslint-enable camelcase
             }}], {models: {Test: {_attachments: {'.*': {
                 maximum: 2, minimum: 2
             }}}}}, {
                 fillUp: {'-type': 'Test', _attachments: {
                     // eslint-disable camelcase
-                    a: {data: '', content_type: 'text/plain'},
-                    b: {data: '', content_type: 'text/plain'}
+                    a: {content_type: 'text/plain', data: ''},
+                    b: {content_type: 'text/plain', data: ''}
                     // eslint-enable camelcase
                 }},
                 incremental: {'-type': 'Test', _attachments: {
                     // eslint-disable camelcase
-                    a: {data: '', content_type: 'text/plain'},
-                    b: {data: '', content_type: 'text/plain'}
+                    a: {content_type: 'text/plain', data: ''},
+                    b: {content_type: 'text/plain', data: ''}
                     // eslint-enable camelcase
                 }},
                 '': {'-type': 'Test', _attachments: {
                     // eslint-disable camelcase
-                    a: {data: '', content_type: 'text/plain'},
-                    b: {data: '', content_type: 'text/plain'}
+                    a: {content_type: 'text/plain', data: ''},
+                    b: {content_type: 'text/plain', data: ''}
                     // eslint-enable camelcase
                 }}
             }],
             [[{'-type': 'Test', _attachments: {
                 // eslint-disable camelcase
-                a: {data: '', content_type: 'text/plain'},
-                b: {data: '', content_type: 'text/plain'}
+                a: {content_type: 'text/plain', data: ''},
+                b: {content_type: 'text/plain', data: ''}
                 // eslint-enable camelcase
             }}], {models: {Test: {_attachments: {'.*': {
                 maximum: 2, regularExpressionPattern: 'a|b'
             }}}}}, {
                 fillUp: {'-type': 'Test', _attachments: {
                     // eslint-disable camelcase
-                    a: {data: '', content_type: 'text/plain'},
-                    b: {data: '', content_type: 'text/plain'}
+                    a: {content_type: 'text/plain', data: ''},
+                    b: {content_type: 'text/plain', data: ''}
                     // eslint-enable camelcase
                 }},
                 incremental: {'-type': 'Test', _attachments: {
                     // eslint-disable camelcase
-                    a: {data: '', content_type: 'text/plain'},
-                    b: {data: '', content_type: 'text/plain'}
+                    a: {content_type: 'text/plain', data: ''},
+                    b: {content_type: 'text/plain', data: ''}
                     // eslint-enable camelcase
                 }},
                 '': {'-type': 'Test', _attachments: {
                     // eslint-disable camelcase
-                    a: {data: '', content_type: 'text/plain'},
-                    b: {data: '', content_type: 'text/plain'}
+                    a: {content_type: 'text/plain', data: ''},
+                    b: {content_type: 'text/plain', data: ''}
                     // eslint-enable camelcase
                 }}
             }],
             [[{'-type': 'Test', _attachments: {
                 // eslint-disable camelcase
-                a: {data: '', content_type: 'image/png'},
-                b: {data: '', content_type: 'image/jpeg'}
+                a: {content_type: 'image/png', data: ''},
+                b: {content_type: 'image/jpeg', data: ''}
                 // eslint-enable camelcase
             }}], {models: {Test: {_attachments: {'.*': {
                 contentTypeRegularExpressionPattern: /image\/.+/,
@@ -1593,12 +1619,12 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
             }],
             [[{'-type': 'Test'}, {'-type': 'Test', _attachments: {a: {
                 // eslint-disable camelcase
-                data: '', content_type: 'image/jpeg'
+                content_type: 'image/jpeg', data: ''
                 // eslint-enable camelcase
             }}}], {models: {Test: {_attachments: {a: {}}}}}, {
                 fillUp: {'-type': 'Test', _attachments: {a: {
                     // eslint-disable camelcase
-                    data: '', content_type: 'image/jpeg'
+                    content_type: 'image/jpeg', data: ''
                     // eslint-enable camelcase
                 }}},
                 incremental: {},

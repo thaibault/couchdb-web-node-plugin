@@ -518,7 +518,7 @@ export default class DatabaseHelper {
                             ).filter((fileName:string):boolean =>
                                 newDocument[name][fileName] && (new RegExp(
                                     type
-                                )).test(name))
+                                )).test(fileName))
                             let oldFileNames:Array<string> = []
                             if (oldDocument)
                                 oldFileNames = Object.keys(
@@ -526,7 +526,7 @@ export default class DatabaseHelper {
                                 ).filter((fileName:string):boolean =>
                                     newDocument[name][fileName] && (new RegExp(
                                         type
-                                    )).test(name))
+                                    )).test(fileName))
                             for (const fileName:string of newFileNames)
                                 runCreateHook(
                                     model[name][type], newDocument[name],
