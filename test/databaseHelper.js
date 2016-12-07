@@ -1425,6 +1425,29 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                     // eslint-enable camelcase
                 }}}
             }],
+            [[{'-type': 'Test', _attachments: {test: {
+                // eslint-disable camelcase
+                data: '', content_type: 'text/plain'
+                // eslint-enable camelcase
+            }}}], {models: {Test: {_attachments: {'.*': {
+                nullable: false
+            }}}}}, {
+                fillUp: {'-type': 'Test', _attachments: {test: {
+                    // eslint-disable camelcase
+                    content_type: 'text/plain', data: ''
+                    // eslint-enable camelcase
+                }}},
+                incremental: {'-type': 'Test', _attachments: {test: {
+                    // eslint-disable camelcase
+                    content_type: 'text/plain', data: ''
+                    // eslint-enable camelcase
+                }}},
+                '': {'-type': 'Test', _attachments: {test: {
+                    // eslint-disable camelcase
+                    content_type: 'text/plain', data: ''
+                    // eslint-enable camelcase
+                }}}
+            }],
             [[{'-type': 'Test', _attachments: {
                 // eslint-disable camelcase
                 a: {data: '', content_type: 'text/plain'},
