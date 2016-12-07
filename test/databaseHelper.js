@@ -426,12 +426,15 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
             [[{'-type': 'Test'}], {models: {Test: {_attachments: {'.*': {
                 minimum: 1, nullable: false
             }}}}}, 'MissingAttachment'],
-            [[{'-type': 'Test', _attachments: {test: null}}], {models: {
-                Test: {_attachments: {'.*': {nullable: false}}}
-            }}, 'MissingAttachment'],
-            [[{'-type': 'Test', _attachments: {test: null}}], {models: {
-                Test: {_attachments: {'.*': {minimum: 1, nullable: false}}}
-            }}, 'MissingAttachment'],
+            [[{'-type': 'Test', _attachments: {test: {
+                data: null
+            }}}], {models: {Test: {_attachments: {'.*': {nullable: false}}}}},
+            'MissingAttachment'],
+            [[{'-type': 'Test', _attachments: {test: {data: null}}}], {
+                models: {Test: {_attachments: {'.*': {
+                    minimum: 1, nullable: false
+                }}}}
+            }, 'MissingAttachment'],
             [[{'-type': 'Test', _attachments: {
                 a: {data: '', content_type: 'text/plain'}
             }}], {models: {Test: {_attachments: {
@@ -461,7 +464,7 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 }}}}}, 'MissingAttachment'
             ],
             [
-                [{'-type': 'Test', _attachments: {test: null}}, {
+                [{'-type': 'Test', _attachments: {test: {data: null}}}, {
                     '-type': 'Test',
                     _attachments: {test: {
                         content_type: 'text/plain', data: ''
@@ -1592,7 +1595,7 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                     // eslint-enable camelcase
                 }}
             }],
-            [[{'-type': 'Test', _attachments: {a: null}}, {
+            [[{'-type': 'Test', _attachments: {a: {data: null}}}, {
                 '-type': 'Test', _attachments: {a: {
                     // eslint-disable camelcase
                     content_type: 'image/jpeg', data: ''
