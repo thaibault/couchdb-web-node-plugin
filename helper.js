@@ -105,6 +105,23 @@ export default class Helper {
             }
         return allowedModelRolesMapping
     }
+    // TODO test
+    /**
+     * Determines all property names which are indexable in a generic manner.
+     * @param modelConfiguration - Model specification object.
+     * @param model - Model to determine property names from.
+     * @returns The mapping object.
+     */
+    static determineGenericIndexablePropertyNames(
+        modelConfiguration:ModelConfiguration, model:Model
+    ):Array<string> {
+        return Object.keys(model).filter((name:string):boolean => !(
+            name.startsWith('_') ||
+            modelConfiguration.reservedPropertyNames.includes(name) ||
+            modelConfiguration.specialPropertyNames.type === name ||
+            model[name].type && model[name].type.endsWith('[]') ||
+            modelConfiguration.models.hasOwnProperty(model[name].type)))
+    }
     /**
      * Extend given model with all specified one.
      * @param modelName - Name of model to extend.
