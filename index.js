@@ -75,7 +75,7 @@ export default class Database {
     ):Promise<Services> {
         if (!services.hasOwnProperty('database'))
             services.database = {}
-        if (!services.database.hasOwnProperty('connector')) {
+        if (!services.database.hasOwnProperty('connector'))
             services.database.connector = PouchDB.plugin(PouchDBFindPlugin)
         if (!services.database.hasOwnProperty('server')) {
             services.database.server = {}
