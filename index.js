@@ -414,31 +414,38 @@ export default class Database {
         // how couchdb deals with "id" conflicts)
         // endregion
         // region create indexes
-        if (configuration.modelConfiguration.createGenericIndex)
-            for (const name:string in configuration.modelConfiguration.models) {
-                console.log(name, (new RegExp(
-                    configuration.modelConfiguration.specialPropertyNames
-                        .typeNameRegularExpressionPattern.public
-                )).test(name))
+        if (configuration.modelConfiguration.createGenericFlatIndex)
+            for (
+                const modelName:string in configuration.modelConfiguration
+                    .models
+            ) {
                 if (configuration.modelConfiguration.models.hasOwnProperty(
-                    name
+                    modelName
                 ) && (new RegExp(
                     configuration.modelConfiguration.specialPropertyNames
                         .typeNameRegularExpressionPattern.public
-                )).test(name)) {
+                )).test(modelName)) {
                     const names:Array<string> = Object.keys(
-                        configuration.modelConfiguration.models[name]
+                        configuration.modelConfiguration.models[modelName]
                     ).filter((name:string):boolean => !(
                         name.startsWith('_') ||
                         configuration.modelConfiguration.reservedPropertyNames
                             .includes(name) ||
                         configuration.modelConfiguration.specialPropertyNames
-                            .type === name))
+                            .type === name ||
+                        configuration.modelConfiguration.models[modelName][
+                            name
+                        ].type.endsWith('[]') ||
+                        configuration.modelConfiguration.models.hasOwnProperty(
+                            configuration.modelConfiguration.models[modelName][
+                                name
+                            ].type)
+                    ))
                     try {
                         await services.database.connection.createIndex({
-                            ddoc: `${name}Index`,
+                            ddoc: `${modelName}Index`,
                             fields: names,
-                            name: `${name}Index`
+                            name: `${modelName}Index`
                         })
                     } catch (error) {
                         throw error
