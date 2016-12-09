@@ -444,17 +444,22 @@ export default class Database {
                                 name
                             ].type)
                     ))
-                    try {
-                        await services.database.connection.createIndex({
-                            index: {
-                                ddoc: `${modelName}Index`,
-                                fields: names,
-                                name: `${modelName}Index`
-                            }
-                        })
-                    } catch (error) {
-                        throw error
-                    }
+                    for (const name:string of names)
+                        try {
+                            await services.database.connection.createIndex({
+                                index: {
+                                    ddoc: modelName + Tools.stringCapitalize(
+                                        name
+                                    ) + 'Index',
+                                    fields: [name],
+                                    name: modelName + Tools.stringCapitalize(
+                                        name
+                                    ) + 'Index'
+                                }
+                            })
+                        } catch (error) {
+                            throw error
+                        }
                 }
             }
         // endregion
