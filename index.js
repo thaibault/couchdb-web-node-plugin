@@ -413,55 +413,73 @@ export default class Database {
         // TODO check conflicting constraints and mark them if necessary (check
         // how couchdb deals with "id" conflicts)
         // endregion
-        // region create indexes
-        if (configuration.modelConfiguration.createGenericFlatIndex)
+        // region create/remove needed/unneeded generic indexes
+        if (configuration.modelConfiguration.createGenericFlatIndex) {
             for (
                 const modelName:string in configuration.modelConfiguration
                     .models
-            ) {
+            )
                 if (configuration.modelConfiguration.models.hasOwnProperty(
                     modelName
                 ) && (new RegExp(
                     configuration.modelConfiguration.specialPropertyNames
                         .typeNameRegularExpressionPattern.public
-                )).test(modelName)) {
-                    const names:Array<string> = Object.keys(
-                        configuration.modelConfiguration.models[modelName]
-                    ).filter((name:string):boolean => !(
-                        name.startsWith('_') ||
-                        configuration.modelConfiguration.reservedPropertyNames
-                            .includes(name) ||
-                        configuration.modelConfiguration.specialPropertyNames
-                            .type === name ||
-                        configuration.modelConfiguration.models[modelName][
-                            name
-                        ].type &&
-                        configuration.modelConfiguration.models[modelName][
-                            name
-                        ].type.endsWith('[]') ||
-                        configuration.modelConfiguration.models.hasOwnProperty(
-                            configuration.modelConfiguration.models[modelName][
-                                name
-                            ].type)
-                    ))
-                    for (const name:string of names)
+                )).test(modelName))
+                    for (
+                        const name:string of
+                        Helper.determineGenericIndexablePropertyNames(
+                            configuration.modelConfiguration,
+                            configuration.modelConfiguration.models[modelName])
+                    )
                         try {
                             await services.database.connection.createIndex({
                                 index: {
-                                    ddoc: modelName + Tools.stringCapitalize(
-                                        name
-                                    ) + 'Index',
-                                    fields: [name],
-                                    name: modelName + Tools.stringCapitalize(
-                                        name
-                                    ) + 'Index'
+                                    ddoc: `${modelName}-${name}-GenericIndex`,
+                                    fields: [
+                                        modelConfiguration.specialPropertyNames
+                                            .type, name
+                                    ],
+                                    name: `${modelName}-${name}-GenericIndex`
                                 }
                             })
                         } catch (error) {
                             throw error
                         }
-                }
+            let indexes:PlainObject
+            try {
+                indexes = await services.database.connection.getIndexes()
+            } catch (error) {
+                throw error
             }
+            for (const index:PlainObject of indexes.indexes)
+                if (index.name.endsWith('-GenericIndex')) {
+                    let exists:boolean = false
+                    for (const modelName:string in configuration
+                        .modelConfiguration.models
+                    )
+                        if (index.name.startsWith(`${modelName}-`)) {
+                            for (
+                                const name:string of
+                                Helper.determineGenericIndexablePropertyNames(
+                                    configuration.modelConfiguration,
+                                    configuration.modelConfiguration.models[
+                                        modelName])
+                            )
+                                if (index.name ===
+                                    `${modelName}-${name}-GenericIndex`
+                                )
+                                    exists = true
+                            break
+                        }
+                    if (!exists)
+                        try {
+                            await services.database.connection.deleteIndex(
+                                index)
+                        } catch (error) {
+                            throw error
+                        }
+                }
+        }
         // endregion
         return {name: 'database', promise}
     }
