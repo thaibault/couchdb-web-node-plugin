@@ -415,15 +415,14 @@ export default class Database {
         // endregion
         // region create/remove needed/unneeded generic indexes
         if (configuration.modelConfiguration.createGenericFlatIndex) {
-            for (
-                const modelName:string in configuration.modelConfiguration
-                    .models
+            for (const modelName:string in configuration.modelConfiguration
+                .models
             )
                 if (configuration.modelConfiguration.models.hasOwnProperty(
                     modelName
-                ) && (new RegExp(
-                    configuration.modelConfiguration.specialPropertyNames
-                        .typeNameRegularExpressionPattern.public
+                ) && (new RegExp(configuration.modelConfiguration
+                    .specialPropertyNames.typeNameRegularExpressionPattern
+                    .public
                 )).test(modelName))
                     for (
                         const name:string of

@@ -120,7 +120,8 @@ export default class Helper {
             modelConfiguration.reservedPropertyNames.includes(name) ||
             modelConfiguration.specialPropertyNames.type === name ||
             model[name].type && model[name].type.endsWith('[]') ||
-            modelConfiguration.models.hasOwnProperty(model[name].type)))
+            modelConfiguration.models.hasOwnProperty(model[name].type)
+        )).concat('_id', '_rev')
     }
     /**
      * Extend given model with all specified one.
