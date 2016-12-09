@@ -435,6 +435,9 @@ export default class Database {
                             .type === name ||
                         configuration.modelConfiguration.models[modelName][
                             name
+                        ].type &&
+                        configuration.modelConfiguration.models[modelName][
+                            name
                         ].type.endsWith('[]') ||
                         configuration.modelConfiguration.models.hasOwnProperty(
                             configuration.modelConfiguration.models[modelName][
@@ -443,9 +446,11 @@ export default class Database {
                     ))
                     try {
                         await services.database.connection.createIndex({
-                            ddoc: `${modelName}Index`,
-                            fields: names,
-                            name: `${modelName}Index`
+                            index: {
+                                ddoc: `${modelName}Index`,
+                                fields: names,
+                                name: `${modelName}Index`
+                            }
                         })
                     } catch (error) {
                         throw error
