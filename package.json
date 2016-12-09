@@ -40,6 +40,7 @@
     "clientnode": "latest",
     "node-fetch": "latest",
     "pouchdb": "latest",
+    "pouchdb-find": "latest",
     "pouchdb-server": "latest",
     "rimraf": "latest",
     "web-node": "latest",

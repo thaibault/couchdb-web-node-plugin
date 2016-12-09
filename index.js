@@ -17,13 +17,14 @@
     See http://creativecommons.org/licenses/by/3.0/deed.de
     endregion
 */
-// region  imports
+// region imports
 import {spawn as spawnChildProcess} from 'child_process'
 import Tools from 'clientnode'
 import type {PlainObject} from 'clientnode'
 import fileSystem from 'fs'
 import path from 'path'
 import PouchDB from 'pouchdb'
+import PouchDBFindPlugin from 'pouchdb-find'
 // NOTE: Only needed for debugging this file.
 try {
     require('source-map-support/register')
@@ -74,6 +75,8 @@ export default class Database {
     ):Promise<Services> {
         if (!services.hasOwnProperty('database'))
             services.database = {}
+        if (!services.database.hasOwnProperty('connector')) {
+            services.database.connector = PouchDB.plugin(PouchDBFindPlugin)
         if (!services.database.hasOwnProperty('server')) {
             services.database.server = {}
             // region search for binary file to start database server
@@ -139,8 +142,9 @@ export default class Database {
         if (services.database.hasOwnProperty('connection'))
             return {promise}
         // region ensure presence of global admin user
-        const unauthenticatedUserDatabaseConnection:PouchDB = new PouchDB(
-            `${Tools.stringFormat(configuration.database.url, '')}/_users`)
+        const unauthenticatedUserDatabaseConnection:PouchDB =
+            new services.database.connector(
+                `${Tools.stringFormat(configuration.database.url, '')}/_users`)
         try {
             await unauthenticatedUserDatabaseConnection.allDocs()
             console.info(
@@ -157,8 +161,8 @@ export default class Database {
             if (error.hasOwnProperty(
                 'name'
             ) && error.name === 'unauthorized') {
-                const authenticatedUserDatabaseConnection = new PouchDB(
-                    Tools.stringFormat(
+                const authenticatedUserDatabaseConnection =
+                    new services.database.connector(Tools.stringFormat(
                         configuration.database.url,
                         `${configuration.database.user.name}:` +
                         `${configuration.database.user.password}@`
@@ -204,11 +208,12 @@ export default class Database {
                         Tools.representObject(error))
                 }
         // endregion
-        services.database.connection = new PouchDB(Tools.stringFormat(
-            configuration.database.url,
-            `${configuration.database.user.name}:` +
-            `${configuration.database.user.password}@`
-        ) + `/${configuration.name}`)
+        services.database.connection = new services.database.connector(
+            Tools.stringFormat(
+                configuration.database.url,
+                `${configuration.database.user.name}:` +
+                `${configuration.database.user.password}@`
+            ) + `/${configuration.name}`)
         // region ensure presence of database security settings
         try {
             /*
@@ -407,6 +412,37 @@ export default class Database {
             }
         // TODO check conflicting constraints and mark them if necessary (check
         // how couchdb deals with "id" conflicts)
+        // endregion
+        // region create indexes
+        if (configuration.database.autoIndexCreation)
+            for (const name:string in configuration.modelConfiguration.models)
+                if (configuration.modelConfiguration.models.hasOwnProperty(
+                    name
+                ) && (new RegExp(
+                    configuration.modelConfiguration.specialPropertyNames
+                        .typeNameRegularExpressionPattern.public
+                )).test(name)) {
+                    const names:Array<string> = Object.keys(
+                        configuration.modelConfiguration.models[name]
+                    ).filter((name:string):boolean => !(
+                        name.startsWith('_') ||
+                        configuration.modelConfiguration.reservedPropertyNames
+                            .includes(name) ||
+                        configuration.modelConfiguration.specialPropertyNames
+                            .type === name))
+                    console.log()
+                    console.log(name, names)
+                    console.log()
+                    try {
+                        await services.database.connection.createIndex({
+                            ddoc: `${name}Index`,
+                            fields: names,
+                            name: `${name}Index`
+                        })
+                    } catch (error) {
+                        throw error
+                    }
+                }
         // endregion
         return {name: 'database', promise}
     }
