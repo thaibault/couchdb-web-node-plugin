@@ -414,8 +414,12 @@ export default class Database {
         // how couchdb deals with "id" conflicts)
         // endregion
         // region create indexes
-        if (configuration.database.autoIndexCreation)
-            for (const name:string in configuration.modelConfiguration.models)
+        if (configuration.modelConfiguration.createGenericIndex)
+            for (const name:string in configuration.modelConfiguration.models) {
+                console.log(name, (new RegExp(
+                    configuration.modelConfiguration.specialPropertyNames
+                        .typeNameRegularExpressionPattern.public
+                )).test(name))
                 if (configuration.modelConfiguration.models.hasOwnProperty(
                     name
                 ) && (new RegExp(
@@ -440,6 +444,7 @@ export default class Database {
                         throw error
                     }
                 }
+            }
         // endregion
         return {name: 'database', promise}
     }
