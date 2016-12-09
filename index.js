@@ -430,9 +430,6 @@ export default class Database {
                             .includes(name) ||
                         configuration.modelConfiguration.specialPropertyNames
                             .type === name))
-                    console.log()
-                    console.log(name, names)
-                    console.log()
                     try {
                         await services.database.connection.createIndex({
                             ddoc: `${name}Index`,
