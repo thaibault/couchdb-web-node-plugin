@@ -415,20 +415,16 @@ export default class Database {
         // endregion
         // region create/remove needed/unneeded generic indexes
         if (configuration.modelConfiguration.createGenericFlatIndex) {
-            for (const modelName:string in configuration.modelConfiguration
-                .models
-            )
-                if (configuration.modelConfiguration.models.hasOwnProperty(
-                    modelName
-                ) && (new RegExp(configuration.modelConfiguration
-                    .specialPropertyNames.typeNameRegularExpressionPattern
-                    .public
+            for (const modelName:string in models)
+                if (models.hasOwnProperty(modelName) && (new RegExp(
+                    configuration.modelConfiguration.specialPropertyNames
+                        .typeNameRegularExpressionPattern.public
                 )).test(modelName))
                     for (
                         const name:string of
                         Helper.determineGenericIndexablePropertyNames(
-                            configuration.modelConfiguration,
-                            configuration.modelConfiguration.models[modelName])
+                            configuration.modelConfiguration, models[modelName]
+                        )
                     )
                         try {
                             await services.database.connection.createIndex({
@@ -453,16 +449,13 @@ export default class Database {
             for (const index:PlainObject of indexes.indexes)
                 if (index.name.endsWith('-GenericIndex')) {
                     let exists:boolean = false
-                    for (const modelName:string in configuration
-                        .modelConfiguration.models
-                    )
+                    for (const modelName:string in models)
                         if (index.name.startsWith(`${modelName}-`)) {
                             for (
                                 const name:string of
                                 Helper.determineGenericIndexablePropertyNames(
                                     configuration.modelConfiguration,
-                                    configuration.modelConfiguration.models[
-                                        modelName])
+                                    models[modelName])
                             )
                                 if (index.name ===
                                     `${modelName}-${name}-GenericIndex`
