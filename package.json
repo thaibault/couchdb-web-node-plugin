@@ -183,7 +183,7 @@
             "mutable": false,
             "nullable": false
           },
-          "updateDateType": {
+          "updateDateTime": {
             "type": "DateTime",
             "onUpdateExpression": "(new Date()).getTime()",
             "minimum": {
