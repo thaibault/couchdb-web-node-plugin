@@ -313,6 +313,12 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
             // // endregion
             // / endregion
             [
+                [{'-type': 'Test1', a: 1}], {models: {
+                    Test1: {a: {type: 'foreignKey:Test2'}},
+                    Test2: {_id: {type: 'string'}}
+                }}, 'PropertyType'
+            ],
+            [
                 [{'-type': 'Test', a: 1}], {models: {Test: {a: {type: 2}}}},
                 'PropertyType'
             ],
@@ -1275,6 +1281,14 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
             ],
             // // endregion
             // / endregion
+            [[{'-type': 'Test1', a: 2}], {models: {
+                Test1: {a: {type: 'foreignKey:Test2'}},
+                Test2: {_id: {type: 'number'}}
+            }}, {
+                fillUp: {'-type': 'Test1', a: 2},
+                incremental: {'-type': 'Test1', a: 2},
+                '': {'-type': 'Test1', a: 2}
+            }],
             [[{'-type': 'Test', a: 2}, {'-type': 'Test'}], {
                 models: {Test: {a: {type: 2}}}}, {
                     fillUp: {'-type': 'Test', a: 2},
@@ -1653,7 +1667,8 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
             delete modelConfiguration.models
             assert.deepEqual(DatabaseHelper.validateDocumentUpdate(
                 ...test[0].concat([null, {}, {}].slice(
-                    test[0].length - 1)).concat([models, modelConfiguration])
+                    test[0].length - 1
+                )).concat([models, modelConfiguration])
             ), test[2][updateStrategy])
         }
         // endregion
