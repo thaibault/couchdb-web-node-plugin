@@ -199,7 +199,8 @@ export default class DatabaseHelper {
                         throw {
                             forbidden: `PropertyType: Property "${name}" ` +
                                 `isn't of type "DateTime" (given "` +
-                                `${serialize(initialNewValue)}").`
+                                `${serialize(initialNewValue)}" of type "` +
+                                `${typeof newValue}").`
                         }
                         /* eslint-enable no-throw-literal */
                 } else if (models.hasOwnProperty(propertySpecification.type))
@@ -227,7 +228,25 @@ export default class DatabaseHelper {
                             forbidden: `PropertyType: Property "${name}" ` +
                                 `isn't of type "` +
                                 `${propertySpecification.type}" (given "` +
-                                `${serialize(newValue)}").`
+                                `${serialize(newValue)} of type "` +
+                                `${typeof newValue}").`
+                        }
+                        /* eslint-enable no-throw-literal */
+                } else if (
+                    typeof propertySpecification.type === 'string' &&
+                    propertySpecification.type.startsWith('foreignKey:')
+                ) {
+                    const foreignKeyType:string = models[
+                        propertySpecification.type.substring(
+                            'foreignKey:'.length
+                        )]._id.type
+                    if (foreignKeyType !== typeof newValue)
+                        /* eslint-disable no-throw-literal */
+                        throw {
+                            forbidden: `PropertyType: Foreign key property "` +
+                                `${name}" isn't of type "${foreignKeyType}" ` +
+                                `(given "${serialize(newValue)}" of type "` +
+                                `${typeof newValue}").`
                         }
                         /* eslint-enable no-throw-literal */
                 } else if (newValue !== propertySpecification.type)
@@ -235,7 +254,8 @@ export default class DatabaseHelper {
                     throw {
                         forbidden: `PropertyType: Property "${name}" isn't ` +
                             `value "${propertySpecification.type}" (given "` +
-                            `${serialize(newValue)}").`
+                            `${serialize(newValue)}" of type "` +
+                            `${typeof newValue}").`
                     }
                     /* eslint-disable no-throw-literal */
                 // endregion
