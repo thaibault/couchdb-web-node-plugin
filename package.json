@@ -1,22 +1,13 @@
 {
   "name": "databasewebnodeplugin",
   "version": "1.0.72",
+  "license": "CC-BY-3.0",
   "description": "A database server, model instance conflict handler, rest api, authentication, session management, schema validator and model relation guarantee for webNode.",
+  "homepage": "http://torben.website/databaseWebNodePlugin",
   "documentationWebsite": {
     "name": "databaseWebNodePlugin",
     "trackingCode": "TODO"
   },
-  "homepage": "http://torben.website/databaseWebNodePlugin",
-  "license": "CC-BY-3.0",
-  "main": "index.compiled.js",
-  "files": [
-    "index.js",
-    "helper.js",
-    "helper.compiled.js",
-    "databaseHelper.js",
-    "databaseHelper.compiled.js",
-    "type.js"
-  ],
   "keywords": [
     "web",
     "backend",
@@ -32,24 +23,18 @@
     "roles",
     "session"
   ],
+  "files": [
+    "index.js",
+    "helper.js",
+    "helper.compiled.js",
+    "databaseHelper.js",
+    "databaseHelper.compiled.js",
+    "type.js"
+  ],
+  "main": "index.compiled.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/thaibault/databaseWebNodePlugin.git"
-  },
-  "dependencies": {
-    "clientnode": "latest",
-    "node-fetch": "latest",
-    "pouchdb": "latest",
-    "pouchdb-find": "latest",
-    "pouchdb-server": "latest",
-    "rimraf": "latest",
-    "web-node": "latest",
-    "weboptimizer": "latest"
-  },
-  "devDependencies": {
-    "documentation-website": "latest",
-    "qunit-cli": "latest",
-    "source-map-support": "latest"
   },
   "scripts": {
     "build": "webOptimizer build",
@@ -65,6 +50,21 @@
     "updateDocumentation": "documentationWebsite --log-level info",
     "watch": "webOptimizer build --watch",
     "watchDLL": "webOptimizer buildDLL --watch"
+  },
+  "dependencies": {
+    "clientnode": "latest",
+    "node-fetch": "latest",
+    "pouchdb": "latest",
+    "pouchdb-find": "latest",
+    "pouchdb-server": "latest",
+    "rimraf": "latest",
+    "web-node": "latest",
+    "weboptimizer": "latest"
+  },
+  "devDependencies": {
+    "documentation-website": "latest",
+    "qunit-cli": "latest",
+    "source-map-support": "latest"
   },
   "webNode": {
     "database": {
