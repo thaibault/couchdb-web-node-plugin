@@ -170,9 +170,9 @@ export default class DatabaseHelper {
                         ] + '").'
                 }
                 /* eslint-enable no-throw-literal */
-            if (!models.hasOwnProperty(
-                newDocument[modelConfiguration.specialPropertyNames.type]
-            ))
+            if (!models.hasOwnProperty(newDocument[
+                modelConfiguration.specialPropertyNames.type
+            ]))
                 /* eslint-disable no-throw-literal */
                 throw {
                     forbidden: 'Model: Given model "' + newDocument[
