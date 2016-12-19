@@ -315,7 +315,7 @@ export default class DatabaseHelper {
                     throw {
                         forbidden: `Selection: Property "${name}" (type ` +
                             `${propertySpecification.type}) should be one of` +
-                            '"' +
+                            ' "' +
                             propertySpecification.selection.join('", "') +
                             `". But is "${newValue}".`
                     }
