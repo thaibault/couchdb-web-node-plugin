@@ -170,9 +170,9 @@ export default class DatabaseHelper {
                         ] + '").'
                 }
                 /* eslint-enable no-throw-literal */
-            if (!models.hasOwnProperty(
-                newDocument[modelConfiguration.specialPropertyNames.type]
-            ))
+            if (!models.hasOwnProperty(newDocument[
+                modelConfiguration.specialPropertyNames.type
+            ]))
                 /* eslint-disable no-throw-literal */
                 throw {
                     forbidden: 'Model: Given model "' + newDocument[
@@ -315,7 +315,7 @@ export default class DatabaseHelper {
                     throw {
                         forbidden: `Selection: Property "${name}" (type ` +
                             `${propertySpecification.type}) should be one of` +
-                            '"' +
+                            ' "' +
                             propertySpecification.selection.join('", "') +
                             `". But is "${newValue}".`
                     }
