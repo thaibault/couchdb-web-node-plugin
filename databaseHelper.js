@@ -228,7 +228,7 @@ export default class DatabaseHelper {
                             forbidden: `PropertyType: Property "${name}" ` +
                                 `isn't of type "` +
                                 `${propertySpecification.type}" (given "` +
-                                `${serialize(newValue)} of type "` +
+                                `${serialize(newValue)}" of type "` +
                                 `${typeof newValue}").`
                         }
                         /* eslint-enable no-throw-literal */
