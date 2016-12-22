@@ -603,6 +603,13 @@ QUnit.test('validateDocumentUpdate', (assert:Object):void => {
                 incremental: {_id: 1, _rev: 1},
                 '': {_id: 1, _rev: 1}
             }],
+            [[{'-type': 'Test', _id: 1, _rev: 1, a: null}, {
+                '-type': 'Test', _id: 1, _rev: 0, a: 'a'
+            }], {models: {Test: {a: {}}}}, {
+                fillUp: {'-type': 'Test', _id: 1, _rev: 1},
+                incremental: {_id: 1, _rev: 1},
+                '': {'-type': 'Test', _id: 1, _rev: 1}
+            }],
             [[{'-type': 'Test', _rev: 'latest'}, {'-type': 'Test', _rev: 1}], {
                 models: {Test: {}}
             }, {
