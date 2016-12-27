@@ -15,6 +15,7 @@
     endregion
 */
 // region imports
+import Tools from 'clientnode'
 import * as QUnit from 'qunit-cli'
 // NOTE: Only needed for debugging this file.
 try {
@@ -33,7 +34,8 @@ QUnit.test('ensureValidationDocumentPresence', async (
     const done:Function = assert.async()
     for (const test:Array<any> of [
         [{put: ():Promise<void> =>
-            new Promise((resolve:Function):number => setTimeout(resolve, 0))
+            new Promise((resolve:Function):Promise<boolean> => Tools.timeout(
+                resolve))
         }, 'test', {data: 'data'}, 'Description', null, false]
     ])
         assert.strictEqual(await Helper.ensureValidationDocumentPresence(
