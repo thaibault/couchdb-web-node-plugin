@@ -15,18 +15,19 @@
 // region imports
 import Tools from 'clientnode'
 import type {PlainObject} from 'clientnode'
+// NOTE: Remove when "fetch" is supported by node.
+import fetch from 'node-fetch'
 // NOTE: Only needed for debugging this file.
 try {
     require('source-map-support/register')
 } catch (error) {}
 
-import fetch from 'node-fetch'
-// NOTE: Remove when "fetch" is supported by node.
-global.fetch = fetch
 import type {
     AllowedModelRolesMapping, Model, ModelConfiguration, Models
 } from './type'
 // endregion
+// NOTE: Remove when "fetch" is supported by node.
+global.fetch = fetch
 // region methods
 /**
  * A dumm plugin interface with all available hooks.
