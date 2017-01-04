@@ -15,7 +15,7 @@
     endregion
 */
 // region imports
-import * as QUnit from 'qunit-cli'
+import registerTest from 'clientnode/test'
 // NOTE: Only needed for debugging this file.
 try {
     require('source-map-support/register')
@@ -25,48 +25,49 @@ import type {Services} from 'web-node/type'
 
 import Index from '../index'
 // endregion
-QUnit.module('index')
-QUnit.load()
-// region tests
-QUnit.test('shouldExit', async (assert:Object):Promise<void> => {
-    const done:Function = assert.async()
-    let testValue:number = 0
-    const services:Services = {database: {
-        connection: {close: ():void => {
-            testValue += 1
-        }},
-        server: {process: {kill: ():void => {
-            testValue += 1
-        }}}
-    }}
-    try {
-        assert.deepEqual(
-            await Index.shouldExit(services, configuration), services)
-    } catch (error) {
-        console.error(error)
-    }
-    assert.deepEqual(services, {})
-    assert.strictEqual(testValue, 2)
-    done()
-})
-QUnit.test('loadService', async (assert:Object):Promise<void> => {
-    try {
-        assert.deepEqual((await Index.loadService(
-            {}, {database: {connection: null, server: {}}}, configuration
-        )).promise, null)
-    } catch (error) {
-        console.error(error)
-    }
-})
-QUnit.test('preLoadService', async (assert:Object):Promise<void> => {
-    try {
-        assert.strictEqual(typeof (await Index.preLoadService({
-        }, configuration)).database.server.binaryFilePath, 'string')
-    } catch (error) {
-        console.error(error)
-    }
-})
+registerTest(async function():Promise<void> {
+    this.module('index')
+    // region tests
+    this.test('shouldExit', async (assert:Object):Promise<void> => {
+        const done:Function = assert.async()
+        let testValue:number = 0
+        const services:Services = {database: {
+            connection: {close: ():void => {
+                testValue += 1
+            }},
+            server: {process: {kill: ():void => {
+                testValue += 1
+            }}}
+        }}
+        try {
+            assert.deepEqual(
+                await Index.shouldExit(services, configuration), services)
+        } catch (error) {
+            console.error(error)
+        }
+        assert.deepEqual(services, {})
+        assert.strictEqual(testValue, 2)
+        done()
+    })
+    this.test('loadService', async (assert:Object):Promise<void> => {
+        try {
+            assert.deepEqual((await Index.loadService(
+                {}, {database: {connection: null, server: {}}}, configuration
+            )).promise, null)
+        } catch (error) {
+            console.error(error)
+        }
+    })
+    this.test('preLoadService', async (assert:Object):Promise<void> => {
+        try {
+            assert.strictEqual(typeof (await Index.preLoadService({
+            }, configuration)).database.server.binaryFilePath, 'string')
+        } catch (error) {
+            console.error(error)
+        }
+    })
 // endregion
+}, ['plain'])
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
 // vim: foldmethod=marker foldmarker=region,endregion:
