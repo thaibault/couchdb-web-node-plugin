@@ -19,7 +19,7 @@ import Tools from 'clientnode'
 import * as QUnit from 'qunit-cli'
 // NOTE: Only needed for debugging this file.
 try {
-    module.require('source-map-support/register')
+    require('source-map-support/register')
 } catch (error) {}
 import configuration from 'web-node/configurator'
 
