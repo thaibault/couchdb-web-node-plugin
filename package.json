@@ -80,6 +80,7 @@
       "httpd/host": {
         "__evaluate__": "self.hasOwnProperty('server') && self.server.application.hostName || '127.0.0.1'"
       },
+      "local": false,
       "log/file": "/dev/stdout",
       "log/level": "info",
       "path": "database",

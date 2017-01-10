@@ -14,7 +14,7 @@
 .*/website-utilities/.*
 
 [options]
-esproposal.class_static_fields=enable
+unsafe.enable_getters_and_setters=true
 
 module.name_mapper='^weboptimizer/browserAPI.compiled$' -> 'weboptimizer/browserAPI'
 

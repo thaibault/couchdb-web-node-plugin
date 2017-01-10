@@ -110,6 +110,7 @@ export type Configuration = {
     database:{
         configurationFilePath:string;
         'httpd/host':string;
+        local:boolean;
         'log/file':string;
         'log/level':string;
         path:string;
