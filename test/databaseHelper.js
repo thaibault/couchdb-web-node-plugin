@@ -182,15 +182,28 @@ registerTest(async function():Promise<void> {
                     [{'-type': 'Test', a: '["a"]'}],
                     {models: {Test: {a: {type: 'DateTime[]'}}}}, 'PropertyType'
                 ],
+                [
+                    [{'-type': 'Test', a: [{'-type': 'Test'}]}],
+                    {models: {Test: {a: {type: 'Custom[]'}}}}, 'PropertyType'
+                ],
+                [
+                    [{'-type': 'Test', a: [{'-type': 'Custom'}, {
+                        '-type': 'Test'
+                    }]}],
+                    {models: {Test: {a: {type: 'Custom[]'}}}}, 'PropertyType'
+                ],
                 // // endregion
                 [
                     [{'-type': 'Test', a: [{'-type': 'Test', b: 2}]}],
                     {models: {Test: {a: {type: 'Test[]'}}}}, 'Property'
                 ],
                 [
-                    [{'-type': 'Test', a: [{'-type': 'Test', b: null}], b: 'a'}],
-                    {models: {Test: {a: {type: 'Test[]'}, b: {nullable: false}}}},
-                    'NotNull'
+                    [{'-type': 'Test', a: [{
+                        '-type': 'Test', b: null
+                    }], b: 'a'}],
+                    {models: {Test: {a: {type: 'Test[]'}, b: {
+                        nullable: false
+                    }}}}, 'NotNull'
                 ],
                 [
                     [
@@ -201,8 +214,9 @@ registerTest(async function():Promise<void> {
                     }}, 'Readonly'
                 ],
                 [
-                    [{'-type': 'Test', a: [4], b: [{'-type': 'Test', a: [2]}]}],
-                    {models: {Test: {
+                    [{'-type': 'Test', a: [4], b: [{'-type': 'Test', a: [
+                        2
+                    ]}]}], {models: {Test: {
                         a: {type: 'number[]', minimum: 3},
                         b: {type: 'Test[]'}
                     }}}, 'Minimum'
@@ -225,7 +239,8 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{'-type': 'Test', a: {'-type': 'Test', b: 2}, b: 'a'}],
-                    {models: {Test: {a: {type: 'Test'}, b: {}}}}, 'PropertyType'
+                    {models: {Test: {a: {type: 'Test'}, b: {}}}},
+                    'PropertyType'
                 ],
                 // // endregion
                 // // region property existents
@@ -235,13 +250,15 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{'-type': 'Test', a: {'-type': 'Test', b: null}, b: 'a'}],
-                    {models: {Test: {a: {type: 'Test'}, b: {nullable: false}}}},
-                    'NotNull'
+                    {models: {Test: {a: {type: 'Test'}, b: {
+                        nullable: false
+                    }}}}, 'NotNull'
                 ],
                 [
                     [{'-type': 'Test', a: {'-type': 'Test'}, b: 'a'}],
-                    {models: {Test: {a: {type: 'Test'}, b: {nullable: false}}}},
-                    'MissingProperty'
+                    {models: {Test: {a: {type: 'Test'}, b: {
+                        nullable: false
+                    }}}}, 'MissingProperty'
                 ],
                 // // endregion
                 // // region property readonly
@@ -249,30 +266,33 @@ registerTest(async function():Promise<void> {
                     [
                         {'-type': 'Test', a: {'-type': 'Test', b: 'a'}},
                         {'-type': 'Test', a: {'-type': 'Test', b: 'b'}}
-                    ], {models: {Test: {a: {type: 'Test'}, b: {writable: false}}}},
-                    'Readonly'
+                    ], {models: {Test: {a: {type: 'Test'}, b: {
+                        writable: false
+                    }}}}, 'Readonly'
                 ],
                 [
                     [
                         {'-type': 'Test', a: {'-type': 'Test', b: 'a'}},
                         {'-type': 'Test', a: {'-type': 'Test', b: 'b'}}
-                    ], {models: {Test: {a: {type: 'Test'}, b: {mutable: false}}}},
-                    'Immutable'
+                    ], {models: {Test: {a: {type: 'Test'}, b: {
+                        mutable: false
+                    }}}}, 'Immutable'
                 ],
                 [
                     [
                         {'-type': 'Test', a: {'-type': 'Test', b: 'a'}},
                         {'-type': 'Test', a: {'-type': 'Test'}}
-                    ], {models: {Test: {a: {type: 'Test'}, b: {writable: false}}}},
-                    'Readonly'
+                    ], {models: {Test: {a: {type: 'Test'}, b: {
+                        writable: false
+                    }}}}, 'Readonly'
                 ],
                 [
                     [
                         {'-type': 'Test', a: {'-type': 'Test', b: 'a'}},
                         {'-type': 'Test', a: {'-type': 'Test', b: 'b'}}, {}, {}
                     ],
-                    {models: {Test: {a: {type: 'Test', writable: false}, b: {}}}},
-                    'Readonly'
+                    {models: {Test: {a: {type: 'Test', writable: false}, b: {
+                    }}}}, 'Readonly'
                 ],
                 // // endregion
                 // // region property range
@@ -311,7 +331,8 @@ registerTest(async function():Promise<void> {
                     [{'-type': 'Test', a: 'b', b: {'-type': 'Test', a: 'a'}}],
                     {models: {Test: {
                         a: {constraintExpression: {
-                            description: '`Value "b" given but: "${newValue}".`',
+                            description:
+                                '`Value "b" given but: "${newValue}".`',
                             evaluation: 'newValue === "b"'
                         }},
                         b: {type: 'Test'}
@@ -325,10 +346,9 @@ registerTest(async function():Promise<void> {
                         Test2: {_id: {type: 'string'}}
                     }}, 'PropertyType'
                 ],
-                [
-                    [{'-type': 'Test', a: 1}], {models: {Test: {a: {type: 2}}}},
-                    'PropertyType'
-                ],
+                [[{'-type': 'Test', a: 1}], {models: {Test: {a: {
+                    type: 2
+                }}}}, 'PropertyType'],
                 // endregion
                 // region property range
                 [
@@ -1231,7 +1251,9 @@ registerTest(async function():Promise<void> {
                     ],
                     {models: {Test: {a: {type: 'Test', writable: false}, b: {
                     }}}}, {
-                        fillUp: {'-type': 'Test', a: {'-type': 'Test', b: 'a'}},
+                        fillUp: {'-type': 'Test', a: {
+                            '-type': 'Test', b: 'a'
+                        }},
                         incremental: {},
                         '': {'-type': 'Test', a: {'-type': 'Test', b: 'a'}}
                     }
