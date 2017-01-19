@@ -247,7 +247,7 @@
         }
       },
       "skipParseRegularExpressions": {
-        "__evaluate__": "/(bindings\\/bindings|encoding\\/lib\\/iconv-loader|colors\\/lib\\/colors|colors\\/lib\\/extendStringPrototype)\\.js(?:\\?.+|$)/"
+        "__evaluate__": "/(?:(?:bindings\\/bindings)|(?:colors\\/lib\\/(?:colors)|(?:extendStringPrototype))|(?:encoding\\/lib\\/iconv-loader)|(?:global)|(?:module))\\.js(?:\\?.+|$)/"
       }
     },
     "targetTechnology": "node"
