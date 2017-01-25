@@ -108,6 +108,10 @@ export type SecuritySettings = {
 }
 export type Configuration = {
     database:{
+        binary:{
+            locations:Array<string>;
+            name:string;
+        };
         configurationFilePath:string;
         'httpd/host':string;
         local:boolean;

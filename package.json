@@ -78,7 +78,7 @@
         "__evaluate__": "`./${self.database.path}/database.json`"
       },
       "httpd/host": {
-        "__evaluate__": "self.hasOwnProperty('server') && self.server.application.hostName || '127.0.0.1'"
+        "__evaluate__": "self.hasOwnProperty('server') ? self.server.application.hostName : '127.0.0.1'"
       },
       "local": false,
       "log/file": "/dev/stdout",

@@ -206,7 +206,6 @@ export default class DatabaseHelper {
                 } else if (models.hasOwnProperty(propertySpecification.type))
                     if (typeof newValue === 'object' && Object.getPrototypeOf(
                         newValue
-                    // IgnoreTypeCheck
                     ) === Object.prototype) {
                         newValue = checkDocument(newValue, oldValue, true)
                         if (serialize(newValue) === serialize({}))
@@ -933,7 +932,6 @@ export default class DatabaseHelper {
                 const newAttachments:PlainObject = newDocument[name]
                 if (
                     typeof newAttachments !== 'object' ||
-                    // IgnoreTypeCheck
                     Object.getPrototypeOf(newAttachments) !== Object.prototype
                 )
                     /* eslint-disable no-throw-literal */
@@ -952,7 +950,6 @@ export default class DatabaseHelper {
                         typeof oldAttachments === 'object' &&
                         Object.getPrototypeOf(
                             oldAttachments
-                        // IgnoreTypeCheck
                         ) === Object.prototype
                     )
                         for (const fileName:string in oldAttachments)
