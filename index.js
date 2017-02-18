@@ -118,9 +118,9 @@ export default class Database {
         if (services.database.server.hasOwnProperty('binaryFilePath')) {
             services.database.server.process = spawnChildProcess(
                 services.database.server.binaryFilePath, [
-                    '--port', `${configuration.database.port}`,
+                    '--config', configuration.database.configurationFilePath,
                     '--dir', path.resolve(configuration.database.path),
-                    '--config', configuration.database.configurationFilePath
+                    '--port', `${configuration.database.port}`
                 ], {
                     cwd: eval('process').cwd(),
                     env: eval('process').env,
