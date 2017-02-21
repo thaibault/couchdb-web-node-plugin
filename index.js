@@ -29,7 +29,7 @@ import PouchDBFindPlugin from 'pouchdb-find'
 try {
     require('source-map-support/register')
 } catch (error) {}
-import type {Configuration, Services} from 'web-node/type'
+import type {Configuration, ServicePromises, Services} from 'web-node/type'
 
 import DatabaseHelper from './databaseHelper'
 import Helper from './helper'
@@ -111,7 +111,7 @@ export default class Database {
      * service.
      */
     static async loadService(
-        servicePromises:{[key:string]:Promise<Object>}, services:Services,
+        servicePromises:ServicePromises, services:Services,
         configuration:Configuration
     ):Promise<{promise:?Promise<Object>}> {
         let promise:?Promise<Object> = null
