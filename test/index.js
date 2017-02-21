@@ -28,6 +28,23 @@ import Index from '../index'
 registerTest(async function():Promise<void> {
     this.module('index')
     // region tests
+    this.test('loadService', async (assert:Object):Promise<void> => {
+        try {
+            assert.deepEqual((await Index.loadService(
+                {}, {database: {connection: null, server: {}}}, configuration
+            )).promise, null)
+        } catch (error) {
+            console.error(error)
+        }
+    })
+    this.test('preLoadService', async (assert:Object):Promise<void> => {
+        try {
+            assert.strictEqual(typeof (await Index.preLoadService({
+            }, configuration)).database.server.binaryFilePath, 'string')
+        } catch (error) {
+            console.error(error)
+        }
+    })
     this.test('shouldExit', async (assert:Object):Promise<void> => {
         const done:Function = assert.async()
         let testValue:number = 0
@@ -48,23 +65,6 @@ registerTest(async function():Promise<void> {
         assert.deepEqual(services, {})
         assert.strictEqual(testValue, 2)
         done()
-    })
-    this.test('loadService', async (assert:Object):Promise<void> => {
-        try {
-            assert.deepEqual((await Index.loadService(
-                {}, {database: {connection: null, server: {}}}, configuration
-            )).promise, null)
-        } catch (error) {
-            console.error(error)
-        }
-    })
-    this.test('preLoadService', async (assert:Object):Promise<void> => {
-        try {
-            assert.strictEqual(typeof (await Index.preLoadService({
-            }, configuration)).database.server.binaryFilePath, 'string')
-        } catch (error) {
-            console.error(error)
-        }
     })
 // endregion
 }, ['plain'])
