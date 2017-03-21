@@ -29,7 +29,7 @@ import PouchDBFindPlugin from 'pouchdb-find'
 try {
     require('source-map-support/register')
 } catch (error) {}
-import type {Configuration, Services} from 'web-node/type'
+import type {Configuration, ServicePromises, Services} from 'web-node/type'
 
 import DatabaseHelper from './databaseHelper'
 import Helper from './helper'
@@ -44,63 +44,6 @@ import type {
  */
 export default class Database {
     /**
-     * Application will be closed soon.
-     * @param services - An object with stored service instances.
-     * @param configuration - Mutable by plugins extended configuration object.
-     * @returns Given object of services.
-     */
-    static async shouldExit(
-        services:Services, configuration:Configuration
-    ):Promise<Services> {
-        const logFilePath:string = 'log.txt'
-        if (await Tools.isFile(logFilePath))
-            await new Promise((resolve:Function, reject:Function):void =>
-                fileSystem.unlink(logFilePath, (error:?Error):void =>
-                    error ? reject(error) : resolve()))
-        services.database.connection.close()
-        services.database.server.process.kill('SIGINT')
-        await Tools.checkUnreachability(
-            Tools.stringFormat(configuration.database.url, ''), true)
-        delete services.database
-        return services
-    }
-    /**
-     * Appends an application server to the web node services.
-     * @param services - An object with stored service instances.
-     * @param configuration - Mutable by plugins extended configuration object.
-     * @returns Given and extended object of services.
-     */
-    static async preLoadService(
-        services:Services, configuration:Configuration
-    ):Promise<Services> {
-        if (!services.hasOwnProperty('database'))
-            services.database = {}
-        if (!services.database.hasOwnProperty('connector'))
-            services.database.connector = PouchDB.plugin(PouchDBFindPlugin)
-        if (!services.database.hasOwnProperty('server')) {
-            services.database.server = {}
-            // region search for binary file to start database server
-            for (
-                const filePath:string of
-                configuration.database.binary.locations
-            ) {
-                const binaryFilePath:string = path.resolve(
-                    filePath, configuration.database.binary.name)
-                if (await Tools.isFile(binaryFilePath))
-                    services.database.server.binaryFilePath = binaryFilePath
-            }
-            if (!services.database.server.hasOwnProperty('binaryFilePath'))
-                throw new Error(
-                    'No binary file name "' +
-                    `${configuration.database.binary.name}" in one of the ` +
-                    'following locations found: "' +
-                    `${configuration.database.binary.locations.join('", "')}` +
-                    '".')
-            // endregion
-        }
-        return services
-    }
-    /**
      * Start database's child process and return a Promise which observes this
      * service.
      * @param servicePromises - An object with stored service promise
@@ -111,16 +54,21 @@ export default class Database {
      * service.
      */
     static async loadService(
-        servicePromises:{[key:string]:Promise<Object>}, services:Services,
+        servicePromises:ServicePromises, services:Services,
         configuration:Configuration
     ):Promise<{promise:?Promise<Object>}> {
         let promise:?Promise<Object> = null
         if (services.database.server.hasOwnProperty('binaryFilePath')) {
             services.database.server.process = spawnChildProcess(
                 services.database.server.binaryFilePath, [
-                    '--port', `${configuration.database.port}`,
+                    '--config', configuration.database.configurationFilePath,
                     '--dir', path.resolve(configuration.database.path),
-                    '--config', configuration.database.configurationFilePath
+                    /*
+                        NOTE: This redundancy seems to be needed to forward
+                        ports in docker containers.
+                    */
+                    '--host', configuration.database['httpd/host'],
+                    '--port', `${configuration.database.port}`
                 ], {
                     cwd: eval('process').cwd(),
                     env: eval('process').env,
@@ -474,6 +422,63 @@ export default class Database {
         }
         // endregion
         return {name: 'database', promise}
+    }
+    /**
+     * Appends an application server to the web node services.
+     * @param services - An object with stored service instances.
+     * @param configuration - Mutable by plugins extended configuration object.
+     * @returns Given and extended object of services.
+     */
+    static async preLoadService(
+        services:Services, configuration:Configuration
+    ):Promise<Services> {
+        if (!services.hasOwnProperty('database'))
+            services.database = {}
+        if (!services.database.hasOwnProperty('connector'))
+            services.database.connector = PouchDB.plugin(PouchDBFindPlugin)
+        if (!services.database.hasOwnProperty('server')) {
+            services.database.server = {}
+            // region search for binary file to start database server
+            for (
+                const filePath:string of
+                configuration.database.binary.locations
+            ) {
+                const binaryFilePath:string = path.resolve(
+                    filePath, configuration.database.binary.name)
+                if (await Tools.isFile(binaryFilePath))
+                    services.database.server.binaryFilePath = binaryFilePath
+            }
+            if (!services.database.server.hasOwnProperty('binaryFilePath'))
+                throw new Error(
+                    'No binary file name "' +
+                    `${configuration.database.binary.name}" in one of the ` +
+                    'following locations found: "' +
+                    `${configuration.database.binary.locations.join('", "')}` +
+                    '".')
+            // endregion
+        }
+        return services
+    }
+    /**
+     * Application will be closed soon.
+     * @param services - An object with stored service instances.
+     * @param configuration - Mutable by plugins extended configuration object.
+     * @returns Given object of services.
+     */
+    static async shouldExit(
+        services:Services, configuration:Configuration
+    ):Promise<Services> {
+        const logFilePath:string = 'log.txt'
+        if (await Tools.isFile(logFilePath))
+            await new Promise((resolve:Function, reject:Function):void =>
+                fileSystem.unlink(logFilePath, (error:?Error):void =>
+                    error ? reject(error) : resolve()))
+        services.database.connection.close()
+        services.database.server.process.kill('SIGINT')
+        await Tools.checkUnreachability(
+            Tools.stringFormat(configuration.database.url, ''), true)
+        delete services.database
+        return services
     }
 }
 // endregion
