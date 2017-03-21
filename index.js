@@ -63,6 +63,11 @@ export default class Database {
                 services.database.server.binaryFilePath, [
                     '--config', configuration.database.configurationFilePath,
                     '--dir', path.resolve(configuration.database.path),
+                    /*
+                        NOTE: This redundancy seems to be needed to forward
+                        ports in docker containers.
+                    */
+                    '--host', configuration.database['httpd/host'],
                     '--port', `${configuration.database.port}`
                 ], {
                     cwd: eval('process').cwd(),
