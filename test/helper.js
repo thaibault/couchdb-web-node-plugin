@@ -47,15 +47,15 @@ registerTest(async function():Promise<void> {
         for (const test:Array<any> of [
             [{}, {}],
             [{
-                specialPropertyNames: {allowedRoles: 'roles'},
+                propertyName: {special: {allowedRoles: 'roles'}},
                 models: {Test: {}}
             }, {}],
             [{
-                specialPropertyNames: {allowedRoles: 'roles'},
+                propertyName: {special: {allowedRoles: 'roles'}},
                 models: {Test: {roles: []}}
             }, {Test: []}],
             [{
-                specialPropertyNames: {allowedRoles: 'roles'},
+                propertyName: {special: {allowedRoles: 'roles'}},
                 models: {Test: {roles: ['a']}}
             }, {Test: ['a']}]
         ])
@@ -127,7 +127,7 @@ registerTest(async function():Promise<void> {
                 {
                     default: {propertySpecification: {minimum: 1}},
                     models: {Test: {_attachments: {a: {}}}},
-                    specialPropertyNames: {attachments: '_attachments'}
+                    propertyName: {special: {attachments: '_attachments'}}
                 },
                 {Test: {_attachments: {a: {minimum: 1}}}}
             ]
@@ -135,9 +135,9 @@ registerTest(async function():Promise<void> {
             assert.deepEqual(Helper.extendModels(test[0]), test[1])
         assert.throws(():Models => Helper.extendModels({models: {a: {}}}))
         assert.deepEqual(Helper.extendModels({
-            specialPropertyNames: {typeNameRegularExpressionPattern: {
+            propertyName: {special: {typeNameRegularExpressionPattern: {
                 public: 'a'
-            }},
+            }}},
             models: {a: {}}
         }), {a: {}})
     })

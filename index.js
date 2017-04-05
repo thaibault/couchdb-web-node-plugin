@@ -167,8 +167,8 @@ export default class Database {
             /*
                 NOTE: As a needed side effect: This clears preexisting document
                 references in "securitySettings[
-                    configuration.database.modelConfiguration
-                        .specialPropertyNames.validatedDocumentsCache]".
+                    configuration.database.model.propertyName.special
+                        .validatedDocumentsCache]".
             */
             await fetch(Tools.stringFormat(
                 configuration.database.url,
@@ -186,12 +186,10 @@ export default class Database {
         }
         // endregion
         const modelConfiguration:ModelConfiguration =
-            Tools.copyLimitedRecursively(
-                configuration.database.modelConfiguration)
+            Tools.copyLimitedRecursively(configuration.database.model)
         delete modelConfiguration.default
-        delete modelConfiguration.models
-        const models:Models = Helper.extendModels(
-            configuration.database.modelConfiguration)
+        delete modelConfiguration.entities
+        const models:Models = Helper.extendModels(configuration.database.model)
         const databaseHelperCode:string = await new Promise((
             resolve:Function, reject:Function
         ):void => fileSystem.readFile(
@@ -218,7 +216,7 @@ export default class Database {
         }
         if (configuration.debug)
             console.info('Specification \n\n"' + Tools.representObject(
-                configuration.database.modelConfiguration
+                configuration.database.model
             ) + `" has generated validation code: \n\n"${validationCode}".`)
         await Helper.ensureValidationDocumentPresence(
             services.database.connection, 'validation', {
@@ -233,9 +231,9 @@ export default class Database {
             `    return require('helper').default.authenticate(` +
                     '...parameter.concat([' +
                     JSON.stringify(Helper.determineAllowedModelRolesMapping(
-                        configuration.database.modelConfiguration
-                    )) + `, '` + configuration.database.modelConfiguration
-                        .specialPropertyNames.type + `']))\n` +
+                        configuration.database.model
+                    )) + `, '` + configuration.database.model.propertyName
+                        .special.type + `']))\n` +
             '}'
         try {
             new Function(`return ${authenticationCode}`)
@@ -262,9 +260,9 @@ export default class Database {
                 for (const name:string in models[modelName])
                     if (models[modelName].hasOwnProperty(name))
                         if ([
-                            modelConfiguration.specialPropertyNames.constraints
+                            modelConfiguration.propertyName.special.constraints
                                 .expression,
-                            modelConfiguration.specialPropertyNames.constraints
+                            modelConfiguration.propertyName.special.constraints
                                 .execution
                         ].includes(name)) {
                             // IgnoreTypeCheck
@@ -362,25 +360,22 @@ export default class Database {
         // how couchdb deals with "id" conflicts)
         // endregion
         // region create/remove needed/unneeded generic indexes
-        if (configuration.database.modelConfiguration.createGenericFlatIndex) {
+        if (configuration.database.createGenericFlatIndex) {
             for (const modelName:string in models)
                 if (models.hasOwnProperty(modelName) && (new RegExp(
-                    configuration.database.modelConfiguration
-                        .specialPropertyNames.typeNameRegularExpressionPattern
-                        .public
+                    configuration.database.model.propertyName.special
+                        .typeNameRegularExpressionPattern.public
                 )).test(modelName))
                     for (
                         const name:string of
                         Helper.determineGenericIndexablePropertyNames(
-                            configuration.database.modelConfiguration,
-                            models[modelName])
-                    )
+                            configuration.database.model, models[modelName]))
                         try {
                             await services.database.connection.createIndex({
                                 index: {
                                     ddoc: `${modelName}-${name}-GenericIndex`,
                                     fields: [
-                                        modelConfiguration.specialPropertyNames
+                                        modelConfiguration.propertyName.special
                                             .type, name
                                     ],
                                     name: `${modelName}-${name}-GenericIndex`
@@ -403,7 +398,7 @@ export default class Database {
                             for (
                                 const name:string of
                                 Helper.determineGenericIndexablePropertyNames(
-                                    configuration.database.modelConfiguration,
+                                    configuration.database.model,
                                     models[modelName])
                             )
                                 if (index.name ===

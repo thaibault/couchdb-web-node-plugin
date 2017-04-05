@@ -97,11 +97,11 @@ export default class Helper {
             if (models.hasOwnProperty(modelName) && models[
                 modelName
             ].hasOwnProperty(
-                modelConfiguration.specialPropertyNames.allowedRoles
+                modelConfiguration.propertyName.special.allowedRoles
             )) {
                 // IgnoreTypeCheck
                 const allowedRoles:Array<string> = models[modelName][
-                    modelConfiguration.specialPropertyNames.allowedRoles]
+                    modelConfiguration.propertyName.special.allowedRoles]
                 allowedModelRolesMapping[modelName] = allowedRoles
             }
         return allowedModelRolesMapping
@@ -118,10 +118,10 @@ export default class Helper {
     ):Array<string> {
         return Object.keys(model).filter((name:string):boolean => !(
             name.startsWith('_') ||
-            modelConfiguration.reservedPropertyNames.includes(name) ||
-            modelConfiguration.specialPropertyNames.type === name ||
+            modelConfiguration.propertyName.reserved.includes(name) ||
+            modelConfiguration.propertyName.special.type === name ||
             model[name].type && model[name].type.endsWith('[]') ||
-            modelConfiguration.models.hasOwnProperty(model[name].type)
+            modelConfiguration.entities.hasOwnProperty(model[name].type)
         )).concat('_id', '_rev')
     }
     /**
@@ -166,43 +166,45 @@ export default class Helper {
     static extendModels(modelConfiguration:PlainObject):Models {
         modelConfiguration = Tools.extendObject(true, {
             default: {propertySpecification: {}},
-            specialPropertyNames: {
-                extend: '_extends',
-                typeNameRegularExpressionPattern: {
-                    private: '^_[a-z][A-Za-z0-9]+$',
-                    public: '^[A-Z][A-Za-z0-9]+$'
+            propertyName: {
+                special: {
+                    extend: '_extends',
+                    typeNameRegularExpressionPattern: {
+                        private: '^_[a-z][A-Za-z0-9]+$',
+                        public: '^[A-Z][A-Za-z0-9]+$'
+                    }
                 }
             }
         }, modelConfiguration)
         const models:Models = {}
-        for (const modelName:string in modelConfiguration.models)
-            if (modelConfiguration.models.hasOwnProperty(
+        for (const modelName:string in modelConfiguration.entities)
+            if (modelConfiguration.entities.hasOwnProperty(
                 modelName
             )) {
                 if (!((new RegExp(
-                    modelConfiguration.specialPropertyNames
+                    modelConfiguration.propertyName.special
                         .typeNameRegularExpressionPattern.public
                 )).test(modelName) || (new RegExp(
-                    modelConfiguration.specialPropertyNames
+                    modelConfiguration.propertyName.special
                         .typeNameRegularExpressionPattern.private
                 )).test(modelName)))
                     throw new Error(
                         'Model names have to match "' +
-                        modelConfiguration.specialPropertyNames
+                        modelConfiguration.propertyName.special
                             .typeNameRegularExpressionPattern.public +
-                        '" or "' + modelConfiguration.specialPropertyNames
+                        '" or "' + modelConfiguration.propertyName.special
                             .typeNameRegularExpressionPattern.private +
                         `" for private one (given name: "${modelName}").`)
                 models[modelName] = Helper.extendModel(
-                    modelName, modelConfiguration.models,
-                    modelConfiguration.specialPropertyNames.extend)
+                    modelName, modelConfiguration.entities,
+                    modelConfiguration.propertyName.special.extend)
             }
         for (const modelName:string in models)
             if (models.hasOwnProperty(modelName))
                 for (const propertyName:string in models[modelName])
                     if (models[modelName].hasOwnProperty(propertyName))
-                        if (propertyName === modelConfiguration
-                            .specialPropertyNames.attachments
+                        if (propertyName === modelConfiguration.propertyName
+                            .special.attachments
                         )
                             for (const type:string in models[modelName][
                                 propertyName

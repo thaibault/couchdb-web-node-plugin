@@ -77,14 +77,14 @@
       "configurationFilePath": {
         "__evaluate__": "`./${self.database.path}/database.json`"
       },
+      "createGenericFlatIndex": true,
       "httpd/host": {
         "__evaluate__": "self.hasOwnProperty('server') ? self.server.application.hostName : '0.0.0.0'"
       },
       "local": false,
       "log/file": "/dev/stdout",
       "log/level": "info",
-      "modelConfiguration": {
-        "createGenericFlatIndex": true,
+      "model": {
         "default": {
           "propertySpecification": {
             "conflictingConstraintExpression": null,
@@ -106,29 +106,7 @@
             "writable": true
           }
         },
-        "reservedPropertyNames": [
-          "_deleted",
-          "_id",
-          "_rev",
-          "_revisions"
-        ],
-        "specialPropertyNames": {
-          "allowedRoles": "_allowedRoles",
-          "attachments": "_attachments",
-          "constraints": {
-            "expression": "_constraintExpressions",
-            "execution": "_constraintExecutions"
-          },
-          "extend": "_extends",
-          "type": "-type",
-          "typeNameRegularExpressionPattern": {
-            "public": "^[A-Z][A-Za-z0-9]+$",
-            "private": "^_[a-z][A-Za-z0-9]+$"
-          },
-          "validatedDocumentsCache": "_validatedDocuments"
-        },
-        "updateStrategy": "fillUp",
-        "models": {
+        "entities": {
           "_base": {
             "_allowedRoles": [
               "users"
@@ -145,7 +123,7 @@
             },
             "-type": {
               "regularExpressionPattern": {
-                "__evaluate__": "`(?:${self.database.modelConfiguration.specialPropertyNames.typeNameRegularExpressionPattern.public}|${self.database.modelConfiguration.specialPropertyNames.typeNameRegularExpressionPattern.private})`"
+                "__evaluate__": "`(?:${self.database.model.propertyName.special.typeNameRegularExpressionPattern.public}|${self.database.model.propertyName.special.typeNameRegularExpressionPattern.private})`"
               },
               "nullable": false,
               "minimum": 1,
@@ -176,7 +154,31 @@
               "nullable": false
             }
           }
-        }
+        },
+        "propertyName": {
+            "reserved": [
+              "_deleted",
+              "_id",
+              "_rev",
+              "_revisions"
+            ],
+            "special": {
+              "allowedRoles": "_allowedRoles",
+              "attachments": "_attachments",
+              "constraints": {
+                "expression": "_constraintExpressions",
+                "execution": "_constraintExecutions"
+              },
+              "extend": "_extends",
+              "type": "-type",
+              "typeNameRegularExpressionPattern": {
+                "public": "^[A-Z][A-Za-z0-9]+$",
+                "private": "^_[a-z][A-Za-z0-9]+$"
+              },
+              "validatedDocumentsCache": "_validatedDocuments"
+            }
+        },
+        "updateStrategy": "fillUp"
       },
       "path": "database",
       "port": 5984,

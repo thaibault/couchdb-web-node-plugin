@@ -59,18 +59,19 @@ registerTest(async function():Promise<void> {
             '', 'fillUp', 'incremental'
         ]) {
             const defaultModelSpecification:ModelConfiguration =
-                Tools.extendObject(true, {
-                }, configuration.database.modelConfiguration, {updateStrategy})
+                Tools.extendObject(true, {}, configuration.database.model, {
+                    updateStrategy})
             for (
                 const propertyName:string in
-                defaultModelSpecification.models._base
+                defaultModelSpecification.entities._base
             )
-                if (defaultModelSpecification.models._base.hasOwnProperty(
+                if (defaultModelSpecification.entities._base.hasOwnProperty(
                     propertyName
-                ) && propertyName !== configuration.database.modelConfiguration
-                    .specialPropertyNames.type
+                ) && propertyName !== configuration.database.model.propertyName
+                    .special.type
                 )
-                    delete defaultModelSpecification.models._base[propertyName]
+                    delete defaultModelSpecification.entities._base[
+                        propertyName]
             // region forbidden writes
             for (const test:Array<any> of [
                 // region general environment
@@ -578,7 +579,7 @@ registerTest(async function():Promise<void> {
                     Tools.extendObject(
                         true, {}, defaultModelSpecification, test[1])
                 delete modelConfiguration.default
-                delete modelConfiguration.models
+                delete modelConfiguration.entities
                 const parameter:Array<any> = test[0].concat([null, {}, {
                 }].slice(test[0].length - 1)).concat([
                     models, modelConfiguration])
@@ -1730,7 +1731,7 @@ registerTest(async function():Promise<void> {
                     Tools.extendObject(
                         true, {}, defaultModelSpecification, test[1])
                 delete modelConfiguration.default
-                delete modelConfiguration.models
+                delete modelConfiguration.entities
                 assert.deepEqual(DatabaseHelper.validateDocumentUpdate(
                     ...test[0].concat([null, {}, {}].slice(
                         test[0].length - 1
@@ -1741,19 +1742,18 @@ registerTest(async function():Promise<void> {
         }
         // region migration writes
         const defaultModelSpecification:ModelConfiguration =
-            Tools.extendObject(true, {
-            }, configuration.database.modelConfiguration, {
+            Tools.extendObject(true, {}, configuration.database.model, {
                 updateStrategy: 'migrate'})
         for (
             const propertyName:string in
-            defaultModelSpecification.models._base
+            defaultModelSpecification.entities._base
         )
-            if (defaultModelSpecification.models._base.hasOwnProperty(
+            if (defaultModelSpecification.entities._base.hasOwnProperty(
                 propertyName
-            ) && propertyName !== configuration.database.modelConfiguration
-                .specialPropertyNames.type
+            ) && propertyName !== configuration.database.model.propertyName
+                .special.type
             )
-                delete defaultModelSpecification.models._base[propertyName]
+                delete defaultModelSpecification.entities._base[propertyName]
         for (const test:Array<any> of [
             [
                 [{'-type': 'Test', a: 2}], {models: {Test: {}}},
@@ -1817,7 +1817,7 @@ registerTest(async function():Promise<void> {
             const modelConfiguration:ModelConfiguration = Tools.extendObject(
                 true, {}, defaultModelSpecification, test[1])
             delete modelConfiguration.default
-            delete modelConfiguration.models
+            delete modelConfiguration.entities
             assert.deepEqual(DatabaseHelper.validateDocumentUpdate(
                 ...test[0].concat([null, {}, {}].slice(
                     test[0].length - 1
