@@ -72,6 +72,10 @@ export type SpecialPropertyNames = {
     validatedDocumentsCache:string;
 }
 export type UpdateStrategy = ''|'fillUp'|'incremental'|'migrate'
+export type PropertyNameConfiguration = {
+    reserved:Array<string>;
+    special:SpecialPropertyNames;
+}
 export type ModelConfiguration = {
     default:{
         attachments:{
@@ -81,14 +85,12 @@ export type ModelConfiguration = {
         };
         propertySpecification:PropertySpecification;
     },
-    models:Models;
-    reservedPropertyNames:Array<string>;
-    specialPropertyNames:SpecialPropertyNames;
+    entities:Models;
+    propertyName:PropertyNameConfiguration;
     updateStrategy:UpdateStrategy;
 }
 export type SimpleModelConfiguration = {
-    reservedPropertyNames:Array<string>;
-    specialPropertyNames:SpecialPropertyNames;
+    propertyName:PropertyNameConfiguration;
     updateStrategy:UpdateStrategy;
 }
 // / endregion
@@ -113,10 +115,12 @@ export type Configuration = {
             name:string;
         };
         configurationFilePath:string;
+        createGenericFlatIndex:boolean;
         'httpd/host':string;
         local:boolean;
         'log/file':string;
         'log/level':string;
+        model:ModelConfiguration;
         path:string;
         port:number;
         security:SecuritySettings;
@@ -126,7 +130,6 @@ export type Configuration = {
             password:string;
         };
     };
-    modelConfiguration:ModelConfiguration;
 }
 // / endregion
 // / region database error
