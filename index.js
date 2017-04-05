@@ -167,7 +167,7 @@ export default class Database {
             /*
                 NOTE: As a needed side effect: This clears preexisting document
                 references in "securitySettings[
-                    configuration.database.model.propertyName.special
+                    configuration.database.model.property.name.special
                         .validatedDocumentsCache]".
             */
             await fetch(Tools.stringFormat(
@@ -187,7 +187,7 @@ export default class Database {
         // endregion
         const modelConfiguration:ModelConfiguration =
             Tools.copyLimitedRecursively(configuration.database.model)
-        delete modelConfiguration.default
+        delete modelConfiguration.property.defaultSpecification
         delete modelConfiguration.entities
         const models:Models = Helper.extendModels(configuration.database.model)
         const databaseHelperCode:string = await new Promise((
@@ -232,7 +232,7 @@ export default class Database {
                     '...parameter.concat([' +
                     JSON.stringify(Helper.determineAllowedModelRolesMapping(
                         configuration.database.model
-                    )) + `, '` + configuration.database.model.propertyName
+                    )) + `, '` + configuration.database.model.property.name
                         .special.type + `']))\n` +
             '}'
         try {
@@ -260,10 +260,10 @@ export default class Database {
                 for (const name:string in models[modelName])
                     if (models[modelName].hasOwnProperty(name))
                         if ([
-                            modelConfiguration.propertyName.special.constraints
-                                .expression,
-                            modelConfiguration.propertyName.special.constraints
-                                .execution
+                            modelConfiguration.property.name.special
+                                .constraints.expression,
+                            modelConfiguration.property.name.special
+                                .constraints.execution
                         ].includes(name)) {
                             // IgnoreTypeCheck
                             for (const constraint:Constraint of models[
@@ -363,7 +363,7 @@ export default class Database {
         if (configuration.database.createGenericFlatIndex) {
             for (const modelName:string in models)
                 if (models.hasOwnProperty(modelName) && (new RegExp(
-                    configuration.database.model.propertyName.special
+                    configuration.database.model.property.name.special
                         .typeNameRegularExpressionPattern.public
                 )).test(modelName))
                     for (
@@ -375,8 +375,9 @@ export default class Database {
                                 index: {
                                     ddoc: `${modelName}-${name}-GenericIndex`,
                                     fields: [
-                                        modelConfiguration.propertyName.special
-                                            .type, name
+                                        modelConfiguration.property.name
+                                            .special.type,
+                                        name
                                     ],
                                     name: `${modelName}-${name}-GenericIndex`
                                 }

@@ -26,7 +26,7 @@ export type PropertySpecification = {
     constraintExecution:?Constraint;
     contentTypeRegularExpressionPattern:?string;
     default:any;
-    maximum:number;
+    maximum:?number;
     minimum:number;
     mutable:boolean;
     nullable:boolean;
@@ -77,20 +77,18 @@ export type PropertyNameConfiguration = {
     special:SpecialPropertyNames;
 }
 export type ModelConfiguration = {
-    default:{
-        attachments:{
-            maximum:number;
-            minimum:number;
-            name:PropertySpecification;
-        };
-        propertySpecification:PropertySpecification;
-    },
     entities:Models;
-    propertyName:PropertyNameConfiguration;
+    property:{
+        defaultSpecification:PropertySpecification;
+        name:PropertyNameConfiguration;
+    };
     updateStrategy:UpdateStrategy;
 }
 export type SimpleModelConfiguration = {
-    propertyName:PropertyNameConfiguration;
+    property:{
+        defaultSpecification:PropertySpecification;
+        name:PropertyNameConfiguration;
+    };
     updateStrategy:UpdateStrategy;
 }
 // / endregion

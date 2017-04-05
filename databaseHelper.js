@@ -108,14 +108,15 @@ export default class DatabaseHelper {
         )
             return newDocument
         if (securitySettings.hasOwnProperty(
-            modelConfiguration.propertyName.special.validatedDocumentsCache
+            modelConfiguration.property.name.special.validatedDocumentsCache
         ) && securitySettings[
-            modelConfiguration.propertyName.special.validatedDocumentsCache
+            modelConfiguration.property.name.special.validatedDocumentsCache
         ].has(
             `${newDocument._id}-${newDocument._rev}`
         )) {
             securitySettings[
-                modelConfiguration.propertyName.special.validatedDocumentsCache
+                modelConfiguration.property.name.special
+                    .validatedDocumentsCache
             ].delete(`${newDocument._id}-${newDocument._rev}`)
             return newDocument
         }
@@ -145,44 +146,44 @@ export default class DatabaseHelper {
         ):PlainObject => {
             // region check for model type
             if (!newDocument.hasOwnProperty(
-                modelConfiguration.propertyName.special.type
+                modelConfiguration.property.name.special.type
             ))
                 /* eslint-disable no-throw-literal */
                 throw {
                     forbidden: 'Type: You have to specify a model type via ' +
                         `property "` +
-                        `${modelConfiguration.propertyName.special.type}".`
+                        `${modelConfiguration.property.name.special.type}".`
                 }
                 /* eslint-enable no-throw-literal */
             if (!(nested || (new RegExp(
-                modelConfiguration.propertyName.special
+                modelConfiguration.property.name.special
                     .typeNameRegularExpressionPattern.public
-            )).test(newDocument[modelConfiguration.propertyName.special.type]))
-            )
+            )).test(newDocument[modelConfiguration.property.name.special.type])
+            ))
                 /* eslint-disable no-throw-literal */
                 throw {
                     forbidden: 'TypeName: You have to specify a model type ' +
                         'which matches "' +
-                            modelConfiguration.propertyName.special
+                            modelConfiguration.property.name.special
                             .typeNameRegularExpressionPattern.public +
                         '" as public type (given "' + newDocument[
-                            modelConfiguration.propertyName.special.type
+                            modelConfiguration.property.name.special.type
                         ] + '").'
                 }
                 /* eslint-enable no-throw-literal */
             if (!models.hasOwnProperty(newDocument[
-                modelConfiguration.propertyName.special.type
+                modelConfiguration.property.name.special.type
             ]))
                 /* eslint-disable no-throw-literal */
                 throw {
                     forbidden: 'Model: Given model "' + newDocument[
-                        modelConfiguration.propertyName.special.type
+                        modelConfiguration.property.name.special.type
                     ] + '" is not specified.'
                 }
                 /* eslint-enable no-throw-literal */
             // endregion
             const modelName:string = newDocument[
-                modelConfiguration.propertyName.special.type]
+                modelConfiguration.property.name.special.type]
             const model:Model = models[modelName]
             // region functions
             const checkPropertyContent:Function = (
@@ -259,28 +260,27 @@ export default class DatabaseHelper {
                     /* eslint-disable no-throw-literal */
                 // endregion
                 // region range
-                if (![undefined, null].includes(propertySpecification.minimum))
-                    if (propertySpecification.type === 'string') {
-                        if (newValue.length < propertySpecification.minimum)
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden: `MinimalLength: Property "${name}` +
-                                    '" (type string) should have minimal ' +
-                                    `length ${propertySpecification.minimum}.`
-                            }
-                            /* eslint-enable no-throw-literal */
-                    } else if ([
-                        'number', 'integer', 'float', 'DateTime'
-                    ].includes(propertySpecification.type) &&
-                    newValue < propertySpecification.minimum)
+                if (propertySpecification.type === 'string') {
+                    if (newValue.length < propertySpecification.minimum)
                         /* eslint-disable no-throw-literal */
                         throw {
-                            forbidden: `Minimum: Property "${name}" (type ` +
-                                `${propertySpecification.type}) should ` +
-                                `satisfy a minimum of ` +
-                                `${propertySpecification.minimum}.`
+                            forbidden: `MinimalLength: Property "${name}` +
+                                '" (type string) should have minimal ' +
+                                `length ${propertySpecification.minimum}.`
                         }
-                        /* eslint-disable no-throw-literal */
+                        /* eslint-enable no-throw-literal */
+                } else if ([
+                    'number', 'integer', 'float', 'DateTime'
+                ].includes(propertySpecification.type) &&
+                newValue < propertySpecification.minimum)
+                    /* eslint-disable no-throw-literal */
+                    throw {
+                        forbidden: `Minimum: Property "${name}" (type ` +
+                            `${propertySpecification.type}) should ` +
+                            `satisfy a minimum of ` +
+                            `${propertySpecification.minimum}.`
+                    }
+                    /* eslint-disable no-throw-literal */
                 if (![undefined, null].includes(propertySpecification.maximum))
                     if (propertySpecification.type === 'string') {
                         if (newValue.length > propertySpecification.maximum)
@@ -288,6 +288,7 @@ export default class DatabaseHelper {
                             throw {
                                 forbidden: `MaximalLength: Property "${name}` +
                                     ' (type string) should have maximal ' +
+                                    // IgnoreTypeCheck
                                     `length ${propertySpecification.maximum}.`
                             }
                             /* eslint-enable no-throw-literal */
@@ -301,6 +302,7 @@ export default class DatabaseHelper {
                             forbidden: `Maximum: Property "${name}" (type ` +
                                 `${propertySpecification.type}) should ` +
                                 `satisfy a maximum of ` +
+                                // IgnoreTypeCheck
                                 `${propertySpecification.maximum}.`
                         }
                         /* eslint-disable no-throw-literal */
@@ -512,15 +514,15 @@ export default class DatabaseHelper {
             // endregion
             for (const name:string in model)
                 if (model.hasOwnProperty(name) && ![
-                    modelConfiguration.propertyName.special.allowedRoles,
-                    modelConfiguration.propertyName.special.constraints
+                    modelConfiguration.property.name.special.allowedRoles,
+                    modelConfiguration.property.name.special.constraints
                         .expression,
-                    modelConfiguration.propertyName.special.constraints
+                    modelConfiguration.property.name.special.constraints
                         .execution
                 ].includes(name))
                     // region run hooks and check for presence of needed data
                     if (
-                        modelConfiguration.propertyName.special.attachments
+                        modelConfiguration.property.name.special.attachments
                         === name
                     ) {
                         for (const type:string in model[name]) {
@@ -670,10 +672,10 @@ export default class DatabaseHelper {
                 for (const name:string in newDocument)
                     if (
                         newDocument.hasOwnProperty(name) &&
-                        name !== modelConfiguration.propertyName.special
+                        name !== modelConfiguration.property.name.special
                             .type &&
                         oldDocument.hasOwnProperty(name) &&
-                        !modelConfiguration.propertyName.reserved.includes(
+                        !modelConfiguration.property.name.reserved.includes(
                             name
                         ) && (
                             oldDocument[name] === newDocument[name] ||
@@ -689,7 +691,7 @@ export default class DatabaseHelper {
             for (const name:string in newDocument)
                 if (newDocument.hasOwnProperty(
                     name
-                ) && !modelConfiguration.propertyName.reserved.includes(
+                ) && !modelConfiguration.property.name.reserved.includes(
                     name
                 )) {
                     if (!model.hasOwnProperty(name))
@@ -755,7 +757,7 @@ export default class DatabaseHelper {
                                 if (
                                     modelConfiguration.updateStrategy ===
                                         'incremental' &&
-                                    !modelConfiguration.propertyName.reserved
+                                    !modelConfiguration.property.name.reserved
                                         .includes(name)
                                 )
                                     delete newDocument[name]
@@ -785,8 +787,8 @@ export default class DatabaseHelper {
                         return false
                     }
                     if (
-                        modelConfiguration.propertyName.special.attachments ===
-                        name
+                        modelConfiguration.property.name.special.attachments
+                        === name
                     ) {
                         for (const fileName:string in newDocument[name])
                             if (newDocument[name].hasOwnProperty(fileName))
@@ -860,12 +862,12 @@ export default class DatabaseHelper {
             ]
             for (
                 let type:string in
-                modelConfiguration.propertyName.special.constraints
+                modelConfiguration.property.name.special.constraints
             )
                 if (
-                    modelConfiguration.propertyName.special.constraints
+                    modelConfiguration.property.name.special.constraints
                         .hasOwnProperty(type) &&
-                    (type = modelConfiguration.propertyName.special
+                    (type = modelConfiguration.property.name.special
                         .constraints[type]) &&
                     model.hasOwnProperty(type) &&
                     Array.isArray(model[type]) && model[type].length
@@ -873,7 +875,7 @@ export default class DatabaseHelper {
                     for (const constraint:Constraint of model[type]) {
                         let hook:Function
                         const code:string = ((
-                            type === modelConfiguration.propertyName.special
+                            type === modelConfiguration.property.name.special
                                 .constraints.expression
                         ) ? 'return ' : '') + constraint.evaluation
                         const values:Array<any> = [
@@ -927,7 +929,7 @@ export default class DatabaseHelper {
                     }
             // / endregion
             // / region attachments
-            const name:string = modelConfiguration.propertyName.special
+            const name:string = modelConfiguration.property.name.special
                 .attachments
             if (newDocument.hasOwnProperty(name)) {
                 const newAttachments:PlainObject = newDocument[name]
@@ -1035,8 +1037,7 @@ export default class DatabaseHelper {
                         /* eslint-enable no-throw-literal */
                     if (!(
                         model[name][type].nullable && numberOfAttachments === 0
-                    ) && model[name][type].minimum !== null &&
-                    numberOfAttachments < model[name][type].minimum)
+                    ) && numberOfAttachments < model[name][type].minimum)
                         /* eslint-disable no-throw-literal */
                         throw {
                             forbidden: 'AttachmentMinimum: given number of ' +
@@ -1097,11 +1098,13 @@ export default class DatabaseHelper {
         newDocument = checkDocument(newDocument, oldDocument)
         if (securitySettings.hasOwnProperty('checkedDocuments'))
             securitySettings[
-                modelConfiguration.propertyName.special.validatedDocumentsCache
+                modelConfiguration.property.name.special
+                    .validatedDocumentsCache
             ].add(`${newDocument._id}-${newDocument._rev}`)
         else
             securitySettings[
-                modelConfiguration.propertyName.special.validatedDocumentsCache
+                modelConfiguration.property.name.special
+                    .validatedDocumentsCache
             ] = new Set([`${newDocument._id}-${newDocument._rev}`])
         return newDocument
     }
