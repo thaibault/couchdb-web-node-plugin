@@ -85,27 +85,6 @@
       "log/file": "/dev/stdout",
       "log/level": "info",
       "model": {
-        "default": {
-          "propertySpecification": {
-            "conflictingConstraintExpression": null,
-            "conflictingConstraintExecution": null,
-            "constraintExpression": null,
-            "constraintExecution": null,
-            "default": null,
-            "maximum": null,
-            "minimum": null,
-            "mutable": true,
-            "nullable": true,
-            "onCreateExpression": null,
-            "onCreateExecution": null,
-            "onUpdateExpression": null,
-            "onUpdateExecution": null,
-            "regularExpressionPattern": null,
-            "selection": null,
-            "type": "string",
-            "writable": true
-          }
-        },
         "entities": {
           "_base": {
             "_allowedRoles": [
@@ -123,7 +102,7 @@
             },
             "-type": {
               "regularExpressionPattern": {
-                "__evaluate__": "`(?:${self.database.model.propertyName.special.typeNameRegularExpressionPattern.public}|${self.database.model.propertyName.special.typeNameRegularExpressionPattern.private})`"
+                "__evaluate__": "`(?:${self.database.model.property.name.special.typeNameRegularExpressionPattern.public}|${self.database.model.property.name.special.typeNameRegularExpressionPattern.private})`"
               },
               "nullable": false,
               "minimum": 1,
@@ -155,27 +134,57 @@
             }
           }
         },
-        "propertyName": {
-          "reserved": [
-            "_deleted",
-            "_id",
-            "_rev",
-            "_revisions"
-          ],
-          "special": {
-            "allowedRoles": "_allowedRoles",
-            "attachments": "_attachments",
-            "constraints": {
-              "expression": "_constraintExpressions",
-              "execution": "_constraintExecutions"
+        "property": {
+          "defaultSpecification": {
+            "attachment": {
+              "maximum": null,
+              "minimum": 0,
+              "name": {
+                "__evaluate__": "self.database.model.property.defaultSpecification['*']"
+              }
             },
-            "extend": "_extends",
-            "type": "-type",
-            "typeNameRegularExpressionPattern": {
-              "public": "^[A-Z][A-Za-z0-9]+$",
-              "private": "^_[a-z][A-Za-z0-9]+$"
-            },
-            "validatedDocumentsCache": "_validatedDocuments"
+            "*": {
+              "conflictingConstraintExpression": null,
+              "conflictingConstraintExecution": null,
+              "constraintExpression": null,
+              "constraintExecution": null,
+              "default": null,
+              "maximum": null,
+              "minimum": 0,
+              "mutable": true,
+              "nullable": true,
+              "onCreateExpression": null,
+              "onCreateExecution": null,
+              "onUpdateExpression": null,
+              "onUpdateExecution": null,
+              "regularExpressionPattern": null,
+              "selection": null,
+              "type": "string",
+              "writable": true
+            }
+          },
+          "name": {
+            "reserved": [
+              "_deleted",
+              "_id",
+              "_rev",
+              "_revisions"
+            ],
+            "special": {
+              "allowedRoles": "_allowedRoles",
+              "attachments": "_attachments",
+              "constraints": {
+                "expression": "_constraintExpressions",
+                "execution": "_constraintExecutions"
+              },
+              "extend": "_extends",
+              "type": "-type",
+              "typeNameRegularExpressionPattern": {
+                "public": "^[A-Z][A-Za-z0-9]+$",
+                "private": "^_[a-z][A-Za-z0-9]+$"
+              },
+              "validatedDocumentsCache": "_validatedDocuments"
+            }
           }
         },
         "updateStrategy": "fillUp"

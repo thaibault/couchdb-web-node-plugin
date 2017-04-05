@@ -67,8 +67,8 @@ registerTest(async function():Promise<void> {
             )
                 if (defaultModelSpecification.entities._base.hasOwnProperty(
                     propertyName
-                ) && propertyName !== configuration.database.model.propertyName
-                    .special.type
+                ) && propertyName !== configuration.database.model.property
+                    .name.special.type
                 )
                     delete defaultModelSpecification.entities._base[
                         propertyName]
@@ -584,7 +584,7 @@ registerTest(async function():Promise<void> {
                 const modelConfiguration:ModelConfiguration =
                     Tools.extendObject(
                         true, {}, defaultModelSpecification, test[1])
-                delete modelConfiguration.default
+                delete modelConfiguration.property.defaultSpecification
                 delete modelConfiguration.entities
                 const parameter:Array<any> = test[0].concat([null, {}, {
                 }].slice(test[0].length - 1)).concat([
@@ -1737,7 +1737,7 @@ registerTest(async function():Promise<void> {
                 const modelConfiguration:ModelConfiguration =
                     Tools.extendObject(
                         true, {}, defaultModelSpecification, test[1])
-                delete modelConfiguration.default
+                delete modelConfiguration.property.defaultSpecification
                 delete modelConfiguration.entities
                 assert.deepEqual(DatabaseHelper.validateDocumentUpdate(
                     ...test[0].concat([null, {}, {}].slice(
@@ -1757,7 +1757,7 @@ registerTest(async function():Promise<void> {
         )
             if (defaultModelSpecification.entities._base.hasOwnProperty(
                 propertyName
-            ) && propertyName !== configuration.database.model.propertyName
+            ) && propertyName !== configuration.database.model.property.name
                 .special.type
             )
                 delete defaultModelSpecification.entities._base[propertyName]
@@ -1823,7 +1823,7 @@ registerTest(async function():Promise<void> {
                 true, {}, defaultModelSpecification, test[1]))
             const modelConfiguration:ModelConfiguration = Tools.extendObject(
                 true, {}, defaultModelSpecification, test[1])
-            delete modelConfiguration.default
+            delete modelConfiguration.property.defaultSpecification
             delete modelConfiguration.entities
             assert.deepEqual(DatabaseHelper.validateDocumentUpdate(
                 ...test[0].concat([null, {}, {}].slice(

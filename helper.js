@@ -97,11 +97,11 @@ export default class Helper {
             if (models.hasOwnProperty(modelName) && models[
                 modelName
             ].hasOwnProperty(
-                modelConfiguration.propertyName.special.allowedRoles
+                modelConfiguration.property.name.special.allowedRoles
             )) {
                 // IgnoreTypeCheck
                 const allowedRoles:Array<string> = models[modelName][
-                    modelConfiguration.propertyName.special.allowedRoles]
+                    modelConfiguration.property.name.special.allowedRoles]
                 allowedModelRolesMapping[modelName] = allowedRoles
             }
         return allowedModelRolesMapping
@@ -118,8 +118,8 @@ export default class Helper {
     ):Array<string> {
         return Object.keys(model).filter((name:string):boolean => !(
             name.startsWith('_') ||
-            modelConfiguration.propertyName.reserved.includes(name) ||
-            modelConfiguration.propertyName.special.type === name ||
+            modelConfiguration.property.name.reserved.includes(name) ||
+            modelConfiguration.property.name.special.type === name ||
             model[name].type && model[name].type.endsWith('[]') ||
             modelConfiguration.entities.hasOwnProperty(model[name].type)
         )).concat('_id', '_rev')
@@ -165,13 +165,15 @@ export default class Helper {
      */
     static extendModels(modelConfiguration:PlainObject):Models {
         modelConfiguration = Tools.extendObject(true, {
-            default: {propertySpecification: {}},
-            propertyName: {
-                special: {
-                    extend: '_extends',
-                    typeNameRegularExpressionPattern: {
-                        private: '^_[a-z][A-Za-z0-9]+$',
-                        public: '^[A-Z][A-Za-z0-9]+$'
+            property: {
+                defaultSpecification: {'*': {}},
+                name: {
+                    special: {
+                        extend: '_extends',
+                        typeNameRegularExpressionPattern: {
+                            private: '^_[a-z][A-Za-z0-9]+$',
+                            public: '^[A-Z][A-Za-z0-9]+$'
+                        }
                     }
                 }
             }
@@ -182,28 +184,28 @@ export default class Helper {
                 modelName
             )) {
                 if (!((new RegExp(
-                    modelConfiguration.propertyName.special
+                    modelConfiguration.property.name.special
                         .typeNameRegularExpressionPattern.public
                 )).test(modelName) || (new RegExp(
-                    modelConfiguration.propertyName.special
+                    modelConfiguration.property.name.special
                         .typeNameRegularExpressionPattern.private
                 )).test(modelName)))
                     throw new Error(
                         'Model names have to match "' +
-                        modelConfiguration.propertyName.special
+                        modelConfiguration.property.name.special
                             .typeNameRegularExpressionPattern.public +
-                        '" or "' + modelConfiguration.propertyName.special
+                        '" or "' + modelConfiguration.property.name.special
                             .typeNameRegularExpressionPattern.private +
                         `" for private one (given name: "${modelName}").`)
                 models[modelName] = Helper.extendModel(
                     modelName, modelConfiguration.entities,
-                    modelConfiguration.propertyName.special.extend)
+                    modelConfiguration.property.name.special.extend)
             }
         for (const modelName:string in models)
             if (models.hasOwnProperty(modelName))
                 for (const propertyName:string in models[modelName])
                     if (models[modelName].hasOwnProperty(propertyName))
-                        if (propertyName === modelConfiguration.propertyName
+                        if (propertyName === modelConfiguration.property.name
                             .special.attachments
                         )
                             for (const type:string in models[modelName][
@@ -213,16 +215,16 @@ export default class Helper {
                                     type
                                 ] = Tools.extendObject(
                                     true, Tools.copyLimitedRecursively(
-                                        modelConfiguration.default
-                                        .propertySpecification
+                                        modelConfiguration.property
+                                            .defaultSpecification.attachment
                                     ), models[modelName][propertyName][type])
                         else
                             models[modelName][
                                 propertyName
                             ] = Tools.extendObject(
                                 true, Tools.copyLimitedRecursively(
-                                    modelConfiguration.default
-                                    .propertySpecification,
+                                    modelConfiguration.property
+                                        .defaultSpecification['*'],
                                 ), models[modelName][propertyName])
         return models
     }

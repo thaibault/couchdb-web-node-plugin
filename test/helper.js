@@ -47,15 +47,15 @@ registerTest(async function():Promise<void> {
         for (const test:Array<any> of [
             [{}, {}],
             [{
-                propertyName: {special: {allowedRoles: 'roles'}},
+                property: {name: {special: {allowedRoles: 'roles'}}},
                 entities: {Test: {}}
             }, {}],
             [{
-                propertyName: {special: {allowedRoles: 'roles'}},
+                property: {name: {special: {allowedRoles: 'roles'}}},
                 entities: {Test: {roles: []}}
             }, {Test: []}],
             [{
-                propertyName: {special: {allowedRoles: 'roles'}},
+                property: {name: {special: {allowedRoles: 'roles'}}},
                 entities: {Test: {roles: ['a']}}
             }, {Test: ['a']}]
         ])
@@ -114,7 +114,7 @@ registerTest(async function():Promise<void> {
             ],
             [
                 {
-                    default: {propertySpecification: {maximum: 3}},
+                    property: {defaultSpecification: {'*': {maximum: 3}}},
                     entities: {_base: {}, Test: {a: {}}}
                 },
                 {_base: {}, Test: {a: {maximum: 3}}}
@@ -125,9 +125,9 @@ registerTest(async function():Promise<void> {
             ],
             [
                 {
-                    default: {propertySpecification: {minimum: 1}},
+                    property: {defaultSpecification: {'*': {minimum: 1}}},
                     entities: {Test: {_attachments: {a: {}}}},
-                    propertyName: {special: {attachments: '_attachments'}}
+                    property: {name: {special: {attachments: '_attachments'}}}
                 },
                 {Test: {_attachments: {a: {minimum: 1}}}}
             ]
@@ -135,9 +135,9 @@ registerTest(async function():Promise<void> {
             assert.deepEqual(Helper.extendModels(test[0]), test[1])
         assert.throws(():Models => Helper.extendModels({entities: {a: {}}}))
         assert.deepEqual(Helper.extendModels({
-            propertyName: {special: {typeNameRegularExpressionPattern: {
+            property: {name: {special: {typeNameRegularExpressionPattern: {
                 public: 'a'
-            }}},
+            }}}},
             entities: {a: {}}
         }), {a: {}})
     })

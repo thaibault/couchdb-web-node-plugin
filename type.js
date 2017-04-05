@@ -26,7 +26,7 @@ export type PropertySpecification = {
     constraintExecution:?Constraint;
     contentTypeRegularExpressionPattern:?string;
     default:any;
-    maximum:number;
+    maximum:?number;
     minimum:number;
     mutable:boolean;
     nullable:boolean;
@@ -76,21 +76,27 @@ export type PropertyNameConfiguration = {
     reserved:Array<string>;
     special:SpecialPropertyNames;
 }
+export type DefaultPropertySpecification = {
+    attachment:{
+        maximum:?number;
+        minimum:number;
+        name:PropertySpecification;
+    };
+    '*':PropertySpecification;
+}
 export type ModelConfiguration = {
-    default:{
-        attachments:{
-            maximum:number;
-            minimum:number;
-            name:PropertySpecification;
-        };
-        propertySpecification:PropertySpecification;
-    },
     entities:Models;
-    propertyName:PropertyNameConfiguration;
+    property:{
+        defaultSpecification:DefaultPropertySpecification;
+        name:PropertyNameConfiguration;
+    };
     updateStrategy:UpdateStrategy;
 }
 export type SimpleModelConfiguration = {
-    propertyName:PropertyNameConfiguration;
+    property:{
+        defaultSpecification:DefaultPropertySpecification;
+        name:PropertyNameConfiguration;
+    };
     updateStrategy:UpdateStrategy;
 }
 // / endregion
