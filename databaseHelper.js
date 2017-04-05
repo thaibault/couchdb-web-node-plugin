@@ -260,28 +260,27 @@ export default class DatabaseHelper {
                     /* eslint-disable no-throw-literal */
                 // endregion
                 // region range
-                if (![undefined, null].includes(propertySpecification.minimum))
-                    if (propertySpecification.type === 'string') {
-                        if (newValue.length < propertySpecification.minimum)
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden: `MinimalLength: Property "${name}` +
-                                    '" (type string) should have minimal ' +
-                                    `length ${propertySpecification.minimum}.`
-                            }
-                            /* eslint-enable no-throw-literal */
-                    } else if ([
-                        'number', 'integer', 'float', 'DateTime'
-                    ].includes(propertySpecification.type) &&
-                    newValue < propertySpecification.minimum)
+                if (propertySpecification.type === 'string') {
+                    if (newValue.length < propertySpecification.minimum)
                         /* eslint-disable no-throw-literal */
                         throw {
-                            forbidden: `Minimum: Property "${name}" (type ` +
-                                `${propertySpecification.type}) should ` +
-                                `satisfy a minimum of ` +
-                                `${propertySpecification.minimum}.`
+                            forbidden: `MinimalLength: Property "${name}` +
+                                '" (type string) should have minimal ' +
+                                `length ${propertySpecification.minimum}.`
                         }
-                        /* eslint-disable no-throw-literal */
+                        /* eslint-enable no-throw-literal */
+                } else if ([
+                    'number', 'integer', 'float', 'DateTime'
+                ].includes(propertySpecification.type) &&
+                newValue < propertySpecification.minimum)
+                    /* eslint-disable no-throw-literal */
+                    throw {
+                        forbidden: `Minimum: Property "${name}" (type ` +
+                            `${propertySpecification.type}) should ` +
+                            `satisfy a minimum of ` +
+                            `${propertySpecification.minimum}.`
+                    }
+                    /* eslint-disable no-throw-literal */
                 if (![undefined, null].includes(propertySpecification.maximum))
                     if (propertySpecification.type === 'string') {
                         if (newValue.length > propertySpecification.maximum)
@@ -1038,8 +1037,7 @@ export default class DatabaseHelper {
                         /* eslint-enable no-throw-literal */
                     if (!(
                         model[name][type].nullable && numberOfAttachments === 0
-                    ) && model[name][type].minimum !== null &&
-                    numberOfAttachments < model[name][type].minimum)
+                    ) && numberOfAttachments < model[name][type].minimum)
                         /* eslint-disable no-throw-literal */
                         throw {
                             forbidden: 'AttachmentMinimum: given number of ' +

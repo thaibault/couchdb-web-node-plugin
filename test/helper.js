@@ -114,7 +114,7 @@ registerTest(async function():Promise<void> {
             ],
             [
                 {
-                    property: {defaultSpecification: {'*': {maximum: 3}}},
+                    property: {defaultSpecification: {maximum: 3}},
                     entities: {_base: {}, Test: {a: {}}}
                 },
                 {_base: {}, Test: {a: {maximum: 3}}}
@@ -125,9 +125,11 @@ registerTest(async function():Promise<void> {
             ],
             [
                 {
-                    property: {defaultSpecification: {'*': {minimum: 1}}},
                     entities: {Test: {_attachments: {a: {}}}},
-                    property: {name: {special: {attachments: '_attachments'}}}
+                    property: {
+                        defaultSpecification: {minimum: 1},
+                        name: {special: {attachments: '_attachments'}}
+                    }
                 },
                 {Test: {_attachments: {a: {minimum: 1}}}}
             ]

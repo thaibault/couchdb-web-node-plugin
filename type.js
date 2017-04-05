@@ -76,25 +76,17 @@ export type PropertyNameConfiguration = {
     reserved:Array<string>;
     special:SpecialPropertyNames;
 }
-export type DefaultPropertySpecification = {
-    attachment:{
-        maximum:?number;
-        minimum:number;
-        name:PropertySpecification;
-    };
-    '*':PropertySpecification;
-}
 export type ModelConfiguration = {
     entities:Models;
     property:{
-        defaultSpecification:DefaultPropertySpecification;
+        defaultSpecification:PropertySpecification;
         name:PropertyNameConfiguration;
     };
     updateStrategy:UpdateStrategy;
 }
 export type SimpleModelConfiguration = {
     property:{
-        defaultSpecification:DefaultPropertySpecification;
+        defaultSpecification:PropertySpecification;
         name:PropertyNameConfiguration;
     };
     updateStrategy:UpdateStrategy;

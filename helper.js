@@ -165,8 +165,9 @@ export default class Helper {
      */
     static extendModels(modelConfiguration:PlainObject):Models {
         modelConfiguration = Tools.extendObject(true, {
+            entities: {},
             property: {
-                defaultSpecification: {'*': {}},
+                defaultSpecification: {},
                 name: {
                     special: {
                         extend: '_extends',
@@ -207,25 +208,30 @@ export default class Helper {
                     if (models[modelName].hasOwnProperty(propertyName))
                         if (propertyName === modelConfiguration.property.name
                             .special.attachments
-                        )
+                        ) {
                             for (const type:string in models[modelName][
                                 propertyName
                             ])
-                                models[modelName][propertyName][
-                                    type
-                                ] = Tools.extendObject(
-                                    true, Tools.copyLimitedRecursively(
-                                        modelConfiguration.property
-                                            .defaultSpecification.attachment
-                                    ), models[modelName][propertyName][type])
-                        else
+                                if (models[modelName][
+                                    propertyName
+                                ].hasOwnProperty(type))
+                                    models[modelName][propertyName][
+                                        type
+                                    ] = Tools.extendObject(
+                                        true, Tools.copyLimitedRecursively(
+                                            modelConfiguration.property
+                                                .defaultSpecification
+                                        ),
+                                        models[modelName][propertyName][type])
+                        } else {
                             models[modelName][
                                 propertyName
                             ] = Tools.extendObject(
                                 true, Tools.copyLimitedRecursively(
                                     modelConfiguration.property
-                                        .defaultSpecification['*'],
+                                        .defaultSpecification,
                                 ), models[modelName][propertyName])
+                        }
         return models
     }
     // endregion

@@ -58,19 +58,19 @@ registerTest(async function():Promise<void> {
         for (const updateStrategy:UpdateStrategy of [
             '', 'fillUp', 'incremental'
         ]) {
-            const defaultModelSpecification:ModelConfiguration =
+            const defaultModelConfiguration:ModelConfiguration =
                 Tools.extendObject(true, {}, configuration.database.model, {
                     updateStrategy})
             for (
                 const propertyName:string in
-                defaultModelSpecification.entities._base
+                defaultModelConfiguration.entities._base
             )
-                if (defaultModelSpecification.entities._base.hasOwnProperty(
+                if (defaultModelConfiguration.entities._base.hasOwnProperty(
                     propertyName
                 ) && propertyName !== configuration.database.model.property
                     .name.special.type
                 )
-                    delete defaultModelSpecification.entities._base[
+                    delete defaultModelConfiguration.entities._base[
                         propertyName]
             // region forbidden writes
             for (const test:Array<any> of [
@@ -580,10 +580,10 @@ registerTest(async function():Promise<void> {
                 if (test.length < 3)
                     test.splice(1, 0, {})
                 const models:Models = Helper.extendModels(Tools.extendObject(
-                    true, {}, defaultModelSpecification, test[1]))
+                    true, {}, defaultModelConfiguration, test[1]))
                 const modelConfiguration:ModelConfiguration =
                     Tools.extendObject(
-                        true, {}, defaultModelSpecification, test[1])
+                        true, {}, defaultModelConfiguration, test[1])
                 delete modelConfiguration.property.defaultSpecification
                 delete modelConfiguration.entities
                 const parameter:Array<any> = test[0].concat([null, {}, {
@@ -1733,10 +1733,10 @@ registerTest(async function():Promise<void> {
                 // endregion
             ]) {
                 const models:Models = Helper.extendModels(Tools.extendObject(
-                    true, {}, defaultModelSpecification, test[1]))
+                    true, {}, defaultModelConfiguration, test[1]))
                 const modelConfiguration:ModelConfiguration =
                     Tools.extendObject(
-                        true, {}, defaultModelSpecification, test[1])
+                        true, {}, defaultModelConfiguration, test[1])
                 delete modelConfiguration.property.defaultSpecification
                 delete modelConfiguration.entities
                 assert.deepEqual(DatabaseHelper.validateDocumentUpdate(
@@ -1748,19 +1748,19 @@ registerTest(async function():Promise<void> {
             // endregion
         }
         // region migration writes
-        const defaultModelSpecification:ModelConfiguration =
+        const defaultModelConfiguration:ModelConfiguration =
             Tools.extendObject(true, {}, configuration.database.model, {
                 updateStrategy: 'migrate'})
         for (
             const propertyName:string in
-            defaultModelSpecification.entities._base
+            defaultModelConfiguration.entities._base
         )
-            if (defaultModelSpecification.entities._base.hasOwnProperty(
+            if (defaultModelConfiguration.entities._base.hasOwnProperty(
                 propertyName
             ) && propertyName !== configuration.database.model.property.name
                 .special.type
             )
-                delete defaultModelSpecification.entities._base[propertyName]
+                delete defaultModelConfiguration.entities._base[propertyName]
         for (const test:Array<any> of [
             [
                 [{'-type': 'Test', a: 2}], {entities: {Test: {}}},
@@ -1820,9 +1820,9 @@ registerTest(async function():Promise<void> {
             ]
         ]) {
             const models:Models = Helper.extendModels(Tools.extendObject(
-                true, {}, defaultModelSpecification, test[1]))
+                true, {}, defaultModelConfiguration, test[1]))
             const modelConfiguration:ModelConfiguration = Tools.extendObject(
-                true, {}, defaultModelSpecification, test[1])
+                true, {}, defaultModelConfiguration, test[1])
             delete modelConfiguration.property.defaultSpecification
             delete modelConfiguration.entities
             assert.deepEqual(DatabaseHelper.validateDocumentUpdate(
