@@ -48,15 +48,15 @@ registerTest(async function():Promise<void> {
             [{}, {}],
             [{
                 propertyName: {special: {allowedRoles: 'roles'}},
-                models: {Test: {}}
+                entities: {Test: {}}
             }, {}],
             [{
                 propertyName: {special: {allowedRoles: 'roles'}},
-                models: {Test: {roles: []}}
+                entities: {Test: {roles: []}}
             }, {Test: []}],
             [{
                 propertyName: {special: {allowedRoles: 'roles'}},
-                models: {Test: {roles: ['a']}}
+                entities: {Test: {roles: ['a']}}
             }, {Test: ['a']}]
         ])
             assert.deepEqual(
@@ -101,44 +101,44 @@ registerTest(async function():Promise<void> {
     this.test('extendModels', (assert:Object):void => {
         for (const test:Array<any> of [
             [{}, {}],
-            [{models: {}}, {}],
-            [{models: {Test: {}}}, {Test: {}}],
-            [{models: {Test: {}}}, {Test: {}}],
+            [{entities: {}}, {}],
+            [{entities: {Test: {}}}, {Test: {}}],
+            [{entities: {Test: {}}}, {Test: {}}],
             [
-                {models: {Base: {b: {}}, Test: {a: {}, _extends: 'Base'}}},
+                {entities: {Base: {b: {}}, Test: {a: {}, _extends: 'Base'}}},
                 {Base: {b: {}}, Test: {a: {}, b: {}}}
             ],
             [
-                {models: {_base: {b: {}}, Test: {a: {}}}},
+                {entities: {_base: {b: {}}, Test: {a: {}}}},
                 {_base: {b: {}}, Test: {a: {}, b: {}}}
             ],
             [
                 {
                     default: {propertySpecification: {maximum: 3}},
-                    models: {_base: {}, Test: {a: {}}}
+                    entities: {_base: {}, Test: {a: {}}}
                 },
                 {_base: {}, Test: {a: {maximum: 3}}}
             ],
             [
-                {models: {Test: {_attachments: {}}}},
+                {entities: {Test: {_attachments: {}}}},
                 {Test: {_attachments: {}}}
             ],
             [
                 {
                     default: {propertySpecification: {minimum: 1}},
-                    models: {Test: {_attachments: {a: {}}}},
+                    entities: {Test: {_attachments: {a: {}}}},
                     propertyName: {special: {attachments: '_attachments'}}
                 },
                 {Test: {_attachments: {a: {minimum: 1}}}}
             ]
         ])
             assert.deepEqual(Helper.extendModels(test[0]), test[1])
-        assert.throws(():Models => Helper.extendModels({models: {a: {}}}))
+        assert.throws(():Models => Helper.extendModels({entities: {a: {}}}))
         assert.deepEqual(Helper.extendModels({
             propertyName: {special: {typeNameRegularExpressionPattern: {
                 public: 'a'
             }}},
-            models: {a: {}}
+            entities: {a: {}}
         }), {a: {}})
     })
     // / endregion
