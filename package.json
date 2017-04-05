@@ -1,6 +1,6 @@
 {
   "name": "databasewebnodeplugin",
-  "version": "1.0.89",
+  "version": "1.0.90",
   "license": "CC-BY-3.0",
   "description": "A database server, model instance conflict handler, rest api, authentication, session management, schema validator and model relation guarantee for webNode.",
   "homepage": "http://torben.website/databaseWebNodePlugin",
@@ -156,27 +156,27 @@
           }
         },
         "propertyName": {
-            "reserved": [
-              "_deleted",
-              "_id",
-              "_rev",
-              "_revisions"
-            ],
-            "special": {
-              "allowedRoles": "_allowedRoles",
-              "attachments": "_attachments",
-              "constraints": {
-                "expression": "_constraintExpressions",
-                "execution": "_constraintExecutions"
-              },
-              "extend": "_extends",
-              "type": "-type",
-              "typeNameRegularExpressionPattern": {
-                "public": "^[A-Z][A-Za-z0-9]+$",
-                "private": "^_[a-z][A-Za-z0-9]+$"
-              },
-              "validatedDocumentsCache": "_validatedDocuments"
-            }
+          "reserved": [
+            "_deleted",
+            "_id",
+            "_rev",
+            "_revisions"
+          ],
+          "special": {
+            "allowedRoles": "_allowedRoles",
+            "attachments": "_attachments",
+            "constraints": {
+              "expression": "_constraintExpressions",
+              "execution": "_constraintExecutions"
+            },
+            "extend": "_extends",
+            "type": "-type",
+            "typeNameRegularExpressionPattern": {
+              "public": "^[A-Z][A-Za-z0-9]+$",
+              "private": "^_[a-z][A-Za-z0-9]+$"
+            },
+            "validatedDocumentsCache": "_validatedDocuments"
+          }
         },
         "updateStrategy": "fillUp"
       },
