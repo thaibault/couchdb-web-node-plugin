@@ -83,6 +83,101 @@
       "local": false,
       "log/file": "/dev/stdout",
       "log/level": "info",
+      "modelConfiguration": {
+        "createGenericFlatIndex": true,
+        "default": {
+          "propertySpecification": {
+            "conflictingConstraintExpression": null,
+            "conflictingConstraintExecution": null,
+            "constraintExpression": null,
+            "constraintExecution": null,
+            "default": null,
+            "maximum": null,
+            "minimum": null,
+            "mutable": true,
+            "nullable": true,
+            "onCreateExpression": null,
+            "onCreateExecution": null,
+            "onUpdateExpression": null,
+            "onUpdateExecution": null,
+            "regularExpressionPattern": null,
+            "selection": null,
+            "type": "string",
+            "writable": true
+          }
+        },
+        "reservedPropertyNames": [
+          "_deleted",
+          "_id",
+          "_rev",
+          "_revisions"
+        ],
+        "specialPropertyNames": {
+          "allowedRoles": "_allowedRoles",
+          "attachments": "_attachments",
+          "constraints": {
+            "expression": "_constraintExpressions",
+            "execution": "_constraintExecutions"
+          },
+          "extend": "_extends",
+          "type": "-type",
+          "typeNameRegularExpressionPattern": {
+            "public": "^[A-Z][A-Za-z0-9]+$",
+            "private": "^_[a-z][A-Za-z0-9]+$"
+          },
+          "validatedDocumentsCache": "_validatedDocuments"
+        },
+        "updateStrategy": "fillUp",
+        "models": {
+          "_base": {
+            "_allowedRoles": [
+              "users"
+            ],
+            "_attachments": {},
+            "_id": {
+              "mutable": false
+            },
+            "_rev": {
+              "mutable": false
+            },
+            "_revisions": {
+              "writable": false
+            },
+            "-type": {
+              "regularExpressionPattern": {
+                "__evaluate__": "`(?:${self.database.modelConfiguration.specialPropertyNames.typeNameRegularExpressionPattern.public}|${self.database.modelConfiguration.specialPropertyNames.typeNameRegularExpressionPattern.private})`"
+              },
+              "nullable": false,
+              "minimum": 1,
+              "maximum": 999,
+              "mutable": false
+            },
+            "creationDateTime": {
+              "type": "DateTime",
+              "onCreateExpression": "(new Date()).getTime()",
+              "minimum": {
+                "__evaluate__": "(new Date()).getTime()"
+              },
+              "mutable": false,
+              "nullable": false
+            },
+            "updateDateTime": {
+              "type": "DateTime",
+              "onUpdateExpression": "(new Date()).getTime()",
+              "minimum": {
+                "__evaluate__": "(new Date()).getTime()"
+              },
+              "nullable": false
+            },
+            "lastUser": {
+              "onUpdateExpression": {
+                "__evaluate__": "`userContext.name || '${self.database.user.name}'`"
+              },
+              "nullable": false
+            }
+          }
+        }
+      },
       "path": "database",
       "port": 5984,
       "security": {
@@ -103,101 +198,6 @@
       "user": {
         "name": "admin",
         "password": "admin"
-      }
-    },
-    "modelConfiguration": {
-      "createGenericFlatIndex": true,
-      "default": {
-        "propertySpecification": {
-          "conflictingConstraintExpression": null,
-          "conflictingConstraintExecution": null,
-          "constraintExpression": null,
-          "constraintExecution": null,
-          "default": null,
-          "maximum": null,
-          "minimum": null,
-          "mutable": true,
-          "nullable": true,
-          "onCreateExpression": null,
-          "onCreateExecution": null,
-          "onUpdateExpression": null,
-          "onUpdateExecution": null,
-          "regularExpressionPattern": null,
-          "selection": null,
-          "type": "string",
-          "writable": true
-        }
-      },
-      "reservedPropertyNames": [
-        "_deleted",
-        "_id",
-        "_rev",
-        "_revisions"
-      ],
-      "specialPropertyNames": {
-        "allowedRoles": "_allowedRoles",
-        "attachments": "_attachments",
-        "constraints": {
-          "expression": "_constraintExpressions",
-          "execution": "_constraintExecutions"
-        },
-        "extend": "_extends",
-        "type": "-type",
-        "typeNameRegularExpressionPattern": {
-          "public": "^[A-Z][A-Za-z0-9]+$",
-          "private": "^_[a-z][A-Za-z0-9]+$"
-        },
-        "validatedDocumentsCache": "_validatedDocuments"
-      },
-      "updateStrategy": "fillUp",
-      "models": {
-        "_base": {
-          "_allowedRoles": [
-            "users"
-          ],
-          "_attachments": {},
-          "_id": {
-            "mutable": false
-          },
-          "_rev": {
-            "mutable": false
-          },
-          "_revisions": {
-            "writable": false
-          },
-          "-type": {
-            "regularExpressionPattern": {
-              "__evaluate__": "`(?:${self.modelConfiguration.specialPropertyNames.typeNameRegularExpressionPattern.public}|${self.modelConfiguration.specialPropertyNames.typeNameRegularExpressionPattern.private})`"
-            },
-            "nullable": false,
-            "minimum": 1,
-            "maximum": 999,
-            "mutable": false
-          },
-          "creationDateTime": {
-            "type": "DateTime",
-            "onCreateExpression": "(new Date()).getTime()",
-            "minimum": {
-              "__evaluate__": "(new Date()).getTime()"
-            },
-            "mutable": false,
-            "nullable": false
-          },
-          "updateDateTime": {
-            "type": "DateTime",
-            "onUpdateExpression": "(new Date()).getTime()",
-            "minimum": {
-              "__evaluate__": "(new Date()).getTime()"
-            },
-            "nullable": false
-          },
-          "lastUser": {
-            "onUpdateExpression": {
-              "__evaluate__": "`userContext.name || '${self.database.user.name}'`"
-            },
-            "nullable": false
-          }
-        }
       }
     }
   },

@@ -60,16 +60,15 @@ registerTest(async function():Promise<void> {
         ]) {
             const defaultModelSpecification:ModelConfiguration =
                 Tools.extendObject(true, {
-                }, configuration.modelConfiguration, {updateStrategy})
+                }, configuration.database.modelConfiguration, {updateStrategy})
             for (
                 const propertyName:string in
                 defaultModelSpecification.models._base
             )
-                if (
-                    defaultModelSpecification.models._base.hasOwnProperty(
-                        propertyName
-                    ) && propertyName !==
-                    configuration.modelConfiguration.specialPropertyNames.type
+                if (defaultModelSpecification.models._base.hasOwnProperty(
+                    propertyName
+                ) && propertyName !== configuration.database.modelConfiguration
+                    .specialPropertyNames.type
                 )
                     delete defaultModelSpecification.models._base[propertyName]
             // region forbidden writes
@@ -1743,16 +1742,16 @@ registerTest(async function():Promise<void> {
         // region migration writes
         const defaultModelSpecification:ModelConfiguration =
             Tools.extendObject(true, {
-            }, configuration.modelConfiguration, {updateStrategy: 'migrate'})
+            }, configuration.database.modelConfiguration, {
+                updateStrategy: 'migrate'})
         for (
             const propertyName:string in
             defaultModelSpecification.models._base
         )
-            if (
-                defaultModelSpecification.models._base.hasOwnProperty(
-                    propertyName
-                ) && propertyName !==
-                configuration.modelConfiguration.specialPropertyNames.type
+            if (defaultModelSpecification.models._base.hasOwnProperty(
+                propertyName
+            ) && propertyName !== configuration.database.modelConfiguration
+                .specialPropertyNames.type
             )
                 delete defaultModelSpecification.models._base[propertyName]
         for (const test:Array<any> of [
