@@ -153,6 +153,14 @@ registerTest(async function():Promise<void> {
                     {entities: {Test: {a: {type: 'number'}}}}, 'PropertyType'
                 ],
                 [
+                    [{'-type': 'Test', a: 'b'}],
+                    {entities: {Test: {a: {type: 'integer'}}}}, 'PropertyType'
+                ],
+                [
+                    [{'-type': 'Test', a: 2.2}],
+                    {entities: {Test: {a: {type: 'integer'}}}}, 'PropertyType'
+                ],
+                [
                     [{'-type': 'Test', a: 1}],
                     {entities: {Test: {a: {type: 'boolean'}}}}, 'PropertyType'
                 ],
@@ -363,8 +371,13 @@ registerTest(async function():Promise<void> {
                     'Minimum'
                 ],
                 [
-                    [{'-type': 'Test', a: 2}],
+                    [{'-type': 'Test', a: 1.1}],
                     {entities: {Test: {a: {type: 'number', maximum: 1}}}},
+                    'Maximum'
+                ],
+                [
+                    [{'-type': 'Test', a: 2}],
+                    {entities: {Test: {a: {type: 'integer', maximum: 1}}}},
                     'Maximum'
                 ],
                 [
@@ -389,7 +402,7 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{'-type': 'Test', a: 2}],
-                    {entities: {Test: {a: {type: 'number', selection: [1, 3]}}}},
+                    {entities: {Test: {a: {type: 'integer', selection: [1, 3]}}}},
                     'Selection'
                 ],
                 // endregion
@@ -978,10 +991,18 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{'-type': 'Test', a: 2}, {'-type': 'Test', a: 2}],
-                    {entities: {Test: {a: {type: 'number'}}}}, {
+                    {entities: {Test: {a: {type: 'integer'}}}}, {
                         fillUp: {'-type': 'Test', a: 2},
                         incremental: {},
                         '': {'-type': 'Test', a: 2}
+                    }
+                ],
+                [
+                    [{'-type': 'Test', a: 2.2}, {'-type': 'Test', a: 2}],
+                    {entities: {Test: {a: {type: 'number'}}}}, {
+                        fillUp: {'-type': 'Test', a: 2.2},
+                        incremental: {a: 2.2},
+                        '': {'-type': 'Test', a: 2.2}
                     }
                 ],
                 [
@@ -1045,10 +1066,18 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{'-type': 'Test', a: [2]}, {'-type': 'Test'}],
-                    {entities: {Test: {a: {type: 'number[]'}}}}, {
+                    {entities: {Test: {a: {type: 'integer[]'}}}}, {
                         fillUp: {'-type': 'Test', a: [2]},
                         incremental: {a: [2]},
                         '': {'-type': 'Test', a: [2]}
+                    }
+                ],
+                [
+                    [{'-type': 'Test', a: [2.3]}, {'-type': 'Test'}],
+                    {entities: {Test: {a: {type: 'number[]'}}}}, {
+                        fillUp: {'-type': 'Test', a: [2.3]},
+                        incremental: {a: [2.3]},
+                        '': {'-type': 'Test', a: [2.3]}
                     }
                 ],
                 [
@@ -1267,12 +1296,11 @@ registerTest(async function():Promise<void> {
                 // // endregion
                 // // region property range
                 [
-
                     [
                         {'-type': 'Test', a: 4, b: {'-type': 'Test', a: 3}},
                         {'-type': 'Test'}
                     ], {entities: {Test: {
-                        a: {type: 'number', minimum: 3},
+                        a: {type: 'integer', minimum: 3},
                         b: {type: 'Test'}
                     }}}, {
                         fillUp: {'-type': 'Test', a: 4, b: {

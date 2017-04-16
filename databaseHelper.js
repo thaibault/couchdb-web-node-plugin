@@ -219,10 +219,15 @@ export default class DatabaseHelper {
                                 `(given "${serialize(newValue)}").`
                         }
                         /* eslint-enable no-throw-literal */
-                else if (['string', 'number', 'boolean'].includes(
+                else if (['boolean', 'integer', 'number', 'string'].includes(
                     propertySpecification.type
                 )) {
-                    if (typeof newValue !== propertySpecification.type)
+                    if (!(
+                        propertySpecification.type === 'integer' ||
+                        typeof newValue === propertySpecification.type
+                    ) || propertySpecification.type === 'integer' && parseInt(
+                        newValue
+                    ) !== newValue)
                         /* eslint-disable no-throw-literal */
                         throw {
                             forbidden: `PropertyType: Property "${name}" ` +
@@ -269,10 +274,9 @@ export default class DatabaseHelper {
                                 `length ${propertySpecification.minimum}.`
                         }
                         /* eslint-enable no-throw-literal */
-                } else if ([
-                    'number', 'integer', 'float', 'DateTime'
-                ].includes(propertySpecification.type) &&
-                newValue < propertySpecification.minimum)
+                } else if (['number', 'integer', 'DateTime'].includes(
+                    propertySpecification.type
+                ) && newValue < propertySpecification.minimum)
                     /* eslint-disable no-throw-literal */
                     throw {
                         forbidden: `Minimum: Property "${name}" (type ` +
@@ -292,9 +296,7 @@ export default class DatabaseHelper {
                                     `length ${propertySpecification.maximum}.`
                             }
                             /* eslint-enable no-throw-literal */
-                    } else if ([
-                        'number', 'integer', 'float', 'DateTime'
-                    ].includes(
+                    } else if (['number', 'integer', 'DateTime'].includes(
                         propertySpecification.type
                     ) && newValue > propertySpecification.maximum)
                         /* eslint-enable no-throw-literal */
