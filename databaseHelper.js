@@ -1097,14 +1097,12 @@ export default class DatabaseHelper {
         }
         newDocument = checkDocument(newDocument, oldDocument)
         if (securitySettings.hasOwnProperty('checkedDocuments'))
-            securitySettings[
-                modelConfiguration.property.name.special
-                    .validatedDocumentsCache
+            securitySettings[modelConfiguration.property.name.special
+                .validatedDocumentsCache
             ].add(`${newDocument._id}-${newDocument._rev}`)
         else
-            securitySettings[
-                modelConfiguration.property.name.special
-                    .validatedDocumentsCache
+            securitySettings[modelConfiguration.property.name.special
+                .validatedDocumentsCache
             ] = new Set([`${newDocument._id}-${newDocument._rev}`])
         return newDocument
     }

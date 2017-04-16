@@ -342,7 +342,7 @@ export default class Database {
                 migrationModelConfiguration.updateStrategy = 'migrate'
                 try {
                     newDocument = DatabaseHelper.validateDocumentUpdate(
-                        Tools.copyLimitedRecursively(document), null, {
+                        Tools.copyLimitedRecursively(document), document, {
                             db: configuration.name,
                             name: configuration.database.user.name,
                             roles: ['_admin']
@@ -358,7 +358,9 @@ export default class Database {
                 if (newDocument && !Tools.equals(newDocument, document)) {
                     console.info(
                         `Auto migrating document "${newDocument._id}".`)
+                    try {
                     await services.database.connection.put(newDocument)
+                    } catch (e) {console.error(Tools.representObject(e))}
                 }
             }
         // TODO check conflicting constraints and mark them if necessary (check
