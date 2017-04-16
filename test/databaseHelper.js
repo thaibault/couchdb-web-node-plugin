@@ -56,7 +56,7 @@ registerTest(async function():Promise<void> {
     })
     this.test('validateDocumentUpdate', (assert:Object):void => {
         for (const updateStrategy:UpdateStrategy of [
-            '', 'fillUp', 'incremental'
+            /*'', */'fillUp'/*, 'incremental'*/
         ]) {
             const defaultModelConfiguration:ModelConfiguration =
                 Tools.extendObject(true, {}, configuration.database.model, {
@@ -1363,6 +1363,13 @@ registerTest(async function():Promise<void> {
                 ],
                 // endregion
                 // region property range
+                [[{'-type': 'Test'}], {
+                    entities: {Test: {a: {type: 'number', default: 2}}}}, {
+                        fillUp: {'-type': 'Test', a: 2},
+                        incremental: {a: 2},
+                        '': {'-type': 'Test', a: 2}
+                    }
+                ],
                 [[{'-type': 'Test', a: 3}, {'-type': 'Test'}], {
                     entities: {Test: {a: {type: 'number', minimum: 3}}}}, {
                         fillUp: {'-type': 'Test', a: 3},
@@ -1739,11 +1746,13 @@ registerTest(async function():Promise<void> {
                         true, {}, defaultModelConfiguration, test[1])
                 delete modelConfiguration.property.defaultSpecification
                 delete modelConfiguration.entities
+                try {
                 assert.deepEqual(DatabaseHelper.validateDocumentUpdate(
                     ...test[0].concat([null, {}, {}].slice(
                         test[0].length - 1
                     )).concat([models, modelConfiguration])
                 ), test[2][updateStrategy])
+                } catch (error) {console.error(error)}
             }
             // endregion
         }
@@ -1765,6 +1774,10 @@ registerTest(async function():Promise<void> {
             [
                 [{'-type': 'Test', a: 2}], {entities: {Test: {}}},
                 {'-type': 'Test'}
+            ],
+            [
+                [{'-type': 'Test'}], {entities: {Test: {a: {default: '2'}}}},
+                {'-type': 'Test', a: '2'}
             ],
             [
                 [{'-type': 'Test', a: '2'}], {entities: {Test: {a: {}}}},
@@ -1793,6 +1806,11 @@ registerTest(async function():Promise<void> {
                 [{'-type': 'Test', b: '3'}, {'-type': 'Test', a: '1'}],
                 {entities: {Test: {a: {default: '2'}}}},
                 {'-type': 'Test', a: '2'}
+            ],
+            [
+                [{'-type': 'Test'}],
+                {entities: {Test: {a: {default: 2, type: 'number'}}}},
+                {'-type': 'Test', a: 2}
             ],
             [
                 [{'-type': 'Test'}, {'-type': 'Test', _attachments: {}}],
