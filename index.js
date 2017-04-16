@@ -336,9 +336,8 @@ export default class Database {
                     Auto migration can:
 
                     - Remove not specified properties.
-                    - A property which is missing and a default value exists
-                      we will add this property and apply the default value to
-                      it.
+                    - A property which is missing and a default value exists we
+                      will add this property and apply the default value to it.
                 */
                 migrationModelConfiguration.updateStrategy = 'migrate'
                 try {
@@ -357,8 +356,9 @@ export default class Database {
                         Tools.representObject(error))
                 }
                 if (newDocument && !Tools.equals(newDocument, document)) {
-                    console.info(`Auto migrate document "${newDocument._id}".`)
-                    services.database.connection.put(newDocument)
+                    console.info(
+                        `Auto migrating document "${newDocument._id}".`)
+                    await services.database.connection.put(newDocument)
                 }
             }
         // TODO check conflicting constraints and mark them if necessary (check
