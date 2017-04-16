@@ -356,8 +356,10 @@ export default class Database {
                         `doesn't satisfy its schema: ` +
                         Tools.representObject(error))
                 }
-                if (!Tools.equals(newDocument, document))
+                if (newDocument && !Tools.equals(newDocument, document)) {
+                    console.info(`Auto migrate document "${newDocument._id}".`)
                     services.database.connection.put(newDocument)
+                }
             }
         // TODO check conflicting constraints and mark them if necessary (check
         // how couchdb deals with "id" conflicts)
