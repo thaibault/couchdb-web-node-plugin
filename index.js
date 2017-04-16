@@ -343,7 +343,7 @@ export default class Database {
                 migrationModelConfiguration.updateStrategy = 'migrate'
                 try {
                     newDocument = DatabaseHelper.validateDocumentUpdate(
-                        document, null, {
+                        Tools.copyLimitedRecursively(document), null, {
                             db: configuration.name,
                             name: configuration.database.user.name,
                             roles: ['_admin']
