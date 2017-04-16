@@ -332,7 +332,14 @@ export default class Database {
                 let newDocument:?PlainObject = null
                 const migrationModelConfiguration:ModelConfiguration =
                     Tools.copyLimitedRecursively(modelConfiguration)
-                // NOTE: Will remove not specified properties.
+                /*
+                    Auto migration can:
+
+                    - Remove not specified properties.
+                    - A property which is missing and a default value exists
+                      we will add this property and apply the default value to
+                      it.
+                */
                 migrationModelConfiguration.updateStrategy = 'migrate'
                 try {
                     newDocument = DatabaseHelper.validateDocumentUpdate(
@@ -349,11 +356,7 @@ export default class Database {
                         `doesn't satisfy its schema: ` +
                         Tools.representObject(error))
                 }
-                /*
-                    NOTE: If a property is missing and a default one could be
-                    applied we have an auto migration for that case.
-                */
-                if (newDocument !== document)
+                if (!Tools.equals(newDocument, document))
                     services.database.connection.put(newDocument)
             }
         // TODO check conflicting constraints and mark them if necessary (check
