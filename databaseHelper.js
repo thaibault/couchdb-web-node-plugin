@@ -823,6 +823,34 @@ export default class DatabaseHelper {
                                     `${serialize(newDocument[name])}").`
                             }
                             /* eslint-enable no-throw-literal */
+                        if (propertySpecification.hasOwnProperty(
+                            'minimumLength'
+                        ) && newDocument[name].length <
+                            propertySpecification.minimumLength
+                        )
+                            /* eslint-disable no-throw-literal */
+                            throw {
+                                forbidden: `MinimumArrayLength: Property "` +
+                                    `${name}" (array of length ` +
+                                    `${newDocument[name].length}) doesn't ` +
+                                    `fullfill minimum array length of ` +
+                                    `${propertySpecification.minimumLength}.`
+                            }
+                            /* eslint-enable no-throw-literal */
+                        else if (propertySpecification.hasOwnProperty(
+                            'maximumLength'
+                        ) && propertySpecification.maximumLength <
+                            newDocument[name].length
+                        )
+                            /* eslint-disable no-throw-literal */
+                            throw {
+                                forbidden: `MaximumArrayLength: Property "` +
+                                    `${name}" (array of length ` +
+                                    `${newDocument[name].length}) doesn't ` +
+                                    `fullfill maximum array length of ` +
+                                    `${propertySpecification.maximumLength}.`
+                            }
+                            /* eslint-enable no-throw-literal */
                         // IgnoreTypeCheck
                         const propertySpecificationCopy:PropertySpecification =
                             {}

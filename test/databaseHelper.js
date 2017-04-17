@@ -235,6 +235,31 @@ registerTest(async function():Promise<void> {
                         b: {type: 'Test[]'}
                     }}}, 'Minimum'
                 ],
+                [
+                    [{'-type': 'Test', a: [4]}], {entities: {Test: {
+                        a: {type: 'integer[]', minimumLength: 2}
+                    }}}, 'MinimumArrayLength'
+                ],
+                [
+                    [{'-type': 'Test', a: []}], {entities: {Test: {
+                        a: {type: 'integer[]', minimumLength: 1}
+                    }}}, 'MinimumArrayLength'
+                ],
+                [
+                    [{'-type': 'Test', a: [1]}], {entities: {Test: {
+                        a: {type: 'integer[]', maximumLength: 0}
+                    }}}, 'MaximumArrayLength'
+                ],
+                [
+                    [{'-type': 'Test', a: [1, 2]}], {entities: {Test: {
+                        a: {type: 'integer[]', maximumLength: 1}
+                    }}}, 'MaximumArrayLength'
+                ],
+                [
+                    [{'-type': 'Test', a: [1, 2, 3]}], {entities: {Test: {
+                        a: {type: 'integer[]', maximumLength: 2}
+                    }}}, 'MaximumArrayLength'
+                ],
                 // / endregion
                 // / region nested property
                 // // region property type
@@ -1115,11 +1140,47 @@ registerTest(async function():Promise<void> {
                     }
                 ],
                 [
-                    [{'-type': 'Test', a: [2, 1]}, {'-type': 'Test', a: [2]}],
+                    [{'-type': 'Test', a: [2, 1.1]}, {'-type': 'Test', a: [2]}],
                     {entities: {Test: {a: {type: 'number[]'}}}}, {
+                        fillUp: {'-type': 'Test', a: [2, 1.1]},
+                        incremental: {a: [2, 1.1]},
+                        '': {'-type': 'Test', a: [2, 1.1]}
+                    }
+                ],
+                [
+                    [{'-type': 'Test', a: [2, 1]}], {entities: {Test: {a: {
+                        type: 'integer[]', minimumLength: 1, maximumLength: 2
+                    }}}}, {
                         fillUp: {'-type': 'Test', a: [2, 1]},
                         incremental: {a: [2, 1]},
                         '': {'-type': 'Test', a: [2, 1]}
+                    }
+                ],
+                [
+                    [{'-type': 'Test', a: [2, 1]}], {entities: {Test: {a: {
+                        type: 'integer[]', minimumLength: 0, maximumLength: Infinity
+                    }}}}, {
+                        fillUp: {'-type': 'Test', a: [2, 1]},
+                        incremental: {a: [2, 1]},
+                        '': {'-type': 'Test', a: [2, 1]}
+                    }
+                ],
+                [
+                    [{'-type': 'Test', a: [2]}], {entities: {Test: {a: {
+                        type: 'integer[]', maximum: 2, maximumLength: 1
+                    }}}}, {
+                        fillUp: {'-type': 'Test', a: [2]},
+                        incremental: {a: [2]},
+                        '': {'-type': 'Test', a: [2]}
+                    }
+                ],
+                [
+                    [{'-type': 'Test', a: []}], {entities: {Test: {a: {
+                        type: 'integer[]', maximum: 2, maximumLength: 0
+                    }}}}, {
+                        fillUp: {'-type': 'Test', a: []},
+                        incremental: {},
+                        '': {'-type': 'Test'}
                     }
                 ],
                 // / endregion
