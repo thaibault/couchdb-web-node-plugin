@@ -261,9 +261,9 @@ export default class Database {
                     if (models[modelName].hasOwnProperty(name))
                         if ([
                             modelConfiguration.property.name.special
-                                .constraints.expression,
+                                .constraints.execution,
                             modelConfiguration.property.name.special
-                                .constraints.execution
+                                .constraints.expression
                         ].includes(name)) {
                             // IgnoreTypeCheck
                             for (const constraint:Constraint of models[
@@ -329,11 +329,16 @@ export default class Database {
                 retrievedDocument.id.startsWith('_design/')
             )) {
                 const document:Document = retrievedDocument.doc
-                if (Object.keys(document[
-                    modelConfiguration.property.name.special.attachments
-                ]).length === 0)
+                if (
+                    modelConfiguration.property.name.special.attachments in
+                        document && Object.keys(document[
+                            modelConfiguration.property.name.special
+                                .attachments
+                        ]).length === 0
+                )
                     delete document[
                         modelConfiguration.property.name.special.attachments]
+                console.log('\n\nB\n\n')
                 let newDocument:?PlainObject = null
                 const migrationModelConfiguration:ModelConfiguration =
                     Tools.copyLimitedRecursively(modelConfiguration)
