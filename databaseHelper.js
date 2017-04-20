@@ -696,6 +696,23 @@ export default class DatabaseHelper {
                 ) && !modelConfiguration.property.name.reserved.includes(
                     name
                 )) {
+                    if ([
+                        modelConfiguration.property.name.special.allowedRoles,
+                        modelConfiguration.property.name.special.constraints
+                            .execution,
+                        modelConfiguration.property.name.special.constraints
+                            .expression,
+                        modelConfiguration.property.name.special.extend,
+                        modelConfiguration.property.name.special.revisions,
+                        modelConfiguration.property.name.special
+                            .validatedDocumentsCache
+                    ].includes(name))
+                        /* eslint-disable no-throw-literal */
+                        throw {
+                            forbidden: 'Invalid: Given property name "' +
+                                `${name}" isn't allowed as property name.`
+                        }
+                        /* eslint-enable no-throw-literal */
                     if (!model.hasOwnProperty(name))
                         if (modelConfiguration.updateStrategy === 'migrate') {
                             delete newDocument[name]

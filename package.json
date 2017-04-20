@@ -164,8 +164,8 @@
               "allowedRoles": "_allowedRoles",
               "attachments": "_attachments",
               "constraints": {
-                "expression": "_constraintExpressions",
-                "execution": "_constraintExecutions"
+                "execution": "_constraintExecutions",
+                "expression": "_constraintExpressions"
               },
               "extend": "_extends",
               "revisions": "_revisions",
