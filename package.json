@@ -119,13 +119,13 @@
               "nullable": false
             },
             "updateDateTime": {
-              "type": "DateTime",
-              "onUpdateExpression": "modelConfiguration.updateStrategy === 'migrate' && oldDocument ? oldDocument[name] : (new Date()).getTime()",
-              "minimum": 0,
               "constraintExpression": {
                 "__evaluate__": "`modelConfiguration.updateStrategy === 'migrate' && oldDocument || newValue > ${(new Date()).getTime()}`"
               },
-              "nullable": false
+              "minimum": 0,
+              "nullable": false,
+              "onUpdateExpression": "modelConfiguration.updateStrategy === 'migrate' && oldDocument ? oldDocument[name] : (new Date()).getTime()",
+              "type": "DateTime"
             },
             "lastUser": {
               "onUpdateExpression": {
