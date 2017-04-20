@@ -28,6 +28,8 @@ export type PropertySpecification = {
     default:any;
     maximum:?number;
     minimum:number;
+    maximumLength:?number;
+    minimumLength:?number;
     mutable:boolean;
     nullable:boolean;
     onCreateExpression:?string;
@@ -64,6 +66,7 @@ export type SpecialPropertyNames = {
         execution:string;
     },
     extend:string;
+    revisions:string;
     type:string;
     typeNameRegularExpressionPattern:{
         private:string;

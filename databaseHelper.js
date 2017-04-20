@@ -357,7 +357,7 @@ export default class DatabaseHelper {
                         const code:string = (type.endsWith(
                             'Expression'
                         ) ? 'return ' : ''
-                        ) + propertySpecification[type].evaluation
+                        ) + propertySpecification[type]
                         const values:Array<any> = [
                             checkDocument, checkPropertyContent, code, model,
                             modelConfiguration, modelName, models, name,
@@ -850,6 +850,7 @@ export default class DatabaseHelper {
                                     `${name}" (array of length ` +
                                     `${newDocument[name].length}) doesn't ` +
                                     `fullfill minimum array length of ` +
+                                    // IgnoreTypeCheck
                                     `${propertySpecification.minimumLength}.`
                             }
                             /* eslint-enable no-throw-literal */
@@ -864,6 +865,7 @@ export default class DatabaseHelper {
                                     `${name}" (array of length ` +
                                     `${newDocument[name].length}) doesn't ` +
                                     `fullfill maximum array length of ` +
+                                    // IgnoreTypeCheck
                                     `${propertySpecification.maximumLength}.`
                             }
                             /* eslint-enable no-throw-literal */
