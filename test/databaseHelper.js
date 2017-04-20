@@ -134,6 +134,10 @@ registerTest(async function():Promise<void> {
                     'Property'
                 ],
                 [
+                    [{'-type': 'Test', _constraintExpressions: null}],
+                    {entities: {Test: {}}}, 'Invalid'
+                ],
+                [
                     [{'-type': 'Test', a: null}],
                     {entities: {Test: {a: {nullable: false}}}}, 'NotNull'
                 ],
