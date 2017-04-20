@@ -120,7 +120,7 @@
             },
             "updateDateTime": {
               "type": "DateTime",
-              "onUpdateExpression": "(new Date()).getTime()",
+              "onUpdateExpression": "modelConfiguration.updateStrategy === 'migrate' && oldDocument ? oldDocument[name] : (new Date()).getTime()",
               "minimum": {
                 "__evaluate__": "(new Date()).getTime()"
               },

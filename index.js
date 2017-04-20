@@ -329,6 +329,11 @@ export default class Database {
                 retrievedDocument.id.startsWith('_design/')
             )) {
                 const document:Document = retrievedDocument.doc
+                if (Object.keys(document[
+                    modelConfiguration.property.name.special.attachments
+                ]).length === 0)
+                    delete document[
+                        modelConfiguration.property.name.special.attachments]
                 let newDocument:?PlainObject = null
                 const migrationModelConfiguration:ModelConfiguration =
                     Tools.copyLimitedRecursively(modelConfiguration)
@@ -356,11 +361,16 @@ export default class Database {
                         Tools.representObject(error))
                 }
                 if (newDocument && !Tools.equals(newDocument, document)) {
-                    console.info(
-                        `Auto migrating document "${newDocument._id}".`)
                     try {
-                    await services.database.connection.put(newDocument)
-                    } catch (e) {console.error(Tools.representObject(e))}
+                        await services.database.connection.put(newDocument)
+                    } catch (error) {
+                        throw new Error(
+                            `Auto migrating document "${newDocument._id}" ` +
+                            `was failed: ${Tools.representObject(error)}`)
+                    }
+                    console.info(
+                        `Auto migrating document "${newDocument._id}" was ` +
+                        'successful.')
                 }
             }
         // TODO check conflicting constraints and mark them if necessary (check
