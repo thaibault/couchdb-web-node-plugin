@@ -121,8 +121,9 @@
             "updateDateTime": {
               "type": "DateTime",
               "onUpdateExpression": "modelConfiguration.updateStrategy === 'migrate' && oldDocument ? oldDocument[name] : (new Date()).getTime()",
-              "minimum": {
-                "__evaluate__": "(new Date()).getTime()"
+              "minimum": 0,
+              "constraintExpression": {
+                "__evaluate__": "`modelConfiguration.updateStrategy === 'migrate' && oldDocument || newValue > ${(new Date()).getTime()}`"
               },
               "nullable": false
             },
