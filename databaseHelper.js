@@ -693,9 +693,9 @@ export default class DatabaseHelper {
             for (const name:string in newDocument)
                 if (newDocument.hasOwnProperty(
                     name
-                ) && !modelConfiguration.property.name.reserved.includes(
-                    name
-                )) {
+                ) && !modelConfiguration.property.name.reserved.concat(
+                    modelConfiguration.property.name.special.revisions
+                ).includes(name)) {
                     if ([
                         modelConfiguration.property.name.special.allowedRoles,
                         modelConfiguration.property.name.special.constraints
@@ -703,7 +703,6 @@ export default class DatabaseHelper {
                         modelConfiguration.property.name.special.constraints
                             .expression,
                         modelConfiguration.property.name.special.extend,
-                        modelConfiguration.property.name.special.revisions,
                         modelConfiguration.property.name.special
                             .validatedDocumentsCache
                     ].includes(name))
