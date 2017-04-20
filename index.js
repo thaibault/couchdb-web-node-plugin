@@ -338,7 +338,6 @@ export default class Database {
                 )
                     delete document[
                         modelConfiguration.property.name.special.attachments]
-                console.log('\n\nB\n\n')
                 let newDocument:?PlainObject = null
                 const migrationModelConfiguration:ModelConfiguration =
                     Tools.copyLimitedRecursively(modelConfiguration)
