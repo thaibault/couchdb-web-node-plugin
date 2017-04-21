@@ -329,15 +329,6 @@ export default class Database {
                 retrievedDocument.id.startsWith('_design/')
             )) {
                 const document:Document = retrievedDocument.doc
-                if (
-                    modelConfiguration.property.name.special.attachments in
-                        document && Object.keys(document[
-                            modelConfiguration.property.name.special
-                                .attachments
-                        ]).length === 0
-                )
-                    delete document[
-                        modelConfiguration.property.name.special.attachments]
                 let newDocument:?PlainObject = null
                 const migrationModelConfiguration:ModelConfiguration =
                     Tools.copyLimitedRecursively(modelConfiguration)
@@ -351,7 +342,8 @@ export default class Database {
                 migrationModelConfiguration.updateStrategy = 'migrate'
                 try {
                     newDocument = DatabaseHelper.validateDocumentUpdate(
-                        Tools.copyLimitedRecursively(document), document, {
+                        Tools.copyLimitedRecursively(document),
+                        Tools.copyLimitedRecursively(document), {
                             db: configuration.name,
                             name: configuration.database.user.name,
                             roles: ['_admin']
