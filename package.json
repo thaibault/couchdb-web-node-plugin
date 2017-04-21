@@ -108,7 +108,9 @@
               "minimum": 1,
               "maximum": 999,
               "mutable": false
-            },
+            }
+          },
+          "_timeTrackable": {
             "creationDateTime": {
               "type": "DateTime",
               "onCreateExpression": "(new Date()).getTime()",
@@ -126,7 +128,9 @@
               "nullable": false,
               "onUpdateExpression": "modelConfiguration.updateStrategy === 'migrate' && oldDocument ? oldDocument[name] : (new Date()).getTime()",
               "type": "DateTime"
-            },
+            }
+          },
+          "_userTrackable": {
             "lastUser": {
               "onUpdateExpression": {
                 "__evaluate__": "`userContext.name || '${self.database.user.name}'`"
