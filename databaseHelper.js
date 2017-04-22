@@ -359,7 +359,7 @@ export default class DatabaseHelper {
                     'modelConfiguration', 'modelName', 'models', 'name',
                     'newDocument', 'newValue', 'oldDocument', 'oldValue',
                     'propertySpecification', 'securitySettings', 'serialize',
-                    'userContext'
+                    'userContext', 'parentNames', 'pathDescription'
                 ]
                 for (const type:string of [
                     'constraintExpression', 'constraintExecution'
@@ -376,7 +376,7 @@ export default class DatabaseHelper {
                             modelConfiguration, modelName, models, name,
                             newDocument, newValue, oldDocument, oldValue,
                             propertySpecification, securitySettings, serialize,
-                            userContext
+                            userContext, parentNames, pathDescription
                         ]
                         try {
                             hook = new Function(
