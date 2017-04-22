@@ -186,6 +186,83 @@ export default class DatabaseHelper {
                 modelConfiguration.property.name.special.type]
             const model:Model = models[modelName]
             // region functions
+            const checkPropertyConstraints:Function = (
+                newValue:any, name:string,
+                propertySpecification:PropertySpecification, oldValue:?any,
+                types:Array<string> = [
+                    'constraintExpression', 'constraintExecution']
+            ):void => {
+                const propertyConstraintParameterNames:Array<string> = [
+                    'checkDocument', 'checkPropertyContent', 'code', 'model',
+                    'modelConfiguration', 'modelName', 'models', 'name',
+                    'newDocument', 'newValue', 'oldDocument', 'oldValue',
+                    'propertySpecification', 'securitySettings', 'serialize',
+                    'userContext', 'parentNames', 'pathDescription'
+                ]
+                for (const type:string of types)
+                    if (propertySpecification[type]) {
+                        let hook:Function
+                        const code:string = (type.endsWith(
+                            'Expression'
+                        ) ? 'return ' : '') + propertySpecification[
+                            type
+                        ].evaluation
+                        const values:Array<any> = [
+                            checkDocument, checkPropertyContent, code, model,
+                            modelConfiguration, modelName, models, name,
+                            newDocument, newValue, oldDocument, oldValue,
+                            propertySpecification, securitySettings, serialize,
+                            userContext, parentNames, pathDescription
+                        ]
+                        // region compile
+                        try {
+                            hook = new Function(
+                                // IgnoreTypeCheck
+                                ...propertyConstraintParameterNames.concat(
+                                    code))
+                        } catch (error) {
+                            /* eslint-enable no-throw-literal */
+                            throw {
+                                forbidden: `Compilation: Hook "${type}" has ` +
+                                    `invalid code "${code}": "` + serialize(
+                                        error
+                                    ) + `"${pathDescription}.`
+                            }
+                            /* eslint-disable no-throw-literal */
+                        }
+                        // endregion
+                        let satisfied:boolean = false
+                        // region run
+                        try {
+                            // IgnoreTypeCheck
+                            satisfied = hook(...values)
+                        } catch (error) {
+                            /* eslint-disable no-throw-literal */
+                            throw {
+                                forbidden: `Runtime: Hook "${type}" has ` +
+                                    `throw an error with code "${code}": "` +
+                                    `${serialize(error)}"${pathDescription}.`
+                            }
+                            /* eslint-enable no-throw-literal */
+                        }
+                        // endregion
+                        if (!satisfied)
+                            /* eslint-disable no-throw-literal */
+                            throw {forbidden: type.charAt(0).toUpperCase(
+                            ) + type.substring(1) + `: ` + ((
+                                propertySpecification[type].description
+                            // IgnoreTypeCheck
+                            ) ? (new Function(
+                                ...propertyConstraintParameterNames.concat(
+                                    'return ' +
+                                        propertySpecification[type].description
+                                )
+                            ))(...values) : `Property "${name}" should ` +
+                            `satisfy constraint "${code}" (given "` +
+                            `${serialize(newValue)}")${pathDescription}.`)}
+                            /* eslint-enable no-throw-literal */
+                    }
+            }
             const checkPropertyContent:Function = (
                 newValue:any, name:string,
                 propertySpecification:PropertySpecification, oldValue:?any
@@ -353,77 +430,8 @@ export default class DatabaseHelper {
                     }
                     /* eslint-disable no-throw-literal */
                 // endregion
-                // region property constraint
-                const propertyConstraintParameterNames:Array<string> = [
-                    'checkDocument', 'checkPropertyContent', 'code', 'model',
-                    'modelConfiguration', 'modelName', 'models', 'name',
-                    'newDocument', 'newValue', 'oldDocument', 'oldValue',
-                    'propertySpecification', 'securitySettings', 'serialize',
-                    'userContext', 'parentNames', 'pathDescription'
-                ]
-                for (const type:string of [
-                    'constraintExpression', 'constraintExecution'
-                ])
-                    if (propertySpecification[type]) {
-                        let hook:Function
-                        const code:string = (type.endsWith(
-                            'Expression'
-                        ) ? 'return ' : '') + propertySpecification[
-                            type
-                        ].evaluation
-                        const values:Array<any> = [
-                            checkDocument, checkPropertyContent, code, model,
-                            modelConfiguration, modelName, models, name,
-                            newDocument, newValue, oldDocument, oldValue,
-                            propertySpecification, securitySettings, serialize,
-                            userContext, parentNames, pathDescription
-                        ]
-                        try {
-                            hook = new Function(
-                                // IgnoreTypeCheck
-                                ...propertyConstraintParameterNames.concat(
-                                    code))
-                        } catch (error) {
-                            /* eslint-enable no-throw-literal */
-                            throw {
-                                forbidden: `Compilation: Hook "${type}" has ` +
-                                    `invalid code "${code}": "` + serialize(
-                                        error
-                                    ) + `"${pathDescription}.`
-                            }
-                            /* eslint-disable no-throw-literal */
-                        }
-                        let satisfied:boolean = false
-                        try {
-                            // IgnoreTypeCheck
-                            satisfied = hook(...values)
-                        } catch (error) {
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden: `Runtime: Hook "${type}" has ` +
-                                    `throw an error with code "${code}": "` +
-                                    `${serialize(error)}"${pathDescription}.`
-                            }
-                            /* eslint-enable no-throw-literal */
-                        }
-                        console.log('A', propertySpecification[type].description)
-                        if (!satisfied)
-                            /* eslint-disable no-throw-literal */
-                            throw {forbidden: type.charAt(0).toUpperCase(
-                            ) + type.substring(1) + `: ` + ((
-                                propertySpecification[type].description
-                            // IgnoreTypeCheck
-                            ) ? (new Function(
-                                ...propertyConstraintParameterNames.concat(
-                                    'return ' +
-                                        propertySpecification[type].description
-                                )
-                            ))(...values) : `Property "${name}" should ` +
-                            `satisfy constraint "${code}" (given "` +
-                            `${serialize(newValue)}")${pathDescription}.`)}
-                            /* eslint-enable no-throw-literal */
-                    }
-                // endregion
+                checkPropertyConstraints(
+                    newValue, name, propertySpecification, oldValue)
                 return newValue
             }
             // / region create hook
@@ -896,6 +904,13 @@ export default class DatabaseHelper {
                                     `${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
+                        checkPropertyConstraints(
+                            newDocument[name], name, propertySpecification,
+                            oldDocument && oldDocument.hasOwnProperty(
+                                name
+                            ) && oldDocument[name] || undefined, [
+                                'arrayConstraintExpression',
+                                'arrayConstraintExecution'])
                         // IgnoreTypeCheck
                         const propertySpecificationCopy:PropertySpecification =
                             {}

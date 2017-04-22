@@ -264,6 +264,20 @@ registerTest(async function():Promise<void> {
                         a: {type: 'integer[]', maximumLength: 2}
                     }}}, 'MaximumArrayLength'
                 ],
+                [
+                    [{'-type': 'Test', a: [1]}], {entities: {Test: {
+                        a: {type: 'integer[]', constraintExpression: {
+                            evaluation: 'newValue === 2'
+                        }}
+                    }}}, 'ConstraintExpression'
+                ],
+                [
+                    [{'-type': 'Test', a: [1]}], {entities: {Test: {
+                        a: {type: 'integer[]', arrayConstraintExpression: {
+                            evaluation: 'newValue.length === 2'
+                        }}
+                    }}}, 'ArrayConstraintExpression'
+                ],
                 // / endregion
                 // / region nested property
                 // // region property type
@@ -1268,6 +1282,19 @@ registerTest(async function():Promise<void> {
                         fillUp: {'-type': 'Test', a: []},
                         incremental: {},
                         '': {'-type': 'Test'}
+                    }
+                ],
+                [
+                    [{'-type': 'Test', a: [2]}], {entities: {Test: {a: {
+                        type: 'integer[]', arrayConstraintExpression: {
+                            evaluation: 'newValue.length === 1'
+                        }, constraintExpression: {
+                            evaluation: 'newValue === 2'
+                        }
+                    }}}}, {
+                        fillUp: {'-type': 'Test', a: [2]},
+                        incremental: {},
+                        '': {'-type': 'Test', a: [2]}
                     }
                 ],
                 // / endregion
