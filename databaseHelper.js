@@ -406,6 +406,7 @@ export default class DatabaseHelper {
                             }
                             /* eslint-enable no-throw-literal */
                         }
+                        console.log('A', propertySpecification[type].description)
                         if (!satisfied)
                             /* eslint-disable no-throw-literal */
                             throw {forbidden: type.charAt(0).toUpperCase(
@@ -414,7 +415,9 @@ export default class DatabaseHelper {
                             // IgnoreTypeCheck
                             ) ? (new Function(
                                 ...propertyConstraintParameterNames.concat(
-                                    propertySpecification[type].description)
+                                    'return ' +
+                                        propertySpecification[type].description
+                                )
                             ))(...values) : `Property "${name}" should ` +
                             `satisfy constraint "${code}" (given "` +
                             `${serialize(newValue)}")${pathDescription}.`)}
