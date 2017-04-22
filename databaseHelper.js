@@ -467,8 +467,9 @@ export default class DatabaseHelper {
                                 }
                                 /* eslint-enable no-throw-literal */
                             }
+                            let result:any
                             try {
-                                newDocument[name] = hook(
+                                result = hook(
                                     newDocument, oldDocument, userContext,
                                     securitySettings, name, models,
                                     modelConfiguration, serialize, modelName,
@@ -485,6 +486,8 @@ export default class DatabaseHelper {
                                 }
                                 /* eslint-enable no-throw-literal */
                             }
+                            if (![undefined, null].includes(result))
+                                newDocument[name] = result
                         }
             }
             // / endregion
@@ -493,6 +496,8 @@ export default class DatabaseHelper {
                 propertySpecification:PropertySpecification,
                 newDocument:PlainObject, oldDocument:PlainObject, name:string
             ):any => {
+                if (!newDocument.hasOwnProperty(name))
+                    return
                 for (const type:string of [
                     'onUpdateExpression', 'onUpdateExecution'
                 ])
