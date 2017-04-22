@@ -110,6 +110,24 @@
               "mutable": false
             }
           },
+          "_intervall": {
+            "_constraintExpressions": [
+              {
+                "description": "`You have to ensure that start time is before or equal to end time for models with an ${modelName.replace(/^_+/, '')} specification${pathDescription}.`",
+                "evaluation": "newDocument.start <= newDocument.end"
+              }
+            ],
+            "end": {
+              "nullable": false,
+              "onUpdateExpression": "typeof newDocument[name] === 'number' && newDocument[name] >= 0 ? newDocument[name] : typeof newDocument.start === 'number' && newDocument.start >= 0 ? newDocument.start : (new Date()).getTime()",
+              "type": "DateTime"
+            },
+            "start": {
+              "nullable": false,
+              "onUpdateExpression": "typeof newDocument[name] === 'number' && newDocument[name] >= 0 ? newDocument[name] : (new Date()).getTime()",
+              "type": "DateTime"
+            }
+          },
           "_timeTrackable": {
             "creationDateTime": {
               "type": "DateTime",

@@ -1041,17 +1041,98 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [
-                        {'-type': 'Test', a: '2016-01-01'},
-                        {'-type': 'Test', a: '2016-01-01'}
+                        {'-type': 'Test', a: new Date(1970, 0, 1)},
+                        {'-type': 'Test', a: new Date(1970, 0, 1)}
                     ],
                     {entities: {Test: {a: {type: 'DateTime'}}}}, {
-                        fillUp: {'-type': 'Test', a: (new Date(
-                            '2016-01-01'
-                        )).getTime()},
+                        fillUp: {'-type': 'Test', a: 0},
                         incremental: {},
-                        '': {'-type': 'Test', a: (new Date(
-                            '2016-01-01'
-                        )).getTime()}
+                        '': {'-type': 'Test', a: 0}
+                    }
+                ],
+                [
+                    [
+                        {
+                            '-type': 'Test',
+                            a: new Date(1970, 0, 1).toUTCString()
+                        },
+                        {
+                            '-type': 'Test',
+                            a: new Date(1970, 0, 1).toUTCString()
+                        }
+                    ],
+                    {entities: {Test: {a: {type: 'DateTime'}}}}, {
+                        fillUp: {'-type': 'Test', a: 0},
+                        incremental: {},
+                        '': {'-type': 'Test', a: 0}
+                    }
+                ],
+                [
+                    [
+                        {
+                            '-type': 'Test',
+                            a: new Date(1970, 0, 1).toString()
+                        },
+                        {
+                            '-type': 'Test',
+                            a: new Date(1970, 0, 1).toString()
+                        }
+                    ],
+                    {entities: {Test: {a: {type: 'DateTime'}}}}, {
+                        fillUp: {'-type': 'Test', a: 0},
+                        incremental: {},
+                        '': {'-type': 'Test', a: 0}
+                    }
+                ],
+                [
+                    [
+                        {'-type': 'Test', a: new Date(1970, 0, 1, 0, 0, 0, 1)},
+                        {'-type': 'Test', a: new Date(1970, 0, 1, 0, 0, 0, 1)}
+                    ],
+                    {entities: {Test: {a: {type: 'DateTime'}}}}, {
+                        fillUp: {'-type': 'Test', a: 1},
+                        incremental: {},
+                        '': {'-type': 'Test', a: 1}
+                    }
+                ],
+                [
+                    [
+                        {
+                            '-type': 'Test',
+                            a: new Date(1970, 0, 1, 0, 0, 2).toUTCString()
+                        },
+                        {
+                            '-type': 'Test',
+                            a: new Date(1970, 0, 1, 0, 0, 2).toUTCString()
+                        }
+                    ],
+                    {entities: {Test: {a: {type: 'DateTime'}}}}, {
+                        fillUp: {'-type': 'Test', a: 2 * 1000},
+                        incremental: {},
+                        '': {'-type': 'Test', a: 2 * 1000}
+                    }
+                ],
+                [
+                    [
+                        {
+                            '-type': 'Test',
+                            a: new Date(1970, 0, 1, 5, 0, 2).toISOString()
+                        },
+                        {
+                            '-type': 'Test',
+                            a: new Date(1970, 0, 1, 5, 0, 2).toISOString()
+                        }
+                    ],
+                    {entities: {Test: {a: {type: 'DateTime'}}}}, {
+                        fillUp: {
+                            '-type': 'Test',
+                            a: 5 * 60 ** 2 * 1000 + 2 * 1000
+                        },
+                        incremental: {},
+                        '': {
+                            '-type': 'Test',
+                            a: 5 * 60 ** 2 * 1000 + 2 * 1000
+                        }
                     }
                 ],
                 // / region array
