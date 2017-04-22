@@ -140,7 +140,9 @@
             },
             "updateDateTime": {
               "constraintExpression": {
-                "__evaluate__": "`modelConfiguration.updateStrategy === 'migrate' && oldDocument ? true : newValue > ${(new Date()).getTime()}`"
+                "evaluate": {
+                  "__evaluate__": "`modelConfiguration.updateStrategy === 'migrate' && oldDocument ? true : newValue > ${(new Date()).getTime()}`"
+                }
               },
               "minimum": 0,
               "nullable": false,
