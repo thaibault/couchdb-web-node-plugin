@@ -368,8 +368,9 @@ export default class DatabaseHelper {
                         let hook:Function
                         const code:string = (type.endsWith(
                             'Expression'
-                        ) ? 'return ' : ''
-                        ) + propertySpecification[type]
+                        ) ? 'return ' : '') + propertySpecification[
+                            type
+                        ].evaluation
                         const values:Array<any> = [
                             checkDocument, checkPropertyContent, code, model,
                             modelConfiguration, modelName, models, name,

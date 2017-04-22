@@ -364,14 +364,18 @@ registerTest(async function():Promise<void> {
                 [
                     [{'-type': 'Test', a: 'b', b: {'-type': 'Test', a: 'a'}}],
                     {entities: {Test: {
-                        a: {constraintExpression: 'newValue === "b"'},
+                        a: {constraintExpression: {
+                            evaluation: 'newValue === "b"'
+                        }},
                         b: {type: 'Test'}
                     }}}, 'ConstraintExpression'
                 ],
                 [
                     [{'-type': 'Test', a: 'b', b: {'-type': 'Test', a: 'a'}}],
                     {entities: {Test: {
-                        a: {constraintExpression: 'newValue === "b"'},
+                        a: {constraintExpression: {
+                            evaluation: 'newValue === "b"'
+                        }},
                         b: {type: 'Test'}
                     }}}, 'ConstraintExpression'
                 ],
@@ -439,28 +443,37 @@ registerTest(async function():Promise<void> {
                 // region property constraint
                 [
                     [{'-type': 'Test', a: 'b'}],
-                    {entities: {Test: {a: {constraintExpression: 'false'}}}},
+                    {entities: {Test: {a: {constraintExpression: {
+                        evaluation: 'false'
+                    }}}}},
                     'ConstraintExpression'
                 ],
                 [
                     [{'-type': 'Test', a: 'b'}],
-                    {entities: {Test: {a: {
-                        constraintExecution: 'return false'
-                    }}}}, 'ConstraintExecution'
+                    {entities: {Test: {a: {constraintExecution: {
+                        evaluation: 'return false'
+                    }}}}}, 'ConstraintExecution'
                 ],
                 [
                     [{'-type': 'Test', a: 'b'}],
-                    {entities: {Test: {a: {constraintExpression: '+'}}}},
+                    {entities: {Test: {a: {constraintExpression: {
+                        evaluation: '+'
+                    }}}}},
                     'Compilation'
                 ],
                 [[{'-type': 'Test', a: 'b'}], {entities: {Test: {a: {
-                    constraintExpression: 'undefinedVariableName'
+                    constraintExpression: {
+                        evaluation: 'undefinedVariableName'
+                }}}}}, 'Runtime'],
+                [[{'-type': 'Test', a: 'b'}], {entities: {Test: {a: {
+                    constraintExecution: {
+                        evaluation: 'return undefinedVariableName'
+                    }
                 }}}}, 'Runtime'],
                 [[{'-type': 'Test', a: 'b'}], {entities: {Test: {a: {
-                    constraintExecution: 'return undefinedVariableName'
-                }}}}, 'Runtime'],
-                [[{'-type': 'Test', a: 'b'}], {entities: {Test: {a: {
-                    constraintExpression: 'newValue === "a"'
+                    constraintExpression: {
+                        evaluation: 'newValue === "a"'
+                    }
                 }}}}, 'ConstraintExpression'],
                 // endregion
                 // region constraint
@@ -1486,7 +1499,9 @@ registerTest(async function():Promise<void> {
                 // // region property constraint
                 [[{'-type': 'Test', a: 'b', b: {'-type': 'Test', a: 'b'}}], {
                     entities: {Test: {
-                        a: {constraintExpression: 'newValue === "b"'},
+                        a: {constraintExpression: {
+                            evaluation: 'newValue === "b"'
+                        }},
                         b: {type: 'Test'}
                     }}
                 }, {
@@ -1591,28 +1606,32 @@ registerTest(async function():Promise<void> {
                 // endregion
                 // region property constraint
                 [[{'-type': 'Test', a: 'b'}], {entities: {Test: {a: {
-                    constraintExpression: 'true'
+                    constraintExpression: {evaluation: 'true'}
                 }}}}, {
                     fillUp: {'-type': 'Test', a: 'b'},
                     incremental: {'-type': 'Test', a: 'b'},
                     '': {'-type': 'Test', a: 'b'}
                 }],
                 [[{'-type': 'Test', a: 'a'}], {entities: {Test: {a: {
-                    constraintExpression: 'newValue === "a"'
+                    constraintExpression: {evaluation: 'newValue === "a"'}
                 }}}}, {
                     fillUp: {'-type': 'Test', a: 'a'},
                     incremental: {'-type': 'Test', a: 'a'},
                     '': {'-type': 'Test', a: 'a'}
                 }],
                 [[{'-type': 'Test', a: 'a'}], {entities: {Test: {a: {
-                    constraintExecution: 'return newValue === "a"'
+                    constraintExecution: {
+                        evaluation: 'return newValue === "a"'
+                    }
                 }}}}, {
                     fillUp: {'-type': 'Test', a: 'a'},
                     incremental: {'-type': 'Test', a: 'a'},
                     '': {'-type': 'Test', a: 'a'}
                 }],
                 [[{'-type': 'Test', a: 'a'}], {entities: {Test: {a: {
-                    constraintExecution: 'return newValue === "a"',
+                    constraintExecution: {
+                        evaluation: 'return newValue === "a"'
+                    },
                     description: '`Value have to be "a" not "${newValue}".`'
                 }}}}, {
                     fillUp: {'-type': 'Test', a: 'a'},
