@@ -97,7 +97,7 @@ export default class DatabaseHelper {
         if (
             newDocument.hasOwnProperty('_deleted') && newDocument._deleted
             /*
-                NOTE: Needed if we are able to validate users table
+                NOTE: Needed if we are able to validate users table.
 
                 ||
                 newDocument.hasOwnProperty('type') &&
@@ -111,12 +111,9 @@ export default class DatabaseHelper {
             modelConfiguration.property.name.special.validatedDocumentsCache
         ) && securitySettings[
             modelConfiguration.property.name.special.validatedDocumentsCache
-        ].has(
-            `${newDocument._id}-${newDocument._rev}`
-        )) {
-            securitySettings[
-                modelConfiguration.property.name.special
-                    .validatedDocumentsCache
+        ].has(`${newDocument._id}-${newDocument._rev}`)) {
+            securitySettings[modelConfiguration.property.name.special
+                .validatedDocumentsCache
             ].delete(`${newDocument._id}-${newDocument._rev}`)
             return newDocument
         }
@@ -142,8 +139,10 @@ export default class DatabaseHelper {
         // endregion
         const checkDocument:Function = (
             newDocument:PlainObject, oldDocument:?PlainObject,
-            nested:boolean = false
+            parentNames:Array<string> = []
         ):PlainObject => {
+            const pathDescription:string =
+                parentNames.length ? ` in ${parentNames.join(' -> ')}` : ''
             // region check for model type
             if (!newDocument.hasOwnProperty(
                 modelConfiguration.property.name.special.type
@@ -152,10 +151,11 @@ export default class DatabaseHelper {
                 throw {
                     forbidden: 'Type: You have to specify a model type via ' +
                         `property "` +
-                        `${modelConfiguration.property.name.special.type}".`
+                        `${modelConfiguration.property.name.special.type}"` +
+                        `${pathDescription}.`
                 }
                 /* eslint-enable no-throw-literal */
-            if (!(nested || (new RegExp(
+            if (!(parentNames.length || (new RegExp(
                 modelConfiguration.property.name.special
                     .typeNameRegularExpressionPattern.public
             )).test(newDocument[modelConfiguration.property.name.special.type])
@@ -168,7 +168,7 @@ export default class DatabaseHelper {
                             .typeNameRegularExpressionPattern.public +
                         '" as public type (given "' + newDocument[
                             modelConfiguration.property.name.special.type
-                        ] + '").'
+                        ] + `")${pathDescription}.`
                 }
                 /* eslint-enable no-throw-literal */
             if (!models.hasOwnProperty(newDocument[
@@ -178,7 +178,7 @@ export default class DatabaseHelper {
                 throw {
                     forbidden: 'Model: Given model "' + newDocument[
                         modelConfiguration.property.name.special.type
-                    ] + '" is not specified.'
+                    ] + `" is not specified${pathDescription}.`
                 }
                 /* eslint-enable no-throw-literal */
             // endregion
@@ -193,22 +193,29 @@ export default class DatabaseHelper {
                 // region type
                 if (propertySpecification.type === 'DateTime') {
                     const initialNewValue:any = newValue
-                    if (newValue !== null)
-                        newValue = (new Date(newValue)).getTime()
+                    if (newValue !== null && typeof newValue !== 'number') {
+                        newValue = new Date(newValue)
+                        newValue = Date.UTC(
+                            newValue.getFullYear(), newValue.getMonth(),
+                            newValue.getDate(), newValue.getHours(),
+                            newValue.getMinutes(), newValue.getSeconds(),
+                            newValue.getMilliseconds())
+                    }
                     if (typeof newValue !== 'number' || isNaN(newValue))
                         /* eslint-disable no-throw-literal */
                         throw {
                             forbidden: `PropertyType: Property "${name}" ` +
                                 `isn't of type "DateTime" (given "` +
                                 `${serialize(initialNewValue)}" of type "` +
-                                `${typeof newValue}").`
+                                `${typeof newValue}")${pathDescription}.`
                         }
                         /* eslint-enable no-throw-literal */
                 } else if (models.hasOwnProperty(propertySpecification.type))
                     if (typeof newValue === 'object' && Object.getPrototypeOf(
                         newValue
                     ) === Object.prototype) {
-                        newValue = checkDocument(newValue, oldValue, true)
+                        newValue = checkDocument(
+                            newValue, oldValue, parentNames.concat(name))
                         if (serialize(newValue) === serialize({}))
                             return null
                     } else
@@ -216,7 +223,8 @@ export default class DatabaseHelper {
                         throw {
                             forbidden: 'NestedModel: Under key "${name}" ' +
                                 `isn't "${propertySpecification.type}" ` +
-                                `(given "${serialize(newValue)}").`
+                                `(given "${serialize(newValue)}")` +
+                                `${pathDescription}.`
                         }
                         /* eslint-enable no-throw-literal */
                 else if (['boolean', 'integer', 'number', 'string'].includes(
@@ -234,7 +242,7 @@ export default class DatabaseHelper {
                                 `isn't of type "` +
                                 `${propertySpecification.type}" (given "` +
                                 `${serialize(newValue)}" of type "` +
-                                `${typeof newValue}").`
+                                `${typeof newValue}")${pathDescription}.`
                         }
                         /* eslint-enable no-throw-literal */
                 } else if (
@@ -251,7 +259,7 @@ export default class DatabaseHelper {
                             forbidden: `PropertyType: Foreign key property "` +
                                 `${name}" isn't of type "${foreignKeyType}" ` +
                                 `(given "${serialize(newValue)}" of type "` +
-                                `${typeof newValue}").`
+                                `${typeof newValue}")${pathDescription}.`
                         }
                         /* eslint-enable no-throw-literal */
                 } else if (newValue !== propertySpecification.type)
@@ -260,7 +268,7 @@ export default class DatabaseHelper {
                         forbidden: `PropertyType: Property "${name}" isn't ` +
                             `value "${propertySpecification.type}" (given "` +
                             `${serialize(newValue)}" of type "` +
-                            `${typeof newValue}").`
+                            `${typeof newValue}")${pathDescription}.`
                     }
                     /* eslint-disable no-throw-literal */
                 // endregion
@@ -271,7 +279,8 @@ export default class DatabaseHelper {
                         throw {
                             forbidden: `MinimalLength: Property "${name}` +
                                 '" (type string) should have minimal ' +
-                                `length ${propertySpecification.minimum}.`
+                                `length ${propertySpecification.minimum}` +
+                                `${pathDescription}.`
                         }
                         /* eslint-enable no-throw-literal */
                 } else if (['number', 'integer', 'DateTime'].includes(
@@ -282,7 +291,8 @@ export default class DatabaseHelper {
                         forbidden: `Minimum: Property "${name}" (type ` +
                             `${propertySpecification.type}) should ` +
                             `satisfy a minimum of ` +
-                            `${propertySpecification.minimum}.`
+                            `${propertySpecification.minimum}` +
+                            `${pathDescription}.`
                     }
                     /* eslint-disable no-throw-literal */
                 if (![undefined, null].includes(propertySpecification.maximum))
@@ -293,7 +303,8 @@ export default class DatabaseHelper {
                                 forbidden: `MaximalLength: Property "${name}` +
                                     ' (type string) should have maximal ' +
                                     // IgnoreTypeCheck
-                                    `length ${propertySpecification.maximum}.`
+                                    `length ${propertySpecification.maximum}` +
+                                    `${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
                     } else if (['number', 'integer', 'DateTime'].includes(
@@ -305,7 +316,8 @@ export default class DatabaseHelper {
                                 `${propertySpecification.type}) should ` +
                                 `satisfy a maximum of ` +
                                 // IgnoreTypeCheck
-                                `${propertySpecification.maximum}.`
+                                propertySpecification.maximum +
+                                `${pathDescription}.`
                         }
                         /* eslint-disable no-throw-literal */
                 // endregion
@@ -320,7 +332,7 @@ export default class DatabaseHelper {
                             `${propertySpecification.type}) should be one of` +
                             ' "' +
                             propertySpecification.selection.join('", "') +
-                            `". But is "${newValue}".`
+                            `". But is "${newValue}"${pathDescription}.`
                     }
                     /* eslint-disable no-throw-literal */
                 // endregion
@@ -337,7 +349,7 @@ export default class DatabaseHelper {
                             'match regular expression pattern ' +
                             // IgnoreTypeCheck
                             propertySpecification.regularExpressionPattern +
-                            ` (given "${newValue}").`
+                            ` (given "${newValue}")${pathDescription}.`
                     }
                     /* eslint-disable no-throw-literal */
                 // endregion
@@ -376,7 +388,7 @@ export default class DatabaseHelper {
                                 forbidden: `Compilation: Hook "${type}" has ` +
                                     `invalid code "${code}": "` + serialize(
                                         error
-                                    ) + '".'
+                                    ) + `"${pathDescription}.`
                             }
                             /* eslint-disable no-throw-literal */
                         }
@@ -389,7 +401,7 @@ export default class DatabaseHelper {
                             throw {
                                 forbidden: `Runtime: Hook "${type}" has ` +
                                     `throw an error with code "${code}": "` +
-                                    `${serialize(error)}".`
+                                    `${serialize(error)}"${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
                         }
@@ -402,9 +414,9 @@ export default class DatabaseHelper {
                             ) ? (new Function(
                                 ...propertyConstraintParameterNames.concat(
                                     propertySpecification[type].description)
-                            ))(...values) : `Property "${name}` +
-                            `" should satisfy constraint "${code}" (given "` +
-                            `${serialize(newValue)}").`)}
+                            ))(...values) : `Property "${name}" should ` +
+                            `satisfy constraint "${code}" (given "` +
+                            `${serialize(newValue)}")${pathDescription}.`)}
                             /* eslint-enable no-throw-literal */
                     }
                 // endregion
@@ -437,8 +449,9 @@ export default class DatabaseHelper {
                                     forbidden: `Compilation: Hook "${type}" ` +
                                         'has invalid code "' +
                                         `${propertySpecification[type]}" for` +
-                                        ` property "${name}": ` +
-                                        serialize(error)
+                                        ` property "${name}": ` + serialize(
+                                            error
+                                        ) + `${pathDescription}.`
                                 }
                                 /* eslint-enable no-throw-literal */
                             }
@@ -454,8 +467,9 @@ export default class DatabaseHelper {
                                     forbidden: `Runtime: Hook "${type}" has ` +
                                         'throw an error with code "' +
                                         `${propertySpecification[type]}" ` +
-                                        `for property "${name}": ` +
-                                        serialize(error)
+                                        `for property "${name}": ` + serialize(
+                                            error
+                                        ) + `${pathDescription}.`
                                 }
                                 /* eslint-enable no-throw-literal */
                             }
@@ -489,7 +503,8 @@ export default class DatabaseHelper {
                                 forbidden: `Compilation: Hook "${type}" has ` +
                                     `invalid code "` +
                                     `${propertySpecification[type]}" for ` +
-                                    `property "${name}": ${serialize(error)}`
+                                    `property "${name}": ${serialize(error)}` +
+                                    `${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
                         }
@@ -506,7 +521,8 @@ export default class DatabaseHelper {
                                 forbidden: `Runtime: Hook "${type}" has ` +
                                     'throw an error with code "' +
                                     `${propertySpecification[type]}" for ` +
-                                    `property "${name}": ${serialize(error)}`
+                                    `property "${name}": ${serialize(error)}` +
+                                    `${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
                         }
@@ -572,7 +588,7 @@ export default class DatabaseHelper {
                                     throw {
                                         forbidden: 'MissingAttachment: ' +
                                             'Missing attachment for type "' +
-                                            `${type}".`
+                                            `${type}"${pathDescription}.`
                                     }
                                     /* eslint-enable no-throw-literal */
                                 if (
@@ -639,7 +655,7 @@ export default class DatabaseHelper {
                                 /* eslint-disable no-throw-literal */
                                 throw {
                                     forbidden: 'MissingProperty: Missing ' +
-                                        `property "${name}".`
+                                        `property "${name}"${pathDescription}.`
                                 }
                                 /* eslint-enable no-throw-literal */
                             if (!newDocument.hasOwnProperty(
@@ -709,7 +725,8 @@ export default class DatabaseHelper {
                         /* eslint-disable no-throw-literal */
                         throw {
                             forbidden: 'Invalid: Given property name "' +
-                                `${name}" isn't allowed as property name.`
+                                `${name}" isn't allowed as property name` +
+                                `${pathDescription}.`
                         }
                         /* eslint-enable no-throw-literal */
                     if (!model.hasOwnProperty(name))
@@ -721,7 +738,7 @@ export default class DatabaseHelper {
                             throw {
                                 forbidden: 'Property: Given property "' +
                                     `${name}" isn't specified in ` +
-                                    `model "${modelName}".`
+                                    `model "${modelName}"${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
                     const propertySpecification:PropertySpecification = model[
@@ -753,14 +770,15 @@ export default class DatabaseHelper {
                                         forbidden: 'Readonly: Property "' +
                                             `${name}" is not writable (old ` +
                                             `document "` +
-                                            `${serialize(oldDocument)}").`
+                                            `${serialize(oldDocument)}")` +
+                                            `${pathDescription}.`
                                     }
                                     /* eslint-enable no-throw-literal */
                             else
                                 /* eslint-disable no-throw-literal */
                                 throw {
                                     forbidden: `Readonly: Property "${name}"` +
-                                    ' is not writable.'
+                                    ` is not writable${pathDescription}.`
                                 }
                                 /* eslint-enable no-throw-literal */
                         // endregion
@@ -785,7 +803,8 @@ export default class DatabaseHelper {
                                 throw {
                                     forbidden: `Immutable: Property "${name}` +
                                         '" is not writable (old document "' +
-                                        `${serialize(oldDocument)}").`
+                                        `${serialize(oldDocument)}")` +
+                                        `${pathDescription}.`
                                 }
                                 /* eslint-enable no-throw-literal */
                         // endregion
@@ -798,7 +817,8 @@ export default class DatabaseHelper {
                                 /* eslint-disable no-throw-literal */
                                 throw {
                                     forbidden: `NotNull: Property "${name}" ` +
-                                        'should not by "null".'
+                                        'should not by "null"' +
+                                        `${pathDescription}.`
                                 }
                                 /* eslint-enable no-throw-literal */
                         // endregion
@@ -836,7 +856,8 @@ export default class DatabaseHelper {
                                 forbidden: `PropertyType: Property "${name}"` +
                                     ` isn't of type "array -> ` +
                                     `${propertySpecification.type}" (given "` +
-                                    `${serialize(newDocument[name])}").`
+                                    `${serialize(newDocument[name])}")` +
+                                    `${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
                         if (propertySpecification.hasOwnProperty(
@@ -851,7 +872,8 @@ export default class DatabaseHelper {
                                     `${newDocument[name].length}) doesn't ` +
                                     `fullfill minimum array length of ` +
                                     // IgnoreTypeCheck
-                                    `${propertySpecification.minimumLength}.`
+                                    propertySpecification.minimumLength +
+                                    `${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
                         else if (propertySpecification.hasOwnProperty(
@@ -866,7 +888,8 @@ export default class DatabaseHelper {
                                     `${newDocument[name].length}) doesn't ` +
                                     `fullfill maximum array length of ` +
                                     // IgnoreTypeCheck
-                                    `${propertySpecification.maximumLength}.`
+                                    propertySpecification.maximumLength +
+                                    `${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
                         // IgnoreTypeCheck
@@ -906,7 +929,8 @@ export default class DatabaseHelper {
             const constraintParameterNames:Array<string> = [
                 'checkDocument', 'checkPropertyContent', 'code', 'model',
                 'modelConfiguration', 'modelName', 'models', 'newDocument',
-                'oldDocument', 'securitySettings', 'serialize', 'userContext'
+                'oldDocument', 'securitySettings', 'serialize', 'userContext',
+                'parentNames', 'pathDescription'
             ]
             for (
                 let type:string in
@@ -930,7 +954,7 @@ export default class DatabaseHelper {
                             checkDocument, checkPropertyContent, code, model,
                             modelConfiguration, modelName, models, newDocument,
                             oldDocument, securitySettings, serialize,
-                            userContext
+                            userContext, parentNames, pathDescription
                         ]
                         try {
                             hook = new Function(
@@ -942,7 +966,7 @@ export default class DatabaseHelper {
                                 forbidden: `Compilation: Hook "${type}" has ` +
                                     `invalid code "${code}": "` + serialize(
                                         error
-                                    ) + '".'
+                                    ) + `"${pathDescription}.`
                             }
                             /* eslint-disable no-throw-literal */
                         }
@@ -955,7 +979,7 @@ export default class DatabaseHelper {
                             throw {
                                 forbidden: `Runtime: Hook "${type}" has ` +
                                     `thrown an error with code "${code}": ` +
-                                    serialize(error)
+                                    `${serialize(error)}${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
                         }
@@ -971,7 +995,8 @@ export default class DatabaseHelper {
                                         `return ${constraint.description}`)
                                 ))(...values) : `Model "${modelName}" should ` +
                                 `satisfy constraint "${code}" (given "` +
-                                `${serialize(newDocument)}").`)}
+                                `${serialize(newDocument)}")` +
+                                `${pathDescription}.`)}
                             /* eslint-enable no-throw-literal */
                         }
                     }
@@ -988,7 +1013,7 @@ export default class DatabaseHelper {
                     /* eslint-disable no-throw-literal */
                     throw {
                         forbidden: 'AttachmentPresence: given ' +
-                            'attachment has invalid type.'
+                            `attachment has invalid type${pathDescription}.`
                     }
                     /* eslint-enable no-throw-literal */
                 // region migrate old attachments
@@ -1061,7 +1086,7 @@ export default class DatabaseHelper {
                                     ' specified attachment types ("' +
                                     Object.keys(model[name]).join('", "') +
                                     '") matches given one ("' +
-                                    `${attachmentName}").`
+                                    `${attachmentName}")${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
                     }
@@ -1080,7 +1105,7 @@ export default class DatabaseHelper {
                                 `attachments (${numberOfAttachments}) ` +
                                 `doesn't satisfy specified maximum of ` +
                                 `${model[name][type].maximum} from type "` +
-                                `${type}".`
+                                `${type}"${pathDescription}.`
                         }
                         /* eslint-enable no-throw-literal */
                     if (!(
@@ -1092,7 +1117,7 @@ export default class DatabaseHelper {
                                 `attachments (${numberOfAttachments}) ` +
                                 `doesn't satisfy specified minimum of ` +
                                 `${model[name][type].minimum} from type "` +
-                                `${type}".`
+                                `${type}"${pathDescription}.`
                         }
                         /* eslint-enable no-throw-literal */
                     for (const fileName:string of attachmentToTypeMapping[
@@ -1111,7 +1136,7 @@ export default class DatabaseHelper {
                                     'expression pattern "' + model[name][
                                         type
                                     ].regularExpressionPattern + '" from ' +
-                                    `type "${type}".`
+                                    `type "${type}"${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
                         if (!([null, undefined].includes(model[name][
@@ -1133,7 +1158,7 @@ export default class DatabaseHelper {
                                     ' expression pattern "' + model[name][
                                         type
                                     ].regularExpressionPattern + '" from ' +
-                                    `type "${type}".`
+                                    `type "${type}"${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
                     }
