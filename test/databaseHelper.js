@@ -1067,9 +1067,31 @@ registerTest(async function():Promise<void> {
                     }
                 ],
                 [
+                    [{'-type': 'Test', a: new Date(
+                        1970, 0, 1, 0, -1 *
+                        (new Date(1970, 0, 1)).getTimezoneOffset()
+                    )}, {'-type': 'Test', a: new Date(
+                        1970, 0, 1, 0, -1 *
+                        (new Date(1970, 0, 1)).getTimezoneOffset()
+                    )}],
+                    {entities: {Test: {a: {type: 'DateTime'}}}}, {
+                        fillUp: {'-type': 'Test', a: 0},
+                        incremental: {},
+                        '': {'-type': 'Test', a: 0}
+                    }
+                ],
+                [
                     [
-                        {'-type': 'Test', a: new Date(1970, 0, 1)},
-                        {'-type': 'Test', a: new Date(1970, 0, 1)}
+                        {'-type': 'Test', a: (new Date(
+                            1970, 0, 1, 0, -1 * (new Date(
+                                1970, 0, 1
+                            )).getTimezoneOffset()
+                        )).toUTCString()},
+                        {'-type': 'Test', a: (new Date(
+                            1970, 0, 1, 0, -1 * (new Date(
+                                1970, 0, 1
+                            )).getTimezoneOffset()
+                        )).toUTCString()}
                     ],
                     {entities: {Test: {a: {type: 'DateTime'}}}}, {
                         fillUp: {'-type': 'Test', a: 0},
@@ -1079,14 +1101,12 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [
-                        {
-                            '-type': 'Test',
-                            a: new Date(1970, 0, 1).toUTCString()
-                        },
-                        {
-                            '-type': 'Test',
-                            a: new Date(1970, 0, 1).toUTCString()
-                        }
+                        {'-type': 'Test', a: new Date(1970, 0, 1, 0, -1 * (
+                            new Date(1970, 0, 1)).getTimezoneOffset()
+                        ).toLocaleString()},
+                        {'-type': 'Test', a: new Date(1970, 0, 1, 0, -1 * (
+                            new Date(1970, 0, 1)
+                        ).getTimezoneOffset()).toLocaleString()}
                     ],
                     {entities: {Test: {a: {type: 'DateTime'}}}}, {
                         fillUp: {'-type': 'Test', a: 0},
@@ -1095,27 +1115,12 @@ registerTest(async function():Promise<void> {
                     }
                 ],
                 [
-                    [
-                        {
-                            '-type': 'Test',
-                            a: new Date(1970, 0, 1).toString()
-                        },
-                        {
-                            '-type': 'Test',
-                            a: new Date(1970, 0, 1).toString()
-                        }
-                    ],
-                    {entities: {Test: {a: {type: 'DateTime'}}}}, {
-                        fillUp: {'-type': 'Test', a: 0},
-                        incremental: {},
-                        '': {'-type': 'Test', a: 0}
-                    }
-                ],
-                [
-                    [
-                        {'-type': 'Test', a: new Date(1970, 0, 1, 0, 0, 0, 1)},
-                        {'-type': 'Test', a: new Date(1970, 0, 1, 0, 0, 0, 1)}
-                    ],
+                    [{'-type': 'Test', a: new Date(1970, 0, 1, 0, -1 * (
+                        new Date(1970, 0, 1)
+                    ).getTimezoneOffset(), 0, 1)},
+                    {'-type': 'Test', a: new Date(1970, 0, 1, 0, -1 * (
+                        new Date(1970, 0, 1)
+                    ).getTimezoneOffset(), 0, 1)}],
                     {entities: {Test: {a: {type: 'DateTime'}}}}, {
                         fillUp: {'-type': 'Test', a: 1},
                         incremental: {},
@@ -1124,14 +1129,12 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [
-                        {
-                            '-type': 'Test',
-                            a: new Date(1970, 0, 1, 0, 0, 2).toUTCString()
-                        },
-                        {
-                            '-type': 'Test',
-                            a: new Date(1970, 0, 1, 0, 0, 2).toUTCString()
-                        }
+                        {'-type': 'Test', a: new Date(1970, 0, 1, 0, -1 * (
+                            new Date(1970, 0, 1)
+                        ).getTimezoneOffset(), 2).toUTCString()},
+                        {'-type': 'Test', a: new Date(1970, 0, 1, 0, -1 * (
+                            new Date(1970, 0, 1)
+                        ).getTimezoneOffset(), 2).toUTCString()}
                     ],
                     {entities: {Test: {a: {type: 'DateTime'}}}}, {
                         fillUp: {'-type': 'Test', a: 2 * 1000},
@@ -1141,14 +1144,12 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [
-                        {
-                            '-type': 'Test',
-                            a: new Date(1970, 0, 1, 5, 0, 2).toISOString()
-                        },
-                        {
-                            '-type': 'Test',
-                            a: new Date(1970, 0, 1, 5, 0, 2).toISOString()
-                        }
+                        {'-type': 'Test', a: new Date(1970, 0, 1, 5, -1 * (
+                            new Date(1970, 0, 1)
+                        ).getTimezoneOffset(), 2).toISOString()},
+                        {'-type': 'Test', a: new Date(1970, 0, 1, 5, -1 * (
+                            new Date(1970, 0, 1)
+                        ).getTimezoneOffset(), 2).toISOString()}
                     ],
                     {entities: {Test: {a: {type: 'DateTime'}}}}, {
                         fillUp: {

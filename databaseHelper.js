@@ -273,10 +273,10 @@ export default class DatabaseHelper {
                     if (newValue !== null && typeof newValue !== 'number') {
                         newValue = new Date(newValue)
                         newValue = Date.UTC(
-                            newValue.getFullYear(), newValue.getMonth(),
-                            newValue.getDate(), newValue.getHours(),
-                            newValue.getMinutes(), newValue.getSeconds(),
-                            newValue.getMilliseconds())
+                            newValue.getUTCFullYear(), newValue.getUTCMonth(),
+                            newValue.getUTCDate(), newValue.getUTCHours(),
+                            newValue.getUTCMinutes(), newValue.getUTCSeconds(),
+                            newValue.getUTCMilliseconds())
                     }
                     if (typeof newValue !== 'number' || isNaN(newValue))
                         /* eslint-disable no-throw-literal */
