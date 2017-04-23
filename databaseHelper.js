@@ -93,6 +93,11 @@ export default class DatabaseHelper {
         }, models:Models, modelConfiguration:SimpleModelConfiguration,
         toJSON:?Function = null
     ):PlainObject {
+        const now:Date = new Date()
+        const nowUTCTimestamp:number = Date.UTC(
+            now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
+            now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds(),
+            now.getUTCMilliseconds())
         // region ensure needed environment
         if (
             newDocument.hasOwnProperty('_deleted') && newDocument._deleted
@@ -197,7 +202,8 @@ export default class DatabaseHelper {
                     'modelConfiguration', 'modelName', 'models', 'name',
                     'newDocument', 'newValue', 'oldDocument', 'oldValue',
                     'propertySpecification', 'securitySettings', 'serialize',
-                    'userContext', 'parentNames', 'pathDescription'
+                    'userContext', 'parentNames', 'pathDescription', 'now',
+                    'nowUTCTimestamp'
                 ]
                 for (const type:string of types)
                     if (propertySpecification[type]) {
@@ -212,7 +218,8 @@ export default class DatabaseHelper {
                             modelConfiguration, modelName, models, name,
                             newDocument, newValue, oldDocument, oldValue,
                             propertySpecification, securitySettings, serialize,
-                            userContext, parentNames, pathDescription
+                            userContext, parentNames, pathDescription, now,
+                            nowUTCTimestamp
                         ]
                         // region compile
                         try {
@@ -451,7 +458,8 @@ export default class DatabaseHelper {
                                     'userContext', 'securitySettings',
                                     'name', 'models', 'modelConfiguration',
                                     'serialize', 'modelName', 'model',
-                                    'propertySpecification', (
+                                    'propertySpecification', 'now',
+                                    'nowUTCTimestamp', (
                                         type.endsWith('Expression') ?
                                         'return ' : ''
                                     ) + propertySpecification[type])
@@ -473,7 +481,8 @@ export default class DatabaseHelper {
                                     newDocument, oldDocument, userContext,
                                     securitySettings, name, models,
                                     modelConfiguration, serialize, modelName,
-                                    model, propertySpecification)
+                                    model, propertySpecification, now,
+                                    nowUTCTimestamp)
                             } catch (error) {
                                 /* eslint-disable no-throw-literal */
                                 throw {
@@ -510,7 +519,8 @@ export default class DatabaseHelper {
                                 'modelConfiguration', 'serialize', 'modelName',
                                 'model', 'checkDocument',
                                 'checkPropertyContent',
-                                'propertySpecification', (type.endsWith(
+                                'propertySpecification', 'now',
+                                'nowUTCTimestamp', (type.endsWith(
                                     'Expression'
                                 ) ? 'return ' : '') +
                                 propertySpecification[type])
@@ -531,7 +541,7 @@ export default class DatabaseHelper {
                                 securitySettings, name, models,
                                 modelConfiguration, serialize, modelName,
                                 model, checkDocument, checkPropertyContent,
-                                propertySpecification)
+                                propertySpecification, now, nowUTCTimestamp)
                         } catch (error) {
                             /* eslint-disable no-throw-literal */
                             throw {
@@ -954,7 +964,7 @@ export default class DatabaseHelper {
                 'checkDocument', 'checkPropertyContent', 'code', 'model',
                 'modelConfiguration', 'modelName', 'models', 'newDocument',
                 'oldDocument', 'securitySettings', 'serialize', 'userContext',
-                'parentNames', 'pathDescription'
+                'parentNames', 'pathDescription', 'now', 'nowUTCTimestamp'
             ]
             for (
                 let type:string in
@@ -978,7 +988,8 @@ export default class DatabaseHelper {
                             checkDocument, checkPropertyContent, code, model,
                             modelConfiguration, modelName, models, newDocument,
                             oldDocument, securitySettings, serialize,
-                            userContext, parentNames, pathDescription
+                            userContext, parentNames, pathDescription, now,
+                            nowUTCTimestamp
                         ]
                         try {
                             hook = new Function(

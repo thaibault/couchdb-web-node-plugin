@@ -119,21 +119,21 @@
             ],
             "end": {
               "nullable": false,
-              "onUpdateExpression": "typeof newDocument[name] === 'number' && newDocument[name] >= 0 ? newDocument[name] : typeof newDocument.start === 'number' && newDocument.start >= 0 ? newDocument.start : (new Date()).getTime()",
+              "onUpdateExpression": "typeof newDocument[name] === 'number' && newDocument[name] >= 0 ? newDocument[name] : typeof newDocument.start === 'number' && newDocument.start >= 0 ? newDocument.start : nowUTCTimestamp",
               "type": "DateTime"
             },
             "start": {
               "nullable": false,
-              "onUpdateExpression": "typeof newDocument[name] === 'number' && newDocument[name] >= 0 ? newDocument[name] : (new Date()).getTime()",
+              "onUpdateExpression": "typeof newDocument[name] === 'number' && newDocument[name] >= 0 ? newDocument[name] : nowUTCTimestamp",
               "type": "DateTime"
             }
           },
           "_timeTrackable": {
             "creationDateTime": {
               "type": "DateTime",
-              "onCreateExpression": "(new Date()).getTime()",
+              "onCreateExpression": "nowUTCTimestamp",
               "minimum": {
-                "__evaluate__": "(new Date()).getTime()"
+                "__evaluate__": "nowUTCTimestamp"
               },
               "mutable": false,
               "nullable": false
@@ -141,12 +141,12 @@
             "updateDateTime": {
               "constraintExpression": {
                 "evaluate": {
-                  "__evaluate__": "`modelConfiguration.updateStrategy === 'migrate' && oldDocument ? true : newValue > ${(new Date()).getTime()}`"
+                  "__evaluate__": "`modelConfiguration.updateStrategy === 'migrate' && oldDocument ? true : newValue > ${nowUTCTimestamp}`"
                 }
               },
               "minimum": 0,
               "nullable": false,
-              "onUpdateExpression": "modelConfiguration.updateStrategy === 'migrate' && oldDocument ? oldDocument[name] : (new Date()).getTime()",
+              "onUpdateExpression": "modelConfiguration.updateStrategy === 'migrate' && oldDocument ? oldDocument[name] : nowUTCTimestamp",
               "type": "DateTime"
             }
           },
