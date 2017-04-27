@@ -167,7 +167,7 @@
             "constraintExecution": null,
             "default": null,
             "maximum": null,
-            "minimum": 0,
+            "minimum": null,
             "mutable": true,
             "nullable": true,
             "onCreateExpression": null,
