@@ -357,28 +357,29 @@ export default class DatabaseHelper {
                     /* eslint-disable no-throw-literal */
                 // endregion
                 // region range
-                if (propertySpecification.type === 'string') {
-                    if (newValue.length < propertySpecification.minimum)
+                if (![undefined, null].includes(propertySpecification.minimum))
+                    if (propertySpecification.type === 'string') {
+                        if (newValue.length < propertySpecification.minimum)
+                            /* eslint-disable no-throw-literal */
+                            throw {
+                                forbidden: `MinimalLength: Property "${name}` +
+                                    '" (type string) should have minimal ' +
+                                    `length ${propertySpecification.minimum}` +
+                                    `${pathDescription}.`
+                            }
+                            /* eslint-enable no-throw-literal */
+                    } else if (['number', 'integer', 'DateTime'].includes(
+                        propertySpecification.type
+                    ) && newValue < propertySpecification.minimum)
                         /* eslint-disable no-throw-literal */
                         throw {
-                            forbidden: `MinimalLength: Property "${name}` +
-                                '" (type string) should have minimal ' +
-                                `length ${propertySpecification.minimum}` +
+                            forbidden: `Minimum: Property "${name}" (type ` +
+                                `${propertySpecification.type}) should ` +
+                                `satisfy a minimum of ` +
+                                `${propertySpecification.minimum}` +
                                 `${pathDescription}.`
                         }
-                        /* eslint-enable no-throw-literal */
-                } else if (['number', 'integer', 'DateTime'].includes(
-                    propertySpecification.type
-                ) && newValue < propertySpecification.minimum)
-                    /* eslint-disable no-throw-literal */
-                    throw {
-                        forbidden: `Minimum: Property "${name}" (type ` +
-                            `${propertySpecification.type}) should ` +
-                            `satisfy a minimum of ` +
-                            `${propertySpecification.minimum}` +
-                            `${pathDescription}.`
-                    }
-                    /* eslint-disable no-throw-literal */
+                        /* eslint-disable no-throw-literal */
                 if (![undefined, null].includes(propertySpecification.maximum))
                     if (propertySpecification.type === 'string') {
                         if (newValue.length > propertySpecification.maximum)
