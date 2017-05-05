@@ -122,17 +122,19 @@ export default class DatabaseHelper {
             ].delete(`${newDocument._id}-${newDocument._rev}`)
             return newDocument
         }
-        if (newDocument.hasOwnProperty(
-            '_rev'
-        ) && newDocument._rev === 'latest')
+        if (newDocument.hasOwnProperty('_rev') && [
+            'latest', 'upsert'
+        ].includes(newDocument._rev))
             if (oldDocument && oldDocument.hasOwnProperty('_rev'))
                 newDocument._rev = oldDocument._rev
-            else
+            else if (newDocument._rev === 'latest')
                 /* eslint-disable no-throw-literal */
                 throw {
                     forbidden: 'Revision: No old document to update available.'
                 }
                 /* eslint-enable no-throw-literal */
+            else
+                delete newDocument._rev
         let serialize:(value:any) => string
         if (toJSON)
             serialize = toJSON

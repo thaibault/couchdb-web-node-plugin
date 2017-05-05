@@ -719,6 +719,18 @@ registerTest(async function():Promise<void> {
                     incremental: {_rev: 1},
                     '': {'-type': 'Test', _rev: 1}
                 }],
+                [[{'-type': 'Test', _rev: 'upsert'}, {
+                    '-type': 'Test', _rev: 1
+                }], {entities: {Test: {}}}, {
+                    fillUp: {'-type': 'Test', _rev: 1},
+                    incremental: {_rev: 1},
+                    '': {'-type': 'Test', _rev: 1}
+                }],
+                [[{'-type': 'Test', _rev: 'upsert'}], {entities: {Test: {}}}, {
+                    fillUp: {'-type': 'Test'},
+                    incremental: {},
+                    '': {'-type': 'Test'}
+                }],
                 [[{'-type': 'Test', _rev: 1}, {'-type': 'Test', _rev: 1}], {
                     entities: {Test: {}}
                 }, {
