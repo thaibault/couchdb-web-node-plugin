@@ -119,6 +119,7 @@ export default class Helper {
         return Object.keys(model).filter((name:string):boolean => !(
             name.startsWith('_') ||
             modelConfiguration.property.name.reserved.concat(
+                modelConfiguration.property.name.special.deleted,
                 modelConfiguration.property.name.special.id,
                 modelConfiguration.property.name.special.revision,
                 modelConfiguration.property.name.special.type
