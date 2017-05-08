@@ -720,16 +720,16 @@ export default class DatabaseHelper {
                 for (const name:string in newDocument)
                     if (
                         newDocument.hasOwnProperty(name) &&
-                        name !== modelConfiguration.property.name.special
-                            .type &&
                         oldDocument.hasOwnProperty(name) &&
-                        !modelConfiguration.property.name.reserved.includes(
-                            name
-                        ) && (
+                        !modelConfiguration.property.name.reserved.concat(
+                            modelConfiguration.property.name.special.id,
+                            modelConfiguration.property.name.special.revision,
+                            modelConfiguration.property.name.special.type
+                        ).includes(name) && (
                             oldDocument[name] === newDocument[name] ||
-                                serialize(
-                                    oldDocument[name]
-                                ) === serialize(newDocument[name])
+                            serialize(
+                                oldDocument[name]
+                            ) === serialize(newDocument[name])
                         )
                     ) {
                         delete newDocument[name]
@@ -740,7 +740,8 @@ export default class DatabaseHelper {
                 if (newDocument.hasOwnProperty(
                     name
                 ) && !modelConfiguration.property.name.reserved.concat(
-                    modelConfiguration.property.name.special.revisions
+                    modelConfiguration.property.name.special.id,
+                    modelConfiguration.property.name.special.revision
                 ).includes(name)) {
                     if ([
                         modelConfiguration.property.name.special.allowedRoles,
@@ -824,7 +825,12 @@ export default class DatabaseHelper {
                                     modelConfiguration.updateStrategy ===
                                         'incremental' &&
                                     !modelConfiguration.property.name.reserved
-                                        .includes(name)
+                                    .concat(
+                                        modelConfiguration.property.name
+                                            .special.id,
+                                        modelConfiguration.property.name
+                                            .special.revision
+                                    ).includes(name)
                                 )
                                     delete newDocument[name]
                                 return true

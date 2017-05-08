@@ -66,6 +66,9 @@ export type SpecialPropertyNames = {
         execution:string;
     },
     extend:string;
+    id:string;
+    revision:string;
+    revisionInformations:string;
     revisions:string;
     type:string;
     typeNameRegularExpressionPattern:{
