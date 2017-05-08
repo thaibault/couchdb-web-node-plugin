@@ -180,11 +180,7 @@
             "writable": true
           },
           "name": {
-            "reserved": [
-              "_deleted",
-              "_id",
-              "_rev"
-            ],
+            "reserved": [],
             "special": {
               "allowedRoles": "_allowedRoles",
               "attachments": "_attachments",
@@ -193,7 +189,11 @@
                 "execution": "_constraintExecutions",
                 "expression": "_constraintExpressions"
               },
+              "deleted": "_deleted",
               "extend": "_extends",
+              "id": "_id",
+              "revision": "_rev",
+              "revisionInformations": "_revs_info",
               "revisions": "_revisions",
               "type": "-type",
               "typeNameRegularExpressionPattern": {

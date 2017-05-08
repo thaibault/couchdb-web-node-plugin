@@ -118,8 +118,11 @@ export default class Helper {
     ):Array<string> {
         return Object.keys(model).filter((name:string):boolean => !(
             name.startsWith('_') ||
-            modelConfiguration.property.name.reserved.includes(name) ||
-            modelConfiguration.property.name.special.type === name ||
+            modelConfiguration.property.name.reserved.concat(
+                modelConfiguration.property.name.special.id,
+                modelConfiguration.property.name.special.revision,
+                modelConfiguration.property.name.special.type
+            ).includes(name) ||
             model[name].type && model[name].type.endsWith('[]') ||
             modelConfiguration.entities.hasOwnProperty(model[name].type)
         )).concat('_id', '_rev')
