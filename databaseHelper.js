@@ -722,6 +722,7 @@ export default class DatabaseHelper {
                         newDocument.hasOwnProperty(name) &&
                         oldDocument.hasOwnProperty(name) &&
                         !modelConfiguration.property.name.reserved.concat(
+                            modelConfiguration.property.name.special.deleted,
                             modelConfiguration.property.name.special.id,
                             modelConfiguration.property.name.special.revision,
                             modelConfiguration.property.name.special.type
@@ -740,6 +741,7 @@ export default class DatabaseHelper {
                 if (newDocument.hasOwnProperty(
                     name
                 ) && !modelConfiguration.property.name.reserved.concat(
+                    modelConfiguration.property.name.special.deleted,
                     modelConfiguration.property.name.special.id,
                     modelConfiguration.property.name.special.revision
                 ).includes(name)) {
@@ -826,6 +828,8 @@ export default class DatabaseHelper {
                                         'incremental' &&
                                     !modelConfiguration.property.name.reserved
                                     .concat(
+                                        modelConfiguration.property.name
+                                            .special.deleted,
                                         modelConfiguration.property.name
                                             .special.id,
                                         modelConfiguration.property.name

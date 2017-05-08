@@ -65,6 +65,7 @@ export type SpecialPropertyNames = {
         expression:string;
         execution:string;
     },
+    deleted:string;
     extend:string;
     id:string;
     revision:string;
