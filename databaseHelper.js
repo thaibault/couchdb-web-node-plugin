@@ -743,7 +743,9 @@ export default class DatabaseHelper {
                 ) && !modelConfiguration.property.name.reserved.concat(
                     modelConfiguration.property.name.special.deleted,
                     modelConfiguration.property.name.special.id,
-                    modelConfiguration.property.name.special.revision
+                    modelConfiguration.property.name.special.revision,
+                    // NOTE: This property is integrated automatically.
+                    modelConfiguration.property.name.special.revisions
                 ).includes(name)) {
                     if ([
                         modelConfiguration.property.name.special.allowedRoles,
