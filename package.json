@@ -101,9 +101,6 @@
             "_rev": {
               "mutable": false
             },
-            "_revisions": {
-              "writable": false
-            },
             "-type": {
               "regularExpressionPattern": {
                 "__evaluate__": "`(?:${self.database.model.property.name.special.typeNameRegularExpressionPattern.public}|${self.database.model.property.name.special.typeNameRegularExpressionPattern.private})`"
