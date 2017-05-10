@@ -218,7 +218,7 @@ export default class Database {
         if (configuration.debug)
             console.info('Specification \n\n"' + Tools.representObject(
                 configuration.database.model
-            ) + `" has generated validation code: \n\n"${validationCode}".`)
+            ) + `"\n\nhas generated validation code: \n\n"${validationCode}".`)
         await Helper.ensureValidationDocumentPresence(
             services.database.connection, 'validation', {
                 helper: databaseHelperCode,
