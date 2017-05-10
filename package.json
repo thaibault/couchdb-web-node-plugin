@@ -114,7 +114,7 @@
               "mutable": false
             }
           },
-          "_intervall": {
+          "_interval": {
             "_constraintExpressions": [
               {
                 "description": "`You have to ensure that start time is before or equal to end time for models with an ${modelName.replace(/^_+/, '')} specification${pathDescription}.`",
