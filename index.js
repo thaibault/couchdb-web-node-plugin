@@ -92,7 +92,8 @@ export default class Database {
         // region ensure presence of global admin user
         const unauthenticatedUserDatabaseConnection:PouchDB =
             new services.database.connector(
-                `${Tools.stringFormat(configuration.database.url, '')}/_users`)
+                `${Tools.stringFormat(configuration.database.url, '')}/_users`,
+                configuration.database.connector)
         try {
             await unauthenticatedUserDatabaseConnection.allDocs()
             console.info(
