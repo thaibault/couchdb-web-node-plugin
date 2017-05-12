@@ -41,7 +41,7 @@
     "buildDLL": "webOptimizer buildDLL",
     "clear": "webOptimizer clear && rimraf log.txt",
     "document": "webOptimizer document",
-    "lint": "webOptimizer typeCheck && webOptimizer lint",
+    "lint": "webOptimizer typeCheck; webOptimizer lint",
     "prepublish": "npm run build",
     "serve": "npm run build && webNode",
     "start": "npm run serve",
