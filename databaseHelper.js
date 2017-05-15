@@ -562,15 +562,15 @@ export default class DatabaseHelper {
             // endregion
             for (const name:string in model)
                 if (model.hasOwnProperty(name) && ![
-                    modelConfiguration.property.name.special.allowedRoles,
-                    modelConfiguration.property.name.special.constraints
+                    modelConfiguration.property.name.special.allowedRole,
+                    modelConfiguration.property.name.special.constraint
                         .expression,
-                    modelConfiguration.property.name.special.constraints
+                    modelConfiguration.property.name.special.constraint
                         .execution
                 ].includes(name))
                     // region run hooks and check for presence of needed data
                     if (
-                        modelConfiguration.property.name.special.attachments
+                        modelConfiguration.property.name.special.attachment
                         === name
                     ) {
                         for (const type:string in model[name]) {
@@ -748,10 +748,10 @@ export default class DatabaseHelper {
                     modelConfiguration.property.name.special.revisions
                 ).includes(name)) {
                     if ([
-                        modelConfiguration.property.name.special.allowedRoles,
-                        modelConfiguration.property.name.special.constraints
+                        modelConfiguration.property.name.special.allowedRole,
+                        modelConfiguration.property.name.special.constraint
                             .execution,
-                        modelConfiguration.property.name.special.constraints
+                        modelConfiguration.property.name.special.constraint
                             .expression,
                         modelConfiguration.property.name.special.extend,
                         modelConfiguration.property.name.special
@@ -867,7 +867,7 @@ export default class DatabaseHelper {
                         return false
                     }
                     if (
-                        modelConfiguration.property.name.special.attachments
+                        modelConfiguration.property.name.special.attachment
                         === name
                     ) {
                         for (const fileName:string in newDocument[name])
@@ -983,13 +983,13 @@ export default class DatabaseHelper {
             ]
             for (
                 let type:string in
-                modelConfiguration.property.name.special.constraints
+                modelConfiguration.property.name.special.constraint
             )
                 if (
-                    modelConfiguration.property.name.special.constraints
+                    modelConfiguration.property.name.special.constraint
                         .hasOwnProperty(type) &&
                     (type = modelConfiguration.property.name.special
-                        .constraints[type]) &&
+                        .constraint[type]) &&
                     model.hasOwnProperty(type) &&
                     Array.isArray(model[type]) && model[type].length
                 )
@@ -997,7 +997,7 @@ export default class DatabaseHelper {
                         let hook:Function
                         const code:string = ((
                             type === modelConfiguration.property.name.special
-                                .constraints.expression
+                                .constraint.expression
                         ) ? 'return ' : '') + constraint.evaluation
                         const values:Array<any> = [
                             checkDocument, checkPropertyContent, code, model,
@@ -1051,9 +1051,9 @@ export default class DatabaseHelper {
                         }
                     }
             // / endregion
-            // / region attachments
+            // / region attachment
             const name:string = modelConfiguration.property.name.special
-                .attachments
+                .attachment
             if (newDocument.hasOwnProperty(name)) {
                 const newAttachments:PlainObject = newDocument[name]
                 if (

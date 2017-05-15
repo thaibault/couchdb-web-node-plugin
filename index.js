@@ -262,9 +262,9 @@ export default class Database {
                     if (models[modelName].hasOwnProperty(name))
                         if ([
                             modelConfiguration.property.name.special
-                                .constraints.execution,
+                                .constraint.execution,
                             modelConfiguration.property.name.special
-                                .constraints.expression
+                                .constraint.expression
                         ].includes(name)) {
                             // IgnoreTypeCheck
                             for (const constraint:Constraint of models[

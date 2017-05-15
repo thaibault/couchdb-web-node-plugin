@@ -97,11 +97,11 @@ export default class Helper {
             if (models.hasOwnProperty(modelName) && models[
                 modelName
             ].hasOwnProperty(
-                modelConfiguration.property.name.special.allowedRoles
+                modelConfiguration.property.name.special.allowedRole
             )) {
                 // IgnoreTypeCheck
                 const allowedRoles:Array<string> = models[modelName][
-                    modelConfiguration.property.name.special.allowedRoles]
+                    modelConfiguration.property.name.special.allowedRole]
                 allowedModelRolesMapping[modelName] = allowedRoles
             }
         return allowedModelRolesMapping
@@ -211,7 +211,7 @@ export default class Helper {
                 for (const propertyName:string in models[modelName])
                     if (models[modelName].hasOwnProperty(propertyName))
                         if (propertyName === modelConfiguration.property.name
-                            .special.attachments
+                            .special.attachment
                         ) {
                             for (const type:string in models[modelName][
                                 propertyName

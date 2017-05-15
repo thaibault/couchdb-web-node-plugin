@@ -62,17 +62,20 @@ export type RetrievedDocument = {
     doc:Document;
 }
 export type SpecialPropertyNames = {
-    allowedRoles:string;
-    attachments:string;
-    constraints:{
+    allowedRole:string;
+    attachment:string;
+    conflict:string;
+    constraint:{
         expression:string;
         execution:string;
     },
     deleted:string;
+    deletedConflict:string;
     extend:string;
     id:string;
+    localSequence:string;
     revision:string;
-    revisionInformations:string;
+    revisionsInformation:string;
     revisions:string;
     type:string;
     typeNameRegularExpressionPattern:{

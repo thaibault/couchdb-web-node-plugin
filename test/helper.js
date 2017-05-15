@@ -47,15 +47,15 @@ registerTest(async function():Promise<void> {
         for (const test:Array<any> of [
             [{}, {}],
             [{
-                property: {name: {special: {allowedRoles: 'roles'}}},
+                property: {name: {special: {allowedRole: 'roles'}}},
                 entities: {Test: {}}
             }, {}],
             [{
-                property: {name: {special: {allowedRoles: 'roles'}}},
+                property: {name: {special: {allowedRole: 'roles'}}},
                 entities: {Test: {roles: []}}
             }, {Test: []}],
             [{
-                property: {name: {special: {allowedRoles: 'roles'}}},
+                property: {name: {special: {allowedRole: 'roles'}}},
                 entities: {Test: {roles: ['a']}}
             }, {Test: ['a']}]
         ])
