@@ -115,7 +115,7 @@ export default class Database {
                         configuration.database.url,
                         `${configuration.database.user.name}:` +
                         `${configuration.database.user.password}@`
-                    ) + '/_users')
+                    ) + '/_users', configuration.database.connector)
                 try {
                     await authenticatedUserDatabaseConnection.allDocs()
                 } catch (error) {
@@ -162,7 +162,7 @@ export default class Database {
                 configuration.database.url,
                 `${configuration.database.user.name}:` +
                 `${configuration.database.user.password}@`
-            ) + `/${configuration.name}`)
+            ) + `/${configuration.name}`, configuration.database.connector)
         // region ensure presence of database security settings
         try {
             /*
