@@ -191,7 +191,7 @@
                 "expression": "_constraintExpressions"
               },
               "deleted": "_deleted",
-              "deleted_conflict": "_deleted_conflicts",
+              "deletedConflict": "_deleted_conflicts",
               "extend": "_extends",
               "id": "_id",
               "localSequence": "_local_seq",
