@@ -56,7 +56,7 @@ registerTest(async function():Promise<void> {
     })
     this.test('validateDocumentUpdate', (assert:Object):void => {
         for (const updateStrategy:UpdateStrategy of [
-            /*'', */'fillUp'/*, 'incremental'*/
+            '', 'fillUp', 'incremental'
         ]) {
             const defaultModelConfiguration:ModelConfiguration =
                 Tools.extendObject(true, {}, configuration.database.model, {
@@ -443,7 +443,9 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{'-type': 'Test', a: 2}],
-                    {entities: {Test: {a: {type: 'integer', selection: [1, 3]}}}},
+                    {entities: {Test: {a: {type: 'integer', selection: [
+                        1, 3
+                    ]}}}},
                     'Selection'
                 ],
                 // endregion
@@ -476,9 +478,8 @@ registerTest(async function():Promise<void> {
                     'Compilation'
                 ],
                 [[{'-type': 'Test', a: 'b'}], {entities: {Test: {a: {
-                    constraintExpression: {
-                        evaluation: 'undefinedVariableName'
-                }}}}}, 'Runtime'],
+                    constraintExpression: {evaluation: 'undefinedVariableName'}
+                }}}}, 'Runtime'],
                 [[{'-type': 'Test', a: 'b'}], {entities: {Test: {a: {
                     constraintExecution: {
                         evaluation: 'return undefinedVariableName'
@@ -647,27 +648,26 @@ registerTest(async function():Promise<void> {
                 const parameter:Array<any> = test[0].concat([null, {}, {
                 }].slice(test[0].length - 1)).concat([
                     models, modelConfiguration])
-                assert.throws(():Object =>
-                    DatabaseHelper.validateDocumentUpdate(...parameter), (
-                        error:DatabaseForbiddenError
-                    ):boolean => {
-                        if (error.hasOwnProperty('forbidden')) {
-                            const result:boolean = error.forbidden.startsWith(
-                                `${test[2]}:`)
-                            if (!result)
-                                console.error(
-                                    `Error "${error.forbidden}" doesn't ` +
-                                    `start with "${test[2]}:". Given ` +
-                                    `arguments: "` + parameter.map((
-                                        value:any
-                                    ):string => Tools.representObject(value)
-                                    ).join('", "') + '".')
-                            return result
-                        }
-                        // IgnoreTypeCheck
-                        console.error(`Unexpeced error "${error}" was thrown.`)
-                        return false
-                    })
+                assert.throws((
+                ):Object => DatabaseHelper.validateDocumentUpdate(
+                    ...parameter
+                ), (error:DatabaseForbiddenError):boolean => {
+                    if (error.hasOwnProperty('forbidden')) {
+                        const result:boolean = error.forbidden.startsWith(
+                            `${test[2]}:`)
+                        if (!result)
+                            console.error(
+                                `Error "${error.forbidden}" doesn't start ` +
+                                `with "${test[2]}:". Given arguments: "` +
+                                parameter.map((value:any):string =>
+                                    Tools.representObject(value)
+                                ).join('", "') + '".')
+                        return result
+                    }
+                    // IgnoreTypeCheck
+                    console.error(`Unexpeced error "${error}" was thrown.`)
+                    return false
+                })
             }
             // endregion
             // region allowed writes
@@ -781,7 +781,7 @@ registerTest(async function():Promise<void> {
                 }, {
                     fillUp: {'-type': 'Test', a: {'-type': '_test'}},
                     incremental: {'-type': 'Test', a: {'-type': '_test'}},
-                    '': {'-type': 'Test', a: {'-type': '_test'}},
+                    '': {'-type': 'Test', a: {'-type': '_test'}}
                 }],
                 // endregion
                 // region hooks
@@ -1272,7 +1272,8 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{'-type': 'Test', a: [2, 1]}], {entities: {Test: {a: {
-                        type: 'integer[]', minimumLength: 0, maximumLength: Infinity
+                        type: 'integer[]', maximumLength: Infinity,
+                        minimumLength: 0
                     }}}}, {
                         fillUp: {'-type': 'Test', a: [2, 1]},
                         incremental: {a: [2, 1]},
@@ -1962,12 +1963,14 @@ registerTest(async function():Promise<void> {
                 delete modelConfiguration.property.defaultSpecification
                 delete modelConfiguration.entities
                 try {
-                assert.deepEqual(DatabaseHelper.validateDocumentUpdate(
-                    ...test[0].concat([null, {}, {}].slice(
-                        test[0].length - 1
-                    )).concat([models, modelConfiguration])
-                ), test[2][updateStrategy])
-                } catch (error) {console.error(error)}
+                    assert.deepEqual(DatabaseHelper.validateDocumentUpdate(
+                        ...test[0].concat([null, {}, {}].slice(
+                            test[0].length - 1
+                        )).concat([models, modelConfiguration])
+                    ), test[2][updateStrategy])
+                } catch (error) {
+                    console.error(error)
+                }
             }
             // endregion
         }

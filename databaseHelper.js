@@ -230,14 +230,14 @@ export default class DatabaseHelper {
                                 ...propertyConstraintParameterNames.concat(
                                     code))
                         } catch (error) {
-                            /* eslint-enable no-throw-literal */
+                            /* eslint-disable no-throw-literal */
                             throw {
                                 forbidden: `Compilation: Hook "${type}" has ` +
                                     `invalid code "${code}": "` + serialize(
                                         error
                                     ) + `"${pathDescription}.`
                             }
-                            /* eslint-disable no-throw-literal */
+                            /* eslint-enable no-throw-literal */
                         }
                         // endregion
                         let satisfied:boolean = false
@@ -448,7 +448,7 @@ export default class DatabaseHelper {
             const runCreateHook:Function = (
                 propertySpecification:PropertySpecification,
                 newDocument:PlainObject, oldDocument:PlainObject, name:string
-            ):any => {
+            ):void => {
                 if (!oldDocument)
                     for (const type:string of [
                         'onCreateExpression', 'onCreateExecution'
@@ -507,7 +507,7 @@ export default class DatabaseHelper {
             const runUpdateHook:Function = (
                 propertySpecification:PropertySpecification,
                 newDocument:PlainObject, oldDocument:PlainObject, name:string
-            ):any => {
+            ):void => {
                 if (!newDocument.hasOwnProperty(name))
                     return
                 for (const type:string of [
