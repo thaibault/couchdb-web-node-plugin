@@ -518,7 +518,7 @@ registerTest(async function():Promise<void> {
                     b: {}
                 }}}, 'ConstraintExecutions'],
                 // endregion
-                // region attachments
+                // region attachment
                 [
                     [{'-type': 'Test', _attachments: {}}],
                     {entities: {Test: {}}}, 'Property'
@@ -1713,7 +1713,7 @@ registerTest(async function():Promise<void> {
                     '': {'-type': 'Test', a: 'a', b: 'a'}
                 }],
                 // endregion
-                // region attachments
+                // region attachment
                 [[{'-type': 'Test'}], {entities: {Test: {_attachments: {'.*': {
                     minimum: 1
                 }}}}}, {
