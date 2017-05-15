@@ -55,8 +55,14 @@ registerTest(async function():Promise<void> {
             assert.ok(DatabaseHelper.authenticate(...test))
     })
     this.test('validateDocumentUpdate', (assert:Object):void => {
+        const attachmentName:string =
+            configuration.database.model.property.name.special.attachment
+        const idName:string =
+            configuration.database.model.property.name.special.id
+        const revisionName:string =
+            configuration.database.model.property.name.special.revision
         for (const updateStrategy:UpdateStrategy of [
-            /*'', */'fillUp'/*, 'incremental'*/
+            '', 'fillUp', 'incremental'
         ]) {
             const defaultModelConfiguration:ModelConfiguration =
                 Tools.extendObject(true, {}, configuration.database.model, {
@@ -75,10 +81,19 @@ registerTest(async function():Promise<void> {
             // region forbidden writes
             for (const test:Array<any> of [
                 // region general environment
-                [[{'-type': 'Test', _rev: 'latest'}, null], 'Revision'],
-                [[{'-type': 'Test', _rev: 'latest'}, {}], 'Revision'],
                 [
-                    [{'-type': 'Test', _rev: 'latest'}, {'-type': 'Test'}],
+                    [{'-type': 'Test', [revisionName]: 'latest'}, null],
+                    'Revision'
+                ],
+                [
+                    [{'-type': 'Test', [revisionName]: 'latest'}, {}],
+                    'Revision'
+                ],
+                [
+                    [
+                        {'-type': 'Test', [revisionName]: 'latest'},
+                        {'-type': 'Test'}
+                    ],
                     'Revision'
                 ],
                 // endregion
@@ -398,7 +413,7 @@ registerTest(async function():Promise<void> {
                 [
                     [{'-type': 'Test1', a: 1}], {entities: {
                         Test1: {a: {type: 'foreignKey:Test2'}},
-                        Test2: {_id: {type: 'string'}}
+                        Test2: {[idName]: {type: 'string'}}
                     }}, 'PropertyType'
                 ],
                 [[{'-type': 'Test', a: 1}], {entities: {Test: {a: {
@@ -443,7 +458,9 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{'-type': 'Test', a: 2}],
-                    {entities: {Test: {a: {type: 'integer', selection: [1, 3]}}}},
+                    {entities: {Test: {a: {type: 'integer', selection: [
+                        1, 3
+                    ]}}}},
                     'Selection'
                 ],
                 // endregion
@@ -476,9 +493,8 @@ registerTest(async function():Promise<void> {
                     'Compilation'
                 ],
                 [[{'-type': 'Test', a: 'b'}], {entities: {Test: {a: {
-                    constraintExpression: {
-                        evaluation: 'undefinedVariableName'
-                }}}}}, 'Runtime'],
+                    constraintExpression: {evaluation: 'undefinedVariableName'}
+                }}}}, 'Runtime'],
                 [[{'-type': 'Test', a: 'b'}], {entities: {Test: {a: {
                     constraintExecution: {
                         evaluation: 'return undefinedVariableName'
@@ -520,116 +536,124 @@ registerTest(async function():Promise<void> {
                 // endregion
                 // region attachment
                 [
-                    [{'-type': 'Test', _attachments: {}}],
+                    [{'-type': 'Test', [attachmentName]: {}}],
                     {entities: {Test: {}}}, 'Property'
                 ],
-                [[{'-type': 'Test'}], {entities: {Test: {_attachments: {'.*': {
-                    minimum: 1, nullable: false
-                }}}}}, 'MissingAttachment'],
-                [[{'-type': 'Test', _attachments: {test: {
+                [[{'-type': 'Test'}], {entities: {Test: {[attachmentName]: {
+                    '.*': {minimum: 1, nullable: false}
+                }}}}, 'MissingAttachment'],
+                [[{'-type': 'Test', [attachmentName]: {test: {
                     data: null
-                }}}], {entities: {Test: {_attachments: {'.*': {
+                }}}], {entities: {Test: {[attachmentName]: {'.*': {
                     nullable: false
                 }}}}}, 'MissingAttachment'],
-                [[{'-type': 'Test', _attachments: {test: {data: null}}}], {
-                    entities: {Test: {_attachments: {'.*': {
+                [[{'-type': 'Test', [attachmentName]: {test: {data: null}}}], {
+                    entities: {Test: {[attachmentName]: {'.*': {
                         minimum: 1, nullable: false
                     }}}}
                 }, 'MissingAttachment'],
-                [[{'-type': 'Test', _attachments: {
+                [[{'-type': 'Test', [attachmentName]: {
                     a: {data: '', content_type: 'text/plain'}
-                }}], {entities: {Test: {_attachments: {
+                }}], {entities: {Test: {[attachmentName]: {
                     a: {minimum: 1, nullable: false},
                     b: {minimum: 1, nullable: false}
                 }}}}, 'MissingAttachment'],
-                [[{'-type': 'Test'}], {entities: {Test: {_attachments: {a: {
-                    minimum: 1, nullable: false
-                }}}}}, 'MissingAttachment'],
-                [[{'-type': 'Test', _attachments: null}], {entities: {Test: {
-                    _attachments: {'.*': {minimum: 1, nullable: false}}
-                }}}, 'MissingAttachment'],
+                [[{'-type': 'Test'}], {entities: {Test: {[attachmentName]: {
+                    a: {minimum: 1, nullable: false}
+                }}}}, 'MissingAttachment'],
+                [[{'-type': 'Test', [attachmentName]: null}], {entities: {
+                    Test: {[attachmentName]: {'.*': {
+                        minimum: 1, nullable: false
+                    }}}
+                }}, 'MissingAttachment'],
                 [
-                    [{'-type': 'Test', _attachments: {
+                    [{'-type': 'Test', [attachmentName]: {
                         // eslint-disable camelcase
                         a: {data: '', content_type: 'text/plain'},
                         b: {data: '', content_type: 'text/plain'}
                         // eslint-enable camelcase
                     }}],
-                    {entities: {Test: {_attachments: {'.*': {maximum: 1}}}}},
+                    {entities: {Test: {[attachmentName]: {'.*': {
+                        maximum: 1
+                    }}}}},
                     'AttachmentMaximum'
                 ],
                 [
-                    [{'-type': 'Test', _attachments: {}}],
-                    {entities: {Test: {_attachments: {'.*': {
+                    [{'-type': 'Test', [attachmentName]: {}}],
+                    {entities: {Test: {[attachmentName]: {'.*': {
                         minimum: 1, nullable: false
                     }}}}}, 'MissingAttachment'
                 ],
                 [
-                    [{'-type': 'Test', _attachments: {test: {data: null}}}, {
+                    [{'-type': 'Test', [attachmentName]: {test: {
+                        data: null
+                    }}}, {
                         '-type': 'Test',
-                        _attachments: {test: {
+                        [attachmentName]: {test: {
                             content_type: 'text/plain', data: ''
                         }}
-                    }], {entities: {Test: {_attachments: {'.*': {
+                    }], {entities: {Test: {[attachmentName]: {'.*': {
                         nullable: false
                     }}}}}, 'MissingAttachment'
                 ],
                 [
-                    [{'-type': 'Test', _attachments: {a: {
+                    [{'-type': 'Test', [attachmentName]: {a: {
                         // eslint-disable camelcase
                         data: '', content_type: 'text/plain'
                         // eslint-enable camelcase
                     }}}],
-                    {entities: {Test: {_attachments: {b: {}}}}},
+                    {entities: {Test: {[attachmentName]: {b: {}}}}},
                     'AttachmentTypeMatch'
                 ],
                 [
-                    [{'-type': 'Test', _attachments: {a: {
+                    [{'-type': 'Test', [attachmentName]: {a: {
                         // eslint-disable camelcase
                         data: '', content_type: 'text/plain'
                         // eslint-enable camelcase
                     }}}],
-                    {entities: {Test: {_attachments: {b: {}, c: {}}}}},
+                    {entities: {Test: {[attachmentName]: {b: {}, c: {}}}}},
                     'AttachmentTypeMatch'
                 ],
                 [
-                    [{'-type': 'Test', _attachments: {test: {
+                    [{'-type': 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         data: '', content_type: 'text/plain'
                         // eslint-enable camelcase
                     }}}],
-                    {entities: {Test: {_attachments: {'.*': {minimum: 2}}}}},
+                    {entities: {Test: {[attachmentName]: {'.*': {
+                        minimum: 2
+                    }}}}},
                     'AttachmentMinimum'
                 ],
                 [
-                    [{'-type': 'Test', _attachments: {a: {
+                    [{'-type': 'Test', [attachmentName]: {a: {
                         // eslint-disable camelcase
                         data: '', content_type: 'text/plain'
                         // eslint-enable camelcase
                     }}}],
-                    {entities: {Test: {_attachments: {'.*': {
+                    {entities: {Test: {[attachmentName]: {'.*': {
                         regularExpressionPattern: /b/g
                     }}}}}, 'AttachmentName'
                 ],
                 [
-                    [{'-type': 'Test', _attachments: {
+                    [{'-type': 'Test', [attachmentName]: {
                         // eslint-disable camelcase
                         a: {data: '', content_type: 'text/plain'},
                         b: {data: '', content_type: 'text/plain'}
                         // eslint-enable camelcase
                     }}],
-                    {entities: {Test: {_attachments: {'.*': {
+                    {entities: {Test: {[attachmentName]: {'.*': {
                         regularExpressionPattern: /a/
                     }}}}}, 'AttachmentName'
                 ],
                 [
-                    [{'-type': 'Test', _attachments: {
+                    [{'-type': 'Test', [attachmentName]: {
                         // eslint-disable camelcase
                         a: {data: '', content_type: 'text/plain'},
                         b: {data: '', content_type: 'image/jpg'}
                         // eslint-enable camelcase
                     }}],
-                    {entities: {Test: {_attachments: {'.*': {
+                    {entities: {Test: {[attachmentName]: {'.*': {
                         contentTypeRegularExpressionPattern: /text\/plain/
                     }}}}}, 'AttachmentContentType'
                 ]
@@ -647,27 +671,26 @@ registerTest(async function():Promise<void> {
                 const parameter:Array<any> = test[0].concat([null, {}, {
                 }].slice(test[0].length - 1)).concat([
                     models, modelConfiguration])
-                assert.throws(():Object =>
-                    DatabaseHelper.validateDocumentUpdate(...parameter), (
-                        error:DatabaseForbiddenError
-                    ):boolean => {
-                        if (error.hasOwnProperty('forbidden')) {
-                            const result:boolean = error.forbidden.startsWith(
-                                `${test[2]}:`)
-                            if (!result)
-                                console.error(
-                                    `Error "${error.forbidden}" doesn't ` +
-                                    `start with "${test[2]}:". Given ` +
-                                    `arguments: "` + parameter.map((
-                                        value:any
-                                    ):string => Tools.representObject(value)
-                                    ).join('", "') + '".')
-                            return result
-                        }
-                        // IgnoreTypeCheck
-                        console.error(`Unexpeced error "${error}" was thrown.`)
-                        return false
-                    })
+                assert.throws((
+                ):Object => DatabaseHelper.validateDocumentUpdate(
+                    ...parameter
+                ), (error:DatabaseForbiddenError):boolean => {
+                    if (error.hasOwnProperty('forbidden')) {
+                        const result:boolean = error.forbidden.startsWith(
+                            `${test[2]}:`)
+                        if (!result)
+                            console.error(
+                                `Error "${error.forbidden}" doesn't start ` +
+                                `with "${test[2]}:". Given arguments: "` +
+                                parameter.map((value:any):string =>
+                                    Tools.representObject(value)
+                                ).join('", "') + '".')
+                        return result
+                    }
+                    // IgnoreTypeCheck
+                    console.error(`Unexpeced error "${error}" was thrown.`)
+                    return false
+                })
             }
             // endregion
             // region allowed writes
@@ -681,62 +704,71 @@ registerTest(async function():Promise<void> {
                 /*
                     NOTE: Needed if we are able to validate "_users" table:
 
-                    [[{type: 'user', _id: 'org.couchdb.user:test'}], {}, {
-                        fillUp: {type: 'user', _id: 'org.couchdb.user:test'},
-                        incremental: {
-                            type: 'user', _id: 'org.couchdb.user:test'
+                    [[{type: 'user', [idName]: 'org.couchdb.user:test'}], {}, {
+                        fillUp: {
+                            type: 'user',
+                            [idName]: 'org.couchdb.user:test'
                         },
-                        '': {type: 'user', _id: 'org.couchdb.user:test'}
+                        incremental: {
+                            type: 'user', [idName]: 'org.couchdb.user:test'
+                        },
+                        '': {type: 'user', [idName]: 'org.couchdb.user:test'}
                     }],
-                    [[{type: 'user', _id: 'org.couchdb.user:test'}, {
-                        type: 'user', _id: 'org.couchdb.user:test'
+                    [[{type: 'user', [idName]: 'org.couchdb.user:test'}, {
+                        type: 'user', [idName]: 'org.couchdb.user:test'
                     }], {}, {
-                        fillUp: {type: 'user', _id: 'org.couchdb.user:test'},
-                        incremental: {
-                            type: 'user', _id: 'org.couchdb.user:test'
+                        fillUp: {
+                            type: 'user',
+                            [idName]: 'org.couchdb.user:test'
                         },
-                        '': {type: 'user', _id: 'org.couchdb.user:test'}
+                        incremental: {
+                            type: 'user', [idName]: 'org.couchdb.user:test'
+                        },
+                        '': {type: 'user', [idName]: 'org.couchdb.user:test'}
                     }]
                 */
-                [[{_id: 1, _rev: 1}, null, {}, {_validatedDocuments: new Set(
-                    ['1-1']
-                )}], {}, {
-                    fillUp: {_id: 1, _rev: 1},
-                    incremental: {_id: 1, _rev: 1},
-                    '': {_id: 1, _rev: 1}
+                [[{[idName]: 1, [revisionName]: 1}, null, {}, {
+                    _validatedDocuments: new Set(['1-1'])
+                }], {}, {
+                    fillUp: {[idName]: 1, [revisionName]: 1},
+                    incremental: {[idName]: 1, [revisionName]: 1},
+                    '': {[idName]: 1, [revisionName]: 1}
                 }],
-                [[{'-type': 'Test', _id: 1, _rev: 1, a: null}, {
-                    '-type': 'Test', _id: 1, _rev: 0, a: 'a'
+                [[{'-type': 'Test', [idName]: 1, [revisionName]: 1, a: null}, {
+                    '-type': 'Test', [idName]: 1, [revisionName]: 0, a: 'a'
                 }], {entities: {Test: {a: {}}}}, {
-                    fillUp: {'-type': 'Test', _id: 1, _rev: 1},
-                    incremental: {_id: 1, _rev: 1},
-                    '': {'-type': 'Test', _id: 1, _rev: 1}
+                    fillUp: {'-type': 'Test', [idName]: 1, [revisionName]: 1},
+                    incremental: {[idName]: 1, [revisionName]: 1},
+                    '': {'-type': 'Test', [idName]: 1, [revisionName]: 1}
                 }],
-                [[{'-type': 'Test', _rev: 'latest'}, {
-                    '-type': 'Test', _rev: 1
+                [[{'-type': 'Test', [revisionName]: 'latest'}, {
+                    '-type': 'Test', [revisionName]: 1
                 }], {entities: {Test: {}}}, {
-                    fillUp: {'-type': 'Test', _rev: 1},
-                    incremental: {_rev: 1},
-                    '': {'-type': 'Test', _rev: 1}
+                    fillUp: {'-type': 'Test', [revisionName]: 1},
+                    incremental: {[revisionName]: 1},
+                    '': {'-type': 'Test', [revisionName]: 1}
                 }],
-                [[{'-type': 'Test', _rev: 'upsert'}, {
-                    '-type': 'Test', _rev: 1
+                [[{'-type': 'Test', [revisionName]: 'upsert'}, {
+                    '-type': 'Test', [revisionName]: 1
                 }], {entities: {Test: {}}}, {
-                    fillUp: {'-type': 'Test', _rev: 1},
-                    incremental: {_rev: 1},
-                    '': {'-type': 'Test', _rev: 1}
+                    fillUp: {'-type': 'Test', [revisionName]: 1},
+                    incremental: {[revisionName]: 1},
+                    '': {'-type': 'Test', [revisionName]: 1}
                 }],
-                [[{'-type': 'Test', _rev: 'upsert'}], {entities: {Test: {}}}, {
+                [[{'-type': 'Test', [revisionName]: 'upsert'}], {entities: {
+                    Test: {}
+                }}, {
                     fillUp: {'-type': 'Test'},
-                    incremental: {},
+                    incremental: {'-type': 'Test'},
                     '': {'-type': 'Test'}
                 }],
-                [[{'-type': 'Test', _rev: 1}, {'-type': 'Test', _rev: 1}], {
-                    entities: {Test: {}}
-                }, {
-                    fillUp: {'-type': 'Test', _rev: 1},
-                    incremental: {_rev: 1},
-                    '': {'-type': 'Test', _rev: 1}
+                [[
+                    {'-type': 'Test', [revisionName]: 1},
+                    {'-type': 'Test', [revisionName]: 1}
+                ], {entities: {Test: {}}}, {
+                    fillUp: {'-type': 'Test', [revisionName]: 1},
+                    incremental: {[revisionName]: 1},
+                    '': {'-type': 'Test', [revisionName]: 1}
                 }],
                 // endregion
                 // region model
@@ -781,7 +813,7 @@ registerTest(async function():Promise<void> {
                 }, {
                     fillUp: {'-type': 'Test', a: {'-type': '_test'}},
                     incremental: {'-type': 'Test', a: {'-type': '_test'}},
-                    '': {'-type': 'Test', a: {'-type': '_test'}},
+                    '': {'-type': 'Test', a: {'-type': '_test'}}
                 }],
                 // endregion
                 // region hooks
@@ -793,53 +825,53 @@ registerTest(async function():Promise<void> {
                     incremental: {'-type': 'Test', a: '2'},
                     '': {'-type': 'Test', a: '2'}
                 }],
-                [[{'-type': 'Test', _attachments: {test: {
+                [[{'-type': 'Test', [attachmentName]: {test: {
                     // eslint-disable camelcase
                     data: 'payload', content_type: 'text/plain'
                     // eslint-enable camelcase
-                }}}], {entities: {Test: {_attachments: {'.*': {
+                }}}], {entities: {Test: {[attachmentName]: {'.*': {
                     onCreateExpression:
                         `(newDocument[name].data += ' footer') && ` +
                         'newDocument[name]'
                 }}}}}, {
-                    fillUp: {'-type': 'Test', _attachments: {test: {
+                    fillUp: {'-type': 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         data: 'payload footer', content_type: 'text/plain'
                         // eslint-enable camelcase
                     }}},
-                    incremental: {'-type': 'Test', _attachments: {test: {
+                    incremental: {'-type': 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         data: 'payload footer', content_type: 'text/plain'
                         // eslint-enable camelcase
                     }}},
-                    '': {'-type': 'Test', _attachments: {test: {
+                    '': {'-type': 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         data: 'payload footer', content_type: 'text/plain'
                         // eslint-enable camelcase
                     }}}
                 }],
-                [[{'-type': 'Test', _attachments: {test: {
+                [[{'-type': 'Test', [attachmentName]: {test: {
                     // eslint-disable camelcase
                     data: 'payload', content_type: 'text/plain'
                     // eslint-enable camelcase
-                }}}, {'-type': 'Test'}], {entities: {Test: {_attachments: {
+                }}}, {'-type': 'Test'}], {entities: {Test: {[attachmentName]: {
                     '.*': {
                         onCreateExpression:
                             `(newDocument[name].data += ' footer') && ` +
                             'newDocument[name]'
                     }
                 }}}}, {
-                    fillUp: {'-type': 'Test', _attachments: {test: {
+                    fillUp: {'-type': 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         data: 'payload', content_type: 'text/plain'
                         // eslint-enable camelcase
                     }}},
-                    incremental: {_attachments: {test: {
+                    incremental: {[attachmentName]: {test: {
                         // eslint-disable camelcase
                         data: 'payload', content_type: 'text/plain'
                         // eslint-enable camelcase
                     }}},
-                    '': {'-type': 'Test', _attachments: {test: {
+                    '': {'-type': 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         data: 'payload', content_type: 'text/plain'
                         // eslint-enable camelcase
@@ -889,60 +921,60 @@ registerTest(async function():Promise<void> {
                     incremental: {},
                     '': {'-type': 'Test', a: '2'}
                 }],
-                [[{'-type': 'Test', _attachments: {test: {
+                [[{'-type': 'Test', [attachmentName]: {test: {
                     // eslint-disable camelcase
                     data: 'payload', content_type: 'text/plain'
                     // eslint-enable camelcase
-                }}}], {entities: {Test: {_attachments: {'.*': {
+                }}}], {entities: {Test: {[attachmentName]: {'.*': {
                     onUpdateExpression:
                         `(newDocument[name].data += ' footer') && ` +
                         'newDocument[name]'
                 }}}}}, {
-                    fillUp: {'-type': 'Test', _attachments: {test: {
+                    fillUp: {'-type': 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         data: 'payload footer', content_type: 'text/plain'
                         // eslint-enable camelcase
                     }}},
-                    incremental: {'-type': 'Test', _attachments: {test: {
+                    incremental: {'-type': 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         data: 'payload footer', content_type: 'text/plain'
                         // eslint-enable camelcase
                     }}},
-                    '': {'-type': 'Test', _attachments: {test: {
+                    '': {'-type': 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         data: 'payload footer', content_type: 'text/plain'
                         // eslint-enable camelcase
                     }}}
                 }],
-                [[{'-type': 'Test', _attachments: {test: {
+                [[{'-type': 'Test', [attachmentName]: {test: {
                     // eslint-disable camelcase
                     data: 'payload', content_type: 'text/plain'
                     // eslint-enable camelcase
-                }}}, {'-type': 'Test'}], {entities: {Test: {_attachments: {
+                }}}, {'-type': 'Test'}], {entities: {Test: {[attachmentName]: {
                     '.*': {
                         onUpdateExpression:
                             `(newDocument[name].data += ' footer') && ` +
                             'newDocument[name]'
                     }
                 }}}}, {
-                    fillUp: {'-type': 'Test', _attachments: {test: {
+                    fillUp: {'-type': 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         data: 'payload footer', content_type: 'text/plain'
                         // eslint-enable camelcase
                     }}},
-                    incremental: {_attachments: {test: {
+                    incremental: {[attachmentName]: {test: {
                         // eslint-disable camelcase
                         data: 'payload footer', content_type: 'text/plain'
                         // eslint-enable camelcase
                     }}},
-                    '': {'-type': 'Test', _attachments: {test: {
+                    '': {'-type': 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         data: 'payload footer', content_type: 'text/plain'
                         // eslint-enable camelcase
                     }}}
                 }],
                 [[{'-type': 'Test'}, {'-type': 'Test'}], {entities: {Test: {
-                    _attachments: {'.*': {onUpdateExpression:
+                    [attachmentName]: {'.*': {onUpdateExpression:
                         `(newDocument[name].data += ' footer') && ` +
                         'newDocument[name]'
                     }}
@@ -1012,25 +1044,27 @@ registerTest(async function():Promise<void> {
                     incremental: {'-type': 'Test', a: '2'},
                     '': {'-type': 'Test', a: '2'}
                 }],
-                [[{'-type': 'Test'}], {entities: {Test: {_attachments: {'.*': {
-                    default: {test: {
-                        // eslint-disable camelcase
-                        data: '', content_type: 'text/plain'
-                        // eslint-enable camelcase
-                    }},
-                    nullable: false
-                }}}}}, {
-                    fillUp: {'-type': 'Test', _attachments: {test: {
+                [[{'-type': 'Test'}], {entities: {Test: {[attachmentName]: {
+                    '.*': {
+                        default: {test: {
+                            // eslint-disable camelcase
+                            data: '', content_type: 'text/plain'
+                            // eslint-enable camelcase
+                        }},
+                        nullable: false
+                    }
+                }}}}, {
+                    fillUp: {'-type': 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         data: '', content_type: 'text/plain'
                         // eslint-enable camelcase
                     }}},
-                    incremental: {'-type': 'Test', _attachments: {test: {
+                    incremental: {'-type': 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         data: '', content_type: 'text/plain'
                         // eslint-enable camelcase
                     }}},
-                    '': {'-type': 'Test', _attachments: {test: {
+                    '': {'-type': 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         data: '', content_type: 'text/plain'
                         // eslint-enable camelcase
@@ -1266,16 +1300,17 @@ registerTest(async function():Promise<void> {
                         type: 'integer[]', minimumLength: 1, maximumLength: 2
                     }}}}, {
                         fillUp: {'-type': 'Test', a: [2, 1]},
-                        incremental: {a: [2, 1]},
+                        incremental: {'-type': 'Test', a: [2, 1]},
                         '': {'-type': 'Test', a: [2, 1]}
                     }
                 ],
                 [
                     [{'-type': 'Test', a: [2, 1]}], {entities: {Test: {a: {
-                        type: 'integer[]', minimumLength: 0, maximumLength: Infinity
+                        type: 'integer[]', maximumLength: Infinity,
+                        minimumLength: 0
                     }}}}, {
                         fillUp: {'-type': 'Test', a: [2, 1]},
-                        incremental: {a: [2, 1]},
+                        incremental: {'-type': 'Test', a: [2, 1]},
                         '': {'-type': 'Test', a: [2, 1]}
                     }
                 ],
@@ -1284,7 +1319,7 @@ registerTest(async function():Promise<void> {
                         type: 'integer[]', maximum: 2, maximumLength: 1
                     }}}}, {
                         fillUp: {'-type': 'Test', a: [2]},
-                        incremental: {a: [2]},
+                        incremental: {'-type': 'Test', a: [2]},
                         '': {'-type': 'Test', a: [2]}
                     }
                 ],
@@ -1293,8 +1328,8 @@ registerTest(async function():Promise<void> {
                         type: 'integer[]', maximum: 2, maximumLength: 0
                     }}}}, {
                         fillUp: {'-type': 'Test', a: []},
-                        incremental: {},
-                        '': {'-type': 'Test'}
+                        incremental: {'-type': 'Test', a: []},
+                        '': {'-type': 'Test', a: []}
                     }
                 ],
                 [
@@ -1306,7 +1341,7 @@ registerTest(async function():Promise<void> {
                         }
                     }}}}, {
                         fillUp: {'-type': 'Test', a: [2]},
-                        incremental: {},
+                        incremental: {'-type': 'Test', a: [2]},
                         '': {'-type': 'Test', a: [2]}
                     }
                 ],
@@ -1564,7 +1599,7 @@ registerTest(async function():Promise<void> {
                 // / endregion
                 [[{'-type': 'Test1', a: 2}], {entities: {
                     Test1: {a: {type: 'foreignKey:Test2'}},
-                    Test2: {_id: {type: 'number'}}
+                    Test2: {[idName]: {type: 'number'}}
                 }}, {
                     fillUp: {'-type': 'Test1', a: 2},
                     incremental: {'-type': 'Test1', a: 2},
@@ -1582,7 +1617,7 @@ registerTest(async function():Promise<void> {
                 [[{'-type': 'Test'}], {
                     entities: {Test: {a: {type: 'number', default: 2}}}}, {
                         fillUp: {'-type': 'Test', a: 2},
-                        incremental: {a: 2},
+                        incremental: {'-type': 'Test', a: 2},
                         '': {'-type': 'Test', a: 2}
                     }
                 ],
@@ -1714,40 +1749,42 @@ registerTest(async function():Promise<void> {
                 }],
                 // endregion
                 // region attachment
-                [[{'-type': 'Test'}], {entities: {Test: {_attachments: {'.*': {
-                    minimum: 1
-                }}}}}, {
+                [[{'-type': 'Test'}], {entities: {Test: {[attachmentName]: {
+                    '.*': {minimum: 1}
+                }}}}, {
                     fillUp: {'-type': 'Test'},
                     incremental: {'-type': 'Test'},
                     '': {'-type': 'Test'}
                 }],
-                [[{'-type': 'Test', _attachments: {test: {
+                [[{'-type': 'Test', [attachmentName]: {test: {
                     // eslint-disable camelcase
                     content_type: 'text/plain', data: ''
                     // eslint-enable camelcase
-                }}}], {entities: {Test: {_attachments: {'.*': {maximum: 1}}}}},
+                }}}], {entities: {Test: {[attachmentName]: {'.*': {
+                    maximum: 1
+                }}}}},
                 {
-                    fillUp: {'-type': 'Test', _attachments: {test: {
+                    fillUp: {'-type': 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         content_type: 'text/plain', data: ''
                         // eslint-enable camelcase
                     }}},
-                    incremental: {'-type': 'Test', _attachments: {test: {
+                    incremental: {'-type': 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         content_type: 'text/plain', data: ''
                         // eslint-enable camelcase
                     }}},
-                    '': {'-type': 'Test', _attachments: {test: {
+                    '': {'-type': 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         content_type: 'text/plain', data: ''
                         // eslint-enable camelcase
                     }}}
                 }],
-                [[{'-type': 'Test', _attachments: {'favicon.png': {
+                [[{'-type': 'Test', [attachmentName]: {'favicon.png': {
                     // eslint-disable camelcase
                     content_type: 'image/png', data: 'abc'
                     // eslint-enable camelcase
-                }}}], {entities: {Test: {_attachments: {
+                }}}], {entities: {Test: {[attachmentName]: {
                     '.+\\.(?:jpe?g|png|svg)': {
                         contentTypeRegularExpressionPattern:
                             'image/(?:p?jpe?g|png|svg)',
@@ -1755,183 +1792,185 @@ registerTest(async function():Promise<void> {
                         nullable: false
                     }
                 }}}}, {
-                    fillUp: {'-type': 'Test', _attachments: {'favicon.png': {
-                        // eslint-disable camelcase
-                        content_type: 'image/png', data: 'abc'
-                        // eslint-enable camelcase
-                    }}},
-                    incremental: {'-type': 'Test', _attachments: {
+                    fillUp: {'-type': 'Test', [attachmentName]: {
                         'favicon.png': {
                             // eslint-disable camelcase
                             content_type: 'image/png', data: 'abc'
                             // eslint-enable camelcase
                         }
                     }},
-                    '': {'-type': 'Test', _attachments: {'favicon.png': {
+                    incremental: {'-type': 'Test', [attachmentName]: {
+                        'favicon.png': {
+                            // eslint-disable camelcase
+                            content_type: 'image/png', data: 'abc'
+                            // eslint-enable camelcase
+                        }
+                    }},
+                    '': {'-type': 'Test', [attachmentName]: {'favicon.png': {
                         // eslint-disable camelcase
                         content_type: 'image/png', data: 'abc'
                         // eslint-enable camelcase
                     }}}
                 }],
-                [[{'-type': 'Test', _attachments: {test: {
+                [[{'-type': 'Test', [attachmentName]: {test: {
                     // eslint-disable camelcase
                     content_type: 'text/plain', data: ''
                     // eslint-enable camelcase
-                }}}], {entities: {Test: {_attachments: {'.*': {
+                }}}], {entities: {Test: {[attachmentName]: {'.*': {
                     nullable: false
                 }}}}}, {
-                    fillUp: {'-type': 'Test', _attachments: {test: {
+                    fillUp: {'-type': 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         content_type: 'text/plain', data: ''
                         // eslint-enable camelcase
                     }}},
-                    incremental: {'-type': 'Test', _attachments: {test: {
+                    incremental: {'-type': 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         content_type: 'text/plain', data: ''
                         // eslint-enable camelcase
                     }}},
-                    '': {'-type': 'Test', _attachments: {test: {
+                    '': {'-type': 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         content_type: 'text/plain', data: ''
                         // eslint-enable camelcase
                     }}}
                 }],
-                [[{'-type': 'Test', _attachments: {
+                [[{'-type': 'Test', [attachmentName]: {
                     // eslint-disable camelcase
                     a: {content_type: 'text/plain', data: ''},
                     b: {content_type: 'text/plain', data: ''}
                     // eslint-enable camelcase
-                }}], {entities: {Test: {_attachments: {'.*': {
+                }}], {entities: {Test: {[attachmentName]: {'.*': {
                     maximum: 2, minimum: 2
                 }}}}}, {
-                    fillUp: {'-type': 'Test', _attachments: {
+                    fillUp: {'-type': 'Test', [attachmentName]: {
                         // eslint-disable camelcase
                         a: {content_type: 'text/plain', data: ''},
                         b: {content_type: 'text/plain', data: ''}
                         // eslint-enable camelcase
                     }},
-                    incremental: {'-type': 'Test', _attachments: {
+                    incremental: {'-type': 'Test', [attachmentName]: {
                         // eslint-disable camelcase
                         a: {content_type: 'text/plain', data: ''},
                         b: {content_type: 'text/plain', data: ''}
                         // eslint-enable camelcase
                     }},
-                    '': {'-type': 'Test', _attachments: {
+                    '': {'-type': 'Test', [attachmentName]: {
                         // eslint-disable camelcase
                         a: {content_type: 'text/plain', data: ''},
                         b: {content_type: 'text/plain', data: ''}
                         // eslint-enable camelcase
                     }}
                 }],
-                [[{'-type': 'Test', _attachments: {
+                [[{'-type': 'Test', [attachmentName]: {
                     // eslint-disable camelcase
                     a: {content_type: 'text/plain', data: ''},
                     b: {content_type: 'text/plain', data: ''}
                     // eslint-enable camelcase
-                }}], {entities: {Test: {_attachments: {'.*': {
+                }}], {entities: {Test: {[attachmentName]: {'.*': {
                     maximum: 2, regularExpressionPattern: 'a|b'
                 }}}}}, {
-                    fillUp: {'-type': 'Test', _attachments: {
+                    fillUp: {'-type': 'Test', [attachmentName]: {
                         // eslint-disable camelcase
                         a: {content_type: 'text/plain', data: ''},
                         b: {content_type: 'text/plain', data: ''}
                         // eslint-enable camelcase
                     }},
-                    incremental: {'-type': 'Test', _attachments: {
+                    incremental: {'-type': 'Test', [attachmentName]: {
                         // eslint-disable camelcase
                         a: {content_type: 'text/plain', data: ''},
                         b: {content_type: 'text/plain', data: ''}
                         // eslint-enable camelcase
                     }},
-                    '': {'-type': 'Test', _attachments: {
+                    '': {'-type': 'Test', [attachmentName]: {
                         // eslint-disable camelcase
                         a: {content_type: 'text/plain', data: ''},
                         b: {content_type: 'text/plain', data: ''}
                         // eslint-enable camelcase
                     }}
                 }],
-                [[{'-type': 'Test', _attachments: {
+                [[{'-type': 'Test', [attachmentName]: {
                     // eslint-disable camelcase
                     a: {content_type: 'image/png', data: ''},
                     b: {content_type: 'image/jpeg', data: ''}
                     // eslint-enable camelcase
-                }}], {entities: {Test: {_attachments: {'.*': {
+                }}], {entities: {Test: {[attachmentName]: {'.*': {
                     contentTypeRegularExpressionPattern: /image\/.+/,
                     regularExpressionPattern: 'a|b'
                 }}}}}, {
-                    fillUp: {'-type': 'Test', _attachments: {
+                    fillUp: {'-type': 'Test', [attachmentName]: {
                         // eslint-disable camelcase
                         a: {content_type: 'image/png', data: ''},
                         b: {content_type: 'image/jpeg', data: ''}
                         // eslint-enable camelcase
                     }},
-                    incremental: {'-type': 'Test', _attachments: {
+                    incremental: {'-type': 'Test', [attachmentName]: {
                         // eslint-disable camelcase
                         a: {content_type: 'image/png', data: ''},
                         b: {content_type: 'image/jpeg', data: ''}
                         // eslint-enable camelcase
                     }},
-                    '': {'-type': 'Test', _attachments: {
+                    '': {'-type': 'Test', [attachmentName]: {
                         // eslint-disable camelcase
                         a: {content_type: 'image/png', data: ''},
                         b: {content_type: 'image/jpeg', data: ''}
                         // eslint-enable camelcase
                     }}
                 }],
-                [[{'-type': 'Test', _attachments: {
+                [[{'-type': 'Test', [attachmentName]: {
                     // eslint-disable camelcase
                     a: {content_type: 'image/png', data: ''}
                     // eslint-enable camelcase
-                }}, {'-type': 'Test', _attachments: {
+                }}, {'-type': 'Test', [attachmentName]: {
                     // eslint-disable camelcase
                     b: {content_type: 'image/jpeg', data: ''}
                     // eslint-enable camelcase
-                }}], {entities: {Test: {_attachments: {'.*': {}}}}}, {
-                    fillUp: {'-type': 'Test', _attachments: {
+                }}], {entities: {Test: {[attachmentName]: {'.*': {}}}}}, {
+                    fillUp: {'-type': 'Test', [attachmentName]: {
                         // eslint-disable camelcase
                         a: {content_type: 'image/png', data: ''},
                         b: {content_type: 'image/jpeg', data: ''}
                         // eslint-enable camelcase
                     }},
-                    incremental: {_attachments: {
+                    incremental: {[attachmentName]: {
                         // eslint-disable camelcase
                         a: {content_type: 'image/png', data: ''}
                         // eslint-enable camelcase
                     }},
-                    '': {'-type': 'Test', _attachments: {
+                    '': {'-type': 'Test', [attachmentName]: {
                         // eslint-disable camelcase
                         a: {content_type: 'image/png', data: ''}
                         // eslint-enable camelcase
                     }}
                 }],
-                [[{'-type': 'Test', _attachments: {a: {data: null}}}, {
-                    '-type': 'Test', _attachments: {a: {
+                [[{'-type': 'Test', [attachmentName]: {a: {data: null}}}, {
+                    '-type': 'Test', [attachmentName]: {a: {
                         // eslint-disable camelcase
                         content_type: 'image/jpeg', data: ''
                         // eslint-enable camelcase
                     }}
-                }], {entities: {Test: {_attachments: {'.*': {}}}}}, {
+                }], {entities: {Test: {[attachmentName]: {'.*': {}}}}}, {
                     fillUp: {'-type': 'Test'},
                     incremental: {},
                     '': {'-type': 'Test'}
                 }],
-                [[{'-type': 'Test', _attachments: {a: {data: null}}}, {
-                    '-type': 'Test', _attachments: {a: {
+                [[{'-type': 'Test', [attachmentName]: {a: {data: null}}}, {
+                    '-type': 'Test', [attachmentName]: {a: {
                         // eslint-disable camelcase
                         content_type: 'image/jpeg', data: ''
                         // eslint-enable camelcase
                     }}
-                }], {entities: {Test: {_attachments: {'.*': {}}}}}, {
+                }], {entities: {Test: {[attachmentName]: {'.*': {}}}}}, {
                     fillUp: {'-type': 'Test'},
                     incremental: {},
                     '': {'-type': 'Test'}
                 }],
-                [[{'-type': 'Test'}, {'-type': 'Test', _attachments: {a: {
+                [[{'-type': 'Test'}, {'-type': 'Test', [attachmentName]: {a: {
                     // eslint-disable camelcase
                     content_type: 'image/jpeg', data: ''
                     // eslint-enable camelcase
-                }}}], {entities: {Test: {_attachments: {'.*': {}}}}}, {
-                    fillUp: {'-type': 'Test', _attachments: {a: {
+                }}}], {entities: {Test: {[attachmentName]: {'.*': {}}}}}, {
+                    fillUp: {'-type': 'Test', [attachmentName]: {a: {
                         // eslint-disable camelcase
                         content_type: 'image/jpeg', data: ''
                         // eslint-enable camelcase
@@ -1939,12 +1978,12 @@ registerTest(async function():Promise<void> {
                     incremental: {},
                     '': {'-type': 'Test'}
                 }],
-                [[{'-type': 'Test'}, {'-type': 'Test', _attachments: {a: {
+                [[{'-type': 'Test'}, {'-type': 'Test', [attachmentName]: {a: {
                     // eslint-disable camelcase
                     content_type: 'image/jpeg', data: ''
                     // eslint-enable camelcase
-                }}}], {entities: {Test: {_attachments: {a: {}}}}}, {
-                    fillUp: {'-type': 'Test', _attachments: {a: {
+                }}}], {entities: {Test: {[attachmentName]: {a: {}}}}}, {
+                    fillUp: {'-type': 'Test', [attachmentName]: {a: {
                         // eslint-disable camelcase
                         content_type: 'image/jpeg', data: ''
                         // eslint-enable camelcase
@@ -1962,12 +2001,14 @@ registerTest(async function():Promise<void> {
                 delete modelConfiguration.property.defaultSpecification
                 delete modelConfiguration.entities
                 try {
-                assert.deepEqual(DatabaseHelper.validateDocumentUpdate(
-                    ...test[0].concat([null, {}, {}].slice(
-                        test[0].length - 1
-                    )).concat([models, modelConfiguration])
-                ), test[2][updateStrategy])
-                } catch (error) {console.error(error)}
+                    assert.deepEqual(DatabaseHelper.validateDocumentUpdate(
+                        ...test[0].concat([null, {}, {}].slice(
+                            test[0].length - 1
+                        )).concat([models, modelConfiguration])
+                    ), test[2][updateStrategy])
+                } catch (error) {
+                    console.error(error)
+                }
             }
             // endregion
         }
@@ -2028,24 +2069,26 @@ registerTest(async function():Promise<void> {
                 {'-type': 'Test', a: 2}
             ],
             [
-                [{'-type': 'Test'}, {'-type': 'Test', _attachments: {}}],
+                [{'-type': 'Test'}, {'-type': 'Test', [attachmentName]: {}}],
                 {entities: {Test: {}}}, {'-type': 'Test'}
             ],
             [
-                [{'-type': 'Test'}, {'-type': 'Test', _attachments: {test: {
-                    // eslint-disable camelcase
-                    data: '', content_type: 'text/plain'
-                    // eslint-enable camelcase
-                }}}],
+                [{'-type': 'Test'}, {'-type': 'Test', [attachmentName]: {
+                    test: {
+                        // eslint-disable camelcase
+                        data: '', content_type: 'text/plain'
+                        // eslint-enable camelcase
+                    }
+                }}],
                 {entities: {Test: {}}}, {'-type': 'Test'}
             ],
             [
                 [{'-type': 'Test'}, {'-type': 'Test'}],
-                {entities: {Test: {_attachments: {'.*': {default: {test: {
+                {entities: {Test: {[attachmentName]: {'.*': {default: {test: {
                     // eslint-disable camelcase
                     data: '', content_type: 'text/plain'
                     // eslint-enable camelcase
-                }}}}}}}, {'-type': 'Test', _attachments: {test: {
+                }}}}}}}, {'-type': 'Test', [attachmentName]: {test: {
                     // eslint-disable camelcase
                     data: '', content_type: 'text/plain'
                     // eslint-enable camelcase
