@@ -128,7 +128,7 @@ registerTest(async function():Promise<void> {
                     entities: {Test: {_attachments: {a: {}}}},
                     property: {
                         defaultSpecification: {minimum: 1},
-                        name: {special: {attachments: '_attachments'}}
+                        name: {special: {attachment: '_attachments'}}
                     }
                 },
                 {Test: {_attachments: {a: {minimum: 1}}}}
