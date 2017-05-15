@@ -49,6 +49,7 @@ export default class DatabaseHelper {
         typePropertyName:string
     ):?true {
         let allowedRoles:Array<string> = ['_admin']
+        let userRolesDescription:string = `Current user doesn't own any role`
         if (userContext) {
             if (
                 allowedModelRolesMapping && typePropertyName &&
@@ -58,14 +59,22 @@ export default class DatabaseHelper {
             )
                 allowedRoles = allowedRoles.concat(
                     allowedModelRolesMapping[newDocument[typePropertyName]])
-            for (const userRole:string of userContext.roles)
-                if (allowedRoles.includes(userRole))
-                    return true
+            if (userContext.roles.length) {
+                for (const userRole:string of userContext.roles)
+                    if (allowedRoles.includes(userRole))
+                        return true
+                userRolesDescription = `Current user "${userContext.name}" ` +
+                    `owns the following roles: ` +
+                    userContext.roles.join('", "')
+            } else
+                userRolesDescription = `Current user "${userContext.name}" ` +
+                    `doesn't own any role`
         }
         /* eslint-disable no-throw-literal */
         throw {unauthorized:
             'Only users with a least on of these roles are allowed to ' +
-            `perform requested action: "${allowedRoles.join('", "')}".`}
+            `perform requested action: "${allowedRoles.join('", "')}". ` +
+            `${userRolesDescription}.`}
         /* eslint-enable no-throw-literal */
     }
     /**
