@@ -157,6 +157,50 @@ export default class Database {
                         Tools.representObject(error))
                 }
         // endregion
+        // region apply latest/upsert plugin
+        const nativeBulkDocs:Function =
+            services.database.connector.prototype.bulkDocs
+        const bulkDocs:Function = async function(
+            ...parameter:Array<any>
+        ):Promise<Array<PlainObject>> {
+            /*
+                Implements a generic retry mechanism for "upsert" and "latest"
+                updates.
+            */
+            const revisionName:string =
+                configuration.database.model.property.name.special.revision
+            let result:Array<PlainObject>
+            try {
+                result = await nativeBulkDocs.apply(this, parameter)
+            } catch (error) {
+                throw error
+            }
+            const conflictingIndexes:Array<number> = []
+            const conflicts:Array<PlainObject> = []
+            let index:number = 0
+            for (const item:PlainObject of result) {
+                if (parameter[0][index].hasOwnProperty(revisionName) && [
+                    'latest', 'upsert'
+                ].includes(parameter[0][index][revisionName]) &&
+                item.name === 'conflict') {
+                    conflicts.push(item)
+                    conflictingIndexes.push(index)
+                }
+                index += 1
+            }
+            parameter[0] = conflicts
+            let retriedResults:Array<PlainObject>
+            try {
+                retriedResults = await this.bulkDocs(...parameter)
+            } catch (error) {
+                throw error
+            }
+            for (const retriedResult:PlainObject of retriedResults)
+                result[conflictingIndexes.shift()] = retriedResult
+            return result
+        }
+        services.database.connector.plugin({bulkDocs})
+        // endregion
         services.database.connection = new services.database.connector(
             Tools.stringFormat(
                 configuration.database.url,

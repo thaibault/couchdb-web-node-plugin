@@ -44,13 +44,20 @@ export default class DatabaseHelper {
      */
     static authenticate(
         newDocument:PlainObject, oldDocument:?PlainObject,
-        userContext:?UserContext, securitySettings:?SecuritySettings,
-        allowedModelRolesMapping:AllowedModelRolesMapping,
+        userContext:UserContext = {
+            db: 'dummy',
+            name: '"unknown"',
+            roles: []
+        }, securitySettings:SecuritySettings = {
+            admins: {names: [], roles: []}, members: {names: [], roles: []}
+        }, allowedModelRolesMapping:AllowedModelRolesMapping,
         typePropertyName:string
     ):?true {
         let allowedRoles:Array<string> = ['_admin']
         let userRolesDescription:string = `Current user doesn't own any role`
         if (userContext) {
+            if (!('name' in userContext))
+                userContext.name = '"unknown"'
             if (
                 allowedModelRolesMapping && typePropertyName &&
                 newDocument.hasOwnProperty(typePropertyName) &&
@@ -63,11 +70,13 @@ export default class DatabaseHelper {
                 for (const userRole:string of userContext.roles)
                     if (allowedRoles.includes(userRole))
                         return true
-                userRolesDescription = `Current user "${userContext.name}" ` +
+                // IgnoreTypeCheck
+                userRolesDescription = `Current user ${userContext.name} ` +
                     `owns the following roles: ` +
                     userContext.roles.join('", "')
             } else
-                userRolesDescription = `Current user "${userContext.name}" ` +
+                // IgnoreTypeCheck
+                userRolesDescription = `Current user ${userContext.name} ` +
                     `doesn't own any role`
         }
         /* eslint-disable no-throw-literal */
