@@ -188,15 +188,17 @@ export default class Database {
                 }
                 index += 1
             }
-            parameter[0] = conflicts
-            let retriedResults:Array<PlainObject>
-            try {
-                retriedResults = await this.bulkDocs(...parameter)
-            } catch (error) {
-                throw error
+            if (conflicts.length) {
+                parameter[0] = conflicts
+                let retriedResults:Array<PlainObject>
+                try {
+                    retriedResults = await this.bulkDocs(...parameter)
+                } catch (error) {
+                    throw error
+                }
+                for (const retriedResult:PlainObject of retriedResults)
+                    result[conflictingIndexes.shift()] = retriedResult
             }
-            for (const retriedResult:PlainObject of retriedResults)
-                result[conflictingIndexes.shift()] = retriedResult
             return result
         }
         services.database.connector.plugin({bulkDocs})
