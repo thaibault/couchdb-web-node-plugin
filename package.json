@@ -175,6 +175,7 @@
             "onCreateExecution": null,
             "onUpdateExpression": null,
             "onUpdateExecution": null,
+            "persistent": true,
             "regularExpressionPattern": null,
             "selection": null,
             "type": "string",
