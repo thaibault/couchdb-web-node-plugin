@@ -42,6 +42,7 @@ export type PropertySpecification = {
     persistent:boolean;
     regularExpressionPattern:?string;
     selection:?Array<any>;
+    trim:boolean;
     type:string;
     writable:boolean;
 }

@@ -178,6 +178,7 @@
             "persistent": true,
             "regularExpressionPattern": null,
             "selection": null,
+            "trim": true,
             "type": "string",
             "writable": true
           },
