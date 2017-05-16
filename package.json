@@ -175,8 +175,10 @@
             "onCreateExecution": null,
             "onUpdateExpression": null,
             "onUpdateExecution": null,
+            "persistent": true,
             "regularExpressionPattern": null,
             "selection": null,
+            "trim": true,
             "type": "string",
             "writable": true
           },

@@ -528,6 +528,11 @@ export default class DatabaseHelper {
             ):void => {
                 if (!newDocument.hasOwnProperty(name))
                     return
+                if (
+                    propertySpecification.trim &&
+                    typeof newDocument[name] === 'string'
+                )
+                    newDocument[name] = newDocument[name].trim()
                 for (const type:string of [
                     'onUpdateExpression', 'onUpdateExecution'
                 ])

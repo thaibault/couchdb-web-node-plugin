@@ -1073,6 +1073,22 @@ registerTest(async function():Promise<void> {
                 //  endregion
                 // region property type
                 [
+                    [{'-type': 'Test', a: '2 '}, {'-type': 'Test', a: '2'}],
+                    {entities: {Test: {a: {}}}}, {
+                        fillUp: {'-type': 'Test', a: '2'},
+                        incremental: {},
+                        '': {'-type': 'Test', a: '2'}
+                    }
+                ],
+                [
+                    [{'-type': 'Test', a: '2 '}, {'-type': 'Test', a: '2'}],
+                    {entities: {Test: {a: {trim: false}}}}, {
+                        fillUp: {'-type': 'Test', a: '2 '},
+                        incremental: {a: '2 '},
+                        '': {'-type': 'Test', a: '2 '}
+                    }
+                ],
+                [
                     [{'-type': 'Test', a: '2'}, {'-type': 'Test', a: '2'}],
                     {entities: {Test: {a: {}}}}, {
                         fillUp: {'-type': 'Test', a: '2'},
