@@ -160,6 +160,8 @@ export default class Database {
         // region apply latest/upsert plugin
         const nativeBulkDocs:Function =
             services.database.connector.prototype.bulkDocs
+        const revisionName:string =
+            configuration.database.model.property.name.special.revision
         const bulkDocs:Function = async function(
             ...parameter:Array<any>
         ):Promise<Array<PlainObject>> {
@@ -167,8 +169,6 @@ export default class Database {
                 Implements a generic retry mechanism for "upsert" and "latest"
                 updates.
             */
-            const revisionName:string =
-                configuration.database.model.property.name.special.revision
             let result:Array<PlainObject>
             try {
                 result = await nativeBulkDocs.apply(this, parameter)
@@ -188,15 +188,17 @@ export default class Database {
                 }
                 index += 1
             }
-            parameter[0] = conflicts
-            let retriedResults:Array<PlainObject>
-            try {
-                retriedResults = await this.bulkDocs(...parameter)
-            } catch (error) {
-                throw error
+            if (conflicts.length) {
+                parameter[0] = conflicts
+                let retriedResults:Array<PlainObject>
+                try {
+                    retriedResults = await this.bulkDocs(...parameter)
+                } catch (error) {
+                    throw error
+                }
+                for (const retriedResult:PlainObject of retriedResults)
+                    result[conflictingIndexes.shift()] = retriedResult
             }
-            for (const retriedResult:PlainObject of retriedResults)
-                result[conflictingIndexes.shift()] = retriedResult
             return result
         }
         services.database.connector.plugin({bulkDocs})
