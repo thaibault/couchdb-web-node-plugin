@@ -160,18 +160,28 @@ export default class Database {
         // region apply latest/upsert plugin
         const nativeBulkDocs:Function =
             services.database.connector.prototype.bulkDocs
+        const idName:string =
+            configuration.database.model.property.name.special.id
         const revisionName:string =
             configuration.database.model.property.name.special.revision
         const bulkDocs:Function = async function(
-            ...parameter:Array<any>
+            firstParameter:any, ...parameter:Array<any>
         ):Promise<Array<PlainObject>> {
             /*
                 Implements a generic retry mechanism for "upsert" and "latest"
                 updates.
             */
+            if (
+                !Array.isArray(firstParameter) &&
+                typeof firstParameter === 'object' &&
+                firstParameter !== null &&
+                firstParameter.hasOwnProperty(idName)
+            )
+                firstParameter = [firstParameter]
             let result:Array<PlainObject>
             try {
-                result = await nativeBulkDocs.apply(this, parameter)
+                result = await nativeBulkDocs.call(
+                    this, firstParameter, ...parameter)
             } catch (error) {
                 throw error
             }
@@ -179,9 +189,9 @@ export default class Database {
             const conflicts:Array<PlainObject> = []
             let index:number = 0
             for (const item:PlainObject of result) {
-                if (parameter[0][index].hasOwnProperty(revisionName) && [
+                if (firstParameter[index].hasOwnProperty(revisionName) && [
                     'latest', 'upsert'
-                ].includes(parameter[0][index][revisionName]) &&
+                ].includes(firstParameter[index][revisionName]) &&
                 item.name === 'conflict') {
                     conflicts.push(item)
                     conflictingIndexes.push(index)
@@ -189,10 +199,11 @@ export default class Database {
                 index += 1
             }
             if (conflicts.length) {
-                parameter[0] = conflicts
+                firstParameter = conflicts
                 let retriedResults:Array<PlainObject>
                 try {
-                    retriedResults = await this.bulkDocs(...parameter)
+                    retriedResults = await this.bulkDocs(
+                        firstParameter, ...parameter)
                 } catch (error) {
                     throw error
                 }
