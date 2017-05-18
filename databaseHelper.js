@@ -162,6 +162,22 @@ export default class DatabaseHelper {
         else
             throw new Error('Needed "serialize" function is not available.')
         // endregion
+        const getFilenameByPrefix:Function = (
+            attachments:PlainObject, prefix:?string
+        ):?string => {
+            if (prefix) {
+                for (const name:string in attachments)
+                    if (attachments.hasOwnProperty(name) && name.startsWith(
+                        prefix
+                    ))
+                        return name
+            } else {
+                const keys:Array<string> = Object.keys(attachments)
+                if (keys.length)
+                    return keys[0]
+            }
+            return null
+        }
         const checkDocument:Function = (
             newDocument:PlainObject, oldDocument:?PlainObject,
             parentNames:Array<string> = []
@@ -223,7 +239,7 @@ export default class DatabaseHelper {
                     'newDocument', 'newValue', 'oldDocument', 'oldValue',
                     'propertySpecification', 'securitySettings', 'serialize',
                     'userContext', 'parentNames', 'pathDescription', 'now',
-                    'nowUTCTimestamp'
+                    'nowUTCTimestamp', 'getFilenameByPrefix'
                 ]
                 for (const type:string of types)
                     if (propertySpecification[type]) {
@@ -239,7 +255,7 @@ export default class DatabaseHelper {
                             newDocument, newValue, oldDocument, oldValue,
                             propertySpecification, securitySettings, serialize,
                             userContext, parentNames, pathDescription, now,
-                            nowUTCTimestamp
+                            nowUTCTimestamp, getFilenameByPrefix
                         ]
                         // region compile
                         try {
@@ -480,7 +496,7 @@ export default class DatabaseHelper {
                                     'name', 'models', 'modelConfiguration',
                                     'serialize', 'modelName', 'model',
                                     'propertySpecification', 'now',
-                                    'nowUTCTimestamp', (
+                                    'nowUTCTimestamp', 'getFilenameByPrefix', (
                                         type.endsWith('Expression') ?
                                         'return ' : ''
                                     ) + propertySpecification[type])
@@ -503,7 +519,7 @@ export default class DatabaseHelper {
                                     securitySettings, name, models,
                                     modelConfiguration, serialize, modelName,
                                     model, propertySpecification, now,
-                                    nowUTCTimestamp)
+                                    nowUTCTimestamp, getFilenameByPrefix)
                             } catch (error) {
                                 /* eslint-disable no-throw-literal */
                                 throw {
@@ -546,10 +562,11 @@ export default class DatabaseHelper {
                                 'model', 'checkDocument',
                                 'checkPropertyContent',
                                 'propertySpecification', 'now',
-                                'nowUTCTimestamp', (type.endsWith(
-                                    'Expression'
-                                ) ? 'return ' : '') +
-                                propertySpecification[type])
+                                'nowUTCTimestamp', 'getFilenameByPrefix', (
+                                    type.endsWith(
+                                        'Expression'
+                                    ) ? 'return ' : '') +
+                                    propertySpecification[type])
                         } catch (error) {
                             /* eslint-disable no-throw-literal */
                             throw {
@@ -567,7 +584,8 @@ export default class DatabaseHelper {
                                 securitySettings, name, models,
                                 modelConfiguration, serialize, modelName,
                                 model, checkDocument, checkPropertyContent,
-                                propertySpecification, now, nowUTCTimestamp)
+                                propertySpecification, now, nowUTCTimestamp,
+                                getFilenameByPrefix)
                         } catch (error) {
                             /* eslint-disable no-throw-literal */
                             throw {
@@ -1002,7 +1020,8 @@ export default class DatabaseHelper {
                 'checkDocument', 'checkPropertyContent', 'code', 'model',
                 'modelConfiguration', 'modelName', 'models', 'newDocument',
                 'oldDocument', 'securitySettings', 'serialize', 'userContext',
-                'parentNames', 'pathDescription', 'now', 'nowUTCTimestamp'
+                'parentNames', 'pathDescription', 'now', 'nowUTCTimestamp',
+                'getFilenameByPrefix'
             ]
             for (
                 let type:string in
@@ -1027,7 +1046,7 @@ export default class DatabaseHelper {
                             modelConfiguration, modelName, models, newDocument,
                             oldDocument, securitySettings, serialize,
                             userContext, parentNames, pathDescription, now,
-                            nowUTCTimestamp
+                            nowUTCTimestamp, getFilenameByPrefix
                         ]
                         try {
                             hook = new Function(
