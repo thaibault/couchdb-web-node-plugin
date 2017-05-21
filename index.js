@@ -447,6 +447,7 @@ export default class Database {
                         try {
                             await services.database.connection.put(newDocument)
                         } catch (error) {
+                            // TODO could give a NoChange error and migrated doc has not!
                             throw new Error(
                                 `Replaceing auto migrated document "` +
                                 `${newDocument._id}" has failed: ` +
