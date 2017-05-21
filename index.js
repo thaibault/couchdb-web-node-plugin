@@ -139,6 +139,7 @@ export default class Database {
             } finally {
                 unauthenticatedUserDatabaseConnection.close()
             }
+        }
         // endregion
         // region apply database/rest api configuration
         if (configuration.database.updateConfiguration || configuration.debug)
@@ -153,12 +154,13 @@ export default class Database {
                             `${configuration.database.user.password}@`
                         ) + `/_config/${configurationPath}`, {
                             method: 'PUT',
-                            body: `"${configuration.database[configurationPath]}"`
+                            body: '"' +
+                                `${configuration.database[configurationPath]}"`
                         })
                     } catch (error) {
                         console.error(
-                            `Configuration "${configurationPath}" couldn't be ` +
-                            'applied to "' +
+                            `Configuration "${configurationPath}" couldn't ` +
+                            'be applied to "' +
                             `${configuration.database[configurationPath]}": ` +
                             Tools.representObject(error))
                     }
@@ -393,7 +395,7 @@ export default class Database {
         if (
             configuration.database.model.autoMigration ||
             configuration.debug
-        ) {
+        )
             // TODO run migrations scripts if there exists some.
             for (let retrievedDocument:RetrievedDocument of (
                 await services.database.connection.allDocs({
@@ -429,7 +431,7 @@ export default class Database {
                                 configuration.database.security
                             ), models, migrationModelConfiguration)
                     } catch (error) {
-                        if ('forbidden' in error)
+                        if ('forbidden' in error) {
                             if (error.forbidden.startsWith('NoChange:'))
                                 continue
                             console.warn(
@@ -438,7 +440,7 @@ export default class Database {
                                 ` satisfy its schema (and can not be ` +
                                 `migrated automatically): ` +
                                 Tools.representObject(error))
-                        else
+                        } else
                             throw error
                     }
                     if (newDocument && !Tools.equals(newDocument, document)) {
@@ -455,7 +457,6 @@ export default class Database {
                             'was successful.')
                     }
                 }
-        }
         // TODO check conflicting constraints and mark them if necessary (check
         // how couchdb deals with "id" conflicts)
         // endregion
