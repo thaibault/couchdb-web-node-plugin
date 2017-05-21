@@ -208,6 +208,11 @@ registerTest(async function():Promise<void> {
                     {entities: {Test: {a: {nullable: false}}}},
                     'MissingProperty'
                 ],
+                [
+                    [{[typeName]: 'Test'}, {[typeName]: 'Test', a: ''}],
+                    {entities: {Test: {a: {nullable: false}}}},
+                    updateStrategy ? 'NoChange' : 'MissingProperty'
+                ],
                 // endregion
                 // region property type
                 [
@@ -357,9 +362,9 @@ registerTest(async function():Promise<void> {
                 [
                     [{
                         [typeName]: 'Test',
-                        a: {[typeName]: 'Test',
-                        b: 2
-                    }, b: 'a'}],
+                        a: {[typeName]: 'Test', b: 2},
+                        b: 'a'
+                    }],
                     {entities: {Test: {a: {type: 'Test'}, b: {}}}},
                     'PropertyType'
                 ],
@@ -967,8 +972,8 @@ registerTest(async function():Promise<void> {
                     incremental: {[typeName]: 'Test', a: '2'},
                     '': {[typeName]: 'Test', a: '2'}
                 }],
-                [
-                    [{[typeName]: 'Test', a: '', b: 'b'},
+                [[
+                    {[typeName]: 'Test', a: '', b: 'b'},
                     {[typeName]: 'Test', a: ''}
                 ], {entities: {Test: {
                     a: {onCreateExecution: `return '2'`},
@@ -1034,13 +1039,13 @@ registerTest(async function():Promise<void> {
                     // eslint-disable camelcase
                     data: 'payload', content_type: 'text/plain'
                     // eslint-enable camelcase
-                }}}, {[typeName]: 'Test'}], {entities: {Test: {[attachmentName]: {
-                    '.*': {
+                }}}, {[typeName]: 'Test'}], {entities: {Test: {
+                    [attachmentName]: {'.*': {
                         onUpdateExpression:
                             `(newDocument[name].data += ' footer') && ` +
                             'newDocument[name]'
-                    }
-                }}}}, {
+                    }}
+                }}}, {
                     fillUp: {[typeName]: 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         data: 'payload footer', content_type: 'text/plain'
@@ -1124,14 +1129,6 @@ registerTest(async function():Promise<void> {
                     incremental: {[typeName]: 'Test', a: 'a'},
                     '': {[typeName]: 'Test', a: 'a'}
                 }],
-                /* TODO
-                [[{[typeName]: 'Test'}, {[typeName]: 'Test', a: 'a'}], {entities: {
-                    Test: {a: {nullable: false}}
-                }}, {
-                    fillUp: {[typeName]: 'Test', a: 'a'},
-                    incremental: {},
-                    '': {[typeName]: 'Test'}
-                }],*/
                 [[{[typeName]: 'Test'}], {entities: {Test: {a: {
                     default: '2',
                     nullable: false
@@ -1729,14 +1726,14 @@ registerTest(async function():Promise<void> {
                 ],
                 // // endregion
                 // // region property constraint
-                [[{[typeName]: 'Test', a: 'b', b: {[typeName]: 'Test', a: 'b'}}], {
-                    entities: {Test: {
-                        a: {constraintExpression: {
-                            evaluation: 'newValue === "b"'
-                        }},
-                        b: {type: 'Test'}
-                    }}
-                }, {
+                [[{
+                    [typeName]: 'Test', a: 'b', b: {[typeName]: 'Test', a: 'b'}
+                }], {entities: {Test: {
+                    a: {constraintExpression: {
+                        evaluation: 'newValue === "b"'
+                    }},
+                    b: {type: 'Test'}
+                }}}, {
                     fillUp: {[typeName]: 'Test', a: 'b', b: {
                         [typeName]: 'Test', a: 'b'
                     }},
@@ -2233,7 +2230,6 @@ registerTest(async function():Promise<void> {
                 {entities: {Test: {a: {default: '2'}}}},
                 {[typeName]: 'Test', a: '2'}
             ],
-            /* TODO
             [
                 [{[typeName]: 'Test', a: null}, {[typeName]: 'Test', a: '1'}],
                 {entities: {Test: {a: {default: '2'}}}},
@@ -2248,7 +2244,7 @@ registerTest(async function():Promise<void> {
                 [{[typeName]: 'Test', b: '3'}, {[typeName]: 'Test', a: '1'}],
                 {entities: {Test: {a: {default: '2'}}}},
                 {[typeName]: 'Test', a: '2'}
-            ],*/
+            ],
             [
                 [{[typeName]: 'Test'}],
                 {entities: {Test: {a: {default: 2, type: 'number'}}}},

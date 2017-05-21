@@ -721,7 +721,9 @@ export default class DatabaseHelper {
                         if ([undefined, null].includes(model[name].default)) {
                             if (!(model[name].nullable || (
                                 newDocument.hasOwnProperty(name) ||
-                                oldDocument && oldDocument.hasOwnProperty(name)
+                                oldDocument && oldDocument.hasOwnProperty(
+                                    name
+                                ) && modelConfiguration.updateStrategy
                             )))
                                 /* eslint-disable no-throw-literal */
                                 throw {
@@ -744,19 +746,25 @@ export default class DatabaseHelper {
                         } else if (!newDocument.hasOwnProperty(
                             name
                         ) || newDocument[name] === null)
-                            if (!oldDocument) {
-                                newDocument[name] = model[name].default
-                                somethingChanged = true
-                            } else if (
-                                modelConfiguration.updateStrategy
-                                    === 'fillUp'
-                            )
-                                if (oldDocument.hasOwnProperty(name))
+                            if (oldDocument && oldDocument.hasOwnProperty(
+                                name
+                            )) {
+                                if (
+                                    modelConfiguration.updateStrategy ===
+                                        'fillUp'
+                                )
                                     newDocument[name] = oldDocument[name]
-                                else {
+                                else if (
+                                    modelConfiguration.updateStrategy ===
+                                        'migrate'
+                                ) {
                                     newDocument[name] = model[name].default
                                     somethingChanged = true
                                 }
+                            } else {
+                                newDocument[name] = model[name].default
+                                somethingChanged = true
+                            }
                     }
                     // endregion
             // region check given data
@@ -1193,7 +1201,7 @@ export default class DatabaseHelper {
                                     somethingChanged = true
                 }
                 for (const fileName:string in newAttachments)
-                    if (newAttachments.hasOwnProperty(fileName)) {
+                    if (newAttachments.hasOwnProperty(fileName))
                         if ([undefined, null].includes(
                             newAttachments[fileName]
                         ) || newAttachments[fileName].data === null)
@@ -1207,7 +1215,6 @@ export default class DatabaseHelper {
                                 oldAttachments[fileName].data
                         ))
                             somethingChanged = true
-                    }
                 // endregion
                 if (Object.keys(newAttachments).length === 0)
                     delete newDocument[name]
