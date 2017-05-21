@@ -67,8 +67,8 @@ export type SpecialPropertyNames = {
     attachment:string;
     conflict:string;
     constraint:{
-        expression:string;
         execution:string;
+        expression:string;
     },
     deleted:string;
     deletedConflict:string;
