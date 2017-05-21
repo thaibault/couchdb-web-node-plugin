@@ -155,11 +155,11 @@ export default class DatabaseHelper {
         if (toJSON)
             serialize = toJSON
         else if (JSON && JSON.hasOwnProperty('stringify'))
-            serialize = (object:Object):string => JSON.stringify(
-                object, null, 4)
+            serialize = (object:any):string => JSON.stringify(object, null, 4)
         else
             throw new Error('Needed "serialize" function is not available.')
         // endregion
+        // region functions
         const getFilenameByPrefix:Function = (
             attachments:PlainObject, prefix:?string
         ):?string => {
@@ -182,7 +182,7 @@ export default class DatabaseHelper {
         ):PlainObject => {
             const pathDescription:string =
                 parentNames.length ? ` in ${parentNames.join(' -> ')}` : ''
-            const somethingChanged:boolean = false
+            let somethingChanged:boolean = false
             // region check for model type
             if (!newDocument.hasOwnProperty(
                 modelConfiguration.property.name.special.type
@@ -225,7 +225,7 @@ export default class DatabaseHelper {
             const modelName:string = newDocument[
                 modelConfiguration.property.name.special.type]
             const model:Model = models[modelName]
-            // region functions
+            // region document specific functions
             const checkPropertyConstraints:Function = (
                 newValue:any, name:string,
                 propertySpecification:PropertySpecification, oldValue:?any,
@@ -307,9 +307,10 @@ export default class DatabaseHelper {
             }
             const checkPropertyContent:Function = (
                 newValue:any, name:string,
-                propertySpecification:PropertySpecification, oldValue:?any
+                propertySpecification:PropertySpecification,
+                oldValue:?any = null
             ):{newValue:any;somethingChanged:boolean;} => {
-                const somethingChanged:boolean = false
+                let somethingChanged:boolean = false
                 // region type
                 if (propertySpecification.type === 'DateTime') {
                     const initialNewValue:any = newValue
@@ -334,14 +335,15 @@ export default class DatabaseHelper {
                     if (typeof newValue === 'object' && Object.getPrototypeOf(
                         newValue
                     ) === Object.prototype) {
-                        const {
-                            newValue:any, somethingNestedChanged:boolean
+                        const result:{
+                            newDocument:any, somethingChanged:boolean
                         } = checkDocument(
                             newValue, oldValue, parentNames.concat(name))
-                        if (somethingNestedChanged)
+                        if (result.somethingChanged)
                             somethingChanged = true
+                        newValue = result.newDocument
                         if (serialize(newValue) === serialize({}))
-                            return null
+                            return {newValue: null, somethingChanged}
                     } else
                         /* eslint-disable no-throw-literal */
                         throw {
@@ -482,6 +484,8 @@ export default class DatabaseHelper {
                 // endregion
                 checkPropertyConstraints(
                     newValue, name, propertySpecification, oldValue)
+                if (serialize(newValue) !== serialize(oldValue))
+                    somethingChanged = true
                 return {newValue, somethingChanged}
             }
             // / region create hook
@@ -688,7 +692,7 @@ export default class DatabaseHelper {
                                                 // IgnoreTypeCheck
                                                 oldDocument[name][fileName]
                             } else if (newFileNames.length === 0)
-                                if (oldFileNames.length === 0)
+                                if (oldFileNames.length === 0) {
                                     for (const fileName:string in model[name][
                                         type
                                     ].default)
@@ -700,7 +704,7 @@ export default class DatabaseHelper {
                                                     fileName]
                                             somethingChanged = true
                                         }
-                                else if (
+                                } else if (
                                     modelConfiguration.updateStrategy ===
                                         'fillUp'
                                 )
@@ -1011,7 +1015,7 @@ export default class DatabaseHelper {
                             ).newValue
                             if (newDocument[name][index] === null)
                                 newDocument[name].splice(index, 1)
-                            if (!(oldDocument.hasOwnProperty(
+                            if (!(oldDocument && oldDocument.hasOwnProperty(
                                 name
                             ) && Array.isArray(
                                 oldDocument[name]
@@ -1023,19 +1027,24 @@ export default class DatabaseHelper {
                             index += 1
                         }
                     } else {
+                        const oldValue:any =
+                            oldDocument && oldDocument.hasOwnProperty(
+                                name
+                            ) ? oldDocument[name] : null
                         const result:{
                             newValue:any;
                             somethingChanged:boolean;
                         } = checkPropertyContent(
                             newDocument[name], name, propertySpecification,
-                            oldDocument && oldDocument.hasOwnProperty(
-                                name
-                            ) && oldDocument[name] || undefined)
+                            oldValue)
                         newDocument[name] = result.newValue
                         if (result.somethingChanged)
                             somethingChanged = true
-                        if (newDocument[name] === null)
+                        if (newDocument[name] === null) {
+                            if (oldValue !== null)
+                                somethingChanged = true
                             delete newDocument[name]
+                        }
                     }
                 }
             // / region constraint
@@ -1143,7 +1152,7 @@ export default class DatabaseHelper {
                     )
                         for (const fileName:string in oldAttachments)
                             if (oldAttachments.hasOwnProperty(fileName))
-                                if (newAttachments.hasOwnProperty(fileName)
+                                if (newAttachments.hasOwnProperty(fileName))
                                     if (
                                         newAttachments[fileName] === null ||
                                         newAttachments[
@@ -1286,14 +1295,17 @@ export default class DatabaseHelper {
             // endregion
             return {newDocument, somethingChanged}
         }
-        const {newDocument, somethingChanged} = checkDocument(
-            newDocument, oldDocument)
-        if (!somethingChanged)
+        // endregion
+        const result:{
+            newDocument:PlainObject;
+            somethingChanged:boolean;
+        } = checkDocument(newDocument, oldDocument)
+        if (!result.somethingChanged)
             /* eslint-disable no-throw-literal */
             throw {
                 forbidden: 'NoChange: No new data given. new document: ' +
                     `${serialize(newDocument)}; old document: ` +
-                    `${serialize(oldDocument)}${pathDescription}.`
+                    `${serialize(oldDocument)}.`
             }
             /* eslint-enable no-throw-literal */
         if (securitySettings.hasOwnProperty('checkedDocuments'))
@@ -1304,7 +1316,7 @@ export default class DatabaseHelper {
             securitySettings[modelConfiguration.property.name.special
                 .validatedDocumentsCache
             ] = new Set([`${newDocument._id}-${newDocument._rev}`])
-        return newDocument
+        return result.newDocument
     }
 }
 // region vim modline
