@@ -671,7 +671,7 @@ export default class DatabaseHelper {
                                 )))
                                     /* eslint-disable no-throw-literal */
                                     throw {
-                                        forbidden: 'MissingAttachment: ' +
+                                        forbidden: 'AttachmentMissing: ' +
                                             'Missing attachment for type "' +
                                             `${type}"${pathDescription}.`
                                     }
@@ -733,9 +733,14 @@ export default class DatabaseHelper {
                                 name
                             ) && oldDocument && oldDocument.hasOwnProperty(
                                 name
-                            ) && modelConfiguration.updateStrategy === 'fillUp'
-                            )
-                                newDocument[name] = oldDocument[name]
+                            ))
+                                if (
+                                    modelConfiguration.updateStrategy ===
+                                    'fillUp'
+                                )
+                                    newDocument[name] = oldDocument[name]
+                                else if (!modelConfiguration.updateStrategy)
+                                    somethingChanged = true
                         } else if (!newDocument.hasOwnProperty(
                             name
                         ) || newDocument[name] === null)
@@ -840,10 +845,8 @@ export default class DatabaseHelper {
                                         name !== '_id' &&
                                         modelConfiguration.updateStrategy ===
                                             'incremental'
-                                    ) {
+                                    )
                                         delete newDocument[name]
-                                        somethingChanged = true
-                                    }
                                     return true
                                 } else
                                     /* eslint-disable no-throw-literal */
@@ -883,10 +886,8 @@ export default class DatabaseHelper {
                                         modelConfiguration.property.name
                                             .special.revision
                                     ).includes(name)
-                                ) {
+                                )
                                     delete newDocument[name]
-                                    somethingChanged = true
-                                }
                                 return true
                             } else
                                 /* eslint-disable no-throw-literal */
@@ -1026,6 +1027,8 @@ export default class DatabaseHelper {
                                 somethingChanged = true
                             index += 1
                         }
+                        if (!(oldDocument && oldDocument.hasOwnProperty(name)))
+                            somethingChanged = true
                     } else {
                         const oldValue:any =
                             oldDocument && oldDocument.hasOwnProperty(
@@ -1136,13 +1139,14 @@ export default class DatabaseHelper {
                 )
                     /* eslint-disable no-throw-literal */
                     throw {
-                        forbidden: 'AttachmentPresence: given ' +
-                            `attachment has invalid type${pathDescription}.`
+                        forbidden: 'AttachmentType: given attachment has ' +
+                            `invalid type${pathDescription}.`
                     }
                     /* eslint-enable no-throw-literal */
                 // region migrate old attachments
+                let oldAttachments:any = null
                 if (oldDocument && oldDocument.hasOwnProperty(name)) {
-                    const oldAttachments:any = oldDocument[name]
+                    oldAttachments = oldDocument[name]
                     if (
                         oldAttachments !== null &&
                         typeof oldAttachments === 'object' &&
@@ -1165,6 +1169,12 @@ export default class DatabaseHelper {
                                         newAttachments[fileName].data ===
                                         oldAttachments[fileName].data
                                     ) {
+                                        if (newAttachments[
+                                            fileName
+                                        ] === null || newAttachments[
+                                            fileName
+                                        ].data === null)
+                                            somethingChanged = true
                                         if (
                                             modelConfiguration
                                                 .updateStrategy ===
@@ -1183,12 +1193,21 @@ export default class DatabaseHelper {
                                     somethingChanged = true
                 }
                 for (const fileName:string in newAttachments)
-                    if (newAttachments.hasOwnProperty(fileName) && ([
-                        undefined, null
-                    ].includes(
-                        newAttachments[fileName]
-                    ) || newAttachments[fileName].data === null))
-                        delete newAttachments[fileName]
+                    if (newAttachments.hasOwnProperty(fileName)) {
+                        if ([undefined, null].includes(
+                            newAttachments[fileName]
+                        ) || newAttachments[fileName].data === null)
+                            delete newAttachments[fileName]
+                        else if (!(
+                            oldAttachments && oldAttachments.hasOwnProperty(
+                                fileName
+                            ) && newAttachments[fileName].content_type ===
+                                oldAttachments[fileName].content_type &&
+                            newAttachments[fileName].data ===
+                                oldAttachments[fileName].data
+                        ))
+                            somethingChanged = true
+                    }
                 // endregion
                 if (Object.keys(newAttachments).length === 0)
                     delete newDocument[name]
@@ -1300,7 +1319,11 @@ export default class DatabaseHelper {
             newDocument:PlainObject;
             somethingChanged:boolean;
         } = checkDocument(newDocument, oldDocument)
-        if (!result.somethingChanged)
+        if (result.newDocument._deleted && !oldDocument || !(
+            result.newDocument._deleted && oldDocument &&
+            result.newDocument._deleted !== oldDocument._deleted ||
+            result.somethingChanged
+        ))
             /* eslint-disable no-throw-literal */
             throw {
                 forbidden: 'NoChange: No new data given. new document: ' +
