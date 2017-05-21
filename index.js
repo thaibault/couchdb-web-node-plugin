@@ -90,72 +90,78 @@ export default class Database {
         if (services.database.hasOwnProperty('connection'))
             return {promise}
         // region ensure presence of global admin user
-        const unauthenticatedUserDatabaseConnection:PouchDB =
-            new services.database.connector(
-                `${Tools.stringFormat(configuration.database.url, '')}/_users`,
-                configuration.database.connector)
-        try {
-            await unauthenticatedUserDatabaseConnection.allDocs()
-            console.info(
-                'No admin user available. Automatically creating admin user ' +
-                `"${configuration.database.user.name}".`)
-            await fetch(
-                `${Tools.stringFormat(configuration.database.url, '')}/` +
-                `_config/admins/${configuration.database.user.name}`,
-                {
-                    method: 'PUT',
-                    body: `"${configuration.database.user.password}"`
-                })
-        } catch (error) {
-            if (error.hasOwnProperty(
-                'name'
-            ) && error.name === 'unauthorized') {
-                const authenticatedUserDatabaseConnection =
-                    new services.database.connector(Tools.stringFormat(
-                        configuration.database.url,
-                        `${configuration.database.user.name}:` +
-                        `${configuration.database.user.password}@`
-                    ) + '/_users', configuration.database.connector)
-                try {
-                    await authenticatedUserDatabaseConnection.allDocs()
-                } catch (error) {
+        if (
+            configuration.database.ensureAdminPresence ||
+            configuration.debug
+        ) {
+            const unauthenticatedUserDatabaseConnection:PouchDB =
+                new services.database.connector(
+                    `${Tools.stringFormat(configuration.database.url, '')}/` +
+                        `_users`,
+                    configuration.database.connector)
+            try {
+                await unauthenticatedUserDatabaseConnection.allDocs()
+                console.info(
+                    'No admin user available. Automatically creating admin ' +
+                    `user "${configuration.database.user.name}".`)
+                await fetch(
+                    `${Tools.stringFormat(configuration.database.url, '')}/` +
+                    `_config/admins/${configuration.database.user.name}`,
+                    {
+                        method: 'PUT',
+                        body: `"${configuration.database.user.password}"`
+                    })
+            } catch (error) {
+                if (error.hasOwnProperty(
+                    'name'
+                ) && error.name === 'unauthorized') {
+                    const authenticatedUserDatabaseConnection =
+                        new services.database.connector(Tools.stringFormat(
+                            configuration.database.url,
+                            `${configuration.database.user.name}:` +
+                            `${configuration.database.user.password}@`
+                        ) + '/_users', configuration.database.connector)
+                    try {
+                        await authenticatedUserDatabaseConnection.allDocs()
+                    } catch (error) {
+                        console.error(
+                            `Can't login as existing admin user "` +
+                            `${configuration.database.user.name}": "` +
+                            `${Tools.representObject(error)}".`)
+                    } finally {
+                        authenticatedUserDatabaseConnection.close()
+                    }
+                } else
                     console.error(
-                        `Can't login as existing admin user "` +
+                        `Can't create new admin user "` +
                         `${configuration.database.user.name}": "` +
                         `${Tools.representObject(error)}".`)
-                } finally {
-                    authenticatedUserDatabaseConnection.close()
-                }
-            } else
-                console.error(
-                    `Can't create new admin user "` +
-                    `${configuration.database.user.name}": "` +
-                    `${Tools.representObject(error)}".`)
-        } finally {
-            unauthenticatedUserDatabaseConnection.close()
-        }
+            } finally {
+                unauthenticatedUserDatabaseConnection.close()
+            }
         // endregion
         // region apply database/rest api configuration
-        for (const configurationPath:string in configuration.database)
-            if (configuration.database.hasOwnProperty(
-                configurationPath
-            ) && configurationPath.includes('/'))
-                try {
-                    await fetch(Tools.stringFormat(
-                        configuration.database.url,
-                        `${configuration.database.user.name}:` +
-                        `${configuration.database.user.password}@`
-                    ) + `/_config/${configurationPath}`, {
-                        method: 'PUT',
-                        body: `"${configuration.database[configurationPath]}"`
-                    })
-                } catch (error) {
-                    console.error(
-                        `Configuration "${configurationPath}" couldn't be ` +
-                        'applied to "' +
-                        `${configuration.database[configurationPath]}": ` +
-                        Tools.representObject(error))
-                }
+        if (configuration.database.updateConfiguration || configuration.debug)
+            for (const configurationPath:string in configuration.database)
+                if (configuration.database.hasOwnProperty(
+                    configurationPath
+                ) && configurationPath.includes('/'))
+                    try {
+                        await fetch(Tools.stringFormat(
+                            configuration.database.url,
+                            `${configuration.database.user.name}:` +
+                            `${configuration.database.user.password}@`
+                        ) + `/_config/${configurationPath}`, {
+                            method: 'PUT',
+                            body: `"${configuration.database[configurationPath]}"`
+                        })
+                    } catch (error) {
+                        console.error(
+                            `Configuration "${configurationPath}" couldn't be ` +
+                            'applied to "' +
+                            `${configuration.database[configurationPath]}": ` +
+                            Tools.representObject(error))
+                    }
         // endregion
         // region apply latest/upsert plugin
         const nativeBulkDocs:Function =
@@ -221,217 +227,242 @@ export default class Database {
                 `${configuration.database.user.password}@`
             ) + `/${configuration.name}`, configuration.database.connector)
         // region ensure presence of database security settings
-        try {
-            /*
-                NOTE: As a needed side effect: This clears preexisting document
-                references in "securitySettings[
-                    configuration.database.model.property.name.special
-                        .validatedDocumentsCache]".
-            */
-            await fetch(Tools.stringFormat(
-                configuration.database.url,
-                `${configuration.database.user.name}:` +
-                `${configuration.database.user.password}@`
-            ) + `/${configuration.name}/_security`, {
-                method: 'PUT',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(configuration.database.security)
-            })
-        } catch (error) {
-            console.error(
-                `Security object couldn't be applied.: ` +
-                Tools.representObject(error))
-        }
+        if (
+            configuration.database.ensureSecuritySettingsPresence ||
+            configuration.debug
+        )
+            try {
+                /*
+                    NOTE: As a needed side effect: This clears preexisting
+                    document references in "securitySettings[
+                        configuration.database.model.property.name.special
+                            .validatedDocumentsCache]".
+                */
+                await fetch(Tools.stringFormat(
+                    configuration.database.url,
+                    `${configuration.database.user.name}:` +
+                    `${configuration.database.user.password}@`
+                ) + `/${configuration.name}/_security`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(configuration.database.security)
+                })
+            } catch (error) {
+                console.error(
+                    `Security object couldn't be applied.: ` +
+                    Tools.representObject(error))
+            }
         // endregion
         const modelConfiguration:ModelConfiguration =
             Tools.copyLimitedRecursively(configuration.database.model)
         delete modelConfiguration.property.defaultSpecification
         delete modelConfiguration.entities
         const models:Models = Helper.extendModels(configuration.database.model)
-        const databaseHelperCode:string = await new Promise((
-            resolve:Function, reject:Function
-        ):void => fileSystem.readFile(
-            /* eslint-disable no-eval */
-            eval('require.resolve')('./databaseHelper.compiled'),
-            /* eslint-enable no-eval */
-            {encoding: (configuration.encoding:string), flag: 'r'},
-            (error:?Error, data:string):void =>
-                error ? reject(error) : resolve(data)))
-        // region generate/update authentication/validation code
-        // / region validation
-        const validationCode:string = 'function(...parameter) {\n' +
-            `    return require('helper').default.validateDocumentUpdate(` +
-                    '...parameter.concat([' +
-                    JSON.stringify(models) + ', ' +
-                    JSON.stringify(modelConfiguration) + ']))\n' +
-            '}'
-        try {
-            new Function(`return ${validationCode}`)
-        } catch (error) {
-            throw new Error(
-                `Generated validation code "${validationCode}" doesn't ` +
-                `compile: ${Tools.representObject(error)}`)
-        }
-        if (configuration.debug)
-            console.info('Specification \n\n"' + Tools.representObject(
-                configuration.database.model
-            ) + `"\n\nhas generated validation code: \n\n"${validationCode}".`)
-        await Helper.ensureValidationDocumentPresence(
-            services.database.connection, 'validation', {
-                helper: databaseHelperCode,
-                /* eslint-disable camelcase */
-                validate_doc_update: validationCode
-                /* eslint-enable camelcase */
-            }, 'Model specification')
-        // / endregion
-        // / region authentication
-        const authenticationCode:string = 'function(...parameter) {\n' +
-            `    return require('helper').default.authenticate(` +
-                    '...parameter.concat([' +
-                    JSON.stringify(Helper.determineAllowedModelRolesMapping(
-                        configuration.database.model
-                    )) + `, '` + configuration.database.model.property.name
-                        .special.type + `']))\n` +
-            '}'
-        try {
-            new Function(`return ${authenticationCode}`)
-        } catch (error) {
-            throw new Error(
-                `Generated authentication code "${authenticationCode}" ` +
-                `doesn't compile: ${Tools.representObject(error)}`)
-        }
-        if (configuration.debug)
-            console.info(
-                `Authentication code "${authenticationCode}" generated.`)
-        await Helper.ensureValidationDocumentPresence(
-            services.database.connection, 'authentication', {
-                helper: databaseHelperCode,
-                /* eslint-disable camelcase */
-                validate_doc_update: authenticationCode
-                /* eslint-enable camelcase */
-            }, 'Authentication logic')
-        // / endregion
-        // endregion
-        // region check if all constraint descriptions compile
-        for (const modelName:string in models)
-            if (models.hasOwnProperty(modelName))
-                for (const name:string in models[modelName])
-                    if (models[modelName].hasOwnProperty(name))
-                        if ([
-                            modelConfiguration.property.name.special
-                                .constraint.execution,
-                            modelConfiguration.property.name.special
-                                .constraint.expression
-                        ].includes(name)) {
-                            // IgnoreTypeCheck
-                            for (const constraint:Constraint of models[
-                                modelName
-                            ][name])
-                                if (
-                                    constraint.hasOwnProperty('description') &&
-                                    constraint.description
-                                )
-                                    try {
-                                        new Function(
-                                            `return ${constraint.description}`)
-                                    } catch (error) {
-                                        throw new Error(
-                                            `Specified constraint ` +
-                                            `description "` +
-                                            `${constraint.description}" for ` +
-                                            `model "${modelName}" doesn't ` +
-                                            `compile: "` +
-                                            `${Tools.representObject(error)}".`
-                                        )
-                                    }
-                        } else
-                            for (const type:string of [
-                                'conflictingConstraintExpression',
-                                'conflictingConstraintExecution',
-                                'constraintExpression',
-                                'constraintExecution'
-                            ])
-                                if (
-                                    models[modelName][name][type] &&
-                                    models[modelName][name][type]
-                                        .hasOwnProperty('description')
-                                )
-                                    try {
-                                        new Function(models[modelName][name][
-                                            type
-                                        ].description)
-                                    } catch (error) {
-                                        throw new Error(
-                                            `Specified constraint ` +
-                                            `description "` + models[
-                                                modelName
-                                            ][name][type].description + '" ' +
-                                            `for model "${modelName}" in ` +
-                                            `property "${name}" as "${type}"` +
-                                            ` doesn't compile: "` +
-                                            `${Tools.representObject(error)}".`
-                                        )
-                                    }
-        // endregion
-        // region ensure all constraints to have a consistent initial state
-        // TODO run migrations scripts if there exists some.
-        for (let retrievedDocument:RetrievedDocument of (
-            await services.database.connection.allDocs({
-                /* eslint-disable camelcase */
-                include_docs: true
-                /* eslint-enable camelcase */
-            })
-        ).rows)
-            if (!(
-                typeof retrievedDocument.id === 'string' &&
-                retrievedDocument.id.startsWith('_design/')
-            )) {
-                const document:Document = retrievedDocument.doc
-                let newDocument:?PlainObject = null
-                const migrationModelConfiguration:ModelConfiguration =
-                    Tools.copyLimitedRecursively(modelConfiguration)
-                /*
-                    Auto migration can:
-
-                    - Remove not specified properties.
-                    - A property which is missing and a default value exists we
-                      will add this property and apply the default value to it.
-                */
-                migrationModelConfiguration.updateStrategy = 'migrate'
-                try {
-                    newDocument = DatabaseHelper.validateDocumentUpdate(
-                        Tools.copyLimitedRecursively(document),
-                        Tools.copyLimitedRecursively(document), {
-                            db: configuration.name,
-                            name: configuration.database.user.name,
-                            roles: ['_admin']
-                        }, Tools.copyLimitedRecursively(
-                            configuration.database.security
-                        ), models, migrationModelConfiguration)
-                } catch (error) {
-                    console.warn(
-                        `Document "${Tools.representObject(document)}" ` +
-                        `doesn't satisfy its schema: ` +
-                        Tools.representObject(error))
-                }
-                if (newDocument && !Tools.equals(newDocument, document)) {
-                    try {
-                        await services.database.connection.put(newDocument)
-                    } catch (error) {
-                        throw new Error(
-                            `Auto migrating document "${newDocument._id}" ` +
-                            `was failed: ${Tools.representObject(error)}`)
-                    }
-                    console.info(
-                        `Auto migrating document "${newDocument._id}" was ` +
-                        'successful.')
-                }
+        if (configuration.database.updateValidation || configuration.debug) {
+            const databaseHelperCode:string = await new Promise((
+                resolve:Function, reject:Function
+            ):void => fileSystem.readFile(
+                /* eslint-disable no-eval */
+                eval('require.resolve')('./databaseHelper.compiled'),
+                /* eslint-enable no-eval */
+                {encoding: (configuration.encoding:string), flag: 'r'},
+                (error:?Error, data:string):void =>
+                    error ? reject(error) : resolve(data)))
+            // region generate/update authentication/validation code
+            // / region validation
+            const validationCode:string = 'function(...parameter) {\n' +
+                `    return require('helper').default.validateDocumentUpdate` +
+                    '(...parameter.concat([' +
+                        JSON.stringify(models) + ', ' +
+                        JSON.stringify(modelConfiguration) + ']))\n' +
+                '}'
+            try {
+                new Function(`return ${validationCode}`)
+            } catch (error) {
+                throw new Error(
+                    `Generated validation code "${validationCode}" doesn't ` +
+                    `compile: ${Tools.representObject(error)}`)
             }
+            if (configuration.debug)
+                console.info('Specification \n\n"' + Tools.representObject(
+                    configuration.database.model
+                ) + `"\n\nhas generated validation code: \n\n"` +
+                `${validationCode}".`)
+            await Helper.ensureValidationDocumentPresence(
+                services.database.connection, 'validation', {
+                    helper: databaseHelperCode,
+                    /* eslint-disable camelcase */
+                    validate_doc_update: validationCode
+                    /* eslint-enable camelcase */
+                }, 'Model specification')
+            // / endregion
+            // / region authentication
+            const authenticationCode:string = 'function(...parameter) {\n' +
+                `    return require('helper').default.authenticate(` +
+                        '...parameter.concat([' + JSON.stringify(
+                            Helper.determineAllowedModelRolesMapping(
+                                configuration.database.model
+                            )) + `, '` +
+                            configuration.database.model.property.name.special
+                                .type +
+                            `']))\n` +
+                '}'
+            try {
+                new Function(`return ${authenticationCode}`)
+            } catch (error) {
+                throw new Error(
+                    `Generated authentication code "${authenticationCode}" ` +
+                    `doesn't compile: ${Tools.representObject(error)}`)
+            }
+            if (configuration.debug)
+                console.info(
+                    `Authentication code "${authenticationCode}" generated.`)
+            await Helper.ensureValidationDocumentPresence(
+                services.database.connection, 'authentication', {
+                    helper: databaseHelperCode,
+                    /* eslint-disable camelcase */
+                    validate_doc_update: authenticationCode
+                    /* eslint-enable camelcase */
+                }, 'Authentication logic')
+            // / endregion
+            // endregion
+            // region check if all constraint descriptions compile
+            for (const modelName:string in models)
+                if (models.hasOwnProperty(modelName))
+                    for (const name:string in models[modelName])
+                        if (models[modelName].hasOwnProperty(name))
+                            if ([
+                                modelConfiguration.property.name.special
+                                    .constraint.execution,
+                                modelConfiguration.property.name.special
+                                    .constraint.expression
+                            ].includes(name)) {
+                                // IgnoreTypeCheck
+                                for (const constraint:Constraint of models[
+                                    modelName
+                                ][name])
+                                    if (constraint.hasOwnProperty(
+                                        'description'
+                                    ) && constraint.description)
+                                        try {
+                                            new Function('return ' +
+                                                constraint.description)
+                                        } catch (error) {
+                                            throw new Error(
+                                                `Specified constraint ` +
+                                                `description "` +
+                                                `${constraint.description}" ` +
+                                                `for model "${modelName}" ` +
+                                                `doesn't compile: "` +
+                                                Tools.representObject(error) +
+                                                '".'
+                                            )
+                                        }
+                            } else
+                                for (const type:string of [
+                                    'conflictingConstraintExpression',
+                                    'conflictingConstraintExecution',
+                                    'constraintExpression',
+                                    'constraintExecution'
+                                ])
+                                    if (
+                                        models[modelName][name][type] &&
+                                        models[modelName][name][type]
+                                            .hasOwnProperty('description')
+                                    )
+                                        try {
+                                            new Function(models[modelName][
+                                                name
+                                            ][type].description)
+                                        } catch (error) {
+                                            throw new Error(
+                                                `Specified constraint ` +
+                                                `description "` + models[
+                                                    modelName
+                                                ][name][type].description +
+                                                `" for model "${modelName}" ` +
+                                                `in property "${name}" as "` +
+                                                `${type}" doesn't compile: "` +
+                                                Tools.representObject(error) +
+                                                '".'
+                                            )
+                                        }
+            // endregion
+        }
+        // region ensure all constraints to have a consistent initial state
+        if (
+            configuration.database.model.autoMigration ||
+            configuration.debug
+        ) {
+            // TODO run migrations scripts if there exists some.
+            for (let retrievedDocument:RetrievedDocument of (
+                await services.database.connection.allDocs({
+                    /* eslint-disable camelcase */
+                    include_docs: true
+                    /* eslint-enable camelcase */
+                })
+            ).rows)
+                if (!(
+                    typeof retrievedDocument.id === 'string' &&
+                    retrievedDocument.id.startsWith('_design/')
+                )) {
+                    const document:Document = retrievedDocument.doc
+                    let newDocument:?PlainObject = null
+                    const migrationModelConfiguration:ModelConfiguration =
+                        Tools.copyLimitedRecursively(modelConfiguration)
+                    /*
+                        Auto migration can:
+
+                        - Remove not specified properties.
+                        - Add a property which is missing and a default value
+                          is specified.
+                    */
+                    migrationModelConfiguration.updateStrategy = 'migrate'
+                    try {
+                        newDocument = DatabaseHelper.validateDocumentUpdate(
+                            Tools.copyLimitedRecursively(document),
+                            Tools.copyLimitedRecursively(document), {
+                                db: configuration.name,
+                                name: configuration.database.user.name,
+                                roles: ['_admin']
+                            }, Tools.copyLimitedRecursively(
+                                configuration.database.security
+                            ), models, migrationModelConfiguration)
+                    } catch (error) {
+                        if ('forbidden' in error)
+                            if (error.forbidden.startsWith('NoChange:'))
+                                continue
+                            console.warn(
+                                `Document "` +
+                                `${Tools.representObject(document)}" doesn't` +
+                                ` satisfy its schema (and can not be ` +
+                                `migrated automatically): ` +
+                                Tools.representObject(error))
+                        else
+                            throw error
+                    }
+                    if (newDocument && !Tools.equals(newDocument, document)) {
+                        try {
+                            await services.database.connection.put(newDocument)
+                        } catch (error) {
+                            throw new Error(
+                                `Replaceing auto migrated document "` +
+                                `${newDocument._id}" has failed: ` +
+                                Tools.representObject(error))
+                        }
+                        console.info(
+                            `Auto migrating document "${newDocument._id}" ` +
+                            'was successful.')
+                    }
+                }
+        }
         // TODO check conflicting constraints and mark them if necessary (check
         // how couchdb deals with "id" conflicts)
         // endregion
         // region create/remove needed/unneeded generic indexes
-        if (configuration.database.createGenericFlatIndex) {
+        if (configuration.database.createGenericFlatIndex && (
+            configuration.database.model.autoMigration || configuration.debug
+        )) {
             for (const modelName:string in models)
                 if (models.hasOwnProperty(modelName) && (new RegExp(
                     configuration.database.model.property.name.special

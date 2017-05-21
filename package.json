@@ -82,6 +82,8 @@
         "__evaluate__": "`./${self.database.path}/database.json`"
       },
       "createGenericFlatIndex": true,
+      "ensureAdminPresence": true,
+      "ensureSecuritySettingsPresence": true,
       "httpd/host": {
         "__evaluate__": "self.hasOwnProperty('server') ? self.server.application.hostName : '0.0.0.0'"
       },
@@ -89,6 +91,7 @@
       "log/file": "/dev/stdout",
       "log/level": "info",
       "model": {
+        "autoMigration": true,
         "entities": {
           "_base": {
             "_allowedRoles": [
@@ -208,7 +211,9 @@
             }
           }
         },
-        "updateStrategy": "fillUp"
+        "updateConfiguration": true,
+        "updateStrategy": "fillUp",
+        "updateValidation": true
       },
       "path": "database",
       "port": 5984,
