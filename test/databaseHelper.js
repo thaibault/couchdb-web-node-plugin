@@ -61,6 +61,8 @@ registerTest(async function():Promise<void> {
             configuration.database.model.property.name.special.id
         const revisionName:string =
             configuration.database.model.property.name.special.revision
+        const typeName:string =
+            configuration.database.model.property.name.special.type
         for (const updateStrategy:UpdateStrategy of [
             '', 'fillUp', 'incremental'
         ]) {
@@ -82,211 +84,215 @@ registerTest(async function():Promise<void> {
             for (const test:Array<any> of [
                 // region general environment
                 [
-                    [{'-type': 'Test', [revisionName]: 'latest'}, null],
+                    [{[typeName]: 'Test', [revisionName]: 'latest'}, null],
                     'Revision'
                 ],
                 [
-                    [{'-type': 'Test', [revisionName]: 'latest'}, {}],
+                    [{[typeName]: 'Test', [revisionName]: 'latest'}, {}],
                     'Revision'
                 ],
                 [
                     [
-                        {'-type': 'Test', [revisionName]: 'latest'},
-                        {'-type': 'Test'}
+                        {[typeName]: 'Test', [revisionName]: 'latest'},
+                        {[typeName]: 'Test'}
                     ],
                     'Revision'
                 ],
                 // endregion
                 // region changes
-                [[{'-type': 'Test'}, {'-type': 'Test'}], {entities: {Test: {
-                    a: {}
-                }}}, 'NoChange'],
-                [[{'-type': 'Test', a: '2'}, {'-type': 'Test', a: '2'}], {
-                    entities: {Test: {a: {}}}
-                }, 'NoChange'],
-                [[{'-type': 'Test', a: 'a '}, {'-type': 'Test', a: 'a'}], {
-                    entities: {Test: {a: {}}}
-                }, 'NoChange'],
-                [[{'-type': 'Test', a: []}, {'-type': 'Test', a: []}], {
+                [[
+                    {[typeName]: 'Test'},
+                    {[typeName]: 'Test'}], {entities: {Test: {a: {}}}},
+                    'NoChange'
+                ],
+                [[
+                    {[typeName]: 'Test', a: '2'},
+                    {[typeName]: 'Test', a: '2'}],
+                    {entities: {Test: {a: {}}}}, 'NoChange'
+                ],
+                [[
+                    {[typeName]: 'Test', a: 'a '},
+                    {[typeName]: 'Test', a: 'a'}],
+                    {entities: {Test: {a: {}}}}, 'NoChange'
+                ],
+                [[{[typeName]: 'Test', a: []}, {[typeName]: 'Test', a: []}], {
                     entities: {Test: {a: {type: 'integer[]'}}}
                 }, 'NoChange'],
-                [[{'-type': 'Test', a: [1, 2]}, {'-type': 'Test', a: [
+                [[{[typeName]: 'Test', a: [1, 2]}, {[typeName]: 'Test', a: [
                     1, 2
                 ]}], {entities: {Test: {a: {type: 'integer[]'}}}}, 'NoChange'],
                 [[
-                    {'-type': 'Test', a: {b: 1}},
-                    {'-type': 'Test', a: {b: 1}}
+                    {[typeName]: 'Test', a: {b: 1}},
+                    {[typeName]: 'Test', a: {b: 1}}
                 ], {entities: {Test: {a: {type: {b: 1}}}}}, 'NoChange'],
                 [[
-                    {'-type': 'Test', a: {'-type': '_test', b: 1}},
-                    {'-type': 'Test', a: {'-type': '_test', b: 1}}
+                    {[typeName]: 'Test', a: {[typeName]: '_test', b: 1}},
+                    {[typeName]: 'Test', a: {[typeName]: '_test', b: 1}}
                 ], {entities: {
                     _test: {b: {type: 'number'}},
                     Test: {a: {type: '_test'}}
                 }}, 'NoChange'],
                 [[
-                    {'-type': 'Test', a: new Date(0)},
-                    {'-type': 'Test', a: 0}
+                    {[typeName]: 'Test', a: new Date(0)},
+                    {[typeName]: 'Test', a: 0}
                 ], {entities: {Test: {a: {type: 'DateTime'}}}}, 'NoChange'],
                 [
-                    [{'-type': 'Test', _deleted: true}],
+                    [{[typeName]: 'Test', _deleted: true}],
                     {entities: {Test: {}}}, 'NoChange'
                 ],
-                [[{'-type': 'Test'}, {'-type': 'Test', a: '1'}], {entities: {
-                    Test: {a: {}}
-                }}, updateStrategy ? 'NoChange' : {'-type': 'Test'}],
+                [[{[typeName]: 'Test'}, {[typeName]: 'Test', a: '1'}], {
+                    entities: {Test: {a: {}}}
+                }, updateStrategy ? 'NoChange' : {[typeName]: 'Test'}],
                 // endregion
                 // region model
                 [[{}, {}], 'Type'],
-                [[{'-type': 'test'}], 'TypeName'],
-                [[{'-type': '_test'}], 'TypeName'],
-                [[{'-type': 'Test'}], 'Model'],
+                [[{[typeName]: 'test'}], 'TypeName'],
+                [[{[typeName]: '_test'}], 'TypeName'],
+                [[{[typeName]: 'Test'}], 'Model'],
                 // endregion
                 // region hooks
                 // / region on create
-                [[{'-type': 'Test', a: ''}], {entities: {Test: {a: {
+                [[{[typeName]: 'Test', a: ''}], {entities: {Test: {a: {
                     onCreateExpression: '+'
                 }}}}, 'Compilation'],
-                [[{'-type': 'Test', a: ''}], {entities: {Test: {a: {
+                [[{[typeName]: 'Test', a: ''}], {entities: {Test: {a: {
                     onCreateExecution: 'return +'
                 }}}}, 'Compilation'],
-                [[{'-type': 'Test', a: ''}], {entities: {Test: {a: {
+                [[{[typeName]: 'Test', a: ''}], {entities: {Test: {a: {
                     onCreateExpression: 'undefinedVariableName'
                 }}}}, 'Runtime'],
-                [[{'-type': 'Test', a: ''}], {entities: {Test: {a: {
+                [[{[typeName]: 'Test', a: ''}], {entities: {Test: {a: {
                     onCreateExecution: 'return undefinedVariableName'
                 }}}}, 'Runtime'],
                 // / endregion
                 // / region on update
-                [[{'-type': 'Test', a: ''}], {entities: {Test: {a: {
+                [[{[typeName]: 'Test', a: ''}], {entities: {Test: {a: {
                     onUpdateExpression: '+'
                 }}}}, 'Compilation'],
-                [[{'-type': 'Test', a: ''}], {entities: {Test: {a: {
+                [[{[typeName]: 'Test', a: ''}], {entities: {Test: {a: {
                     onUpdateExecution: 'return +'
                 }}}}, 'Compilation'],
-                [[{'-type': 'Test', a: ''}], {entities: {Test: {a: {
+                [[{[typeName]: 'Test', a: ''}], {entities: {Test: {a: {
                     onUpdateExpression: 'undefinedVariableName'
                 }}}}, 'Runtime'],
-                [[{'-type': 'Test', a: ''}], {entities: {Test: {a: {
+                [[{[typeName]: 'Test', a: ''}], {entities: {Test: {a: {
                     onUpdateExecution: 'return undefinedVariableName'
                 }}}}, 'Runtime'],
                 // / endregion
                 // endregion
                 // region property writable/mutable
                 [
-                    [{'-type': 'Test', a: 'b'}, {'-type': 'Test'}],
+                    [{[typeName]: 'Test', a: 'b'}, {[typeName]: 'Test'}],
                     {entities: {Test: {a: {writable: false}}}}, 'Readonly'
                 ],
-                [
-                    [{'-type': 'Test', a: 'b'}, {'-type': 'Test', a: 'a'}],
-                    {entities: {Test: {a: {writable: false}}}}, 'Readonly'
-                ],
+                [[
+                    {[typeName]: 'Test', a: 'b'},
+                    {[typeName]: 'Test', a: 'a'}
+                ], {entities: {Test: {a: {writable: false}}}}, 'Readonly'],
                 // endregion
                 // region property existents
                 [
-                    [{'-type': 'Test', a: 2}], {entities: {Test: {}}},
+                    [{[typeName]: 'Test', a: 2}], {entities: {Test: {}}},
                     'Property'
                 ],
                 [
-                    [{'-type': 'Test', _constraintExpressions: null}],
+                    [{[typeName]: 'Test', _constraintExpressions: null}],
                     {entities: {Test: {}}}, 'Invalid'
                 ],
                 [
-                    [{'-type': 'Test', a: null}],
+                    [{[typeName]: 'Test', a: null}],
                     {entities: {Test: {a: {nullable: false}}}}, 'NotNull'
                 ],
                 [
-                    [{'-type': 'Test'}],
+                    [{[typeName]: 'Test'}],
                     {entities: {Test: {a: {nullable: false}}}},
                     'MissingProperty'
                 ],
                 // endregion
                 // region property type
                 [
-                    [{'-type': 'Test', a: 2}], {entities: {Test: {a: {}}}},
+                    [{[typeName]: 'Test', a: 2}], {entities: {Test: {a: {}}}},
                     'PropertyType'
                 ],
                 [
-                    [{'-type': 'Test', a: 'b'}],
+                    [{[typeName]: 'Test', a: 'b'}],
                     {entities: {Test: {a: {type: 'number'}}}}, 'PropertyType'
                 ],
                 [
-                    [{'-type': 'Test', a: 'b'}],
+                    [{[typeName]: 'Test', a: 'b'}],
                     {entities: {Test: {a: {type: 'integer'}}}}, 'PropertyType'
                 ],
                 [
-                    [{'-type': 'Test', a: 2.2}],
+                    [{[typeName]: 'Test', a: 2.2}],
                     {entities: {Test: {a: {type: 'integer'}}}}, 'PropertyType'
                 ],
                 [
-                    [{'-type': 'Test', a: 1}],
+                    [{[typeName]: 'Test', a: 1}],
                     {entities: {Test: {a: {type: 'boolean'}}}}, 'PropertyType'
                 ],
                 [
-                    [{'-type': 'Test', a: 'a'}],
+                    [{[typeName]: 'Test', a: 'a'}],
                     {entities: {Test: {a: {type: 'DateTime'}}}}, 'PropertyType'
                 ],
                 // / region array
                 // // region type
                 [
-                    [{'-type': 'Test', a: 2}],
+                    [{[typeName]: 'Test', a: 2}],
                     {entities: {Test: {a: {type: 'string[]'}}}}, 'PropertyType'
                 ],
                 [
-                    [{'-type': 'Test', a: [2]}],
+                    [{[typeName]: 'Test', a: [2]}],
                     {entities: {Test: {a: {type: 'string[]'}}}}, 'PropertyType'
                 ],
                 [
-                    [{'-type': 'Test', a: ['b']}],
+                    [{[typeName]: 'Test', a: ['b']}],
                     {entities: {Test: {a: {type: 'number[]'}}}}, 'PropertyType'
                 ],
                 [
-                    [{'-type': 'Test', a: [1]}],
+                    [{[typeName]: 'Test', a: [1]}],
                     {entities: {Test: {a: {type: 'boolean[]'}}}},
                     'PropertyType'
                 ],
                 [
-                    [{'-type': 'Test', a: '[1]'}],
+                    [{[typeName]: 'Test', a: '[1]'}],
                     {entities: {Test: {a: {type: 'DateTime'}}}}, 'PropertyType'
                 ],
                 [
-                    [{'-type': 'Test', a: '["a"]'}],
+                    [{[typeName]: 'Test', a: '["a"]'}],
                     {entities: {Test: {a: {type: 'DateTime[]'}}}},
                     'PropertyType'
                 ],
                 [
-                    [{'-type': 'Test', a: [{'-type': 'Test'}]}],
+                    [{[typeName]: 'Test', a: [{[typeName]: 'Test'}]}],
                     {entities: {Test: {a: {type: 'Custom[]'}}}}, 'PropertyType'
                 ],
                 [
-                    [{'-type': 'Test', a: [{'-type': 'Custom'}, {
-                        '-type': 'Test'
+                    [{[typeName]: 'Test', a: [{[typeName]: 'Custom'}, {
+                        [typeName]: 'Test'
                     }]}],
                     {entities: {Test: {a: {type: 'Custom[]'}}}}, 'PropertyType'
                 ],
                 // // endregion
                 [
-                    [{'-type': 'Test', a: [{'-type': 'Test', b: 2}]}],
+                    [{[typeName]: 'Test', a: [{[typeName]: 'Test', b: 2}]}],
                     {entities: {Test: {a: {type: 'Test[]'}}}}, 'Property'
                 ],
                 [
-                    [{'-type': 'Test', a: [{
-                        '-type': 'Test', b: null
+                    [{[typeName]: 'Test', a: [{
+                        [typeName]: 'Test', b: null
                     }], b: 'a'}],
                     {entities: {Test: {a: {type: 'Test[]'}, b: {
                         nullable: false
                     }}}}, 'NotNull'
                 ],
+                [[
+                    {[typeName]: 'Test', a: [{[typeName]: 'Test', b: 'a'}]},
+                    {[typeName]: 'Test', a: [{[typeName]: 'Test', b: 'b'}]}
+                ], {entities: {
+                    Test: {a: {type: 'Test[]', writable: false}, b: {}}
+                }}, 'Readonly'],
                 [
-                    [
-                        {'-type': 'Test', a: [{'-type': 'Test', b: 'a'}]},
-                        {'-type': 'Test', a: [{'-type': 'Test', b: 'b'}]}
-                    ], {entities: {
-                        Test: {a: {type: 'Test[]', writable: false}, b: {}}
-                    }}, 'Readonly'
-                ],
-                [
-                    [{'-type': 'Test', a: [4], b: [{'-type': 'Test', a: [
+                    [{[typeName]: 'Test', a: [4], b: [{[typeName]: 'Test', a: [
                         2
                     ]}]}], {entities: {Test: {
                         a: {type: 'number[]', minimum: 3},
@@ -294,39 +300,39 @@ registerTest(async function():Promise<void> {
                     }}}, 'Minimum'
                 ],
                 [
-                    [{'-type': 'Test', a: [4]}], {entities: {Test: {
+                    [{[typeName]: 'Test', a: [4]}], {entities: {Test: {
                         a: {type: 'integer[]', minimumLength: 2}
                     }}}, 'MinimumArrayLength'
                 ],
                 [
-                    [{'-type': 'Test', a: []}], {entities: {Test: {
+                    [{[typeName]: 'Test', a: []}], {entities: {Test: {
                         a: {type: 'integer[]', minimumLength: 1}
                     }}}, 'MinimumArrayLength'
                 ],
                 [
-                    [{'-type': 'Test', a: [1]}], {entities: {Test: {
+                    [{[typeName]: 'Test', a: [1]}], {entities: {Test: {
                         a: {type: 'integer[]', maximumLength: 0}
                     }}}, 'MaximumArrayLength'
                 ],
                 [
-                    [{'-type': 'Test', a: [1, 2]}], {entities: {Test: {
+                    [{[typeName]: 'Test', a: [1, 2]}], {entities: {Test: {
                         a: {type: 'integer[]', maximumLength: 1}
                     }}}, 'MaximumArrayLength'
                 ],
                 [
-                    [{'-type': 'Test', a: [1, 2, 3]}], {entities: {Test: {
+                    [{[typeName]: 'Test', a: [1, 2, 3]}], {entities: {Test: {
                         a: {type: 'integer[]', maximumLength: 2}
                     }}}, 'MaximumArrayLength'
                 ],
                 [
-                    [{'-type': 'Test', a: [1]}], {entities: {Test: {
+                    [{[typeName]: 'Test', a: [1]}], {entities: {Test: {
                         a: {type: 'integer[]', constraintExpression: {
                             evaluation: 'newValue === 2'
                         }}
                     }}}, 'ConstraintExpression'
                 ],
                 [
-                    [{'-type': 'Test', a: [1]}], {entities: {Test: {
+                    [{[typeName]: 'Test', a: [1]}], {entities: {Test: {
                         a: {type: 'integer[]', arrayConstraintExpression: {
                             evaluation: 'newValue.length === 2'
                         }}
@@ -336,37 +342,42 @@ registerTest(async function():Promise<void> {
                 // / region nested property
                 // // region property type
                 [
-                    [{'-type': 'Test', a: 1}],
+                    [{[typeName]: 'Test', a: 1}],
                     {entities: {Test: {a: {type: 'Test'}}}}, 'NestedModel'
                 ],
                 [
-                    [{'-type': 'Test', a: null}],
+                    [{[typeName]: 'Test', a: null}],
                     {entities: {Test: {a: {type: 'Test', nullable: false}}}},
                     'NotNull'
                 ],
                 [
-                    [{'-type': 'Test', a: {}}],
+                    [{[typeName]: 'Test', a: {}}],
                     {entities: {Test: {a: {type: 'Test'}}}}, 'Type'
                 ],
                 [
-                    [{'-type': 'Test', a: {'-type': 'Test', b: 2}, b: 'a'}],
+                    [{
+                        [typeName]: 'Test',
+                        a: {[typeName]: 'Test',
+                        b: 2
+                    }, b: 'a'}],
                     {entities: {Test: {a: {type: 'Test'}, b: {}}}},
                     'PropertyType'
                 ],
                 // // endregion
                 // // region property existents
                 [
-                    [{'-type': 'Test', a: {'-type': 'Test', b: 2}}],
+                    [{[typeName]: 'Test', a: {[typeName]: 'Test', b: 2}}],
                     {entities: {Test: {a: {type: 'Test'}}}}, 'Property'
                 ],
+                [[{
+                    [typeName]: 'Test',
+                    a: {[typeName]: 'Test', b: null},
+                    b: 'a'
+                }], {entities: {Test: {a: {type: 'Test'}, b: {
+                    nullable: false
+                }}}}, 'NotNull'],
                 [
-                    [{'-type': 'Test', a: {'-type': 'Test', b: null}, b: 'a'}],
-                    {entities: {Test: {a: {type: 'Test'}, b: {
-                        nullable: false
-                    }}}}, 'NotNull'
-                ],
-                [
-                    [{'-type': 'Test', a: {'-type': 'Test'}, b: 'a'}],
+                    [{[typeName]: 'Test', a: {[typeName]: 'Test'}, b: 'a'}],
                     {entities: {Test: {a: {type: 'Test'}, b: {
                         nullable: false
                     }}}}, 'MissingProperty'
@@ -375,32 +386,33 @@ registerTest(async function():Promise<void> {
                 // // region property readonly
                 [
                     [
-                        {'-type': 'Test', a: {'-type': 'Test', b: 'a'}},
-                        {'-type': 'Test', a: {'-type': 'Test', b: 'b'}}
+                        {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'a'}},
+                        {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'b'}}
                     ], {entities: {Test: {a: {type: 'Test'}, b: {
                         writable: false
                     }}}}, 'Readonly'
                 ],
                 [
                     [
-                        {'-type': 'Test', a: {'-type': 'Test', b: 'a'}},
-                        {'-type': 'Test', a: {'-type': 'Test', b: 'b'}}
+                        {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'a'}},
+                        {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'b'}}
                     ], {entities: {Test: {a: {type: 'Test'}, b: {
                         mutable: false
                     }}}}, 'Immutable'
                 ],
                 [
                     [
-                        {'-type': 'Test', a: {'-type': 'Test', b: 'a'}},
-                        {'-type': 'Test', a: {'-type': 'Test'}}
+                        {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'a'}},
+                        {[typeName]: 'Test', a: {[typeName]: 'Test'}}
                     ], {entities: {Test: {a: {type: 'Test'}, b: {
                         writable: false
                     }}}}, 'Readonly'
                 ],
                 [
                     [
-                        {'-type': 'Test', a: {'-type': 'Test', b: 'a'}},
-                        {'-type': 'Test', a: {'-type': 'Test', b: 'b'}}, {}, {}
+                        {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'a'}},
+                        {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'b'}},
+                        {}, {}
                     ],
                     {entities: {Test: {a: {type: 'Test', writable: false}, b: {
                     }}}}, 'Readonly'
@@ -408,20 +420,27 @@ registerTest(async function():Promise<void> {
                 // // endregion
                 // // region property range
                 [
-                    [{'-type': 'Test', a: 4, b: {'-type': 'Test', a: 2}}],
-                    {entities: {Test: {
+                    [{
+                        [typeName]: 'Test',
+                        a: 4,
+                        b: {[typeName]: 'Test', a: 2}
+                    }], {entities: {Test: {
                         a: {type: 'number', minimum: 3}, b: {type: 'Test'}
                     }}}, 'Minimum'
                 ],
                 [
-                    [{'-type': 'Test', a: '1', b: {'-type': 'Test', a: '12'}}],
+                    [{
+                        [typeName]: 'Test',
+                        a: '1',
+                        b: {[typeName]: 'Test', a: '12'}
+                    }],
                     {entities: {Test: {a: {maximum: 1}, b: {type: 'Test'}}}},
                     'MaximalLength'
                 ],
                 // // endregion
                 // // region property pattern
                 [
-                    [{'-type': 'Test', b: {'-type': 'Test', a: 'b'}}],
+                    [{[typeName]: 'Test', b: {[typeName]: 'Test', a: 'b'}}],
                     {entities: {Test: {
                         a: {regularExpressionPattern: 'a'},
                         b: {type: 'Test'}
@@ -429,74 +448,74 @@ registerTest(async function():Promise<void> {
                 ],
                 // // endregion
                 // // region property constraint
-                [
-                    [{'-type': 'Test', a: 'b', b: {'-type': 'Test', a: 'a'}}],
-                    {entities: {Test: {
-                        a: {constraintExpression: {
-                            evaluation: 'newValue === "b"'
-                        }},
-                        b: {type: 'Test'}
-                    }}}, 'ConstraintExpression'
-                ],
-                [
-                    [{'-type': 'Test', a: 'b', b: {'-type': 'Test', a: 'a'}}],
-                    {entities: {Test: {
-                        a: {constraintExpression: {
-                            evaluation: 'newValue === "b"'
-                        }},
-                        b: {type: 'Test'}
-                    }}}, 'ConstraintExpression'
-                ],
+                [[{
+                    [typeName]: 'Test',
+                    a: 'b',
+                    b: {[typeName]: 'Test', a: 'a'}
+                }], {entities: {Test: {
+                    a: {constraintExpression: {
+                        evaluation: 'newValue === "b"'
+                    }},
+                    b: {type: 'Test'}
+                }}}, 'ConstraintExpression'],
+                [[{[typeName]: 'Test', a: 'b', b: {
+                    [typeName]: 'Test', a: 'a'
+                }}], {entities: {Test: {
+                    a: {constraintExpression: {
+                        evaluation: 'newValue === "b"'
+                    }},
+                    b: {type: 'Test'}
+                }}}, 'ConstraintExpression'],
                 // // endregion
                 // / endregion
                 [
-                    [{'-type': 'Test1', a: 1}], {entities: {
+                    [{[typeName]: 'Test1', a: 1}], {entities: {
                         Test1: {a: {type: 'foreignKey:Test2'}},
                         Test2: {[idName]: {type: 'string'}}
                     }}, 'PropertyType'
                 ],
-                [[{'-type': 'Test', a: 1}], {entities: {Test: {a: {
+                [[{[typeName]: 'Test', a: 1}], {entities: {Test: {a: {
                     type: 2
                 }}}}, 'PropertyType'],
                 // endregion
                 // region property range
                 [
-                    [{'-type': 'Test', a: 2}],
+                    [{[typeName]: 'Test', a: 2}],
                     {entities: {Test: {a: {type: 'number', minimum: 3}}}},
                     'Minimum'
                 ],
                 [
-                    [{'-type': 'Test', a: 1.1}],
+                    [{[typeName]: 'Test', a: 1.1}],
                     {entities: {Test: {a: {type: 'number', maximum: 1}}}},
                     'Maximum'
                 ],
                 [
-                    [{'-type': 'Test', a: 2}],
+                    [{[typeName]: 'Test', a: 2}],
                     {entities: {Test: {a: {type: 'integer', maximum: 1}}}},
                     'Maximum'
                 ],
                 [
-                    [{'-type': 'Test', a: '12'}],
+                    [{[typeName]: 'Test', a: '12'}],
                     {entities: {Test: {a: {minimum: 3}}}}, 'MinimalLength'
                 ],
                 [
-                    [{'-type': 'Test', a: '12'}],
+                    [{[typeName]: 'Test', a: '12'}],
                     {entities: {Test: {a: {maximum: 1}}}}, 'MaximalLength'
                 ],
                 // endregion
                 // region selection
                 [
-                    [{'-type': 'Test', a: 2}],
+                    [{[typeName]: 'Test', a: 2}],
                     {entities: {Test: {a: {type: 'number', selection: []}}}},
                     'Selection'
                 ],
                 [
-                    [{'-type': 'Test', a: 2}],
+                    [{[typeName]: 'Test', a: 2}],
                     {entities: {Test: {a: {type: 'number', selection: [1]}}}},
                     'Selection'
                 ],
                 [
-                    [{'-type': 'Test', a: 2}],
+                    [{[typeName]: 'Test', a: 2}],
                     {entities: {Test: {a: {type: 'integer', selection: [
                         1, 3
                     ]}}}},
@@ -505,58 +524,58 @@ registerTest(async function():Promise<void> {
                 // endregion
                 // region property pattern
                 [
-                    [{'-type': 'Test', a: 'b'}],
+                    [{[typeName]: 'Test', a: 'b'}],
                     {entities: {Test: {a: {regularExpressionPattern: 'a'}}}},
                     'PatternMatch'
                 ],
                 // endregion
                 // region property constraint
                 [
-                    [{'-type': 'Test', a: 'b'}],
+                    [{[typeName]: 'Test', a: 'b'}],
                     {entities: {Test: {a: {constraintExpression: {
                         evaluation: 'false'
                     }}}}},
                     'ConstraintExpression'
                 ],
                 [
-                    [{'-type': 'Test', a: 'b'}],
+                    [{[typeName]: 'Test', a: 'b'}],
                     {entities: {Test: {a: {constraintExecution: {
                         evaluation: 'return false'
                     }}}}}, 'ConstraintExecution'
                 ],
                 [
-                    [{'-type': 'Test', a: 'b'}],
+                    [{[typeName]: 'Test', a: 'b'}],
                     {entities: {Test: {a: {constraintExpression: {
                         evaluation: '+'
                     }}}}},
                     'Compilation'
                 ],
-                [[{'-type': 'Test', a: 'b'}], {entities: {Test: {a: {
+                [[{[typeName]: 'Test', a: 'b'}], {entities: {Test: {a: {
                     constraintExpression: {evaluation: 'undefinedVariableName'}
                 }}}}, 'Runtime'],
-                [[{'-type': 'Test', a: 'b'}], {entities: {Test: {a: {
+                [[{[typeName]: 'Test', a: 'b'}], {entities: {Test: {a: {
                     constraintExecution: {
                         evaluation: 'return undefinedVariableName'
                     }
                 }}}}, 'Runtime'],
-                [[{'-type': 'Test', a: 'b'}], {entities: {Test: {a: {
+                [[{[typeName]: 'Test', a: 'b'}], {entities: {Test: {a: {
                     constraintExpression: {
                         evaluation: 'newValue === "a"'
                     }
                 }}}}, 'ConstraintExpression'],
                 // endregion
                 // region constraint
-                [[{'-type': 'Test', a: 'a', b: 'b'}], {entities: {Test: {
+                [[{[typeName]: 'Test', a: 'a', b: 'b'}], {entities: {Test: {
                     _constraintExpressions: [{evaluation: 'false'}],
                     a: {},
                     b: {}
                 }}}, 'ConstraintExpressions'],
-                [[{'-type': 'Test', a: 'a', b: 'b'}], {entities: {Test: {
+                [[{[typeName]: 'Test', a: 'a', b: 'b'}], {entities: {Test: {
                     _constraintExecutions: [{evaluation: 'return false'}],
                     a: {},
                     b: {}
                 }}}, 'ConstraintExecutions'],
-                [[{'-type': 'Test', a: 'a', b: 'b'}], {entities: {Test: {
+                [[{[typeName]: 'Test', a: 'a', b: 'b'}], {entities: {Test: {
                     _constraintExecutions: [{
                         description: '`Fails always!`',
                         evaluation: 'return false'
@@ -564,7 +583,7 @@ registerTest(async function():Promise<void> {
                     a: {},
                     b: {}
                 }}}, 'ConstraintExecutions'],
-                [[{'-type': 'Test', a: 'a', b: 'b'}], {entities: {Test: {
+                [[{[typeName]: 'Test', a: 'a', b: 'b'}], {entities: {Test: {
                     _constraintExecutions: [{
                         description: '`a: ${newDocument.a} failed!`',
                         evaluation: 'return newDocument.a === newDocument.b'
@@ -575,43 +594,46 @@ registerTest(async function():Promise<void> {
                 // endregion
                 // region attachment
                 [
-                    [{'-type': 'Test', [attachmentName]: {}}],
+                    [{[typeName]: 'Test', [attachmentName]: {}}],
                     {entities: {Test: {}}}, 'Property'
                 ],
-                [[{'-type': 'Test'}], {entities: {Test: {[attachmentName]: {
+                [[{[typeName]: 'Test'}], {entities: {Test: {[attachmentName]: {
                     '.*': {minimum: 1, nullable: false}
                 }}}}, 'AttachmentMissing'],
-                [[{'-type': 'Test', [attachmentName]: {test: {
+                [[{[typeName]: 'Test', [attachmentName]: {test: {
                     data: null
                 }}}], {entities: {Test: {[attachmentName]: {'.*': {
                     nullable: false
                 }}}}}, 'AttachmentMissing'],
-                [[{'-type': 'Test', [attachmentName]: {test: {data: null}}}], {
-                    entities: {Test: {[attachmentName]: {'.*': {
-                        minimum: 1, nullable: false
-                    }}}}
-                }, 'AttachmentMissing'],
-                [[{'-type': 'Test', [attachmentName]: {
+                [[{
+                    [typeName]: 'Test',
+                    [attachmentName]: {test: {data: null}}}], {
+                        entities: {Test: {[attachmentName]: {'.*': {
+                            minimum: 1, nullable: false
+                        }}}}
+                    }, 'AttachmentMissing'
+                ],
+                [[{[typeName]: 'Test', [attachmentName]: {
                     a: {data: '', content_type: 'text/plain'}
                 }}], {entities: {Test: {[attachmentName]: {
                     a: {minimum: 1, nullable: false},
                     b: {minimum: 1, nullable: false}
                 }}}}, 'AttachmentMissing'],
-                [[{'-type': 'Test'}], {entities: {Test: {[attachmentName]: {
+                [[{[typeName]: 'Test'}], {entities: {Test: {[attachmentName]: {
                     a: {minimum: 1, nullable: false}
                 }}}}, 'AttachmentMissing'],
-                [[{'-type': 'Test', [attachmentName]: null}], {entities: {
+                [[{[typeName]: 'Test', [attachmentName]: null}], {entities: {
                     Test: {[attachmentName]: {'.*': {
                         minimum: 1, nullable: false
                     }}}
                 }}, 'AttachmentMissing'],
                 [
-                    [{'-type': 'Test', [attachmentName]: new Date()}],
+                    [{[typeName]: 'Test', [attachmentName]: new Date()}],
                     {entities: {Test: {[attachmentName]: {'.*': {}}}}},
                     'AttachmentType'
                 ],
                 [
-                    [{'-type': 'Test', [attachmentName]: {
+                    [{[typeName]: 'Test', [attachmentName]: {
                         // eslint-disable camelcase
                         a: {data: '', content_type: 'text/plain'},
                         b: {data: '', content_type: 'text/plain'}
@@ -623,16 +645,16 @@ registerTest(async function():Promise<void> {
                     'AttachmentMaximum'
                 ],
                 [
-                    [{'-type': 'Test', [attachmentName]: {}}],
+                    [{[typeName]: 'Test', [attachmentName]: {}}],
                     {entities: {Test: {[attachmentName]: {'.*': {
                         minimum: 1, nullable: false
                     }}}}}, 'AttachmentMissing'
                 ],
                 [
-                    [{'-type': 'Test', [attachmentName]: {test: {
+                    [{[typeName]: 'Test', [attachmentName]: {test: {
                         data: null
                     }}}, {
-                        '-type': 'Test',
+                        [typeName]: 'Test',
                         [attachmentName]: {test: {
                             content_type: 'text/plain', data: ''
                         }}
@@ -641,7 +663,7 @@ registerTest(async function():Promise<void> {
                     }}}}}, 'AttachmentMissing'
                 ],
                 [
-                    [{'-type': 'Test', [attachmentName]: {a: {
+                    [{[typeName]: 'Test', [attachmentName]: {a: {
                         // eslint-disable camelcase
                         data: '', content_type: 'text/plain'
                         // eslint-enable camelcase
@@ -650,7 +672,7 @@ registerTest(async function():Promise<void> {
                     'AttachmentTypeMatch'
                 ],
                 [
-                    [{'-type': 'Test', [attachmentName]: {a: {
+                    [{[typeName]: 'Test', [attachmentName]: {a: {
                         // eslint-disable camelcase
                         data: '', content_type: 'text/plain'
                         // eslint-enable camelcase
@@ -659,7 +681,7 @@ registerTest(async function():Promise<void> {
                     'AttachmentTypeMatch'
                 ],
                 [
-                    [{'-type': 'Test', [attachmentName]: {test: {
+                    [{[typeName]: 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         data: '', content_type: 'text/plain'
                         // eslint-enable camelcase
@@ -670,7 +692,7 @@ registerTest(async function():Promise<void> {
                     'AttachmentMinimum'
                 ],
                 [
-                    [{'-type': 'Test', [attachmentName]: {a: {
+                    [{[typeName]: 'Test', [attachmentName]: {a: {
                         // eslint-disable camelcase
                         data: '', content_type: 'text/plain'
                         // eslint-enable camelcase
@@ -680,7 +702,7 @@ registerTest(async function():Promise<void> {
                     }}}}}, 'AttachmentName'
                 ],
                 [
-                    [{'-type': 'Test', [attachmentName]: {
+                    [{[typeName]: 'Test', [attachmentName]: {
                         // eslint-disable camelcase
                         a: {data: '', content_type: 'text/plain'},
                         b: {data: '', content_type: 'text/plain'}
@@ -691,7 +713,7 @@ registerTest(async function():Promise<void> {
                     }}}}}, 'AttachmentName'
                 ],
                 [
-                    [{'-type': 'Test', [attachmentName]: {
+                    [{[typeName]: 'Test', [attachmentName]: {
                         // eslint-disable camelcase
                         a: {data: '', content_type: 'text/plain'},
                         b: {data: '', content_type: 'image/jpg'}
@@ -746,10 +768,12 @@ registerTest(async function():Promise<void> {
             // region allowed writes
             for (const test:Array<any> of [
                 // region general environment
-                [[{'-type': 'Test', _deleted: true}, {'-type': 'Test'}], {entities: {Test: {}}}, {
-                    fillUp: {'-type': 'Test', _deleted: true},
+                [[
+                    {[typeName]: 'Test', _deleted: true}, {[typeName]: 'Test'}
+                ], {entities: {Test: {}}}, {
+                    fillUp: {[typeName]: 'Test', _deleted: true},
                     incremental: {_deleted: true},
-                    '': {'-type': 'Test', _deleted: true}
+                    '': {[typeName]: 'Test', _deleted: true}
                 }],
                 /*
                     NOTE: Needed if we are able to validate "_users" table:
@@ -784,91 +808,105 @@ registerTest(async function():Promise<void> {
                     incremental: {[idName]: 1, [revisionName]: 1},
                     '': {[idName]: 1, [revisionName]: 1}
                 }],
-                [[{'-type': 'Test', [idName]: 1, [revisionName]: 1, a: null}, {
-                    '-type': 'Test', [idName]: 1, [revisionName]: 0, a: 'a'
+                [[{
+                    [typeName]: 'Test',
+                    [idName]: 1,
+                    [revisionName]: 1,
+                    a: null
+                }, {
+                    [typeName]: 'Test', [idName]: 1, [revisionName]: 0, a: 'a'
                 }], {entities: {Test: {a: {}}}}, {
-                    fillUp: {'-type': 'Test', [idName]: 1, [revisionName]: 1},
+                    fillUp: {
+                        [typeName]: 'Test', [idName]: 1, [revisionName]: 1
+                    },
                     incremental: {[idName]: 1, [revisionName]: 1},
-                    '': {'-type': 'Test', [idName]: 1, [revisionName]: 1}
+                    '': {[typeName]: 'Test', [idName]: 1, [revisionName]: 1}
                 }],
-                [[{'-type': 'Test', [revisionName]: 'latest', a: 'a'}, {
-                    '-type': 'Test', [revisionName]: 1
+                [[{[typeName]: 'Test', [revisionName]: 'latest', a: 'a'}, {
+                    [typeName]: 'Test', [revisionName]: 1
                 }], {entities: {Test: {a: {}}}}, {
-                    fillUp: {'-type': 'Test', [revisionName]: 1, a: 'a'},
+                    fillUp: {[typeName]: 'Test', [revisionName]: 1, a: 'a'},
                     incremental: {[revisionName]: 1, a: 'a'},
-                    '': {'-type': 'Test', [revisionName]: 1, a: 'a'}
+                    '': {[typeName]: 'Test', [revisionName]: 1, a: 'a'}
                 }],
-                [[{'-type': 'Test', [revisionName]: 'upsert', a: 'a'}, {
-                    '-type': 'Test', [revisionName]: 1
+                [[{[typeName]: 'Test', [revisionName]: 'upsert', a: 'a'}, {
+                    [typeName]: 'Test', [revisionName]: 1
                 }], {entities: {Test: {a: {}}}}, {
-                    fillUp: {'-type': 'Test', [revisionName]: 1, a: 'a'},
+                    fillUp: {[typeName]: 'Test', [revisionName]: 1, a: 'a'},
                     incremental: {[revisionName]: 1, a: 'a'},
-                    '': {'-type': 'Test', [revisionName]: 1, a: 'a'}
+                    '': {[typeName]: 'Test', [revisionName]: 1, a: 'a'}
                 }],
-                [[{'-type': 'Test', [revisionName]: 'upsert'}], {entities: {
+                [[{[typeName]: 'Test', [revisionName]: 'upsert'}], {entities: {
                     Test: {}
                 }}, {
-                    fillUp: {'-type': 'Test'},
-                    incremental: {'-type': 'Test'},
-                    '': {'-type': 'Test'}
+                    fillUp: {[typeName]: 'Test'},
+                    incremental: {[typeName]: 'Test'},
+                    '': {[typeName]: 'Test'}
                 }],
                 [[
-                    {'-type': 'Test', [revisionName]: 1, a: 'a'},
-                    {'-type': 'Test', [revisionName]: 1}
+                    {[typeName]: 'Test', [revisionName]: 1, a: 'a'},
+                    {[typeName]: 'Test', [revisionName]: 1}
                 ], {entities: {Test: {a: {}}}}, {
-                    fillUp: {'-type': 'Test', [revisionName]: 1, a: 'a'},
+                    fillUp: {[typeName]: 'Test', [revisionName]: 1, a: 'a'},
                     incremental: {[revisionName]: 1, a: 'a'},
-                    '': {'-type': 'Test', [revisionName]: 1, a: 'a'}
+                    '': {[typeName]: 'Test', [revisionName]: 1, a: 'a'}
                 }],
                 // endregion
                 // region model
-                [[{'-type': 'Test'}], {entities: {Test: {}}}, {
-                    fillUp: {'-type': 'Test'},
-                    incremental: {'-type': 'Test'},
-                    '': {'-type': 'Test'}
+                [[{[typeName]: 'Test'}], {entities: {Test: {}}}, {
+                    fillUp: {[typeName]: 'Test'},
+                    incremental: {[typeName]: 'Test'},
+                    '': {[typeName]: 'Test'}
                 }],
-                [[{'-type': 'Test'}], {entities: {Test: {}}}, {
-                    fillUp: {'-type': 'Test'},
-                    incremental: {'-type': 'Test'},
-                    '': {'-type': 'Test'}
+                [[{[typeName]: 'Test'}], {entities: {Test: {}}}, {
+                    fillUp: {[typeName]: 'Test'},
+                    incremental: {[typeName]: 'Test'},
+                    '': {[typeName]: 'Test'}
                 }],
-                [[{'-type': 'Test'}], {entities: {Test: {class: {}}}}, {
-                    fillUp: {'-type': 'Test'},
-                    incremental: {'-type': 'Test'},
-                    '': {'-type': 'Test'}
+                [[{[typeName]: 'Test'}], {entities: {Test: {class: {}}}}, {
+                    fillUp: {[typeName]: 'Test'},
+                    incremental: {[typeName]: 'Test'},
+                    '': {[typeName]: 'Test'}
                 }],
-                [[{'-type': 'Test', b: 'b'}, {'-type': 'Test', a: '2'}], {
+                [[
+                    {[typeName]: 'Test', b: 'b'},
+                    {[typeName]: 'Test', a: '2'}
+                ], {
                     entities: {Test: {a: {}, b: {}}}
                 }, {
-                    fillUp: {'-type': 'Test', a: '2', b: 'b'},
+                    fillUp: {[typeName]: 'Test', a: '2', b: 'b'},
                     incremental: {b: 'b'},
-                    '': {'-type': 'Test', b: 'b'}
+                    '': {[typeName]: 'Test', b: 'b'}
                 }],
-                [[{'-type': 'Test', a: '3'}, {'-type': 'Test', a: '2'}], {
-                    entities: {Test: {a: {}}}
-                }, {
-                    fillUp: {a: '3', '-type': 'Test'},
+                [[
+                    {[typeName]: 'Test', a: '3'},
+                    {[typeName]: 'Test', a: '2'}
+                ], {entities: {Test: {a: {}}}}, {
+                    fillUp: {a: '3', [typeName]: 'Test'},
                     incremental: {a: '3'},
-                    '': {'-type': 'Test', a: '3'}
+                    '': {[typeName]: 'Test', a: '3'}
                 }],
-                [[{'-type': 'Test', a: {'-type': '_test'}}], {
+                [[{[typeName]: 'Test', a: {[typeName]: '_test'}}], {
                     entities: {Test: {a: {type: '_test'}}, _test: {}}
                 }, {
-                    fillUp: {'-type': 'Test', a: {'-type': '_test'}},
-                    incremental: {'-type': 'Test', a: {'-type': '_test'}},
-                    '': {'-type': 'Test', a: {'-type': '_test'}}
+                    fillUp: {[typeName]: 'Test', a: {[typeName]: '_test'}},
+                    incremental: {
+                        [typeName]: 'Test',
+                        a: {[typeName]: '_test'}
+                    },
+                    '': {[typeName]: 'Test', a: {[typeName]: '_test'}}
                 }],
                 // endregion
                 // region hooks
                 // / region on create
-                [[{'-type': 'Test', a: ''}], {entities: {Test: {a: {
+                [[{[typeName]: 'Test', a: ''}], {entities: {Test: {a: {
                     onCreateExpression: `'2'`
                 }}}}, {
-                    fillUp: {'-type': 'Test', a: '2'},
-                    incremental: {'-type': 'Test', a: '2'},
-                    '': {'-type': 'Test', a: '2'}
+                    fillUp: {[typeName]: 'Test', a: '2'},
+                    incremental: {[typeName]: 'Test', a: '2'},
+                    '': {[typeName]: 'Test', a: '2'}
                 }],
-                [[{'-type': 'Test', [attachmentName]: {test: {
+                [[{[typeName]: 'Test', [attachmentName]: {test: {
                     // eslint-disable camelcase
                     data: 'payload', content_type: 'text/plain'
                     // eslint-enable camelcase
@@ -877,34 +915,36 @@ registerTest(async function():Promise<void> {
                         `(newDocument[name].data += ' footer') && ` +
                         'newDocument[name]'
                 }}}}}, {
-                    fillUp: {'-type': 'Test', [attachmentName]: {test: {
+                    fillUp: {[typeName]: 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         data: 'payload footer', content_type: 'text/plain'
                         // eslint-enable camelcase
                     }}},
-                    incremental: {'-type': 'Test', [attachmentName]: {test: {
-                        // eslint-disable camelcase
-                        data: 'payload footer', content_type: 'text/plain'
-                        // eslint-enable camelcase
-                    }}},
-                    '': {'-type': 'Test', [attachmentName]: {test: {
+                    incremental: {[typeName]: 'Test', [attachmentName]: {
+                        test: {
+                            // eslint-disable camelcase
+                            data: 'payload footer', content_type: 'text/plain'
+                            // eslint-enable camelcase
+                        }
+                    }},
+                    '': {[typeName]: 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         data: 'payload footer', content_type: 'text/plain'
                         // eslint-enable camelcase
                     }}}
                 }],
-                [[{'-type': 'Test', [attachmentName]: {test: {
+                [[{[typeName]: 'Test', [attachmentName]: {test: {
                     // eslint-disable camelcase
                     data: 'payload', content_type: 'text/plain'
                     // eslint-enable camelcase
-                }}}, {'-type': 'Test'}], {entities: {Test: {[attachmentName]: {
-                    '.*': {
+                }}}, {[typeName]: 'Test'}], {entities: {Test: {
+                    [attachmentName]: {'.*': {
                         onCreateExpression:
                             `(newDocument[name].data += ' footer') && ` +
                             'newDocument[name]'
-                    }
-                }}}}, {
-                    fillUp: {'-type': 'Test', [attachmentName]: {test: {
+                    }}
+                }}}, {
+                    fillUp: {[typeName]: 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         data: 'payload', content_type: 'text/plain'
                         // eslint-enable camelcase
@@ -914,58 +954,58 @@ registerTest(async function():Promise<void> {
                         data: 'payload', content_type: 'text/plain'
                         // eslint-enable camelcase
                     }}},
-                    '': {'-type': 'Test', [attachmentName]: {test: {
+                    '': {[typeName]: 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         data: 'payload', content_type: 'text/plain'
                         // eslint-enable camelcase
                     }}}
                 }],
-                [[{'-type': 'Test', a: ''}], {entities: {Test: {a: {
+                [[{[typeName]: 'Test', a: ''}], {entities: {Test: {a: {
                     onCreateExecution: `return '2'`
                 }}}}, {
-                    fillUp: {'-type': 'Test', a: '2'},
-                    incremental: {'-type': 'Test', a: '2'},
-                    '': {'-type': 'Test', a: '2'}
+                    fillUp: {[typeName]: 'Test', a: '2'},
+                    incremental: {[typeName]: 'Test', a: '2'},
+                    '': {[typeName]: 'Test', a: '2'}
                 }],
                 [
-                    [{'-type': 'Test', a: '', b: 'b'},
-                    {'-type': 'Test', a: ''}
+                    [{[typeName]: 'Test', a: '', b: 'b'},
+                    {[typeName]: 'Test', a: ''}
                 ], {entities: {Test: {
                     a: {onCreateExecution: `return '2'`},
                     b: {}
                 }}}, {
-                    fillUp: {'-type': 'Test', a: '', b: 'b'},
+                    fillUp: {[typeName]: 'Test', a: '', b: 'b'},
                     incremental: {b: 'b'},
-                    '': {'-type': 'Test', a: '', b: 'b'}
+                    '': {[typeName]: 'Test', a: '', b: 'b'}
                 }],
                 // / endregion
                 // / region on update
-                [[{'-type': 'Test', a: ''}], {entities: {Test: {a: {
+                [[{[typeName]: 'Test', a: ''}], {entities: {Test: {a: {
                     onUpdateExpression: `'2'`
                 }}}}, {
-                    fillUp: {'-type': 'Test', a: '2'},
-                    incremental: {'-type': 'Test', a: '2'},
-                    '': {'-type': 'Test', a: '2'}
+                    fillUp: {[typeName]: 'Test', a: '2'},
+                    incremental: {[typeName]: 'Test', a: '2'},
+                    '': {[typeName]: 'Test', a: '2'}
                 }],
-                [[{'-type': 'Test', a: ''}], {entities: {Test: {a: {
+                [[{[typeName]: 'Test', a: ''}], {entities: {Test: {a: {
                     onUpdateExecution: `return '2'`
                 }}}}, {
-                    fillUp: {'-type': 'Test', a: '2'},
-                    incremental: {'-type': 'Test', a: '2'},
-                    '': {'-type': 'Test', a: '2'}
+                    fillUp: {[typeName]: 'Test', a: '2'},
+                    incremental: {[typeName]: 'Test', a: '2'},
+                    '': {[typeName]: 'Test', a: '2'}
                 }],
                 [[
-                    {'-type': 'Test', a: '1', b: ''},
-                    {'-type': 'Test', a: '2'}
+                    {[typeName]: 'Test', a: '1', b: ''},
+                    {[typeName]: 'Test', a: '2'}
                 ], {entities: {Test: {
                     a: {onUpdateExpression: `'2'`},
                     b: {}
                 }}}, {
-                    fillUp: {'-type': 'Test', a: '2', b: ''},
+                    fillUp: {[typeName]: 'Test', a: '2', b: ''},
                     incremental: {b: ''},
-                    '': {'-type': 'Test', a: '2', b: ''}
+                    '': {[typeName]: 'Test', a: '2', b: ''}
                 }],
-                [[{'-type': 'Test', [attachmentName]: {test: {
+                [[{[typeName]: 'Test', [attachmentName]: {test: {
                     // eslint-disable camelcase
                     data: 'payload', content_type: 'text/plain'
                     // eslint-enable camelcase
@@ -974,34 +1014,34 @@ registerTest(async function():Promise<void> {
                         `(newDocument[name].data += ' footer') && ` +
                         'newDocument[name]'
                 }}}}}, {
-                    fillUp: {'-type': 'Test', [attachmentName]: {test: {
+                    fillUp: {[typeName]: 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         data: 'payload footer', content_type: 'text/plain'
                         // eslint-enable camelcase
                     }}},
-                    incremental: {'-type': 'Test', [attachmentName]: {test: {
+                    incremental: {[typeName]: 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         data: 'payload footer', content_type: 'text/plain'
                         // eslint-enable camelcase
                     }}},
-                    '': {'-type': 'Test', [attachmentName]: {test: {
+                    '': {[typeName]: 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         data: 'payload footer', content_type: 'text/plain'
                         // eslint-enable camelcase
                     }}}
                 }],
-                [[{'-type': 'Test', [attachmentName]: {test: {
+                [[{[typeName]: 'Test', [attachmentName]: {test: {
                     // eslint-disable camelcase
                     data: 'payload', content_type: 'text/plain'
                     // eslint-enable camelcase
-                }}}, {'-type': 'Test'}], {entities: {Test: {[attachmentName]: {
+                }}}, {[typeName]: 'Test'}], {entities: {Test: {[attachmentName]: {
                     '.*': {
                         onUpdateExpression:
                             `(newDocument[name].data += ' footer') && ` +
                             'newDocument[name]'
                     }
                 }}}}, {
-                    fillUp: {'-type': 'Test', [attachmentName]: {test: {
+                    fillUp: {[typeName]: 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         data: 'payload footer', content_type: 'text/plain'
                         // eslint-enable camelcase
@@ -1011,92 +1051,96 @@ registerTest(async function():Promise<void> {
                         data: 'payload footer', content_type: 'text/plain'
                         // eslint-enable camelcase
                     }}},
-                    '': {'-type': 'Test', [attachmentName]: {test: {
+                    '': {[typeName]: 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         data: 'payload footer', content_type: 'text/plain'
                         // eslint-enable camelcase
                     }}}
                 }],
-                [[{'-type': 'Test', a: ''}, {'-type': 'Test'}], {entities: {
-                    Test: {
-                        [attachmentName]: {'.*': {onUpdateExpression:
-                            `(newDocument[name].data += ' footer') && ` +
-                            'newDocument[name]'
-                        }},
-                        a: {}
-                    }
-                }}, {
-                    fillUp: {'-type': 'Test', a: ''},
+                [[
+                    {[typeName]: 'Test', a: ''},
+                    {[typeName]: 'Test'}
+                ], {entities: {Test: {
+                    [attachmentName]: {'.*': {onUpdateExpression:
+                        `(newDocument[name].data += ' footer') && ` +
+                        'newDocument[name]'
+                    }},
+                    a: {}
+                }}}, {
+                    fillUp: {[typeName]: 'Test', a: ''},
                     incremental: {a: ''},
-                    '': {'-type': 'Test', a: ''}
+                    '': {[typeName]: 'Test', a: ''}
                 }],
                 // / endregion
                 // endregion
                 // region property writable/mutable
                 [[
-                    {'-type': 'Test', a: 'b', b: ''},
-                    {'-type': 'Test', a: 'b'}
+                    {[typeName]: 'Test', a: 'b', b: ''},
+                    {[typeName]: 'Test', a: 'b'}
                 ], {entities: {Test: {a: {writable: false}, b: {}}}}, {
-                    fillUp: {'-type': 'Test', a: 'b', b: ''},
+                    fillUp: {[typeName]: 'Test', a: 'b', b: ''},
                     incremental: {b: ''},
-                    '': {'-type': 'Test', a: 'b', b: ''}
+                    '': {[typeName]: 'Test', a: 'b', b: ''}
                 }],
-                [[{'-type': 'Test', b: ''}, {'-type': 'Test'}], {entities: {
-                    Test: {
-                        a: {writable: false},
-                        b: {}
-                    }
-                }}, {
-                    fillUp: {'-type': 'Test', b: ''},
+                [[
+                    {[typeName]: 'Test', b: ''},
+                    {[typeName]: 'Test'}
+                ], {entities: {Test: {
+                    a: {writable: false},
+                    b: {}
+                }}}, {
+                    fillUp: {[typeName]: 'Test', b: ''},
                     incremental: {b: ''},
-                    '': {'-type': 'Test', b: ''}
+                    '': {[typeName]: 'Test', b: ''}
                 }],
                 [
-                    [{'-type': 'Test', a: '2'}, {'-type': 'Test'}],
+                    [{[typeName]: 'Test', a: '2'}, {[typeName]: 'Test'}],
                     {entities: {Test: {a: {mutable: false}}}}, {
-                        fillUp: {'-type': 'Test', a: '2'},
+                        fillUp: {[typeName]: 'Test', a: '2'},
                         incremental: {a: '2'},
-                        '': {'-type': 'Test', a: '2'}
+                        '': {[typeName]: 'Test', a: '2'}
                     }
                 ],
                 // endregion
                 // region property existents
-                [[{'-type': 'Test', a: 2}], {entities: {Test: {a: {
+                [[{[typeName]: 'Test', a: 2}], {entities: {Test: {a: {
                     type: 'number'
                 }}}}, {
-                    fillUp: {'-type': 'Test', a: 2},
-                    incremental: {'-type': 'Test', a: 2},
-                    '': {'-type': 'Test', a: 2}
+                    fillUp: {[typeName]: 'Test', a: 2},
+                    incremental: {[typeName]: 'Test', a: 2},
+                    '': {[typeName]: 'Test', a: 2}
                 }],
-                [[{'-type': 'Test', a: null}], {entities: {Test: {a: {}}}}, {
-                    fillUp: {'-type': 'Test'},
-                    incremental: {'-type': 'Test'},
-                    '': {'-type': 'Test'}
+                [[{[typeName]: 'Test', a: null}], {
+                    entities: {Test: {a: {}}}
+                }, {
+                    fillUp: {[typeName]: 'Test'},
+                    incremental: {[typeName]: 'Test'},
+                    '': {[typeName]: 'Test'}
                 }],
-                [[{'-type': 'Test', a: 'a'}], {entities: {Test: {a: {
+                [[{[typeName]: 'Test', a: 'a'}], {entities: {Test: {a: {
                     nullable: false
                 }}}}, {
-                    fillUp: {'-type': 'Test', a: 'a'},
-                    incremental: {'-type': 'Test', a: 'a'},
-                    '': {'-type': 'Test', a: 'a'}
+                    fillUp: {[typeName]: 'Test', a: 'a'},
+                    incremental: {[typeName]: 'Test', a: 'a'},
+                    '': {[typeName]: 'Test', a: 'a'}
                 }],
                 /* TODO
-                [[{'-type': 'Test'}, {'-type': 'Test', a: 'a'}], {entities: {
+                [[{[typeName]: 'Test'}, {[typeName]: 'Test', a: 'a'}], {entities: {
                     Test: {a: {nullable: false}}
                 }}, {
-                    fillUp: {'-type': 'Test', a: 'a'},
+                    fillUp: {[typeName]: 'Test', a: 'a'},
                     incremental: {},
-                    '': {'-type': 'Test'}
+                    '': {[typeName]: 'Test'}
                 }],*/
-                [[{'-type': 'Test'}], {entities: {Test: {a: {
+                [[{[typeName]: 'Test'}], {entities: {Test: {a: {
                     default: '2',
                     nullable: false
                 }}}}, {
-                    fillUp: {'-type': 'Test', a: '2'},
-                    incremental: {'-type': 'Test', a: '2'},
-                    '': {'-type': 'Test', a: '2'}
+                    fillUp: {[typeName]: 'Test', a: '2'},
+                    incremental: {[typeName]: 'Test', a: '2'},
+                    '': {[typeName]: 'Test', a: '2'}
                 }],
-                [[{'-type': 'Test'}], {entities: {Test: {[attachmentName]: {
+                [[{[typeName]: 'Test'}], {entities: {Test: {[attachmentName]: {
                     '.*': {
                         default: {test: {
                             // eslint-disable camelcase
@@ -1106,17 +1150,19 @@ registerTest(async function():Promise<void> {
                         nullable: false
                     }
                 }}}}, {
-                    fillUp: {'-type': 'Test', [attachmentName]: {test: {
+                    fillUp: {[typeName]: 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         data: '', content_type: 'text/plain'
                         // eslint-enable camelcase
                     }}},
-                    incremental: {'-type': 'Test', [attachmentName]: {test: {
-                        // eslint-disable camelcase
-                        data: '', content_type: 'text/plain'
-                        // eslint-enable camelcase
-                    }}},
-                    '': {'-type': 'Test', [attachmentName]: {test: {
+                    incremental: {[typeName]: 'Test', [attachmentName]: {
+                        test: {
+                            // eslint-disable camelcase
+                            data: '', content_type: 'text/plain'
+                            // eslint-enable camelcase
+                        }
+                    }},
+                    '': {[typeName]: 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         data: '', content_type: 'text/plain'
                         // eslint-enable camelcase
@@ -1126,160 +1172,160 @@ registerTest(async function():Promise<void> {
                 // region property type
                 [
                     [
-                        {'-type': 'Test', a: '2 ', b: ''},
-                        {'-type': 'Test', a: '2'}
+                        {[typeName]: 'Test', a: '2 ', b: ''},
+                        {[typeName]: 'Test', a: '2'}
                     ],
                     {entities: {Test: {a: {}, b: {}}}}, {
-                        fillUp: {'-type': 'Test', a: '2', b: ''},
+                        fillUp: {[typeName]: 'Test', a: '2', b: ''},
                         incremental: {b: ''},
-                        '': {'-type': 'Test', a: '2', b: ''}
+                        '': {[typeName]: 'Test', a: '2', b: ''}
                     }
                 ],
+                [[
+                    {[typeName]: 'Test', a: '2 '},
+                    {[typeName]: 'Test', a: '2'}
+                ], {entities: {Test: {a: {trim: false}}}}, {
+                    fillUp: {[typeName]: 'Test', a: '2 '},
+                    incremental: {a: '2 '},
+                    '': {[typeName]: 'Test', a: '2 '}
+                }],
                 [
-                    [{'-type': 'Test', a: '2 '}, {'-type': 'Test', a: '2'}],
-                    {entities: {Test: {a: {trim: false}}}}, {
-                        fillUp: {'-type': 'Test', a: '2 '},
-                        incremental: {a: '2 '},
-                        '': {'-type': 'Test', a: '2 '}
-                    }
-                ],
-                [
-                    [{'-type': 'Test', a: 3}, {'-type': 'Test', a: 2}],
+                    [{[typeName]: 'Test', a: 3}, {[typeName]: 'Test', a: 2}],
                     {entities: {Test: {a: {type: 'integer'}}}}, {
-                        fillUp: {'-type': 'Test', a: 3},
+                        fillUp: {[typeName]: 'Test', a: 3},
                         incremental: {a: 3},
-                        '': {'-type': 'Test', a: 3}
+                        '': {[typeName]: 'Test', a: 3}
                     }
                 ],
                 [
-                    [{'-type': 'Test', a: 2.2}, {'-type': 'Test', a: 2}],
+                    [{[typeName]: 'Test', a: 2.2}, {[typeName]: 'Test', a: 2}],
                     {entities: {Test: {a: {type: 'number'}}}}, {
-                        fillUp: {'-type': 'Test', a: 2.2},
+                        fillUp: {[typeName]: 'Test', a: 2.2},
                         incremental: {a: 2.2},
-                        '': {'-type': 'Test', a: 2.2}
+                        '': {[typeName]: 'Test', a: 2.2}
                     }
                 ],
-                [
-                    [{'-type': 'Test', a: true, b: ''}, {'-type': 'Test', a: true}],
-                    {entities: {Test: {a: {type: 'boolean'}, b: {}}}}, {
-                        fillUp: {'-type': 'Test', a: true, b: ''},
-                        incremental: {b: ''},
-                        '': {'-type': 'Test', a: true, b: ''}
-                    }
-                ],
-                [
-                    [{'-type': 'Test', a: 1, b: ''}, {'-type': 'Test', a: 1}],
-                    {entities: {Test: {a: {type: 'DateTime'}, b: {}}}}, {
-                        fillUp: {'-type': 'Test', a: 1, b: ''},
-                        incremental: {b: ''},
-                        '': {'-type': 'Test', a: 1, b: ''}
-                    }
-                ],
+                [[
+                    {[typeName]: 'Test', a: true, b: ''},
+                    {[typeName]: 'Test', a: true}
+                ], {entities: {Test: {a: {type: 'boolean'}, b: {}}}}, {
+                    fillUp: {[typeName]: 'Test', a: true, b: ''},
+                    incremental: {b: ''},
+                    '': {[typeName]: 'Test', a: true, b: ''}
+                }],
+                [[
+                    {[typeName]: 'Test', a: 1, b: ''},
+                    {[typeName]: 'Test', a: 1}
+                ], {entities: {Test: {a: {type: 'DateTime'}, b: {}}}}, {
+                    fillUp: {[typeName]: 'Test', a: 1, b: ''},
+                    incremental: {b: ''},
+                    '': {[typeName]: 'Test', a: 1, b: ''}
+                }],
                 [
                     [{
-                        '-type': 'Test',
+                        [typeName]: 'Test',
                         a: new Date(1970, 0, 1, 0, -1 * (
                             new Date(1970, 0, 1)
                         ).getTimezoneOffset()),
                         b: ''
-                    }, {'-type': 'Test', a: new Date(
+                    }, {[typeName]: 'Test', a: new Date(
                         1970, 0, 1, 0, -1 * (new Date(
                             1970, 0, 1
                         )).getTimezoneOffset()
                     )}],
                     {entities: {Test: {a: {type: 'DateTime'}, b: {}}}}, {
-                        fillUp: {'-type': 'Test', a: 0, b: ''},
+                        fillUp: {[typeName]: 'Test', a: 0, b: ''},
                         incremental: {b: ''},
-                        '': {'-type': 'Test', a: 0, b: ''}
+                        '': {[typeName]: 'Test', a: 0, b: ''}
                     }
                 ],
                 [
                     [{
-                        '-type': 'Test',
+                        [typeName]: 'Test',
                         a: (new Date(1970, 0, 1, 0, -1 * (new Date(
                             1970, 0, 1
                         )).getTimezoneOffset())).toUTCString(),
                         b: ''
                     }, {
-                        '-type': 'Test',
+                        [typeName]: 'Test',
                         a: (new Date(1970, 0, 1, 0, -1 * (new Date(
                             1970, 0, 1
                         )).getTimezoneOffset())).toUTCString()
                     }],
                     {entities: {Test: {a: {type: 'DateTime'}, b: {}}}}, {
-                        fillUp: {'-type': 'Test', a: 0, b: ''},
+                        fillUp: {[typeName]: 'Test', a: 0, b: ''},
                         incremental: {b: ''},
-                        '': {'-type': 'Test', a: 0, b: ''}
+                        '': {[typeName]: 'Test', a: 0, b: ''}
                     }
                 ],
                 [
                     [{
-                        '-type': 'Test',
+                        [typeName]: 'Test',
                         a: new Date(1970, 0, 1, 0, -1 * (new Date(
                             1970, 0, 1
                         )).getTimezoneOffset()).toLocaleString(),
                         b: ''
-                    }, {'-type': 'Test', a: new Date(1970, 0, 1, 0, -1 * (
+                    }, {[typeName]: 'Test', a: new Date(1970, 0, 1, 0, -1 * (
                         new Date(1970, 0, 1)
                     ).getTimezoneOffset()).toLocaleString()}],
                     {entities: {Test: {a: {type: 'DateTime'}, b: {}}}}, {
-                        fillUp: {'-type': 'Test', a: 0, b: ''},
+                        fillUp: {[typeName]: 'Test', a: 0, b: ''},
                         incremental: {b: ''},
-                        '': {'-type': 'Test', a: 0, b: ''}
+                        '': {[typeName]: 'Test', a: 0, b: ''}
                     }
                 ],
                 [
                     [{
-                        '-type': 'Test',
+                        [typeName]: 'Test',
                         a: new Date(1970, 0, 1, 0, -1 * (new Date(
                             1970, 0, 1
                         )).getTimezoneOffset(), 0, 1),
                         b: ''
                     },
-                    {'-type': 'Test', a: new Date(1970, 0, 1, 0, -1 * (
+                    {[typeName]: 'Test', a: new Date(1970, 0, 1, 0, -1 * (
                         new Date(1970, 0, 1)
                     ).getTimezoneOffset(), 0, 1)}],
                     {entities: {Test: {a: {type: 'DateTime'}, b: {}}}}, {
-                        fillUp: {'-type': 'Test', a: 1, b: ''},
+                        fillUp: {[typeName]: 'Test', a: 1, b: ''},
                         incremental: {b: ''},
-                        '': {'-type': 'Test', a: 1, b: ''}
+                        '': {[typeName]: 'Test', a: 1, b: ''}
                     }
                 ],
                 [
                     [{
-                        '-type': 'Test',
+                        [typeName]: 'Test',
                         a: new Date(1970, 0, 1, 0, -1 * (new Date(
                             1970, 0, 1
                         )).getTimezoneOffset(), 2).toUTCString(),
                         b: ''
-                    }, {'-type': 'Test', a: new Date(1970, 0, 1, 0, -1 * (
+                    }, {[typeName]: 'Test', a: new Date(1970, 0, 1, 0, -1 * (
                         new Date(1970, 0, 1)
                     ).getTimezoneOffset(), 2).toUTCString()}],
                     {entities: {Test: {a: {type: 'DateTime'}, b: {}}}}, {
-                        fillUp: {'-type': 'Test', a: 2 * 1000, b: ''},
+                        fillUp: {[typeName]: 'Test', a: 2 * 1000, b: ''},
                         incremental: {b: ''},
-                        '': {'-type': 'Test', a: 2 * 1000, b: ''}
+                        '': {[typeName]: 'Test', a: 2 * 1000, b: ''}
                     }
                 ],
                 [
                     [{
-                        '-type': 'Test',
+                        [typeName]: 'Test',
                         a: new Date(1970, 0, 1, 5, -1 * (new Date(
                             1970, 0, 1
                         )).getTimezoneOffset(), 2).toISOString(),
                         b: ''
-                    }, {'-type': 'Test', a: new Date(1970, 0, 1, 5, -1 * (
+                    }, {[typeName]: 'Test', a: new Date(1970, 0, 1, 5, -1 * (
                         new Date(1970, 0, 1)
                     ).getTimezoneOffset(), 2).toISOString()}],
                     {entities: {Test: {a: {type: 'DateTime'}, b: {}}}}, {
                         fillUp: {
-                            '-type': 'Test',
+                            [typeName]: 'Test',
                             a: 5 * 60 ** 2 * 1000 + 2 * 1000,
                             b: ''
                         },
                         incremental: {b: ''},
                         '': {
-                            '-type': 'Test',
+                            [typeName]: 'Test',
                             a: 5 * 60 ** 2 * 1000 + 2 * 1000,
                             b: ''
                         }
@@ -1288,385 +1334,402 @@ registerTest(async function():Promise<void> {
                 // / region array
                 [
                     [
-                        {'-type': 'Test', a: ['2'], b: ''},
-                        {'-type': 'Test', a: ['2']}
+                        {[typeName]: 'Test', a: ['2'], b: ''},
+                        {[typeName]: 'Test', a: ['2']}
                     ],
                     {entities: {Test: {a: {type: 'string[]'}, b: {}}}}, {
-                        fillUp: {'-type': 'Test', a: ['2'], b: ''},
+                        fillUp: {[typeName]: 'Test', a: ['2'], b: ''},
                         incremental: {b: ''},
-                        '': {'-type': 'Test', a: ['2'], b: ''}
+                        '': {[typeName]: 'Test', a: ['2'], b: ''}
                     }
                 ],
                 [
-                    [{'-type': 'Test', a: ['2']}, {'-type': 'Test'}],
+                    [{[typeName]: 'Test', a: ['2']}, {[typeName]: 'Test'}],
                     {entities: {Test: {a: {type: 'string[]'}}}}, {
-                        fillUp: {'-type': 'Test', a: ['2']},
+                        fillUp: {[typeName]: 'Test', a: ['2']},
                         incremental: {a: ['2']},
-                        '': {'-type': 'Test', a: ['2']}
+                        '': {[typeName]: 'Test', a: ['2']}
                     }
                 ],
+                [[
+                    {[typeName]: 'Test', a: null, b: ''},
+                    {[typeName]: 'Test'}
+                ], {entities: {Test: {a: {type: 'string[]'}, b: {}}}}, {
+                    fillUp: {[typeName]: 'Test', b: ''},
+                    incremental: {b: ''},
+                    '': {[typeName]: 'Test', b: ''}
+                }],
                 [
-                    [{'-type': 'Test', a: null, b: ''}, {'-type': 'Test'}],
-                    {entities: {Test: {a: {type: 'string[]'}, b: {}}}}, {
-                        fillUp: {'-type': 'Test', b: ''},
-                        incremental: {b: ''},
-                        '': {'-type': 'Test', b: ''}
-                    }
-                ],
-                [
-                    [{'-type': 'Test', a: [2]}, {'-type': 'Test'}],
+                    [{[typeName]: 'Test', a: [2]}, {[typeName]: 'Test'}],
                     {entities: {Test: {a: {type: 'integer[]'}}}}, {
-                        fillUp: {'-type': 'Test', a: [2]},
+                        fillUp: {[typeName]: 'Test', a: [2]},
                         incremental: {a: [2]},
-                        '': {'-type': 'Test', a: [2]}
+                        '': {[typeName]: 'Test', a: [2]}
                     }
                 ],
                 [
-                    [{'-type': 'Test', a: [2.3]}, {'-type': 'Test'}],
+                    [{[typeName]: 'Test', a: [2.3]}, {[typeName]: 'Test'}],
                     {entities: {Test: {a: {type: 'number[]'}}}}, {
-                        fillUp: {'-type': 'Test', a: [2.3]},
+                        fillUp: {[typeName]: 'Test', a: [2.3]},
                         incremental: {a: [2.3]},
-                        '': {'-type': 'Test', a: [2.3]}
+                        '': {[typeName]: 'Test', a: [2.3]}
                     }
                 ],
                 [
-                    [{'-type': 'Test', a: [true]}, {'-type': 'Test'}],
+                    [{[typeName]: 'Test', a: [true]}, {[typeName]: 'Test'}],
                     {entities: {Test: {a: {type: 'boolean[]'}}}}, {
-                        fillUp: {'-type': 'Test', a: [true]},
+                        fillUp: {[typeName]: 'Test', a: [true]},
                         incremental: {a: [true]},
-                        '': {'-type': 'Test', a: [true]}
+                        '': {[typeName]: 'Test', a: [true]}
                     }
                 ],
                 [
-                    [{'-type': 'Test', a: [1]}, {'-type': 'Test'}],
+                    [{[typeName]: 'Test', a: [1]}, {[typeName]: 'Test'}],
                     {entities: {Test: {a: {type: 'DateTime[]'}}}}, {
-                        fillUp: {'-type': 'Test', a: [1]},
+                        fillUp: {[typeName]: 'Test', a: [1]},
                         incremental: {a: [1]},
-                        '': {'-type': 'Test', a: [1]}
+                        '': {[typeName]: 'Test', a: [1]}
                     }
                 ],
                 [
-                    [{'-type': 'Test', a: []}, {'-type': 'Test'}],
+                    [{[typeName]: 'Test', a: []}, {[typeName]: 'Test'}],
                     {entities: {Test: {a: {type: 'DateTime[]'}}}}, {
-                        fillUp: {'-type': 'Test', a: []},
+                        fillUp: {[typeName]: 'Test', a: []},
                         incremental: {a: []},
-                        '': {'-type': 'Test', a: []}
+                        '': {[typeName]: 'Test', a: []}
                     }
                 ],
                 [
-                    [{'-type': 'Test', a: [2]}, {'-type': 'Test'}],
+                    [{[typeName]: 'Test', a: [2]}, {[typeName]: 'Test'}],
                     {entities: {Test: {a: {
                         type: 'DateTime[]', mutable: false
                     }}}}, {
-                        fillUp: {'-type': 'Test', a: [2]},
+                        fillUp: {[typeName]: 'Test', a: [2]},
                         incremental: {a: [2]},
-                        '': {'-type': 'Test', a: [2]}
+                        '': {[typeName]: 'Test', a: [2]}
                     }
                 ],
+                [[
+                    {[typeName]: 'Test', a: [2, 1.1]},
+                    {[typeName]: 'Test', a: [2]}
+                ], {entities: {Test: {a: {type: 'number[]'}}}}, {
+                    fillUp: {[typeName]: 'Test', a: [2, 1.1]},
+                    incremental: {a: [2, 1.1]},
+                    '': {[typeName]: 'Test', a: [2, 1.1]}
+                }],
                 [
-                    [{'-type': 'Test', a: [2, 1.1]}, {'-type': 'Test', a: [2]}],
-                    {entities: {Test: {a: {type: 'number[]'}}}}, {
-                        fillUp: {'-type': 'Test', a: [2, 1.1]},
-                        incremental: {a: [2, 1.1]},
-                        '': {'-type': 'Test', a: [2, 1.1]}
-                    }
-                ],
-                [
-                    [{'-type': 'Test', a: [2, 1]}], {entities: {Test: {a: {
+                    [{[typeName]: 'Test', a: [2, 1]}], {entities: {Test: {a: {
                         type: 'integer[]', minimumLength: 1, maximumLength: 2
                     }}}}, {
-                        fillUp: {'-type': 'Test', a: [2, 1]},
-                        incremental: {'-type': 'Test', a: [2, 1]},
-                        '': {'-type': 'Test', a: [2, 1]}
+                        fillUp: {[typeName]: 'Test', a: [2, 1]},
+                        incremental: {[typeName]: 'Test', a: [2, 1]},
+                        '': {[typeName]: 'Test', a: [2, 1]}
                     }
                 ],
                 [
-                    [{'-type': 'Test', a: [2, 1]}], {entities: {Test: {a: {
+                    [{[typeName]: 'Test', a: [2, 1]}], {entities: {Test: {a: {
                         type: 'integer[]', maximumLength: Infinity,
                         minimumLength: 0
                     }}}}, {
-                        fillUp: {'-type': 'Test', a: [2, 1]},
-                        incremental: {'-type': 'Test', a: [2, 1]},
-                        '': {'-type': 'Test', a: [2, 1]}
+                        fillUp: {[typeName]: 'Test', a: [2, 1]},
+                        incremental: {[typeName]: 'Test', a: [2, 1]},
+                        '': {[typeName]: 'Test', a: [2, 1]}
                     }
                 ],
                 [
-                    [{'-type': 'Test', a: [2]}], {entities: {Test: {a: {
+                    [{[typeName]: 'Test', a: [2]}], {entities: {Test: {a: {
                         type: 'integer[]', maximum: 2, maximumLength: 1
                     }}}}, {
-                        fillUp: {'-type': 'Test', a: [2]},
-                        incremental: {'-type': 'Test', a: [2]},
-                        '': {'-type': 'Test', a: [2]}
+                        fillUp: {[typeName]: 'Test', a: [2]},
+                        incremental: {[typeName]: 'Test', a: [2]},
+                        '': {[typeName]: 'Test', a: [2]}
                     }
                 ],
                 [
-                    [{'-type': 'Test', a: []}], {entities: {Test: {a: {
+                    [{[typeName]: 'Test', a: []}], {entities: {Test: {a: {
                         type: 'integer[]', maximum: 2, maximumLength: 0
                     }}}}, {
-                        fillUp: {'-type': 'Test', a: []},
-                        incremental: {'-type': 'Test', a: []},
-                        '': {'-type': 'Test', a: []}
+                        fillUp: {[typeName]: 'Test', a: []},
+                        incremental: {[typeName]: 'Test', a: []},
+                        '': {[typeName]: 'Test', a: []}
                     }
                 ],
                 [
-                    [{'-type': 'Test', a: [2]}], {entities: {Test: {a: {
+                    [{[typeName]: 'Test', a: [2]}], {entities: {Test: {a: {
                         type: 'integer[]', arrayConstraintExpression: {
                             evaluation: 'newValue.length === 1'
                         }, constraintExpression: {
                             evaluation: 'newValue === 2'
                         }
                     }}}}, {
-                        fillUp: {'-type': 'Test', a: [2]},
-                        incremental: {'-type': 'Test', a: [2]},
-                        '': {'-type': 'Test', a: [2]}
+                        fillUp: {[typeName]: 'Test', a: [2]},
+                        incremental: {[typeName]: 'Test', a: [2]},
+                        '': {[typeName]: 'Test', a: [2]}
                     }
                 ],
                 // / endregion
                 // / region nested property
                 // // region property type
+                [[
+                    {[typeName]: 'Test', a: {[typeName]: 'Test'}, b: ''},
+                    {[typeName]: 'Test', a: {[typeName]: 'Test'}}
+                ], {entities: {Test: {a: {type: 'Test'}, b: {}}}}, {
+                    fillUp: {
+                        [typeName]: 'Test',
+                        a: {[typeName]: 'Test'},
+                        b: ''
+                    },
+                    incremental: {b: ''},
+                    '': {
+                        [typeName]: 'Test',
+                        a: {[typeName]: 'Test'},
+                        b: ''
+                    }
+                }],
+                [[
+                    {[typeName]: 'Test', a: null, b: ''},
+                    {[typeName]: 'Test'}
+                ], {entities: {Test: {a: {type: 'Test'}, b: {}}}}, {
+                    fillUp: {[typeName]: 'Test', b: ''},
+                    incremental: {b: ''},
+                    '': {[typeName]: 'Test', b: ''}
+                }],
                 [
                     [
-                        {'-type': 'Test', a: {'-type': 'Test'}, b: ''},
-                        {'-type': 'Test', a: {'-type': 'Test'}}
-                    ], {entities: {Test: {a: {type: 'Test'}, b: {}}}}, {
-                        fillUp: {'-type': 'Test', a: {'-type': 'Test'}, b: ''},
-                        incremental: {b: ''},
-                        '': {'-type': 'Test', a: {'-type': 'Test'}, b: ''}
-                    }
-                ],
-                [
-                    [{'-type': 'Test', a: null, b: ''}, {'-type': 'Test'}],
-                    {entities: {Test: {a: {type: 'Test'}, b: {}}}}, {
-                        fillUp: {'-type': 'Test', b: ''},
-                        incremental: {b: ''},
-                        '': {'-type': 'Test', b: ''}
-                    }
-                ],
-                [
-                    [
-                        {'-type': 'Test', a: {
-                            '-type': 'Test', b: null
+                        {[typeName]: 'Test', a: {
+                            [typeName]: 'Test', b: null
                         }, b: ''},
-                        {'-type': 'Test', a: {'-type': 'Test'}}
-                    ], {entities: {Test: {a: {type: 'Test'}, b: {}}}}, {
-                        fillUp: {'-type': 'Test', a: {'-type': 'Test'}, b: ''},
-                        incremental: {b: ''},
-                        '': {'-type': 'Test', a: {'-type': 'Test'}, b: ''}
-                    }
-                ],
-                [
-                    [
-                        {'-type': 'Test', a: {'-type': 'Test', b: '2'}, b: ''},
-                        {'-type': 'Test', a: {'-type': 'Test', b: '2'}}
+                        {[typeName]: 'Test', a: {[typeName]: 'Test'}}
                     ], {entities: {Test: {a: {type: 'Test'}, b: {}}}}, {
                         fillUp: {
-                            '-type': 'Test',
-                            a: {'-type': 'Test', b: '2'},
+                            [typeName]: 'Test',
+                            a: {[typeName]: 'Test'},
                             b: ''
                         },
                         incremental: {b: ''},
                         '': {
-                            '-type': 'Test',
-                            a: {'-type': 'Test', b: '2'},
+                            [typeName]: 'Test',
+                            a: {[typeName]: 'Test'},
                             b: ''
                         }
                     }
                 ],
-                [
-                    [
-                        {
-                            '-type': 'Test',
-                            a: {'-type': 'Test', b: 'a'},
-                            b: '3'
-                        },
-                        {
-                            '-type': 'Test',
-                            a: {'-type': 'Test', b: 'a'},
-                            b: '2'
-                        }
-                    ], {entities: {Test: {a: {type: 'Test'}, b: {}}}}, {
-                        fillUp: {
-                            '-type': 'Test',
-                            a: {'-type': 'Test', b: 'a'},
-                            b: '3'
-                        },
-                        incremental: {b: '3'},
-                        '': {
-                            '-type': 'Test',
-                            a: {'-type': 'Test', b: 'a'},
-                            b: '3'
-                        }
+                [[
+                    {
+                        [typeName]: 'Test',
+                        a: {[typeName]: 'Test', b: '2'},
+                        b: ''
+                    }, {[typeName]: 'Test', a: {[typeName]: 'Test', b: '2'}}
+                ], {entities: {Test: {a: {type: 'Test'}, b: {}}}}, {
+                    fillUp: {
+                        [typeName]: 'Test',
+                        a: {[typeName]: 'Test', b: '2'},
+                        b: ''
+                    },
+                    incremental: {b: ''},
+                    '': {
+                        [typeName]: 'Test',
+                        a: {[typeName]: 'Test', b: '2'},
+                        b: ''
                     }
-                ],
+                }],
+                [[
+                    {
+                        [typeName]: 'Test',
+                        a: {[typeName]: 'Test', b: 'a'},
+                        b: '3'
+                    },
+                    {
+                        [typeName]: 'Test',
+                        a: {[typeName]: 'Test', b: 'a'},
+                        b: '2'
+                    }
+                ], {entities: {Test: {a: {type: 'Test'}, b: {}}}}, {
+                    fillUp: {
+                        [typeName]: 'Test',
+                        a: {[typeName]: 'Test', b: 'a'},
+                        b: '3'
+                    },
+                    incremental: {b: '3'},
+                    '': {
+                        [typeName]: 'Test',
+                        a: {[typeName]: 'Test', b: 'a'},
+                        b: '3'
+                    }
+                }],
                 // // endregion
                 // // region property existents
-                [
-                    [
-                        {'-type': 'Test', a: {'-type': 'Test'}, b: ''},
-                        {'-type': 'Test', a: {'-type': 'Test'}}
-                    ], {entities: {Test: {a: {type: 'Test'}, b: {}}}}, {
-                        fillUp: {
-                            '-type': 'Test',
-                            a: {'-type': 'Test'},
-                            b: ''
-                        },
-                        incremental: {b: ''},
-                        '': {
-                            '-type': 'Test',
-                            a: {'-type': 'Test'},
-                            b: ''
-                        }
+                [[
+                    {[typeName]: 'Test', a: {[typeName]: 'Test'}, b: ''},
+                    {[typeName]: 'Test', a: {[typeName]: 'Test'}}
+                ], {entities: {Test: {a: {type: 'Test'}, b: {}}}}, {
+                    fillUp: {
+                        [typeName]: 'Test',
+                        a: {[typeName]: 'Test'},
+                        b: ''
+                    },
+                    incremental: {b: ''},
+                    '': {
+                        [typeName]: 'Test',
+                        a: {[typeName]: 'Test'},
+                        b: ''
                     }
-                ],
-                [
-                    [
-                        {
-                            '-type': 'Test',
-                            a: {'-type': 'Test', b: null},
-                            b: 'b'
-                        },
-                        {'-type': 'Test', a: {'-type': 'Test'}, b: 'a'}
-                    ], {entities: {Test: {a: {type: 'Test'}, b: {}}}}, {
-                        fillUp: {
-                            '-type': 'Test',
-                            a: {'-type': 'Test'},
-                            b: 'b'
-                        },
-                        incremental: {b: 'b'},
-                        '': {
-                            '-type': 'Test',
-                            a: {'-type': 'Test'},
-                            b: 'b'
-                        }
+                }],
+                [[
+                    {
+                        [typeName]: 'Test',
+                        a: {[typeName]: 'Test', b: null},
+                        b: 'b'
+                    },
+                    {[typeName]: 'Test', a: {[typeName]: 'Test'}, b: 'a'}
+                ], {entities: {Test: {a: {type: 'Test'}, b: {}}}}, {
+                    fillUp: {
+                        [typeName]: 'Test',
+                        a: {[typeName]: 'Test'},
+                        b: 'b'
+                    },
+                    incremental: {b: 'b'},
+                    '': {
+                        [typeName]: 'Test',
+                        a: {[typeName]: 'Test'},
+                        b: 'b'
                     }
-                ],
-                [
-                    [
-                        {
-                            '-type': 'Test',
-                            a: {'-type': 'Test', b: '2'},
-                            b: 'b'
-                        },
-                        {
-                            '-type': 'Test',
-                            a: {'-type': 'Test', b: '2'},
-                            b: 'a'
-                        }
-                    ], {entities: {Test: {a: {type: 'Test'}, b: {
-                        nullable: false
-                    }}}}, {
-                        fillUp: {
-                            '-type': 'Test',
-                            a: {'-type': 'Test', b: '2'},
-                            b: 'b'
-                        },
-                        incremental: {b: 'b'},
-                        '': {
-                            '-type': 'Test',
-                            a: {'-type': 'Test', b: '2'},
-                            b: 'b'
-                        }
+                }],
+                [[
+                    {
+                        [typeName]: 'Test',
+                        a: {[typeName]: 'Test', b: '2'},
+                        b: 'b'
+                    },
+                    {
+                        [typeName]: 'Test',
+                        a: {[typeName]: 'Test', b: '2'},
+                        b: 'a'
                     }
-                ],
+                ], {entities: {Test: {a: {type: 'Test'}, b: {
+                    nullable: false
+                }}}}, {
+                    fillUp: {
+                        [typeName]: 'Test',
+                        a: {[typeName]: 'Test', b: '2'},
+                        b: 'b'
+                    },
+                    incremental: {b: 'b'},
+                    '': {
+                        [typeName]: 'Test',
+                        a: {[typeName]: 'Test', b: '2'},
+                        b: 'b'
+                    }
+                }],
                 // // endregion
                 // // region property readonly
-                [
-                    [
-                        {'-type': 'Test', a: {'-type': 'Test', b: 'b'}, c: ''},
-                        {'-type': 'Test', a: {'-type': 'Test', b: 'b'}}
-                    ], {entities: {Test: {
-                        a: {type: 'Test'},
-                        b: {writable: false},
-                        c: {}
-                    }}}, {
-                        fillUp: {
-                            '-type': 'Test',
-                            a: {'-type': 'Test', b: 'b'},
-                            c: ''
-                        },
-                        incremental: {c: ''},
-                        '': {
-                            '-type': 'Test',
-                            a: {'-type': 'Test', b: 'b'},
-                            c: ''
-                        }
+                [[
+                    {
+                        [typeName]: 'Test',
+                        a: {[typeName]: 'Test', b: 'b'},
+                        c: ''
+                    },
+                    {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'b'}}
+                ], {entities: {Test: {
+                    a: {type: 'Test'},
+                    b: {writable: false},
+                    c: {}
+                }}}, {
+                    fillUp: {
+                        [typeName]: 'Test',
+                        a: {[typeName]: 'Test', b: 'b'},
+                        c: ''
+                    },
+                    incremental: {c: ''},
+                    '': {
+                        [typeName]: 'Test',
+                        a: {[typeName]: 'Test', b: 'b'},
+                        c: ''
                     }
+                }],
+                [[
+                    {
+                        [typeName]: 'Test',
+                        a: {[typeName]: 'Test', b: 'a'},
+                        b: ''
+                    },
+                    {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'a'}}
                 ],
-                [
-                    [
-                        {'-type': 'Test', a: {'-type': 'Test', b: 'a'}, b: ''},
-                        {'-type': 'Test', a: {'-type': 'Test', b: 'a'}}
-                    ],
-                    {entities: {Test: {a: {type: 'Test', writable: false}, b: {
-                    }}}}, {
-                        fillUp: {'-type': 'Test', a: {
-                            '-type': 'Test', b: 'a'
-                        }, b: ''},
-                        incremental: {b: ''},
-                        '': {
-                            '-type': 'Test',
-                            a: {'-type': 'Test', b: 'a'},
-                            b: ''
-                        }
+                {entities: {Test: {a: {type: 'Test', writable: false}, b: {
+                }}}}, {
+                    fillUp: {[typeName]: 'Test', a: {
+                        [typeName]: 'Test', b: 'a'
+                    }, b: ''},
+                    incremental: {b: ''},
+                    '': {
+                        [typeName]: 'Test',
+                        a: {[typeName]: 'Test', b: 'a'},
+                        b: ''
                     }
-                ],
+                }],
                 // // endregion
                 // // region property range
-                [
-                    [
-                        {'-type': 'Test', a: 4, b: {'-type': 'Test', a: 3}},
-                        {'-type': 'Test'}
-                    ], {entities: {Test: {
-                        a: {type: 'integer', minimum: 3},
-                        b: {type: 'Test'}
-                    }}}, {
-                        fillUp: {'-type': 'Test', a: 4, b: {
-                            '-type': 'Test', a: 3
-                        }},
-                        incremental: {a: 4, b: {'-type': 'Test', a: 3}},
-                        '': {'-type': 'Test', a: 4, b: {'-type': 'Test', a: 3}}
+                [[
+                    {[typeName]: 'Test', a: 4, b: {[typeName]: 'Test', a: 3}},
+                    {[typeName]: 'Test'}
+                ], {entities: {Test: {
+                    a: {type: 'integer', minimum: 3},
+                    b: {type: 'Test'}
+                }}}, {
+                    fillUp: {[typeName]: 'Test', a: 4, b: {
+                        [typeName]: 'Test', a: 3
+                    }},
+                    incremental: {a: 4, b: {[typeName]: 'Test', a: 3}},
+                    '': {
+                        [typeName]: 'Test',
+                        a: 4,
+                        b: {[typeName]: 'Test', a: 3}
                     }
-                ],
-                [
-                    [{'-type': 'Test', a: '1', b: {'-type': 'Test', a: '1'}}],
-                    {entities: {Test: {a: {maximum: 1}, b: {type: 'Test'}}}}, {
-                        fillUp: {
-                            '-type': 'Test',
-                            a: '1',
-                            b: {'-type': 'Test', a: '1'}
-                        },
-                        incremental: {
-                            '-type': 'Test',
-                            a: '1',
-                            b: {'-type': 'Test', a: '1'}
-                        },
-                        '': {
-                            '-type': 'Test',
-                            a: '1',
-                            b: {'-type': 'Test', a: '1'}
-                        }
+                }],
+                [[{
+                    [typeName]: 'Test',
+                    a: '1',
+                    b: {[typeName]: 'Test', a: '1'}
+                }], {entities: {Test: {a: {maximum: 1}, b: {type: 'Test'}}}}, {
+                    fillUp: {
+                        [typeName]: 'Test',
+                        a: '1',
+                        b: {[typeName]: 'Test', a: '1'}
+                    },
+                    incremental: {
+                        [typeName]: 'Test',
+                        a: '1',
+                        b: {[typeName]: 'Test', a: '1'}
+                    },
+                    '': {
+                        [typeName]: 'Test',
+                        a: '1',
+                        b: {[typeName]: 'Test', a: '1'}
                     }
-                ],
+                }],
                 // // endregion
                 // // region property pattern
                 [
-                    [{'-type': 'Test', b: {'-type': 'Test', a: 'a'}}],
+                    [{[typeName]: 'Test', b: {[typeName]: 'Test', a: 'a'}}],
                     {entities: {Test: {
                         a: {regularExpressionPattern: 'a'},
                         b: {type: 'Test'}
                     }}}, {
-                        fillUp: {'-type': 'Test', b: {
-                            '-type': 'Test', a: 'a'
+                        fillUp: {[typeName]: 'Test', b: {
+                            [typeName]: 'Test', a: 'a'
                         }},
-                        incremental: {'-type': 'Test', b: {
-                            '-type': 'Test', a: 'a'
+                        incremental: {[typeName]: 'Test', b: {
+                            [typeName]: 'Test', a: 'a'
                         }},
-                        '': {'-type': 'Test', b: {'-type': 'Test', a: 'a'}}
+                        '': {
+                            [typeName]: 'Test',
+                            b: {[typeName]: 'Test', a: 'a'}
+                        }
                     }
                 ],
                 // // endregion
                 // // region property constraint
-                [[{'-type': 'Test', a: 'b', b: {'-type': 'Test', a: 'b'}}], {
+                [[{[typeName]: 'Test', a: 'b', b: {[typeName]: 'Test', a: 'b'}}], {
                     entities: {Test: {
                         a: {constraintExpression: {
                             evaluation: 'newValue === "b"'
@@ -1674,151 +1737,151 @@ registerTest(async function():Promise<void> {
                         b: {type: 'Test'}
                     }}
                 }, {
-                    fillUp: {'-type': 'Test', a: 'b', b: {
-                        '-type': 'Test', a: 'b'
+                    fillUp: {[typeName]: 'Test', a: 'b', b: {
+                        [typeName]: 'Test', a: 'b'
                     }},
                     incremental: {
-                        '-type': 'Test',
+                        [typeName]: 'Test',
                         a: 'b',
-                        b: {'-type': 'Test', a: 'b'}
+                        b: {[typeName]: 'Test', a: 'b'}
                     },
                     '': {
-                        '-type': 'Test',
+                        [typeName]: 'Test',
                         a: 'b',
-                        b: {'-type': 'Test', a: 'b'}
+                        b: {[typeName]: 'Test', a: 'b'}
                     }
                 }
                 ],
                 // // endregion
                 // / endregion
-                [[{'-type': 'Test1', a: 2}], {entities: {
+                [[{[typeName]: 'Test1', a: 2}], {entities: {
                     Test1: {a: {type: 'foreignKey:Test2'}},
                     Test2: {[idName]: {type: 'number'}}
                 }}, {
-                    fillUp: {'-type': 'Test1', a: 2},
-                    incremental: {'-type': 'Test1', a: 2},
-                    '': {'-type': 'Test1', a: 2}
+                    fillUp: {[typeName]: 'Test1', a: 2},
+                    incremental: {[typeName]: 'Test1', a: 2},
+                    '': {[typeName]: 'Test1', a: 2}
                 }],
-                [[{'-type': 'Test', a: 2}, {'-type': 'Test'}], {
+                [[{[typeName]: 'Test', a: 2}, {[typeName]: 'Test'}], {
                     entities: {Test: {a: {type: 2}}}}, {
-                        fillUp: {'-type': 'Test', a: 2},
+                        fillUp: {[typeName]: 'Test', a: 2},
                         incremental: {a: 2},
-                        '': {'-type': 'Test', a: 2}
+                        '': {[typeName]: 'Test', a: 2}
                     }
                 ],
                 // endregion
                 // region property range
-                [[{'-type': 'Test'}], {
+                [[{[typeName]: 'Test'}], {
                     entities: {Test: {a: {type: 'number', default: 2}}}}, {
-                        fillUp: {'-type': 'Test', a: 2},
-                        incremental: {'-type': 'Test', a: 2},
-                        '': {'-type': 'Test', a: 2}
+                        fillUp: {[typeName]: 'Test', a: 2},
+                        incremental: {[typeName]: 'Test', a: 2},
+                        '': {[typeName]: 'Test', a: 2}
                     }
                 ],
-                [[{'-type': 'Test', a: 3}, {'-type': 'Test'}], {
+                [[{[typeName]: 'Test', a: 3}, {[typeName]: 'Test'}], {
                     entities: {Test: {a: {type: 'number', minimum: 3}}}}, {
-                        fillUp: {'-type': 'Test', a: 3},
+                        fillUp: {[typeName]: 'Test', a: 3},
                         incremental: {a: 3},
-                        '': {'-type': 'Test', a: 3}
+                        '': {[typeName]: 'Test', a: 3}
                     }
                 ],
-                [[{'-type': 'Test', a: 1}, {'-type': 'Test'}], {
+                [[{[typeName]: 'Test', a: 1}, {[typeName]: 'Test'}], {
                     entities: {Test: {a: {type: 'number', maximum: 1}}}}, {
-                        fillUp: {'-type': 'Test', a: 1},
+                        fillUp: {[typeName]: 'Test', a: 1},
                         incremental: {a: 1},
-                        '': {'-type': 'Test', a: 1}
+                        '': {[typeName]: 'Test', a: 1}
                     }
                 ],
-                [[{'-type': 'Test', a: '123'}, {'-type': 'Test'}], {
+                [[{[typeName]: 'Test', a: '123'}, {[typeName]: 'Test'}], {
                     entities: {Test: {a: {minimum: 3}}}}, {
-                        fillUp: {'-type': 'Test', a: '123'},
+                        fillUp: {[typeName]: 'Test', a: '123'},
                         incremental: {a: '123'},
-                        '': {'-type': 'Test', a: '123'}
+                        '': {[typeName]: 'Test', a: '123'}
                     }
                 ],
-                [[{'-type': 'Test', a: '1'}], {
+                [[{[typeName]: 'Test', a: '1'}], {
                     entities: {Test: {a: {maximum: 1}}}}, {
-                        fillUp: {'-type': 'Test', a: '1'},
-                        incremental: {'-type': 'Test', a: '1'},
-                        '': {'-type': 'Test', a: '1'}
+                        fillUp: {[typeName]: 'Test', a: '1'},
+                        incremental: {[typeName]: 'Test', a: '1'},
+                        '': {[typeName]: 'Test', a: '1'}
                     }
                 ],
                 // endregion
                 // region selection
                 [
-                    [{'-type': 'Test', a: 2}], {entities: {Test: {a: {
+                    [{[typeName]: 'Test', a: 2}], {entities: {Test: {a: {
                         type: 'number', selection: [2]
                     }}}}, {
-                        fillUp: {'-type': 'Test', a: 2},
-                        incremental: {'-type': 'Test', a: 2},
-                        '': {'-type': 'Test', a: 2}
+                        fillUp: {[typeName]: 'Test', a: 2},
+                        incremental: {[typeName]: 'Test', a: 2},
+                        '': {[typeName]: 'Test', a: 2}
                     }
                 ],
                 [
-                    [{'-type': 'Test', a: 2}], {entities: {Test: {a: {
+                    [{[typeName]: 'Test', a: 2}], {entities: {Test: {a: {
                         type: 'number', selection: [1, 2]
                     }}}}, {
-                        fillUp: {'-type': 'Test', a: 2},
-                        incremental: {'-type': 'Test', a: 2},
-                        '': {'-type': 'Test', a: 2}
+                        fillUp: {[typeName]: 'Test', a: 2},
+                        incremental: {[typeName]: 'Test', a: 2},
+                        '': {[typeName]: 'Test', a: 2}
                     }
                 ],
                 // endregion
                 // region property pattern
-                [[{'-type': 'Test', a: 'a'}], {entities: {Test: {a: {
+                [[{[typeName]: 'Test', a: 'a'}], {entities: {Test: {a: {
                     regularExpressionPattern: 'a'
                 }}}}, {
-                    fillUp: {'-type': 'Test', a: 'a'},
-                    incremental: {'-type': 'Test', a: 'a'},
-                    '': {'-type': 'Test', a: 'a'}
+                    fillUp: {[typeName]: 'Test', a: 'a'},
+                    incremental: {[typeName]: 'Test', a: 'a'},
+                    '': {[typeName]: 'Test', a: 'a'}
                 }],
                 // endregion
                 // region property constraint
-                [[{'-type': 'Test', a: 'b'}], {entities: {Test: {a: {
+                [[{[typeName]: 'Test', a: 'b'}], {entities: {Test: {a: {
                     constraintExpression: {evaluation: 'true'}
                 }}}}, {
-                    fillUp: {'-type': 'Test', a: 'b'},
-                    incremental: {'-type': 'Test', a: 'b'},
-                    '': {'-type': 'Test', a: 'b'}
+                    fillUp: {[typeName]: 'Test', a: 'b'},
+                    incremental: {[typeName]: 'Test', a: 'b'},
+                    '': {[typeName]: 'Test', a: 'b'}
                 }],
-                [[{'-type': 'Test', a: 'a'}], {entities: {Test: {a: {
+                [[{[typeName]: 'Test', a: 'a'}], {entities: {Test: {a: {
                     constraintExpression: {evaluation: 'newValue === "a"'}
                 }}}}, {
-                    fillUp: {'-type': 'Test', a: 'a'},
-                    incremental: {'-type': 'Test', a: 'a'},
-                    '': {'-type': 'Test', a: 'a'}
+                    fillUp: {[typeName]: 'Test', a: 'a'},
+                    incremental: {[typeName]: 'Test', a: 'a'},
+                    '': {[typeName]: 'Test', a: 'a'}
                 }],
-                [[{'-type': 'Test', a: 'a'}], {entities: {Test: {a: {
+                [[{[typeName]: 'Test', a: 'a'}], {entities: {Test: {a: {
                     constraintExecution: {
                         evaluation: 'return newValue === "a"'
                     }
                 }}}}, {
-                    fillUp: {'-type': 'Test', a: 'a'},
-                    incremental: {'-type': 'Test', a: 'a'},
-                    '': {'-type': 'Test', a: 'a'}
+                    fillUp: {[typeName]: 'Test', a: 'a'},
+                    incremental: {[typeName]: 'Test', a: 'a'},
+                    '': {[typeName]: 'Test', a: 'a'}
                 }],
-                [[{'-type': 'Test', a: 'a'}], {entities: {Test: {a: {
+                [[{[typeName]: 'Test', a: 'a'}], {entities: {Test: {a: {
                     constraintExecution: {
                         evaluation: 'return newValue === "a"'
                     },
                     description: '`Value have to be "a" not "${newValue}".`'
                 }}}}, {
-                    fillUp: {'-type': 'Test', a: 'a'},
-                    incremental: {'-type': 'Test', a: 'a'},
-                    '': {'-type': 'Test', a: 'a'}
+                    fillUp: {[typeName]: 'Test', a: 'a'},
+                    incremental: {[typeName]: 'Test', a: 'a'},
+                    '': {[typeName]: 'Test', a: 'a'}
                 }],
                 // endregion
                 // region constraint
-                [[{'-type': 'Test', a: 'a', b: 'b'}], {entities: {Test: {
+                [[{[typeName]: 'Test', a: 'a', b: 'b'}], {entities: {Test: {
                     _constraintExpressions: [{evaluation: 'true'}],
                     a: {},
                     b: {}
                 }}}, {
-                    fillUp: {'-type': 'Test', a: 'a', b: 'b'},
-                    incremental: {'-type': 'Test', a: 'a', b: 'b'},
-                    '': {'-type': 'Test', a: 'a', b: 'b'}
+                    fillUp: {[typeName]: 'Test', a: 'a', b: 'b'},
+                    incremental: {[typeName]: 'Test', a: 'a', b: 'b'},
+                    '': {[typeName]: 'Test', a: 'a', b: 'b'}
                 }],
-                [[{'-type': 'Test', a: 'a', b: 'b'}], {entities: {Test: {
+                [[{[typeName]: 'Test', a: 'a', b: 'b'}], {entities: {Test: {
                     _constraintExecutions: [{
                         description: '`Always valid: "${newDocument.a}".`',
                         evaluation: 'return true'
@@ -1826,54 +1889,54 @@ registerTest(async function():Promise<void> {
                     a: {},
                     b: {}
                 }}}, {
-                    fillUp: {'-type': 'Test', a: 'a', b: 'b'},
-                    incremental: {'-type': 'Test', a: 'a', b: 'b'},
-                    '': {'-type': 'Test', a: 'a', b: 'b'}
+                    fillUp: {[typeName]: 'Test', a: 'a', b: 'b'},
+                    incremental: {[typeName]: 'Test', a: 'a', b: 'b'},
+                    '': {[typeName]: 'Test', a: 'a', b: 'b'}
                 }],
-                [[{'-type': 'Test', a: 'a', b: 'a'}], {entities: {Test: {
+                [[{[typeName]: 'Test', a: 'a', b: 'a'}], {entities: {Test: {
                     _constraintExpressions: [{
                         evaluation: 'newDocument.a === newDocument.b'
                     }],
                     a: {},
                     b: {}
                 }}}, {
-                    fillUp: {'-type': 'Test', a: 'a', b: 'a'},
-                    incremental: {'-type': 'Test', a: 'a', b: 'a'},
-                    '': {'-type': 'Test', a: 'a', b: 'a'}
+                    fillUp: {[typeName]: 'Test', a: 'a', b: 'a'},
+                    incremental: {[typeName]: 'Test', a: 'a', b: 'a'},
+                    '': {[typeName]: 'Test', a: 'a', b: 'a'}
                 }],
                 // endregion
                 // region attachment
-                [[{'-type': 'Test'}], {entities: {Test: {[attachmentName]: {
+                [[{[typeName]: 'Test'}], {entities: {Test: {[attachmentName]: {
                     '.*': {minimum: 1}
                 }}}}, {
-                    fillUp: {'-type': 'Test'},
-                    incremental: {'-type': 'Test'},
-                    '': {'-type': 'Test'}
+                    fillUp: {[typeName]: 'Test'},
+                    incremental: {[typeName]: 'Test'},
+                    '': {[typeName]: 'Test'}
                 }],
-                [[{'-type': 'Test', [attachmentName]: {test: {
+                [[{[typeName]: 'Test', [attachmentName]: {test: {
                     // eslint-disable camelcase
                     content_type: 'text/plain', data: ''
                     // eslint-enable camelcase
                 }}}], {entities: {Test: {[attachmentName]: {'.*': {
                     maximum: 1
                 }}}}}, {
-                    fillUp: {'-type': 'Test', [attachmentName]: {test: {
+                    fillUp: {[typeName]: 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         content_type: 'text/plain', data: ''
                         // eslint-enable camelcase
                     }}},
-                    incremental: {'-type': 'Test', [attachmentName]: {test: {
+                    incremental: {[typeName]: 'Test', [attachmentName]: {
                         // eslint-disable camelcase
-                        content_type: 'text/plain', data: ''
+                        test: {content_type: 'text/plain', data: ''}
                         // eslint-enable camelcase
-                    }}},
-                    '': {'-type': 'Test', [attachmentName]: {test: {
+                    }},
+                    '': {[typeName]: 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         content_type: 'text/plain', data: ''
                         // eslint-enable camelcase
                     }}}
                 }],
-                [[{'-type': 'Test', [attachmentName]: {'favicon.png': {
+                [[{[typeName]: 'Test', [attachmentName]: {'favicon.png': {
                     // eslint-disable camelcase
                     content_type: 'image/png', data: 'abc'
                     // eslint-enable camelcase
@@ -1885,50 +1948,53 @@ registerTest(async function():Promise<void> {
                         nullable: false
                     }
                 }}}}, {
-                    fillUp: {'-type': 'Test', [attachmentName]: {
+                    fillUp: {[typeName]: 'Test', [attachmentName]: {
                         'favicon.png': {
                             // eslint-disable camelcase
                             content_type: 'image/png', data: 'abc'
                             // eslint-enable camelcase
                         }
                     }},
-                    incremental: {'-type': 'Test', [attachmentName]: {
+                    incremental: {[typeName]: 'Test', [attachmentName]: {
                         'favicon.png': {
                             // eslint-disable camelcase
                             content_type: 'image/png', data: 'abc'
                             // eslint-enable camelcase
                         }
                     }},
-                    '': {'-type': 'Test', [attachmentName]: {'favicon.png': {
+                    '': {[typeName]: 'Test', [attachmentName]: {
                         // eslint-disable camelcase
-                        content_type: 'image/png', data: 'abc'
+                        'favicon.png': {content_type: 'image/png', data: 'abc'}
                         // eslint-enable camelcase
-                    }}}
+                    }}
                 }],
-                [[{'-type': 'Test', [attachmentName]: {test: {
+                [[{[typeName]: 'Test', [attachmentName]: {test: {
                     // eslint-disable camelcase
                     content_type: 'text/plain', data: ''
                     // eslint-enable camelcase
                 }}}], {entities: {Test: {[attachmentName]: {'.*': {
                     nullable: false
                 }}}}}, {
-                    fillUp: {'-type': 'Test', [attachmentName]: {test: {
+                    fillUp: {[typeName]: 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         content_type: 'text/plain', data: ''
                         // eslint-enable camelcase
                     }}},
-                    incremental: {'-type': 'Test', [attachmentName]: {test: {
-                        // eslint-disable camelcase
-                        content_type: 'text/plain', data: ''
-                        // eslint-enable camelcase
-                    }}},
-                    '': {'-type': 'Test', [attachmentName]: {test: {
+                    incremental: {
+                        [typeName]: 'Test',
+                        [attachmentName]: {test: {
+                            // eslint-disable camelcase
+                            content_type: 'text/plain', data: ''
+                            // eslint-enable camelcase
+                        }}
+                    },
+                    '': {[typeName]: 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
                         content_type: 'text/plain', data: ''
                         // eslint-enable camelcase
                     }}}
                 }],
-                [[{'-type': 'Test', [attachmentName]: {
+                [[{[typeName]: 'Test', [attachmentName]: {
                     // eslint-disable camelcase
                     a: {content_type: 'text/plain', data: ''},
                     b: {content_type: 'text/plain', data: ''}
@@ -1936,26 +2002,26 @@ registerTest(async function():Promise<void> {
                 }}], {entities: {Test: {[attachmentName]: {'.*': {
                     maximum: 2, minimum: 2
                 }}}}}, {
-                    fillUp: {'-type': 'Test', [attachmentName]: {
+                    fillUp: {[typeName]: 'Test', [attachmentName]: {
                         // eslint-disable camelcase
                         a: {content_type: 'text/plain', data: ''},
                         b: {content_type: 'text/plain', data: ''}
                         // eslint-enable camelcase
                     }},
-                    incremental: {'-type': 'Test', [attachmentName]: {
+                    incremental: {[typeName]: 'Test', [attachmentName]: {
                         // eslint-disable camelcase
                         a: {content_type: 'text/plain', data: ''},
                         b: {content_type: 'text/plain', data: ''}
                         // eslint-enable camelcase
                     }},
-                    '': {'-type': 'Test', [attachmentName]: {
+                    '': {[typeName]: 'Test', [attachmentName]: {
                         // eslint-disable camelcase
                         a: {content_type: 'text/plain', data: ''},
                         b: {content_type: 'text/plain', data: ''}
                         // eslint-enable camelcase
                     }}
                 }],
-                [[{'-type': 'Test', [attachmentName]: {
+                [[{[typeName]: 'Test', [attachmentName]: {
                     // eslint-disable camelcase
                     a: {content_type: 'text/plain', data: ''},
                     b: {content_type: 'text/plain', data: ''}
@@ -1963,26 +2029,26 @@ registerTest(async function():Promise<void> {
                 }}], {entities: {Test: {[attachmentName]: {'.*': {
                     maximum: 2, regularExpressionPattern: 'a|b'
                 }}}}}, {
-                    fillUp: {'-type': 'Test', [attachmentName]: {
+                    fillUp: {[typeName]: 'Test', [attachmentName]: {
                         // eslint-disable camelcase
                         a: {content_type: 'text/plain', data: ''},
                         b: {content_type: 'text/plain', data: ''}
                         // eslint-enable camelcase
                     }},
-                    incremental: {'-type': 'Test', [attachmentName]: {
+                    incremental: {[typeName]: 'Test', [attachmentName]: {
                         // eslint-disable camelcase
                         a: {content_type: 'text/plain', data: ''},
                         b: {content_type: 'text/plain', data: ''}
                         // eslint-enable camelcase
                     }},
-                    '': {'-type': 'Test', [attachmentName]: {
+                    '': {[typeName]: 'Test', [attachmentName]: {
                         // eslint-disable camelcase
                         a: {content_type: 'text/plain', data: ''},
                         b: {content_type: 'text/plain', data: ''}
                         // eslint-enable camelcase
                     }}
                 }],
-                [[{'-type': 'Test', [attachmentName]: {
+                [[{[typeName]: 'Test', [attachmentName]: {
                     // eslint-disable camelcase
                     a: {content_type: 'image/png', data: ''},
                     b: {content_type: 'image/jpeg', data: ''}
@@ -1991,35 +2057,35 @@ registerTest(async function():Promise<void> {
                     contentTypeRegularExpressionPattern: /image\/.+/,
                     regularExpressionPattern: 'a|b'
                 }}}}}, {
-                    fillUp: {'-type': 'Test', [attachmentName]: {
+                    fillUp: {[typeName]: 'Test', [attachmentName]: {
                         // eslint-disable camelcase
                         a: {content_type: 'image/png', data: ''},
                         b: {content_type: 'image/jpeg', data: ''}
                         // eslint-enable camelcase
                     }},
-                    incremental: {'-type': 'Test', [attachmentName]: {
+                    incremental: {[typeName]: 'Test', [attachmentName]: {
                         // eslint-disable camelcase
                         a: {content_type: 'image/png', data: ''},
                         b: {content_type: 'image/jpeg', data: ''}
                         // eslint-enable camelcase
                     }},
-                    '': {'-type': 'Test', [attachmentName]: {
+                    '': {[typeName]: 'Test', [attachmentName]: {
                         // eslint-disable camelcase
                         a: {content_type: 'image/png', data: ''},
                         b: {content_type: 'image/jpeg', data: ''}
                         // eslint-enable camelcase
                     }}
                 }],
-                [[{'-type': 'Test', [attachmentName]: {
+                [[{[typeName]: 'Test', [attachmentName]: {
                     // eslint-disable camelcase
                     a: {content_type: 'image/png', data: ''}
                     // eslint-enable camelcase
-                }}, {'-type': 'Test', [attachmentName]: {
+                }}, {[typeName]: 'Test', [attachmentName]: {
                     // eslint-disable camelcase
                     b: {content_type: 'image/jpeg', data: ''}
                     // eslint-enable camelcase
                 }}], {entities: {Test: {[attachmentName]: {'.*': {}}}}}, {
-                    fillUp: {'-type': 'Test', [attachmentName]: {
+                    fillUp: {[typeName]: 'Test', [attachmentName]: {
                         // eslint-disable camelcase
                         a: {content_type: 'image/png', data: ''},
                         b: {content_type: 'image/jpeg', data: ''}
@@ -2030,7 +2096,7 @@ registerTest(async function():Promise<void> {
                         a: {content_type: 'image/png', data: ''}
                         // eslint-enable camelcase
                     }},
-                    '': {'-type': 'Test', [attachmentName]: {
+                    '': {[typeName]: 'Test', [attachmentName]: {
                         // eslint-disable camelcase
                         a: {content_type: 'image/png', data: ''}
                         // eslint-enable camelcase
@@ -2038,11 +2104,11 @@ registerTest(async function():Promise<void> {
                 }],
                 [[
                     {
-                        '-type': 'Test',
+                        [typeName]: 'Test',
                         [attachmentName]: {a: {data: null}},
                         b: ''
                     }, {
-                        '-type': 'Test',
+                        [typeName]: 'Test',
                         [attachmentName]: {a: {
                             // eslint-disable camelcase
                             content_type: 'image/jpeg', data: ''
@@ -2050,17 +2116,17 @@ registerTest(async function():Promise<void> {
                         }}
                     }
                 ], {entities: {Test: {[attachmentName]: {'.*': {}}, b: {}}}}, {
-                    fillUp: {'-type': 'Test', b: ''},
+                    fillUp: {[typeName]: 'Test', b: ''},
                     incremental: {b: ''},
-                    '': {'-type': 'Test', b: ''}
+                    '': {[typeName]: 'Test', b: ''}
                 }],
                 [[
                     {
-                        '-type': 'Test',
+                        [typeName]: 'Test',
                         [attachmentName]: {a: {data: null}},
                         b: ''
                     }, {
-                        '-type': 'Test',
+                        [typeName]: 'Test',
                         [attachmentName]: {a: {
                             // eslint-disable camelcase
                             content_type: 'image/jpeg', data: ''
@@ -2068,20 +2134,20 @@ registerTest(async function():Promise<void> {
                         }}
                     }
                 ], {entities: {Test: {[attachmentName]: {'.*': {}}, b: {}}}}, {
-                    fillUp: {'-type': 'Test', b: ''},
+                    fillUp: {[typeName]: 'Test', b: ''},
                     incremental: {b: ''},
-                    '': {'-type': 'Test', b: ''}
+                    '': {[typeName]: 'Test', b: ''}
                 }],
                 [[
-                    {'-type': 'Test', a: ''},
-                    {'-type': 'Test', [attachmentName]: {a: {
+                    {[typeName]: 'Test', a: ''},
+                    {[typeName]: 'Test', [attachmentName]: {a: {
                         // eslint-disable camelcase
                         content_type: 'image/jpeg', data: ''
                         // eslint-enable camelcase
                     }}}
                 ], {entities: {Test: {[attachmentName]: {'.*': {}}, a: {}}}}, {
                     fillUp: {
-                        '-type': 'Test', [attachmentName]: {a: {
+                        [typeName]: 'Test', [attachmentName]: {a: {
                             // eslint-disable camelcase
                             content_type: 'image/jpeg', data: ''
                             // eslint-enable camelcase
@@ -2089,18 +2155,18 @@ registerTest(async function():Promise<void> {
                         a: ''
                     },
                     incremental: {a: ''},
-                    '': {'-type': 'Test', a: ''}
+                    '': {[typeName]: 'Test', a: ''}
                 }],
                 [[
-                    {'-type': 'Test', a: ''},
-                    {'-type': 'Test', [attachmentName]: {a: {
+                    {[typeName]: 'Test', a: ''},
+                    {[typeName]: 'Test', [attachmentName]: {a: {
                         // eslint-disable camelcase
                         content_type: 'image/jpeg', data: ''
                         // eslint-enable camelcase
                     }}}
                 ], {entities: {Test: {[attachmentName]: {a: {}}, a: {}}}}, {
                     fillUp: {
-                        '-type': 'Test', [attachmentName]: {a: {
+                        [typeName]: 'Test', [attachmentName]: {a: {
                             // eslint-disable camelcase
                             content_type: 'image/jpeg', data: ''
                             // eslint-enable camelcase
@@ -2108,7 +2174,7 @@ registerTest(async function():Promise<void> {
                         a: ''
                     },
                     incremental: {a: ''},
-                    '': {'-type': 'Test', a: ''}
+                    '': {[typeName]: 'Test', a: ''}
                 }]
                 // endregion
             ]) {
@@ -2147,65 +2213,65 @@ registerTest(async function():Promise<void> {
                 delete defaultModelConfiguration.entities._base[propertyName]
         for (const test:Array<any> of [
             [
-                [{'-type': 'Test', a: 2}], {entities: {Test: {}}},
-                {'-type': 'Test'}
+                [{[typeName]: 'Test', a: 2}], {entities: {Test: {}}},
+                {[typeName]: 'Test'}
             ],
             [
-                [{'-type': 'Test'}], {entities: {Test: {a: {default: '2'}}}},
-                {'-type': 'Test', a: '2'}
+                [{[typeName]: 'Test'}], {entities: {Test: {a: {default: '2'}}}},
+                {[typeName]: 'Test', a: '2'}
             ],
             [
-                [{'-type': 'Test', a: '2'}], {entities: {Test: {a: {}}}},
-                {'-type': 'Test', a: '2'}
+                [{[typeName]: 'Test', a: '2'}], {entities: {Test: {a: {}}}},
+                {[typeName]: 'Test', a: '2'}
             ],
             [
-                [{'-type': 'Test', b: ''}, {'-type': 'Test', a: 1}],
-                {entities: {Test: {a: {}, b: {}}}}, {'-type': 'Test', b: ''}
+                [{[typeName]: 'Test', b: ''}, {[typeName]: 'Test', a: 1}],
+                {entities: {Test: {a: {}, b: {}}}}, {[typeName]: 'Test', b: ''}
             ],
             [
-                [{'-type': 'Test', a: null}],
+                [{[typeName]: 'Test', a: null}],
                 {entities: {Test: {a: {default: '2'}}}},
-                {'-type': 'Test', a: '2'}
+                {[typeName]: 'Test', a: '2'}
             ],
             /* TODO
             [
-                [{'-type': 'Test', a: null}, {'-type': 'Test', a: '1'}],
+                [{[typeName]: 'Test', a: null}, {[typeName]: 'Test', a: '1'}],
                 {entities: {Test: {a: {default: '2'}}}},
-                {'-type': 'Test', a: '2'}
+                {[typeName]: 'Test', a: '2'}
             ],
             [
-                [{'-type': 'Test'}, {'-type': 'Test', a: '1'}],
+                [{[typeName]: 'Test'}, {[typeName]: 'Test', a: '1'}],
                 {entities: {Test: {a: {default: '2'}}}},
-                {'-type': 'Test', a: '2'}
+                {[typeName]: 'Test', a: '2'}
             ],
             [
-                [{'-type': 'Test', b: '3'}, {'-type': 'Test', a: '1'}],
+                [{[typeName]: 'Test', b: '3'}, {[typeName]: 'Test', a: '1'}],
                 {entities: {Test: {a: {default: '2'}}}},
-                {'-type': 'Test', a: '2'}
+                {[typeName]: 'Test', a: '2'}
             ],*/
             [
-                [{'-type': 'Test'}],
+                [{[typeName]: 'Test'}],
                 {entities: {Test: {a: {default: 2, type: 'number'}}}},
-                {'-type': 'Test', a: 2}
+                {[typeName]: 'Test', a: 2}
             ],
             [[
-                {'-type': 'Test', b: ''},
-                 {'-type': 'Test', [attachmentName]: {}}
-            ], {entities: {Test: {b: {}}}}, {'-type': 'Test', b: ''}],
-            [[{'-type': 'Test', b: ''}, {'-type': 'Test', [attachmentName]: {
-                test: {
+                {[typeName]: 'Test', b: ''},
+                 {[typeName]: 'Test', [attachmentName]: {}}
+            ], {entities: {Test: {b: {}}}}, {[typeName]: 'Test', b: ''}],
+            [[{[typeName]: 'Test', b: ''}, {
+                [typeName]: 'Test', [attachmentName]: {
                     // eslint-disable camelcase
-                    data: '', content_type: 'text/plain'
+                    test: {data: '', content_type: 'text/plain'}
                     // eslint-enable camelcase
                 }
-            }}], {entities: {Test: {b: {}}}}, {'-type': 'Test', b: ''}],
+            }], {entities: {Test: {b: {}}}}, {[typeName]: 'Test', b: ''}],
             [
-                [{'-type': 'Test'}, {'-type': 'Test'}],
+                [{[typeName]: 'Test'}, {[typeName]: 'Test'}],
                 {entities: {Test: {[attachmentName]: {'.*': {default: {test: {
                     // eslint-disable camelcase
                     data: '', content_type: 'text/plain'
                     // eslint-enable camelcase
-                }}}}}}}, {'-type': 'Test', [attachmentName]: {test: {
+                }}}}}}}, {[typeName]: 'Test', [attachmentName]: {test: {
                     // eslint-disable camelcase
                     data: '', content_type: 'text/plain'
                     // eslint-enable camelcase
