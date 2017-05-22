@@ -443,6 +443,11 @@ export default class Database {
                         } else
                             throw error
                     }
+                    // IgnoreTypeCheck
+                    newDocument[
+                        configuration.database.model.property.name.special
+                        .strategy
+                    ] = migrationModelConfiguration.updateStrategy
                     try {
                         await services.database.connection.put(newDocument)
                     } catch (error) {
