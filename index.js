@@ -446,15 +446,16 @@ export default class Database {
                     try {
                         await services.database.connection.put(newDocument)
                     } catch (error) {
-                        // TODO could give a NoChange error and migrated doc has not!
                         throw new Error(
                             `Replaceing auto migrated document "` +
-                            `${newDocument._id}" has failed: ` +
+                            // IgnoreTypeCheck
+                            `${newDocument[idName]}" has failed: ` +
                             Tools.representObject(error))
                     }
                     console.info(
-                        `Auto migrating document "${newDocument._id}" was ` +
-                        'successful.')
+                        // IgnoreTypeCheck
+                        `Auto migrating document "${newDocument[idName]}" ` +
+                        'was successful.')
                 }
         // TODO check conflicting constraints and mark them if necessary (check
         // how couchdb deals with "id" conflicts)
