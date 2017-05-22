@@ -443,19 +443,19 @@ export default class Database {
                         } else
                             throw error
                     }
-                    if (newDocument && !Tools.equals(newDocument, document)) {
-                        try {
-                            await services.database.connection.put(newDocument)
-                        } catch (error) {
-                            throw new Error(
-                                `Replaceing auto migrated document "` +
-                                `${newDocument._id}" has failed: ` +
-                                Tools.representObject(error))
-                        }
-                        console.info(
-                            `Auto migrating document "${newDocument._id}" ` +
-                            'was successful.')
+                    try {
+                        await services.database.connection.put(newDocument)
+                    } catch (error) {
+                        throw new Error(
+                            `Replaceing auto migrated document "` +
+                            // IgnoreTypeCheck
+                            `${newDocument[idName]}" has failed: ` +
+                            Tools.representObject(error))
                     }
+                    console.info(
+                        // IgnoreTypeCheck
+                        `Auto migrating document "${newDocument[idName]}" ` +
+                        'was successful.')
                 }
         // TODO check conflicting constraints and mark them if necessary (check
         // how couchdb deals with "id" conflicts)

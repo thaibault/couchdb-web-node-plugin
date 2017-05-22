@@ -2226,6 +2226,14 @@ registerTest(async function():Promise<void> {
                 {entities: {Test: {a: {}, b: {}}}}, {[typeName]: 'Test', b: ''}
             ],
             [
+                [{[typeName]: 'Test'}, {[typeName]: 'Test', a: 1}],
+                {entities: {Test: {}}}, {[typeName]: 'Test'}
+            ],
+            [
+                [{[typeName]: 'Test'}, {[typeName]: 'Test', a: 1}],
+                {entities: {Test: {a: {}}}}, {[typeName]: 'Test'}
+            ],
+            [
                 [{[typeName]: 'Test', a: null}],
                 {entities: {Test: {a: {default: '2'}}}},
                 {[typeName]: 'Test', a: '2'}
