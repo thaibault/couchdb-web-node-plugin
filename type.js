@@ -62,6 +62,7 @@ export type RetrievedDocument = {
     id:string;
     doc:Document;
 }
+export type UpdateStrategy = ''|'fillUp'|'incremental'|'migrate'
 export type SpecialPropertyNames = {
     allowedRole:string;
     attachment:string;
@@ -78,6 +79,7 @@ export type SpecialPropertyNames = {
     revision:string;
     revisionsInformation:string;
     revisions:string;
+    strategy:UpdateStrategy;
     type:string;
     typeNameRegularExpressionPattern:{
         private:string;
@@ -85,7 +87,6 @@ export type SpecialPropertyNames = {
     };
     validatedDocumentsCache:string;
 }
-export type UpdateStrategy = ''|'fillUp'|'incremental'|'migrate'
 export type PropertyNameConfiguration = {
     reserved:Array<string>;
     special:SpecialPropertyNames;

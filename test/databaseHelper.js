@@ -773,13 +773,6 @@ registerTest(async function():Promise<void> {
             // region allowed writes
             for (const test:Array<any> of [
                 // region general environment
-                [[
-                    {[typeName]: 'Test', _deleted: true}, {[typeName]: 'Test'}
-                ], {entities: {Test: {}}}, {
-                    fillUp: {[typeName]: 'Test', _deleted: true},
-                    incremental: {_deleted: true},
-                    '': {[typeName]: 'Test', _deleted: true}
-                }],
                 /*
                     NOTE: Needed if we are able to validate "_users" table:
 
@@ -804,8 +797,23 @@ registerTest(async function():Promise<void> {
                             type: 'user', [idName]: 'org.couchdb.user:test'
                         },
                         '': {type: 'user', [idName]: 'org.couchdb.user:test'}
-                    }]
+                    }],
                 */
+                [[
+                    {[typeName]: 'Test', _deleted: true}, {[typeName]: 'Test'}
+                ], {entities: {Test: {}}}, {
+                    fillUp: {[typeName]: 'Test', _deleted: true},
+                    incremental: {_deleted: true},
+                    '': {[typeName]: 'Test', _deleted: true}
+                }],
+                [[{[typeName]: 'Test', a: 2, [
+                    configuration.database.model.property.name.special
+                    .strategy
+                ]: 'migrate'}], {entities: {Test: {}}}, {
+                    fillUp: {[typeName]: 'Test'},
+                    incremental: {[typeName]: 'Test'},
+                    '': {[typeName]: 'Test'}
+                }],
                 [[{[idName]: 1, [revisionName]: 1}, null, {}, {
                     _validatedDocuments: new Set(['1-1'])
                 }], {}, {
@@ -2228,10 +2236,6 @@ registerTest(async function():Promise<void> {
             [
                 [{[typeName]: 'Test'}, {[typeName]: 'Test', a: 1}],
                 {entities: {Test: {}}}, {[typeName]: 'Test'}
-            ],
-            [
-                [{[typeName]: 'Test'}, {[typeName]: 'Test', a: 1}],
-                {entities: {Test: {a: {}}}}, {[typeName]: 'Test'}
             ],
             [
                 [{[typeName]: 'Test', a: null}],

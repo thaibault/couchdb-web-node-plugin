@@ -111,46 +111,55 @@ export default class DatabaseHelper {
         }, models:Models, modelConfiguration:SimpleModelConfiguration,
         toJSON:?Function = null
     ):PlainObject {
+        // region ensure needed environment
         const now:Date = new Date()
         const nowUTCTimestamp:number = Date.UTC(
             now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
             now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds(),
             now.getUTCMilliseconds())
-        // region ensure needed environment
+        const specialNames:PlainObject =
+            modelConfiguration.property.name.special
+        const attachmentName:string = specialNames.attachment
+        const idName:string = specialNames.id
+        const revisionName:string = specialNames.revision
         /*
             NOTE: Needed if we are able to validate users table.
 
             if (
                 newDocument.hasOwnProperty('type') &&
                 newDocument.type === 'user' &&
-                newDocument.hasOwnProperty('_id') &&
-                newDocument._id.startsWith('org.couchdb.user:')
+                newDocument.hasOwnProperty(idName) &&
+                newDocument[idName].startsWith('org.couchdb.user:')
             )
                 return newDocument
         */
         if (securitySettings.hasOwnProperty(
-            modelConfiguration.property.name.special.validatedDocumentsCache
-        ) && securitySettings[
-            modelConfiguration.property.name.special.validatedDocumentsCache
-        ].has(`${newDocument._id}-${newDocument._rev}`)) {
-            securitySettings[modelConfiguration.property.name.special
-                .validatedDocumentsCache
-            ].delete(`${newDocument._id}-${newDocument._rev}`)
+            specialNames.validatedDocumentsCache
+        ) && securitySettings[specialNames.validatedDocumentsCache].has(
+            `${newDocument[idName]}-${newDocument[revisionName]}`
+        )) {
+            securitySettings[specialNames.validatedDocumentsCache].delete(
+                `${newDocument[idName]}-${newDocument[revisionName]}`)
             return newDocument
         }
-        if (newDocument.hasOwnProperty('_rev') && [
+        if (newDocument.hasOwnProperty(revisionName) && [
             'latest', 'upsert'
-        ].includes(newDocument._rev))
-            if (oldDocument && oldDocument.hasOwnProperty('_rev'))
-                newDocument._rev = oldDocument._rev
-            else if (newDocument._rev === 'latest')
+        ].includes(newDocument[revisionName]))
+            if (oldDocument && oldDocument.hasOwnProperty(revisionName))
+                newDocument[revisionName] = oldDocument[revisionName]
+            else if (newDocument[revisionName] === 'latest')
                 /* eslint-disable no-throw-literal */
                 throw {
                     forbidden: 'Revision: No old document available to update.'
                 }
                 /* eslint-enable no-throw-literal */
             else
-                delete newDocument._rev
+                delete newDocument[revisionName]
+        let updateStrategy:string = modelConfiguration.updateStrategy
+        if (newDocument.hasOwnProperty(specialNames.strategy)) {
+            updateStrategy = newDocument[specialNames.strategy]
+            delete newDocument[specialNames.strategy]
+        }
         let serialize:(value:any) => string
         if (toJSON)
             serialize = toJSON
@@ -184,46 +193,38 @@ export default class DatabaseHelper {
                 parentNames.length ? ` in ${parentNames.join(' -> ')}` : ''
             let somethingChanged:boolean = false
             // region check for model type
-            if (!newDocument.hasOwnProperty(
-                modelConfiguration.property.name.special.type
-            ))
+            if (!newDocument.hasOwnProperty(specialNames.type))
                 /* eslint-disable no-throw-literal */
                 throw {
                     forbidden: 'Type: You have to specify a model type via ' +
-                        `property "` +
-                        `${modelConfiguration.property.name.special.type}"` +
-                        `${pathDescription}.`
+                        `property "${specialNames.type}"${pathDescription}.`
                 }
                 /* eslint-enable no-throw-literal */
             if (!(parentNames.length || (new RegExp(
-                modelConfiguration.property.name.special
-                    .typeNameRegularExpressionPattern.public
-            )).test(newDocument[modelConfiguration.property.name.special.type])
+                specialNames.typeNameRegularExpressionPattern.public
+            )).test(newDocument[specialNames.type])
             ))
                 /* eslint-disable no-throw-literal */
                 throw {
                     forbidden: 'TypeName: You have to specify a model type ' +
                         'which matches "' +
-                            modelConfiguration.property.name.special
-                            .typeNameRegularExpressionPattern.public +
+                            specialNames.typeNameRegularExpressionPattern
+                            .public +
                         '" as public type (given "' + newDocument[
-                            modelConfiguration.property.name.special.type
+                            specialNames.type
                         ] + `")${pathDescription}.`
                 }
                 /* eslint-enable no-throw-literal */
-            if (!models.hasOwnProperty(newDocument[
-                modelConfiguration.property.name.special.type
-            ]))
+            if (!models.hasOwnProperty(newDocument[specialNames.type]))
                 /* eslint-disable no-throw-literal */
                 throw {
                     forbidden: 'Model: Given model "' + newDocument[
-                        modelConfiguration.property.name.special.type
+                        specialNames.type
                     ] + `" is not specified${pathDescription}.`
                 }
                 /* eslint-enable no-throw-literal */
             // endregion
-            const modelName:string = newDocument[
-                modelConfiguration.property.name.special.type]
+            const modelName:string = newDocument[specialNames.type]
             const model:Model = models[modelName]
             // region document specific functions
             const checkPropertyConstraints:Function = (
@@ -378,7 +379,7 @@ export default class DatabaseHelper {
                     const foreignKeyType:string = models[
                         propertySpecification.type.substring(
                             'foreignKey:'.length
-                        )]._id.type
+                        )][idName].type
                     if (foreignKeyType !== typeof newValue)
                         /* eslint-disable no-throw-literal */
                         throw {
@@ -613,17 +614,12 @@ export default class DatabaseHelper {
             // endregion
             for (const name:string in model)
                 if (model.hasOwnProperty(name) && ![
-                    modelConfiguration.property.name.special.allowedRole,
-                    modelConfiguration.property.name.special.constraint
-                        .expression,
-                    modelConfiguration.property.name.special.constraint
-                        .execution
+                    specialNames.allowedRole,
+                    specialNames.constraint.execution,
+                    specialNames.constraint.expression
                 ].includes(name))
                     // region run hooks and check for presence of needed data
-                    if (
-                        modelConfiguration.property.name.special.attachment
-                        === name
-                    ) {
+                    if (attachmentName === name) {
                         for (const type:string in model[name]) {
                             if (!newDocument.hasOwnProperty(
                                 name
@@ -677,8 +673,7 @@ export default class DatabaseHelper {
                                     }
                                     /* eslint-enable no-throw-literal */
                                 if (
-                                    modelConfiguration.updateStrategy ===
-                                        'fillUp' &&
+                                    updateStrategy === 'fillUp' &&
                                     newFileNames.length === 0 &&
                                     oldFileNames.length > 0
                                 )
@@ -704,10 +699,7 @@ export default class DatabaseHelper {
                                                     fileName]
                                             somethingChanged = true
                                         }
-                                } else if (
-                                    modelConfiguration.updateStrategy ===
-                                        'fillUp'
-                                )
+                                } else if (updateStrategy === 'fillUp')
                                     for (const fileName:string of oldFileNames)
                                         newDocument[name][fileName] =
                                             // IgnoreTypeCheck
@@ -723,7 +715,7 @@ export default class DatabaseHelper {
                                 newDocument.hasOwnProperty(name) ||
                                 oldDocument && oldDocument.hasOwnProperty(
                                     name
-                                ) && modelConfiguration.updateStrategy
+                                ) && updateStrategy
                             )))
                                 /* eslint-disable no-throw-literal */
                                 throw {
@@ -736,12 +728,9 @@ export default class DatabaseHelper {
                             ) && oldDocument && oldDocument.hasOwnProperty(
                                 name
                             ))
-                                if (
-                                    modelConfiguration.updateStrategy ===
-                                    'fillUp'
-                                )
+                                if (updateStrategy === 'fillUp')
                                     newDocument[name] = oldDocument[name]
-                                else if (!modelConfiguration.updateStrategy)
+                                else if (!updateStrategy)
                                     somethingChanged = true
                         } else if (!newDocument.hasOwnProperty(
                             name
@@ -749,15 +738,9 @@ export default class DatabaseHelper {
                             if (oldDocument && oldDocument.hasOwnProperty(
                                 name
                             )) {
-                                if (
-                                    modelConfiguration.updateStrategy ===
-                                        'fillUp'
-                                )
+                                if (updateStrategy === 'fillUp')
                                     newDocument[name] = oldDocument[name]
-                                else if (
-                                    modelConfiguration.updateStrategy ===
-                                        'migrate'
-                                ) {
+                                else if (updateStrategy === 'migrate') {
                                     newDocument[name] = model[name].default
                                     somethingChanged = true
                                 }
@@ -768,20 +751,15 @@ export default class DatabaseHelper {
                     }
                     // endregion
             // region check given data
-            if (
-                oldDocument &&
-                modelConfiguration.updateStrategy === 'incremental'
-            )
+            if (oldDocument && updateStrategy === 'incremental')
                 // region remove new data which already exists
                 for (const name:string in newDocument)
                     if (
                         newDocument.hasOwnProperty(name) &&
                         oldDocument.hasOwnProperty(name) &&
                         !modelConfiguration.property.name.reserved.concat(
-                            modelConfiguration.property.name.special.deleted,
-                            modelConfiguration.property.name.special.id,
-                            modelConfiguration.property.name.special.revision,
-                            modelConfiguration.property.name.special.type
+                            specialNames.deleted, idName, revisionName,
+                            specialNames.type
                         ).includes(name) && (
                             oldDocument[name] === newDocument[name] ||
                             serialize(
@@ -797,21 +775,16 @@ export default class DatabaseHelper {
                 if (newDocument.hasOwnProperty(
                     name
                 ) && !modelConfiguration.property.name.reserved.concat(
-                    modelConfiguration.property.name.special.deleted,
-                    modelConfiguration.property.name.special.id,
-                    modelConfiguration.property.name.special.revision,
+                    specialNames.deleted, idName, revisionName,
                     // NOTE: This property is integrated automatically.
-                    modelConfiguration.property.name.special.revisions
+                    specialNames.revisions
                 ).includes(name)) {
                     if ([
-                        modelConfiguration.property.name.special.allowedRole,
-                        modelConfiguration.property.name.special.constraint
-                            .execution,
-                        modelConfiguration.property.name.special.constraint
-                            .expression,
-                        modelConfiguration.property.name.special.extend,
-                        modelConfiguration.property.name.special
-                            .validatedDocumentsCache
+                        specialNames.allowedRole,
+                        specialNames.constraint.execution,
+                        specialNames.constraint.expression,
+                        specialNames.extend,
+                        specialNames.validatedDocumentsCache
                     ].includes(name))
                         /* eslint-disable no-throw-literal */
                         throw {
@@ -821,7 +794,7 @@ export default class DatabaseHelper {
                         }
                         /* eslint-enable no-throw-literal */
                     if (!model.hasOwnProperty(name))
-                        if (modelConfiguration.updateStrategy === 'migrate') {
+                        if (updateStrategy === 'migrate') {
                             delete newDocument[name]
                             somethingChanged = true
                             continue
@@ -850,9 +823,8 @@ export default class DatabaseHelper {
                                     newDocument[name]
                                 ) === serialize(oldDocument[name])) {
                                     if (
-                                        name !== '_id' &&
-                                        modelConfiguration.updateStrategy ===
-                                            'incremental'
+                                        name !== idName &&
+                                        updateStrategy === 'incremental'
                                     )
                                         delete newDocument[name]
                                     return true
@@ -883,16 +855,11 @@ export default class DatabaseHelper {
                                 oldDocument[name]
                             )) {
                                 if (
-                                    modelConfiguration.updateStrategy ===
-                                        'incremental' &&
+                                    updateStrategy === 'incremental' &&
                                     !modelConfiguration.property.name.reserved
                                     .concat(
-                                        modelConfiguration.property.name
-                                            .special.deleted,
-                                        modelConfiguration.property.name
-                                            .special.id,
-                                        modelConfiguration.property.name
-                                            .special.revision
+                                        specialNames.deleted, idName,
+                                        revisionName
                                     ).includes(name)
                                 )
                                     delete newDocument[name]
@@ -927,10 +894,7 @@ export default class DatabaseHelper {
                         // endregion
                         return false
                     }
-                    if (
-                        modelConfiguration.property.name.special.attachment
-                        === name
-                    ) {
+                    if (attachmentName === name) {
                         for (const fileName:string in newDocument[name])
                             if (newDocument[name].hasOwnProperty(fileName))
                                 for (const type:string in model[name])
@@ -1066,23 +1030,17 @@ export default class DatabaseHelper {
                 'parentNames', 'pathDescription', 'now', 'nowUTCTimestamp',
                 'getFilenameByPrefix'
             ]
-            for (
-                let type:string in
-                modelConfiguration.property.name.special.constraint
-            )
+            for (let type:string in specialNames.constraint)
                 if (
-                    modelConfiguration.property.name.special.constraint
-                        .hasOwnProperty(type) &&
-                    (type = modelConfiguration.property.name.special
-                        .constraint[type]) &&
+                    specialNames.constraint.hasOwnProperty(type) &&
+                    (type = specialNames.constraint[type]) &&
                     model.hasOwnProperty(type) &&
                     Array.isArray(model[type]) && model[type].length
                 )
                     for (const constraint:Constraint of model[type]) {
                         let hook:Function
                         const code:string = ((
-                            type === modelConfiguration.property.name.special
-                                .constraint.expression
+                            type === specialNames.constraint.expression
                         ) ? 'return ' : '') + constraint.evaluation
                         const values:Array<any> = [
                             checkDocument, checkPropertyContent, code, model,
@@ -1137,10 +1095,8 @@ export default class DatabaseHelper {
                     }
             // / endregion
             // / region attachment
-            const name:string = modelConfiguration.property.name.special
-                .attachment
-            if (newDocument.hasOwnProperty(name)) {
-                const newAttachments:PlainObject = newDocument[name]
+            if (newDocument.hasOwnProperty(attachmentName)) {
+                const newAttachments:PlainObject = newDocument[attachmentName]
                 if (
                     typeof newAttachments !== 'object' ||
                     Object.getPrototypeOf(newAttachments) !== Object.prototype
@@ -1153,8 +1109,10 @@ export default class DatabaseHelper {
                     /* eslint-enable no-throw-literal */
                 // region migrate old attachments
                 let oldAttachments:any = null
-                if (oldDocument && oldDocument.hasOwnProperty(name)) {
-                    oldAttachments = oldDocument[name]
+                if (oldDocument && oldDocument.hasOwnProperty(
+                    attachmentName
+                )) {
+                    oldAttachments = oldDocument[attachmentName]
                     if (
                         oldAttachments !== null &&
                         typeof oldAttachments === 'object' &&
@@ -1183,21 +1141,14 @@ export default class DatabaseHelper {
                                             fileName
                                         ].data === null)
                                             somethingChanged = true
-                                        if (
-                                            modelConfiguration
-                                                .updateStrategy ===
-                                            'incremental'
-                                        )
+                                        if (updateStrategy === 'incremental')
                                             delete newAttachments[fileName]
                                     } else
                                         somethingChanged = true
-                                else if (
-                                    modelConfiguration.updateStrategy ===
-                                        'fillUp'
-                                )
+                                else if (updateStrategy === 'fillUp')
                                     newAttachments[fileName] = oldAttachments[
                                         fileName]
-                                else if (!modelConfiguration.updateStrategy)
+                                else if (!updateStrategy)
                                     somethingChanged = true
                 }
                 for (const fileName:string in newAttachments)
@@ -1217,18 +1168,17 @@ export default class DatabaseHelper {
                             somethingChanged = true
                 // endregion
                 if (Object.keys(newAttachments).length === 0)
-                    delete newDocument[name]
+                    delete newDocument[attachmentName]
                 const attachmentToTypeMapping:{[key:string]:Array<string>} = {}
-                for (const type:string in model[name])
-                    if (model[name].hasOwnProperty(type))
+                for (const type:string in model[attachmentName])
+                    if (model[attachmentName].hasOwnProperty(type))
                         attachmentToTypeMapping[type] = []
-                for (const attachmentName:string in newAttachments)
-                    if (newAttachments.hasOwnProperty(attachmentName)) {
+                for (const name:string in newAttachments)
+                    if (newAttachments.hasOwnProperty(name)) {
                         let matched:boolean = false
-                        for (const type:string in model[name])
-                            if ((new RegExp(type)).test(attachmentName)) {
-                                attachmentToTypeMapping[type].push(
-                                    attachmentName)
+                        for (const type:string in model[attachmentName])
+                            if ((new RegExp(type)).test(name)) {
+                                attachmentToTypeMapping[type].push(name)
                                 matched = true
                                 break
                             }
@@ -1237,9 +1187,10 @@ export default class DatabaseHelper {
                             throw {
                                 forbidden: 'AttachmentTypeMatch: None of the' +
                                     ' specified attachment types ("' +
-                                    Object.keys(model[name]).join('", "') +
-                                    '") matches given one ("' +
-                                    `${attachmentName}")${pathDescription}.`
+                                    Object.keys(model[attachmentName]).join(
+                                        '", "'
+                                    ) + '") matches given one ("' +
+                                    `${name}")${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
                     }
@@ -1249,56 +1200,61 @@ export default class DatabaseHelper {
                     const numberOfAttachments:number =
                         attachmentToTypeMapping[type].length
                     if (
-                        model[name][type].maximum !== null &&
-                        numberOfAttachments > model[name][type].maximum
+                        model[attachmentName][type].maximum !== null &&
+                        numberOfAttachments > model[attachmentName][
+                            type
+                        ].maximum
                     )
                         /* eslint-disable no-throw-literal */
                         throw {
                             forbidden: 'AttachmentMaximum: given number of ' +
                                 `attachments (${numberOfAttachments}) ` +
                                 `doesn't satisfy specified maximum of ` +
-                                `${model[name][type].maximum} from type "` +
-                                `${type}"${pathDescription}.`
+                                `${model[attachmentName][type].maximum} from` +
+                                ` type "${type}"${pathDescription}.`
                         }
                         /* eslint-enable no-throw-literal */
                     if (!(
-                        model[name][type].nullable && numberOfAttachments === 0
-                    ) && numberOfAttachments < model[name][type].minimum)
+                        model[attachmentName][type].nullable &&
+                        numberOfAttachments === 0
+                    ) && numberOfAttachments < model[attachmentName][
+                        type
+                    ].minimum)
                         /* eslint-disable no-throw-literal */
                         throw {
                             forbidden: 'AttachmentMinimum: given number of ' +
                                 `attachments (${numberOfAttachments}) ` +
                                 `doesn't satisfy specified minimum of ` +
-                                `${model[name][type].minimum} from type "` +
-                                `${type}"${pathDescription}.`
+                                `${model[attachmentName][type].minimum} from` +
+                                ` type "${type}"${pathDescription}.`
                         }
                         /* eslint-enable no-throw-literal */
                     for (const fileName:string of attachmentToTypeMapping[
                         type
                     ]) {
                         if (!([null, undefined].includes(
-                            model[name][type].regularExpressionPattern
+                            model[attachmentName][type].regularExpressionPattern
                         ) || (new RegExp(
-                            model[name][type].regularExpressionPattern
+                            model[attachmentName][type].regularExpressionPattern
                         )).test(fileName)))
                             /* eslint-disable no-throw-literal */
                             throw {
                                 forbidden: 'AttachmentName: given ' +
                                     `attachment name "${fileName}" ` +
                                     `doesn't satisfy specified regular ` +
-                                    'expression pattern "' + model[name][
-                                        type
-                                    ].regularExpressionPattern + '" from ' +
-                                    `type "${type}"${pathDescription}.`
+                                    'expression pattern "' + model[
+                                        attachmentName
+                                    ][type].regularExpressionPattern + '" ' +
+                                    `from type "${type}"${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
-                        if (!([null, undefined].includes(model[name][
+                        if (!([null, undefined].includes(model[attachmentName][
                             type
                         ].contentTypeRegularExpressionPattern) ||
                         newAttachments[fileName].hasOwnProperty(
                             'content_type'
                         ) && newAttachments[fileName].content_type && (
-                            new RegExp(model[name][
+                            new RegExp(model[attachmentName][
                                 type
                             ].contentTypeRegularExpressionPattern)
                         ).test(newAttachments[fileName].content_type)))
@@ -1308,10 +1264,10 @@ export default class DatabaseHelper {
                                     ' attachment content type "' +
                                     newAttachments[fileName].content_type +
                                     `" doesn't satisfy specified regular` +
-                                    ' expression pattern "' + model[name][
-                                        type
-                                    ].regularExpressionPattern + '" from ' +
-                                    `type "${type}"${pathDescription}.`
+                                    ' expression pattern "' + model[
+                                        attachmentName
+                                    ][type].regularExpressionPattern + '" ' +
+                                    `from type "${type}"${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
                     }
@@ -1321,7 +1277,7 @@ export default class DatabaseHelper {
             // endregion
             if (
                 !somethingChanged && oldDocument &&
-                modelConfiguration.updateStrategy === 'migrate'
+                updateStrategy === 'migrate'
             )
                 for (const name:string in oldDocument)
                     if (oldDocument.hasOwnProperty(
@@ -1348,13 +1304,11 @@ export default class DatabaseHelper {
             }
             /* eslint-enable no-throw-literal */
         if (securitySettings.hasOwnProperty('checkedDocuments'))
-            securitySettings[modelConfiguration.property.name.special
-                .validatedDocumentsCache
-            ].add(`${newDocument._id}-${newDocument._rev}`)
+            securitySettings[specialNames.validatedDocumentsCache].add(
+                `${newDocument[idName]}-${newDocument[revisionName]}`)
         else
-            securitySettings[modelConfiguration.property.name.special
-                .validatedDocumentsCache
-            ] = new Set([`${newDocument._id}-${newDocument._rev}`])
+            securitySettings[specialNames.validatedDocumentsCache] = new Set([
+                `${newDocument[idName]}-${newDocument[revisionName]}`])
         return result.newDocument
     }
 }

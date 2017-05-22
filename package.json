@@ -202,6 +202,7 @@
               "revision": "_rev",
               "revisionsInformation": "_revs_info",
               "revisions": "_revisions",
+              "strategy": "_updateStrategy",
               "type": "-type",
               "typeNameRegularExpressionPattern": {
                 "public": "^[A-Z][A-Za-z0-9]+$",
