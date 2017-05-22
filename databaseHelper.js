@@ -1319,6 +1319,15 @@ export default class DatabaseHelper {
             }
             // / endregion
             // endregion
+            if (
+                !somethingChanged && oldDocument &&
+                modelConfiguration.updateStrategy === 'migrate'
+            )
+                for (const name:string in oldDocument)
+                    if (oldDocument.hasOwnProperty(
+                        name
+                    ) && !newDocument.hasOwnProperty(name))
+                        somethingChanged = true
             return {newDocument, somethingChanged}
         }
         // endregion
