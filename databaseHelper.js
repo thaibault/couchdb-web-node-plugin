@@ -784,6 +784,7 @@ export default class DatabaseHelper {
                     }
                 // endregion
             for (const name:string in newDocument)
+                // TODO specialNames migration stand
                 if (newDocument.hasOwnProperty(
                     name
                 ) && !modelConfiguration.property.name.reserved.concat(
@@ -799,8 +800,9 @@ export default class DatabaseHelper {
                     ].includes(name))
                         /* eslint-disable no-throw-literal */
                         throw {
-                            forbidden: 'Invalid: Given property name "' +
-                                `${name}" isn't allowed as property name` +
+                            forbidden: 'Invalid: Given special property name' +
+                                `'"${name}" isn't allowed as normal property` +
+                                ' name for payload data usage' +
                                 `${pathDescription}.`
                         }
                         /* eslint-enable no-throw-literal */
