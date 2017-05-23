@@ -133,12 +133,13 @@ export default class DatabaseHelper {
                 return newDocument
         */
         if (securitySettings.hasOwnProperty(
-            specialNames.validatedDocumentsCache
-        ) && securitySettings[specialNames.validatedDocumentsCache].has(
-            `${newDocument[idName]}-${newDocument[revisionName]}`
-        )) {
-            securitySettings[specialNames.validatedDocumentsCache].delete(
-                `${newDocument[idName]}-${newDocument[revisionName]}`)
+            modelConfiguration.property.name.validatedDocumentsCache
+        ) && securitySettings[
+            modelConfiguration.property.name.validatedDocumentsCache
+        ].has(`${newDocument[idName]}-${newDocument[revisionName]}`)) {
+            securitySettings[
+                modelConfiguration.property.name.validatedDocumentsCache
+            ].delete(`${newDocument[idName]}-${newDocument[revisionName]}`)
             return newDocument
         }
         if (newDocument.hasOwnProperty(revisionName) && [
@@ -784,14 +785,21 @@ export default class DatabaseHelper {
                     }
                 // endregion
             for (const name:string in newDocument)
-                // TODO specialNames migration stand
                 if (newDocument.hasOwnProperty(
                     name
                 ) && !modelConfiguration.property.name.reserved.concat(
-                    idName, revisionName, specialNames.deleted,
+                    idName,
+                    revisionName,
+                    specialNames.conflict,
+                    specialNames.deleted,
+                    specialNames.deletedConflict,
+                    specialNames.localSequence,
                     // NOTE: This property is integrated automatically.
-                    specialNames.revisions
+                    specialNames.revisions,
+                    specialNames.revisionsInformation
+                    specialNames.strategy
                 ).includes(name)) {
+                    // TODO special names stand
                     if ([
                         specialNames.allowedRole,
                         specialNames.constraint.execution,
@@ -1321,10 +1329,13 @@ export default class DatabaseHelper {
             }
             /* eslint-enable no-throw-literal */
         if (securitySettings.hasOwnProperty('checkedDocuments'))
-            securitySettings[specialNames.validatedDocumentsCache].add(
-                `${newDocument[idName]}-${newDocument[revisionName]}`)
+            securitySettings[
+                modelConfiguration.property.name.validatedDocumentsCache
+            ].add(`${newDocument[idName]}-${newDocument[revisionName]}`)
         else
-            securitySettings[specialNames.validatedDocumentsCache] = new Set([
+            securitySettings[
+                modelConfiguration.property.name.validatedDocumentsCache
+            ] = new Set([
                 `${newDocument[idName]}-${newDocument[revisionName]}`])
         return result.newDocument
     }

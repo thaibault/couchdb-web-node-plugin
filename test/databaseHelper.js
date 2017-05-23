@@ -814,9 +814,10 @@ registerTest(async function():Promise<void> {
                     incremental: {[typeName]: 'Test'},
                     '': {[typeName]: 'Test'}
                 }],
-                [[{[idName]: 1, [revisionName]: 1}, null, {}, {
-                    _validatedDocuments: new Set(['1-1'])
-                }], {}, {
+                [[{[idName]: 1, [revisionName]: 1}, null, {}, {[
+                    configuration.database.model.property.name
+                    .validatedDocumentsCache
+                ]: new Set(['1-1'])}], {}, {
                     fillUp: {[idName]: 1, [revisionName]: 1},
                     incremental: {[idName]: 1, [revisionName]: 1},
                     '': {[idName]: 1, [revisionName]: 1}

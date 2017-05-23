@@ -81,7 +81,6 @@ export type SpecialPropertyNames = {
     revisionsInformation:string;
     strategy:UpdateStrategy;
     type:string;
-    validatedDocumentsCache:string;
 }
 export type PropertyNameConfiguration = {
     reserved:Array<string>;
@@ -90,6 +89,7 @@ export type PropertyNameConfiguration = {
         private:string;
         public:string;
     };
+    validatedDocumentsCache:string;
 }
 export type ModelConfiguration = {
     entities:Models;

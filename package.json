@@ -203,13 +203,13 @@
               "revisions": "_revisions",
               "revisionsInformation": "_revs_info",
               "strategy": "_updateStrategy",
-              "type": "-type",
-              "validatedDocumentsCache": "_validatedDocuments"
+              "type": "-type"
             },
             "typeRegularExpressionPattern": {
               "public": "^[A-Z][A-Za-z0-9]+$",
               "private": "^_[a-z][A-Za-z0-9]+$"
-            }
+            },
+            "validatedDocumentsCache": "_validatedDocuments"
           }
         },
         "updateConfiguration": true,
