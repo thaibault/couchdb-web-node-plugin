@@ -77,8 +77,8 @@ export type SpecialPropertyNames = {
     id:string;
     localSequence:string;
     revision:string;
-    revisionsInformation:string;
     revisions:string;
+    revisionsInformation:string;
     strategy:UpdateStrategy;
     type:string;
     validatedDocumentsCache:string;

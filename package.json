@@ -200,8 +200,8 @@
               "id": "_id",
               "localSequence": "_local_seq",
               "revision": "_rev",
-              "revisionsInformation": "_revs_info",
               "revisions": "_revisions",
+              "revisionsInformation": "_revs_info",
               "strategy": "_updateStrategy",
               "type": "-type",
               "validatedDocumentsCache": "_validatedDocuments"

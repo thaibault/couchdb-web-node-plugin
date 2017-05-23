@@ -619,8 +619,7 @@ export default class DatabaseHelper {
                     specialNames.constraint.expression,
                     specialNames.extend,
                     specialNames.localSequence,
-                    specialNames.revisionsInformation,
-                    specialNames.validatedDocumentsCache
+                    specialNames.revisionsInformation
                 ].includes(name))
                     // region run hooks and check for presence of needed data
                     if (specialNames.attachment === name) {
@@ -762,7 +761,16 @@ export default class DatabaseHelper {
                         newDocument.hasOwnProperty(name) &&
                         oldDocument.hasOwnProperty(name) &&
                         !modelConfiguration.property.name.reserved.concat(
-                            idName, revisionName, specialNames.deleted,
+                            idName,
+                            revisionName,
+                            specialNames.allowedRole,
+                            specialNames.conflict,
+                            specialNames.deleted,
+                            specialNames.deletedConflict,
+                            specialNames.localSequence,
+                            specialNames.revisions,
+                            specialNames.revisionsInformation,
+                            specialNames.strategy,
                             specialNames.type
                         ).includes(name) && (
                             oldDocument[name] === newDocument[name] ||
@@ -787,8 +795,7 @@ export default class DatabaseHelper {
                         specialNames.allowedRole,
                         specialNames.constraint.execution,
                         specialNames.constraint.expression,
-                        specialNames.extend,
-                        specialNames.validatedDocumentsCache
+                        specialNames.extend
                     ].includes(name))
                         /* eslint-disable no-throw-literal */
                         throw {
