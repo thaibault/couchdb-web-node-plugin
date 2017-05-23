@@ -119,7 +119,6 @@ export default class DatabaseHelper {
             now.getUTCMilliseconds())
         const specialNames:PlainObject =
             modelConfiguration.property.name.special
-        const attachmentName:string = specialNames.attachment
         const idName:string = specialNames.id
         const revisionName:string = specialNames.revision
         /*
@@ -201,15 +200,16 @@ export default class DatabaseHelper {
                 }
                 /* eslint-enable no-throw-literal */
             if (!(parentNames.length || (new RegExp(
-                specialNames.typeNameRegularExpressionPattern.public
+                modelConfiguration.property.name.typeRegularExpressionPattern
+                    .public
             )).test(newDocument[specialNames.type])
             ))
                 /* eslint-disable no-throw-literal */
                 throw {
                     forbidden: 'TypeName: You have to specify a model type ' +
                         'which matches "' +
-                            specialNames.typeNameRegularExpressionPattern
-                            .public +
+                            modelConfiguration.property.name
+                                .typeRegularExpressionPattern.public +
                         '" as public type (given "' + newDocument[
                             specialNames.type
                         ] + `")${pathDescription}.`
@@ -616,10 +616,14 @@ export default class DatabaseHelper {
                 if (model.hasOwnProperty(name) && ![
                     specialNames.allowedRole,
                     specialNames.constraint.execution,
-                    specialNames.constraint.expression
+                    specialNames.constraint.expression,
+                    specialNames.extend,
+                    specialNames.localSequence,
+                    specialNames.revisionsInformation,
+                    specialNames.validatedDocumentsCache
                 ].includes(name))
                     // region run hooks and check for presence of needed data
-                    if (attachmentName === name) {
+                    if (specialNames.attachment === name) {
                         for (const type:string in model[name]) {
                             if (!newDocument.hasOwnProperty(
                                 name
@@ -758,7 +762,7 @@ export default class DatabaseHelper {
                         newDocument.hasOwnProperty(name) &&
                         oldDocument.hasOwnProperty(name) &&
                         !modelConfiguration.property.name.reserved.concat(
-                            specialNames.deleted, idName, revisionName,
+                            idName, revisionName, specialNames.deleted,
                             specialNames.type
                         ).includes(name) && (
                             oldDocument[name] === newDocument[name] ||
@@ -775,7 +779,7 @@ export default class DatabaseHelper {
                 if (newDocument.hasOwnProperty(
                     name
                 ) && !modelConfiguration.property.name.reserved.concat(
-                    specialNames.deleted, idName, revisionName,
+                    idName, revisionName, specialNames.deleted,
                     // NOTE: This property is integrated automatically.
                     specialNames.revisions
                 ).includes(name)) {
@@ -894,7 +898,7 @@ export default class DatabaseHelper {
                         // endregion
                         return false
                     }
-                    if (attachmentName === name) {
+                    if (specialNames.attachment === name) {
                         for (const fileName:string in newDocument[name])
                             if (newDocument[name].hasOwnProperty(fileName))
                                 for (const type:string in model[name])
@@ -1095,8 +1099,9 @@ export default class DatabaseHelper {
                     }
             // / endregion
             // / region attachment
-            if (newDocument.hasOwnProperty(attachmentName)) {
-                const newAttachments:PlainObject = newDocument[attachmentName]
+            if (newDocument.hasOwnProperty(specialNames.attachment)) {
+                const newAttachments:PlainObject = newDocument[
+                    specialNames.attachment]
                 if (
                     typeof newAttachments !== 'object' ||
                     Object.getPrototypeOf(newAttachments) !== Object.prototype
@@ -1110,9 +1115,9 @@ export default class DatabaseHelper {
                 // region migrate old attachments
                 let oldAttachments:any = null
                 if (oldDocument && oldDocument.hasOwnProperty(
-                    attachmentName
+                    specialNames.attachment
                 )) {
-                    oldAttachments = oldDocument[attachmentName]
+                    oldAttachments = oldDocument[specialNames.attachment]
                     if (
                         oldAttachments !== null &&
                         typeof oldAttachments === 'object' &&
@@ -1168,15 +1173,17 @@ export default class DatabaseHelper {
                             somethingChanged = true
                 // endregion
                 if (Object.keys(newAttachments).length === 0)
-                    delete newDocument[attachmentName]
+                    delete newDocument[specialNames.attachment]
                 const attachmentToTypeMapping:{[key:string]:Array<string>} = {}
-                for (const type:string in model[attachmentName])
-                    if (model[attachmentName].hasOwnProperty(type))
+                for (const type:string in model[specialNames.attachment])
+                    if (model[specialNames.attachment].hasOwnProperty(type))
                         attachmentToTypeMapping[type] = []
                 for (const name:string in newAttachments)
                     if (newAttachments.hasOwnProperty(name)) {
                         let matched:boolean = false
-                        for (const type:string in model[attachmentName])
+                        for (const type:string in model[
+                            specialNames.attachment
+                        ])
                             if ((new RegExp(type)).test(name)) {
                                 attachmentToTypeMapping[type].push(name)
                                 matched = true
@@ -1187,10 +1194,10 @@ export default class DatabaseHelper {
                             throw {
                                 forbidden: 'AttachmentTypeMatch: None of the' +
                                     ' specified attachment types ("' +
-                                    Object.keys(model[attachmentName]).join(
-                                        '", "'
-                                    ) + '") matches given one ("' +
-                                    `${name}")${pathDescription}.`
+                                    Object.keys(model[
+                                        specialNames.attachment
+                                    ]).join('", "') + '") matches given one ' +
+                                    `("${name}")${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
                     }
@@ -1199,25 +1206,24 @@ export default class DatabaseHelper {
                         continue
                     const numberOfAttachments:number =
                         attachmentToTypeMapping[type].length
-                    if (
-                        model[attachmentName][type].maximum !== null &&
-                        numberOfAttachments > model[attachmentName][
-                            type
-                        ].maximum
+                    if (model[specialNames.attachment][
+                        type
+                    ].maximum !== null && numberOfAttachments > model[
+                        specialNames.attachment][type].maximum
                     )
                         /* eslint-disable no-throw-literal */
                         throw {
                             forbidden: 'AttachmentMaximum: given number of ' +
                                 `attachments (${numberOfAttachments}) ` +
                                 `doesn't satisfy specified maximum of ` +
-                                `${model[attachmentName][type].maximum} from` +
-                                ` type "${type}"${pathDescription}.`
+                                model[specialNames.attachment][type].maximum +
+                                ` from type "${type}"${pathDescription}.`
                         }
                         /* eslint-enable no-throw-literal */
                     if (!(
-                        model[attachmentName][type].nullable &&
+                        model[specialNames.attachment][type].nullable &&
                         numberOfAttachments === 0
-                    ) && numberOfAttachments < model[attachmentName][
+                    ) && numberOfAttachments < model[specialNames.attachment][
                         type
                     ].minimum)
                         /* eslint-disable no-throw-literal */
@@ -1225,17 +1231,19 @@ export default class DatabaseHelper {
                             forbidden: 'AttachmentMinimum: given number of ' +
                                 `attachments (${numberOfAttachments}) ` +
                                 `doesn't satisfy specified minimum of ` +
-                                `${model[attachmentName][type].minimum} from` +
-                                ` type "${type}"${pathDescription}.`
+                                model[specialNames.attachment][type].minimum +
+                                ` from type "${type}"${pathDescription}.`
                         }
                         /* eslint-enable no-throw-literal */
                     for (const fileName:string of attachmentToTypeMapping[
                         type
                     ]) {
-                        if (!([null, undefined].includes(
-                            model[attachmentName][type].regularExpressionPattern
-                        ) || (new RegExp(
-                            model[attachmentName][type].regularExpressionPattern
+                        if (!([null, undefined].includes(model[
+                            specialNames.attachment
+                        ][type].regularExpressionPattern) || (new RegExp(
+                            model[specialNames.attachment][
+                                type
+                            ].regularExpressionPattern
                         )).test(fileName)))
                             /* eslint-disable no-throw-literal */
                             throw {
@@ -1243,18 +1251,18 @@ export default class DatabaseHelper {
                                     `attachment name "${fileName}" ` +
                                     `doesn't satisfy specified regular ` +
                                     'expression pattern "' + model[
-                                        attachmentName
+                                        specialNames.attachment
                                     ][type].regularExpressionPattern + '" ' +
                                     `from type "${type}"${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
-                        if (!([null, undefined].includes(model[attachmentName][
-                            type
-                        ].contentTypeRegularExpressionPattern) ||
+                        if (!([null, undefined].includes(model[
+                            specialNames.attachment
+                        ][type].contentTypeRegularExpressionPattern) ||
                         newAttachments[fileName].hasOwnProperty(
                             'content_type'
                         ) && newAttachments[fileName].content_type && (
-                            new RegExp(model[attachmentName][
+                            new RegExp(model[specialNames.attachment][
                                 type
                             ].contentTypeRegularExpressionPattern)
                         ).test(newAttachments[fileName].content_type)))
@@ -1265,7 +1273,7 @@ export default class DatabaseHelper {
                                     newAttachments[fileName].content_type +
                                     `" doesn't satisfy specified regular` +
                                     ' expression pattern "' + model[
-                                        attachmentName
+                                        specialNames.attachment
                                     ][type].regularExpressionPattern + '" ' +
                                     `from type "${type}"${pathDescription}.`
                             }

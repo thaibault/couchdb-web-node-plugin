@@ -116,17 +116,19 @@ export default class Helper {
     static determineGenericIndexablePropertyNames(
         modelConfiguration:ModelConfiguration, model:Model
     ):Array<string> {
+        const specialNames:PlainObject =
+            modelConfiguration.property.name.special
         return Object.keys(model).filter((name:string):boolean => !(
             name.startsWith('_') ||
             modelConfiguration.property.name.reserved.concat(
-                modelConfiguration.property.name.special.deleted,
-                modelConfiguration.property.name.special.id,
-                modelConfiguration.property.name.special.revision,
-                modelConfiguration.property.name.special.type
+                specialNames.deleted,
+                specialNames.id,
+                specialNames.revision,
+                specialNames.type
             ).includes(name) ||
             model[name].type && model[name].type.endsWith('[]') ||
             modelConfiguration.entities.hasOwnProperty(model[name].type)
-        )).concat('_id', '_rev')
+        )).concat(specialNames.id, specialNames.revision)
     }
     /**
      * Extend given model with all specified one.
@@ -174,11 +176,11 @@ export default class Helper {
                 defaultSpecification: {},
                 name: {
                     special: {
-                        extend: '_extends',
-                        typeNameRegularExpressionPattern: {
-                            private: '^_[a-z][A-Za-z0-9]+$',
-                            public: '^[A-Z][A-Za-z0-9]+$'
-                        }
+                        extend: '_extends'
+                    },
+                    typeRegularExpressionPattern: {
+                        private: '^_[a-z][A-Za-z0-9]+$',
+                        public: '^[A-Z][A-Za-z0-9]+$'
                     }
                 }
             }
@@ -189,18 +191,18 @@ export default class Helper {
                 modelName
             )) {
                 if (!((new RegExp(
-                    modelConfiguration.property.name.special
-                        .typeNameRegularExpressionPattern.public
+                    modelConfiguration.property.name
+                        .typeRegularExpressionPattern.public
                 )).test(modelName) || (new RegExp(
                     modelConfiguration.property.name.special
-                        .typeNameRegularExpressionPattern.private
+                        .typeRegularExpressionPattern.private
                 )).test(modelName)))
                     throw new Error(
                         'Model names have to match "' +
                         modelConfiguration.property.name.special
-                            .typeNameRegularExpressionPattern.public +
+                            .typeRegularExpressionPattern.public +
                         '" or "' + modelConfiguration.property.name.special
-                            .typeNameRegularExpressionPattern.private +
+                            .typeRegularExpressionPattern.private +
                         `" for private one (given name: "${modelName}").`)
                 models[modelName] = Helper.extendModel(
                     modelName, modelConfiguration.entities,

@@ -81,15 +81,15 @@ export type SpecialPropertyNames = {
     revisions:string;
     strategy:UpdateStrategy;
     type:string;
-    typeNameRegularExpressionPattern:{
-        private:string;
-        public:string;
-    };
     validatedDocumentsCache:string;
 }
 export type PropertyNameConfiguration = {
     reserved:Array<string>;
     special:SpecialPropertyNames;
+    typeRegularExpressionPattern:{
+        private:string;
+        public:string;
+    };
 }
 export type ModelConfiguration = {
     entities:Models;
