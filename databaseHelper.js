@@ -359,7 +359,7 @@ export default class DatabaseHelper {
                 else if (['boolean', 'integer', 'number', 'string'].includes(
                     propertySpecification.type
                 )) {
-                    if (isNaN(newValue) || !(
+                    if (typeof newValue === 'number' && isNaN(newValue) || !(
                         propertySpecification.type === 'integer' ||
                         typeof newValue === propertySpecification.type
                     ) || propertySpecification.type === 'integer' && parseInt(
@@ -957,8 +957,8 @@ export default class DatabaseHelper {
                                     `${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
-                        if (propertySpecification.hasOwnProperty(
-                            'minimumNumber'
+                        if (![undefined, null].includes(
+                            propertySpecification.minimumNumber
                         ) && newDocument[name].length <
                             propertySpecification.minimumNumber
                         )
@@ -973,8 +973,8 @@ export default class DatabaseHelper {
                                     `${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
-                        else if (propertySpecification.hasOwnProperty(
-                            'maximumNumber'
+                        else if (![undefined, null].includes(
+                            propertySpecification.maximumNumber
                         ) && propertySpecification.maximumNumber <
                             newDocument[name].length
                         )
