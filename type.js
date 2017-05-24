@@ -33,8 +33,8 @@ export type PropertySpecification = {
     minimum:number;
     maximumLength:?number;
     minimumLength:?number;
-    maximumSize:?number;
-    minimumSize:?number;
+    maximumNumber:?number;
+    minimumNumber:?number;
     mutable:boolean;
     nullable:boolean;
     onCreateExpression:?string;

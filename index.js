@@ -471,7 +471,7 @@ export default class Database {
         )) {
             for (const modelName:string in models)
                 if (models.hasOwnProperty(modelName) && (new RegExp(
-                    configuration.database.model.property.name.
+                    configuration.database.model.property.name
                         .typeRegularExpressionPattern.public
                 )).test(modelName))
                     for (

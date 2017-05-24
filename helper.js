@@ -194,14 +194,14 @@ export default class Helper {
                     modelConfiguration.property.name
                         .typeRegularExpressionPattern.public
                 )).test(modelName) || (new RegExp(
-                    modelConfiguration.property.name.special
+                    modelConfiguration.property.name
                         .typeRegularExpressionPattern.private
                 )).test(modelName)))
                     throw new Error(
                         'Model names have to match "' +
-                        modelConfiguration.property.name.special
+                        modelConfiguration.property.name
                             .typeRegularExpressionPattern.public +
-                        '" or "' + modelConfiguration.property.name.special
+                        '" or "' + modelConfiguration.property.name
                             .typeRegularExpressionPattern.private +
                         `" for private one (given name: "${modelName}").`)
                 models[modelName] = Helper.extendModel(

@@ -413,6 +413,7 @@ export default class DatabaseHelper {
                             forbidden:
                                 `MinimalLength: Property "${name}" must have` +
                                 ' minimal length ' +
+                                // IgnoreTypeCheck
                                 propertySpecification.minimumLength +
                                 `${pathDescription}.`
                         }
@@ -425,6 +426,7 @@ export default class DatabaseHelper {
                             forbidden:
                                 `MaximalLength: Property "${name}" must have` +
                                 ' maximal length ' +
+                                // IgnoreTypeCheck
                                 propertySpecification.maximumLength +
                                 `${pathDescription}.`
                         }
@@ -444,7 +446,7 @@ export default class DatabaseHelper {
                                 `${pathDescription}.`
                         }
                         /* eslint-disable no-throw-literal */
-                    else if (![undefined, null].includes(
+                    if (![undefined, null].includes(
                         propertySpecification.maximum
                     ) && newValue > propertySpecification.maximum)
                         /* eslint-enable no-throw-literal */
@@ -452,6 +454,7 @@ export default class DatabaseHelper {
                             forbidden: `Maximum: Property "${name}" (type ` +
                                 `${propertySpecification.type}) must ` +
                                 'satisfy a maximum of ' +
+                                // IgnoreTypeCheck
                                 propertySpecification.maximum +
                                 `${pathDescription}.`
                         }
@@ -955,9 +958,9 @@ export default class DatabaseHelper {
                             }
                             /* eslint-enable no-throw-literal */
                         if (propertySpecification.hasOwnProperty(
-                            'minimumSize'
+                            'minimumNumber'
                         ) && newDocument[name].length <
-                            propertySpecification.minimumSize
+                            propertySpecification.minimumNumber
                         )
                             /* eslint-disable no-throw-literal */
                             throw {
@@ -966,13 +969,13 @@ export default class DatabaseHelper {
                                     `${newDocument[name].length}) doesn't ` +
                                     `fullfill minimum array length of ` +
                                     // IgnoreTypeCheck
-                                    propertySpecification.minimumSize +
+                                    propertySpecification.minimumNumber +
                                     `${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
                         else if (propertySpecification.hasOwnProperty(
-                            'maximumLength'
-                        ) && propertySpecification.maximumLength <
+                            'maximumNumber'
+                        ) && propertySpecification.maximumNumber <
                             newDocument[name].length
                         )
                             /* eslint-disable no-throw-literal */
@@ -982,7 +985,7 @@ export default class DatabaseHelper {
                                     `${newDocument[name].length}) doesn't ` +
                                     `fullfill maximum array length of ` +
                                     // IgnoreTypeCheck
-                                    propertySpecification.maximumLength +
+                                    propertySpecification.maximumNumber +
                                     `${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
@@ -1231,15 +1234,17 @@ export default class DatabaseHelper {
                         attachmentToTypeMapping[type].length
                     if (model[specialNames.attachment][
                         type
-                    ].maximum !== null && numberOfAttachments > model[
-                        specialNames.attachment][type].maximum
+                    ].maximumNumber !== null && numberOfAttachments > model[
+                        specialNames.attachment][type].maximumNumber
                     )
                         /* eslint-disable no-throw-literal */
                         throw {
                             forbidden: 'AttachmentMaximum: given number of ' +
                                 `attachments (${numberOfAttachments}) ` +
                                 `doesn't satisfy specified maximum of ` +
-                                model[specialNames.attachment][type].maximum +
+                                model[specialNames.attachment][
+                                    type
+                                ].maximumNumber +
                                 ` from type "${type}"${pathDescription}.`
                         }
                         /* eslint-enable no-throw-literal */
@@ -1248,13 +1253,15 @@ export default class DatabaseHelper {
                         numberOfAttachments === 0
                     ) && numberOfAttachments < model[specialNames.attachment][
                         type
-                    ].minimum)
+                    ].minimumNumber)
                         /* eslint-disable no-throw-literal */
                         throw {
                             forbidden: 'AttachmentMinimum: given number of ' +
                                 `attachments (${numberOfAttachments}) ` +
                                 `doesn't satisfy specified minimum of ` +
-                                model[specialNames.attachment][type].minimum +
+                                model[specialNames.attachment][
+                                    type
+                                ].minimumNumber +
                                 ` from type "${type}"${pathDescription}.`
                         }
                         /* eslint-enable no-throw-literal */
