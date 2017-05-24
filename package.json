@@ -109,8 +109,8 @@
                 "__evaluate__": "`(?:${self.database.model.property.name.typeRegularExpressionPattern.public}|${self.database.model.property.name.typeRegularExpressionPattern.private})`"
               },
               "nullable": false,
-              "minimum": 1,
-              "maximum": 999,
+              "minimumLength": 1,
+              "maximumLength": 999,
               "mutable": false
             }
           },
@@ -172,6 +172,10 @@
             "default": null,
             "maximum": null,
             "minimum": null,
+            "minimumLength": 0,
+            "maximumLength": null,
+            "minimumSize": 0,
+            "maximumSize": null,
             "mutable": true,
             "nullable": true,
             "onCreateExecution": null,

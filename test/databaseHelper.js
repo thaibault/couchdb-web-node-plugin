@@ -306,12 +306,12 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{[typeName]: 'Test', a: [4]}], {entities: {Test: {
-                        a: {type: 'integer[]', minimumLength: 2}
+                        a: {type: 'integer[]', minimumSize: 2}
                     }}}, 'MinimumArrayLength'
                 ],
                 [
                     [{[typeName]: 'Test', a: []}], {entities: {Test: {
-                        a: {type: 'integer[]', minimumLength: 1}
+                        a: {type: 'integer[]', minimumSize: 1}
                     }}}, 'MinimumArrayLength'
                 ],
                 [
@@ -501,7 +501,8 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{[typeName]: 'Test', a: '12'}],
-                    {entities: {Test: {a: {minimum: 3}}}}, 'MinimalLength'
+                    {entities: {Test: {a: {minimumLength: 3}}}},
+                    'MinimalLength'
                 ],
                 [
                     [{[typeName]: 'Test', a: '12'}],
@@ -1425,7 +1426,7 @@ registerTest(async function():Promise<void> {
                 }],
                 [
                     [{[typeName]: 'Test', a: [2, 1]}], {entities: {Test: {a: {
-                        type: 'integer[]', minimumLength: 1, maximumLength: 2
+                        type: 'integer[]', maximumSize: 2, minimumSize: 1
                     }}}}, {
                         fillUp: {[typeName]: 'Test', a: [2, 1]},
                         incremental: {[typeName]: 'Test', a: [2, 1]},
@@ -1434,8 +1435,8 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{[typeName]: 'Test', a: [2, 1]}], {entities: {Test: {a: {
-                        type: 'integer[]', maximumLength: Infinity,
-                        minimumLength: 0
+                        type: 'integer[]', maximumSize: Infinity,
+                        minimumSize: 0
                     }}}}, {
                         fillUp: {[typeName]: 'Test', a: [2, 1]},
                         incremental: {[typeName]: 'Test', a: [2, 1]},
@@ -1799,7 +1800,7 @@ registerTest(async function():Promise<void> {
                     }
                 ],
                 [[{[typeName]: 'Test', a: '123'}, {[typeName]: 'Test'}], {
-                    entities: {Test: {a: {minimum: 3}}}}, {
+                    entities: {Test: {a: {minimumLength: 3}}}}, {
                         fillUp: {[typeName]: 'Test', a: '123'},
                         incremental: {a: '123'},
                         '': {[typeName]: 'Test', a: '123'}

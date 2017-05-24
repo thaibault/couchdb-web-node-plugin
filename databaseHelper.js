@@ -318,6 +318,7 @@ export default class DatabaseHelper {
                     const initialNewValue:any = newValue
                     if (newValue !== null && typeof newValue !== 'number') {
                         newValue = new Date(newValue)
+                        /* eslint-enable no-throw-literal */
                         newValue = Date.UTC(
                             newValue.getUTCFullYear(), newValue.getUTCMonth(),
                             newValue.getUTCDate(), newValue.getUTCHours(),
@@ -328,7 +329,7 @@ export default class DatabaseHelper {
                         /* eslint-disable no-throw-literal */
                         throw {
                             forbidden: `PropertyType: Property "${name}" ` +
-                                `isn't of type "DateTime" (given "` +
+                                `isn't of (valid) type "DateTime" (given "` +
                                 `${serialize(initialNewValue)}" of type "` +
                                 `${typeof newValue}")${pathDescription}.`
                         }
@@ -358,7 +359,7 @@ export default class DatabaseHelper {
                 else if (['boolean', 'integer', 'number', 'string'].includes(
                     propertySpecification.type
                 )) {
-                    if (!(
+                    if (isNaN(newValue) || !(
                         propertySpecification.type === 'integer' ||
                         typeof newValue === propertySpecification.type
                     ) || propertySpecification.type === 'integer' && parseInt(
@@ -367,7 +368,7 @@ export default class DatabaseHelper {
                         /* eslint-disable no-throw-literal */
                         throw {
                             forbidden: `PropertyType: Property "${name}" ` +
-                                `isn't of type "` +
+                                `isn't of (valid) type "` +
                                 `${propertySpecification.type}" (given "` +
                                 `${serialize(newValue)}" of type "` +
                                 `${typeof newValue}")${pathDescription}.`
@@ -403,54 +404,59 @@ export default class DatabaseHelper {
                     /* eslint-disable no-throw-literal */
                 // endregion
                 // region range
-                if (![undefined, null].includes(propertySpecification.minimum))
-                    if (propertySpecification.type === 'string') {
-                        if (newValue.length < propertySpecification.minimum)
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden: `MinimalLength: Property "${name}` +
-                                    '" (type string) should have minimal ' +
-                                    `length ${propertySpecification.minimum}` +
-                                    `${pathDescription}.`
-                            }
-                            /* eslint-enable no-throw-literal */
-                    } else if (['number', 'integer', 'DateTime'].includes(
-                        propertySpecification.type
+                if (typeof newValue === 'string') {
+                    if (![undefined, null].includes(
+                        propertySpecification.minimumLength
+                    ) && newValue.length < propertySpecification.minimumLength)
+                        /* eslint-disable no-throw-literal */
+                        throw {
+                            forbidden:
+                                `MinimalLength: Property "${name}" must have` +
+                                ' minimal length ' +
+                                propertySpecification.minimumLength +
+                                `${pathDescription}.`
+                        }
+                        /* eslint-enable no-throw-literal */
+                    if (![undefined, null].includes(
+                        propertySpecification.maximumLength
+                    ) && newValue.length > propertySpecification.maximumLength)
+                        /* eslint-disable no-throw-literal */
+                        throw {
+                            forbidden:
+                                `MaximalLength: Property "${name}" must have` +
+                                ' maximal length ' +
+                                propertySpecification.maximumLength +
+                                `${pathDescription}.`
+                        }
+                        /* eslint-enable no-throw-literal */
+                }
+                if (typeof newValue === 'number') {
+                    if (![undefined, null].includes(
+                        propertySpecification.minimum
                     ) && newValue < propertySpecification.minimum)
                         /* eslint-disable no-throw-literal */
                         throw {
-                            forbidden: `Minimum: Property "${name}" (type ` +
-                                `${propertySpecification.type}) should ` +
-                                `satisfy a minimum of ` +
+                            forbidden:
+                                `Minimum: Property "${name}" (type ` +
+                                `${propertySpecification.type}) must ` +
+                                'satisfy a minimum of ' +
                                 `${propertySpecification.minimum}` +
                                 `${pathDescription}.`
                         }
                         /* eslint-disable no-throw-literal */
-                if (![undefined, null].includes(propertySpecification.maximum))
-                    if (propertySpecification.type === 'string') {
-                        if (newValue.length > propertySpecification.maximum)
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden: `MaximalLength: Property "${name}` +
-                                    ' (type string) should have maximal ' +
-                                    // IgnoreTypeCheck
-                                    `length ${propertySpecification.maximum}` +
-                                    `${pathDescription}.`
-                            }
-                            /* eslint-enable no-throw-literal */
-                    } else if (['number', 'integer', 'DateTime'].includes(
-                        propertySpecification.type
+                    else if (![undefined, null].includes(
+                        propertySpecification.maximum
                     ) && newValue > propertySpecification.maximum)
                         /* eslint-enable no-throw-literal */
                         throw {
                             forbidden: `Maximum: Property "${name}" (type ` +
-                                `${propertySpecification.type}) should ` +
-                                `satisfy a maximum of ` +
-                                // IgnoreTypeCheck
+                                `${propertySpecification.type}) must ` +
+                                'satisfy a maximum of ' +
                                 propertySpecification.maximum +
                                 `${pathDescription}.`
                         }
                         /* eslint-disable no-throw-literal */
+                }
                 // endregion
                 // region selection
                 if (
@@ -796,7 +802,7 @@ export default class DatabaseHelper {
                     specialNames.localSequence,
                     // NOTE: This property is integrated automatically.
                     specialNames.revisions,
-                    specialNames.revisionsInformation
+                    specialNames.revisionsInformation,
                     specialNames.strategy
                 ).includes(name)) {
                     // TODO special names stand
@@ -949,9 +955,9 @@ export default class DatabaseHelper {
                             }
                             /* eslint-enable no-throw-literal */
                         if (propertySpecification.hasOwnProperty(
-                            'minimumLength'
+                            'minimumSize'
                         ) && newDocument[name].length <
-                            propertySpecification.minimumLength
+                            propertySpecification.minimumSize
                         )
                             /* eslint-disable no-throw-literal */
                             throw {
@@ -960,7 +966,7 @@ export default class DatabaseHelper {
                                     `${newDocument[name].length}) doesn't ` +
                                     `fullfill minimum array length of ` +
                                     // IgnoreTypeCheck
-                                    propertySpecification.minimumLength +
+                                    propertySpecification.minimumSize +
                                     `${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
