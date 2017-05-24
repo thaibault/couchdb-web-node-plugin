@@ -137,9 +137,9 @@ registerTest(async function():Promise<void> {
             assert.deepEqual(Helper.extendModels(test[0]), test[1])
         assert.throws(():Models => Helper.extendModels({entities: {a: {}}}))
         assert.deepEqual(Helper.extendModels({
-            property: {name: {special: {typeNameRegularExpressionPattern: {
+            property: {name: {typeRegularExpressionPattern: {
                 public: 'a'
-            }}}},
+            }}},
             entities: {a: {}}
         }), {a: {}})
     })

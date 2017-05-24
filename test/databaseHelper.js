@@ -224,6 +224,10 @@ registerTest(async function():Promise<void> {
                     {entities: {Test: {a: {type: 'number'}}}}, 'PropertyType'
                 ],
                 [
+                    [{[typeName]: 'Test', a: parseInt('a')}],
+                    {entities: {Test: {a: {type: 'number'}}}}, 'PropertyType'
+                ],
+                [
                     [{[typeName]: 'Test', a: 'b'}],
                     {entities: {Test: {a: {type: 'integer'}}}}, 'PropertyType'
                 ],
@@ -237,6 +241,10 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{[typeName]: 'Test', a: 'a'}],
+                    {entities: {Test: {a: {type: 'DateTime'}}}}, 'PropertyType'
+                ],
+                [
+                    [{[typeName]: 'Test', a: new Date('a')}],
                     {entities: {Test: {a: {type: 'DateTime'}}}}, 'PropertyType'
                 ],
                 // / region array
@@ -306,27 +314,27 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{[typeName]: 'Test', a: [4]}], {entities: {Test: {
-                        a: {type: 'integer[]', minimumLength: 2}
+                        a: {type: 'integer[]', minimumNumber: 2}
                     }}}, 'MinimumArrayLength'
                 ],
                 [
                     [{[typeName]: 'Test', a: []}], {entities: {Test: {
-                        a: {type: 'integer[]', minimumLength: 1}
+                        a: {type: 'integer[]', minimumNumber: 1}
                     }}}, 'MinimumArrayLength'
                 ],
                 [
                     [{[typeName]: 'Test', a: [1]}], {entities: {Test: {
-                        a: {type: 'integer[]', maximumLength: 0}
+                        a: {type: 'integer[]', maximumNumber: 0}
                     }}}, 'MaximumArrayLength'
                 ],
                 [
                     [{[typeName]: 'Test', a: [1, 2]}], {entities: {Test: {
-                        a: {type: 'integer[]', maximumLength: 1}
+                        a: {type: 'integer[]', maximumNumber: 1}
                     }}}, 'MaximumArrayLength'
                 ],
                 [
                     [{[typeName]: 'Test', a: [1, 2, 3]}], {entities: {Test: {
-                        a: {type: 'integer[]', maximumLength: 2}
+                        a: {type: 'integer[]', maximumNumber: 2}
                     }}}, 'MaximumArrayLength'
                 ],
                 [
@@ -424,24 +432,21 @@ registerTest(async function():Promise<void> {
                 ],
                 // // endregion
                 // // region property range
-                [
-                    [{
-                        [typeName]: 'Test',
-                        a: 4,
-                        b: {[typeName]: 'Test', a: 2}
-                    }], {entities: {Test: {
-                        a: {type: 'number', minimum: 3}, b: {type: 'Test'}
-                    }}}, 'Minimum'
-                ],
-                [
-                    [{
-                        [typeName]: 'Test',
-                        a: '1',
-                        b: {[typeName]: 'Test', a: '12'}
-                    }],
-                    {entities: {Test: {a: {maximum: 1}, b: {type: 'Test'}}}},
-                    'MaximalLength'
-                ],
+                [[{
+                    [typeName]: 'Test',
+                    a: 4,
+                    b: {[typeName]: 'Test', a: 2}
+                }], {entities: {Test: {
+                    a: {type: 'number', minimum: 3}, b: {type: 'Test'}
+                }}}, 'Minimum'],
+                [[{
+                    [typeName]: 'Test',
+                    a: '1',
+                    b: {[typeName]: 'Test', a: '12'}
+                }], {entities: {Test: {
+                    a: {maximumLength: 1},
+                    b: {type: 'Test'}
+                }}}, 'MaximalLength'],
                 // // endregion
                 // // region property pattern
                 [
@@ -501,11 +506,13 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{[typeName]: 'Test', a: '12'}],
-                    {entities: {Test: {a: {minimum: 3}}}}, 'MinimalLength'
+                    {entities: {Test: {a: {minimumLength: 3}}}},
+                    'MinimalLength'
                 ],
                 [
                     [{[typeName]: 'Test', a: '12'}],
-                    {entities: {Test: {a: {maximum: 1}}}}, 'MaximalLength'
+                    {entities: {Test: {a: {maximumLength: 1}}}},
+                    'MaximalLength'
                 ],
                 // endregion
                 // region selection
@@ -603,7 +610,7 @@ registerTest(async function():Promise<void> {
                     {entities: {Test: {}}}, 'Property'
                 ],
                 [[{[typeName]: 'Test'}], {entities: {Test: {[attachmentName]: {
-                    '.*': {minimum: 1, nullable: false}
+                    '.*': {minimumNumber: 1, nullable: false}
                 }}}}, 'AttachmentMissing'],
                 [[{[typeName]: 'Test', [attachmentName]: {test: {
                     data: null
@@ -614,22 +621,22 @@ registerTest(async function():Promise<void> {
                     [typeName]: 'Test',
                     [attachmentName]: {test: {data: null}}}], {
                         entities: {Test: {[attachmentName]: {'.*': {
-                            minimum: 1, nullable: false
+                            minimumNumber: 1, nullable: false
                         }}}}
                     }, 'AttachmentMissing'
                 ],
                 [[{[typeName]: 'Test', [attachmentName]: {
                     a: {data: '', content_type: 'text/plain'}
                 }}], {entities: {Test: {[attachmentName]: {
-                    a: {minimum: 1, nullable: false},
-                    b: {minimum: 1, nullable: false}
+                    a: {minimumNumber: 1, nullable: false},
+                    b: {minimumNumber: 1, nullable: false}
                 }}}}, 'AttachmentMissing'],
                 [[{[typeName]: 'Test'}], {entities: {Test: {[attachmentName]: {
-                    a: {minimum: 1, nullable: false}
+                    a: {minimumNumber: 1, nullable: false}
                 }}}}, 'AttachmentMissing'],
                 [[{[typeName]: 'Test', [attachmentName]: null}], {entities: {
                     Test: {[attachmentName]: {'.*': {
-                        minimum: 1, nullable: false
+                        minimumNumber: 1, nullable: false
                     }}}
                 }}, 'AttachmentMissing'],
                 [
@@ -645,14 +652,14 @@ registerTest(async function():Promise<void> {
                         // eslint-enable camelcase
                     }}],
                     {entities: {Test: {[attachmentName]: {'.*': {
-                        maximum: 1
+                        maximumNumber: 1
                     }}}}},
                     'AttachmentMaximum'
                 ],
                 [
                     [{[typeName]: 'Test', [attachmentName]: {}}],
                     {entities: {Test: {[attachmentName]: {'.*': {
-                        minimum: 1, nullable: false
+                        minimumNumber: 1, nullable: false
                     }}}}}, 'AttachmentMissing'
                 ],
                 [
@@ -692,7 +699,7 @@ registerTest(async function():Promise<void> {
                         // eslint-enable camelcase
                     }}}],
                     {entities: {Test: {[attachmentName]: {'.*': {
-                        minimum: 2
+                        minimumNumber: 2
                     }}}}},
                     'AttachmentMinimum'
                 ],
@@ -727,6 +734,22 @@ registerTest(async function():Promise<void> {
                     {entities: {Test: {[attachmentName]: {'.*': {
                         contentTypeRegularExpressionPattern: /text\/plain/
                     }}}}}, 'AttachmentContentType'
+                ],
+                [
+                    [{[typeName]: 'Test', [attachmentName]: {a: {
+                        data: 'a', size: 1
+                    }}}],
+                    {entities: {Test: {[attachmentName]: {a: {
+                        minimumSize: 2
+                    }}}}}, 'AttachmentMinimumSize'
+                ],
+                [
+                    [{[typeName]: 'Test', [attachmentName]: {a: {
+                        data: 'abcd', size: 3
+                    }}}],
+                    {entities: {Test: {[attachmentName]: {a: {
+                        maximumSize: 2
+                    }}}}}, 'AttachmentMaximumSize'
                 ]
                 // endregion
             ]) {
@@ -814,9 +837,10 @@ registerTest(async function():Promise<void> {
                     incremental: {[typeName]: 'Test'},
                     '': {[typeName]: 'Test'}
                 }],
-                [[{[idName]: 1, [revisionName]: 1}, null, {}, {
-                    _validatedDocuments: new Set(['1-1'])
-                }], {}, {
+                [[{[idName]: 1, [revisionName]: 1}, null, {}, {[
+                    configuration.database.model.property.name
+                    .validatedDocumentsCache
+                ]: new Set(['1-1'])}], {}, {
                     fillUp: {[idName]: 1, [revisionName]: 1},
                     incremental: {[idName]: 1, [revisionName]: 1},
                     '': {[idName]: 1, [revisionName]: 1}
@@ -1424,7 +1448,7 @@ registerTest(async function():Promise<void> {
                 }],
                 [
                     [{[typeName]: 'Test', a: [2, 1]}], {entities: {Test: {a: {
-                        type: 'integer[]', minimumLength: 1, maximumLength: 2
+                        type: 'integer[]', maximumNumber: 2, minimumNumber: 1
                     }}}}, {
                         fillUp: {[typeName]: 'Test', a: [2, 1]},
                         incremental: {[typeName]: 'Test', a: [2, 1]},
@@ -1433,8 +1457,8 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{[typeName]: 'Test', a: [2, 1]}], {entities: {Test: {a: {
-                        type: 'integer[]', maximumLength: Infinity,
-                        minimumLength: 0
+                        type: 'integer[]', maximumNumber: Infinity,
+                        minimumNumber: 0
                     }}}}, {
                         fillUp: {[typeName]: 'Test', a: [2, 1]},
                         incremental: {[typeName]: 'Test', a: [2, 1]},
@@ -1443,7 +1467,7 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{[typeName]: 'Test', a: [2]}], {entities: {Test: {a: {
-                        type: 'integer[]', maximum: 2, maximumLength: 1
+                        type: 'integer[]', maximum: 2, maximumNumber: 1
                     }}}}, {
                         fillUp: {[typeName]: 'Test', a: [2]},
                         incremental: {[typeName]: 'Test', a: [2]},
@@ -1452,7 +1476,7 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{[typeName]: 'Test', a: []}], {entities: {Test: {a: {
-                        type: 'integer[]', maximum: 2, maximumLength: 0
+                        type: 'integer[]', maximum: 2, maximumNumber: 0
                     }}}}, {
                         fillUp: {[typeName]: 'Test', a: []},
                         incremental: {[typeName]: 'Test', a: []},
@@ -1695,7 +1719,10 @@ registerTest(async function():Promise<void> {
                     [typeName]: 'Test',
                     a: '1',
                     b: {[typeName]: 'Test', a: '1'}
-                }], {entities: {Test: {a: {maximum: 1}, b: {type: 'Test'}}}}, {
+                }], {entities: {Test: {
+                    a: {maximumLength: 1},
+                    b: {type: 'Test'}
+                }}}, {
                     fillUp: {
                         [typeName]: 'Test',
                         a: '1',
@@ -1798,14 +1825,14 @@ registerTest(async function():Promise<void> {
                     }
                 ],
                 [[{[typeName]: 'Test', a: '123'}, {[typeName]: 'Test'}], {
-                    entities: {Test: {a: {minimum: 3}}}}, {
+                    entities: {Test: {a: {minimumLength: 3}}}}, {
                         fillUp: {[typeName]: 'Test', a: '123'},
                         incremental: {a: '123'},
                         '': {[typeName]: 'Test', a: '123'}
                     }
                 ],
                 [[{[typeName]: 'Test', a: '1'}], {
-                    entities: {Test: {a: {maximum: 1}}}}, {
+                    entities: {Test: {a: {maximumLength: 1}}}}, {
                         fillUp: {[typeName]: 'Test', a: '1'},
                         incremental: {[typeName]: 'Test', a: '1'},
                         '': {[typeName]: 'Test', a: '1'}
@@ -1912,7 +1939,7 @@ registerTest(async function():Promise<void> {
                 // endregion
                 // region attachment
                 [[{[typeName]: 'Test'}], {entities: {Test: {[attachmentName]: {
-                    '.*': {minimum: 1}
+                    '.*': {minimumNumber: 1}
                 }}}}, {
                     fillUp: {[typeName]: 'Test'},
                     incremental: {[typeName]: 'Test'},
@@ -1923,7 +1950,7 @@ registerTest(async function():Promise<void> {
                     content_type: 'text/plain', data: ''
                     // eslint-enable camelcase
                 }}}], {entities: {Test: {[attachmentName]: {'.*': {
-                    maximum: 1
+                    maximumNumber: 1
                 }}}}}, {
                     fillUp: {[typeName]: 'Test', [attachmentName]: {test: {
                         // eslint-disable camelcase
@@ -1949,7 +1976,7 @@ registerTest(async function():Promise<void> {
                     '.+\\.(?:jpe?g|png|svg)': {
                         contentTypeRegularExpressionPattern:
                             'image/(?:p?jpe?g|png|svg)',
-                        maximum: 1,
+                        maximumNumber: 1,
                         nullable: false
                     }
                 }}}}, {
@@ -2005,7 +2032,7 @@ registerTest(async function():Promise<void> {
                     b: {content_type: 'text/plain', data: ''}
                     // eslint-enable camelcase
                 }}], {entities: {Test: {[attachmentName]: {'.*': {
-                    maximum: 2, minimum: 2
+                    maximumNumber: 2, minimumNumber: 2
                 }}}}}, {
                     fillUp: {[typeName]: 'Test', [attachmentName]: {
                         // eslint-disable camelcase
@@ -2032,7 +2059,7 @@ registerTest(async function():Promise<void> {
                     b: {content_type: 'text/plain', data: ''}
                     // eslint-enable camelcase
                 }}], {entities: {Test: {[attachmentName]: {'.*': {
-                    maximum: 2, regularExpressionPattern: 'a|b'
+                    maximumNumber: 2, regularExpressionPattern: 'a|b'
                 }}}}}, {
                     fillUp: {[typeName]: 'Test', [attachmentName]: {
                         // eslint-disable camelcase
@@ -2180,6 +2207,36 @@ registerTest(async function():Promise<void> {
                     },
                     incremental: {a: ''},
                     '': {[typeName]: 'Test', a: ''}
+                }],
+                [[{[typeName]: 'Test', [attachmentName]: {a: {
+                    data: 'a', size: 1
+                }}}], {entities: {Test: {[attachmentName]: {a: {
+                    minimumSize: 1
+                }}}}}, {
+                    fillUp: {[typeName]: 'Test', [attachmentName]: {a: {
+                        data: 'a', size: 1
+                    }}},
+                    incremental: {[typeName]: 'Test', [attachmentName]: {a: {
+                        data: 'a', size: 1
+                    }}},
+                    '': {[typeName]: 'Test', [attachmentName]: {a: {
+                        data: 'a', size: 1
+                    }}}
+                }],
+                [[{[typeName]: 'Test', [attachmentName]: {a: {
+                    data: 'abc', size: 3
+                }}}], {entities: {Test: {[attachmentName]: {a: {
+                    maximumSize: 3, minimumSize: 2
+                }}}}}, {
+                    fillUp: {[typeName]: 'Test', [attachmentName]: {a: {
+                        data: 'abc', size: 3
+                    }}},
+                    incremental: {[typeName]: 'Test', [attachmentName]: {a: {
+                        data: 'abc', size: 3
+                    }}},
+                    '': {[typeName]: 'Test', [attachmentName]: {a: {
+                        data: 'abc', size: 3
+                    }}}
                 }]
                 // endregion
             ]) {

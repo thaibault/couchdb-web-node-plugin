@@ -9,26 +9,26 @@
     "trackingCode": "UA-40192634-21"
   },
   "keywords": [
-    "web",
-    "backend",
-    "rest",
     "api",
+    "authentication",
+    "authorisation",
+    "backend",
     "database",
     "model",
-    "schema",
-    "validation",
-    "authorisation",
-    "authentication",
-    "user",
+    "rest",
     "roles",
-    "session"
+    "session",
+    "schema",
+    "user",
+    "validation",
+    "web"
   ],
   "files": [
-    "index.js",
-    "helper.js",
-    "helper.compiled.js",
     "databaseHelper.js",
     "databaseHelper.compiled.js",
+    "helper.js",
+    "helper.compiled.js",
+    "index.js",
     "type.js"
   ],
   "main": "index.compiled.js",
@@ -74,12 +74,12 @@
         ],
         "name": "pouchdb-server"
       },
+      "configurationFilePath": {
+        "__evaluate__": "`./${self.database.path}/database.json`"
+      },
       "connector": {
         "auto_compaction": true,
         "revs_limit": 100
-      },
-      "configurationFilePath": {
-        "__evaluate__": "`./${self.database.path}/database.json`"
       },
       "createGenericFlatIndex": true,
       "ensureAdminPresence": true,
@@ -106,11 +106,11 @@
             },
             "-type": {
               "regularExpressionPattern": {
-                "__evaluate__": "`(?:${self.database.model.property.name.special.typeNameRegularExpressionPattern.public}|${self.database.model.property.name.special.typeNameRegularExpressionPattern.private})`"
+                "__evaluate__": "`(?:${self.database.model.property.name.typeRegularExpressionPattern.public}|${self.database.model.property.name.typeRegularExpressionPattern.private})`"
               },
               "nullable": false,
-              "minimum": 1,
-              "maximum": 999,
+              "minimumLength": 1,
+              "maximumLength": 999,
               "mutable": false
             }
           },
@@ -169,9 +169,16 @@
             "conflictingConstraintExpression": null,
             "constraintExecution": null,
             "constraintExpression": null,
+            "contentTypeRegularExpressionPattern": null,
             "default": null,
             "maximum": null,
             "minimum": null,
+            "maximumLength": null,
+            "minimumLength": 0,
+            "maximumNumber": null,
+            "minimumNumber": 0,
+            "maximumSize": null,
+            "minimumSize": 0,
             "mutable": true,
             "nullable": true,
             "onCreateExecution": null,
@@ -200,16 +207,16 @@
               "id": "_id",
               "localSequence": "_local_seq",
               "revision": "_rev",
-              "revisionsInformation": "_revs_info",
               "revisions": "_revisions",
+              "revisionsInformation": "_revs_info",
               "strategy": "_updateStrategy",
-              "type": "-type",
-              "typeNameRegularExpressionPattern": {
-                "public": "^[A-Z][A-Za-z0-9]+$",
-                "private": "^_[a-z][A-Za-z0-9]+$"
-              },
-              "validatedDocumentsCache": "_validatedDocuments"
-            }
+              "type": "-type"
+            },
+            "typeRegularExpressionPattern": {
+              "public": "^[A-Z][A-Za-z0-9]+$",
+              "private": "^_[a-z][A-Za-z0-9]+$"
+            },
+            "validatedDocumentsCache": "_validatedDocuments"
           }
         },
         "updateConfiguration": true,

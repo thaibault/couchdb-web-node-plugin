@@ -23,22 +23,26 @@ export type Constraint = {
     evaluation:string;
 }
 export type PropertySpecification = {
-    conflictingConstraintExpression:?Constraint;
     conflictingConstraintExecution:?Constraint;
-    constraintExpression:?Constraint;
+    conflictingConstraintExpression:?Constraint;
     constraintExecution:?Constraint;
+    constraintExpression:?Constraint;
     contentTypeRegularExpressionPattern:?string;
     default:any;
     maximum:?number;
-    minimum:number;
+    minimum:?number;
     maximumLength:?number;
-    minimumLength:?number;
+    minimumLength:number;
+    maximumNumber:?number;
+    minimumNumber:number;
+    maximumSize:?number;
+    minimumSize:number;
     mutable:boolean;
     nullable:boolean;
-    onCreateExpression:?string;
     onCreateExecution:?string;
-    onUpdateExpression:?string;
+    onCreateExpression:?string;
     onUpdateExecution:?string;
+    onUpdateExpression:?string;
     regularExpressionPattern:?string;
     selection:?Array<any>;
     trim:boolean;
@@ -77,19 +81,19 @@ export type SpecialPropertyNames = {
     id:string;
     localSequence:string;
     revision:string;
-    revisionsInformation:string;
     revisions:string;
+    revisionsInformation:string;
     strategy:UpdateStrategy;
     type:string;
-    typeNameRegularExpressionPattern:{
-        private:string;
-        public:string;
-    };
-    validatedDocumentsCache:string;
 }
 export type PropertyNameConfiguration = {
     reserved:Array<string>;
     special:SpecialPropertyNames;
+    typeRegularExpressionPattern:{
+        private:string;
+        public:string;
+    };
+    validatedDocumentsCache:string;
 }
 export type ModelConfiguration = {
     entities:Models;
