@@ -413,7 +413,6 @@ export default class DatabaseHelper {
                             forbidden:
                                 `MinimalLength: Property "${name}" must have` +
                                 ' minimal length ' +
-                                // IgnoreTypeCheck
                                 propertySpecification.minimumLength +
                                 `${pathDescription}.`
                         }
@@ -442,6 +441,7 @@ export default class DatabaseHelper {
                                 `Minimum: Property "${name}" (type ` +
                                 `${propertySpecification.type}) must ` +
                                 'satisfy a minimum of ' +
+                                // IgnoreTypeCheck
                                 `${propertySpecification.minimum}` +
                                 `${pathDescription}.`
                         }
@@ -968,7 +968,6 @@ export default class DatabaseHelper {
                                     `${name}" (array of length ` +
                                     `${newDocument[name].length}) doesn't ` +
                                     `fullfill minimum array length of ` +
-                                    // IgnoreTypeCheck
                                     propertySpecification.minimumNumber +
                                     `${pathDescription}.`
                             }
@@ -1306,6 +1305,40 @@ export default class DatabaseHelper {
                                         specialNames.attachment
                                     ][type].regularExpressionPattern + '" ' +
                                     `from type "${type}"${pathDescription}.`
+                            }
+                            /* eslint-enable no-throw-literal */
+                        if (![null, undefined].includes(model[
+                            specialNames.attachment
+                        ][type].minimumSize) && newAttachments[
+                            fileName
+                        ].hasOwnProperty('size') && model[
+                            specialNames.attachment
+                        ][type].minimumSize > newAttachments[fileName].size)
+                            /* eslint-disable no-throw-literal */
+                            throw {
+                                forbidden: 'AttachmentMinimumSize: given' +
+                                    ' attachment size ' +
+                                    `${newAttachments[fileName].size} byte ` +
+                                    `doesn't satisfy specified minimum ` +
+                                    model[specialNames.attachment][type].size +
+                                    `${pathDescription}.`
+                            }
+                            /* eslint-enable no-throw-literal */
+                        if (![null, undefined].includes(model[
+                            specialNames.attachment
+                        ][type].maximumSize) && newAttachments[
+                            fileName
+                        ].hasOwnProperty('size') && (model[
+                            specialNames.attachment
+                        ][type].maximumSize < newAttachments[fileName].size))
+                            /* eslint-disable no-throw-literal */
+                            throw {
+                                forbidden: 'AttachmentMaximumSize: given' +
+                                    ' attachment size ' +
+                                    `${newAttachments[fileName].size} byte ` +
+                                    ` doesn't satisfy specified maximum ` +
+                                    model[specialNames.attachment][type].size +
+                                    `${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
                     }

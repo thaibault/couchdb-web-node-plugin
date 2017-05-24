@@ -224,6 +224,10 @@ registerTest(async function():Promise<void> {
                     {entities: {Test: {a: {type: 'number'}}}}, 'PropertyType'
                 ],
                 [
+                    [{[typeName]: 'Test', a: parseInt('a')}],
+                    {entities: {Test: {a: {type: 'number'}}}}, 'PropertyType'
+                ],
+                [
                     [{[typeName]: 'Test', a: 'b'}],
                     {entities: {Test: {a: {type: 'integer'}}}}, 'PropertyType'
                 ],
@@ -237,6 +241,10 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{[typeName]: 'Test', a: 'a'}],
+                    {entities: {Test: {a: {type: 'DateTime'}}}}, 'PropertyType'
+                ],
+                [
+                    [{[typeName]: 'Test', a: new Date('a')}],
                     {entities: {Test: {a: {type: 'DateTime'}}}}, 'PropertyType'
                 ],
                 // / region array
@@ -726,6 +734,22 @@ registerTest(async function():Promise<void> {
                     {entities: {Test: {[attachmentName]: {'.*': {
                         contentTypeRegularExpressionPattern: /text\/plain/
                     }}}}}, 'AttachmentContentType'
+                ],
+                [
+                    [{[typeName]: 'Test', [attachmentName]: {a: {
+                        data: 'a', size: 1
+                    }}}],
+                    {entities: {Test: {[attachmentName]: {a: {
+                        minimumSize: 2
+                    }}}}}, 'AttachmentMinimumSize'
+                ],
+                [
+                    [{[typeName]: 'Test', [attachmentName]: {a: {
+                        data: 'abcd', size: 3
+                    }}}],
+                    {entities: {Test: {[attachmentName]: {a: {
+                        maximumSize: 2
+                    }}}}}, 'AttachmentMaximumSize'
                 ]
                 // endregion
             ]) {
@@ -2183,6 +2207,36 @@ registerTest(async function():Promise<void> {
                     },
                     incremental: {a: ''},
                     '': {[typeName]: 'Test', a: ''}
+                }],
+                [[{[typeName]: 'Test', [attachmentName]: {a: {
+                    data: 'a', size: 1
+                }}}], {entities: {Test: {[attachmentName]: {a: {
+                    minimumSize: 1
+                }}}}}, {
+                    fillUp: {[typeName]: 'Test', [attachmentName]: {a: {
+                        data: 'a', size: 1
+                    }}},
+                    incremental: {[typeName]: 'Test', [attachmentName]: {a: {
+                        data: 'a', size: 1
+                    }}},
+                    '': {[typeName]: 'Test', [attachmentName]: {a: {
+                        data: 'a', size: 1
+                    }}}
+                }],
+                [[{[typeName]: 'Test', [attachmentName]: {a: {
+                    data: 'abc', size: 3
+                }}}], {entities: {Test: {[attachmentName]: {a: {
+                    maximumSize: 3, minimumSize: 2
+                }}}}}, {
+                    fillUp: {[typeName]: 'Test', [attachmentName]: {a: {
+                        data: 'abc', size: 3
+                    }}},
+                    incremental: {[typeName]: 'Test', [attachmentName]: {a: {
+                        data: 'abc', size: 3
+                    }}},
+                    '': {[typeName]: 'Test', [attachmentName]: {a: {
+                        data: 'abc', size: 3
+                    }}}
                 }]
                 // endregion
             ]) {

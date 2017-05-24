@@ -9,26 +9,26 @@
     "trackingCode": "UA-40192634-21"
   },
   "keywords": [
-    "web",
-    "backend",
-    "rest",
     "api",
+    "authentication",
+    "authorisation",
+    "backend",
     "database",
     "model",
-    "schema",
-    "validation",
-    "authorisation",
-    "authentication",
-    "user",
+    "rest",
     "roles",
-    "session"
+    "session",
+    "schema",
+    "user",
+    "validation",
+    "web"
   ],
   "files": [
-    "index.js",
-    "helper.js",
-    "helper.compiled.js",
     "databaseHelper.js",
     "databaseHelper.compiled.js",
+    "helper.js",
+    "helper.compiled.js",
+    "index.js",
     "type.js"
   ],
   "main": "index.compiled.js",
@@ -74,12 +74,12 @@
         ],
         "name": "pouchdb-server"
       },
+      "configurationFilePath": {
+        "__evaluate__": "`./${self.database.path}/database.json`"
+      },
       "connector": {
         "auto_compaction": true,
         "revs_limit": 100
-      },
-      "configurationFilePath": {
-        "__evaluate__": "`./${self.database.path}/database.json`"
       },
       "createGenericFlatIndex": true,
       "ensureAdminPresence": true,
@@ -169,6 +169,7 @@
             "conflictingConstraintExpression": null,
             "constraintExecution": null,
             "constraintExpression": null,
+            "contentTypeRegularExpressionPattern": null,
             "default": null,
             "maximum": null,
             "minimum": null,
@@ -176,6 +177,8 @@
             "minimumLength": 0,
             "maximumNumber": null,
             "minimumNumber": 0,
+            "maximumSize": null,
+            "minimumSize": 0,
             "mutable": true,
             "nullable": true,
             "onCreateExecution": null,
