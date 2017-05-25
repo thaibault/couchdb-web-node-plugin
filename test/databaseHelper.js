@@ -737,7 +737,7 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{[typeName]: 'Test', [attachmentName]: {a: {
-                        data: 'a', size: 1
+                        data: 'a', length: 1
                     }}}],
                     {entities: {Test: {[attachmentName]: {a: {
                         minimumSize: 2
@@ -745,7 +745,7 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{[typeName]: 'Test', [attachmentName]: {a: {
-                        data: 'abcd', size: 3
+                        data: 'abcd', length: 3
                     }}}],
                     {entities: {Test: {[attachmentName]: {a: {
                         maximumSize: 2
@@ -2209,33 +2209,33 @@ registerTest(async function():Promise<void> {
                     '': {[typeName]: 'Test', a: ''}
                 }],
                 [[{[typeName]: 'Test', [attachmentName]: {a: {
-                    data: 'a', size: 1
+                    data: 'a', length: 1
                 }}}], {entities: {Test: {[attachmentName]: {a: {
                     minimumSize: 1
                 }}}}}, {
                     fillUp: {[typeName]: 'Test', [attachmentName]: {a: {
-                        data: 'a', size: 1
+                        data: 'a', length: 1
                     }}},
                     incremental: {[typeName]: 'Test', [attachmentName]: {a: {
-                        data: 'a', size: 1
+                        data: 'a', length: 1
                     }}},
                     '': {[typeName]: 'Test', [attachmentName]: {a: {
-                        data: 'a', size: 1
+                        data: 'a', length: 1
                     }}}
                 }],
                 [[{[typeName]: 'Test', [attachmentName]: {a: {
-                    data: 'abc', size: 3
+                    data: 'abc', length: 3
                 }}}], {entities: {Test: {[attachmentName]: {a: {
                     maximumSize: 3, minimumSize: 2
                 }}}}}, {
                     fillUp: {[typeName]: 'Test', [attachmentName]: {a: {
-                        data: 'abc', size: 3
+                        data: 'abc', length: 3
                     }}},
                     incremental: {[typeName]: 'Test', [attachmentName]: {a: {
-                        data: 'abc', size: 3
+                        data: 'abc', length: 3
                     }}},
                     '': {[typeName]: 'Test', [attachmentName]: {a: {
-                        data: 'abc', size: 3
+                        data: 'abc', length: 3
                     }}}
                 }]
                 // endregion
