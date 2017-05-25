@@ -1307,40 +1307,45 @@ export default class DatabaseHelper {
                                     `from type "${type}"${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
-                        if (![null, undefined].includes(model[
-                            specialNames.attachment
-                        ][type].minimumSize) && newAttachments[
-                            fileName
-                        ].hasOwnProperty('size') && model[
-                            specialNames.attachment
-                        ][type].minimumSize > newAttachments[fileName].size)
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden: 'AttachmentMinimumSize: given' +
-                                    ' attachment size ' +
-                                    `${newAttachments[fileName].size} byte ` +
-                                    `doesn't satisfy specified minimum ` +
-                                    model[specialNames.attachment][type].size +
-                                    `${pathDescription}.`
-                            }
-                            /* eslint-enable no-throw-literal */
-                        if (![null, undefined].includes(model[
-                            specialNames.attachment
-                        ][type].maximumSize) && newAttachments[
-                            fileName
-                        ].hasOwnProperty('size') && (model[
-                            specialNames.attachment
-                        ][type].maximumSize < newAttachments[fileName].size))
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden: 'AttachmentMaximumSize: given' +
-                                    ' attachment size ' +
-                                    `${newAttachments[fileName].size} byte ` +
-                                    ` doesn't satisfy specified maximum ` +
-                                    model[specialNames.attachment][type].size +
-                                    `${pathDescription}.`
-                            }
-                            /* eslint-enable no-throw-literal */
+                        if (newAttachments[fileName].hasOwnProperty('length'))
+                            if (![null, undefined].includes(model[
+                                specialNames.attachment
+                            ][type].minimumSize) && model[
+                                specialNames.attachment
+                            ][type].minimumSize > newAttachments[
+                                fileName
+                            ].length)
+                                /* eslint-disable no-throw-literal */
+                                throw {
+                                    forbidden: 'AttachmentMinimumSize: given' +
+                                        ' attachment size ' +
+                                        `${newAttachments[fileName].length} ` +
+                                        `byte doesn't satisfy specified ` +
+                                        `minimum ` + model[
+                                            specialNames.attachment
+                                        ][type].minimumSize +
+                                        `${pathDescription}.`
+                                }
+                                /* eslint-enable no-throw-literal */
+                            else if (![null, undefined].includes(model[
+                                specialNames.attachment
+                            ][type].maximumSize) && (model[
+                                specialNames.attachment
+                            ][type].maximumSize < newAttachments[
+                                fileName
+                            ].length))
+                                /* eslint-disable no-throw-literal */
+                                throw {
+                                    forbidden: 'AttachmentMaximumSize: given' +
+                                        ' attachment size ' +
+                                        `${newAttachments[fileName].length} ` +
+                                        `byte doesn't satisfy specified ` +
+                                        `maximum ` + model[
+                                            specialNames.attachment
+                                        ][type].maximumSize +
+                                        `${pathDescription}.`
+                                }
+                                /* eslint-enable no-throw-literal */
                     }
                 }
             }
