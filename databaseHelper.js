@@ -190,11 +190,13 @@ export default class DatabaseHelper {
         ):boolean => {
             if (newDocument.hasOwnProperty(specialNames.attachment)) {
                 const name:string = getFilenameByPrefix(
-                    newDocument._attachments, namePrefix)
+                    newDocument[specialNames.attachment], namePrefix)
                 if (name)
-                    return newDocument._attachments[name].hasOwnProperty(
-                        'data'
-                    ) && Boolean(newDocument._attachments[name].data)
+                    return newDocument[specialNames.attachment][
+                        name
+                    ].hasOwnProperty('data') && Boolean(newDocument[
+                        specialNames.attachment
+                    ][name].data)
             }
             return false
         }
@@ -650,6 +652,8 @@ export default class DatabaseHelper {
                     specialNames.constraint.expression,
                     specialNames.extend,
                     specialNames.localSequence,
+                    specialNames.maximumAggregatedSize,
+                    specialNames.minimumAggregatedSize,
                     specialNames.revisionsInformation
                 ].includes(name))
                     // region run hooks and check for presence of needed data
@@ -834,7 +838,9 @@ export default class DatabaseHelper {
                         specialNames.allowedRole,
                         specialNames.constraint.execution,
                         specialNames.constraint.expression,
-                        specialNames.extend
+                        specialNames.extend,
+                        specialNames.maximumAggregatedSize,
+                        specialNames.minimumAggregatedSize
                     ].includes(name))
                         /* eslint-disable no-throw-literal */
                         throw {
@@ -1248,6 +1254,7 @@ export default class DatabaseHelper {
                             }
                             /* eslint-enable no-throw-literal */
                     }
+                let sumOfAggregatedSizes:number = 0
                 for (const type:string in attachmentToTypeMapping) {
                     if (!attachmentToTypeMapping.hasOwnProperty(type))
                         continue
@@ -1256,8 +1263,8 @@ export default class DatabaseHelper {
                     if (model[specialNames.attachment][
                         type
                     ].maximumNumber !== null && numberOfAttachments > model[
-                        specialNames.attachment][type].maximumNumber
-                    )
+                        specialNames.attachment
+                    ][type].maximumNumber)
                         /* eslint-disable no-throw-literal */
                         throw {
                             forbidden: 'AttachmentMaximum: given number of ' +
@@ -1286,6 +1293,7 @@ export default class DatabaseHelper {
                                 ` from type "${type}"${pathDescription}.`
                         }
                         /* eslint-enable no-throw-literal */
+                    let aggregatedSize:number = 0
                     for (const fileName:string of attachmentToTypeMapping[
                         type
                     ]) {
@@ -1370,8 +1378,82 @@ export default class DatabaseHelper {
                                     `${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
+                        aggregatedSize += length
                     }
+                    if (![null, undefined].includes(model[
+                        specialNames.attachment
+                    ][type].minimumAggregatedSize) && model[
+                        specialNames.attachment
+                    ][type].minimumAggregatedSize > aggregatedSize)
+                        /* eslint-disable no-throw-literal */
+                        throw {
+                            forbidden:
+                                'AttachmentAggregatedMinimumSize: given ' +
+                                ' aggregated size of attachments from type "' +
+                                `${type}" ${aggregatedSize} byte doesn't ` +
+                                'satisfy specified minimum of ' + model[
+                                    specialNames.attachment
+                                ][type].minimumAggregatedSize + ' byte ' +
+                                `${pathDescription}.`
+                        }
+                        /* eslint-enable no-throw-literal */
+                    else if (![null, undefined].includes(model[
+                        specialNames.attachment
+                    ][type].maximumAggregatedSize) && (model[
+                        specialNames.attachment
+                    ][type].maximumAggregatedSize < aggregatedSize))
+                        /* eslint-disable no-throw-literal */
+                        throw {
+                            forbidden:
+                                'AttachmentAggregatedMaximumSize: given ' +
+                                ' aggregated size of attachments from type "' +
+                                `${type}" ${aggregatedSize} byte doesn't ` +
+                                'satisfy specified maximum of ' + model[
+                                    specialNames.attachment
+                                ][type].maximumAggregatedSize + ' byte ' +
+                                `${pathDescription}.`
+                        }
+                        /* eslint-enable no-throw-literal */
+                    sumOfAggregatedSizes += aggregatedSize
                 }
+                if (model.hasOwnProperty(
+                    specialNames.minimumAggregatedSize
+                ) && ![null, undefined].includes(model[
+                    specialNames.minimumAggregatedSize
+                ]) && model[
+                    specialNames.minimumAggregatedSize
+                // IgnoreTypeCheck
+                ] > sumOfAggregatedSizes)
+                    /* eslint-disable no-throw-literal */
+                    throw {
+                        forbidden:
+                            'AggregatedMinimumSize: given aggregated size ' +
+                            `${sumOfAggregatedSizes} byte doesn't satisfy ` +
+                            // IgnoreTypeCheck
+                            'specified minimum of ' + model[
+                                specialNames.minimumAggregatedSize
+                            ] + ` byte ${pathDescription}.`
+                    }
+                    /* eslint-enable no-throw-literal */
+                else if (model.hasOwnProperty(
+                    specialNames.maximumAggregatedSize
+                ) && ![null, undefined].includes(model[
+                    specialNames.maximumAggregatedSize
+                ]) && model[
+                    specialNames.maximumAggregatedSize
+                // IgnoreTypeCheck
+                ] < sumOfAggregatedSizes)
+                    /* eslint-disable no-throw-literal */
+                    throw {
+                        forbidden:
+                            'AggregatedMaximumSize: given aggregated size ' +
+                            `${sumOfAggregatedSizes} byte doesn't satisfy ` +
+                            // IgnoreTypeCheck
+                            'specified maximum of ' + model[
+                                specialNames.maximumAggregatedSize
+                            ] + ` byte ${pathDescription}.`
+                    }
+                    /* eslint-enable no-throw-literal */
             }
             // / endregion
             // endregion

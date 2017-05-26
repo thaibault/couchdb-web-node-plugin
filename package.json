@@ -101,6 +101,7 @@
             "_id": {
               "mutable": false
             },
+            "_maximumAggregatedAttachmentSize": 100000000,
             "_rev": {
               "mutable": false
             },
@@ -173,11 +174,13 @@
             "default": null,
             "maximum": null,
             "minimum": null,
+            "maximumAggregatedSize": 100000000,
+            "minimumAggregatedSize": 0,
             "maximumLength": null,
             "minimumLength": 0,
             "maximumNumber": null,
             "minimumNumber": 0,
-            "maximumSize": null,
+            "maximumSize": 10000000,
             "minimumSize": 0,
             "mutable": true,
             "nullable": true,
@@ -206,6 +209,8 @@
               "extend": "_extends",
               "id": "_id",
               "localSequence": "_local_seq",
+              "maximumAggregatedSize": "_maximumAggregatedSize",
+              "minimumAggregatedSize": "_minimumAggregatedSize",
               "revision": "_rev",
               "revisions": "_revisions",
               "revisionsInformation": "_revs_info",

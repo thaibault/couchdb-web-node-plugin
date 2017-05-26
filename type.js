@@ -54,6 +54,8 @@ export type Model = {
     _extends:?Array<string>;
     _constraintExpressions:?Array<Constraint>;
     _constraintExecutions:?Array<Constraint>;
+    _maximumAggregatedSize:?number,
+    _minimumAggregatedSize:?number,
     [key:string]:PropertySpecification;
 }
 export type Models = {[key:string]:Model}
@@ -80,6 +82,8 @@ export type SpecialPropertyNames = {
     extend:string;
     id:string;
     localSequence:string;
+    maximumAggregatedSize:string;
+    minimumAggregatedSize:string;
     revision:string;
     revisions:string;
     revisionsInformation:string;
