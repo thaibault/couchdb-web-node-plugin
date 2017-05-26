@@ -185,6 +185,19 @@ export default class DatabaseHelper {
             }
             return null
         }
+        const attachmentPrefixExists:Function = (
+            namePrefix:string, newDocument:PlainObject
+        ):boolean => {
+            if (newDocument.hasOwnProperty(specialNames.attachment)) {
+                const name:string = getFilenameByPrefix(
+                    newDocument._attachments, 'localSource')
+                if (name)
+                    return newDocument._attachments[name].hasOwnProperty(
+                        'data'
+                    ) && Boolean(newDocument._attachments[name].data)
+            }
+            return false
+        }
         const checkDocument:Function = (
             newDocument:PlainObject, oldDocument:?PlainObject,
             parentNames:Array<string> = []
@@ -240,7 +253,8 @@ export default class DatabaseHelper {
                     'newDocument', 'newValue', 'oldDocument', 'oldValue',
                     'propertySpecification', 'securitySettings', 'serialize',
                     'userContext', 'parentNames', 'pathDescription', 'now',
-                    'nowUTCTimestamp', 'getFilenameByPrefix'
+                    'nowUTCTimestamp', 'getFilenameByPrefix',
+                    'attachmentPrefixExists'
                 ]
                 for (const type:string of types)
                     if (propertySpecification[type]) {
@@ -256,7 +270,9 @@ export default class DatabaseHelper {
                             newDocument, newValue, oldDocument, oldValue,
                             propertySpecification, securitySettings, serialize,
                             userContext, parentNames, pathDescription, now,
-                            nowUTCTimestamp, getFilenameByPrefix
+                            nowUTCTimestamp, getFilenameByPrefix,
+                            attachmentPrefixExists.bind(
+                                newDocument, newDocument)
                         ]
                         // region compile
                         try {
@@ -517,7 +533,8 @@ export default class DatabaseHelper {
                                     'name', 'models', 'modelConfiguration',
                                     'serialize', 'modelName', 'model',
                                     'propertySpecification', 'now',
-                                    'nowUTCTimestamp', 'getFilenameByPrefix', (
+                                    'nowUTCTimestamp', 'getFilenameByPrefix',
+                                    'attachmentPrefixExists', (
                                         type.endsWith('Expression') ?
                                         'return ' : ''
                                     ) + propertySpecification[type])
@@ -540,7 +557,9 @@ export default class DatabaseHelper {
                                     securitySettings, name, models,
                                     modelConfiguration, serialize, modelName,
                                     model, propertySpecification, now,
-                                    nowUTCTimestamp, getFilenameByPrefix)
+                                    nowUTCTimestamp, getFilenameByPrefix,
+                                    attachmentPrefixExists.bind(
+                                        newDocument, newDocument))
                             } catch (error) {
                                 /* eslint-disable no-throw-literal */
                                 throw {
@@ -606,7 +625,9 @@ export default class DatabaseHelper {
                                 modelConfiguration, serialize, modelName,
                                 model, checkDocument, checkPropertyContent,
                                 propertySpecification, now, nowUTCTimestamp,
-                                getFilenameByPrefix)
+                                getFilenameByPrefix,
+                                attachmentPrefixExists.bind(
+                                    newDocument, newDocument))
                         } catch (error) {
                             /* eslint-disable no-throw-literal */
                             throw {
@@ -1057,7 +1078,7 @@ export default class DatabaseHelper {
                 'modelConfiguration', 'modelName', 'models', 'newDocument',
                 'oldDocument', 'securitySettings', 'serialize', 'userContext',
                 'parentNames', 'pathDescription', 'now', 'nowUTCTimestamp',
-                'getFilenameByPrefix'
+                'getFilenameByPrefix', 'attachmentPrefixExists'
             ]
             for (let type:string in specialNames.constraint)
                 if (
@@ -1076,7 +1097,8 @@ export default class DatabaseHelper {
                             modelConfiguration, modelName, models, newDocument,
                             oldDocument, securitySettings, serialize,
                             userContext, parentNames, pathDescription, now,
-                            nowUTCTimestamp, getFilenameByPrefix
+                            nowUTCTimestamp, getFilenameByPrefix,
+                            attachmentPrefixExists
                         ]
                         try {
                             hook = new Function(
@@ -1353,6 +1375,12 @@ export default class DatabaseHelper {
             }
             // / endregion
             // endregion
+            if (oldDocument && oldDocument.hasOwnProperty(
+                specialNames.attachment
+            ) && Object.keys(oldDocument[
+                specialNames.attachment
+            ]).length === 0)
+                delete oldDocument[specialNames.attachment]
             if (
                 !somethingChanged && oldDocument &&
                 updateStrategy === 'migrate'

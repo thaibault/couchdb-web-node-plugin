@@ -445,8 +445,6 @@ export default class Database {
                         } else
                             throw error
                     }
-                    console.log(
-                        newDocument, Tools.copyLimitedRecursively(document))
                     try {
                         await services.database.connection.put(newDocument)
                     } catch (error) {
