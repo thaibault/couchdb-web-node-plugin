@@ -432,14 +432,14 @@ export default class Database {
                             ), models, migrationModelConfiguration)
                     } catch (error) {
                         if ('forbidden' in error) {
-                            if (error.forbidden.startsWith('NoChange:'))
-                                continue
-                            console.warn(
-                                `Document "` +
-                                `${Tools.representObject(document)}" doesn't` +
-                                ` satisfy its schema (and can not be ` +
-                                `migrated automatically): ` +
-                                Tools.representObject(error))
+                            if (!error.forbidden.startsWith('NoChange:'))
+                                console.warn(
+                                    `Document "` +
+                                    `${Tools.representObject(document)}" ` +
+                                    `doesn't satisfy its schema (and can not` +
+                                    ` be migrated automatically): ` +
+                                    Tools.representObject(error))
+                            continue
                         } else
                             throw error
                     }
