@@ -190,11 +190,13 @@ export default class DatabaseHelper {
         ):boolean => {
             if (newDocument.hasOwnProperty(specialNames.attachment)) {
                 const name:string = getFilenameByPrefix(
-                    newDocument._attachments, namePrefix)
+                    newDocument[specialNames.attachment], namePrefix)
                 if (name)
-                    return newDocument._attachments[name].hasOwnProperty(
-                        'data'
-                    ) && Boolean(newDocument._attachments[name].data)
+                    return newDocument[specialNames.attachment][
+                        name
+                    ].hasOwnProperty('data') && Boolean(newDocument[
+                        specialNames.attachment
+                    ][name].data)
             }
             return false
         }
