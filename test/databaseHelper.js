@@ -627,12 +627,12 @@ registerTest(async function():Promise<void> {
                 }}}}}, 'AttachmentMissing'],
                 [[{
                     [typeName]: 'Test',
-                    [attachmentName]: {test: {data: null}}}], {
-                        entities: {Test: {[attachmentName]: {'.*': {
-                            minimumNumber: 1, nullable: false
-                        }}}}
-                    }, 'AttachmentMissing'
-                ],
+                    [attachmentName]: {test: {data: null}}
+                }], {
+                    entities: {Test: {[attachmentName]: {'.*': {
+                        minimumNumber: 1, nullable: false
+                    }}}}
+                }, 'AttachmentMissing'],
                 [[{[typeName]: 'Test', [attachmentName]: {
                     a: {data: '', content_type: 'text/plain'}
                 }}], {entities: {Test: {[attachmentName]: {
@@ -652,36 +652,28 @@ registerTest(async function():Promise<void> {
                     {entities: {Test: {[attachmentName]: {'.*': {}}}}},
                     'AttachmentType'
                 ],
-                [
-                    [{[typeName]: 'Test', [attachmentName]: {
-                        // eslint-disable camelcase
-                        a: {data: '', content_type: 'text/plain'},
-                        b: {data: '', content_type: 'text/plain'}
-                        // eslint-enable camelcase
-                    }}],
-                    {entities: {Test: {[attachmentName]: {'.*': {
-                        maximumNumber: 1
-                    }}}}},
-                    'AttachmentMaximum'
-                ],
-                [
-                    [{[typeName]: 'Test', [attachmentName]: {}}],
-                    {entities: {Test: {[attachmentName]: {'.*': {
-                        minimumNumber: 1, nullable: false
-                    }}}}}, 'AttachmentMissing'
-                ],
-                [
-                    [{[typeName]: 'Test', [attachmentName]: {test: {
-                        data: null
-                    }}}, {
-                        [typeName]: 'Test',
-                        [attachmentName]: {test: {
-                            content_type: 'text/plain', data: ''
-                        }}
-                    }], {entities: {Test: {[attachmentName]: {'.*': {
-                        nullable: false
-                    }}}}}, 'AttachmentMissing'
-                ],
+                [[{[typeName]: 'Test', [attachmentName]: {
+                    // eslint-disable camelcase
+                    a: {data: '', content_type: 'text/plain'},
+                    b: {data: '', content_type: 'text/plain'}
+                    // eslint-enable camelcase
+                }}], {entities: {Test: {[attachmentName]: {'.*': {
+                    maximumNumber: 1
+                }}}}}, 'AttachmentMaximum'],
+                [[{[typeName]: 'Test', [attachmentName]: {}}],
+                {entities: {Test: {[attachmentName]: {'.*': {
+                    minimumNumber: 1, nullable: false
+                }}}}}, 'AttachmentMissing'],
+                [[{[typeName]: 'Test', [attachmentName]: {test: {
+                    data: null
+                }}}, {
+                    [typeName]: 'Test',
+                    [attachmentName]: {test: {
+                        content_type: 'text/plain', data: ''
+                    }}
+                }], {entities: {Test: {[attachmentName]: {'.*': {
+                    nullable: false
+                }}}}}, 'AttachmentMissing'],
                 [
                     [{[typeName]: 'Test', [attachmentName]: {a: {
                         // eslint-disable camelcase
@@ -700,65 +692,68 @@ registerTest(async function():Promise<void> {
                     {entities: {Test: {[attachmentName]: {b: {}, c: {}}}}},
                     'AttachmentTypeMatch'
                 ],
-                [
-                    [{[typeName]: 'Test', [attachmentName]: {test: {
-                        // eslint-disable camelcase
-                        data: '', content_type: 'text/plain'
-                        // eslint-enable camelcase
-                    }}}],
-                    {entities: {Test: {[attachmentName]: {'.*': {
-                        minimumNumber: 2
-                    }}}}},
-                    'AttachmentMinimum'
-                ],
-                [
-                    [{[typeName]: 'Test', [attachmentName]: {a: {
-                        // eslint-disable camelcase
-                        data: '', content_type: 'text/plain'
-                        // eslint-enable camelcase
-                    }}}],
-                    {entities: {Test: {[attachmentName]: {'.*': {
-                        regularExpressionPattern: /b/g
-                    }}}}}, 'AttachmentName'
-                ],
-                [
-                    [{[typeName]: 'Test', [attachmentName]: {
-                        // eslint-disable camelcase
-                        a: {data: '', content_type: 'text/plain'},
-                        b: {data: '', content_type: 'text/plain'}
-                        // eslint-enable camelcase
-                    }}],
-                    {entities: {Test: {[attachmentName]: {'.*': {
-                        regularExpressionPattern: /a/
-                    }}}}}, 'AttachmentName'
-                ],
-                [
-                    [{[typeName]: 'Test', [attachmentName]: {
-                        // eslint-disable camelcase
-                        a: {data: '', content_type: 'text/plain'},
-                        b: {data: '', content_type: 'image/jpg'}
-                        // eslint-enable camelcase
-                    }}],
-                    {entities: {Test: {[attachmentName]: {'.*': {
-                        contentTypeRegularExpressionPattern: /text\/plain/
-                    }}}}}, 'AttachmentContentType'
-                ],
-                [
-                    [{[typeName]: 'Test', [attachmentName]: {a: {
-                        data: 'a', length: 1
-                    }}}],
-                    {entities: {Test: {[attachmentName]: {a: {
-                        minimumSize: 2
-                    }}}}}, 'AttachmentMinimumSize'
-                ],
-                [
-                    [{[typeName]: 'Test', [attachmentName]: {a: {
-                        data: 'abcd', length: 3
-                    }}}],
-                    {entities: {Test: {[attachmentName]: {a: {
-                        maximumSize: 2
-                    }}}}}, 'AttachmentMaximumSize'
-                ]
+                [[{[typeName]: 'Test', [attachmentName]: {test: {
+                    // eslint-disable camelcase
+                    data: '', content_type: 'text/plain'
+                    // eslint-enable camelcase
+                }}}], {entities: {Test: {[attachmentName]: {'.*': {
+                    minimumNumber: 2
+                }}}}}, 'AttachmentMinimum'],
+                [[{[typeName]: 'Test', [attachmentName]: {a: {
+                    // eslint-disable camelcase
+                    data: '', content_type: 'text/plain'
+                    // eslint-enable camelcase
+                }}}], {entities: {Test: {[attachmentName]: {'.*': {
+                    regularExpressionPattern: /b/g
+                }}}}}, 'AttachmentName'],
+                [[{[typeName]: 'Test', [attachmentName]: {
+                    // eslint-disable camelcase
+                    a: {data: '', content_type: 'text/plain'},
+                    b: {data: '', content_type: 'text/plain'}
+                    // eslint-enable camelcase
+                }}], {entities: {Test: {[attachmentName]: {'.*': {
+                    regularExpressionPattern: /a/
+                }}}}}, 'AttachmentName'],
+                [[{[typeName]: 'Test', [attachmentName]: {
+                    // eslint-disable camelcase
+                    a: {data: '', content_type: 'text/plain'},
+                    b: {data: '', content_type: 'image/jpg'}
+                    // eslint-enable camelcase
+                }}], {entities: {Test: {[attachmentName]: {'.*': {
+                    contentTypeRegularExpressionPattern: /text\/plain/
+                }}}}}, 'AttachmentContentType'],
+                [[{[typeName]: 'Test', [attachmentName]: {a: {
+                    data: 'a', length: 1
+                }}}], {entities: {Test: {[attachmentName]: {a: {
+                    minimumSize: 2
+                }}}}}, 'AttachmentMinimumSize'],
+                [[{[typeName]: 'Test', [attachmentName]: {a: {
+                    data: 'abcd', length: 3
+                }}}], {entities: {Test: {[attachmentName]: {a: {
+                    maximumSize: 2
+                }}}}}, 'AttachmentMaximumSize'],
+                [[{[typeName]: 'Test', [attachmentName]: {a: {
+                    data: 'a', length: 1
+                }}}], {entities: {Test: {[attachmentName]: {a: {
+                    minimumAggregatedSize: 2
+                }}}}}, 'AttachmentAggregatedMinimumSize'],
+                [[{[typeName]: 'Test', [attachmentName]: {a: {
+                    data: 'abcd', length: 3
+                }}}], {entities: {Test: {[attachmentName]: {a: {
+                    maximumAggregatedSize: 2
+                }}}}}, 'AttachmentAggregatedMaximumSize'],
+                [[{[typeName]: 'Test', [attachmentName]: {a: {
+                    data: 'a', length: 1
+                }}}], {entities: {Test: {
+                    _minimumAggregatedSize: 2,
+                    [attachmentName]: {a: {}}
+                }}}, 'AggregatedMinimumSize'],
+                [[{[typeName]: 'Test', [attachmentName]: {a: {
+                    data: 'abcd', length: 3
+                }}}], {entities: {Test: {
+                    _maximumAggregatedSize: 2,
+                    [attachmentName]: {a: {}}
+                }}}, 'AggregatedMaximumSize']
                 // endregion
             ]) {
                 if (test.length < 3)
