@@ -410,8 +410,6 @@ export default class Database {
                 )) {
                     const document:Document = retrievedDocument.doc
                     let newDocument:?PlainObject = null
-                    const migrationModelConfiguration:ModelConfiguration =
-                        Tools.copyLimitedRecursively(modelConfiguration)
                     /*
                         Auto migration can:
 
@@ -419,10 +417,14 @@ export default class Database {
                         - Add properties whose are missing and a default value
                           is specified.
                     */
-                    migrationModelConfiguration.updateStrategy = 'migrate'
                     try {
                         newDocument = DatabaseHelper.validateDocumentUpdate(
-                            Tools.copyLimitedRecursively(document),
+                            Tools.copyLimitedRecursively(Tools.extendObject(
+                                document, {[
+                                    configuration.database.model.property.name
+                                    .special.strategy
+                                ]: 'migrate'}
+                            )),
                             Tools.copyLimitedRecursively(document), {
                                 db: configuration.name,
                                 name: configuration.database.user.name,
@@ -443,11 +445,8 @@ export default class Database {
                         } else
                             throw error
                     }
-                    // IgnoreTypeCheck
-                    newDocument[
-                        configuration.database.model.property.name.special
-                        .strategy
-                    ] = migrationModelConfiguration.updateStrategy
+                    console.log(
+                        newDocument, Tools.copyLimitedRecursively(document))
                     try {
                         await services.database.connection.put(newDocument)
                     } catch (error) {
