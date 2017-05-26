@@ -101,7 +101,8 @@
             "_id": {
               "mutable": false
             },
-            "_maximumAggregatedAttachmentSize": 100000000,
+            "_maximumAggregatedSize": 100000000,
+            "_minimumAggregatedSize": 100000000,
             "_rev": {
               "mutable": false
             },
