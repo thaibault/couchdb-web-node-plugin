@@ -409,27 +409,29 @@ export default class Database {
                     retrievedDocument.id.startsWith('_design/')
                 )) {
                     const document:Document = retrievedDocument.doc
-                    let newDocument:?PlainObject = null
-                    const migrationModelConfiguration:ModelConfiguration =
-                        Tools.copyLimitedRecursively(modelConfiguration)
+                    const newDocument:PlainObject =
+                        Tools.copyLimitedRecursively(document)
+                    newDocument[
+                        configuration.database.model.property.name.special
+                        .strategy
+                    ] = 'migrate'
                     /*
                         Auto migration can:
 
-                        - Remove not specified properties.
-                        - Add a property which is missing and a default value
+                        - Remove not specified old properties.
+                        - Add properties whose are missing and a default value
                           is specified.
                     */
-                    migrationModelConfiguration.updateStrategy = 'migrate'
                     try {
-                        newDocument = DatabaseHelper.validateDocumentUpdate(
-                            Tools.copyLimitedRecursively(document),
+                        DatabaseHelper.validateDocumentUpdate(
+                            newDocument,
                             Tools.copyLimitedRecursively(document), {
                                 db: configuration.name,
                                 name: configuration.database.user.name,
                                 roles: ['_admin']
                             }, Tools.copyLimitedRecursively(
                                 configuration.database.security
-                            ), models, migrationModelConfiguration)
+                            ), models, modelConfiguration)
                     } catch (error) {
                         if ('forbidden' in error) {
                             if (!error.forbidden.startsWith('NoChange:'))
@@ -443,22 +445,15 @@ export default class Database {
                         } else
                             throw error
                     }
-                    // IgnoreTypeCheck
-                    newDocument[
-                        configuration.database.model.property.name.special
-                        .strategy
-                    ] = migrationModelConfiguration.updateStrategy
                     try {
                         await services.database.connection.put(newDocument)
                     } catch (error) {
                         throw new Error(
                             `Replaceing auto migrated document "` +
-                            // IgnoreTypeCheck
                             `${newDocument[idName]}" has failed: ` +
                             Tools.representObject(error))
                     }
                     console.info(
-                        // IgnoreTypeCheck
                         `Auto migrating document "${newDocument[idName]}" ` +
                         'was successful.')
                 }
