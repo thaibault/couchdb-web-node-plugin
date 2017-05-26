@@ -415,8 +415,8 @@ export default class Database {
                     /*
                         Auto migration can:
 
-                        - Remove not specified properties.
-                        - Add a property which is missing and a default value
+                        - Remove not specified old properties.
+                        - Add properties whose are missing and a default value
                           is specified.
                     */
                     migrationModelConfiguration.updateStrategy = 'migrate'
