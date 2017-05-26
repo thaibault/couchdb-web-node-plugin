@@ -102,7 +102,7 @@
               "mutable": false
             },
             "_maximumAggregatedSize": 100000000,
-            "_minimumAggregatedSize": 100000000,
+            "_minimumAggregatedSize": 0,
             "_rev": {
               "mutable": false
             },
