@@ -194,9 +194,8 @@ export default class DatabaseHelper {
                 if (name)
                     return newDocument[specialNames.attachment][
                         name
-                    ].hasOwnProperty('data') && Boolean(newDocument[
-                        specialNames.attachment
-                    ][name].data)
+                    ].hasOwnProperty('data') && ![undefined, null].includes(
+                        newDocument[specialNames.attachment][name].data)
             }
             return false
         }
