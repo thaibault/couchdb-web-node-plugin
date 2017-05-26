@@ -79,7 +79,6 @@ registerTest(async function():Promise<void> {
                         propertyName]
             // region forbidden writes
             for (const test:Array<any> of [
-                /*
                 // region general environment
                 [
                     [{[typeName]: 'Test', [revisionName]: 'latest'}, null],
@@ -111,12 +110,11 @@ registerTest(async function():Promise<void> {
                     a: ''
                 }, {[typeName]: 'Test', a: ''}], {entities: {Test: {a: {
                 }}}}, 'NoChange'],
-                */
                 [[
                     {[typeName]: 'Test', [specialNames.strategy]: 'migrate'},
                     {[typeName]: 'Test'}
                 ], {entities: {Test: {[attachmentName]: {a: {
-                }}}}}, 'NoChange']/*,
+                }}}}}, 'NoChange'],
                 [[
                     {[typeName]: 'Test', a: '2'},
                     {[typeName]: 'Test', a: '2'}
@@ -762,7 +760,6 @@ registerTest(async function():Promise<void> {
                     }}}}}, 'AttachmentMaximumSize'
                 ]
                 // endregion
-                */
             ]) {
                 if (test.length < 3)
                     test.splice(1, 0, {})
@@ -804,8 +801,6 @@ registerTest(async function():Promise<void> {
                 })
             }
             // endregion
-            // TODO
-            return
             // region allowed writes
             for (const test:Array<any> of [
                 // region general environment
