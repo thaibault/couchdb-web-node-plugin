@@ -663,10 +663,11 @@ registerTest(async function():Promise<void> {
                 }}], {entities: {Test: {[attachmentName]: {'.*': {
                     maximumNumber: 1
                 }}}}}, 'AttachmentMaximum'],
-                [[{[typeName]: 'Test', [attachmentName]: {}}],
-                {entities: {Test: {[attachmentName]: {'.*': {
-                    minimumNumber: 1, nullable: false
-                }}}}}, 'AttachmentMissing'],
+                [[{[typeName]: 'Test', [attachmentName]: {}}], {entities: {
+                    Test: {[attachmentName]: {'.*': {
+                        minimumNumber: 1, nullable: false
+                    }}}
+                }}, 'AttachmentMissing'],
                 [[{[typeName]: 'Test', [attachmentName]: {test: {
                     data: null
                 }}}, {
