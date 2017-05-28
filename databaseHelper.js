@@ -86,6 +86,8 @@ export default class DatabaseHelper {
             `${userRolesDescription}.`}
         /* eslint-enable no-throw-literal */
     }
+    // TODO special names durchgehen.
+    // TODO implement type "any" and variable "_additionalType" feature.
     /**
      * Represents a design document validation function for given model
      * specification.
@@ -832,7 +834,6 @@ export default class DatabaseHelper {
                     specialNames.revisionsInformation,
                     specialNames.strategy
                 ).includes(name)) {
-                    // TODO special names stand
                     if ([
                         specialNames.allowedRole,
                         specialNames.constraint.execution,

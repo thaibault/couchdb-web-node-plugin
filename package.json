@@ -198,6 +198,7 @@
           "name": {
             "reserved": [],
             "special": {
+              "additionalType": "_additionalType",
               "allowedRole": "_allowedRoles",
               "attachment": "_attachments",
               "conflict": "_conflicts",

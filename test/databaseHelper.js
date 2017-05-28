@@ -255,6 +255,9 @@ registerTest(async function():Promise<void> {
                     [{[typeName]: 'Test', a: new Date('a')}],
                     {entities: {Test: {a: {type: 'DateTime'}}}}, 'PropertyType'
                 ],
+                [[{[typeName]: 'Test', a: 1}], {entities: {Test: {[
+                    specialNames.additonalType
+                ]: 'string'}}}, 'PropertyType'],
                 // / region array
                 // // region type
                 [
@@ -1363,6 +1366,13 @@ registerTest(async function():Promise<void> {
                         }
                     }
                 ],
+                [[{[typeName]: 'Test', a: 2, b: ''}], {entities: {Test: {[
+                    specialNames.additonalType
+                ]: 'any'}}}, {
+                    fillUp: {[typeName]: 'Test', a: 2, b: ''},
+                    incremental: {[typeName]: 'Test', a: 2, b: ''},
+                    '': {[typeName]: 'Test', a: 2, b: ''}
+                }],
                 // / region array
                 [
                     [
@@ -1487,13 +1497,9 @@ registerTest(async function():Promise<void> {
                     }
                 ],
                 [
-                    [{[typeName]: 'Test', a: [2]}], {entities: {Test: {a: {
-                        type: 'integer[]', arrayConstraintExpression: {
-                            evaluation: 'newValue.length === 1'
-                        }, constraintExpression: {
-                            evaluation: 'newValue === 2'
-                        }
-                    }}}}, {
+                    [{[typeName]: 'Test', a: [2, '2']}], {entities: {Test: {
+                        a: {type: 'any[]'}
+                    }}}, {
                         fillUp: {[typeName]: 'Test', a: [2]},
                         incremental: {[typeName]: 'Test', a: [2]},
                         '': {[typeName]: 'Test', a: [2]}
@@ -1588,6 +1594,17 @@ registerTest(async function():Promise<void> {
                         a: {[typeName]: 'Test', b: 'a'},
                         b: '3'
                     }
+                }],
+                [[{[typeName]: 'Test', a: {[typeName]: 'Test', b: 2}}], {
+                    entities: {Test: {a: {type: 'Test'}, b: {type: 'any'}}}
+                }, {
+                    fillUp: {
+                        [typeName]: 'Test', a: {[typeName]: 'Test', b: 2}
+                    },
+                    incremental: {
+                        [typeName]: 'Test', a: {[typeName]: 'Test', b: 2}
+                    },
+                    '': {[typeName]: 'Test', a: {[typeName]: 'Test', b: 2}}
                 }],
                 // // endregion
                 // // region property existents
