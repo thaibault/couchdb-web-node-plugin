@@ -106,6 +106,7 @@ registerTest(async function():Promise<void> {
         const modelConfiguration:ModelConfiguration =
             Tools.copyLimitedRecursively(configuration.database.model)
         modelConfiguration.entities = {}
+        // IgnoreTypeCheck
         modelConfiguration.property.defaultSpecification = {}
         const specialNames:PlainObject = modelConfiguration.property.name
             .special

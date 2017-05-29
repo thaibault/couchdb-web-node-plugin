@@ -337,15 +337,17 @@ export default class DatabaseHelper {
             ):{newValue:any;somethingChanged:boolean;} => {
                 let somethingChanged:boolean = false
                 // region type
-                // TODO test
-                for (const type:string of propertySpecification.type.split(
-                    '|'
-                ))
-                    if (models.hasOwnProperty(type))
+                const types:Array<string> = propertySpecification.type.split(
+                    '|')
+                let typeMatched:boolean = false
+                for (const type:string of types)
+                    if (models.hasOwnProperty(type)) {
                         if (
                             typeof newValue === 'object' &&
                             Object.getPrototypeOf(newValue) ===
-                                Object.prototype
+                                Object.prototype &&
+                            newValue.hasOwnProperty(specialNames.type) &&
+                            newValue[specialNames.type] === type
                         ) {
                             const result:{
                                 newDocument:any, somethingChanged:boolean
@@ -356,7 +358,9 @@ export default class DatabaseHelper {
                             newValue = result.newDocument
                             if (serialize(newValue) === serialize({}))
                                 return {newValue: null, somethingChanged}
-                        } else
+                            typeMatched = true
+                            break
+                        } else if (types.length === 1)
                             /* eslint-disable no-throw-literal */
                             throw {
                                 forbidden:
@@ -366,7 +370,7 @@ export default class DatabaseHelper {
                                     `${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
-                    else if (type === 'DateTime') {
+                    } else if (type === 'DateTime') {
                         const initialNewValue:any = newValue
                         if (
                             newValue !== null && typeof newValue !== 'number'
@@ -381,40 +385,58 @@ export default class DatabaseHelper {
                                 newValue.getUTCSeconds(),
                                 newValue.getUTCMilliseconds())
                         }
-                        if (typeof newValue !== 'number' || isNaN(newValue))
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden: `PropertyType: Property "${name}" ` +
-                                    `isn't of (valid) type "DateTime" (given "` +
-                                    `${serialize(initialNewValue)}" of type "` +
-                                    `${typeof newValue}")${pathDescription}.`
-                            }
-                            /* eslint-enable no-throw-literal */
+                        if (newValue !== 'number' || isNaN(newValue)) {
+                            if (types.length === 1)
+                                /* eslint-disable no-throw-literal */
+                                throw {
+                                    forbidden:
+                                        `PropertyType: Property "${name}" ` +
+                                        `isn't of (valid) type "DateTime" (` +
+                                        `given "` +
+                                        `${serialize(initialNewValue)}" of ` +
+                                        `type "${typeof newValue}")` +
+                                        `${pathDescription}.`
+                                }
+                                /* eslint-enable no-throw-literal */
+                        } else {
+                            typeMatched = true
+                            break
+                        }
                     } else if ([
                         'boolean', 'integer', 'number', 'string'
-                    ].includes(type)) {
+                    ].includes(type))
                         if (typeof newValue === 'number' && isNaN(
                             newValue
                         ) || !(
                             type === 'integer' || typeof newValue === type
                         ) || type === 'integer' && parseInt(
                             newValue
-                        ) !== newValue)
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden: `PropertyType: Property "${name}"` +
-                                    ` isn't of (valid) type "${type}" (given` +
-                                    ` "${serialize(newValue)}" of type "` +
-                                    `${typeof newValue}")${pathDescription}.`
-                            }
-                            /* eslint-enable no-throw-literal */
-                    } else if (typeof type === 'string' && type.startsWith(
+                        ) !== newValue) {
+                            if (types.length === 1)
+                                /* eslint-disable no-throw-literal */
+                                throw {
+                                    forbidden:
+                                        `PropertyType: Property "${name}"` +
+                                        ` isn't of (valid) type "${type}" (` +
+                                        `given "${serialize(newValue)}" of ` +
+                                        `type "${typeof newValue}")` +
+                                        `${pathDescription}.`
+                                }
+                                /* eslint-enable no-throw-literal */
+                        } else {
+                            typeMatched = true
+                            break
+                        }
+                    else if (typeof type === 'string' && type.startsWith(
                         'foreignKey:'
                     )) {
                         const foreignKeyType:string = models[type.substring(
                             'foreignKey:'.length
                         )][idName].type
-                        if (foreignKeyType !== typeof newValue)
+                        if (foreignKeyType === typeof newValue) {
+                            typeMatched = true
+                            break
+                        } else if (types.length === 1)
                             /* eslint-disable no-throw-literal */
                             throw {
                                 forbidden:
@@ -425,9 +447,12 @@ export default class DatabaseHelper {
                                     `${typeof newValue}")${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
-                    } else if (!(type === 'any' || serialize(
+                    } else if (type === 'any' || serialize(
                         newValue
-                    ) === serialize(type)))
+                    ) === serialize(type)) {
+                        typeMatched = true
+                        break
+                    } else if (types.length === 1)
                         /* eslint-disable no-throw-literal */
                         throw {
                             forbidden:
@@ -437,6 +462,16 @@ export default class DatabaseHelper {
                                 `${typeof newValue}")${pathDescription}.`
                         }
                         /* eslint-disable no-throw-literal */
+                if (!typeMatched)
+                    /* eslint-disable no-throw-literal */
+                    throw {
+                        forbidden:
+                            'PropertyType: None of the specified types "' +
+                            `${types.join('", "')}" for property "${name}" ` +
+                            `matches value "${newValue}" of type "` +
+                            `${typeof newValue}")${pathDescription}.`
+                    }
+                    /* eslint-disable no-throw-literal */
                 // endregion
                 // region range
                 if (typeof newValue === 'string') {
