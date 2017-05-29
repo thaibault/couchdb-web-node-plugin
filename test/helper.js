@@ -15,15 +15,17 @@
     endregion
 */
 // region imports
+import type {PlainObject} from 'clientnode'
 import Tools from 'clientnode'
 import registerTest from 'clientnode/test'
 // NOTE: Only needed for debugging this file.
 try {
     require('source-map-support/register')
 } catch (error) {}
+import configuration from 'web-node/configurator'
 
 import Helper from '../helper'
-import type {Models} from '../type'
+import type {ModelConfiguration, Models} from '../type'
 // endregion
 registerTest(async function():Promise<void> {
     this.module('helper')
@@ -44,6 +46,9 @@ registerTest(async function():Promise<void> {
     })
     // / region model
     this.test('determineAllowedModelRolesMapping', (assert:Object):void => {
+        const modelConfiguration:ModelConfiguration =
+            Tools.copyLimitedRecursively(configuration.database.model)
+        modelConfiguration.entities = {}
         for (const test:Array<any> of [
             [{}, {}],
             [{
@@ -59,29 +64,28 @@ registerTest(async function():Promise<void> {
                 entities: {Test: {roles: ['a']}}
             }, {Test: ['a']}]
         ])
-            assert.deepEqual(
-                Helper.determineAllowedModelRolesMapping(test[0]), test[1])
+            assert.deepEqual(Helper.determineAllowedModelRolesMapping(
+                Tools.extendObject(true, {}, modelConfiguration, test[0])
+            ), test[1])
     })
     this.test('extendModel', (assert:Object):void => {
+        const specialNames:PlainObject =
+            configuration.database.model.property.name.special
         for (const test:Array<any> of [
             ['A', {A: {}}, {}],
             ['A', {A: {}}, {}],
-            [
-                'Test',
-                {_baseTest: {b: {}}, Test: {a: {}, _extends: '_baseTest'}},
-                {a: {}, b: {}}
-            ],
-            [
-                'C',
-                {A: {a: {}}, B: {b: {}}, C: {c: {}, _extends: ['A', 'B']}},
-                {a: {}, b: {}, c: {}}
-            ],
+            ['Test', {_baseTest: {b: {}}, Test: {a: {}, [
+                specialNames.extend
+            ]: '_baseTest'}}, {a: {}, b: {}}],
+            ['C', {A: {a: {}}, B: {b: {}}, C: {c: {}, [specialNames.extend]: [
+                'A', 'B'
+            ]}}, {a: {}, b: {}, c: {}}],
             [
                 'C',
                 {
                     A: {a: {}},
-                    B: {b: {}, _extends: 'A'},
-                    C: {c: {}, _extends: 'B'}
+                    B: {b: {}, [specialNames.extend]: 'A'},
+                    C: {c: {}, [specialNames.extend]: 'B'}
                 },
                 {a: {}, b: {}, c: {}}
             ],
@@ -90,8 +94,8 @@ registerTest(async function():Promise<void> {
                 {
                     _base: {d: {type: 'number'}},
                     A: {a: {}},
-                    B: {b: {}, _extends: 'A'},
-                    C: {c: {}, _extends: 'B'}
+                    B: {b: {}, [specialNames.extend]: 'A'},
+                    C: {c: {}, [specialNames.extend]: 'B'}
                 },
                 {a: {}, b: {}, c: {}, d: {type: 'number'}}
             ]
@@ -99,13 +103,21 @@ registerTest(async function():Promise<void> {
             assert.deepEqual(Helper.extendModel(test[0], test[1]), test[2])
     })
     this.test('extendModels', (assert:Object):void => {
+        const modelConfiguration:ModelConfiguration =
+            Tools.copyLimitedRecursively(configuration.database.model)
+        modelConfiguration.entities = {}
+        modelConfiguration.property.defaultSpecification = {}
+        const specialNames:PlainObject = modelConfiguration.property.name
+            .special
         for (const test:Array<any> of [
             [{}, {}],
             [{entities: {}}, {}],
             [{entities: {Test: {}}}, {Test: {}}],
             [{entities: {Test: {}}}, {Test: {}}],
             [
-                {entities: {Base: {b: {}}, Test: {a: {}, _extends: 'Base'}}},
+                {entities: {Base: {b: {}}, Test: {a: {}, [
+                    specialNames.extend
+                ]: 'Base'}}},
                 {Base: {b: {}}, Test: {a: {}, b: {}}}
             ],
             [
@@ -120,28 +132,27 @@ registerTest(async function():Promise<void> {
                 {_base: {}, Test: {a: {maximum: 3}}}
             ],
             [
-                {entities: {Test: {_attachments: {}}}},
-                {Test: {_attachments: {}}}
+                {entities: {Test: {[specialNames.attachment]: {}}}},
+                {Test: {[specialNames.attachment]: {}}}
             ],
             [
                 {
-                    entities: {Test: {_attachments: {a: {}}}},
-                    property: {
-                        defaultSpecification: {minimum: 1},
-                        name: {special: {attachment: '_attachments'}}
-                    }
+                    entities: {Test: {[specialNames.attachment]: {a: {}}}},
+                    property: {defaultSpecification: {minimum: 1}}
                 },
-                {Test: {_attachments: {a: {minimum: 1}}}}
+                {Test: {[specialNames.attachment]: {a: {minimum: 1}}}}
             ]
         ])
-            assert.deepEqual(Helper.extendModels(test[0]), test[1])
-        assert.throws(():Models => Helper.extendModels({entities: {a: {}}}))
-        assert.deepEqual(Helper.extendModels({
-            property: {name: {typeRegularExpressionPattern: {
-                public: 'a'
-            }}},
+            assert.deepEqual(Helper.extendModels(Tools.extendObject(
+                true, {}, modelConfiguration, test[0]
+            )), test[1])
+        assert.throws(():Models => Helper.extendModels(Tools.extendObject(
+            true, {}, modelConfiguration, {entities: {a: {}}})))
+        assert.deepEqual(Helper.extendModels(Tools.extendObject(true, {
+        }, modelConfiguration, {
+            property: {name: {typeRegularExpressionPattern: {public: 'a'}}},
             entities: {a: {}}
-        }), {a: {}})
+        })), {a: {}})
     })
     // / endregion
 }, ['plain'])

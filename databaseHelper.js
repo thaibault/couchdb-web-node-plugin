@@ -242,9 +242,9 @@ export default class DatabaseHelper {
             const modelName:string = newDocument[specialNames.type]
             const model:Model = models[modelName]
             let additionalPropertySpecification:?PlainObject = null
-            if (model.hasOwnProperty(specialNames.additional) && typeof model[
+            if (model.hasOwnProperty(specialNames.additional) && model[
                 specialNames.additional
-            ] === 'object')
+            ])
                 additionalPropertySpecification = model[
                     specialNames.additional]
             // region document specific functions
@@ -661,6 +661,9 @@ export default class DatabaseHelper {
                 specialNames.maximumAggregatedSize,
                 specialNames.minimumAggregatedSize
             ].includes(name))
+            // TODO
+            if (Object.keys(model).includes('undefined'))
+                console.log('A', model)
             for (const name:string of specifiedPropertyNames.concat(
                 additionalPropertySpecification ? Object.keys(
                     newDocument
@@ -669,7 +672,7 @@ export default class DatabaseHelper {
                 ) : []
             ))
                 // region run hooks and check for presence of needed data
-                if (specialNames.attachment === name) {
+                if (specialNames.attachment === name)
                     for (const type:string in model[name]) {
                         if (!newDocument.hasOwnProperty(name) || newDocument[
                             name
@@ -751,11 +754,19 @@ export default class DatabaseHelper {
                                         // IgnoreTypeCheck
                                         oldDocument[name][fileName]
                     }
-                } else {
-                    runCreateHook(model[name], newDocument, oldDocument, name)
-                    runUpdateHook(model[name], newDocument, oldDocument, name)
-                    if ([undefined, null].includes(model[name].default)) {
-                        if (!(model[name].nullable || (
+                else {
+                    const propertySpecification:PropertySpecification =
+                        // IgnoreTypeCheck
+                        specifiedPropertyNames.includes(name) ? model[name] :
+                        additionalPropertySpecification
+                    runCreateHook(
+                        propertySpecification, newDocument, oldDocument, name)
+                    runUpdateHook(
+                        propertySpecification, newDocument, oldDocument, name)
+                    if ([undefined, null].includes(
+                        propertySpecification.default
+                    )) {
+                        if (!(propertySpecification.nullable || (
                             newDocument.hasOwnProperty(name) ||
                             oldDocument && oldDocument.hasOwnProperty(
                                 name
@@ -782,11 +793,12 @@ export default class DatabaseHelper {
                             if (updateStrategy === 'fillUp')
                                 newDocument[name] = oldDocument[name]
                             else if (updateStrategy === 'migrate') {
-                                newDocument[name] = model[name].default
+                                newDocument[name] =
+                                    propertySpecification.default
                                 somethingChanged = true
                             }
                         } else {
-                            newDocument[name] = model[name].default
+                            newDocument[name] = propertySpecification.default
                             somethingChanged = true
                         }
                 }
@@ -828,12 +840,11 @@ export default class DatabaseHelper {
                     specialNames.deleted,
                     specialNames.deletedConflict,
                     specialNames.localSequence,
-                    // NOTE: This property is integrated automatically.
                     specialNames.revisions,
                     specialNames.revisionsInformation,
                     specialNames.strategy
                 ).includes(name)) {
-                    let propertySpecification:PropertySpecification
+                    let propertySpecification:?PropertySpecification
                     if (model.hasOwnProperty(name))
                         propertySpecification = model[name]
                     else if (additionalPropertySpecification)
@@ -850,6 +861,9 @@ export default class DatabaseHelper {
                                 `model "${modelName}"${pathDescription}.`
                         }
                         /* eslint-enable no-throw-literal */
+                    // NOTE: Only needed to avoid type check errors.
+                    if (!propertySpecification)
+                        continue
                     // region writable/mutable/nullable
                     const checkWriteableMutableNullable:Function = (
                         propertySpecification:PropertySpecification,
