@@ -107,13 +107,13 @@
               "mutable": false
             },
             "-type": {
+              "nullable": false,
+              "maximumLength": 999,
+              "minimumLength": 1,
+              "mutable": false,
               "regularExpressionPattern": {
                 "__evaluate__": "`(?:${self.database.model.property.name.typeRegularExpressionPattern.public}|${self.database.model.property.name.typeRegularExpressionPattern.private})`"
-              },
-              "nullable": false,
-              "minimumLength": 1,
-              "maximumLength": 999,
-              "mutable": false
+              }
             }
           },
           "_interval": {
@@ -198,7 +198,7 @@
           "name": {
             "reserved": [],
             "special": {
-              "additionalType": "_additionalType",
+              "additional": "_additional",
               "allowedRole": "_allowedRoles",
               "attachment": "_attachments",
               "conflict": "_conflicts",

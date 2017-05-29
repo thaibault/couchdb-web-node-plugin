@@ -86,8 +86,6 @@ export default class DatabaseHelper {
             `${userRolesDescription}.`}
         /* eslint-enable no-throw-literal */
     }
-    // TODO special names durchgehen.
-    // TODO implement type "any" and variable "_additionalType" feature.
     /**
      * Represents a design document validation function for given model
      * specification.
@@ -333,27 +331,7 @@ export default class DatabaseHelper {
             ):{newValue:any;somethingChanged:boolean;} => {
                 let somethingChanged:boolean = false
                 // region type
-                if (propertySpecification.type === 'DateTime') {
-                    const initialNewValue:any = newValue
-                    if (newValue !== null && typeof newValue !== 'number') {
-                        newValue = new Date(newValue)
-                        /* eslint-enable no-throw-literal */
-                        newValue = Date.UTC(
-                            newValue.getUTCFullYear(), newValue.getUTCMonth(),
-                            newValue.getUTCDate(), newValue.getUTCHours(),
-                            newValue.getUTCMinutes(), newValue.getUTCSeconds(),
-                            newValue.getUTCMilliseconds())
-                    }
-                    if (typeof newValue !== 'number' || isNaN(newValue))
-                        /* eslint-disable no-throw-literal */
-                        throw {
-                            forbidden: `PropertyType: Property "${name}" ` +
-                                `isn't of (valid) type "DateTime" (given "` +
-                                `${serialize(initialNewValue)}" of type "` +
-                                `${typeof newValue}")${pathDescription}.`
-                        }
-                        /* eslint-enable no-throw-literal */
-                } else if (models.hasOwnProperty(propertySpecification.type))
+                if (models.hasOwnProperty(propertySpecification.type))
                     if (typeof newValue === 'object' && Object.getPrototypeOf(
                         newValue
                     ) === Object.prototype) {
@@ -375,7 +353,27 @@ export default class DatabaseHelper {
                                 `${pathDescription}.`
                         }
                         /* eslint-enable no-throw-literal */
-                else if (['boolean', 'integer', 'number', 'string'].includes(
+                else if (propertySpecification.type === 'DateTime') {
+                    const initialNewValue:any = newValue
+                    if (newValue !== null && typeof newValue !== 'number') {
+                        newValue = new Date(newValue)
+                        /* eslint-enable no-throw-literal */
+                        newValue = Date.UTC(
+                            newValue.getUTCFullYear(), newValue.getUTCMonth(),
+                            newValue.getUTCDate(), newValue.getUTCHours(),
+                            newValue.getUTCMinutes(), newValue.getUTCSeconds(),
+                            newValue.getUTCMilliseconds())
+                    }
+                    if (typeof newValue !== 'number' || isNaN(newValue))
+                        /* eslint-disable no-throw-literal */
+                        throw {
+                            forbidden: `PropertyType: Property "${name}" ` +
+                                `isn't of (valid) type "DateTime" (given "` +
+                                `${serialize(initialNewValue)}" of type "` +
+                                `${typeof newValue}")${pathDescription}.`
+                        }
+                        /* eslint-enable no-throw-literal */
+                } else if (['boolean', 'integer', 'number', 'string'].includes(
                     propertySpecification.type
                 )) {
                     if (typeof newValue === 'number' && isNaN(newValue) || !(
@@ -410,9 +408,9 @@ export default class DatabaseHelper {
                                 `${typeof newValue}")${pathDescription}.`
                         }
                         /* eslint-enable no-throw-literal */
-                } else if (serialize(newValue) !== serialize(
-                    propertySpecification.type
-                ))
+                } else if (!(propertySpecification.type === 'any' || serialize(
+                    newValue
+                ) === serialize(propertySpecification.type)))
                     /* eslint-disable no-throw-literal */
                     throw {
                         forbidden: `PropertyType: Property "${name}" isn't ` +
@@ -646,16 +644,17 @@ export default class DatabaseHelper {
             }
             // / endregion
             // endregion
+            // TODO if additional is specified run also through remaining
+            // properties to trigger corresponding hooks.
             for (const name:string in model)
                 if (model.hasOwnProperty(name) && ![
+                    specialNames.additional,
                     specialNames.allowedRole,
                     specialNames.constraint.execution,
                     specialNames.constraint.expression,
                     specialNames.extend,
-                    specialNames.localSequence,
                     specialNames.maximumAggregatedSize,
-                    specialNames.minimumAggregatedSize,
-                    specialNames.revisionsInformation
+                    specialNames.minimumAggregatedSize
                 ].includes(name))
                     // region run hooks and check for presence of needed data
                     if (specialNames.attachment === name) {
@@ -799,14 +798,12 @@ export default class DatabaseHelper {
                         !modelConfiguration.property.name.reserved.concat(
                             idName,
                             revisionName,
-                            specialNames.allowedRole,
                             specialNames.conflict,
                             specialNames.deleted,
                             specialNames.deletedConflict,
                             specialNames.localSequence,
                             specialNames.revisions,
                             specialNames.revisionsInformation,
-                            specialNames.strategy,
                             specialNames.type
                         ).includes(name) && (
                             oldDocument[name] === newDocument[name] ||
@@ -823,7 +820,6 @@ export default class DatabaseHelper {
                 if (newDocument.hasOwnProperty(
                     name
                 ) && !modelConfiguration.property.name.reserved.concat(
-                    idName,
                     revisionName,
                     specialNames.conflict,
                     specialNames.deleted,
@@ -834,37 +830,26 @@ export default class DatabaseHelper {
                     specialNames.revisionsInformation,
                     specialNames.strategy
                 ).includes(name)) {
-                    if ([
-                        specialNames.allowedRole,
-                        specialNames.constraint.execution,
-                        specialNames.constraint.expression,
-                        specialNames.extend,
-                        specialNames.maximumAggregatedSize,
-                        specialNames.minimumAggregatedSize
-                    ].includes(name))
+                    let propertySpecification:PropertySpecification
+                    if (model.hasOwnProperty(name))
+                        propertySpecification = model[name]
+                    else if (model.hasOwnProperty(
+                        specialNames.additional
+                    ) && model[specialNames.additional] !== null &&
+                    typeof model[specialNames.additional] === 'object')
+                        propertySpecification = model[specialNames.additional]
+                    else if (updateStrategy === 'migrate') {
+                        delete newDocument[name]
+                        somethingChanged = true
+                        continue
+                    } else
                         /* eslint-disable no-throw-literal */
                         throw {
-                            forbidden: 'Invalid: Given special property name' +
-                                `'"${name}" isn't allowed as normal property` +
-                                ' name for payload data usage' +
-                                `${pathDescription}.`
+                            forbidden: 'Property: Given property "' +
+                                `${name}" isn't specified in ` +
+                                `model "${modelName}"${pathDescription}.`
                         }
                         /* eslint-enable no-throw-literal */
-                    if (!model.hasOwnProperty(name))
-                        if (updateStrategy === 'migrate') {
-                            delete newDocument[name]
-                            somethingChanged = true
-                            continue
-                        } else
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden: 'Property: Given property "' +
-                                    `${name}" isn't specified in ` +
-                                    `model "${modelName}"${pathDescription}.`
-                            }
-                            /* eslint-enable no-throw-literal */
-                    const propertySpecification:PropertySpecification = model[
-                        name]
                     // region writable/mutable/nullable
                     const checkWriteableMutableNullable:Function = (
                         propertySpecification:PropertySpecification,

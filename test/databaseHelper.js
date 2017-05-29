@@ -204,10 +204,6 @@ registerTest(async function():Promise<void> {
                     'Property'
                 ],
                 [
-                    [{[typeName]: 'Test', _constraintExpressions: null}],
-                    {entities: {Test: {}}}, 'Invalid'
-                ],
-                [
                     [{[typeName]: 'Test', a: null}],
                     {entities: {Test: {a: {nullable: false}}}}, 'NotNull'
                 ],
@@ -256,7 +252,7 @@ registerTest(async function():Promise<void> {
                     {entities: {Test: {a: {type: 'DateTime'}}}}, 'PropertyType'
                 ],
                 [[{[typeName]: 'Test', a: 1}], {entities: {Test: {[
-                    specialNames.additonalType
+                    specialNames.additonal
                 ]: 'string'}}}, 'PropertyType'],
                 // / region array
                 // // region type
@@ -836,10 +832,9 @@ registerTest(async function():Promise<void> {
                     incremental: {_deleted: true},
                     '': {[typeName]: 'Test', _deleted: true}
                 }],
-                [[{
-                    [typeName]: 'Test',
-                    a: 2, [specialNames.strategy]: 'migrate'
-                }], {entities: {Test: {}}}, {
+                [[{[typeName]: 'Test', a: 2, [
+                    specialNames.strategy
+                ]: 'migrate'}], {entities: {Test: {}}}, {
                     fillUp: {[typeName]: 'Test'},
                     incremental: {[typeName]: 'Test'},
                     '': {[typeName]: 'Test'}
@@ -894,6 +889,19 @@ registerTest(async function():Promise<void> {
                     fillUp: {[typeName]: 'Test', [revisionName]: 1, a: 'a'},
                     incremental: {[revisionName]: 1, a: 'a'},
                     '': {[typeName]: 'Test', [revisionName]: 1, a: 'a'}
+                }],
+                [[{[typeName]: 'Test', [
+                    specialNames.constraint.expression
+                ]: 2}], {entities: {Test: {[specialNames.additional]: {}}}}, {
+                    fillUp: {[typeName]: 'Test', [
+                        specialNames.constraint.expression
+                    ]: 2},
+                    incremental: {[typeName]: 'Test', [
+                        specialNames.constraint.expression
+                    ]: 2},
+                    '': incremental: {[typeName]: 'Test', [
+                        specialNames.constraint.expression
+                    ]: 2}
                 }],
                 // endregion
                 // region model
@@ -1368,11 +1376,18 @@ registerTest(async function():Promise<void> {
                     }
                 ],
                 [[{[typeName]: 'Test', a: 2, b: ''}], {entities: {Test: {[
-                    specialNames.additonalType
-                ]: 'any'}}}, {
+                    specialNames.additional
+                ]: {type: 'any'}}}}, {
                     fillUp: {[typeName]: 'Test', a: 2, b: ''},
                     incremental: {[typeName]: 'Test', a: 2, b: ''},
                     '': {[typeName]: 'Test', a: 2, b: ''}
+                }],
+                [[{[typeName]: 'Test', a: '2', b: ''}], {entities: {Test: {[
+                    specialNames.additional
+                ]: {}}}}, {
+                    fillUp: {[typeName]: 'Test', a: '2', b: ''},
+                    incremental: {[typeName]: 'Test', a: '2', b: ''},
+                    '': {[typeName]: 'Test', a: '2', b: ''}
                 }],
                 // / region array
                 [

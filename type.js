@@ -70,7 +70,7 @@ export type RetrievedDocument = {
 }
 export type UpdateStrategy = ''|'fillUp'|'incremental'|'migrate'
 export type SpecialPropertyNames = {
-    additionalType:string;
+    additional:string;
     allowedRole:string;
     attachment:string;
     conflict:string;
