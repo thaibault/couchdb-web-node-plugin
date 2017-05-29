@@ -337,8 +337,9 @@ export default class DatabaseHelper {
             ):{newValue:any;somethingChanged:boolean;} => {
                 let somethingChanged:boolean = false
                 // region type
-                const types:Array<string> = propertySpecification.type.split(
-                    '|')
+                const types:Array<any> = Array.isArray(
+                    propertySpecification.type
+                ) ? propertySpecification.type : [propertySpecification.type]
                 let typeMatched:boolean = false
                 for (const type:string of types)
                     if (models.hasOwnProperty(type)) {
@@ -379,22 +380,24 @@ export default class DatabaseHelper {
                             /* eslint-enable no-throw-literal */
                             newValue = Date.UTC(
                                 newValue.getUTCFullYear(),
-                                newValue.getUTCMonth(),
-                                newValue.getUTCDate(), newValue.getUTCHours(),
+                                newValue.getUTCMonth(), newValue.getUTCDate(),
+                                newValue.getUTCHours(),
                                 newValue.getUTCMinutes(),
                                 newValue.getUTCSeconds(),
                                 newValue.getUTCMilliseconds())
                         }
-                        if (newValue !== 'number' || isNaN(newValue)) {
+                        if (typeof newValue !== 'number' || isNaN(newValue)) {
                             if (types.length === 1)
                                 /* eslint-disable no-throw-literal */
                                 throw {
                                     forbidden:
                                         `PropertyType: Property "${name}" ` +
                                         `isn't of (valid) type "DateTime" (` +
-                                        `given "` +
-                                        `${serialize(initialNewValue)}" of ` +
-                                        `type "${typeof newValue}")` +
+                                        `given "` + serialize(
+                                            initialNewValue
+                                        ).replace(/^"/, '').replace(/"$/, '') +
+                                        `" of type "` +
+                                        `${typeof initialNewValue}")` +
                                         `${pathDescription}.`
                                 }
                                 /* eslint-enable no-throw-literal */
@@ -457,9 +460,11 @@ export default class DatabaseHelper {
                         throw {
                             forbidden:
                                 `PropertyType: Property "${name}" isn't ` +
-                                `value "${type}" (given "` +
-                                `${serialize(newValue)}" of type "` +
-                                `${typeof newValue}")${pathDescription}.`
+                                `value "${type}" (given "` + serialize(
+                                    newValue
+                                ).replace(/^"/, '').replace(/"$/, '') + '" ' +
+                                `of type "${typeof newValue}")` +
+                                `${pathDescription}.`
                         }
                         /* eslint-disable no-throw-literal */
                 if (!typeMatched)
@@ -468,7 +473,9 @@ export default class DatabaseHelper {
                         forbidden:
                             'PropertyType: None of the specified types "' +
                             `${types.join('", "')}" for property "${name}" ` +
-                            `matches value "${newValue}" of type "` +
+                            `matches value "` + serialize(newValue).replace(
+                                /^"/, ''
+                            ).replace(/"$/, '') + `${newValue}" of type "` +
                             `${typeof newValue}")${pathDescription}.`
                     }
                     /* eslint-disable no-throw-literal */

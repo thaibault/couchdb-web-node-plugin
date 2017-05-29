@@ -46,7 +46,7 @@ export type PropertySpecification = {
     regularExpressionPattern:?string;
     selection:?Array<any>;
     trim:boolean;
-    type:string;
+    type:any;
     writable:boolean;
 }
 export type Model = {
