@@ -337,94 +337,106 @@ export default class DatabaseHelper {
             ):{newValue:any;somethingChanged:boolean;} => {
                 let somethingChanged:boolean = false
                 // region type
-                if (models.hasOwnProperty(propertySpecification.type))
-                    if (typeof newValue === 'object' && Object.getPrototypeOf(
-                        newValue
-                    ) === Object.prototype) {
-                        const result:{
-                            newDocument:any, somethingChanged:boolean
-                        } = checkDocument(
-                            newValue, oldValue, parentNames.concat(name))
-                        if (result.somethingChanged)
-                            somethingChanged = true
-                        newValue = result.newDocument
-                        if (serialize(newValue) === serialize({}))
-                            return {newValue: null, somethingChanged}
-                    } else
-                        /* eslint-disable no-throw-literal */
-                        throw {
-                            forbidden: 'NestedModel: Under key "${name}" ' +
-                                `isn't "${propertySpecification.type}" ` +
-                                `(given "${serialize(newValue)}")` +
-                                `${pathDescription}.`
+                // TODO test
+                for (const type:string of propertySpecification.type.split(
+                    '|'
+                ))
+                    if (models.hasOwnProperty(type))
+                        if (
+                            typeof newValue === 'object' &&
+                            Object.getPrototypeOf(newValue) ===
+                                Object.prototype
+                        ) {
+                            const result:{
+                                newDocument:any, somethingChanged:boolean
+                            } = checkDocument(
+                                newValue, oldValue, parentNames.concat(name))
+                            if (result.somethingChanged)
+                                somethingChanged = true
+                            newValue = result.newDocument
+                            if (serialize(newValue) === serialize({}))
+                                return {newValue: null, somethingChanged}
+                        } else
+                            /* eslint-disable no-throw-literal */
+                            throw {
+                                forbidden:
+                                    `NestedModel: Under key "${name}" isn't ` +
+                                    `"${type}" (given "` +
+                                    `${serialize(newValue)}")` +
+                                    `${pathDescription}.`
+                            }
+                            /* eslint-enable no-throw-literal */
+                    else if (type === 'DateTime') {
+                        const initialNewValue:any = newValue
+                        if (
+                            newValue !== null && typeof newValue !== 'number'
+                        ) {
+                            newValue = new Date(newValue)
+                            /* eslint-enable no-throw-literal */
+                            newValue = Date.UTC(
+                                newValue.getUTCFullYear(),
+                                newValue.getUTCMonth(),
+                                newValue.getUTCDate(), newValue.getUTCHours(),
+                                newValue.getUTCMinutes(),
+                                newValue.getUTCSeconds(),
+                                newValue.getUTCMilliseconds())
                         }
-                        /* eslint-enable no-throw-literal */
-                else if (propertySpecification.type === 'DateTime') {
-                    const initialNewValue:any = newValue
-                    if (newValue !== null && typeof newValue !== 'number') {
-                        newValue = new Date(newValue)
-                        /* eslint-enable no-throw-literal */
-                        newValue = Date.UTC(
-                            newValue.getUTCFullYear(), newValue.getUTCMonth(),
-                            newValue.getUTCDate(), newValue.getUTCHours(),
-                            newValue.getUTCMinutes(), newValue.getUTCSeconds(),
-                            newValue.getUTCMilliseconds())
-                    }
-                    if (typeof newValue !== 'number' || isNaN(newValue))
-                        /* eslint-disable no-throw-literal */
-                        throw {
-                            forbidden: `PropertyType: Property "${name}" ` +
-                                `isn't of (valid) type "DateTime" (given "` +
-                                `${serialize(initialNewValue)}" of type "` +
-                                `${typeof newValue}")${pathDescription}.`
-                        }
-                        /* eslint-enable no-throw-literal */
-                } else if (['boolean', 'integer', 'number', 'string'].includes(
-                    propertySpecification.type
-                )) {
-                    if (typeof newValue === 'number' && isNaN(newValue) || !(
-                        propertySpecification.type === 'integer' ||
-                        typeof newValue === propertySpecification.type
-                    ) || propertySpecification.type === 'integer' && parseInt(
+                        if (typeof newValue !== 'number' || isNaN(newValue))
+                            /* eslint-disable no-throw-literal */
+                            throw {
+                                forbidden: `PropertyType: Property "${name}" ` +
+                                    `isn't of (valid) type "DateTime" (given "` +
+                                    `${serialize(initialNewValue)}" of type "` +
+                                    `${typeof newValue}")${pathDescription}.`
+                            }
+                            /* eslint-enable no-throw-literal */
+                    } else if ([
+                        'boolean', 'integer', 'number', 'string'
+                    ].includes(type)) {
+                        if (typeof newValue === 'number' && isNaN(
+                            newValue
+                        ) || !(
+                            type === 'integer' || typeof newValue === type
+                        ) || type === 'integer' && parseInt(
+                            newValue
+                        ) !== newValue)
+                            /* eslint-disable no-throw-literal */
+                            throw {
+                                forbidden: `PropertyType: Property "${name}"` +
+                                    ` isn't of (valid) type "${type}" (given` +
+                                    ` "${serialize(newValue)}" of type "` +
+                                    `${typeof newValue}")${pathDescription}.`
+                            }
+                            /* eslint-enable no-throw-literal */
+                    } else if (typeof type === 'string' && type.startsWith(
+                        'foreignKey:'
+                    )) {
+                        const foreignKeyType:string = models[type.substring(
+                            'foreignKey:'.length
+                        )][idName].type
+                        if (foreignKeyType !== typeof newValue)
+                            /* eslint-disable no-throw-literal */
+                            throw {
+                                forbidden:
+                                    `PropertyType: Foreign key property "` +
+                                    `${name}" isn't of type "` +
+                                    `${foreignKeyType}" (given "` +
+                                    `${serialize(newValue)}" of type "` +
+                                    `${typeof newValue}")${pathDescription}.`
+                            }
+                            /* eslint-enable no-throw-literal */
+                    } else if (!(type === 'any' || serialize(
                         newValue
-                    ) !== newValue)
+                    ) === serialize(type)))
                         /* eslint-disable no-throw-literal */
                         throw {
-                            forbidden: `PropertyType: Property "${name}" ` +
-                                `isn't of (valid) type "` +
-                                `${propertySpecification.type}" (given "` +
+                            forbidden:
+                                `PropertyType: Property "${name}" isn't ` +
+                                `value "${type}" (given "` +
                                 `${serialize(newValue)}" of type "` +
                                 `${typeof newValue}")${pathDescription}.`
                         }
-                        /* eslint-enable no-throw-literal */
-                } else if (
-                    typeof propertySpecification.type === 'string' &&
-                    propertySpecification.type.startsWith('foreignKey:')
-                ) {
-                    const foreignKeyType:string = models[
-                        propertySpecification.type.substring(
-                            'foreignKey:'.length
-                        )][idName].type
-                    if (foreignKeyType !== typeof newValue)
                         /* eslint-disable no-throw-literal */
-                        throw {
-                            forbidden: `PropertyType: Foreign key property "` +
-                                `${name}" isn't of type "${foreignKeyType}" ` +
-                                `(given "${serialize(newValue)}" of type "` +
-                                `${typeof newValue}")${pathDescription}.`
-                        }
-                        /* eslint-enable no-throw-literal */
-                } else if (!(propertySpecification.type === 'any' || serialize(
-                    newValue
-                ) === serialize(propertySpecification.type)))
-                    /* eslint-disable no-throw-literal */
-                    throw {
-                        forbidden: `PropertyType: Property "${name}" isn't ` +
-                            `value "${propertySpecification.type}" (given "` +
-                            `${serialize(newValue)}" of type "` +
-                            `${typeof newValue}")${pathDescription}.`
-                    }
-                    /* eslint-disable no-throw-literal */
                 // endregion
                 // region range
                 if (typeof newValue === 'string') {
@@ -661,9 +673,6 @@ export default class DatabaseHelper {
                 specialNames.maximumAggregatedSize,
                 specialNames.minimumAggregatedSize
             ].includes(name))
-            // TODO
-            if (Object.keys(model).includes('undefined'))
-                console.log('A', model)
             for (const name:string of specifiedPropertyNames.concat(
                 additionalPropertySpecification ? Object.keys(
                     newDocument
@@ -898,7 +907,7 @@ export default class DatabaseHelper {
                                 /* eslint-disable no-throw-literal */
                                 throw {
                                     forbidden: `Readonly: Property "${name}"` +
-                                    `is not writable${pathDescription}.`
+                                    ` is not writable${pathDescription}.`
                                 }
                                 /* eslint-enable no-throw-literal */
                         // endregion

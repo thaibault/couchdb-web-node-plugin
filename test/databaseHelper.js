@@ -79,7 +79,7 @@ registerTest(async function():Promise<void> {
                         propertyName]
             // region forbidden writes
             for (const test:Array<any> of [
-                // reg ion general environment
+                // region general environment
                 [
                     [{[typeName]: 'Test', [revisionName]: 'latest'}, null],
                     'Revision'
@@ -94,7 +94,7 @@ registerTest(async function():Promise<void> {
                         {[typeName]: 'Test'}
                     ],
                     'Revision'
-                ]/* TODO,
+                ],
                 // endregion
                 // region changes
                 [[{[typeName]: 'Test'}, {[typeName]: 'Test'}], {entities: {
@@ -251,9 +251,9 @@ registerTest(async function():Promise<void> {
                     [{[typeName]: 'Test', a: new Date('a')}],
                     {entities: {Test: {a: {type: 'DateTime'}}}}, 'PropertyType'
                 ],
-                [[{[typeName]: 'Test', a: 1}], {entities: {Test: {[
-                    specialNames.additonal
-                ]: 'string'}}}, 'PropertyType'],
+                [[{[typeName]: 'Test', a: '1'}], {entities: {Test: {[
+                    specialNames.additional
+                ]: {type: 'number'}}}}, 'PropertyType'],
                 // / region array
                 // // region type
                 [
@@ -755,7 +755,6 @@ registerTest(async function():Promise<void> {
                     [attachmentName]: {a: {}}
                 }}}, 'AggregatedMaximumSize']
                 // endregion
-                */
             ]) {
                 if (test.length < 3)
                     test.splice(1, 0, {})
@@ -846,15 +845,15 @@ registerTest(async function():Promise<void> {
                     fillUp: {[idName]: 1, [revisionName]: 1},
                     incremental: {[idName]: 1, [revisionName]: 1},
                     '': {[idName]: 1, [revisionName]: 1}
-                }]/* TODO,
+                }],
                 [[{
-                    [typeName]: 'Test',
+                    a: null,
                     [idName]: 1,
                     [revisionName]: 1,
-                    a: null
+                    [typeName]: 'Test'
                 }, {
                     [typeName]: 'Test', [idName]: 1, [revisionName]: 0, a: 'a'
-                }], {entities: {Test: {a: {}}}}, {
+                }], {entities: {Test: {a: {}, [idName]: {type: 'number'}}}}, {
                     fillUp: {
                         [typeName]: 'Test', [idName]: 1, [revisionName]: 1
                     },
@@ -892,7 +891,9 @@ registerTest(async function():Promise<void> {
                 }],
                 [[{[typeName]: 'Test', [
                     specialNames.constraint.expression
-                ]: 2}], {entities: {Test: {[specialNames.additional]: {}}}}, {
+                ]: 2}], {entities: {Test: {[specialNames.additional]: {
+                    type: 'any'
+                }}}}, {
                     fillUp: {[typeName]: 'Test', [
                         specialNames.constraint.expression
                     ]: 2},
@@ -1516,9 +1517,9 @@ registerTest(async function():Promise<void> {
                     [{[typeName]: 'Test', a: [2, '2']}], {entities: {Test: {
                         a: {type: 'any[]'}
                     }}}, {
-                        fillUp: {[typeName]: 'Test', a: [2]},
-                        incremental: {[typeName]: 'Test', a: [2]},
-                        '': {[typeName]: 'Test', a: [2]}
+                        fillUp: {[typeName]: 'Test', a: [2, '2']},
+                        incremental: {[typeName]: 'Test', a: [2, '2']},
+                        '': {[typeName]: 'Test', a: [2, '2']}
                     }
                 ],
                 // / endregion
@@ -2275,7 +2276,6 @@ registerTest(async function():Promise<void> {
                     }}}
                 }]
                 // endregion
-                */
             ]) {
                 const modelConfiguration:ModelConfiguration =
                     Tools.extendObject(
@@ -2295,8 +2295,6 @@ registerTest(async function():Promise<void> {
             }
             // endregion
         }
-        // TODO
-        return
         // region migration writes
         const defaultModelConfiguration:ModelConfiguration =
             Tools.extendObject(true, {}, configuration.database.model, {
@@ -2353,6 +2351,11 @@ registerTest(async function():Promise<void> {
             [
                 [{[typeName]: 'Test'}],
                 {entities: {Test: {a: {default: 2, type: 'number'}}}},
+                {[typeName]: 'Test', a: 2}
+            ],
+            [
+                [{[typeName]: 'Test'}],
+                {entities: {Test: {a: {default: 2, type: 'any'}}}},
                 {[typeName]: 'Test', a: 2}
             ],
             [[
