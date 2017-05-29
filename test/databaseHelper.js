@@ -254,6 +254,9 @@ registerTest(async function():Promise<void> {
                 [[{[typeName]: 'Test', a: '1'}], {entities: {Test: {[
                     specialNames.additional
                 ]: {type: 'number'}}}}, 'PropertyType'],
+                [[{[typeName]: 'Test', a: '1'}], {entities: {Test: {[
+                    specialNames.additional
+                ]: {type: ['number', 'boolean', '2']}}}}, 'PropertyType'],
                 // / region array
                 // // region type
                 [
@@ -363,7 +366,7 @@ registerTest(async function():Promise<void> {
                 // // region property type
                 [
                     [{[typeName]: 'Test', a: 1}],
-                    {entities: {Test: {a: {type: 'Test'}}}}, 'NestedModel'
+                    {entities: {Test: {a: {type: 'Test'}}}}, 'NestedType'
                 ],
                 [
                     [{[typeName]: 'Test', a: null}],
@@ -372,7 +375,7 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{[typeName]: 'Test', a: {}}],
-                    {entities: {Test: {a: {type: 'Test'}}}}, 'Type'
+                    {entities: {Test: {a: {type: 'Test'}}}}, 'NestedType'
                 ],
                 [
                     [{
@@ -444,7 +447,8 @@ registerTest(async function():Promise<void> {
                     a: 4,
                     b: {[typeName]: 'Test', a: 2}
                 }], {entities: {Test: {
-                    a: {type: 'number', minimum: 3}, b: {type: 'Test'}
+                    a: {type: ['number', 'string'], minimum: 3},
+                    b: {type: 'Test'}
                 }}}, 'Minimum'],
                 [[{
                     [typeName]: 'Test',
@@ -1522,6 +1526,15 @@ registerTest(async function():Promise<void> {
                         '': {[typeName]: 'Test', a: [2, '2']}
                     }
                 ],
+                [
+                    [{[typeName]: 'Test', a: [2, '2']}], {entities: {Test: {
+                        a: {type: [['number', 'string']]}
+                    }}}, {
+                        fillUp: {[typeName]: 'Test', a: [2, '2']},
+                        incremental: {[typeName]: 'Test', a: [2, '2']},
+                        '': {[typeName]: 'Test', a: [2, '2']}
+                    }
+                ],
                 // / endregion
                 // / region nested property
                 // // region property type
@@ -1836,6 +1849,20 @@ registerTest(async function():Promise<void> {
                         fillUp: {[typeName]: 'Test', a: 2},
                         incremental: {a: 2},
                         '': {[typeName]: 'Test', a: 2}
+                    }
+                ],
+                [[{[typeName]: 'Test', a: 2}, {[typeName]: 'Test'}], {
+                    entities: {Test: {a: {type: [2, 'boolean']}}}}, {
+                        fillUp: {[typeName]: 'Test', a: 2},
+                        incremental: {a: 2},
+                        '': {[typeName]: 'Test', a: 2}
+                    }
+                ],
+                [[{[typeName]: 'Test', a: false}, {[typeName]: 'Test'}], {
+                    entities: {Test: {a: {type: [2, 'boolean']}}}}, {
+                        fillUp: {[typeName]: 'Test', a: false},
+                        incremental: {a: false},
+                        '': {[typeName]: 'Test', a: false}
                     }
                 ],
                 // endregion
@@ -2328,11 +2355,9 @@ registerTest(async function():Promise<void> {
                 [{[typeName]: 'Test'}, {[typeName]: 'Test', a: 1}],
                 {entities: {Test: {}}}, {[typeName]: 'Test'}
             ],
-            [
-                [{[typeName]: 'Test', a: null}],
-                {entities: {Test: {a: {default: '2'}}}},
-                {[typeName]: 'Test', a: '2'}
-            ],
+            [[{[typeName]: 'Test', a: null}], {entities: {Test: {a: {
+                default: '2'
+            }}}}, {[typeName]: 'Test', a: '2'}],
             [
                 [{[typeName]: 'Test', a: null}, {[typeName]: 'Test', a: '1'}],
                 {entities: {Test: {a: {default: '2'}}}},
@@ -2348,19 +2373,24 @@ registerTest(async function():Promise<void> {
                 {entities: {Test: {a: {default: '2'}}}},
                 {[typeName]: 'Test', a: '2'}
             ],
-            [
-                [{[typeName]: 'Test'}],
-                {entities: {Test: {a: {default: 2, type: 'number'}}}},
-                {[typeName]: 'Test', a: 2}
-            ],
-            [
-                [{[typeName]: 'Test'}],
-                {entities: {Test: {a: {default: 2, type: 'any'}}}},
-                {[typeName]: 'Test', a: 2}
-            ],
+            [[{[typeName]: 'Test'}], {entities: {Test: {a: {
+                default: 2, type: 'number'
+            }}}}, {[typeName]: 'Test', a: 2}],
+            [[{[typeName]: 'Test'}], {entities: {Test: {a: {
+                default: 2, type: 'any'
+            }}}}, {[typeName]: 'Test', a: 2}],
+            [[{[typeName]: 'Test'}], {entities: {Test: {a: {
+                default: 2, type: ['any']
+            }}}}, {[typeName]: 'Test', a: 2}],
+            [[{[typeName]: 'Test'}], {entities: {Test: {a: {
+                default: 2, type: ['any', 'boolean']
+            }}}}, {[typeName]: 'Test', a: 2}],
+            [[{[typeName]: 'Test'}], {entities: {Test: {a: {
+                default: 2, type: ['number', 'boolean']
+            }}}}, {[typeName]: 'Test', a: 2}],
             [[
                 {[typeName]: 'Test', b: ''},
-                 {[typeName]: 'Test', [attachmentName]: {}}
+                {[typeName]: 'Test', [attachmentName]: {}}
             ], {entities: {Test: {b: {}}}}, {[typeName]: 'Test', b: ''}],
             [[{[typeName]: 'Test', b: ''}, {
                 [typeName]: 'Test', [attachmentName]: {

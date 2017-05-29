@@ -365,8 +365,8 @@ export default class DatabaseHelper {
                             /* eslint-disable no-throw-literal */
                             throw {
                                 forbidden:
-                                    `NestedModel: Under key "${name}" isn't ` +
-                                    `"${type}" (given "` +
+                                    `NestedType: Under key "${name}" isn't ` +
+                                    `of type "${type}" (given "` +
                                     `${serialize(newValue)}")` +
                                     `${pathDescription}.`
                             }
@@ -1022,7 +1022,10 @@ export default class DatabaseHelper {
                     // endregion
                     if (
                         typeof propertySpecification.type === 'string' &&
-                        propertySpecification.type.endsWith('[]')
+                        propertySpecification.type.endsWith('[]') ||
+                        Array.isArray(propertySpecification.type) &&
+                        propertySpecification.type.length &&
+                        Array.isArray(propertySpecification.type[0])
                     ) {
                         if (!Array.isArray(newDocument[name]))
                             /* eslint-disable no-throw-literal */
@@ -1078,8 +1081,18 @@ export default class DatabaseHelper {
                         for (const key:string in propertySpecification)
                             if (propertySpecification.hasOwnProperty(key))
                                 if (key === 'type')
-                                    propertySpecificationCopy[key] =
-                                        propertySpecification[key].substring(
+                                    if (Array.isArray(propertySpecification[
+                                        key
+                                    ]))
+                                        propertySpecificationCopy[
+                                            key
+                                        ] = propertySpecification[key][0]
+                                    else
+                                        propertySpecificationCopy[
+                                            key
+                                        ] = propertySpecification[
+                                            key
+                                        ].substring(
                                             0,
                                             propertySpecification.type.length -
                                                 '[]'.length)
