@@ -94,9 +94,7 @@
         "autoMigration": true,
         "entities": {
           "_base": {
-            "_allowedRoles": [
-              "users"
-            ],
+            "_allowedRoles": "users",
             "_attachments": {},
             "_id": {
               "mutable": false

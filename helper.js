@@ -91,19 +91,42 @@ export default class Helper {
     static determineAllowedModelRolesMapping(
         modelConfiguration:ModelConfiguration
     ):AllowedModelRolesMapping {
+        const allowedRoleName:string =
+            modelConfiguration.property.name.special.allowedRole
         const allowedModelRolesMapping:AllowedModelRolesMapping = {}
         const models:Models = Helper.extendModels(modelConfiguration)
         for (const modelName:string in models)
             if (models.hasOwnProperty(modelName) && models[
                 modelName
-            ].hasOwnProperty(
-                modelConfiguration.property.name.special.allowedRole
-            )) {
-                // IgnoreTypeCheck
-                const allowedRoles:Array<string> = models[modelName][
-                    modelConfiguration.property.name.special.allowedRole]
-                allowedModelRolesMapping[modelName] = allowedRoles
-            }
+            ].hasOwnProperty(allowedRoleName))
+                if (Array.isArray(models[modelName][allowedRoleName]))
+                    allowedModelRolesMapping[modelName] = {
+                        read: models[modelName][allowedRoleName],
+                        write: models[modelName][allowedRoleName]
+                    }
+                else if (typeof models[modelName][
+                    allowedRoleName
+                ] === 'object') {
+                    allowedModelRolesMapping[modelName] = {read: [], write: []}
+                    for (const type:string in allowedModelRolesMapping[
+                        modelName
+                    ])
+                        if (allowedModelRolesMapping[modelName].hasOwnProperty(
+                            type
+                        ) && Array.isArray(models[modelName][allowedRoleName][
+                            type
+                        ]))
+                            allowedModelRolesMapping[modelName][type] = models[
+                                modelName
+                            ][allowedRoleName][type]
+                        else
+                            allowedModelRolesMapping[modelName][type] = [
+                                models[modelName][allowedRoleName][type]]
+                } else
+                    allowedModelRolesMapping[modelName] = {
+                        read: [models[modelName][allowedRoleName]],
+                        write: [models[modelName][allowedRoleName]]
+                    }
         return allowedModelRolesMapping
     }
     // TODO test
