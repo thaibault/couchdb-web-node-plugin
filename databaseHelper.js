@@ -241,6 +241,12 @@ export default class DatabaseHelper {
             // endregion
             const modelName:string = newDocument[specialNames.type]
             const model:Model = models[modelName]
+            let additionalPropertySpecification:?PlainObject = null
+            if (model.hasOwnProperty(specialNames.additional) && typeof model[
+                specialNames.additional
+            ] === 'object')
+                additionalPropertySpecification = model[
+                    specialNames.additional]
             // region document specific functions
             const checkPropertyConstraints:Function = (
                 newValue:any, name:string,
@@ -644,150 +650,147 @@ export default class DatabaseHelper {
             }
             // / endregion
             // endregion
-            // TODO if additional is specified run also through remaining
-            // properties to trigger corresponding hooks.
-            for (const name:string in model)
-                if (model.hasOwnProperty(name) && ![
-                    specialNames.additional,
-                    specialNames.allowedRole,
-                    specialNames.constraint.execution,
-                    specialNames.constraint.expression,
-                    specialNames.extend,
-                    specialNames.maximumAggregatedSize,
-                    specialNames.minimumAggregatedSize
-                ].includes(name))
-                    // region run hooks and check for presence of needed data
-                    if (specialNames.attachment === name) {
-                        for (const type:string in model[name]) {
-                            if (!newDocument.hasOwnProperty(
-                                name
-                            ) || newDocument[name] === null)
-                                newDocument[name] = {}
-                            if (oldDocument && !oldDocument.hasOwnProperty(
-                                name
-                            ))
-                                oldDocument[name] = {}
-                            const newFileNames:Array<string> = Object.keys(
-                                newDocument[name]
-                            ).filter((fileName:string):boolean => newDocument[
-                                name
-                            ][fileName].data !== null && (new RegExp(
-                                type
-                            )).test(fileName))
-                            let oldFileNames:Array<string> = []
-                            if (oldDocument)
-                                oldFileNames = Object.keys(
-                                    oldDocument[name]
-                                ).filter((fileName:string):boolean =>
-                                    newDocument[name][fileName] && newDocument[
-                                        name
-                                    ][fileName].data !== null && (new RegExp(
-                                        type
-                                    )).test(fileName))
-                            for (const fileName:string of newFileNames)
-                                runCreateHook(
-                                    model[name][type], newDocument[name],
-                                    oldDocument && oldDocument[
-                                        name
-                                    ] ? oldDocument[name] : null, fileName)
-                            for (const fileName:string of newFileNames)
-                                runUpdateHook(
-                                    model[name][type], newDocument[name],
-                                    oldDocument && oldDocument[
-                                        name
-                                    ] ? oldDocument[name] : null, fileName)
-                            if ([undefined, null].includes(
-                                model[name][type].default
-                            )) {
-                                if (!(model[name][type].nullable || (
-                                    newFileNames.length > 0 ||
-                                    oldFileNames.length > 0
-                                )))
-                                    /* eslint-disable no-throw-literal */
-                                    throw {
-                                        forbidden: 'AttachmentMissing: ' +
-                                            'Missing attachment for type "' +
-                                            `${type}"${pathDescription}.`
-                                    }
-                                    /* eslint-enable no-throw-literal */
-                                if (
-                                    updateStrategy === 'fillUp' &&
-                                    newFileNames.length === 0 &&
-                                    oldFileNames.length > 0
-                                )
-                                    for (const fileName:string of oldFileNames)
-                                        if (newDocument[name][
-                                            fileName
-                                        ] === null)
-                                            somethingChanged = true
-                                        else
-                                            newDocument[name][fileName] =
-                                                // IgnoreTypeCheck
-                                                oldDocument[name][fileName]
-                            } else if (newFileNames.length === 0)
-                                if (oldFileNames.length === 0) {
-                                    for (const fileName:string in model[name][
-                                        type
-                                    ].default)
-                                        if (model[name][
-                                            type
-                                        ].default.hasOwnProperty(fileName)) {
-                                            newDocument[name][fileName] =
-                                                model[name][type].default[
-                                                    fileName]
-                                            somethingChanged = true
-                                        }
-                                } else if (updateStrategy === 'fillUp')
-                                    for (const fileName:string of oldFileNames)
-                                        newDocument[name][fileName] =
-                                            // IgnoreTypeCheck
-                                            oldDocument[name][fileName]
-                        }
-                    } else {
-                        runCreateHook(
-                            model[name], newDocument, oldDocument, name)
-                        runUpdateHook(
-                            model[name], newDocument, oldDocument, name)
-                        if ([undefined, null].includes(model[name].default)) {
-                            if (!(model[name].nullable || (
-                                newDocument.hasOwnProperty(name) ||
-                                oldDocument && oldDocument.hasOwnProperty(
+            const specifiedPropertyNames:Array<string> = Object.keys(
+                model
+            ).filter((name:string):boolean => ![
+                specialNames.additional,
+                specialNames.allowedRole,
+                specialNames.constraint.execution,
+                specialNames.constraint.expression,
+                specialNames.extend,
+                specialNames.maximumAggregatedSize,
+                specialNames.minimumAggregatedSize
+            ].includes(name))
+            for (const name:string of specifiedPropertyNames.concat(
+                additionalPropertySpecification ? Object.keys(
+                    newDocument
+                ).filter((name:string):boolean =>
+                    !specifiedPropertyNames.includes(name)
+                ) : []
+            ))
+                // region run hooks and check for presence of needed data
+                if (specialNames.attachment === name) {
+                    for (const type:string in model[name]) {
+                        if (!newDocument.hasOwnProperty(name) || newDocument[
+                            name
+                        ] === null)
+                            newDocument[name] = {}
+                        if (oldDocument && !oldDocument.hasOwnProperty(name))
+                            oldDocument[name] = {}
+                        const newFileNames:Array<string> = Object.keys(
+                            newDocument[name]
+                        ).filter((fileName:string):boolean => newDocument[
+                            name
+                        ][fileName].data !== null && (new RegExp(type)).test(
+                            fileName))
+                        let oldFileNames:Array<string> = []
+                        if (oldDocument)
+                            oldFileNames = Object.keys(
+                                oldDocument[name]
+                            ).filter((fileName:string):boolean =>
+                                newDocument[name][fileName] && newDocument[
                                     name
-                                ) && updateStrategy
+                                ][fileName].data !== null && (new RegExp(
+                                    type
+                                )).test(fileName))
+                        for (const fileName:string of newFileNames)
+                            runCreateHook(
+                                model[name][type], newDocument[name],
+                                oldDocument && oldDocument[
+                                    name
+                                ] ? oldDocument[name] : null, fileName)
+                        for (const fileName:string of newFileNames)
+                            runUpdateHook(
+                                model[name][type], newDocument[name],
+                                oldDocument && oldDocument[
+                                    name
+                                ] ? oldDocument[name] : null, fileName)
+                        if ([undefined, null].includes(
+                            model[name][type].default
+                        )) {
+                            if (!(model[name][type].nullable || (
+                                newFileNames.length > 0 ||
+                                oldFileNames.length > 0
                             )))
                                 /* eslint-disable no-throw-literal */
                                 throw {
-                                    forbidden: 'MissingProperty: Missing ' +
-                                        `property "${name}"${pathDescription}.`
+                                    forbidden:
+                                        'AttachmentMissing: Missing ' +
+                                        `attachment for type "${type}"` +
+                                        `${pathDescription}.`
                                 }
                                 /* eslint-enable no-throw-literal */
-                            if (!newDocument.hasOwnProperty(
+                            if (
+                                updateStrategy === 'fillUp' &&
+                                newFileNames.length === 0 &&
+                                oldFileNames.length > 0
+                            )
+                                for (const fileName:string of oldFileNames)
+                                    if (newDocument[name][fileName] === null)
+                                        somethingChanged = true
+                                    else
+                                        newDocument[name][fileName] =
+                                            // IgnoreTypeCheck
+                                            oldDocument[name][fileName]
+                        } else if (newFileNames.length === 0)
+                            if (oldFileNames.length === 0) {
+                                for (const fileName:string in model[name][
+                                    type
+                                ].default)
+                                    if (model[name][
+                                        type
+                                    ].default.hasOwnProperty(fileName)) {
+                                        newDocument[name][fileName] =
+                                            model[name][type].default[
+                                                fileName]
+                                        somethingChanged = true
+                                    }
+                            } else if (updateStrategy === 'fillUp')
+                                for (const fileName:string of oldFileNames)
+                                    newDocument[name][fileName] =
+                                        // IgnoreTypeCheck
+                                        oldDocument[name][fileName]
+                    }
+                } else {
+                    runCreateHook(model[name], newDocument, oldDocument, name)
+                    runUpdateHook(model[name], newDocument, oldDocument, name)
+                    if ([undefined, null].includes(model[name].default)) {
+                        if (!(model[name].nullable || (
+                            newDocument.hasOwnProperty(name) ||
+                            oldDocument && oldDocument.hasOwnProperty(
                                 name
-                            ) && oldDocument && oldDocument.hasOwnProperty(
-                                name
-                            ))
-                                if (updateStrategy === 'fillUp')
-                                    newDocument[name] = oldDocument[name]
-                                else if (!updateStrategy)
-                                    somethingChanged = true
-                        } else if (!newDocument.hasOwnProperty(
+                            ) && updateStrategy
+                        )))
+                            /* eslint-disable no-throw-literal */
+                            throw {
+                                forbidden:
+                                    'MissingProperty: Missing property "' +
+                                    `${name}"${pathDescription}.`
+                            }
+                            /* eslint-enable no-throw-literal */
+                        if (!newDocument.hasOwnProperty(
                             name
-                        ) || newDocument[name] === null)
-                            if (oldDocument && oldDocument.hasOwnProperty(
-                                name
-                            )) {
-                                if (updateStrategy === 'fillUp')
-                                    newDocument[name] = oldDocument[name]
-                                else if (updateStrategy === 'migrate') {
-                                    newDocument[name] = model[name].default
-                                    somethingChanged = true
-                                }
-                            } else {
+                        ) && oldDocument && oldDocument.hasOwnProperty(name))
+                            if (updateStrategy === 'fillUp')
+                                newDocument[name] = oldDocument[name]
+                            else if (!updateStrategy)
+                                somethingChanged = true
+                    } else if (!newDocument.hasOwnProperty(
+                        name
+                    ) || newDocument[name] === null)
+                        if (oldDocument && oldDocument.hasOwnProperty(name)) {
+                            if (updateStrategy === 'fillUp')
+                                newDocument[name] = oldDocument[name]
+                            else if (updateStrategy === 'migrate') {
                                 newDocument[name] = model[name].default
                                 somethingChanged = true
                             }
-                    }
-                    // endregion
+                        } else {
+                            newDocument[name] = model[name].default
+                            somethingChanged = true
+                        }
+                }
+                // endregion
             // region check given data
             if (oldDocument && updateStrategy === 'incremental')
                 // region remove new data which already exists
@@ -833,11 +836,8 @@ export default class DatabaseHelper {
                     let propertySpecification:PropertySpecification
                     if (model.hasOwnProperty(name))
                         propertySpecification = model[name]
-                    else if (model.hasOwnProperty(
-                        specialNames.additional
-                    ) && model[specialNames.additional] !== null &&
-                    typeof model[specialNames.additional] === 'object')
-                        propertySpecification = model[specialNames.additional]
+                    else if (additionalPropertySpecification)
+                        propertySpecification = additionalPropertySpecification
                     else if (updateStrategy === 'migrate') {
                         delete newDocument[name]
                         somethingChanged = true
