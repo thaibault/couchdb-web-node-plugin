@@ -21,8 +21,9 @@ try {
 
 // NOTE: Remove when "fetch" is supported by node.
 import type {
-    Constraint, AllowedModelRolesMapping, Model, Models, PropertySpecification,
-    SecuritySettings, SimpleModelConfiguration, UserContext
+    Constraint, AllowedModelRolesMapping, Model, Models,
+    NormalizedAllowedRoles, PropertySpecification, SecuritySettings,
+    SimpleModelConfiguration, UserContext
 } from './type'
 // endregion
 /**
@@ -41,6 +42,10 @@ export default class DatabaseHelper {
      * @param allowedModelRolesMapping - Allowed roles for given models.
      * @param typePropertyName - Property name indicating to which model a
      * document belongs to.
+     * @param read - Indicates whether a read or write of given document should
+     * be authorized or not.
+     * @returns Throws an exception if authorisation is not accepted and "true"
+     * otherwise.
      */
     static authenticate(
         newDocument:PlainObject, oldDocument:?PlainObject,
@@ -51,11 +56,12 @@ export default class DatabaseHelper {
         }, securitySettings:SecuritySettings = {
             admins: {names: [], roles: []}, members: {names: [], roles: []}
         }, allowedModelRolesMapping:AllowedModelRolesMapping,
-        typePropertyName:string
+        typePropertyName:string, read:boolean = false
     ):?true {
-        let allowedRoles:Array<string> = ['_admin']
+        let allowedRoles:NormalizedAllowedRoles = {
+            properties: {}, read: ['_admin'], write: ['_admin']}
         let userRolesDescription:string = `Current user doesn't own any role`
-        /* TODO
+        const operationType:string = read ? 'read': 'write'
         if (userContext) {
             if (!('name' in userContext))
                 userContext.name = '"unknown"'
@@ -65,26 +71,38 @@ export default class DatabaseHelper {
                 allowedModelRolesMapping.hasOwnProperty(
                     newDocument[typePropertyName])
             )
-                allowedRoles = allowedRoles.concat(
-                    allowedModelRolesMapping[newDocument[typePropertyName]])
+                for (const type:string in allowedRoles)
+                    if (allowedRoles.hasOwnProperty(type))
+                        if (Array.isArray(allowedRoles[type]))
+                            allowedRoles[type] = allowedRoles[type].concat(
+                                allowedModelRolesMapping[newDocument[
+                                    typePropertyName
+                                ]][type])
+                        else
+                            allowedRoles[type] = allowedModelRolesMapping[
+                                newDocument[typePropertyName]
+                            ][type]
             if (userContext.roles.length) {
+                // TODO check for each property recursively
+                const relevantRoles:Array<string> = allowedRoles[operationType]
                 for (const userRole:string of userContext.roles)
-                    if (allowedRoles.includes(userRole))
+                    if (relevantRoles.includes(userRole))
                         return true
                 // IgnoreTypeCheck
                 userRolesDescription = `Current user ${userContext.name} ` +
                     `owns the following roles: ` +
                     userContext.roles.join('", "')
+                //
             } else
                 // IgnoreTypeCheck
                 userRolesDescription = `Current user ${userContext.name} ` +
                     `doesn't own any role`
         }
-        */
         /* eslint-disable no-throw-literal */
         throw {unauthorized:
             'Only users with a least on of these roles are allowed to ' +
-            `perform requested action: "${allowedRoles.join('", "')}". ` +
+            `perform requested ${operationType} action: "` +
+            `${allowedRoles[operationType].join('", "')}". ` +
             `${userRolesDescription}.`}
         /* eslint-enable no-throw-literal */
     }
@@ -435,6 +453,7 @@ export default class DatabaseHelper {
                     else if (typeof type === 'string' && type.startsWith(
                         'foreignKey:'
                     )) {
+                        // IgnoreTypeCheck
                         const foreignKeyType:string = models[type.substring(
                             'foreignKey:'.length
                         )][idName].type
@@ -492,6 +511,7 @@ export default class DatabaseHelper {
                             forbidden:
                                 `MinimalLength: Property "${name}" must have` +
                                 ' minimal length ' +
+                                // IgnoreTypeCheck
                                 propertySpecification.minimumLength +
                                 `${pathDescription}.`
                         }
@@ -518,6 +538,7 @@ export default class DatabaseHelper {
                         throw {
                             forbidden:
                                 `Minimum: Property "${name}" (type ` +
+                                // IgnoreTypeCheck
                                 `${propertySpecification.type}) must ` +
                                 'satisfy a minimum of ' +
                                 // IgnoreTypeCheck
@@ -530,7 +551,9 @@ export default class DatabaseHelper {
                     ) && newValue > propertySpecification.maximum)
                         /* eslint-enable no-throw-literal */
                         throw {
-                            forbidden: `Maximum: Property "${name}" (type ` +
+                            forbidden:
+                                `Maximum: Property "${name}" (type ` +
+                                // IgnoreTypeCheck
                                 `${propertySpecification.type}) must ` +
                                 'satisfy a maximum of ' +
                                 // IgnoreTypeCheck
@@ -547,11 +570,13 @@ export default class DatabaseHelper {
                 )
                     /* eslint-enable no-throw-literal */
                     throw {
-                        forbidden: `Selection: Property "${name}" (type ` +
+                        forbidden:
+                            `Selection: Property "${name}" (type ` +
+                            // IgnoreTypeCheck
                             `${propertySpecification.type}) should be one of` +
-                            ' "' +
-                            propertySpecification.selection.join('", "') +
-                            `". But is "${newValue}"${pathDescription}.`
+                            ' "' + propertySpecification.selection.join(
+                                '", "'
+                            ) + `". But is "${newValue}"${pathDescription}.`
                     }
                     /* eslint-disable no-throw-literal */
                 // endregion
@@ -1050,6 +1075,7 @@ export default class DatabaseHelper {
                                     `${name}" (array of length ` +
                                     `${newDocument[name].length}) doesn't ` +
                                     `fullfill minimum array length of ` +
+                                    // IgnoreTypeCheck
                                     propertySpecification.minimumNumber +
                                     `${pathDescription}.`
                             }
@@ -1077,7 +1103,6 @@ export default class DatabaseHelper {
                             ) && oldDocument[name] || undefined, [
                                 'arrayConstraintExpression',
                                 'arrayConstraintExecution'])
-                        // IgnoreTypeCheck
                         const propertySpecificationCopy:PropertySpecification =
                             {}
                         for (const key:string in propertySpecification)
@@ -1092,10 +1117,12 @@ export default class DatabaseHelper {
                                     else
                                         propertySpecificationCopy[
                                             key
+                                        // IgnoreTypeCheck
                                         ] = propertySpecification[
                                             key
                                         ].substring(
                                             0,
+                                            // IgnoreTypeCheck
                                             propertySpecification.type.length -
                                                 '[]'.length)
                                 else

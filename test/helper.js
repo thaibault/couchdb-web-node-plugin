@@ -139,7 +139,6 @@ registerTest(async function():Promise<void> {
         const modelConfiguration:ModelConfiguration =
             Tools.copyLimitedRecursively(configuration.database.model)
         modelConfiguration.entities = {}
-        // IgnoreTypeCheck
         modelConfiguration.property.defaultSpecification = {}
         const specialNames:PlainObject = modelConfiguration.property.name
             .special
@@ -189,7 +188,7 @@ registerTest(async function():Promise<void> {
         })), {a: {}})
     })
     this.test('normalizeAllowedModelRoles', (assert:Object):void => {
-        for (const test of [
+        for (const test:Array<any> of [
             ['a', {read: ['a'], write: ['a']}],
             [[], {read: [], write: []}],
             [['a'], {read: ['a'], write: ['a']}],

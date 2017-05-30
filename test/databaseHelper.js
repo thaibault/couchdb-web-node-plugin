@@ -33,26 +33,29 @@ import type {
 registerTest(async function():Promise<void> {
     this.module('databaseHelper')
     // region tests
-    // TODO
-    this.skip('authenticate', (assert:Object):void => {
+    this.test('authenticate', (assert:Object):void => {
         for (const test:Array<any> of [
             [{}],
             [{}, null, {roles: []}],
-            [{type: 'Test'}, {}, {roles: []}, {}, {Test: ['users']}, 'type'],
-            [{type: 'Test'}, {}, {roles: ['users']}, {}, {Test: []}, 'type']
+            [{type: 'Test'}, {}, {roles: []}, {}, {Test: {
+                properties: {}, read: ['users'], write: []
+            }}, 'type'],
+            [{type: 'Test'}, {}, {roles: ['users']}, {}, {Test: {
+                properties: {}, read: [], write: []
+            }}, 'type']
         ])
             assert.throws(():?true => DatabaseHelper.authenticate(...test))
         for (const test:Array<any> of [
             [{}, null, {roles: ['_admin']}],
-            [{}, {}, {roles: ['_admin']}, {}, {}, 'type'],
-            [
-                {type: 'Test'}, {}, {roles: ['users']}, {}, {Test: 'users'},
-                'type'
-            ],
-            [
-                {type: 'Test'}, {}, {roles: ['users']}, {}, {Test: ['users']},
-                'type'
-            ]
+            [{}, {}, {roles: ['_admin']}, {}, {
+                properties: {}, read: [], write: []
+            }, 'type'],
+            [{type: 'Test'}, {}, {roles: ['users']}, {}, {Test: {
+                properties: {}, read: [], write: ['users']
+            }}, 'type'],
+            [{type: 'Test'}, {}, {roles: ['users']}, {}, {Test: {
+                propertues: {}, read: [], write: ['users']
+            }}, 'type']
         ])
             assert.ok(DatabaseHelper.authenticate(...test))
     })

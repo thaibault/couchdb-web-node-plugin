@@ -108,7 +108,9 @@ export default class Helper {
                 for (const name:string in models[modelName])
                     if (models[modelName].hasOwnProperty(name) && models[
                         modelName
-                    ][name].hasOwnProperty('allowedRoles'))
+                    ][name].hasOwnProperty('allowedRoles') && models[
+                        modelName
+                    ][name].allowedRoles)
                         // IgnoreTypeCheck
                         allowedModelRolesMapping[modelName].properties[name] =
                             Helper.normalizeAllowedModelRoles(
