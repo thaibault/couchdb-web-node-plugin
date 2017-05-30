@@ -23,7 +23,8 @@ try {
 } catch (error) {}
 
 import type {
-    AllowedModelRolesMapping, Model, ModelConfiguration, Models
+    AllowedModelRolesMapping, AllowedRoles, Model, ModelConfiguration, Models,
+    NormalizedAllowedRoles
 } from './type'
 // endregion
 // NOTE: Remove when "fetch" is supported by node.
@@ -91,22 +92,37 @@ export default class Helper {
     static determineAllowedModelRolesMapping(
         modelConfiguration:ModelConfiguration
     ):AllowedModelRolesMapping {
+        const allowedRoleName:string =
+            modelConfiguration.property.name.special.allowedRole
         const allowedModelRolesMapping:AllowedModelRolesMapping = {}
         const models:Models = Helper.extendModels(modelConfiguration)
         for (const modelName:string in models)
             if (models.hasOwnProperty(modelName) && models[
                 modelName
-            ].hasOwnProperty(
-                modelConfiguration.property.name.special.allowedRole
-            )) {
-                // IgnoreTypeCheck
-                const allowedRoles:Array<string> = models[modelName][
-                    modelConfiguration.property.name.special.allowedRole]
-                allowedModelRolesMapping[modelName] = allowedRoles
-            }
+            ].hasOwnProperty(allowedRoleName)) {
+                allowedModelRolesMapping[modelName] =
+                    Helper.normalizeAllowedModelRoles(
+                        // IgnoreTypeCheck
+                        models[modelName][allowedRoleName])
+                allowedModelRolesMapping[modelName].properties = {}
+                for (const name:string in models[modelName])
+                    if (models[modelName].hasOwnProperty(name) && models[
+                        modelName
+                    ][name].hasOwnProperty('allowedRoles') && models[
+                        modelName
+                    ][name].allowedRoles)
+                        // IgnoreTypeCheck
+                        allowedModelRolesMapping[modelName].properties[name] =
+                            Helper.normalizeAllowedModelRoles(
+                                models[modelName][name].allowedRoles)
+            } else
+                allowedModelRolesMapping[modelName] = {
+                    read: [],
+                    write: [],
+                    properties: {}
+                }
         return allowedModelRolesMapping
     }
-    // TODO test
     /**
      * Determines all property names which are indexable in a generic manner.
      * @param modelConfiguration - Model specification object.
@@ -119,15 +135,22 @@ export default class Helper {
         const specialNames:PlainObject =
             modelConfiguration.property.name.special
         return Object.keys(model).filter((name:string):boolean => !(
-            name.startsWith('_') ||
             modelConfiguration.property.name.reserved.concat(
+                specialNames.attachment,
+                specialNames.conflict,
                 specialNames.deleted,
+                specialNames.deleted_conflict,
                 specialNames.id,
                 specialNames.revision,
+                specialNames.revisions,
+                specialNames.revisions_info,
                 specialNames.type
-            ).includes(name) ||
-            model[name].type && model[name].type.endsWith('[]') ||
-            modelConfiguration.entities.hasOwnProperty(model[name].type)
+            ).includes(name) || model[name].type && (
+                typeof model[name].type === 'string' &&
+                model[name].type.endsWith('[]') ||
+                Array.isArray(model[name].type) && model[name].type.length &&
+                Array.isArray(model[name].type[0]) ||
+                modelConfiguration.entities.hasOwnProperty(model[name].type))
         )).concat(specialNames.id, specialNames.revision)
     }
     /**
@@ -170,29 +193,15 @@ export default class Helper {
      * @returns Models with extended specific specifications.
      */
     static extendModels(modelConfiguration:PlainObject):Models {
-        modelConfiguration = Tools.extendObject(true, {
-            entities: {},
-            property: {
-                defaultSpecification: {},
-                name: {
-                    special: {
-                        extend: '_extends'
-                    },
-                    typeRegularExpressionPattern: {
-                        private: '^_[a-z][A-Za-z0-9]+$',
-                        public: '^[A-Z][A-Za-z0-9]+$'
-                    }
-                }
-            }
-        }, modelConfiguration)
+        const specialNames:PlainObject = modelConfiguration.property.name
+            .special
         const models:Models = {}
         for (const modelName:string in modelConfiguration.entities)
             if (modelConfiguration.entities.hasOwnProperty(
                 modelName
             )) {
-                if (!((new RegExp(
-                    modelConfiguration.property.name
-                        .typeRegularExpressionPattern.public
+                if (!((new RegExp(modelConfiguration.property.name
+                    .typeRegularExpressionPattern.public
                 )).test(modelName) || (new RegExp(
                     modelConfiguration.property.name
                         .typeRegularExpressionPattern.private
@@ -205,16 +214,14 @@ export default class Helper {
                             .typeRegularExpressionPattern.private +
                         `" for private one (given name: "${modelName}").`)
                 models[modelName] = Helper.extendModel(
-                    modelName, modelConfiguration.entities,
-                    modelConfiguration.property.name.special.extend)
+                    modelName, modelConfiguration.entities, specialNames.extend
+                )
             }
         for (const modelName:string in models)
             if (models.hasOwnProperty(modelName))
                 for (const propertyName:string in models[modelName])
                     if (models[modelName].hasOwnProperty(propertyName))
-                        if (propertyName === modelConfiguration.property.name
-                            .special.attachment
-                        ) {
+                        if (propertyName === specialNames.attachment) {
                             for (const type:string in models[modelName][
                                 propertyName
                             ])
@@ -229,7 +236,14 @@ export default class Helper {
                                                 .defaultSpecification
                                         ),
                                         models[modelName][propertyName][type])
-                        } else {
+                        } else if (![
+                            specialNames.allowedRole,
+                            specialNames.constraint.execution,
+                            specialNames.constraint.expression,
+                            specialNames.extend,
+                            specialNames.maximumAggregatedSize,
+                            specialNames.minimumAggregatedSize
+                        ].includes(propertyName))
                             models[modelName][
                                 propertyName
                             ] = Tools.extendObject(
@@ -237,8 +251,29 @@ export default class Helper {
                                     modelConfiguration.property
                                         .defaultSpecification,
                                 ), models[modelName][propertyName])
-                        }
         return models
+    }
+    /**
+     * Convert given roles to its normalized representation.
+     * @param roles - Unstructured roles description.
+     * @returns Normalized roles representation.
+     */
+    static normalizeAllowedModelRoles(
+        roles:AllowedRoles
+    ):NormalizedAllowedRoles {
+        if (Array.isArray(roles))
+            return {read: roles, write: roles}
+        if (typeof roles === 'object') {
+            const result:NormalizedAllowedRoles = {read: [], write: []}
+            for (const type:string in result)
+                if (roles.hasOwnProperty(type))
+                    if (Array.isArray(roles[type]))
+                        result[type] = roles[type]
+                    else
+                        result[type] = [roles[type]]
+            return result
+        }
+        return {read: [roles], write: [roles]}
     }
     // endregion
 }
