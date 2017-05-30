@@ -113,10 +113,14 @@ export default class Helper {
                         allowedModelRolesMapping[modelName].properties[name] =
                             Helper.normalizeAllowedModelRoles(
                                 models[modelName][name].allowedRoles)
-            }
+            } else
+                allowedModelRolesMapping[modelName] = {
+                    read: [],
+                    write: [],
+                    properties: {}
+                }
         return allowedModelRolesMapping
     }
-    // TODO test
     /**
      * Determines all property names which are indexable in a generic manner.
      * @param modelConfiguration - Model specification object.
@@ -247,7 +251,6 @@ export default class Helper {
                                 ), models[modelName][propertyName])
         return models
     }
-    // TODO test
     /**
      * Convert given roles to its normalized representation.
      * @param roles - Unstructured roles description.
@@ -262,7 +265,7 @@ export default class Helper {
             const result:NormalizedAllowedRoles = {read: [], write: []}
             for (const type:string in result)
                 if (roles.hasOwnProperty(type))
-                    if (Array.isArray(roles))
+                    if (Array.isArray(roles[type]))
                         result[type] = roles[type]
                     else
                         result[type] = [roles[type]]

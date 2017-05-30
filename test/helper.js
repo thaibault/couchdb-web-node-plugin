@@ -54,19 +54,52 @@ registerTest(async function():Promise<void> {
             [{
                 property: {name: {special: {allowedRole: 'roles'}}},
                 entities: {Test: {}}
-            }, {}],
+            }, {Test: {properties: {}, read: [], write: []}}],
             [{
                 property: {name: {special: {allowedRole: 'roles'}}},
                 entities: {Test: {roles: []}}
-            }, {Test: []}],
+            }, {Test: {properties: {}, read: [], write: []}}],
             [{
                 property: {name: {special: {allowedRole: 'roles'}}},
                 entities: {Test: {roles: ['a']}}
-            }, {Test: ['a']}]
+            }, {Test: {properties: {}, read: ['a'], write: ['a']}}],
+            [{
+                property: {name: {special: {allowedRole: 'roles'}}},
+                entities: {Test: {roles: 'a'}}
+            }, {Test: {properties: {}, read: ['a'], write: ['a']}}],
+            [{
+                property: {name: {special: {allowedRole: 'roles'}}},
+                entities: {Test: {roles: {read: ['a']}}}
+            }, {Test: {properties: {}, read: ['a'], write: []}}],
+            [{
+                property: {name: {special: {allowedRole: 'roles'}}},
+                entities: {Test: {roles: {read: 'a'}}}
+            }, {Test: {properties: {}, read: ['a'], write: []}}],
+            [{
+                property: {name: {special: {allowedRole: 'roles'}}},
+                entities: {Test: {roles: {read: 'a', write: ['b']}}}
+            }, {Test: {properties: {}, read: ['a'], write: ['b']}}]
         ])
             assert.deepEqual(Helper.determineAllowedModelRolesMapping(
                 Tools.extendObject(true, {}, modelConfiguration, test[0])
             ), test[1])
+    })
+    this.test('determineGenericIndexablePropertyNames', (
+        assert:Object
+    ):void => {
+        const specialNames:PlainObject =
+            configuration.database.model.property.name.special
+        for (const test of [
+            [{}, {}, [specialNames.id, specialNames.revision]],
+            [{}, {a: {}}, [specialNames.id, specialNames.revision, 'a']],
+            [{}, {a: {}, b: {}}, [
+                specialNames.id, specialNames.revision, 'a', 'b'
+            ]]
+        ])
+            assert.deepEqual(Helper.determineGenericIndexablePropertyNames(
+                Tools.extendObject(true, {
+                }, configuration.database.model, test[0]), test[1]
+            ).sort(), test[2])
     })
     this.test('extendModel', (assert:Object):void => {
         const specialNames:PlainObject =
@@ -154,6 +187,20 @@ registerTest(async function():Promise<void> {
             property: {name: {typeRegularExpressionPattern: {public: 'a'}}},
             entities: {a: {}}
         })), {a: {}})
+    })
+    this.test('normalizeAllowedModelRoles', (assert:Object):void => {
+        for (const test of [
+            ['a', {read: ['a'], write: ['a']}],
+            [[], {read: [], write: []}],
+            [['a'], {read: ['a'], write: ['a']}],
+            [['a', 'b'], {read: ['a', 'b'], write: ['a', 'b']}],
+            [{read: ['a', 'b']}, {read: ['a', 'b'], write: []}],
+            [{read: 'a'}, {read: ['a'], write: []}],
+            [{read: 'a', write: []}, {read: ['a'], write: []}],
+            [{read: 'a', write: ['b']}, {read: ['a'], write: ['b']}]
+        ])
+            assert.deepEqual(
+                Helper.normalizeAllowedModelRoles(test[0]), test[1])
     })
     // / endregion
 }, ['plain'])
