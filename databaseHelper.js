@@ -55,6 +55,7 @@ export default class DatabaseHelper {
     ):?true {
         let allowedRoles:Array<string> = ['_admin']
         let userRolesDescription:string = `Current user doesn't own any role`
+        /* TODO
         if (userContext) {
             if (!('name' in userContext))
                 userContext.name = '"unknown"'
@@ -79,6 +80,7 @@ export default class DatabaseHelper {
                 userRolesDescription = `Current user ${userContext.name} ` +
                     `doesn't own any role`
         }
+        */
         /* eslint-disable no-throw-literal */
         throw {unauthorized:
             'Only users with a least on of these roles are allowed to ' +

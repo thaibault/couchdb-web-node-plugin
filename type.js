@@ -17,15 +17,22 @@ import type {PlainObject} from 'clientnode'
 // endregion
 // region exports
 // / region model
-export type AllowedModelRolesMapping = {[key:string]:{
+export type AllowedRoles = string|Array<string>|{
+    read:string|Array<string>;
+    write:string|Array<string>;
+}
+export type NormalizedAllowedRoles = {
     read:Array<string>;
-    write:Array<string>
-}}
+    write:Array<string>;
+    properties?:AllowedModelRolesMapping;
+}
+export type AllowedModelRolesMapping = {[key:string]:NormalizedAllowedRoles}
 export type Constraint = {
     description:?string;
     evaluation:string;
 }
 export type PropertySpecification = {
+    allowedRoles:AllowedRoles;
     conflictingConstraintExecution:?Constraint;
     conflictingConstraintExpression:?Constraint;
     constraintExecution:?Constraint;

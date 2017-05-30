@@ -23,7 +23,8 @@ try {
 } catch (error) {}
 
 import type {
-    AllowedModelRolesMapping, Model, ModelConfiguration, Models
+    AllowedModelRolesMapping, AllowedRoles, Model, ModelConfiguration, Models,
+    NormalizedAllowedRoles
 } from './type'
 // endregion
 // NOTE: Remove when "fetch" is supported by node.
@@ -98,35 +99,21 @@ export default class Helper {
         for (const modelName:string in models)
             if (models.hasOwnProperty(modelName) && models[
                 modelName
-            ].hasOwnProperty(allowedRoleName))
-                if (Array.isArray(models[modelName][allowedRoleName]))
-                    allowedModelRolesMapping[modelName] = {
-                        read: models[modelName][allowedRoleName],
-                        write: models[modelName][allowedRoleName]
-                    }
-                else if (typeof models[modelName][
-                    allowedRoleName
-                ] === 'object') {
-                    allowedModelRolesMapping[modelName] = {read: [], write: []}
-                    for (const type:string in allowedModelRolesMapping[
+            ].hasOwnProperty(allowedRoleName)) {
+                allowedModelRolesMapping[modelName] =
+                    Helper.normalizeAllowedModelRoles(
+                        // IgnoreTypeCheck
+                        models[modelName][allowedRoleName])
+                allowedModelRolesMapping[modelName].properties = {}
+                for (const name:string in models[modelName])
+                    if (models[modelName].hasOwnProperty(name) && models[
                         modelName
-                    ])
-                        if (allowedModelRolesMapping[modelName].hasOwnProperty(
-                            type
-                        ) && Array.isArray(models[modelName][allowedRoleName][
-                            type
-                        ]))
-                            allowedModelRolesMapping[modelName][type] = models[
-                                modelName
-                            ][allowedRoleName][type]
-                        else
-                            allowedModelRolesMapping[modelName][type] = [
-                                models[modelName][allowedRoleName][type]]
-                } else
-                    allowedModelRolesMapping[modelName] = {
-                        read: [models[modelName][allowedRoleName]],
-                        write: [models[modelName][allowedRoleName]]
-                    }
+                    ][name].hasOwnProperty('allowedRoles'))
+                        // IgnoreTypeCheck
+                        allowedModelRolesMapping[modelName].properties[name] =
+                            Helper.normalizeAllowedModelRoles(
+                                models[modelName][name].allowedRoles)
+            }
         return allowedModelRolesMapping
     }
     // TODO test
@@ -142,15 +129,22 @@ export default class Helper {
         const specialNames:PlainObject =
             modelConfiguration.property.name.special
         return Object.keys(model).filter((name:string):boolean => !(
-            name.startsWith('_') ||
             modelConfiguration.property.name.reserved.concat(
+                specialNames.attachment,
+                specialNames.conflict,
                 specialNames.deleted,
+                specialNames.deleted_conflict,
                 specialNames.id,
                 specialNames.revision,
+                specialNames.revisions,
+                specialNames.revisions_info,
                 specialNames.type
-            ).includes(name) ||
-            model[name].type && model[name].type.endsWith('[]') ||
-            modelConfiguration.entities.hasOwnProperty(model[name].type)
+            ).includes(name) || model[name].type && (
+                typeof model[name].type === 'string' &&
+                model[name].type.endsWith('[]') ||
+                Array.isArray(model[name].type) && model[name].type.length &&
+                Array.isArray(model[name].type[0]) ||
+                modelConfiguration.entities.hasOwnProperty(model[name].type))
         )).concat(specialNames.id, specialNames.revision)
     }
     /**
@@ -252,6 +246,29 @@ export default class Helper {
                                         .defaultSpecification,
                                 ), models[modelName][propertyName])
         return models
+    }
+    // TODO test
+    /**
+     * Convert given roles to its normalized representation.
+     * @param roles - Unstructured roles description.
+     * @returns Normalized roles representation.
+     */
+    static normalizeAllowedModelRoles(
+        roles:AllowedRoles
+    ):NormalizedAllowedRoles {
+        if (Array.isArray(roles))
+            return {read: roles, write: roles}
+        if (typeof roles === 'object') {
+            const result:NormalizedAllowedRoles = {read: [], write: []}
+            for (const type:string in result)
+                if (roles.hasOwnProperty(type))
+                    if (Array.isArray(roles))
+                        result[type] = roles[type]
+                    else
+                        result[type] = [roles[type]]
+            return result
+        }
+        return {read: [roles], write: [roles]}
     }
     // endregion
 }

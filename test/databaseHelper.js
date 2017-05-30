@@ -33,7 +33,8 @@ import type {
 registerTest(async function():Promise<void> {
     this.module('databaseHelper')
     // region tests
-    this.test('authenticate', (assert:Object):void => {
+    // TODO
+    this.skip('authenticate', (assert:Object):void => {
         for (const test:Array<any> of [
             [{}],
             [{}, null, {roles: []}],
