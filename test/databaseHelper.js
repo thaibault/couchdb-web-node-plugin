@@ -2276,6 +2276,27 @@ registerTest(async function():Promise<void> {
                     incremental: {a: ''},
                     '': {[typeName]: 'Test', a: ''}
                 }],
+                [[
+                    {[typeName]: 'Test', a: ''},
+                    {[typeName]: 'Test', [attachmentName]: {a: {
+                        // eslint-disable camelcase
+                        content_type: 'image/jpeg', data: ''
+                        // eslint-enable camelcase
+                    }}}
+                ], {entities: {Test: {[attachmentName]: {a: {
+                    minimumNumber: 0, nullable: false
+                }}, a: {}}}}, {
+                    fillUp: {
+                        [typeName]: 'Test', [attachmentName]: {a: {
+                            // eslint-disable camelcase
+                            content_type: 'image/jpeg', data: ''
+                            // eslint-enable camelcase
+                        }},
+                        a: ''
+                    },
+                    incremental: {a: ''},
+                    '': {[typeName]: 'Test', a: ''}
+                }],
                 [[{[typeName]: 'Test', [attachmentName]: {a: {
                     data: 'a', length: 1
                 }}}], {entities: {Test: {[attachmentName]: {a: {

@@ -768,12 +768,17 @@ export default class DatabaseHelper {
                         if (oldDocument)
                             oldFileNames = Object.keys(
                                 oldDocument[name]
-                            ).filter((fileName:string):boolean =>
-                                newDocument[name][fileName] && newDocument[
-                                    name
-                                ][fileName].data !== null && (new RegExp(
-                                    type
-                                )).test(fileName))
+                            ).filter((fileName:string):boolean => !(
+                                newDocument.hasOwnProperty(name) &&
+                                newDocument[name].hasOwnProperty(fileName) &&
+                                newDocument[name][fileName].hasOwnProperty(
+                                    'data'
+                                ) && newDocument[name][fileName].data === null
+                            ) && oldDocument[name][fileName] && oldDocument[
+                                name
+                            ][fileName].data !== null && (new RegExp(
+                                type
+                            )).test(fileName))
                         for (const fileName:string of newFileNames)
                             runCreateHook(
                                 model[name][type], newDocument[name],
