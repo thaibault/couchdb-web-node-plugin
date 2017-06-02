@@ -96,6 +96,9 @@
           "_base": {
             "_allowedRoles": "users",
             "_attachments": {},
+            "_deleted": {
+              "type": "boolean"
+            }
             "_id": {
               "mutable": false
             },
