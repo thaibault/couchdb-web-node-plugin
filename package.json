@@ -98,7 +98,7 @@
             "_attachments": {},
             "_deleted": {
               "type": "boolean"
-            }
+            },
             "_id": {
               "mutable": false
             },
