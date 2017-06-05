@@ -58,6 +58,12 @@ export default class DatabaseHelper {
         }, allowedModelRolesMapping:AllowedModelRolesMapping,
         typePropertyName:string, read:boolean = false
     ):?true {
+        /*
+            NOTE: Special documents and like changes sequences are going
+            through this function and should be ignored.
+        */
+        if (!newDocument.hasOwnProperty(typePropertyName))
+            return true
         let allowedRoles:NormalizedAllowedRoles = {
             properties: {}, read: ['_admin'], write: ['_admin']}
         let userRolesDescription:string = `Current user doesn't own any role`
@@ -629,8 +635,9 @@ export default class DatabaseHelper {
                             } catch (error) {
                                 /* eslint-disable no-throw-literal */
                                 throw {
-                                    forbidden: `Compilation: Hook "${type}" ` +
-                                        'has invalid code "' +
+                                    forbidden:
+                                        `Compilation: Hook "${type}" has ` +
+                                        'invalid code "' +
                                         `${propertySpecification[type]}" for` +
                                         ` property "${name}": ` + serialize(
                                             error
@@ -651,8 +658,9 @@ export default class DatabaseHelper {
                             } catch (error) {
                                 /* eslint-disable no-throw-literal */
                                 throw {
-                                    forbidden: `Runtime: Hook "${type}" has ` +
-                                        'throw an error with code "' +
+                                    forbidden:
+                                        `Runtime: Hook "${type}" has throw ` +
+                                        'an error with code "' +
                                         `${propertySpecification[type]}" ` +
                                         `for property "${name}": ` + serialize(
                                             error

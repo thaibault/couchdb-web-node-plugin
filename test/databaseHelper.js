@@ -35,8 +35,6 @@ registerTest(async function():Promise<void> {
     // region tests
     this.test('authenticate', (assert:Object):void => {
         for (const test:Array<any> of [
-            [{}],
-            [{}, null, {roles: []}],
             [{type: 'Test'}, {}, {roles: []}, {}, {Test: {
                 properties: {}, read: ['users'], write: []
             }}, 'type'],
@@ -46,6 +44,7 @@ registerTest(async function():Promise<void> {
         ])
             assert.throws(():?true => DatabaseHelper.authenticate(...test))
         for (const test:Array<any> of [
+            [{}],
             [{}, null, {roles: ['_admin']}],
             [{}, {}, {roles: ['_admin']}, {}, {
                 properties: {}, read: [], write: []
@@ -1164,6 +1163,15 @@ registerTest(async function():Promise<void> {
                 ],
                 // endregion
                 // region property existents
+                [[
+                    {[typeName]: 'Test', a: null}, {[typeName]: 'Test', a: ''}
+                ], {
+                    entities: {Test: {a: {}}}
+                }, {
+                    fillUp: {[typeName]: 'Test'},
+                    incremental: {},
+                    '': {[typeName]: 'Test'}
+                }],
                 [[{[typeName]: 'Test', a: 2}], {entities: {Test: {a: {
                     type: 'number'
                 }}}}, {
