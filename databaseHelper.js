@@ -58,6 +58,12 @@ export default class DatabaseHelper {
         }, allowedModelRolesMapping:AllowedModelRolesMapping,
         typePropertyName:string, read:boolean = false
     ):?true {
+        /*
+            NOTE: Special documents and like changes sequences are going
+            through this function and should be ignored.
+        */
+        if (!newDocument.hasOwnProperty(typePropertyName))
+            return true
         let allowedRoles:NormalizedAllowedRoles = {
             properties: {}, read: ['_admin'], write: ['_admin']}
         let userRolesDescription:string = `Current user doesn't own any role`
