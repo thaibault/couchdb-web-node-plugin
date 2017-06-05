@@ -1164,6 +1164,15 @@ registerTest(async function():Promise<void> {
                 ],
                 // endregion
                 // region property existents
+                [[
+                    {[typeName]: 'Test', a: null}, {[typeName]: 'Test', a: ''}
+                ], {
+                    entities: {Test: {a: {}}}
+                }, {
+                    fillUp: {[typeName]: 'Test'},
+                    incremental: {},
+                    '': {[typeName]: 'Test'}
+                }],
                 [[{[typeName]: 'Test', a: 2}], {entities: {Test: {a: {
                     type: 'number'
                 }}}}, {
