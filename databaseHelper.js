@@ -629,8 +629,9 @@ export default class DatabaseHelper {
                             } catch (error) {
                                 /* eslint-disable no-throw-literal */
                                 throw {
-                                    forbidden: `Compilation: Hook "${type}" ` +
-                                        'has invalid code "' +
+                                    forbidden:
+                                        `Compilation: Hook "${type}" has ` +
+                                        'invalid code "' +
                                         `${propertySpecification[type]}" for` +
                                         ` property "${name}": ` + serialize(
                                             error
@@ -651,8 +652,9 @@ export default class DatabaseHelper {
                             } catch (error) {
                                 /* eslint-disable no-throw-literal */
                                 throw {
-                                    forbidden: `Runtime: Hook "${type}" has ` +
-                                        'throw an error with code "' +
+                                    forbidden:
+                                        `Runtime: Hook "${type}" has throw ` +
+                                        'an error with code "' +
                                         `${propertySpecification[type]}" ` +
                                         `for property "${name}": ` + serialize(
                                             error
