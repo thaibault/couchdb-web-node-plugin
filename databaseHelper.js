@@ -595,10 +595,28 @@ export default class DatabaseHelper {
                 )).test(newValue)))
                     /* eslint-enable no-throw-literal */
                     throw {
-                        forbidden: `PatternMatch: Property "${name}" should ` +
-                            'match regular expression pattern ' +
+                        forbidden:
+                            `PatternMatch: Property "${name}" should match ` +
+                            'regular expression pattern ' +
                             // IgnoreTypeCheck
                             propertySpecification.regularExpressionPattern +
+                            ` (given "${newValue}")${pathDescription}.`
+                    }
+                    /* eslint-disable no-throw-literal */
+                else if (!([undefined, null].includes(
+                    propertySpecification.invertedRegularExpressionPattern
+                ) || !(new RegExp(
+                    // IgnoreTypeCheck
+                    propertySpecification.invertedRegularExpressionPattern
+                )).test(newValue)))
+                    /* eslint-enable no-throw-literal */
+                    throw {
+                        forbidden:
+                            `InvertedPatternMatch: Property "${name}" should` +
+                            ' not match regular expression pattern ' +
+                            // IgnoreTypeCheck
+                            propertySpecification
+                                .invertedRegularExpressionPattern +
                             ` (given "${newValue}")${pathDescription}.`
                     }
                     /* eslint-disable no-throw-literal */
@@ -782,6 +800,7 @@ export default class DatabaseHelper {
                                 newDocument[name][fileName].hasOwnProperty(
                                     'data'
                                 ) && newDocument[name][fileName].data === null
+                            // IgnoreTypeCheck
                             ) && oldDocument[name][fileName] && oldDocument[
                                 name
                             ][fileName].data !== null && (new RegExp(
@@ -1411,16 +1430,35 @@ export default class DatabaseHelper {
                         )).test(fileName)))
                             /* eslint-disable no-throw-literal */
                             throw {
-                                forbidden: 'AttachmentName: given ' +
-                                    `attachment name "${fileName}" ` +
-                                    `doesn't satisfy specified regular ` +
-                                    'expression pattern "' + model[
+                                forbidden:
+                                    'AttachmentName: given attachment name "' +
+                                    `${fileName}" doesn't satisfy specified ` +
+                                    'regular expression pattern "' + model[
                                         specialNames.attachment
                                     ][type].regularExpressionPattern + '" ' +
                                     `from type "${type}"${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
-                        if (!([null, undefined].includes(model[
+                        else if (!([null, undefined].includes(model[
+                            specialNames.attachment
+                        ][type].invertedRegularExpressionPattern) || !(
+                            new RegExp(model[specialNames.attachment][
+                                type
+                            ].invertedRegularExpressionPattern
+                        )).test(fileName)))
+                            /* eslint-disable no-throw-literal */
+                            throw {
+                                forbidden:
+                                    'InvertedAttachmentName: given ' +
+                                    `attachment name "${fileName}" doesn't ` +
+                                    'satisfy specified regular expression ' +
+                                    'pattern "' + model[
+                                        specialNames.attachment
+                                    ][type].invertedRegularExpressionPattern +
+                                    `" from type "${type}"${pathDescription}.`
+                            }
+                            /* eslint-enable no-throw-literal */
+                        else if (!([null, undefined].includes(model[
                             specialNames.attachment
                         ][type].contentTypeRegularExpressionPattern) ||
                         newAttachments[fileName].hasOwnProperty(
@@ -1432,13 +1470,38 @@ export default class DatabaseHelper {
                         ).test(newAttachments[fileName].content_type)))
                             /* eslint-disable no-throw-literal */
                             throw {
-                                forbidden: 'AttachmentContentType: given' +
-                                    ' attachment content type "' +
+                                forbidden:
+                                    'AttachmentContentType: given attachment' +
+                                    ' content type "' +
                                     newAttachments[fileName].content_type +
                                     `" doesn't satisfy specified regular` +
                                     ' expression pattern "' + model[
                                         specialNames.attachment
-                                    ][type].regularExpressionPattern + '" ' +
+                                    ][
+                                        type
+                                    ].contentTypeRegularExpressionPattern +
+                                    `" from type "${type}"${pathDescription}.`
+                            }
+                            /* eslint-enable no-throw-literal */
+                        const pattern:?string = model[specialNames.attachment][
+                            type
+                        ].invertedContentTypeRegularExpressionPattern
+                        if (!([null, undefined].includes(pattern) ||
+                        newAttachments[fileName].hasOwnProperty(
+                            'content_type'
+                        ) && newAttachments[fileName].content_type && !(
+                            // IgnoreTypeCheck
+                            new RegExp(pattern)
+                        ).test(newAttachments[fileName].content_type)))
+                            /* eslint-disable no-throw-literal */
+                            throw {
+                                forbidden:
+                                    'InvertedAttachmentContentType: given ' +
+                                    'attachment content type "' +
+                                    newAttachments[fileName].content_type +
+                                    `" doesn't satisfy specified regular` +
+                                    // IgnoreTypeCheck
+                                    ` expression pattern "${pattern}" ` +
                                     `from type "${type}"${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */

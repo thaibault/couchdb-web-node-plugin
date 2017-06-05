@@ -39,6 +39,8 @@ export type PropertySpecification = {
     constraintExpression?:?Constraint;
     contentTypeRegularExpressionPattern?:?string;
     default?:any;
+    invertedContentTypeRegularExpressionPattern?:?string;
+    invertedRegularExpressionPattern?:?string;
     maximum?:?number;
     minimum?:?number;
     maximumLength?:?number;
