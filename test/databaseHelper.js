@@ -470,6 +470,13 @@ registerTest(async function():Promise<void> {
                         b: {type: 'Test'}
                     }}}, 'PatternMatch'
                 ],
+                [
+                    [{[typeName]: 'Test', b: {[typeName]: 'Test', a: 'a'}}],
+                    {entities: {Test: {
+                        a: {invertedRegularExpressionPattern: 'a'},
+                        b: {type: 'Test'}
+                    }}}, 'InvertedPatternMatch'
+                ],
                 // // endregion
                 // // region property constraint
                 [[{
@@ -549,11 +556,12 @@ registerTest(async function():Promise<void> {
                 ],
                 // endregion
                 // region property pattern
-                [
-                    [{[typeName]: 'Test', a: 'b'}],
-                    {entities: {Test: {a: {regularExpressionPattern: 'a'}}}},
-                    'PatternMatch'
-                ],
+                [[{[typeName]: 'Test', a: 'b'}], {entities: {Test: {a: {
+                    regularExpressionPattern: 'a'
+                }}}}, 'PatternMatch'],
+                [[{[typeName]: 'Test', a: 'a'}], {entities: {Test: {a: {
+                    invertedRegularExpressionPattern: 'a'
+                }}}}, 'InvertedPatternMatch'],
                 // endregion
                 // region property constraint
                 [
@@ -713,6 +721,13 @@ registerTest(async function():Promise<void> {
                 }}}], {entities: {Test: {[attachmentName]: {'.*': {
                     regularExpressionPattern: /b/g
                 }}}}}, 'AttachmentName'],
+                [[{[typeName]: 'Test', [attachmentName]: {a: {
+                    // eslint-disable camelcase
+                    data: '', content_type: 'text/plain'
+                    // eslint-enable camelcase
+                }}}], {entities: {Test: {[attachmentName]: {'.*': {
+                    invertedRegularExpressionPattern: /a/g
+                }}}}}, 'InvertedAttachmentName'],
                 [[{[typeName]: 'Test', [attachmentName]: {
                     // eslint-disable camelcase
                     a: {data: '', content_type: 'text/plain'},
@@ -721,6 +736,14 @@ registerTest(async function():Promise<void> {
                 }}], {entities: {Test: {[attachmentName]: {'.*': {
                     regularExpressionPattern: /a/
                 }}}}}, 'AttachmentName'],
+                [[{[typeName]: 'Test', [attachmentName]: {
+                    // eslint-disable camelcase
+                    a: {data: '', content_type: 'text/plain'},
+                    b: {data: '', content_type: 'text/plain'}
+                    // eslint-enable camelcase
+                }}], {entities: {Test: {[attachmentName]: {'.*': {
+                    invertedRegularExpressionPattern: /a/
+                }}}}}, 'InvertedAttachmentName'],
                 [[{[typeName]: 'Test', [attachmentName]: {
                     // eslint-disable camelcase
                     a: {data: '', content_type: 'text/plain'},
@@ -1821,6 +1844,24 @@ registerTest(async function():Promise<void> {
                         }
                     }
                 ],
+                [
+                    [{[typeName]: 'Test', b: {[typeName]: 'Test', a: 'a'}}],
+                    {entities: {Test: {
+                        a: {invertedRegularExpressionPattern: 'b'},
+                        b: {type: 'Test'}
+                    }}}, {
+                        fillUp: {[typeName]: 'Test', b: {
+                            [typeName]: 'Test', a: 'a'
+                        }},
+                        incremental: {[typeName]: 'Test', b: {
+                            [typeName]: 'Test', a: 'a'
+                        }},
+                        '': {
+                            [typeName]: 'Test',
+                            b: {[typeName]: 'Test', a: 'a'}
+                        }
+                    }
+                ],
                 // // endregion
                 // // region property constraint
                 [[{
@@ -1938,6 +1979,13 @@ registerTest(async function():Promise<void> {
                 // region property pattern
                 [[{[typeName]: 'Test', a: 'a'}], {entities: {Test: {a: {
                     regularExpressionPattern: 'a'
+                }}}}, {
+                    fillUp: {[typeName]: 'Test', a: 'a'},
+                    incremental: {[typeName]: 'Test', a: 'a'},
+                    '': {[typeName]: 'Test', a: 'a'}
+                }],
+                [[{[typeName]: 'Test', a: 'a'}], {entities: {Test: {a: {
+                    invertedRegularExpressionPattern: 'b'
                 }}}}, {
                     fillUp: {[typeName]: 'Test', a: 'a'},
                     incremental: {[typeName]: 'Test', a: 'a'},
@@ -2136,6 +2184,33 @@ registerTest(async function():Promise<void> {
                     // eslint-enable camelcase
                 }}], {entities: {Test: {[attachmentName]: {'.*': {
                     maximumNumber: 2, regularExpressionPattern: 'a|b'
+                }}}}}, {
+                    fillUp: {[typeName]: 'Test', [attachmentName]: {
+                        // eslint-disable camelcase
+                        a: {content_type: 'text/plain', data: ''},
+                        b: {content_type: 'text/plain', data: ''}
+                        // eslint-enable camelcase
+                    }},
+                    incremental: {[typeName]: 'Test', [attachmentName]: {
+                        // eslint-disable camelcase
+                        a: {content_type: 'text/plain', data: ''},
+                        b: {content_type: 'text/plain', data: ''}
+                        // eslint-enable camelcase
+                    }},
+                    '': {[typeName]: 'Test', [attachmentName]: {
+                        // eslint-disable camelcase
+                        a: {content_type: 'text/plain', data: ''},
+                        b: {content_type: 'text/plain', data: ''}
+                        // eslint-enable camelcase
+                    }}
+                }],
+                [[{[typeName]: 'Test', [attachmentName]: {
+                    // eslint-disable camelcase
+                    a: {content_type: 'text/plain', data: ''},
+                    b: {content_type: 'text/plain', data: ''}
+                    // eslint-enable camelcase
+                }}], {entities: {Test: {[attachmentName]: {'.*': {
+                    maximumNumber: 2, invertedRegularExpressionPattern: 'c|d'
                 }}}}}, {
                     fillUp: {[typeName]: 'Test', [attachmentName]: {
                         // eslint-disable camelcase
