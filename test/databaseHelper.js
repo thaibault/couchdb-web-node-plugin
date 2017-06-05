@@ -35,8 +35,6 @@ registerTest(async function():Promise<void> {
     // region tests
     this.test('authenticate', (assert:Object):void => {
         for (const test:Array<any> of [
-            [{}],
-            [{}, null, {roles: []}],
             [{type: 'Test'}, {}, {roles: []}, {}, {Test: {
                 properties: {}, read: ['users'], write: []
             }}, 'type'],
@@ -46,6 +44,7 @@ registerTest(async function():Promise<void> {
         ])
             assert.throws(():?true => DatabaseHelper.authenticate(...test))
         for (const test:Array<any> of [
+            [{}],
             [{}, null, {roles: ['_admin']}],
             [{}, {}, {roles: ['_admin']}, {}, {
                 properties: {}, read: [], write: []
