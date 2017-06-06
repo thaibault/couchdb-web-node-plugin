@@ -1089,22 +1089,24 @@ export default class DatabaseHelper {
                         if (!Array.isArray(newDocument[name]))
                             /* eslint-disable no-throw-literal */
                             throw {
-                                forbidden: `PropertyType: Property "${name}"` +
-                                    ` isn't of type "array -> ` +
+                                forbidden:
+                                    `PropertyType: Property "${name}" isn't ` +
+                                    `of type "array -> ` +
                                     `${propertySpecification.type}" (given "` +
                                     `${serialize(newDocument[name])}")` +
                                     `${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
-                        if (![undefined, null].includes(
+                        else if (![undefined, null].includes(
                             propertySpecification.minimumNumber
                         ) && newDocument[name].length <
                             propertySpecification.minimumNumber
                         )
                             /* eslint-disable no-throw-literal */
                             throw {
-                                forbidden: `MinimumArrayLength: Property "` +
-                                    `${name}" (array of length ` +
+                                forbidden:
+                                    `MinimumArrayLength: Property "${name}" ` +
+                                    ` (array of length ` +
                                     `${newDocument[name].length}) doesn't ` +
                                     `fullfill minimum array length of ` +
                                     // IgnoreTypeCheck
@@ -1119,8 +1121,9 @@ export default class DatabaseHelper {
                         )
                             /* eslint-disable no-throw-literal */
                             throw {
-                                forbidden: `MaximumArrayLength: Property "` +
-                                    `${name}" (array of length ` +
+                                forbidden:
+                                    `MaximumArrayLength: Property "${name}" ` +
+                                    `(array of length ` +
                                     `${newDocument[name].length}) doesn't ` +
                                     `fullfill maximum array length of ` +
                                     // IgnoreTypeCheck
@@ -1166,20 +1169,17 @@ export default class DatabaseHelper {
                                 value, `${index + 1}. value in ${name}`,
                                 propertySpecificationCopy
                             ).newValue
-                            if (newDocument[name][index] === null)
+                            if (value === null)
                                 newDocument[name].splice(index, 1)
-                            if (!(oldDocument && oldDocument.hasOwnProperty(
-                                name
-                            ) && Array.isArray(
-                                oldDocument[name]
-                            ) && oldDocument[name].length > index &&
-                            serialize(oldDocument[name][index]) === serialize(
-                                oldDocument[name][index]
-                            )))
-                                somethingChanged = true
                             index += 1
                         }
-                        if (!(oldDocument && oldDocument.hasOwnProperty(name)))
+                        if (!(oldDocument && oldDocument.hasOwnProperty(
+                            name
+                        ) && Array.isArray(oldDocument[name]) && oldDocument[
+                            name
+                        ].length === newDocument[name].length && serialize(
+                            oldDocument[name]
+                        ) === serialize(newDocument[name])))
                             somethingChanged = true
                     } else {
                         const oldValue:any =

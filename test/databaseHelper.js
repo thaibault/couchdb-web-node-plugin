@@ -1442,6 +1442,28 @@ registerTest(async function():Promise<void> {
                     }
                 ],
                 [
+                    [
+                        {[typeName]: 'Test', a: ['2']},
+                        {[typeName]: 'Test', a: ['2', '3']}
+                    ],
+                    {entities: {Test: {a: {type: 'string[]'}}}}, {
+                        fillUp: {[typeName]: 'Test', a: ['2']},
+                        incremental: {a: ['2']},
+                        '': {[typeName]: 'Test', a: ['2']}
+                    }
+                ],
+                [
+                    [
+                        {[typeName]: 'Test', a: ['3']},
+                        {[typeName]: 'Test', a: ['2']}
+                    ],
+                    {entities: {Test: {a: {type: 'string[]'}}}}, {
+                        fillUp: {[typeName]: 'Test', a: ['3']},
+                        incremental: {a: ['3']},
+                        '': {[typeName]: 'Test', a: ['3']}
+                    }
+                ],
+                [
                     [{[typeName]: 'Test', a: ['2']}, {[typeName]: 'Test'}],
                     {entities: {Test: {a: {type: 'string[]'}}}}, {
                         fillUp: {[typeName]: 'Test', a: ['2']},
