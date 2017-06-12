@@ -42,15 +42,13 @@ export default class Helper {
      * @param documentName - Design document name.
      * @param documentData - Design document data.
      * @param description - Used to produce semantic logging messages.
-     * @param libraries - Mapping of library names to their code as string.
      * @param log - Enables logging.
      * @returns Promise which will be resolved after given document has updated
      * successfully.
      */
     static async ensureValidationDocumentPresence(
         databaseConnection:Object, documentName:string,
-        documentData:PlainObject, description:string,
-        libraries:?{[key:string]:string} = null, log:boolean = true
+        documentData:PlainObject, description:string, log:boolean = true
     ):Promise<void> {
         const newDocument:{[key:string]:string} = Tools.extendObject({
             _id: `_design/${documentName}`, language: 'javascript'

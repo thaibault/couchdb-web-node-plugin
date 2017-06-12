@@ -38,7 +38,7 @@ registerTest(async function():Promise<void> {
             [{put: ():Promise<void> =>
                 new Promise((resolve:Function):Promise<boolean> =>
                     Tools.timeout(resolve))
-            }, 'test', {data: 'data'}, 'Description', null, false]
+            }, 'test', {data: 'data'}, 'Description', false]
         ])
             assert.strictEqual(await Helper.ensureValidationDocumentPresence(
                 ...test))

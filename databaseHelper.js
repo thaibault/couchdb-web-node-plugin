@@ -53,8 +53,10 @@ export default class DatabaseHelper {
             db: 'dummy',
             name: '"unknown"',
             roles: []
+        /* eslint-disable no-unused-vars */
         }, securitySettings:SecuritySettings = {
             admins: {names: [], roles: []}, members: {names: [], roles: []}
+        /* eslint-enable no-unused-vars */
         }, allowedModelRolesMapping:AllowedModelRolesMapping,
         typePropertyName:string, read:boolean = false
     ):?true {
@@ -666,11 +668,17 @@ export default class DatabaseHelper {
                             let result:any
                             try {
                                 result = hook(
+                                    // IgnoreTypeCheck
                                     newDocument, oldDocument, userContext,
+                                    // IgnoreTypeCheck
                                     securitySettings, name, models,
+                                    // IgnoreTypeCheck
                                     modelConfiguration, serialize, modelName,
+                                    // IgnoreTypeCheck
                                     model, propertySpecification, now,
+                                    // IgnoreTypeCheck
                                     nowUTCTimestamp, getFilenameByPrefix,
+                                    // IgnoreTypeCheck
                                     attachmentWithPrefixExists.bind(
                                         newDocument, newDocument))
                             } catch (error) {
@@ -734,12 +742,19 @@ export default class DatabaseHelper {
                         }
                         try {
                             newDocument[name] = hook(
+                                // IgnoreTypeCheck
                                 newDocument, oldDocument, userContext,
+                                // IgnoreTypeCheck
                                 securitySettings, name, models,
+                                // IgnoreTypeCheck
                                 modelConfiguration, serialize, modelName,
+                                // IgnoreTypeCheck
                                 model, checkDocument, checkPropertyContent,
+                                // IgnoreTypeCheck
                                 propertySpecification, now, nowUTCTimestamp,
+                                // IgnoreTypeCheck
                                 getFilenameByPrefix,
+                                // IgnoreTypeCheck
                                 attachmentWithPrefixExists.bind(
                                     newDocument, newDocument))
                         } catch (error) {
