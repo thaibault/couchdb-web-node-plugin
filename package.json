@@ -38,18 +38,18 @@
   },
   "scripts": {
     "build": "webOptimizer build",
-    "buildDLL": "webOptimizer buildDLL",
+    "build:dll": "webOptimizer build:dll",
     "clear": "webOptimizer clear && rimraf log.txt",
     "document": "webOptimizer document",
-    "lint": "webOptimizer typeCheck; webOptimizer lint",
+    "lint": "webOptimizer check:type; webOptimizer lint",
     "prepublish": "npm run build",
     "serve": "npm run build && webNode",
     "start": "npm run serve",
     "test": "webOptimizer test",
     "update": "npm version patch && npm publish",
-    "updateDocumentation": "documentationWebsite --log-level info",
+    "update:documentation": "documentationWebsite --log-level info",
     "watch": "webOptimizer build --watch",
-    "watchDLL": "webOptimizer buildDLL --watch"
+    "watch:dll": "webOptimizer build:dll --watch"
   },
   "dependencies": {
     "clientnode": "latest",
@@ -109,9 +109,9 @@
               "mutable": false
             },
             "-type": {
-              "nullable": false,
               "maximumLength": 999,
               "minimumLength": 1,
+              "nullable": false,
               "mutable": false,
               "regularExpressionPattern": {
                 "__evaluate__": "`(?:${self.database.model.property.name.typeRegularExpressionPattern.public}|${self.database.model.property.name.typeRegularExpressionPattern.private})`"
@@ -138,13 +138,11 @@
           },
           "_timeTrackable": {
             "creationDateTime": {
-              "type": "DateTime",
-              "onCreateExpression": "nowUTCTimestamp",
-              "minimum": {
-                "__evaluate__": "nowUTCTimestamp"
-              },
+              "minimum": 1,
               "mutable": false,
-              "nullable": false
+              "nullable": false,
+              "onCreateExpression": "nowUTCTimestamp",
+              "type": "DateTime"
             },
             "updateDateTime": {
               "constraintExpression": {
@@ -160,10 +158,10 @@
           },
           "_userTrackable": {
             "lastUser": {
+              "nullable": false,
               "onUpdateExpression": {
                 "__evaluate__": "`userContext.name || '${self.database.user.name}'`"
-              },
-              "nullable": false
+              }
             }
           }
         },
