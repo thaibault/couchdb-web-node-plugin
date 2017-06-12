@@ -109,9 +109,9 @@
               "mutable": false
             },
             "-type": {
-              "nullable": false,
               "maximumLength": 999,
               "minimumLength": 1,
+              "nullable": false,
               "mutable": false,
               "regularExpressionPattern": {
                 "__evaluate__": "`(?:${self.database.model.property.name.typeRegularExpressionPattern.public}|${self.database.model.property.name.typeRegularExpressionPattern.private})`"
@@ -138,13 +138,11 @@
           },
           "_timeTrackable": {
             "creationDateTime": {
-              "type": "DateTime",
-              "onCreateExpression": "nowUTCTimestamp",
-              "minimum": {
-                "__evaluate__": "nowUTCTimestamp"
-              },
+              "minimum": 1,
               "mutable": false,
-              "nullable": false
+              "nullable": false,
+              "onCreateExpression": "nowUTCTimestamp",
+              "type": "DateTime"
             },
             "updateDateTime": {
               "constraintExpression": {
@@ -160,10 +158,10 @@
           },
           "_userTrackable": {
             "lastUser": {
+              "nullable": false,
               "onUpdateExpression": {
                 "__evaluate__": "`userContext.name || '${self.database.user.name}'`"
-              },
-              "nullable": false
+              }
             }
           }
         },
