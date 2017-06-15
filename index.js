@@ -457,8 +457,6 @@ export default class Database {
                         `Auto migrating document "${newDocument[idName]}" ` +
                         'was successful.')
                 }
-        // TODO check conflicting constraints and mark them if necessary (check
-        // how couchdb deals with "id" conflicts)
         // endregion
         // region create/remove needed/unneeded generic indexes
         if (configuration.database.createGenericFlatIndex && (
@@ -488,9 +486,10 @@ export default class Database {
                         } catch (error) {
                             throw error
                         }
-            let indexes:PlainObject
+            let indexes:Array<PlainObject>
             try {
-                indexes = await services.database.connection.getIndexes()
+                indexes = (await services.database.connection.getIndexes(
+                )).indexes
             } catch (error) {
                 throw error
             }
@@ -521,6 +520,8 @@ export default class Database {
                 }
         }
         // endregion
+        // TODO check conflicting constraints and mark them if necessary (check
+        // how couchdb deals with "id" conflicts)
         return {name: 'database', promise}
     }
     /**
