@@ -134,14 +134,21 @@ export default class Helper {
             modelConfiguration.property.name.special
         return Object.keys(model).filter((name:string):boolean => !(
             modelConfiguration.property.name.reserved.concat(
+                specialNames.additional,
+                specialNames.allowedRole,
                 specialNames.attachment,
                 specialNames.conflict,
+                specialNames.constraint.execution,
+                specialNames.constraint.expression,
                 specialNames.deleted,
                 specialNames.deleted_conflict,
+                specialNames.extend,
                 specialNames.id,
+                specialNames.maximumAggregatedSize,
+                specialNames.minimumAggregatedSize,
                 specialNames.revision,
                 specialNames.revisions,
-                specialNames.revisions_info,
+                specialNames.revisionsInformation,
                 specialNames.type
             ).includes(name) || model[name].type && (
                 typeof model[name].type === 'string' &&
