@@ -493,7 +493,7 @@ export default class Database {
             } catch (error) {
                 throw error
             }
-            for (const index:PlainObject of indexes.indexes)
+            for (const index:PlainObject of indexes)
                 if (index.name.endsWith('-GenericIndex')) {
                     let exists:boolean = false
                     for (const modelName:string in models)
