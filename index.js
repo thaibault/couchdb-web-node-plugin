@@ -20,7 +20,7 @@
 // region imports
 import {spawn as spawnChildProcess} from 'child_process'
 import Tools from 'clientnode'
-import type {PlainObject} from 'clientnode'
+import type {File, PlainObject} from 'clientnode'
 import fileSystem from 'fs'
 import path from 'path'
 import PouchDB from 'pouchdb'
@@ -172,6 +172,8 @@ export default class Database {
             configuration.database.model.property.name.special.id
         const revisionName:string =
             configuration.database.model.property.name.special.revision
+        const typeName:string =
+            configuration.database.model.property.name.special.type
         const bulkDocs:Function = async function(
             firstParameter:any, ...parameter:Array<any>
         ):Promise<Array<PlainObject>> {
@@ -304,10 +306,7 @@ export default class Database {
                         '...parameter.concat([' + JSON.stringify(
                             Helper.determineAllowedModelRolesMapping(
                                 configuration.database.model
-                            )) + `, '` +
-                            configuration.database.model.property.name.special
-                                .type +
-                            `']))\n` +
+                            )) + `, '${typeName}']))\n` +
                 '}'
             try {
                 new Function(`return ${authenticationCode}`)
@@ -393,11 +392,46 @@ export default class Database {
         }
         // region ensure all constraints to have a consistent initial state
         if (
-            configuration.database.model.autoMigration ||
+            configuration.database.model.autoMigrationPath ||
             configuration.debug
-        )
-            // TODO run migrations scripts if there exists some.
-            for (let retrievedDocument:RetrievedDocument of (
+        ) {
+            if (await Tools.isDirectory(path.resolve(
+                configuration.database.model.autoMigrationPath
+            )))
+                for (const file:File of await Tools.walkDirectoryRecursively(
+                    path.resolve(
+                        configuration.database.model.autoMigrationPath)
+                )) {
+                    const extension:string = path.extname(file.name)
+                    const basename = path.basename(file.name, extension)
+                    if (configuration.database.model.entities.hasOwnProperty(
+                        basename
+                    ) && extension === '.json')
+                        for (const document:Document of JSON.parse(
+                            await new Promise((
+                                resolve:Function, reject:Function
+                            ):void => fileSystem.readFile(file.path, {
+                                encoding: (configuration.encoding:string),
+                                flag: 'r'
+                            }, (error:?Error, data:string):void =>
+                                error ? reject(error) : resolve(data)))
+                        )) {
+                            document[typeName] = basename
+                            try {
+                                await services.database.connection.put(
+                                    document)
+                            } catch (error) {
+                                throw new Error(
+                                    `Migrating document "` +
+                                    `${document[idName]}" of type "` +
+                                    `${document[typeName]}" has failed: ` +
+                                    Tools.representObject(error))
+                            }
+                        }
+                }
+            // TODO run migrations scripts by providing an authenticated
+            // database connection instance.
+            for (const retrievedDocument:RetrievedDocument of (
                 await services.database.connection.allDocs({
                     /* eslint-disable camelcase */
                     include_docs: true
@@ -457,10 +491,12 @@ export default class Database {
                         `Auto migrating document "${newDocument[idName]}" ` +
                         'was successful.')
                 }
+        }
         // endregion
         // region create/remove needed/unneeded generic indexes
         if (configuration.database.createGenericFlatIndex && (
-            configuration.database.model.autoMigration || configuration.debug
+            configuration.database.model.autoMigrationPath ||
+            configuration.debug
         )) {
             for (const modelName:string in models)
                 if (models.hasOwnProperty(modelName) && (new RegExp(
@@ -475,11 +511,7 @@ export default class Database {
                             await services.database.connection.createIndex({
                                 index: {
                                     ddoc: `${modelName}-${name}-GenericIndex`,
-                                    fields: [
-                                        modelConfiguration.property.name
-                                            .special.type,
-                                        name
-                                    ],
+                                    fields: [typeName, name],
                                     name: `${modelName}-${name}-GenericIndex`
                                 }
                             })
