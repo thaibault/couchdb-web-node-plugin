@@ -428,7 +428,7 @@ export default class Database {
                                     Tools.representObject(error))
                             }
                             console.info(
-                                `Migrating document "` +
+                                `Including document "` +
                                 `${document[idName]}" of type "` +
                                 `${document[typeName]}" was successful.`)
                         }
