@@ -427,9 +427,13 @@ export default class Database {
                                     `${document[typeName]}" has failed: ` +
                                     Tools.representObject(error))
                             }
+                            console.info(
+                                `Migrating document "` +
+                                `${document[idName]}" of type "` +
+                                `${document[typeName]}" was successful.`)
                         }
                 }
-            // TODO run migrations scripts by providing an authenticated
+            // TODO run migration scripts by providing an authenticated
             // database connection instance.
             for (const retrievedDocument:RetrievedDocument of (
                 await services.database.connection.allDocs({

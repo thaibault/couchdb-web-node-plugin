@@ -225,6 +225,13 @@ export default class DatabaseHelper {
                     ].hasOwnProperty('data') && ![undefined, null].includes(
                         newDocument[specialNames.attachment][name].data)
             }
+            console.log()
+            console.log()
+            console.log()
+            console.log(namePrefix, newDocument._attachments)
+            console.log()
+            console.log()
+            console.log()
             return false
         }
         const checkDocument:Function = (
@@ -1243,7 +1250,8 @@ export default class DatabaseHelper {
                             oldDocument, securitySettings, serialize,
                             userContext, parentNames, pathDescription, now,
                             nowUTCTimestamp, getFilenameByPrefix,
-                            attachmentWithPrefixExists
+                            attachmentWithPrefixExists.bind(
+                                newDocument, newDocument)
                         ]
                         try {
                             hook = new Function(
