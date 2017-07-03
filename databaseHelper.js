@@ -222,16 +222,14 @@ export default class DatabaseHelper {
                 if (name)
                     return newDocument[specialNames.attachment][
                         name
+                    ].hasOwnProperty('stub') &&
+                    newDocument[specialNames.attachment][
+                        name
+                    ].stub || newDocument[specialNames.attachment][
+                        name
                     ].hasOwnProperty('data') && ![undefined, null].includes(
                         newDocument[specialNames.attachment][name].data)
             }
-            console.log()
-            console.log()
-            console.log()
-            console.log(namePrefix, newDocument._attachments)
-            console.log()
-            console.log()
-            console.log()
             return false
         }
         const checkDocument:Function = (
