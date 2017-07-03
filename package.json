@@ -92,7 +92,7 @@
       "log/file": "/dev/stdout",
       "log/level": "info",
       "model": {
-        "autoMigration": true,
+        "autoMigrationPath": "migration",
         "entities": {
           "_base": {
             "_allowedRoles": "users",

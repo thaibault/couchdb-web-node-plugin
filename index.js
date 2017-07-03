@@ -20,7 +20,7 @@
 // region imports
 import {spawn as spawnChildProcess} from 'child_process'
 import Tools from 'clientnode'
-import type {PlainObject} from 'clientnode'
+import type {File, PlainObject} from 'clientnode'
 import fileSystem from 'fs'
 import path from 'path'
 import PouchDB from 'pouchdb'
@@ -393,11 +393,16 @@ export default class Database {
         }
         // region ensure all constraints to have a consistent initial state
         if (
-            configuration.database.model.autoMigration ||
+            configuration.database.model.autoMigrationPath ||
             configuration.debug
-        )
-            // TODO run migrations scripts if there exists some.
-            for (let retrievedDocument:RetrievedDocument of (
+        ) {
+            for (const file:File of await Tools.walkDirectoryRecursively(
+                configuration.database.model.autoMigrationPath
+            ))
+                console.log(file)
+            // TODO run migrations scripts by providing an authenticated
+            // database connection instance.
+            for (const retrievedDocument:RetrievedDocument of (
                 await services.database.connection.allDocs({
                     /* eslint-disable camelcase */
                     include_docs: true
@@ -457,10 +462,12 @@ export default class Database {
                         `Auto migrating document "${newDocument[idName]}" ` +
                         'was successful.')
                 }
+        }
         // endregion
         // region create/remove needed/unneeded generic indexes
         if (configuration.database.createGenericFlatIndex && (
-            configuration.database.model.autoMigration || configuration.debug
+            configuration.database.model.autoMigrationPath ||
+            configuration.debug
         )) {
             for (const modelName:string in models)
                 if (models.hasOwnProperty(modelName) && (new RegExp(
