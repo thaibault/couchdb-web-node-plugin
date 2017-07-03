@@ -172,6 +172,8 @@ export default class Database {
             configuration.database.model.property.name.special.id
         const revisionName:string =
             configuration.database.model.property.name.special.revision
+        const typeName:string =
+            configuration.database.model.property.name.special.type
         const bulkDocs:Function = async function(
             firstParameter:any, ...parameter:Array<any>
         ):Promise<Array<PlainObject>> {
@@ -304,10 +306,7 @@ export default class Database {
                         '...parameter.concat([' + JSON.stringify(
                             Helper.determineAllowedModelRolesMapping(
                                 configuration.database.model
-                            )) + `, '` +
-                            configuration.database.model.property.name.special
-                                .type +
-                            `']))\n` +
+                            )) + `, '${typeName}']))\n` +
                 '}'
             try {
                 new Function(`return ${authenticationCode}`)
@@ -396,10 +395,40 @@ export default class Database {
             configuration.database.model.autoMigrationPath ||
             configuration.debug
         ) {
-            for (const file:File of await Tools.walkDirectoryRecursively(
+            if (await Tools.isDirectory(path.resolve(
                 configuration.database.model.autoMigrationPath
-            ))
-                console.log(file)
+            )))
+                for (const file:File of await Tools.walkDirectoryRecursively(
+                    path.resolve(
+                        configuration.database.model.autoMigrationPath)
+                )) {
+                    const extension:string = path.extname(file.name)
+                    const basename = path.basename(file.name, extension)
+                    if (configuration.database.model.entities.hasOwnProperty(
+                        basename
+                    ) && extension === '.json')
+                        for (const document:Document of JSON.parse(
+                            await new Promise((
+                                resolve:Function, reject:Function
+                            ):void => fileSystem.readFile(file.path, {
+                                encoding: (configuration.encoding:string),
+                                flag: 'r'
+                            }, (error:?Error, data:string):void =>
+                                error ? reject(error) : resolve(data)))
+                        )) {
+                            document[typeName] = basename
+                            try {
+                                await services.database.connection.put(
+                                    document)
+                            } catch (error) {
+                                throw new Error(
+                                    `Migrating document "` +
+                                    `${document[idName]}" of type "` +
+                                    `${document[typeName]}" has failed: ` +
+                                    Tools.representObject(error))
+                            }
+                        }
+                }
             // TODO run migrations scripts by providing an authenticated
             // database connection instance.
             for (const retrievedDocument:RetrievedDocument of (
@@ -482,11 +511,7 @@ export default class Database {
                             await services.database.connection.createIndex({
                                 index: {
                                     ddoc: `${modelName}-${name}-GenericIndex`,
-                                    fields: [
-                                        modelConfiguration.property.name
-                                            .special.type,
-                                        name
-                                    ],
+                                    fields: [typeName, name],
                                     name: `${modelName}-${name}-GenericIndex`
                                 }
                             })
