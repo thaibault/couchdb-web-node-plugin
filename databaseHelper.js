@@ -144,7 +144,8 @@ export default class DatabaseHelper {
         const nowUTCTimestamp:number = Date.UTC(
             now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
             now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds(),
-            now.getUTCMilliseconds())
+            now.getUTCMilliseconds()
+        ) / 1000
         const specialNames:PlainObject =
             modelConfiguration.property.name.special
         const idName:string = specialNames.id
