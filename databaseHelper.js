@@ -417,7 +417,8 @@ export default class DatabaseHelper {
                                 newValue.getUTCHours(),
                                 newValue.getUTCMinutes(),
                                 newValue.getUTCSeconds(),
-                                newValue.getUTCMilliseconds())
+                                newValue.getUTCMilliseconds()
+                            ) / 1000
                         }
                         if (typeof newValue !== 'number' || isNaN(newValue)) {
                             if (types.length === 1)
