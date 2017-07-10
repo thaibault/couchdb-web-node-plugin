@@ -1363,12 +1363,12 @@ registerTest(async function():Promise<void> {
                         [typeName]: 'Test',
                         a: new Date(1970, 0, 1, 0, -1 * (new Date(
                             1970, 0, 1
-                        )).getTimezoneOffset(), 0, 1),
+                        )).getTimezoneOffset(), 1, 0),
                         b: ''
                     },
                     {[typeName]: 'Test', a: new Date(1970, 0, 1, 0, -1 * (
                         new Date(1970, 0, 1)
-                    ).getTimezoneOffset(), 0, 1)}],
+                    ).getTimezoneOffset(), 1, 0)}],
                     {entities: {Test: {a: {type: 'DateTime'}, b: {}}}}, {
                         fillUp: {[typeName]: 'Test', a: 1, b: ''},
                         incremental: {b: ''},
@@ -1386,9 +1386,9 @@ registerTest(async function():Promise<void> {
                         new Date(1970, 0, 1)
                     ).getTimezoneOffset(), 2).toUTCString()}],
                     {entities: {Test: {a: {type: 'DateTime'}, b: {}}}}, {
-                        fillUp: {[typeName]: 'Test', a: 2 * 1000, b: ''},
+                        fillUp: {[typeName]: 'Test', a: 2, b: ''},
                         incremental: {b: ''},
-                        '': {[typeName]: 'Test', a: 2 * 1000, b: ''}
+                        '': {[typeName]: 'Test', a: 2, b: ''}
                     }
                 ],
                 [
@@ -1404,13 +1404,13 @@ registerTest(async function():Promise<void> {
                     {entities: {Test: {a: {type: 'DateTime'}, b: {}}}}, {
                         fillUp: {
                             [typeName]: 'Test',
-                            a: 5 * 60 ** 2 * 1000 + 2 * 1000,
+                            a: 5 * 60 ** 2 + 2,
                             b: ''
                         },
                         incremental: {b: ''},
                         '': {
                             [typeName]: 'Test',
-                            a: 5 * 60 ** 2 * 1000 + 2 * 1000,
+                            a: 5 * 60 ** 2 + 2,
                             b: ''
                         }
                     }
