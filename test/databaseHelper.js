@@ -27,7 +27,9 @@ import configuration from 'web-node/configurator'
 import DatabaseHelper from '../databaseHelper'
 import Helper from '../helper'
 import type {
+    /* eslint-disable no-unused-vars */
     DatabaseForbiddenError, ModelConfiguration, Models, UpdateStrategy
+    /* eslint-enable no-unused-vars */
 } from '../type'
 // endregion
 registerTest(async function():Promise<void> {
@@ -254,12 +256,20 @@ registerTest(async function():Promise<void> {
                     [{[typeName]: 'Test', a: new Date('a')}],
                     {entities: {Test: {a: {type: 'DateTime'}}}}, 'PropertyType'
                 ],
-                [[{[typeName]: 'Test', a: '1'}], {entities: {Test: {[
-                    specialNames.additional
-                ]: {type: 'number'}}}}, 'PropertyType'],
-                [[{[typeName]: 'Test', a: '1'}], {entities: {Test: {[
-                    specialNames.additional
-                ]: {type: ['number', 'boolean', '2']}}}}, 'PropertyType'],
+                [
+                    [{[typeName]: 'Test', a: '1'}],
+                    {entities: {Test: {[specialNames.additional]: {
+                        type: 'number'
+                    }}}},
+                    'PropertyType'
+                ],
+                [
+                    [{[typeName]: 'Test', a: '1'}],
+                    {entities: {Test: {[specialNames.additional]: {
+                        type: ['number', 'boolean', '2']
+                    }}}},
+                    'PropertyType'
+                ],
                 // / region array
                 // // region type
                 [
@@ -648,7 +658,9 @@ registerTest(async function():Promise<void> {
                     }}}}
                 }, 'AttachmentMissing'],
                 [[{[typeName]: 'Test', [attachmentName]: {
+                    /* eslint-disable camelcase */
                     a: {data: '', content_type: 'text/plain'}
+                    /* eslint-enable camelcase */
                 }}], {entities: {Test: {[attachmentName]: {
                     a: {minimumNumber: 1, nullable: false},
                     b: {minimumNumber: 1, nullable: false}
@@ -667,10 +679,10 @@ registerTest(async function():Promise<void> {
                     'AttachmentType'
                 ],
                 [[{[typeName]: 'Test', [attachmentName]: {
-                    // eslint-disable camelcase
+                    /* eslint-disable camelcase */
                     a: {data: '', content_type: 'text/plain'},
                     b: {data: '', content_type: 'text/plain'}
-                    // eslint-enable camelcase
+                    /* eslint-enable camelcase */
                 }}], {entities: {Test: {[attachmentName]: {'.*': {
                     maximumNumber: 1
                 }}}}}, 'AttachmentMaximum'],
@@ -684,71 +696,73 @@ registerTest(async function():Promise<void> {
                 }}}, {
                     [typeName]: 'Test',
                     [attachmentName]: {test: {
+                        /* eslint-disable camelcase */
                         content_type: 'text/plain', data: ''
+                        /* eslint-enable camelcase */
                     }}
                 }], {entities: {Test: {[attachmentName]: {'.*': {
                     nullable: false
                 }}}}}, 'AttachmentMissing'],
                 [
                     [{[typeName]: 'Test', [attachmentName]: {a: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         data: '', content_type: 'text/plain'
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }}}],
                     {entities: {Test: {[attachmentName]: {b: {}}}}},
                     'AttachmentTypeMatch'
                 ],
                 [
                     [{[typeName]: 'Test', [attachmentName]: {a: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         data: '', content_type: 'text/plain'
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }}}],
                     {entities: {Test: {[attachmentName]: {b: {}, c: {}}}}},
                     'AttachmentTypeMatch'
                 ],
                 [[{[typeName]: 'Test', [attachmentName]: {test: {
-                    // eslint-disable camelcase
+                    /* eslint-disable camelcase */
                     data: '', content_type: 'text/plain'
-                    // eslint-enable camelcase
+                    /* eslint-enable camelcase */
                 }}}], {entities: {Test: {[attachmentName]: {'.*': {
                     minimumNumber: 2
                 }}}}}, 'AttachmentMinimum'],
                 [[{[typeName]: 'Test', [attachmentName]: {a: {
-                    // eslint-disable camelcase
+                    /* eslint-disable camelcase */
                     data: '', content_type: 'text/plain'
-                    // eslint-enable camelcase
+                    /* eslint-enable camelcase */
                 }}}], {entities: {Test: {[attachmentName]: {'.*': {
                     regularExpressionPattern: /b/g
                 }}}}}, 'AttachmentName'],
                 [[{[typeName]: 'Test', [attachmentName]: {a: {
-                    // eslint-disable camelcase
+                    /* eslint-disable camelcase */
                     data: '', content_type: 'text/plain'
-                    // eslint-enable camelcase
+                    /* eslint-enable camelcase */
                 }}}], {entities: {Test: {[attachmentName]: {'.*': {
                     invertedRegularExpressionPattern: /a/g
                 }}}}}, 'InvertedAttachmentName'],
                 [[{[typeName]: 'Test', [attachmentName]: {
-                    // eslint-disable camelcase
+                    /* eslint-disable camelcase */
                     a: {data: '', content_type: 'text/plain'},
                     b: {data: '', content_type: 'text/plain'}
-                    // eslint-enable camelcase
+                    /* eslint-enable camelcase */
                 }}], {entities: {Test: {[attachmentName]: {'.*': {
                     regularExpressionPattern: /a/
                 }}}}}, 'AttachmentName'],
                 [[{[typeName]: 'Test', [attachmentName]: {
-                    // eslint-disable camelcase
+                    /* eslint-disable camelcase */
                     a: {data: '', content_type: 'text/plain'},
                     b: {data: '', content_type: 'text/plain'}
-                    // eslint-enable camelcase
+                    /* eslint-enable camelcase */
                 }}], {entities: {Test: {[attachmentName]: {'.*': {
                     invertedRegularExpressionPattern: /a/
                 }}}}}, 'InvertedAttachmentName'],
                 [[{[typeName]: 'Test', [attachmentName]: {
-                    // eslint-disable camelcase
+                    /* eslint-disable camelcase */
                     a: {data: '', content_type: 'text/plain'},
                     b: {data: '', content_type: 'image/jpg'}
-                    // eslint-enable camelcase
+                    /* eslint-enable camelcase */
                 }}], {entities: {Test: {[attachmentName]: {'.*': {
                     contentTypeRegularExpressionPattern: /text\/plain/
                 }}}}}, 'AttachmentContentType'],
@@ -831,109 +845,188 @@ registerTest(async function():Promise<void> {
                 /*
                     NOTE: Needed if we are able to validate "_users" table:
 
-                    [[{type: 'user', [idName]: 'org.couchdb.user:test'}], {}, {
-                        fillUp: {
-                            type: 'user',
-                            [idName]: 'org.couchdb.user:test'
-                        },
-                        incremental: {
-                            type: 'user', [idName]: 'org.couchdb.user:test'
-                        },
-                        '': {type: 'user', [idName]: 'org.couchdb.user:test'}
-                    }],
-                    [[{type: 'user', [idName]: 'org.couchdb.user:test'}, {
-                        type: 'user', [idName]: 'org.couchdb.user:test'
-                    }], {}, {
-                        fillUp: {
-                            type: 'user',
-                            [idName]: 'org.couchdb.user:test'
-                        },
-                        incremental: {
-                            type: 'user', [idName]: 'org.couchdb.user:test'
-                        },
-                        '': {type: 'user', [idName]: 'org.couchdb.user:test'}
-                    }],
+                    [
+                        [{type: 'user', [idName]: 'org.couchdb.user:test'}],
+                        {},
+                        {
+                            fillUp: {
+                                type: 'user',
+                                [idName]: 'org.couchdb.user:test'
+                            },
+                            incremental: {
+                                type: 'user', [idName]: 'org.couchdb.user:test'
+                            },
+                            '': {
+                                type: 'user', [idName]: 'org.couchdb.user:test'
+                            }
+                        }
+                    ],
+                    [
+                        [
+                            {type: 'user', [idName]: 'org.couchdb.user:test'},
+                            {type: 'user', [idName]: 'org.couchdb.user:test'}
+                        ],
+                        {},
+                        {
+                            fillUp: {
+                                type: 'user',
+                                [idName]: 'org.couchdb.user:test'
+                            },
+                            incremental: {
+                                type: 'user', [idName]: 'org.couchdb.user:test'
+                            },
+                            '': {
+                                type: 'user', [idName]: 'org.couchdb.user:test'
+                            }
+                        }
+                    ],
                 */
-                [[
-                    {[typeName]: 'Test', _deleted: true}, {[typeName]: 'Test'}
-                ], {entities: {Test: {}}}, {
-                    fillUp: {[typeName]: 'Test', _deleted: true},
-                    incremental: {_deleted: true},
-                    '': {[typeName]: 'Test', _deleted: true}
-                }],
-                [[{[typeName]: 'Test', a: 2, [
-                    specialNames.strategy
-                ]: 'migrate'}], {entities: {Test: {}}}, {
-                    fillUp: {[typeName]: 'Test'},
-                    incremental: {[typeName]: 'Test'},
-                    '': {[typeName]: 'Test'}
-                }],
-                [[{[idName]: 1, [revisionName]: 1}, null, {}, {[
-                    configuration.database.model.property.name
-                    .validatedDocumentsCache
-                ]: new Set(['1-1'])}], {}, {
-                    fillUp: {[idName]: 1, [revisionName]: 1},
-                    incremental: {[idName]: 1, [revisionName]: 1},
-                    '': {[idName]: 1, [revisionName]: 1}
-                }],
-                [[{
-                    a: null,
-                    [idName]: 1,
-                    [revisionName]: 1,
-                    [typeName]: 'Test'
-                }, {
-                    [typeName]: 'Test', [idName]: 1, [revisionName]: 0, a: 'a'
-                }], {entities: {Test: {a: {}, [idName]: {type: 'number'}}}}, {
-                    fillUp: {
-                        [typeName]: 'Test', [idName]: 1, [revisionName]: 1
-                    },
-                    incremental: {[idName]: 1, [revisionName]: 1},
-                    '': {[typeName]: 'Test', [idName]: 1, [revisionName]: 1}
-                }],
-                [[{[typeName]: 'Test', [revisionName]: 'latest', a: 'a'}, {
-                    [typeName]: 'Test', [revisionName]: 1
-                }], {entities: {Test: {a: {}}}}, {
-                    fillUp: {[typeName]: 'Test', [revisionName]: 1, a: 'a'},
-                    incremental: {[revisionName]: 1, a: 'a'},
-                    '': {[typeName]: 'Test', [revisionName]: 1, a: 'a'}
-                }],
-                [[{[typeName]: 'Test', [revisionName]: 'upsert', a: 'a'}, {
-                    [typeName]: 'Test', [revisionName]: 1
-                }], {entities: {Test: {a: {}}}}, {
-                    fillUp: {[typeName]: 'Test', [revisionName]: 1, a: 'a'},
-                    incremental: {[revisionName]: 1, a: 'a'},
-                    '': {[typeName]: 'Test', [revisionName]: 1, a: 'a'}
-                }],
-                [[{[typeName]: 'Test', [revisionName]: 'upsert'}], {entities: {
-                    Test: {}
-                }}, {
-                    fillUp: {[typeName]: 'Test'},
-                    incremental: {[typeName]: 'Test'},
-                    '': {[typeName]: 'Test'}
-                }],
-                [[
-                    {[typeName]: 'Test', [revisionName]: 1, a: 'a'},
-                    {[typeName]: 'Test', [revisionName]: 1}
-                ], {entities: {Test: {a: {}}}}, {
-                    fillUp: {[typeName]: 'Test', [revisionName]: 1, a: 'a'},
-                    incremental: {[revisionName]: 1, a: 'a'},
-                    '': {[typeName]: 'Test', [revisionName]: 1, a: 'a'}
-                }],
-                [[{[typeName]: 'Test', [
-                    specialNames.constraint.expression
-                ]: 2}], {entities: {Test: {[specialNames.additional]: {
-                    type: 'any'
-                }}}}, {
-                    fillUp: {[typeName]: 'Test', [
-                        specialNames.constraint.expression
-                    ]: 2},
-                    incremental: {[typeName]: 'Test', [
-                        specialNames.constraint.expression
-                    ]: 2},
-                    '': {[typeName]: 'Test', [
-                        specialNames.constraint.expression
-                    ]: 2}
-                }],
+                [
+                    [
+                        {[typeName]: 'Test', _deleted: true},
+                        {[typeName]: 'Test'}
+                    ],
+                    {entities: {Test: {}}},
+                    {
+                        fillUp: {[typeName]: 'Test', _deleted: true},
+                        incremental: {_deleted: true},
+                        '': {[typeName]: 'Test', _deleted: true}
+                    }
+                ],
+                [
+                    [{
+                        a: 2,
+                        [typeName]: 'Test',
+                        [specialNames.strategy]: 'migrate'
+                    }],
+                    {entities: {Test: {}}},
+                    {
+                        fillUp: {[typeName]: 'Test'},
+                        incremental: {[typeName]: 'Test'},
+                        '': {[typeName]: 'Test'}
+                    }
+                ],
+                [
+                    [
+                        {
+                            [idName]: 1,
+                            [revisionName]: 1
+                        },
+                        null,
+                        {},
+                        {
+                            [configuration.database.model.property.name
+                                .validatedDocumentsCache
+                            ]: new Set(['1-1'])
+                        }
+                    ],
+                    {},
+                    {
+                        fillUp: {[idName]: 1, [revisionName]: 1},
+                        incremental: {[idName]: 1, [revisionName]: 1},
+                        '': {[idName]: 1, [revisionName]: 1}
+                    }
+                ],
+                [
+                    [
+                        {
+                            a: null,
+                            [idName]: 1,
+                            [revisionName]: 1,
+                            [typeName]: 'Test'
+                        },
+                        {
+                            [typeName]: 'Test',
+                            [idName]: 1,
+                            [revisionName]: 0,
+                            a: 'a'
+                        }
+                    ],
+                    {entities: {Test: {a: {}, [idName]: {type: 'number'}}}},
+                    {
+                        fillUp: {
+                            [typeName]: 'Test', [idName]: 1, [revisionName]: 1
+                        },
+                        incremental: {[idName]: 1, [revisionName]: 1},
+                        '': {
+                            [idName]: 1,
+                            [revisionName]: 1,
+                            [typeName]: 'Test'
+                        }
+                    }
+                ],
+                [
+                    [
+                        {[typeName]: 'Test', [revisionName]: 'latest', a: 'a'},
+                        {[typeName]: 'Test', [revisionName]: 1}
+                    ],
+                    {entities: {Test: {a: {}}}},
+                    {
+                        fillUp: {
+                            [typeName]: 'Test',
+                            [revisionName]: 1, a: 'a'
+                        },
+                        incremental: {[revisionName]: 1, a: 'a'},
+                        '': {[typeName]: 'Test', [revisionName]: 1, a: 'a'}
+                    }
+                ],
+                [
+                    [
+                        {[typeName]: 'Test', [revisionName]: 'upsert', a: 'a'},
+                        {[typeName]: 'Test', [revisionName]: 1}
+                    ],
+                    {entities: {Test: {a: {}}}},
+                    {
+                        fillUp: {[typeName]: 'Test', [revisionName]: 1, a: 'a'},
+                        incremental: {[revisionName]: 1, a: 'a'},
+                        '': {[typeName]: 'Test', [revisionName]: 1, a: 'a'}
+                    }
+                ],
+                [
+                    [{[typeName]: 'Test', [revisionName]: 'upsert'}],
+                    {entities: {Test: {}}},
+                    {
+                        fillUp: {[typeName]: 'Test'},
+                        incremental: {[typeName]: 'Test'},
+                        '': {[typeName]: 'Test'}
+                    }
+                ],
+                [
+                    [
+                        {[typeName]: 'Test', [revisionName]: 1, a: 'a'},
+                        {[typeName]: 'Test', [revisionName]: 1}
+                    ], {entities: {Test: {a: {}}}},
+                    {
+                        fillUp: {
+                            [typeName]: 'Test', [revisionName]: 1, a: 'a'
+                        },
+                        incremental: {[revisionName]: 1, a: 'a'},
+                        '': {[typeName]: 'Test', [revisionName]: 1, a: 'a'}
+                    }
+                ],
+                [
+                    [{
+                        [typeName]: 'Test',
+                        [specialNames.constraint.expression]: 2
+                    }],
+                    {entities: {Test: {[specialNames.additional]: {
+                        type: 'any'
+                    }}}},
+                    {
+                        fillUp: {
+                            [typeName]: 'Test',
+                            [specialNames.constraint.expression]: 2
+                        },
+                        incremental: {
+                            [typeName]: 'Test',
+                            [specialNames.constraint.expression]: 2
+                        },
+                        '': {
+                            [typeName]: 'Test',
+                            [specialNames.constraint.expression]: 2
+                        }
+                    }
+                ],
                 // endregion
                 // region model
                 [[{[typeName]: 'Test'}], {entities: {Test: {}}}, {
@@ -990,36 +1083,36 @@ registerTest(async function():Promise<void> {
                     '': {[typeName]: 'Test', a: '2'}
                 }],
                 [[{[typeName]: 'Test', [attachmentName]: {test: {
-                    // eslint-disable camelcase
+                    /* eslint-disable camelcase */
                     data: 'payload', content_type: 'text/plain'
-                    // eslint-enable camelcase
+                    /* eslint-enable camelcase */
                 }}}], {entities: {Test: {[attachmentName]: {'.*': {
                     onCreateExpression:
                         `(newDocument[name].data += ' footer') && ` +
                         'newDocument[name]'
                 }}}}}, {
                     fillUp: {[typeName]: 'Test', [attachmentName]: {test: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         data: 'payload footer', content_type: 'text/plain'
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }}},
                     incremental: {[typeName]: 'Test', [attachmentName]: {
                         test: {
-                            // eslint-disable camelcase
+                            /* eslint-disable camelcase */
                             data: 'payload footer', content_type: 'text/plain'
-                            // eslint-enable camelcase
+                            /* eslint-enable camelcase */
                         }
                     }},
                     '': {[typeName]: 'Test', [attachmentName]: {test: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         data: 'payload footer', content_type: 'text/plain'
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }}}
                 }],
                 [[{[typeName]: 'Test', [attachmentName]: {test: {
-                    // eslint-disable camelcase
+                    /* eslint-disable camelcase */
                     data: 'payload', content_type: 'text/plain'
-                    // eslint-enable camelcase
+                    /* eslint-enable camelcase */
                 }}}, {[typeName]: 'Test'}], {entities: {Test: {
                     [attachmentName]: {'.*': {
                         onCreateExpression:
@@ -1028,19 +1121,19 @@ registerTest(async function():Promise<void> {
                     }}
                 }}}, {
                     fillUp: {[typeName]: 'Test', [attachmentName]: {test: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         data: 'payload', content_type: 'text/plain'
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }}},
                     incremental: {[attachmentName]: {test: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         data: 'payload', content_type: 'text/plain'
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }}},
                     '': {[typeName]: 'Test', [attachmentName]: {test: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         data: 'payload', content_type: 'text/plain'
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }}}
                 }],
                 [[{[typeName]: 'Test', a: ''}], {entities: {Test: {a: {
@@ -1089,34 +1182,34 @@ registerTest(async function():Promise<void> {
                     '': {[typeName]: 'Test', a: '2', b: ''}
                 }],
                 [[{[typeName]: 'Test', [attachmentName]: {test: {
-                    // eslint-disable camelcase
+                    /* eslint-disable camelcase */
                     data: 'payload', content_type: 'text/plain'
-                    // eslint-enable camelcase
+                    /* eslint-enable camelcase */
                 }}}], {entities: {Test: {[attachmentName]: {'.*': {
                     onUpdateExpression:
                         `(newDocument[name].data += ' footer') && ` +
                         'newDocument[name]'
                 }}}}}, {
                     fillUp: {[typeName]: 'Test', [attachmentName]: {test: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         data: 'payload footer', content_type: 'text/plain'
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }}},
                     incremental: {[typeName]: 'Test', [attachmentName]: {test: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         data: 'payload footer', content_type: 'text/plain'
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }}},
                     '': {[typeName]: 'Test', [attachmentName]: {test: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         data: 'payload footer', content_type: 'text/plain'
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }}}
                 }],
                 [[{[typeName]: 'Test', [attachmentName]: {test: {
-                    // eslint-disable camelcase
+                    /* eslint-disable camelcase */
                     data: 'payload', content_type: 'text/plain'
-                    // eslint-enable camelcase
+                    /* eslint-enable camelcase */
                 }}}, {[typeName]: 'Test'}], {entities: {Test: {
                     [attachmentName]: {'.*': {
                         onUpdateExpression:
@@ -1125,19 +1218,19 @@ registerTest(async function():Promise<void> {
                     }}
                 }}}, {
                     fillUp: {[typeName]: 'Test', [attachmentName]: {test: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         data: 'payload footer', content_type: 'text/plain'
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }}},
                     incremental: {[attachmentName]: {test: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         data: 'payload footer', content_type: 'text/plain'
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }}},
                     '': {[typeName]: 'Test', [attachmentName]: {test: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         data: 'payload footer', content_type: 'text/plain'
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }}}
                 }],
                 [[
@@ -1227,29 +1320,29 @@ registerTest(async function():Promise<void> {
                 [[{[typeName]: 'Test'}], {entities: {Test: {[attachmentName]: {
                     '.*': {
                         default: {test: {
-                            // eslint-disable camelcase
+                            /* eslint-disable camelcase */
                             data: '', content_type: 'text/plain'
-                            // eslint-enable camelcase
+                            /* eslint-enable camelcase */
                         }},
                         nullable: false
                     }
                 }}}}, {
                     fillUp: {[typeName]: 'Test', [attachmentName]: {test: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         data: '', content_type: 'text/plain'
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }}},
                     incremental: {[typeName]: 'Test', [attachmentName]: {
                         test: {
-                            // eslint-disable camelcase
+                            /* eslint-disable camelcase */
                             data: '', content_type: 'text/plain'
-                            // eslint-enable camelcase
+                            /* eslint-enable camelcase */
                         }
                     }},
                     '': {[typeName]: 'Test', [attachmentName]: {test: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         data: '', content_type: 'text/plain'
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }}}
                 }],
                 // endregion
@@ -1259,20 +1352,25 @@ registerTest(async function():Promise<void> {
                         {[typeName]: 'Test', a: '2 ', b: ''},
                         {[typeName]: 'Test', a: '2'}
                     ],
-                    {entities: {Test: {a: {}, b: {}}}}, {
+                    {entities: {Test: {a: {}, b: {}}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: '2', b: ''},
                         incremental: {b: ''},
                         '': {[typeName]: 'Test', a: '2', b: ''}
                     }
                 ],
-                [[
-                    {[typeName]: 'Test', a: '2 '},
-                    {[typeName]: 'Test', a: '2'}
-                ], {entities: {Test: {a: {trim: false}}}}, {
-                    fillUp: {[typeName]: 'Test', a: '2 '},
-                    incremental: {a: '2 '},
-                    '': {[typeName]: 'Test', a: '2 '}
-                }],
+                [
+                    [
+                        {[typeName]: 'Test', a: '2 '},
+                        {[typeName]: 'Test', a: '2'}
+                    ],
+                    {entities: {Test: {a: {trim: false}}}},
+                    {
+                        fillUp: {[typeName]: 'Test', a: '2 '},
+                        incremental: {a: '2 '},
+                        '': {[typeName]: 'Test', a: '2 '}
+                    }
+                ],
                 [
                     [{[typeName]: 'Test', a: 3}, {[typeName]: 'Test', a: 2}],
                     {entities: {Test: {a: {type: 'integer'}}}}, {
@@ -1289,22 +1387,30 @@ registerTest(async function():Promise<void> {
                         '': {[typeName]: 'Test', a: 2.2}
                     }
                 ],
-                [[
-                    {[typeName]: 'Test', a: true, b: ''},
-                    {[typeName]: 'Test', a: true}
-                ], {entities: {Test: {a: {type: 'boolean'}, b: {}}}}, {
-                    fillUp: {[typeName]: 'Test', a: true, b: ''},
-                    incremental: {b: ''},
-                    '': {[typeName]: 'Test', a: true, b: ''}
-                }],
-                [[
-                    {[typeName]: 'Test', a: 1, b: ''},
-                    {[typeName]: 'Test', a: 1}
-                ], {entities: {Test: {a: {type: 'DateTime'}, b: {}}}}, {
-                    fillUp: {[typeName]: 'Test', a: 1, b: ''},
-                    incremental: {b: ''},
-                    '': {[typeName]: 'Test', a: 1, b: ''}
-                }],
+                [
+                    [
+                        {[typeName]: 'Test', a: true, b: ''},
+                        {[typeName]: 'Test', a: true}
+                    ],
+                    {entities: {Test: {a: {type: 'boolean'}, b: {}}}},
+                    {
+                        fillUp: {[typeName]: 'Test', a: true, b: ''},
+                        incremental: {b: ''},
+                        '': {[typeName]: 'Test', a: true, b: ''}
+                    }
+                ],
+                [
+                    [
+                        {[typeName]: 'Test', a: 1, b: ''},
+                        {[typeName]: 'Test', a: 1}
+                    ],
+                    {entities: {Test: {a: {type: 'DateTime'}, b: {}}}},
+                    {
+                        fillUp: {[typeName]: 'Test', a: 1, b: ''},
+                        incremental: {b: ''},
+                        '': {[typeName]: 'Test', a: 1, b: ''}
+                    }
+                ],
                 [
                     [{
                         [typeName]: 'Test',
@@ -1317,7 +1423,8 @@ registerTest(async function():Promise<void> {
                             1970, 0, 1
                         )).getTimezoneOffset()
                     )}],
-                    {entities: {Test: {a: {type: 'DateTime'}, b: {}}}}, {
+                    {entities: {Test: {a: {type: 'DateTime'}, b: {}}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: 0, b: ''},
                         incremental: {b: ''},
                         '': {[typeName]: 'Test', a: 0, b: ''}
@@ -1336,7 +1443,8 @@ registerTest(async function():Promise<void> {
                             1970, 0, 1
                         )).getTimezoneOffset())).toUTCString()
                     }],
-                    {entities: {Test: {a: {type: 'DateTime'}, b: {}}}}, {
+                    {entities: {Test: {a: {type: 'DateTime'}, b: {}}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: 0, b: ''},
                         incremental: {b: ''},
                         '': {[typeName]: 'Test', a: 0, b: ''}
@@ -1352,7 +1460,8 @@ registerTest(async function():Promise<void> {
                     }, {[typeName]: 'Test', a: new Date(1970, 0, 1, 0, -1 * (
                         new Date(1970, 0, 1)
                     ).getTimezoneOffset()).toLocaleString()}],
-                    {entities: {Test: {a: {type: 'DateTime'}, b: {}}}}, {
+                    {entities: {Test: {a: {type: 'DateTime'}, b: {}}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: 0, b: ''},
                         incremental: {b: ''},
                         '': {[typeName]: 'Test', a: 0, b: ''}
@@ -1369,7 +1478,8 @@ registerTest(async function():Promise<void> {
                     {[typeName]: 'Test', a: new Date(1970, 0, 1, 0, -1 * (
                         new Date(1970, 0, 1)
                     ).getTimezoneOffset(), 1, 0)}],
-                    {entities: {Test: {a: {type: 'DateTime'}, b: {}}}}, {
+                    {entities: {Test: {a: {type: 'DateTime'}, b: {}}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: 1, b: ''},
                         incremental: {b: ''},
                         '': {[typeName]: 'Test', a: 1, b: ''}
@@ -1401,7 +1511,8 @@ registerTest(async function():Promise<void> {
                     }, {[typeName]: 'Test', a: new Date(1970, 0, 1, 5, -1 * (
                         new Date(1970, 0, 1)
                     ).getTimezoneOffset(), 2).toISOString()}],
-                    {entities: {Test: {a: {type: 'DateTime'}, b: {}}}}, {
+                    {entities: {Test: {a: {type: 'DateTime'}, b: {}}}},
+                    {
                         fillUp: {
                             [typeName]: 'Test',
                             a: 5 * 60 ** 2 + 2,
@@ -1415,20 +1526,26 @@ registerTest(async function():Promise<void> {
                         }
                     }
                 ],
-                [[{[typeName]: 'Test', a: 2, b: ''}], {entities: {Test: {[
-                    specialNames.additional
-                ]: {type: 'any'}}}}, {
-                    fillUp: {[typeName]: 'Test', a: 2, b: ''},
-                    incremental: {[typeName]: 'Test', a: 2, b: ''},
-                    '': {[typeName]: 'Test', a: 2, b: ''}
-                }],
-                [[{[typeName]: 'Test', a: '2', b: ''}], {entities: {Test: {[
-                    specialNames.additional
-                ]: {}}}}, {
-                    fillUp: {[typeName]: 'Test', a: '2', b: ''},
-                    incremental: {[typeName]: 'Test', a: '2', b: ''},
-                    '': {[typeName]: 'Test', a: '2', b: ''}
-                }],
+                [
+                    [{[typeName]: 'Test', a: 2, b: ''}],
+                    {entities: {Test: {[specialNames.additional]: {
+                        type: 'any'
+                    }}}},
+                    {
+                        fillUp: {[typeName]: 'Test', a: 2, b: ''},
+                        incremental: {[typeName]: 'Test', a: 2, b: ''},
+                        '': {[typeName]: 'Test', a: 2, b: ''}
+                    }
+                ],
+                [
+                    [{[typeName]: 'Test', a: '2', b: ''}],
+                    {entities: {Test: {[specialNames.additional]: {}}}},
+                    {
+                        fillUp: {[typeName]: 'Test', a: '2', b: ''},
+                        incremental: {[typeName]: 'Test', a: '2', b: ''},
+                        '': {[typeName]: 'Test', a: '2', b: ''}
+                    }
+                ],
                 // / region array
                 [
                     [
@@ -1911,30 +2028,39 @@ registerTest(async function():Promise<void> {
                 ],
                 // // endregion
                 // / endregion
-                [[{[typeName]: 'Test1', a: 2}], {entities: {
-                    Test1: {a: {type: 'foreignKey:Test2'}},
-                    Test2: {[idName]: {type: 'number'}}
-                }}, {
-                    fillUp: {[typeName]: 'Test1', a: 2},
-                    incremental: {[typeName]: 'Test1', a: 2},
-                    '': {[typeName]: 'Test1', a: 2}
-                }],
-                [[{[typeName]: 'Test', a: 2}, {[typeName]: 'Test'}], {
-                    entities: {Test: {a: {type: 2}}}}, {
+                [
+                    [{[typeName]: 'Test1', a: 2}],
+                    {entities: {
+                        Test1: {a: {type: 'foreignKey:Test2'}},
+                        Test2: {[idName]: {type: 'number'}}
+                    }}, {
+                        fillUp: {[typeName]: 'Test1', a: 2},
+                        incremental: {[typeName]: 'Test1', a: 2},
+                        '': {[typeName]: 'Test1', a: 2}
+                    }
+                ],
+                [
+                    [{[typeName]: 'Test', a: 2}, {[typeName]: 'Test'}],
+                    {entities: {Test: {a: {type: 2}}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: 2},
                         incremental: {a: 2},
                         '': {[typeName]: 'Test', a: 2}
                     }
                 ],
-                [[{[typeName]: 'Test', a: 2}, {[typeName]: 'Test'}], {
-                    entities: {Test: {a: {type: [2, 'boolean']}}}}, {
+                [
+                    [{[typeName]: 'Test', a: 2}, {[typeName]: 'Test'}],
+                    {entities: {Test: {a: {type: [2, 'boolean']}}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: 2},
                         incremental: {a: 2},
                         '': {[typeName]: 'Test', a: 2}
                     }
                 ],
-                [[{[typeName]: 'Test', a: false}, {[typeName]: 'Test'}], {
-                    entities: {Test: {a: {type: [2, 'boolean']}}}}, {
+                [
+                    [{[typeName]: 'Test', a: false}, {[typeName]: 'Test'}],
+                    {entities: {Test: {a: {type: [2, 'boolean']}}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: false},
                         incremental: {a: false},
                         '': {[typeName]: 'Test', a: false}
@@ -1942,36 +2068,46 @@ registerTest(async function():Promise<void> {
                 ],
                 // endregion
                 // region property range
-                [[{[typeName]: 'Test'}], {
-                    entities: {Test: {a: {type: 'number', default: 2}}}}, {
+                [
+                    [{[typeName]: 'Test'}],
+                    {entities: {Test: {a: {type: 'number', default: 2}}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: 2},
                         incremental: {[typeName]: 'Test', a: 2},
                         '': {[typeName]: 'Test', a: 2}
                     }
                 ],
-                [[{[typeName]: 'Test', a: 3}, {[typeName]: 'Test'}], {
-                    entities: {Test: {a: {type: 'number', minimum: 3}}}}, {
+                [
+                    [{[typeName]: 'Test', a: 3}, {[typeName]: 'Test'}],
+                    {entities: {Test: {a: {type: 'number', minimum: 3}}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: 3},
                         incremental: {a: 3},
                         '': {[typeName]: 'Test', a: 3}
                     }
                 ],
-                [[{[typeName]: 'Test', a: 1}, {[typeName]: 'Test'}], {
-                    entities: {Test: {a: {type: 'number', maximum: 1}}}}, {
+                [
+                    [{[typeName]: 'Test', a: 1}, {[typeName]: 'Test'}],
+                    {entities: {Test: {a: {type: 'number', maximum: 1}}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: 1},
                         incremental: {a: 1},
                         '': {[typeName]: 'Test', a: 1}
                     }
                 ],
-                [[{[typeName]: 'Test', a: '123'}, {[typeName]: 'Test'}], {
-                    entities: {Test: {a: {minimumLength: 3}}}}, {
+                [
+                    [{[typeName]: 'Test', a: '123'}, {[typeName]: 'Test'}],
+                    {entities: {Test: {a: {minimumLength: 3}}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: '123'},
                         incremental: {a: '123'},
                         '': {[typeName]: 'Test', a: '123'}
                     }
                 ],
-                [[{[typeName]: 'Test', a: '1'}], {
-                    entities: {Test: {a: {maximumLength: 1}}}}, {
+                [
+                    [{[typeName]: 'Test', a: '1'}],
+                    {entities: {Test: {a: {maximumLength: 1}}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: '1'},
                         incremental: {[typeName]: 'Test', a: '1'},
                         '': {[typeName]: 'Test', a: '1'}
@@ -2092,32 +2228,32 @@ registerTest(async function():Promise<void> {
                     '': {[typeName]: 'Test'}
                 }],
                 [[{[typeName]: 'Test', [attachmentName]: {test: {
-                    // eslint-disable camelcase
+                    /* eslint-disable camelcase */
                     content_type: 'text/plain', data: ''
-                    // eslint-enable camelcase
+                    /* eslint-enable camelcase */
                 }}}], {entities: {Test: {[attachmentName]: {'.*': {
                     maximumNumber: 1
                 }}}}}, {
                     fillUp: {[typeName]: 'Test', [attachmentName]: {test: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         content_type: 'text/plain', data: ''
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }}},
                     incremental: {[typeName]: 'Test', [attachmentName]: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         test: {content_type: 'text/plain', data: ''}
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }},
                     '': {[typeName]: 'Test', [attachmentName]: {test: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         content_type: 'text/plain', data: ''
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }}}
                 }],
                 [[{[typeName]: 'Test', [attachmentName]: {'favicon.png': {
-                    // eslint-disable camelcase
+                    /* eslint-disable camelcase */
                     content_type: 'image/png', data: 'abc'
-                    // eslint-enable camelcase
+                    /* eslint-enable camelcase */
                 }}}], {entities: {Test: {[attachmentName]: {
                     '.+\\.(?:jpe?g|png|svg)': {
                         contentTypeRegularExpressionPattern:
@@ -2128,183 +2264,183 @@ registerTest(async function():Promise<void> {
                 }}}}, {
                     fillUp: {[typeName]: 'Test', [attachmentName]: {
                         'favicon.png': {
-                            // eslint-disable camelcase
+                            /* eslint-disable camelcase */
                             content_type: 'image/png', data: 'abc'
-                            // eslint-enable camelcase
+                            /* eslint-enable camelcase */
                         }
                     }},
                     incremental: {[typeName]: 'Test', [attachmentName]: {
                         'favicon.png': {
-                            // eslint-disable camelcase
+                            /* eslint-disable camelcase */
                             content_type: 'image/png', data: 'abc'
-                            // eslint-enable camelcase
+                            /* eslint-enable camelcase */
                         }
                     }},
                     '': {[typeName]: 'Test', [attachmentName]: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         'favicon.png': {content_type: 'image/png', data: 'abc'}
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }}
                 }],
                 [[{[typeName]: 'Test', [attachmentName]: {test: {
-                    // eslint-disable camelcase
+                    /* eslint-disable camelcase */
                     content_type: 'text/plain', data: ''
-                    // eslint-enable camelcase
+                    /* eslint-enable camelcase */
                 }}}], {entities: {Test: {[attachmentName]: {'.*': {
                     nullable: false
                 }}}}}, {
                     fillUp: {[typeName]: 'Test', [attachmentName]: {test: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         content_type: 'text/plain', data: ''
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }}},
                     incremental: {
                         [typeName]: 'Test',
                         [attachmentName]: {test: {
-                            // eslint-disable camelcase
+                            /* eslint-disable camelcase */
                             content_type: 'text/plain', data: ''
-                            // eslint-enable camelcase
+                            /* eslint-enable camelcase */
                         }}
                     },
                     '': {[typeName]: 'Test', [attachmentName]: {test: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         content_type: 'text/plain', data: ''
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }}}
                 }],
                 [[{[typeName]: 'Test', [attachmentName]: {
-                    // eslint-disable camelcase
+                    /* eslint-disable camelcase */
                     a: {content_type: 'text/plain', data: ''},
                     b: {content_type: 'text/plain', data: ''}
-                    // eslint-enable camelcase
+                    /* eslint-enable camelcase */
                 }}], {entities: {Test: {[attachmentName]: {'.*': {
                     maximumNumber: 2, minimumNumber: 2
                 }}}}}, {
                     fillUp: {[typeName]: 'Test', [attachmentName]: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         a: {content_type: 'text/plain', data: ''},
                         b: {content_type: 'text/plain', data: ''}
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }},
                     incremental: {[typeName]: 'Test', [attachmentName]: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         a: {content_type: 'text/plain', data: ''},
                         b: {content_type: 'text/plain', data: ''}
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }},
                     '': {[typeName]: 'Test', [attachmentName]: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         a: {content_type: 'text/plain', data: ''},
                         b: {content_type: 'text/plain', data: ''}
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }}
                 }],
                 [[{[typeName]: 'Test', [attachmentName]: {
-                    // eslint-disable camelcase
+                    /* eslint-disable camelcase */
                     a: {content_type: 'text/plain', data: ''},
                     b: {content_type: 'text/plain', data: ''}
-                    // eslint-enable camelcase
+                    /* eslint-enable camelcase */
                 }}], {entities: {Test: {[attachmentName]: {'.*': {
                     maximumNumber: 2, regularExpressionPattern: 'a|b'
                 }}}}}, {
                     fillUp: {[typeName]: 'Test', [attachmentName]: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         a: {content_type: 'text/plain', data: ''},
                         b: {content_type: 'text/plain', data: ''}
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }},
                     incremental: {[typeName]: 'Test', [attachmentName]: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         a: {content_type: 'text/plain', data: ''},
                         b: {content_type: 'text/plain', data: ''}
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }},
                     '': {[typeName]: 'Test', [attachmentName]: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         a: {content_type: 'text/plain', data: ''},
                         b: {content_type: 'text/plain', data: ''}
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }}
                 }],
                 [[{[typeName]: 'Test', [attachmentName]: {
-                    // eslint-disable camelcase
+                    /* eslint-disable camelcase */
                     a: {content_type: 'text/plain', data: ''},
                     b: {content_type: 'text/plain', data: ''}
-                    // eslint-enable camelcase
+                    /* eslint-enable camelcase */
                 }}], {entities: {Test: {[attachmentName]: {'.*': {
                     maximumNumber: 2, invertedRegularExpressionPattern: 'c|d'
                 }}}}}, {
                     fillUp: {[typeName]: 'Test', [attachmentName]: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         a: {content_type: 'text/plain', data: ''},
                         b: {content_type: 'text/plain', data: ''}
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }},
                     incremental: {[typeName]: 'Test', [attachmentName]: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         a: {content_type: 'text/plain', data: ''},
                         b: {content_type: 'text/plain', data: ''}
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }},
                     '': {[typeName]: 'Test', [attachmentName]: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         a: {content_type: 'text/plain', data: ''},
                         b: {content_type: 'text/plain', data: ''}
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }}
                 }],
                 [[{[typeName]: 'Test', [attachmentName]: {
-                    // eslint-disable camelcase
+                    /* eslint-disable camelcase */
                     a: {content_type: 'image/png', data: ''},
                     b: {content_type: 'image/jpeg', data: ''}
-                    // eslint-enable camelcase
+                    /* eslint-enable camelcase */
                 }}], {entities: {Test: {[attachmentName]: {'.*': {
                     contentTypeRegularExpressionPattern: /image\/.+/,
                     regularExpressionPattern: 'a|b'
                 }}}}}, {
                     fillUp: {[typeName]: 'Test', [attachmentName]: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         a: {content_type: 'image/png', data: ''},
                         b: {content_type: 'image/jpeg', data: ''}
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }},
                     incremental: {[typeName]: 'Test', [attachmentName]: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         a: {content_type: 'image/png', data: ''},
                         b: {content_type: 'image/jpeg', data: ''}
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }},
                     '': {[typeName]: 'Test', [attachmentName]: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         a: {content_type: 'image/png', data: ''},
                         b: {content_type: 'image/jpeg', data: ''}
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }}
                 }],
                 [[{[typeName]: 'Test', [attachmentName]: {
-                    // eslint-disable camelcase
+                    /* eslint-disable camelcase */
                     a: {content_type: 'image/png', data: ''}
-                    // eslint-enable camelcase
+                    /* eslint-enable camelcase */
                 }}, {[typeName]: 'Test', [attachmentName]: {
-                    // eslint-disable camelcase
+                    /* eslint-disable camelcase */
                     b: {content_type: 'image/jpeg', data: ''}
-                    // eslint-enable camelcase
+                    /* eslint-enable camelcase */
                 }}], {entities: {Test: {[attachmentName]: {'.*': {}}}}}, {
                     fillUp: {[typeName]: 'Test', [attachmentName]: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         a: {content_type: 'image/png', data: ''},
                         b: {content_type: 'image/jpeg', data: ''}
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }},
                     incremental: {[attachmentName]: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         a: {content_type: 'image/png', data: ''}
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }},
                     '': {[typeName]: 'Test', [attachmentName]: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         a: {content_type: 'image/png', data: ''}
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }}
                 }],
                 [[
@@ -2315,9 +2451,9 @@ registerTest(async function():Promise<void> {
                     }, {
                         [typeName]: 'Test',
                         [attachmentName]: {a: {
-                            // eslint-disable camelcase
+                            /* eslint-disable camelcase */
                             content_type: 'image/jpeg', data: ''
-                            // eslint-enable camelcase
+                            /* eslint-enable camelcase */
                         }}
                     }
                 ], {entities: {Test: {[attachmentName]: {'.*': {}}, b: {}}}}, {
@@ -2333,9 +2469,9 @@ registerTest(async function():Promise<void> {
                     }, {
                         [typeName]: 'Test',
                         [attachmentName]: {a: {
-                            // eslint-disable camelcase
+                            /* eslint-disable camelcase */
                             content_type: 'image/jpeg', data: ''
-                            // eslint-enable camelcase
+                            /* eslint-enable camelcase */
                         }}
                     }
                 ], {entities: {Test: {[attachmentName]: {'.*': {}}, b: {}}}}, {
@@ -2346,16 +2482,16 @@ registerTest(async function():Promise<void> {
                 [[
                     {[typeName]: 'Test', a: ''},
                     {[typeName]: 'Test', [attachmentName]: {a: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         content_type: 'image/jpeg', data: ''
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }}}
                 ], {entities: {Test: {[attachmentName]: {'.*': {}}, a: {}}}}, {
                     fillUp: {
                         [typeName]: 'Test', [attachmentName]: {a: {
-                            // eslint-disable camelcase
+                            /* eslint-disable camelcase */
                             content_type: 'image/jpeg', data: ''
-                            // eslint-enable camelcase
+                            /* eslint-enable camelcase */
                         }},
                         a: ''
                     },
@@ -2365,16 +2501,16 @@ registerTest(async function():Promise<void> {
                 [[
                     {[typeName]: 'Test', a: ''},
                     {[typeName]: 'Test', [attachmentName]: {a: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         content_type: 'image/jpeg', data: ''
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }}}
                 ], {entities: {Test: {[attachmentName]: {a: {}}, a: {}}}}, {
                     fillUp: {
                         [typeName]: 'Test', [attachmentName]: {a: {
-                            // eslint-disable camelcase
+                            /* eslint-disable camelcase */
                             content_type: 'image/jpeg', data: ''
-                            // eslint-enable camelcase
+                            /* eslint-enable camelcase */
                         }},
                         a: ''
                     },
@@ -2384,18 +2520,18 @@ registerTest(async function():Promise<void> {
                 [[
                     {[typeName]: 'Test', a: ''},
                     {[typeName]: 'Test', [attachmentName]: {a: {
-                        // eslint-disable camelcase
+                        /* eslint-disable camelcase */
                         content_type: 'image/jpeg', data: ''
-                        // eslint-enable camelcase
+                        /* eslint-enable camelcase */
                     }}}
                 ], {entities: {Test: {[attachmentName]: {a: {
                     minimumNumber: 0, nullable: false
                 }}, a: {}}}}, {
                     fillUp: {
                         [typeName]: 'Test', [attachmentName]: {a: {
-                            // eslint-disable camelcase
+                            /* eslint-disable camelcase */
                             content_type: 'image/jpeg', data: ''
-                            // eslint-enable camelcase
+                            /* eslint-enable camelcase */
                         }},
                         a: ''
                     },
@@ -2524,21 +2660,21 @@ registerTest(async function():Promise<void> {
             ], {entities: {Test: {b: {}}}}, {[typeName]: 'Test', b: ''}],
             [[{[typeName]: 'Test', b: ''}, {
                 [typeName]: 'Test', [attachmentName]: {
-                    // eslint-disable camelcase
+                    /* eslint-disable camelcase */
                     test: {data: '', content_type: 'text/plain'}
-                    // eslint-enable camelcase
+                    /* eslint-enable camelcase */
                 }
             }], {entities: {Test: {b: {}}}}, {[typeName]: 'Test', b: ''}],
             [
                 [{[typeName]: 'Test'}, {[typeName]: 'Test'}],
                 {entities: {Test: {[attachmentName]: {'.*': {default: {test: {
-                    // eslint-disable camelcase
+                    /* eslint-disable camelcase */
                     data: '', content_type: 'text/plain'
-                    // eslint-enable camelcase
+                    /* eslint-enable camelcase */
                 }}}}}}}, {[typeName]: 'Test', [attachmentName]: {test: {
-                    // eslint-disable camelcase
+                    /* eslint-disable camelcase */
                     data: '', content_type: 'text/plain'
-                    // eslint-enable camelcase
+                    /* eslint-enable camelcase */
                 }}}
             ]
         ]) {

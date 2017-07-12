@@ -104,11 +104,13 @@ export default class Helper {
                         models[modelName][allowedRoleName])
                 allowedModelRolesMapping[modelName].properties = {}
                 for (const name:string in models[modelName])
-                    if (models[modelName].hasOwnProperty(name) && models[
-                        modelName
-                    ][name].hasOwnProperty('allowedRoles') && models[
-                        modelName
-                    ][name].allowedRoles)
+                    if (
+                        models[modelName].hasOwnProperty(name) &&
+                        models[modelName][name].hasOwnProperty(
+                            'allowedRoles'
+                        ) &&
+                        models[modelName][name].allowedRoles
+                    )
                         // IgnoreTypeCheck
                         allowedModelRolesMapping[modelName].properties[name] =
                             Helper.normalizeAllowedModelRoles(
@@ -205,12 +207,16 @@ export default class Helper {
             if (modelConfiguration.entities.hasOwnProperty(
                 modelName
             )) {
-                if (!((new RegExp(modelConfiguration.property.name
-                    .typeRegularExpressionPattern.public
-                )).test(modelName) || (new RegExp(
-                    modelConfiguration.property.name
-                        .typeRegularExpressionPattern.private
-                )).test(modelName)))
+                if (!(
+                    new RegExp(
+                        modelConfiguration.property.name
+                            .typeRegularExpressionPattern.public
+                    ).test(modelName) ||
+                    (new RegExp(
+                        modelConfiguration.property.name
+                            .typeRegularExpressionPattern.private
+                    )).test(modelName)
+                ))
                     throw new Error(
                         'Model names have to match "' +
                         modelConfiguration.property.name

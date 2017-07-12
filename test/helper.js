@@ -107,9 +107,10 @@ registerTest(async function():Promise<void> {
         for (const test:Array<any> of [
             ['A', {A: {}}, {}],
             ['A', {A: {}}, {}],
-            ['Test', {_baseTest: {b: {}}, Test: {a: {}, [
-                specialNames.extend
-            ]: '_baseTest'}}, {a: {}, b: {}}],
+            ['Test', {
+                baseTest: {b: {}},
+                Test: {a: {}, [specialNames.extend]: '_baseTest'}
+            }, {a: {}, b: {}}],
             ['C', {A: {a: {}}, B: {b: {}}, C: {c: {}, [specialNames.extend]: [
                 'A', 'B'
             ]}}, {a: {}, b: {}, c: {}}],
@@ -148,9 +149,10 @@ registerTest(async function():Promise<void> {
             [{entities: {Test: {}}}, {Test: {}}],
             [{entities: {Test: {}}}, {Test: {}}],
             [
-                {entities: {Base: {b: {}}, Test: {a: {}, [
-                    specialNames.extend
-                ]: 'Base'}}},
+                {entities: {
+                    Base: {b: {}},
+                    Test: {a: {}, [specialNames.extend]: 'Base'}}
+                },
                 {Base: {b: {}}, Test: {a: {}, b: {}}}
             ],
             [

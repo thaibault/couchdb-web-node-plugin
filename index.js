@@ -20,7 +20,9 @@
 // region imports
 import {spawn as spawnChildProcess} from 'child_process'
 import Tools from 'clientnode'
+/* eslint-disable no-unused-vars */
 import type {File, PlainObject} from 'clientnode'
+/* eslint-enable no-unused-vars */
 import fileSystem from 'fs'
 import path from 'path'
 import PouchDB from 'pouchdb'
@@ -34,7 +36,9 @@ import type {Configuration, ServicePromises, Services} from 'web-node/type'
 import DatabaseHelper from './databaseHelper'
 import Helper from './helper'
 import type {
+    /* eslint-disable no-unused-vars */
     Constraint, Document, ModelConfiguration, Models, RetrievedDocument
+    /* eslint-enable no-unused-vars */
 } from './type'
 // endregion
 // region plugins/classes
@@ -302,12 +306,14 @@ export default class Database {
             // / endregion
             // / region authentication
             const authenticationCode:string = 'function(...parameter) {\n' +
+                /* eslint-disable indent */
                 `    return require('helper').default.authenticate(` +
                         '...parameter.concat([' + JSON.stringify(
                             Helper.determineAllowedModelRolesMapping(
-                                configuration.database.model
-                            )) + `, '${typeName}']))\n` +
+                                configuration.database.model)
+                        ) + `, '${typeName}']))\n` +
                 '}'
+                /* eslint-enable indent */
             try {
                 new Function(`return ${authenticationCode}`)
             } catch (error) {
@@ -451,7 +457,7 @@ export default class Database {
                         Tools.copyLimitedRecursively(document)
                     newDocument[
                         configuration.database.model.property.name.special
-                        .strategy
+                            .strategy
                     ] = 'migrate'
                     /*
                         Auto migration can:
