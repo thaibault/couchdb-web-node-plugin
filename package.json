@@ -58,12 +58,23 @@
     "pouchdb-find": "latest",
     "pouchdb-server": "latest",
     "rimraf": "latest",
+  },
+  "peerDependencies": {
     "web-node": "latest",
-    "weboptimizer": "latest"
   },
   "devDependencies": {
+    "babel-eslint": "latest",
     "documentation-website": "latest",
-    "source-map-support": "latest"
+    "eslint": "latest",
+    "eslint-config-google": "latest",
+    "eslint-plugin-flowtype": "latest",
+    "eslint-plugin-jsdoc": "latest",
+    "flow-bin": "latest",
+    "jsdoc": "latest",
+    "source-map-support": "latest",
+    "weboptimizer": "latest",
+    "webpack": "latest",
+    "webpack-dev-server": "latest"
   },
   "webNode": {
     "database": {
