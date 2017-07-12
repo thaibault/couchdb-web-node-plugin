@@ -60,7 +60,7 @@
     "rimraf": "latest"
   },
   "peerDependencies": {
-    "web-node": "latest",
+    "web-node": "latest"
   },
   "devDependencies": {
     "babel-eslint": "latest",
