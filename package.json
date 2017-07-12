@@ -57,7 +57,7 @@
     "pouchdb": "latest",
     "pouchdb-find": "latest",
     "pouchdb-server": "latest",
-    "rimraf": "latest",
+    "rimraf": "latest"
   },
   "peerDependencies": {
     "web-node": "latest",
