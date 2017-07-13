@@ -42,7 +42,7 @@
     "clear": "webOptimizer clear && rimraf log.txt",
     "document": "webOptimizer document",
     "lint": "webOptimizer check:type; webOptimizer lint",
-    "prepublish": "npm run build",
+    "prepare": "npm run build",
     "serve": "npm run build && webNode",
     "start": "npm run serve",
     "test": "webOptimizer test",
@@ -53,14 +53,14 @@
   },
   "dependencies": {
     "clientnode": "^1.0.220",
-    "node-fetch": "latest",
-    "pouchdb": "latest",
-    "pouchdb-find": "latest",
-    "pouchdb-server": "latest",
-    "rimraf": "latest"
+    "node-fetch": "^1.7.1",
+    "pouchdb": "^6.3.2",
+    "pouchdb-find": "^6.3.2",
+    "pouchdb-server": "^2.3.7^",
+    "rimraf": "^2.6.1",
   },
   "peerDependencies": {
-    "web-node": "latest"
+    "web-node": "^1.0.110"
   },
   "devDependencies": {
     "babel-eslint": "latest",
