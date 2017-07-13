@@ -57,7 +57,7 @@
     "pouchdb": "^6.3.2",
     "pouchdb-find": "^6.3.2",
     "pouchdb-server": "^2.3.7^",
-    "rimraf": "^2.6.1",
+    "rimraf": "^2.6.1"
   },
   "peerDependencies": {
     "web-node": "^1.0.110"
