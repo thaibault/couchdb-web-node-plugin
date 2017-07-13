@@ -355,8 +355,8 @@ export default class DatabaseHelper {
                                 forbidden: type.charAt(0).toUpperCase() +
                                 type.substring(1) +
                                 `: ` +
-                                // IgnoreTypeCheck
                                 (propertySpecification[type].description ?
+                                    // IgnoreTypeCheck
                                     new Function(
                                         ...propertyConstraintParameterNames
                                             .concat(
@@ -840,8 +840,8 @@ export default class DatabaseHelper {
                                     'data'
                                 ) &&
                                 newDocument[name][fileName].data === null
-                            // IgnoreTypeCheck
                             ) &&
+                            // IgnoreTypeCheck
                             oldDocument[name][fileName] &&
                             oldDocument[name][fileName].data !== null &&
                             new RegExp(type).test(fileName))
