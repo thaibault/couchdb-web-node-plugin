@@ -139,12 +139,12 @@
             ],
             "end": {
               "nullable": false,
-              "onUpdateExpression": "typeof newDocument[name] === 'number' && newDocument[name] >= 0 ? newDocument[name] : typeof newDocument.start === 'number' && newDocument.start >= 0 ? newDocument.start : nowUTCTimestamp",
+              "onUpdateExpression": "typeof newDocument[name] === 'number' ? newDocument[name] : typeof newDocument.start === 'number' ? newDocument.start : nowUTCTimestamp",
               "type": "DateTime"
             },
             "start": {
               "nullable": false,
-              "onUpdateExpression": "typeof newDocument[name] === 'number' && newDocument[name] >= 0 ? newDocument[name] : nowUTCTimestamp",
+              "onUpdateExpression": "typeof newDocument[name] === 'number' ? newDocument[name] : nowUTCTimestamp",
               "type": "DateTime"
             }
           },
