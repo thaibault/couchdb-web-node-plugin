@@ -138,11 +138,15 @@
               }
             ],
             "end": {
+              "declaration": "Ende des Intervals",
+              "description": "Ende",
               "nullable": false,
               "onUpdateExpression": "typeof newDocument[name] === 'number' ? newDocument[name] : typeof newDocument.start === 'number' ? newDocument.start : nowUTCTimestamp",
               "type": "DateTime"
             },
             "start": {
+              "declaration": "Start des Intervals",
+              "description": "Start",
               "nullable": false,
               "onUpdateExpression": "typeof newDocument[name] === 'number' ? newDocument[name] : nowUTCTimestamp",
               "type": "DateTime"
