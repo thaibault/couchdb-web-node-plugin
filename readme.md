@@ -12,7 +12,7 @@ License
 
 endregion -->
 
-[![Build Status](https://travis-ci.org/thaibault/clientNode.svg?branch=master)](https://travis-ci.org/thaibault/clientNode)
+[![Build Status](https://travis-ci.org/thaibault/databaseWebNodePlugin.svg?branch=master)](https://travis-ci.org/thaibault/databaseWebNodePlugin)
 
 Use case
 --------
