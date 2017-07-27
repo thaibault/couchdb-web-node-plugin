@@ -212,37 +212,41 @@ export default class Database {
             let index:number = 0
             for (const item:PlainObject of result) {
                 if (
-                    firstParameter[index].hasOwnProperty(revisionName) &&
-                    ['latest', 'upsert'].includes(
-                        firstParameter[index][revisionName]) &&
-                    item.name === 'conflict'
-                ) {
-                    conflicts.push(item)
-                    conflictingIndexes.push(index)
-                } else if (
-                    configuration.database.ignoreNoChangeError &&
-                    item.hasOwnProperty('error') &&
-                    item.error === 'forbidden' &&
-                    item.hasOwnProperty('reason') &&
-                    item.reason.startsWith('NoChange:')
-                ) {
-                    result[index] = {
-                        ok: true,
-                        id: firstParameter[index].hasOwnProperty(
-                            idName
-                        ) ? firstParameter[index][idName] : item.id
+                    typeof firstParameter[index] === 'object' &&
+                    firstParameter !== null
+                )
+                    if (
+                        firstParameter[index].hasOwnProperty(revisionName) &&
+                        ['latest', 'upsert'].includes(
+                            firstParameter[index][revisionName]) &&
+                        item.name === 'conflict'
+                    ) {
+                        conflicts.push(item)
+                        conflictingIndexes.push(index)
+                    } else if (
+                        configuration.database.ignoreNoChangeError &&
+                        item.hasOwnProperty('error') &&
+                        item.error === 'forbidden' &&
+                        item.hasOwnProperty('reason') &&
+                        item.reason.startsWith('NoChange:')
+                    ) {
+                        result[index] = {
+                            ok: true,
+                            id: firstParameter[index].hasOwnProperty(
+                                idName
+                            ) ? firstParameter[index][idName] : item.id
+                        }
+                        try {
+                            result[index].rev =
+                                firstParameter[index].hasOwnProperty(
+                                    revisionName
+                                ) ? firstParameter[index][revisionName] : (
+                                    await this.get(result[index].id)
+                                )[revisionName]
+                        } catch (error) {
+                            throw error
+                        }
                     }
-                    try {
-                        result[index].rev =
-                            firstParameter[index].hasOwnProperty(
-                                revisionName
-                            ) ? firstParameter[index][revisionName] : (
-                                await this.get(result[index].id)
-                            )[revisionName]
-                    } catch (error) {
-                        throw error
-                    }
-                }
                 index += 1
             }
             if (conflicts.length) {
