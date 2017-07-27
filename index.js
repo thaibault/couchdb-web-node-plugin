@@ -226,6 +226,7 @@ export default class Database {
                     } else if (
                         configuration.database.ignoreNoChangeError &&
                         item.name === 'forbidden' &&
+                        item.hasOwnProperty('message') &&
                         item.message.startsWith('NoChange:')
                     ) {
                         result[index] = {
