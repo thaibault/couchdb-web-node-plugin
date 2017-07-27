@@ -105,6 +105,7 @@
       "httpd/host": {
         "__evaluate__": "self.hasOwnProperty('server') ? self.server.application.hostName : '0.0.0.0'"
       },
+      "ignoreNoChangeError": true,
       "local": false,
       "log/file": "/dev/stdout",
       "log/level": "info",

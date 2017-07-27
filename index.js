@@ -195,12 +195,17 @@ export default class Database {
                 firstParameter.hasOwnProperty(idName)
             )
                 firstParameter = [firstParameter]
-            let result:Array<PlainObject>
+            let result:Array<PlainObject> = []
             try {
                 result = await nativeBulkDocs.call(
                     this, firstParameter, ...parameter)
             } catch (error) {
-                throw error
+                if (!(
+                    configuration.database.ignoreNoChangeError &&
+                    error.hasOwnProperty('forbidden') &&
+                    error.forbidden.startsWith('NoChange:')
+                ))
+                    throw error
             }
             const conflictingIndexes:Array<number> = []
             const conflicts:Array<PlainObject> = []
@@ -214,17 +219,45 @@ export default class Database {
                 ) {
                     conflicts.push(item)
                     conflictingIndexes.push(index)
+                } else if (
+                    configuration.database.ignoreNoChangeError &&
+                    item.hasOwnProperty('error') &&
+                    item.error === 'forbidden' &&
+                    item.hasOwnProperty('reason') &&
+                    item.reason.startsWith('NoChange:')
+                ) {
+                    result[index] = {
+                        ok: true,
+                        id: firstParameter[index].hasOwnProperty(
+                            idName
+                        ) ? firstParameter[index][idName] : item.id
+                    }
+                    try {
+                        result[index].rev =
+                            firstParameter[index].hasOwnProperty(
+                                revisionName
+                            ) ? firstParameter[index][revisionName] : (
+                                await this.get(result[index].id)
+                            )[revisionName]
+                    } catch (error) {
+                        throw error
+                    }
                 }
                 index += 1
             }
             if (conflicts.length) {
                 firstParameter = conflicts
-                let retriedResults:Array<PlainObject>
+                let retriedResults:Array<PlainObject> = []
                 try {
                     retriedResults = await this.bulkDocs(
                         firstParameter, ...parameter)
                 } catch (error) {
-                    throw error
+                    if (!(
+                        configuration.database.ignoreNoChangeError &&
+                        error.hasOwnProperty('forbidden') &&
+                        error.forbidden.startsWith('NoChange:')
+                    ))
+                        throw error
                 }
                 for (const retriedResult:PlainObject of retriedResults)
                     result[conflictingIndexes.shift()] = retriedResult
