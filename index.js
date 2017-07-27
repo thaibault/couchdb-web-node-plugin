@@ -206,10 +206,12 @@ export default class Database {
             const conflicts:Array<PlainObject> = []
             let index:number = 0
             for (const item:PlainObject of result) {
-                if (firstParameter[index].hasOwnProperty(revisionName) && [
-                    'latest', 'upsert'
-                ].includes(firstParameter[index][revisionName]) &&
-                item.name === 'conflict') {
+                if (
+                    firstParameter[index].hasOwnProperty(revisionName) &&
+                    ['latest', 'upsert'].includes(
+                        firstParameter[index][revisionName]) &&
+                    item.name === 'conflict'
+                ) {
                     conflicts.push(item)
                     conflictingIndexes.push(index)
                 }

@@ -90,6 +90,11 @@
         "__evaluate__": "`./${self.database.path}/database.json`"
       },
       "connector": {
+        "ajax": {
+          "timeout": {
+            "__evaluate__": "5 * 60 * 1000"
+          }
+        },
         "auto_compaction": true,
         "revs_limit": 100
       },
