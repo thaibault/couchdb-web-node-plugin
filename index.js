@@ -206,10 +206,12 @@ export default class Database {
             const conflicts:Array<PlainObject> = []
             let index:number = 0
             for (const item:PlainObject of result) {
-                if (firstParameter[index].hasOwnProperty(revisionName) && [
-                    'latest', 'upsert'
-                ].includes(firstParameter[index][revisionName]) &&
-                item.name === 'conflict') {
+                if (
+                    firstParameter[index].hasOwnProperty(revisionName) &&
+                    ['latest', 'upsert'].includes(
+                        firstParameter[index][revisionName]) &&
+                    item.name === 'conflict'
+                ) {
                     conflicts.push(item)
                     conflictingIndexes.push(index)
                 }
@@ -269,7 +271,10 @@ export default class Database {
         delete modelConfiguration.property.defaultSpecification
         delete modelConfiguration.entities
         const models:Models = Helper.extendModels(configuration.database.model)
-        if (configuration.database.model.updateValidation || configuration.debug) {
+        if (
+            configuration.database.model.updateValidation ||
+            configuration.debug
+        ) {
             const databaseHelperCode:string = await new Promise((
                 resolve:Function, reject:Function
             ):void => fileSystem.readFile(
