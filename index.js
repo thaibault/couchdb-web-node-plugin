@@ -186,7 +186,7 @@ export default class Database {
         ):Promise<Array<PlainObject>> {
             /*
                 Implements a generic retry mechanism for "upsert" and "latest"
-                updates.
+                updates and optionally supports to ignore "NoChange" errors.
             */
             if (
                 !Array.isArray(firstParameter) &&
