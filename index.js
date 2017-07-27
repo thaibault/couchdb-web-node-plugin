@@ -271,7 +271,10 @@ export default class Database {
         delete modelConfiguration.property.defaultSpecification
         delete modelConfiguration.entities
         const models:Models = Helper.extendModels(configuration.database.model)
-        if (configuration.database.model.updateValidation || configuration.debug) {
+        if (
+            configuration.database.model.updateValidation ||
+            configuration.debug
+        ) {
             const databaseHelperCode:string = await new Promise((
                 resolve:Function, reject:Function
             ):void => fileSystem.readFile(
