@@ -187,7 +187,7 @@ export default class Database {
         // region apply "latest/upsert" and ignore "NoChange" error feature
         /*
             NOTE: A "bulkDocs" plugin does not get called for every "put" and
-            "post" call so we have to wrapp runtime generated methods.
+            "post" call so we have to wrap runtime generated methods.
         */
         for (const pluginName:string of ['post', 'put']) {
             const nativeMethod:Function =
