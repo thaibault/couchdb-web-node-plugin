@@ -100,6 +100,7 @@
       },
       "createGenericFlatIndex": true,
       "couch_httpd_auth/timeout": 7200,
+      "debug": false,
       "ensureAdminPresence": true,
       "ensureSecuritySettingsPresence": true,
       "httpd/host": {

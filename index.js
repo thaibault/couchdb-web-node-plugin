@@ -172,109 +172,63 @@ export default class Database {
                             Tools.representObject(error))
                     }
         // endregion
-        // region apply latest/upsert plugin
-        const nativeBulkDocs:Function =
-            services.database.connector.prototype.bulkDocs
-        const idName:string =
-            configuration.database.model.property.name.special.id
-        const revisionName:string =
-            configuration.database.model.property.name.special.revision
-        const typeName:string =
-            configuration.database.model.property.name.special.type
-        const bulkDocs:Function = async function(
-            firstParameter:any, ...parameter:Array<any>
-        ):Promise<Array<PlainObject>> {
-            /*
-                Implements a generic retry mechanism for "upsert" and "latest"
-                updates and optionally supports to ignore "NoChange" errors.
-            */
-            if (
-                !Array.isArray(firstParameter) &&
-                typeof firstParameter === 'object' &&
-                firstParameter !== null &&
-                firstParameter.hasOwnProperty(idName)
-            )
-                firstParameter = [firstParameter]
-            let result:Array<PlainObject> = []
-            try {
-                result = await nativeBulkDocs.call(
-                    this, firstParameter, ...parameter)
-            } catch (error) {
-                if (!(
-                    configuration.database.ignoreNoChangeError &&
-                    error.hasOwnProperty('forbidden') &&
-                    error.forbidden.startsWith('NoChange:')
-                ))
-                    throw error
-            }
-            const conflictingIndexes:Array<number> = []
-            const conflicts:Array<PlainObject> = []
-            let index:number = 0
-            for (const item:PlainObject of result) {
-                if (
-                    typeof firstParameter[index] === 'object' &&
-                    firstParameter !== null
-                )
-                    if (
-                        firstParameter[index].hasOwnProperty(revisionName) &&
-                        item.name === 'conflict' &&
-                        ['latest', 'upsert'].includes(
-                            firstParameter[index][revisionName])
-                    ) {
-                        conflicts.push(item)
-                        conflictingIndexes.push(index)
-                    } else if (
-                        configuration.database.ignoreNoChangeError &&
-                        item.name === 'forbidden' &&
-                        item.hasOwnProperty('message') &&
-                        item.message.startsWith('NoChange:')
-                    ) {
-                        result[index] = {
-                            ok: true,
-                            id: firstParameter[index].hasOwnProperty(
-                                idName
-                            ) ? firstParameter[index][idName] : item.id
-                        }
-                        try {
-                            result[index].rev =
-                                firstParameter[index].hasOwnProperty(
-                                    revisionName
-                                ) ? firstParameter[index][revisionName] : (
-                                    await this.get(result[index].id)
-                                )[revisionName]
-                        } catch (error) {
-                            throw error
-                        }
-                    }
-                index += 1
-            }
-            if (conflicts.length) {
-                firstParameter = conflicts
-                let retriedResults:Array<PlainObject> = []
-                try {
-                    retriedResults = await this.bulkDocs(
-                        firstParameter, ...parameter)
-                } catch (error) {
-                    if (!(
-                        configuration.database.ignoreNoChangeError &&
-                        error.hasOwnProperty('forbidden') &&
-                        error.forbidden.startsWith('NoChange:')
-                    ))
-                        throw error
-                }
-                for (const retriedResult:PlainObject of retriedResults)
-                    result[conflictingIndexes.shift()] = retriedResult
-            }
-            return result
-        }
-        services.database.connector.plugin({bulkDocs})
-        // endregion
         services.database.connection = new services.database.connector(
             Tools.stringFormat(
                 configuration.database.url,
                 `${configuration.database.user.name}:` +
                 `${configuration.database.user.password}@`
             ) + `/${configuration.name}`, configuration.database.connector)
+        const idName:string =
+            configuration.database.model.property.name.special.id
+        const revisionName:string =
+            configuration.database.model.property.name.special.revision
+        const typeName:string =
+            configuration.database.model.property.name.special.type
+        // region apply "latest/upsert" and ignore "NoChange" error feature
+        /*
+            NOTE: A "bulkDocs" plugin does not get called for every "put" and
+            "post" call so we have to wrapp runtime generated methods.
+        */
+        for (const pluginName:string of ['post', 'put']) {
+            const nativeMethod:Function =
+                services.database.connection[pluginName].bind(
+                    services.database.connection)
+            services.database.connection[pluginName] = async function(
+                firstParameter:any, ...parameter:Array<any>
+            ):Promise<any> {
+                try {
+                    return await nativeMethod(firstParameter, ...parameter)
+                } catch (error) {
+                    if (
+                        idName in firstParameter &&
+                        configuration.database.ignoreNoChangeError &&
+                        'name' in error &&
+                        error.name === 'forbidden' &&
+                        'message' in error &&
+                        error.message.startsWith('NoChange:')
+                    ) {
+                        const result:PlainObject = {
+                            id: firstParameter[idName],
+                            ok: true
+                        }
+                        try {
+                            result.rev =
+                                revisionName in firstParameter &&
+                                !['latest', 'upsert'].includes(
+                                    firstParameter[revisionName]
+                                ) ? firstParameter[revisionName] : (
+                                    await this.get(result.id)
+                                )[revisionName]
+                        } catch (error) {
+                            throw error
+                        }
+                        return result
+                    }
+                    throw error
+                }
+            }
+        }
+        // endregion
         // region ensure presence of database security settings
         if (
             configuration.database.ensureSecuritySettingsPresence ||
@@ -621,9 +575,89 @@ export default class Database {
     ):Promise<Services> {
         if (!services.hasOwnProperty('database'))
             services.database = {}
-        if (!services.database.hasOwnProperty('connector'))
-            services.database.connector = PouchDB.plugin(PouchDBFindPlugin)
-        if (!services.database.hasOwnProperty('server')) {
+        if (!services.database.hasOwnProperty('connector')) {
+            const idName:string =
+                configuration.database.model.property.name.special.id
+            const revisionName:string =
+                configuration.database.model.property.name.special.revision
+            services.database.connector = PouchDB
+            // region apply "latest/upsert" and ignore "NoChange" error plugin
+            const nativeBulkDocs:Function =
+                services.database.connector.prototype.bulkDocs
+            services.database.connector.plugin({bulkDocs: async function(
+                firstParameter:any, ...parameter:Array<any>
+            ):Promise<Array<PlainObject>> {
+                /*
+                    Implements a generic retry mechanism for "upsert" and
+                    "latest" updates and optionally supports to ignore
+                    "NoChange" errors.
+                */
+                if (
+                    !Array.isArray(firstParameter) &&
+                    typeof firstParameter === 'object' &&
+                    firstParameter !== null &&
+                    idName in firstParameter
+                )
+                    firstParameter = [firstParameter]
+                let result:Array<PlainObject> = await nativeBulkDocs.call(
+                    this, firstParameter, ...parameter)
+                const conflictingIndexes:Array<number> = []
+                const conflicts:Array<PlainObject> = []
+                let index:number = 0
+                for (const item:PlainObject of result) {
+                    if (
+                        typeof firstParameter[index] === 'object' &&
+                        firstParameter !== null
+                    )
+                        if (
+                            revisionName in firstParameter[index] &&
+                            item.name === 'conflict' &&
+                            ['latest', 'upsert'].includes(
+                                firstParameter[index][revisionName])
+                        ) {
+                            conflicts.push(item)
+                            conflictingIndexes.push(index)
+                        } else if (
+                            idName in firstParameter[index] &&
+                            configuration.database.ignoreNoChangeError &&
+                            'name' in item &&
+                            item.name === 'forbidden' &&
+                            'message' in item &&
+                            item.message.startsWith('NoChange:')
+                        ) {
+                            result[index] = {
+                                id: firstParameter[index][idName],
+                                ok: true
+                            }
+                            try {
+                                result[index].rev =
+                                    revisionName in firstParameter[index] &&
+                                    !['latest', 'upsert'].includes(
+                                        firstParameter[index][revisionName]
+                                    ) ? firstParameter[index][revisionName] : (
+                                        await this.get(result[index].id)
+                                    )[revisionName]
+                            } catch (error) {
+                                throw error
+                            }
+                        }
+                    index += 1
+                }
+                if (conflicts.length) {
+                    firstParameter = conflicts
+                    const retriedResults:Array<PlainObject> =
+                        await this.bulkDocs(firstParameter, ...parameter)
+                    for (const retriedResult:PlainObject of retriedResults)
+                        result[conflictingIndexes.shift()] = retriedResult
+                }
+                return result
+            }})
+            // endregion
+            if (configuration.database.debug)
+                services.database.connector.debug.enable('*')
+            services.database.connector = services.database.connector.plugin(
+                PouchDBFindPlugin)
+        } if (!services.database.hasOwnProperty('server')) {
             services.database.server = {}
             // region search for binary file to start database server
             for (
