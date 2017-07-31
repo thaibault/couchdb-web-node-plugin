@@ -1,6 +1,6 @@
 {
   "name": "databasewebnodeplugin",
-  "version": "1.0.171",
+  "version": "1.0.172",
   "license": "CC-BY-3.0",
   "description": "A database server, model instance conflict handler, rest api, authentication, session management, schema validator and model relation guarantee for webNode.",
   "homepage": "http://torben.website/databaseWebNodePlugin",
@@ -258,13 +258,20 @@
       "port": 5984,
       "security": {
         "admins": {
-          "names": ["readonlyadmin"],
-          "roles": ["readonlyadmins"]
+          "names": [
+            "readonlyadmin"
+          ],
+          "roles": [
+            "readonlyadmins"
+          ]
         },
         "members": {
-          "names": ["readonlymember"],
+          "names": [
+            "readonlymember"
+          ],
           "roles": [
-            "readonlymembers", "users"
+            "readonlymembers",
+            "users"
           ]
         }
       },
