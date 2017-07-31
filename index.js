@@ -166,7 +166,7 @@ export default class Database {
                             `org.couchdb.user:${name}`)
                     } catch (error) {
                         if (
-                            hasOwnProperty('error') &&
+                            error.hasOwnProperty('error') &&
                             error.error === 'not_found'
                         )
                             try {
