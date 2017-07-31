@@ -103,6 +103,7 @@
       "debug": false,
       "ensureAdminPresence": true,
       "ensureSecuritySettingsPresence": true,
+      "ensureUserPresence": true,
       "httpd/host": {
         "__evaluate__": "self.hasOwnProperty('server') ? self.server.application.hostName : '0.0.0.0'"
       },
@@ -257,13 +258,13 @@
       "port": 5984,
       "security": {
         "admins": {
-          "names": [],
-          "roles": []
+          "names": ["readonlyadmin"],
+          "roles": ["readonlyadmins"]
         },
         "members": {
-          "names": [],
+          "names": ["readonlymember"],
           "roles": [
-            "users"
+            "readonlymembers", "users"
           ]
         }
       },

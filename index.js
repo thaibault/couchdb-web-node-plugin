@@ -145,6 +145,59 @@ export default class Database {
             }
         }
         // endregion
+        // region ensure presence of regular users
+        if (
+            configuration.database.ensureUserPresence ||
+            configuration.debug
+        )
+            for (const type:string of ['admins', 'members'])
+                for (
+                    const name:string of configuration.database.security[type]
+                        .names
+                ) {
+                    const userDatabaseConnection:Object =
+                        new services.database.connector(Tools.stringFormat(
+                            configuration.database.url,
+                            `${configuration.database.user.name}:` +
+                            `${configuration.database.user.password}@`
+                        ) + '/_users', configuration.database.connector)
+                    try {
+                        await userDatabaseConnection.get(
+                            `org.couchdb.user:${name}`)
+                    } catch (error) {
+                        if (
+                            hasOwnProperty('error') &&
+                            error.error === 'not_found'
+                        )
+                            try {
+                                await userDatabaseConnection.put({
+                                    [
+                                    configuration.database.model.property.name
+                                        .special.id
+                                    ]: `org.couchdb.user:${name}`,
+                                    name,
+                                    password: name,
+                                    roles: [].concat(
+                                        configuration.database.security[type]
+                                            .roles.includes(`${name}s`) ?
+                                            `${name}s` : []
+                                    ),
+                                    type: 'user'
+                                })
+                            } catch (error) {
+                                throw new Error(
+                                    `Couldn't create missing user "${name}":` +
+                                    ` ${Tools.representObject(error)}`)
+                            }
+                        else
+                            throw new Error(
+                                `Couldn't check for presence of user "` +
+                                `${name}": ${Tools.representObject(error)}`)
+                    } finally {
+                        userDatabaseConnection.close()
+                    }
+                }
+        // endregion
         // region apply database/rest api configuration
         if (
             configuration.database.model.updateConfiguration ||
@@ -187,7 +240,7 @@ export default class Database {
         // region apply "latest/upsert" and ignore "NoChange" error feature
         /*
             NOTE: A "bulkDocs" plugin does not get called for every "put" and
-            "post" call so we have to wrapp runtime generated methods.
+            "post" call so we have to wrap runtime generated methods.
         */
         for (const pluginName:string of ['post', 'put']) {
             const nativeMethod:Function =
@@ -309,7 +362,7 @@ export default class Database {
                         '...parameter.concat([' + JSON.stringify(
                             Helper.determineAllowedModelRolesMapping(
                                 configuration.database.model)
-                        ) + `, '${typeName}']))\n` +
+                        ) + `, ${idName}, '${typeName}']))\n` +
                 '}'
                 /* eslint-enable indent */
             try {
