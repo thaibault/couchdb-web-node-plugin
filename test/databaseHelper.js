@@ -39,10 +39,10 @@ registerTest(async function():Promise<void> {
         for (const test:Array<any> of [
             [{type: 'Test'}, {}, {roles: []}, {}, {Test: {
                 properties: {}, read: ['users'], write: []
-            }}, 'type'],
+            }}, 'id', 'type'],
             [{type: 'Test'}, {}, {roles: ['users']}, {}, {Test: {
                 properties: {}, read: [], write: []
-            }}, 'type']
+            }}, 'id', 'type']
         ])
             assert.throws(():?true => DatabaseHelper.authenticate(...test))
         for (const test:Array<any> of [
@@ -50,13 +50,13 @@ registerTest(async function():Promise<void> {
             [{}, null, {roles: ['_admin']}],
             [{}, {}, {roles: ['_admin']}, {}, {
                 properties: {}, read: [], write: []
-            }, 'type'],
+            }, 'id', 'type'],
             [{type: 'Test'}, {}, {roles: ['users']}, {}, {Test: {
                 properties: {}, read: [], write: ['users']
-            }}, 'type'],
+            }}, 'id', 'type'],
             [{type: 'Test'}, {}, {roles: ['users']}, {}, {Test: {
                 propertues: {}, read: [], write: ['users']
-            }}, 'type']
+            }}, 'id', 'type']
         ])
             assert.ok(DatabaseHelper.authenticate(...test))
     })

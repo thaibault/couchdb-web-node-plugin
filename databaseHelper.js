@@ -41,6 +41,7 @@ export default class DatabaseHelper {
      * user.
      * @param securitySettings - Database security settings.
      * @param allowedModelRolesMapping - Allowed roles for given models.
+     * @param idPropertyName - Property name indicating the id field name.
      * @param typePropertyName - Property name indicating to which model a
      * document belongs to.
      * @param read - Indicates whether a read or write of given document should
@@ -59,7 +60,7 @@ export default class DatabaseHelper {
             admins: {names: [], roles: []}, members: {names: [], roles: []}
         /* eslint-enable no-unused-vars */
         }, allowedModelRolesMapping:AllowedModelRolesMapping,
-        typePropertyName:string, read:boolean = false
+        idPropertyName:string, typePropertyName:string, read:boolean = false
     ):?true {
         /*
             NOTE: Special documents and like changes sequences are going
@@ -67,8 +68,16 @@ export default class DatabaseHelper {
         */
         if (!newDocument.hasOwnProperty(typePropertyName))
             return true
-        let allowedRoles:NormalizedAllowedRoles = {
-            properties: {}, read: ['_admin'], write: ['_admin']}
+        const allowedRoles:NormalizedAllowedRoles = {
+            properties: {},
+            read: ['_admin', 'readonlyadmin'],
+            write: ['_admin']
+        }
+        if (
+            newDocument.hasOwnProperty(idPropertyName) &&
+            newDocument[idPropertyName].startsWith('_design/')
+        )
+            allowedRoles.read.push('readonlymember')
         let userRolesDescription:string = `Current user doesn't own any role`
         const operationType:string = read ? 'read': 'write'
         if (userContext) {
@@ -81,7 +90,10 @@ export default class DatabaseHelper {
                     newDocument[typePropertyName])
             )
                 for (const type:string in allowedRoles)
-                    if (allowedRoles.hasOwnProperty(type))
+                    if (
+                        allowedRoles.hasOwnProperty(type) &&
+                        newDocument.hasOwnProperty(typePropertyName)
+                    )
                         if (Array.isArray(allowedRoles[type]))
                             allowedRoles[type] = allowedRoles[type].concat(
                                 allowedModelRolesMapping[newDocument[
