@@ -110,13 +110,13 @@ export default class DatabaseHelper {
                     if (relevantRoles.includes(userRole))
                         return true
                 // IgnoreTypeCheck
-                userRolesDescription = `Current user ${userContext.name} ` +
-                    `owns the following roles: ` +
-                    userContext.roles.join('", "')
+                userRolesDescription = `Current user "${userContext.name}" ` +
+                    `owns the following roles: "` +
+                    `${userContext.roles.join('", "')}".`
                 //
             } else
                 // IgnoreTypeCheck
-                userRolesDescription = `Current user ${userContext.name} ` +
+                userRolesDescription = `Current user "${userContext.name}" ` +
                     `doesn't own any role`
         }
         /* eslint-disable no-throw-literal */
