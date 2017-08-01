@@ -362,7 +362,7 @@ export default class Database {
                         '...parameter.concat([' + JSON.stringify(
                             Helper.determineAllowedModelRolesMapping(
                                 configuration.database.model)
-                        ) + `, ${idName}, '${typeName}']))\n` +
+                        ) + `, '${idName}', '${typeName}']))\n` +
                 '}'
                 /* eslint-enable indent */
             try {
