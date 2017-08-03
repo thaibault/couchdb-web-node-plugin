@@ -231,7 +231,7 @@ export default class Database {
                 `${configuration.database.user.name}:` +
                 `${configuration.database.user.password}@`
             ) + `/${configuration.name}`, configuration.database.connector)
-        services.database.connection.setMaxListener(Infinity)
+        services.database.connection.setMaxListeners(Infinity)
         const idName:string =
             configuration.database.model.property.name.special.id
         const revisionName:string =
