@@ -420,8 +420,8 @@ export default class DatabaseHelper {
                                 forbidden:
                                     `NestedType: Under key "${name}" isn't ` +
                                     `of type "${type}" (given "` +
-                                    `${serialize(newValue)}")` +
-                                    `${pathDescription}.`
+                                    `${serialize(newValue)}" of type ` +
+                                    `${typeof newValue})${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
                     } else if (type === 'DateTime') {
@@ -550,8 +550,9 @@ export default class DatabaseHelper {
                                 `MinimalLength: Property "${name}" must have` +
                                 ' minimal length ' +
                                 // IgnoreTypeCheck
-                                propertySpecification.minimumLength +
-                                `${pathDescription}.`
+                                `${propertySpecification.minimumLength} (` +
+                                `given ${newValue} with length ` +
+                                `${newValue.length})${pathDescription}.`
                         }
                         /* eslint-enable no-throw-literal */
                     if (![undefined, null].includes(
@@ -563,8 +564,9 @@ export default class DatabaseHelper {
                                 `MaximalLength: Property "${name}" must have` +
                                 ' maximal length ' +
                                 // IgnoreTypeCheck
-                                propertySpecification.maximumLength +
-                                `${pathDescription}.`
+                                `${propertySpecification.maximumLength} (` +
+                                `given ${newValue} with length ` +
+                                `${newValue.length})${pathDescription}.`
                         }
                         /* eslint-enable no-throw-literal */
                 }
@@ -580,8 +582,9 @@ export default class DatabaseHelper {
                                 `${propertySpecification.type}) must ` +
                                 'satisfy a minimum of ' +
                                 // IgnoreTypeCheck
-                                `${propertySpecification.minimum}` +
-                                `${pathDescription}.`
+                                `${propertySpecification.minimum} (` +
+                                `given ${newValue} with length ` +
+                                `${newValue.length})${pathDescription}.`
                         }
                         /* eslint-disable no-throw-literal */
                     if (![undefined, null].includes(
@@ -595,8 +598,9 @@ export default class DatabaseHelper {
                                 `${propertySpecification.type}) must ` +
                                 'satisfy a maximum of ' +
                                 // IgnoreTypeCheck
-                                propertySpecification.maximum +
-                                `${pathDescription}.`
+                                `${propertySpecification.maximum} (` +
+                                `given ${newValue} with length ` +
+                                `${newValue.length}${pathDescription}.`
                         }
                         /* eslint-disable no-throw-literal */
                 }
@@ -623,8 +627,8 @@ export default class DatabaseHelper {
                     [undefined, null].includes(
                         propertySpecification.regularExpressionPattern
                     ) ||
-                    // IgnoreTypeCheck
                     new RegExp(
+                        // IgnoreTypeCheck
                         propertySpecification.regularExpressionPattern
                     ).test(newValue)
                 ))
