@@ -560,26 +560,6 @@ export default class Database {
             configuration.database.model.autoMigrationPath ||
             configuration.debug
         )) {
-            for (const modelName:string in models)
-                if (models.hasOwnProperty(modelName) && (new RegExp(
-                    configuration.database.model.property.name
-                        .typeRegularExpressionPattern.public
-                )).test(modelName))
-                    for (
-                        const name:string of
-                        Helper.determineGenericIndexablePropertyNames(
-                            configuration.database.model, models[modelName]))
-                        try {
-                            await services.database.connection.createIndex({
-                                index: {
-                                    ddoc: `${modelName}-${name}-GenericIndex`,
-                                    fields: [typeName, name],
-                                    name: `${modelName}-${name}-GenericIndex`
-                                }
-                            })
-                        } catch (error) {
-                            throw error
-                        }
             let indexes:Array<PlainObject>
             try {
                 indexes = (await services.database.connection.getIndexes(
@@ -587,6 +567,40 @@ export default class Database {
             } catch (error) {
                 throw error
             }
+            for (const modelName:string in models)
+                if (models.hasOwnProperty(modelName) && (new RegExp(
+                    configuration.database.model.property.name
+                        .typeRegularExpressionPattern.public
+                )).test(modelName))
+                    for (
+                        const propertyName:string of
+                        Helper.determineGenericIndexablePropertyNames(
+                            configuration.database.model, models[modelName])
+                    ) {
+                        const name:string =
+                            `${modelName}-${propertyName}-GenericIndex`
+                        let position:number = -1
+                        for (const index:PlainObject of indexes) {
+                            position += 1
+                            if (index.name === name)
+                                break
+                        }
+                        if (position === -1)
+                            try {
+                                await services.database.connection.createIndex(
+                                    {
+                                        index: {
+                                            ddoc: name,
+                                            fields: [typeName, propertyName],
+                                            name
+                                        }
+                                    })
+                            } catch (error) {
+                                throw error
+                            }
+                        else
+                            indexes.slice(position, 1)
+                    }
             for (const index:PlainObject of indexes)
                 if (index.name.endsWith('-GenericIndex')) {
                     let exists:boolean = false
