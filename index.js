@@ -94,10 +94,7 @@ export default class Database {
         if (services.database.hasOwnProperty('connection'))
             return {promise}
         // region ensure presence of global admin user
-        if (
-            configuration.database.ensureAdminPresence ||
-            configuration.debug
-        ) {
+        if (configuration.database.ensureAdminPresence) {
             const unauthenticatedUserDatabaseConnection:PouchDB =
                 new services.database.connector(
                     `${Tools.stringFormat(configuration.database.url, '')}/` +
@@ -146,10 +143,7 @@ export default class Database {
         }
         // endregion
         // region ensure presence of regular users
-        if (
-            configuration.database.ensureUserPresence ||
-            configuration.debug
-        )
+        if (configuration.database.ensureUserPresence)
             for (const type:string of ['admins', 'members'])
                 for (
                     const name:string of configuration.database.security[type]
@@ -199,10 +193,7 @@ export default class Database {
                 }
         // endregion
         // region apply database/rest api configuration
-        if (
-            configuration.database.model.updateConfiguration ||
-            configuration.debug
-        )
+        if (configuration.database.model.updateConfiguration)
             for (const configurationPath:string in configuration.database)
                 if (configuration.database.hasOwnProperty(
                     configurationPath
@@ -284,10 +275,7 @@ export default class Database {
         }
         // endregion
         // region ensure presence of database security settings
-        if (
-            configuration.database.ensureSecuritySettingsPresence ||
-            configuration.debug
-        )
+        if (configuration.database.ensureSecuritySettingsPresence)
             try {
                 /*
                     NOTE: As a needed side effect: This clears preexisting
@@ -315,10 +303,7 @@ export default class Database {
         delete modelConfiguration.property.defaultSpecification
         delete modelConfiguration.entities
         const models:Models = Helper.extendModels(configuration.database.model)
-        if (
-            configuration.database.model.updateValidation ||
-            configuration.debug
-        ) {
+        if (configuration.database.model.updateValidation) {
             const databaseHelperCode:string = await new Promise((
                 resolve:Function, reject:Function
             ):void => fileSystem.readFile(
@@ -449,10 +434,7 @@ export default class Database {
             // endregion
         }
         // region ensure all constraints to have a consistent initial state
-        if (
-            configuration.database.model.autoMigrationPath ||
-            configuration.debug
-        ) {
+        if (configuration.database.model.autoMigrationPath) {
             if (await Tools.isDirectory(path.resolve(
                 configuration.database.model.autoMigrationPath
             )))
@@ -556,10 +538,10 @@ export default class Database {
         }
         // endregion
         // region create/remove needed/unneeded generic indexes
-        if (configuration.database.createGenericFlatIndex && (
-            configuration.database.model.autoMigrationPath ||
-            configuration.debug
-        )) {
+        if (
+            configuration.database.createGenericFlatIndex &&
+            configuration.database.model.autoMigrationPath
+        ) {
             let indexes:Array<PlainObject>
             try {
                 indexes = (await services.database.connection.getIndexes(
