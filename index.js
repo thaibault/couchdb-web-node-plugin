@@ -561,13 +561,16 @@ export default class Database {
                     ) {
                         const name:string =
                             `${modelName}-${propertyName}-GenericIndex`
-                        let position:number = -1
+                        let foundPosition:number = -1
+                        let position:number = 0
                         for (const index:PlainObject of indexes) {
-                            position += 1
-                            if (index.name === name)
+                            if (index.name === name) {
+                                foundPosition = position
                                 break
+                            }
+                            position += 1
                         }
-                        if (position === -1)
+                        if (foundPosition === -1)
                             try {
                                 await services.database.connection.createIndex(
                                     {
