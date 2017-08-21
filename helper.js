@@ -135,6 +135,7 @@ export default class Helper {
         const specialNames:PlainObject =
             modelConfiguration.property.name.special
         return Object.keys(model).filter((name:string):boolean => !(
+            model[name].hasOwnProperty('noIndex') && model[name].noIndex ||
             modelConfiguration.property.name.reserved.concat(
                 specialNames.additional,
                 specialNames.allowedRole,
