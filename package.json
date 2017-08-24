@@ -248,8 +248,7 @@
               "private": "^_[a-z][A-Za-z0-9]+$"
             },
             "validatedDocumentsCache": "_validatedDocuments"
-          },
-          "namesToIgnoreForIndex": []
+          }
         },
         "updateConfiguration": true,
         "updateStrategy": "fillUp",
