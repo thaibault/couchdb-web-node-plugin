@@ -182,6 +182,7 @@
             "_additional": {
               "declaration": "Templatedaten",
               "description": "Values for template specific placeholder.",
+              "editor": "(advanced)",
               "type": "string"
             },
             "parameter": {
