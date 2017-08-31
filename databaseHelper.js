@@ -393,6 +393,15 @@ export default class DatabaseHelper {
                 const types:Array<any> = Array.isArray(
                     propertySpecification.type
                 ) ? propertySpecification.type : [propertySpecification.type]
+                // Derive nested missing explicit type definition if possible.
+                if (
+                    typeof newValue === 'object' &&
+                    Object.getPrototypeOf(newValue) === Object.prototype &&
+                    !newValue.hasOwnProperty(specialNames.type) &&
+                    types.length === 1 &&
+                    models.hasOwnProperty(types[0])
+                )
+                    newValue[specialNames.type] = types[0]
                 let typeMatched:boolean = false
                 for (const type:string of types)
                     if (models.hasOwnProperty(type)) {
@@ -1209,16 +1218,35 @@ export default class DatabaseHelper {
                                         propertySpecificationCopy[
                                             key
                                         // IgnoreTypeCheck
-                                        ] = propertySpecification[
+                                        ] = [propertySpecification[
                                             key
                                         ].substring(
                                             0,
                                             // IgnoreTypeCheck
                                             propertySpecification.type.length -
-                                                '[]'.length)
+                                                '[]'.length)]
                                 else
                                     propertySpecificationCopy[key] =
                                         propertySpecification[key]
+                        /*
+                            Derive nested missing explicit type definition if
+                            possible.
+                        */
+                        if (
+                            typeof propertySpecificationCopy.type
+                                .length === 1 &&
+                            models.hasOwnProperty(
+                                propertySpecificationCopy.type[0])
+                        )
+                            for (const value:any of newDocument[name].slice())
+                                if (
+                                    typeof value === 'object' &&
+                                    Object.getPrototypeOf(value) ===
+                                        Object.prototype &&
+                                    !value.hasOwnProperty(specialNames.type)
+                                )
+                                    value[specialNames.type] =
+                                        propertySpecificationCopy.type[0]
                         let index:number = 0
                         for (const value:any of newDocument[name].slice()) {
                             newDocument[name][index] = checkPropertyContent(

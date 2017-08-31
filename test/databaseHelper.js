@@ -387,8 +387,8 @@ registerTest(async function():Promise<void> {
                     'NotNull'
                 ],
                 [
-                    [{[typeName]: 'Test', a: {}}],
-                    {entities: {Test: {a: {type: 'Test'}}}}, 'NestedType'
+                    [{[typeName]: 'Test', a: {type: 'Test'}}],
+                    {entities: {NotTest: {a: {type: 'Test'}}}}, 'Model'
                 ],
                 [
                     [{
@@ -1709,6 +1709,32 @@ registerTest(async function():Promise<void> {
                         '': {[typeName]: 'Test', a: [2, '2']}
                     }
                 ],
+                [
+                    [{[typeName]: 'Test', a: [{b: ''}]}],
+                    {entities: {Test: {a: {type: 'Test[]'}, b: {}}}}, {
+                        fillUp: {
+                            [typeName]: 'Test',
+                            a: [{
+                                [typeName]: 'Test',
+                                b: ''
+                            }]
+                        },
+                        incremental: {
+                            [typeName]: 'Test',
+                            a: [{
+                                [typeName]: 'Test',
+                                b: ''
+                            }]
+                        },
+                        '': {
+                            [typeName]: 'Test',
+                            a: [{
+                                [typeName]: 'Test',
+                                b: ''
+                            }]
+                        }
+                    }
+                ],
                 // / endregion
                 // / region nested property
                 // // region property type
@@ -1810,6 +1836,24 @@ registerTest(async function():Promise<void> {
                     },
                     '': {[typeName]: 'Test', a: {[typeName]: 'Test', b: 2}}
                 }],
+                [
+                    [{[typeName]: 'Test', a: {b: 'b'}}],
+                    {entities: {Test: {a: {type: 'Test'}, b: {}}}},
+                    {
+                        fillUp: {
+                            [typeName]: 'Test',
+                            a: {[typeName]: 'Test', b: 'b'}
+                        },
+                        incremental: {
+                            [typeName]: 'Test',
+                            a: {[typeName]: 'Test', b: 'b'}
+                        },
+                        '': {
+                            [typeName]: 'Test',
+                            a: {[typeName]: 'Test', b: 'b'}
+                        }
+                    }
+                ],
                 // // endregion
                 // // region property existents
                 [[
