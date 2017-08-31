@@ -1233,9 +1233,11 @@ export default class DatabaseHelper {
                             possible.
                         */
                         if (
-                            typeof propertySpecificationCopy.type
-                                .length === 1 &&
+                            // IgnoreTypeCheck
+                            typeof propertySpecificationCopy.type.length ===
+                                1 &&
                             models.hasOwnProperty(
+                            // IgnoreTypeCheck
                                 propertySpecificationCopy.type[0])
                         )
                             for (const value:any of newDocument[name].slice())
@@ -1246,6 +1248,7 @@ export default class DatabaseHelper {
                                     !value.hasOwnProperty(specialNames.type)
                                 )
                                     value[specialNames.type] =
+                                        // IgnoreTypeCheck
                                         propertySpecificationCopy.type[0]
                         let index:number = 0
                         for (const value:any of newDocument[name].slice()) {
