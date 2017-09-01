@@ -181,13 +181,20 @@
           "_scope": {
             "_additional": {
               "declaration": "Templatedata",
-              "description": "Values for template specific placeholder.",
-              "type": "string"
+              "description": "Values for template and language specific placeholder.",
+              "type": "_stringMapping"
             },
             "parameter": {
               "declaration": "Templateparameter",
               "description": "Template specific option values.",
               "type": "any"
+            }
+          },
+          "_stringMapping": {
+            "_additional": {
+              "declaration": "Templatedata",
+              "description": "Values for template specific placeholder.",
+              "type": "string"
             }
           },
           "_userTrackable": {
