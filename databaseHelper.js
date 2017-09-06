@@ -187,9 +187,10 @@ export default class DatabaseHelper {
             ].delete(`${newDocument[idName]}-${newDocument[revisionName]}`)
             return newDocument
         }
-        if (newDocument.hasOwnProperty(revisionName) && [
-            'latest', 'upsert'
-        ].includes(newDocument[revisionName]))
+        if (
+            newDocument.hasOwnProperty(revisionName) &&
+            ['latest', 'upsert'].includes(newDocument[revisionName])
+        )
             if (oldDocument && oldDocument.hasOwnProperty(revisionName))
                 newDocument[revisionName] = oldDocument[revisionName]
             else if (newDocument[revisionName] === 'latest')
@@ -760,6 +761,11 @@ export default class DatabaseHelper {
                     typeof newDocument[name] === 'string'
                 )
                     newDocument[name] = newDocument[name].trim()
+                if (
+                    propertySpecification.emptyEqualsToNull &&
+                    newDocument[name] === ''
+                )
+                    newDocument[name] = null
                 for (const type:string of [
                     'onUpdateExpression', 'onUpdateExecution'
                 ])
@@ -842,9 +848,10 @@ export default class DatabaseHelper {
                 // region run hooks and check for presence of needed data
                 if (specialNames.attachment === name)
                     for (const type:string in model[name]) {
-                        if (!newDocument.hasOwnProperty(name) || newDocument[
-                            name
-                        ] === null)
+                        if (
+                            !newDocument.hasOwnProperty(name) ||
+                            newDocument[name] === null
+                        )
                             newDocument[name] = {}
                         if (oldDocument && !oldDocument.hasOwnProperty(name))
                             oldDocument[name] = {}
@@ -953,16 +960,19 @@ export default class DatabaseHelper {
                                     `${name}"${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
-                        if (!newDocument.hasOwnProperty(
-                            name
-                        ) && oldDocument && oldDocument.hasOwnProperty(name))
+                        if (
+                            !newDocument.hasOwnProperty(name) &&
+                            oldDocument &&
+                            oldDocument.hasOwnProperty(name)
+                        )
                             if (updateStrategy === 'fillUp')
                                 newDocument[name] = oldDocument[name]
                             else if (!updateStrategy)
                                 somethingChanged = true
-                    } else if (!newDocument.hasOwnProperty(
-                        name
-                    ) || newDocument[name] === null)
+                    } else if (
+                        !newDocument.hasOwnProperty(name) ||
+                        newDocument[name] === null
+                    )
                         if (oldDocument && oldDocument.hasOwnProperty(name)) {
                             if (updateStrategy === 'fillUp')
                                 newDocument[name] = oldDocument[name]
@@ -1079,7 +1089,8 @@ export default class DatabaseHelper {
                         // endregion
                         // region mutable
                         if (
-                            !propertySpecification.mutable && oldDocument &&
+                            !propertySpecification.mutable &&
+                            oldDocument &&
                             oldDocument.hasOwnProperty(name)
                         )
                             if (serialize(newDocument[name]) === serialize(

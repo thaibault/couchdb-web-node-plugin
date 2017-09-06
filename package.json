@@ -182,6 +182,7 @@
             "_additional": {
               "declaration": "Templatedata",
               "description": "Values for template and language specific placeholder.",
+              "emptyEqualsToNull": false,
               "type": "_stringMapping"
             },
             "parameter": {
