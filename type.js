@@ -39,6 +39,7 @@ export type PropertySpecification = {
     constraintExpression?:?Constraint;
     contentTypeRegularExpressionPattern?:?string;
     default?:any;
+    emptyEqualsToNull?:boolean;
     index?:?boolean;
     invertedContentTypeRegularExpressionPattern?:?string;
     invertedRegularExpressionPattern?:?string;

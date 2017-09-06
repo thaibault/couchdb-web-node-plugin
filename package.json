@@ -214,6 +214,7 @@
             "constraintExpression": null,
             "contentTypeRegularExpressionPattern": null,
             "default": null,
+            "emptyEqualsToNull": true,
             "invertedContentTypeRegularExpressionPattern": null,
             "invertedRegularExpressionPattern": null,
             "maximum": null,
