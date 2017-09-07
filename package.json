@@ -182,6 +182,7 @@
             "_additional": {
               "declaration": "Templatedata",
               "description": "Values for template and language specific placeholder.",
+              "emptyEqualsToNull": false,
               "type": "_stringMapping"
             },
             "parameter": {
@@ -214,6 +215,7 @@
             "constraintExpression": null,
             "contentTypeRegularExpressionPattern": null,
             "default": null,
+            "emptyEqualsToNull": true,
             "invertedContentTypeRegularExpressionPattern": null,
             "invertedRegularExpressionPattern": null,
             "maximum": null,
