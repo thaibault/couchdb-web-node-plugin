@@ -761,10 +761,11 @@ export default class DatabaseHelper {
                     typeof newDocument[name] === 'string'
                 )
                     newDocument[name] = newDocument[name].trim()
-                if (
-                    propertySpecification.emptyEqualsToNull &&
-                    newDocument[name] === ''
-                )
+                if (propertySpecification.emptyEqualsToNull && (
+                    newDocument[name] === '' ||
+                    Array.isArray(newDocument[name]) &&
+                    newDocument[name].length === 0
+                ))
                     newDocument[name] = null
                 for (const type:string of [
                     'onUpdateExpression', 'onUpdateExecution'

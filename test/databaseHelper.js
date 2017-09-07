@@ -114,6 +114,13 @@ registerTest(async function():Promise<void> {
                     [specialNames.strategy]: 'migrate',
                     a: ''
                 }, {[typeName]: 'Test', a: ''}], {entities: {Test: {a: {
+                    emptyEqualsToNull: false
+                }}}}, 'NoChange'],
+                [[{
+                    [typeName]: 'Test',
+                    [specialNames.strategy]: 'migrate',
+                    a: ''
+                }, {[typeName]: 'Test'}], {entities: {Test: {a: {
                 }}}}, 'NoChange'],
                 [[
                     {[typeName]: 'Test', [specialNames.strategy]: 'migrate'},
@@ -128,8 +135,13 @@ registerTest(async function():Promise<void> {
                     {[typeName]: 'Test', a: 'a '},
                     {[typeName]: 'Test', a: 'a'}
                 ], {entities: {Test: {a: {}}}}, 'NoChange'],
-                [[{[typeName]: 'Test', a: []}, {[typeName]: 'Test', a: []}], {
+                [[{[typeName]: 'Test', a: []}, {[typeName]: 'Test'}], {
                     entities: {Test: {a: {type: 'integer[]'}}}
+                }, 'NoChange'],
+                [[{[typeName]: 'Test', a: []}, {[typeName]: 'Test', a: []}], {
+                    entities: {Test: {a: {
+                        type: 'integer[]', emptyEqualsToNull: false
+                    }}}
                 }, 'NoChange'],
                 [[{[typeName]: 'Test', a: [1, 2]}, {[typeName]: 'Test', a: [
                     1, 2
@@ -341,9 +353,11 @@ registerTest(async function():Promise<void> {
                     }}}, 'MinimumArrayLength'
                 ],
                 [
-                    [{[typeName]: 'Test', a: []}], {entities: {Test: {
-                        a: {type: 'integer[]', minimumNumber: 1}
-                    }}}, 'MinimumArrayLength'
+                    [{[typeName]: 'Test', a: []}], {entities: {Test: {a: {
+                        emptyEqualsToNull: false,
+                        minimumNumber: 1,
+                        type: 'integer[]'
+                    }}}}, 'MinimumArrayLength'
                 ],
                 [
                     [{[typeName]: 'Test', a: [1]}], {entities: {Test: {
@@ -1144,15 +1158,15 @@ registerTest(async function():Promise<void> {
                     '': {[typeName]: 'Test', a: '2'}
                 }],
                 [[
-                    {[typeName]: 'Test', a: '', b: 'b'},
-                    {[typeName]: 'Test', a: ''}
+                    {[typeName]: 'Test', a: '3', b: 'b'},
+                    {[typeName]: 'Test', a: '3'}
                 ], {entities: {Test: {
                     a: {onCreateExecution: `return '2'`},
                     b: {}
                 }}}, {
-                    fillUp: {[typeName]: 'Test', a: '', b: 'b'},
+                    fillUp: {[typeName]: 'Test', a: '3', b: 'b'},
                     incremental: {b: 'b'},
-                    '': {[typeName]: 'Test', a: '', b: 'b'}
+                    '': {[typeName]: 'Test', a: '3', b: 'b'}
                 }],
                 // / endregion
                 // / region on update
@@ -1175,7 +1189,7 @@ registerTest(async function():Promise<void> {
                     {[typeName]: 'Test', a: '2'}
                 ], {entities: {Test: {
                     a: {onUpdateExpression: `'2'`},
-                    b: {}
+                    b: {emptyEqualsToNull: false}
                 }}}, {
                     fillUp: {[typeName]: 'Test', a: '2', b: ''},
                     incremental: {b: ''},
@@ -1241,7 +1255,7 @@ registerTest(async function():Promise<void> {
                         `(newDocument[name].data += ' footer') && ` +
                         'newDocument[name]'
                     }},
-                    a: {}
+                    a: {emptyEqualsToNull: false}
                 }}}, {
                     fillUp: {[typeName]: 'Test', a: ''},
                     incremental: {a: ''},
@@ -1253,7 +1267,9 @@ registerTest(async function():Promise<void> {
                 [[
                     {[typeName]: 'Test', a: 'b', b: ''},
                     {[typeName]: 'Test', a: 'b'}
-                ], {entities: {Test: {a: {writable: false}, b: {}}}}, {
+                ], {entities: {Test: {a: {writable: false}, b: {
+                    emptyEqualsToNull: false
+                }}}}, {
                     fillUp: {[typeName]: 'Test', a: 'b', b: ''},
                     incremental: {b: ''},
                     '': {[typeName]: 'Test', a: 'b', b: ''}
@@ -1263,7 +1279,7 @@ registerTest(async function():Promise<void> {
                     {[typeName]: 'Test'}
                 ], {entities: {Test: {
                     a: {writable: false},
-                    b: {}
+                    b: {emptyEqualsToNull: false}
                 }}}, {
                     fillUp: {[typeName]: 'Test', b: ''},
                     incremental: {b: ''},
@@ -1282,7 +1298,7 @@ registerTest(async function():Promise<void> {
                 [[
                     {[typeName]: 'Test', a: null}, {[typeName]: 'Test', a: ''}
                 ], {
-                    entities: {Test: {a: {}}}
+                    entities: {Test: {a: {emptyEqualsToNull: false}}}
                 }, {
                     fillUp: {[typeName]: 'Test'},
                     incremental: {},
@@ -1352,7 +1368,7 @@ registerTest(async function():Promise<void> {
                         {[typeName]: 'Test', a: '2 ', b: ''},
                         {[typeName]: 'Test', a: '2'}
                     ],
-                    {entities: {Test: {a: {}, b: {}}}},
+                    {entities: {Test: {a: {}, b: {emptyEqualsToNull: false}}}},
                     {
                         fillUp: {[typeName]: 'Test', a: '2', b: ''},
                         incremental: {b: ''},
@@ -1392,7 +1408,10 @@ registerTest(async function():Promise<void> {
                         {[typeName]: 'Test', a: true, b: ''},
                         {[typeName]: 'Test', a: true}
                     ],
-                    {entities: {Test: {a: {type: 'boolean'}, b: {}}}},
+                    {entities: {Test: {
+                        a: {type: 'boolean'},
+                        b: {emptyEqualsToNull: false}
+                    }}},
                     {
                         fillUp: {[typeName]: 'Test', a: true, b: ''},
                         incremental: {b: ''},
@@ -1404,7 +1423,10 @@ registerTest(async function():Promise<void> {
                         {[typeName]: 'Test', a: 1, b: ''},
                         {[typeName]: 'Test', a: 1}
                     ],
-                    {entities: {Test: {a: {type: 'DateTime'}, b: {}}}},
+                    {entities: {Test: {
+                        a: {type: 'DateTime'},
+                        b: {emptyEqualsToNull: false}
+                    }}},
                     {
                         fillUp: {[typeName]: 'Test', a: 1, b: ''},
                         incremental: {b: ''},
@@ -1423,7 +1445,9 @@ registerTest(async function():Promise<void> {
                             1970, 0, 1
                         )).getTimezoneOffset()
                     )}],
-                    {entities: {Test: {a: {type: 'DateTime'}, b: {}}}},
+                    {entities: {Test: {a: {type: 'DateTime'}, b: {
+                        emptyEqualsToNull: false
+                    }}}},
                     {
                         fillUp: {[typeName]: 'Test', a: 0, b: ''},
                         incremental: {b: ''},
@@ -1443,7 +1467,9 @@ registerTest(async function():Promise<void> {
                             1970, 0, 1
                         )).getTimezoneOffset())).toUTCString()
                     }],
-                    {entities: {Test: {a: {type: 'DateTime'}, b: {}}}},
+                    {entities: {Test: {a: {type: 'DateTime'}, b: {
+                        emptyEqualsToNull: false
+                    }}}},
                     {
                         fillUp: {[typeName]: 'Test', a: 0, b: ''},
                         incremental: {b: ''},
@@ -1460,7 +1486,9 @@ registerTest(async function():Promise<void> {
                     }, {[typeName]: 'Test', a: new Date(1970, 0, 1, 0, -1 * (
                         new Date(1970, 0, 1)
                     ).getTimezoneOffset()).toLocaleString()}],
-                    {entities: {Test: {a: {type: 'DateTime'}, b: {}}}},
+                    {entities: {Test: {a: {type: 'DateTime'}, b: {
+                        emptyEqualsToNull: false
+                    }}}},
                     {
                         fillUp: {[typeName]: 'Test', a: 0, b: ''},
                         incremental: {b: ''},
@@ -1478,7 +1506,9 @@ registerTest(async function():Promise<void> {
                     {[typeName]: 'Test', a: new Date(1970, 0, 1, 0, -1 * (
                         new Date(1970, 0, 1)
                     ).getTimezoneOffset(), 1, 0)}],
-                    {entities: {Test: {a: {type: 'DateTime'}, b: {}}}},
+                    {entities: {Test: {a: {type: 'DateTime'}, b: {
+                        emptyEqualsToNull: false
+                    }}}},
                     {
                         fillUp: {[typeName]: 'Test', a: 1, b: ''},
                         incremental: {b: ''},
@@ -1495,7 +1525,9 @@ registerTest(async function():Promise<void> {
                     }, {[typeName]: 'Test', a: new Date(1970, 0, 1, 0, -1 * (
                         new Date(1970, 0, 1)
                     ).getTimezoneOffset(), 2).toUTCString()}],
-                    {entities: {Test: {a: {type: 'DateTime'}, b: {}}}}, {
+                    {entities: {Test: {a: {type: 'DateTime'}, b: {
+                        emptyEqualsToNull: false
+                    }}}}, {
                         fillUp: {[typeName]: 'Test', a: 2, b: ''},
                         incremental: {b: ''},
                         '': {[typeName]: 'Test', a: 2, b: ''}
@@ -1511,7 +1543,9 @@ registerTest(async function():Promise<void> {
                     }, {[typeName]: 'Test', a: new Date(1970, 0, 1, 5, -1 * (
                         new Date(1970, 0, 1)
                     ).getTimezoneOffset(), 2).toISOString()}],
-                    {entities: {Test: {a: {type: 'DateTime'}, b: {}}}},
+                    {entities: {Test: {a: {type: 'DateTime'}, b: {
+                        emptyEqualsToNull: false
+                    }}}},
                     {
                         fillUp: {
                             [typeName]: 'Test',
@@ -1529,7 +1563,7 @@ registerTest(async function():Promise<void> {
                 [
                     [{[typeName]: 'Test', a: 2, b: ''}],
                     {entities: {Test: {[specialNames.additional]: {
-                        type: 'any'
+                        type: 'any', emptyEqualsToNull: false
                     }}}},
                     {
                         fillUp: {[typeName]: 'Test', a: 2, b: ''},
@@ -1539,7 +1573,9 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{[typeName]: 'Test', a: '2', b: ''}],
-                    {entities: {Test: {[specialNames.additional]: {}}}},
+                    {entities: {Test: {[specialNames.additional]: {
+                        emptyEqualsToNull: false
+                    }}}},
                     {
                         fillUp: {[typeName]: 'Test', a: '2', b: ''},
                         incremental: {[typeName]: 'Test', a: '2', b: ''},
@@ -1552,7 +1588,9 @@ registerTest(async function():Promise<void> {
                         {[typeName]: 'Test', a: ['2'], b: ''},
                         {[typeName]: 'Test', a: ['2']}
                     ],
-                    {entities: {Test: {a: {type: 'string[]'}, b: {}}}}, {
+                    {entities: {Test: {a: {type: 'string[]'}, b: {
+                        emptyEqualsToNull: false
+                    }}}}, {
                         fillUp: {[typeName]: 'Test', a: ['2'], b: ''},
                         incremental: {b: ''},
                         '': {[typeName]: 'Test', a: ['2'], b: ''}
@@ -1591,7 +1629,9 @@ registerTest(async function():Promise<void> {
                 [[
                     {[typeName]: 'Test', a: null, b: ''},
                     {[typeName]: 'Test'}
-                ], {entities: {Test: {a: {type: 'string[]'}, b: {}}}}, {
+                ], {entities: {Test: {a: {type: 'string[]'}, b: {
+                    emptyEqualsToNull: false
+                }}}}, {
                     fillUp: {[typeName]: 'Test', b: ''},
                     incremental: {b: ''},
                     '': {[typeName]: 'Test', b: ''}
@@ -1630,7 +1670,9 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{[typeName]: 'Test', a: []}, {[typeName]: 'Test'}],
-                    {entities: {Test: {a: {type: 'DateTime[]'}}}}, {
+                    {entities: {Test: {a: {
+                        emptyEqualsToNull: false, type: 'DateTime[]'
+                    }}}}, {
                         fillUp: {[typeName]: 'Test', a: []},
                         incremental: {a: []},
                         '': {[typeName]: 'Test', a: []}
@@ -1686,9 +1728,9 @@ registerTest(async function():Promise<void> {
                     [{[typeName]: 'Test', a: []}], {entities: {Test: {a: {
                         type: 'integer[]', maximum: 2, maximumNumber: 0
                     }}}}, {
-                        fillUp: {[typeName]: 'Test', a: []},
-                        incremental: {[typeName]: 'Test', a: []},
-                        '': {[typeName]: 'Test', a: []}
+                        fillUp: {[typeName]: 'Test'},
+                        incremental: {[typeName]: 'Test'},
+                        '': {[typeName]: 'Test'}
                     }
                 ],
                 [
@@ -1710,27 +1752,27 @@ registerTest(async function():Promise<void> {
                     }
                 ],
                 [
-                    [{[typeName]: 'Test', a: [{b: ''}]}],
+                    [{[typeName]: 'Test', a: [{b: 'b'}]}],
                     {entities: {Test: {a: {type: 'Test[]'}, b: {}}}}, {
                         fillUp: {
                             [typeName]: 'Test',
                             a: [{
                                 [typeName]: 'Test',
-                                b: ''
+                                b: 'b'
                             }]
                         },
                         incremental: {
                             [typeName]: 'Test',
                             a: [{
                                 [typeName]: 'Test',
-                                b: ''
+                                b: 'b'
                             }]
                         },
                         '': {
                             [typeName]: 'Test',
                             a: [{
                                 [typeName]: 'Test',
-                                b: ''
+                                b: 'b'
                             }]
                         }
                     }
@@ -1739,46 +1781,46 @@ registerTest(async function():Promise<void> {
                 // / region nested property
                 // // region property type
                 [[
-                    {[typeName]: 'Test', a: {[typeName]: 'Test'}, b: ''},
+                    {[typeName]: 'Test', a: {[typeName]: 'Test'}, b: 'b'},
                     {[typeName]: 'Test', a: {[typeName]: 'Test'}}
                 ], {entities: {Test: {a: {type: 'Test'}, b: {}}}}, {
                     fillUp: {
                         [typeName]: 'Test',
                         a: {[typeName]: 'Test'},
-                        b: ''
+                        b: 'b'
                     },
-                    incremental: {b: ''},
+                    incremental: {b: 'b'},
                     '': {
                         [typeName]: 'Test',
                         a: {[typeName]: 'Test'},
-                        b: ''
+                        b: 'b'
                     }
                 }],
                 [[
-                    {[typeName]: 'Test', a: null, b: ''},
+                    {[typeName]: 'Test', a: null, b: 'b'},
                     {[typeName]: 'Test'}
                 ], {entities: {Test: {a: {type: 'Test'}, b: {}}}}, {
-                    fillUp: {[typeName]: 'Test', b: ''},
-                    incremental: {b: ''},
-                    '': {[typeName]: 'Test', b: ''}
+                    fillUp: {[typeName]: 'Test', b: 'b'},
+                    incremental: {b: 'b'},
+                    '': {[typeName]: 'Test', b: 'b'}
                 }],
                 [
                     [
                         {[typeName]: 'Test', a: {
                             [typeName]: 'Test', b: null
-                        }, b: ''},
+                        }, b: 'b'},
                         {[typeName]: 'Test', a: {[typeName]: 'Test'}}
                     ], {entities: {Test: {a: {type: 'Test'}, b: {}}}}, {
                         fillUp: {
                             [typeName]: 'Test',
                             a: {[typeName]: 'Test'},
-                            b: ''
+                            b: 'b'
                         },
-                        incremental: {b: ''},
+                        incremental: {b: 'b'},
                         '': {
                             [typeName]: 'Test',
                             a: {[typeName]: 'Test'},
-                            b: ''
+                            b: 'b'
                         }
                     }
                 ],
@@ -1786,19 +1828,19 @@ registerTest(async function():Promise<void> {
                     {
                         [typeName]: 'Test',
                         a: {[typeName]: 'Test', b: '2'},
-                        b: ''
+                        b: 'b'
                     }, {[typeName]: 'Test', a: {[typeName]: 'Test', b: '2'}}
                 ], {entities: {Test: {a: {type: 'Test'}, b: {}}}}, {
                     fillUp: {
                         [typeName]: 'Test',
                         a: {[typeName]: 'Test', b: '2'},
-                        b: ''
+                        b: 'b'
                     },
-                    incremental: {b: ''},
+                    incremental: {b: 'b'},
                     '': {
                         [typeName]: 'Test',
                         a: {[typeName]: 'Test', b: '2'},
-                        b: ''
+                        b: 'b'
                     }
                 }],
                 [[
@@ -1857,19 +1899,19 @@ registerTest(async function():Promise<void> {
                 // // endregion
                 // // region property existents
                 [[
-                    {[typeName]: 'Test', a: {[typeName]: 'Test'}, b: ''},
+                    {[typeName]: 'Test', a: {[typeName]: 'Test'}, b: 'b'},
                     {[typeName]: 'Test', a: {[typeName]: 'Test'}}
                 ], {entities: {Test: {a: {type: 'Test'}, b: {}}}}, {
                     fillUp: {
                         [typeName]: 'Test',
                         a: {[typeName]: 'Test'},
-                        b: ''
+                        b: 'b'
                     },
-                    incremental: {b: ''},
+                    incremental: {b: 'b'},
                     '': {
                         [typeName]: 'Test',
                         a: {[typeName]: 'Test'},
-                        b: ''
+                        b: 'b'
                     }
                 }],
                 [[
@@ -1924,7 +1966,7 @@ registerTest(async function():Promise<void> {
                     {
                         [typeName]: 'Test',
                         a: {[typeName]: 'Test', b: 'b'},
-                        c: ''
+                        c: 'c'
                     },
                     {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'b'}}
                 ], {entities: {Test: {
@@ -1935,20 +1977,20 @@ registerTest(async function():Promise<void> {
                     fillUp: {
                         [typeName]: 'Test',
                         a: {[typeName]: 'Test', b: 'b'},
-                        c: ''
+                        c: 'c'
                     },
-                    incremental: {c: ''},
+                    incremental: {c: 'c'},
                     '': {
                         [typeName]: 'Test',
                         a: {[typeName]: 'Test', b: 'b'},
-                        c: ''
+                        c: 'c'
                     }
                 }],
                 [[
                     {
                         [typeName]: 'Test',
                         a: {[typeName]: 'Test', b: 'a'},
-                        b: ''
+                        b: 'b'
                     },
                     {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'a'}}
                 ],
@@ -1956,12 +1998,12 @@ registerTest(async function():Promise<void> {
                 }}}}, {
                     fillUp: {[typeName]: 'Test', a: {
                         [typeName]: 'Test', b: 'a'
-                    }, b: ''},
-                    incremental: {b: ''},
+                    }, b: 'b'},
+                    incremental: {b: 'b'},
                     '': {
                         [typeName]: 'Test',
                         a: {[typeName]: 'Test', b: 'a'},
-                        b: ''
+                        b: 'b'
                     }
                 }],
                 // // endregion
@@ -2491,7 +2533,7 @@ registerTest(async function():Promise<void> {
                     {
                         [typeName]: 'Test',
                         [attachmentName]: {a: {data: null}},
-                        b: ''
+                        b: 'b'
                     }, {
                         [typeName]: 'Test',
                         [attachmentName]: {a: {
@@ -2501,15 +2543,15 @@ registerTest(async function():Promise<void> {
                         }}
                     }
                 ], {entities: {Test: {[attachmentName]: {'.*': {}}, b: {}}}}, {
-                    fillUp: {[typeName]: 'Test', b: ''},
-                    incremental: {b: ''},
-                    '': {[typeName]: 'Test', b: ''}
+                    fillUp: {[typeName]: 'Test', b: 'b'},
+                    incremental: {b: 'b'},
+                    '': {[typeName]: 'Test', b: 'b'}
                 }],
                 [[
                     {
                         [typeName]: 'Test',
                         [attachmentName]: {a: {data: null}},
-                        b: ''
+                        b: 'b'
                     }, {
                         [typeName]: 'Test',
                         [attachmentName]: {a: {
@@ -2519,12 +2561,12 @@ registerTest(async function():Promise<void> {
                         }}
                     }
                 ], {entities: {Test: {[attachmentName]: {'.*': {}}, b: {}}}}, {
-                    fillUp: {[typeName]: 'Test', b: ''},
-                    incremental: {b: ''},
-                    '': {[typeName]: 'Test', b: ''}
+                    fillUp: {[typeName]: 'Test', b: 'b'},
+                    incremental: {b: 'b'},
+                    '': {[typeName]: 'Test', b: 'b'}
                 }],
                 [[
-                    {[typeName]: 'Test', a: ''},
+                    {[typeName]: 'Test', a: 'a'},
                     {[typeName]: 'Test', [attachmentName]: {a: {
                         /* eslint-disable camelcase */
                         content_type: 'image/jpeg', data: ''
@@ -2537,13 +2579,13 @@ registerTest(async function():Promise<void> {
                             content_type: 'image/jpeg', data: ''
                             /* eslint-enable camelcase */
                         }},
-                        a: ''
+                        a: 'a'
                     },
-                    incremental: {a: ''},
-                    '': {[typeName]: 'Test', a: ''}
+                    incremental: {a: 'a'},
+                    '': {[typeName]: 'Test', a: 'a'}
                 }],
                 [[
-                    {[typeName]: 'Test', a: ''},
+                    {[typeName]: 'Test', a: 'a'},
                     {[typeName]: 'Test', [attachmentName]: {a: {
                         /* eslint-disable camelcase */
                         content_type: 'image/jpeg', data: ''
@@ -2556,13 +2598,13 @@ registerTest(async function():Promise<void> {
                             content_type: 'image/jpeg', data: ''
                             /* eslint-enable camelcase */
                         }},
-                        a: ''
+                        a: 'a'
                     },
-                    incremental: {a: ''},
-                    '': {[typeName]: 'Test', a: ''}
+                    incremental: {a: 'a'},
+                    '': {[typeName]: 'Test', a: 'a'}
                 }],
                 [[
-                    {[typeName]: 'Test', a: ''},
+                    {[typeName]: 'Test', a: 'a'},
                     {[typeName]: 'Test', [attachmentName]: {a: {
                         /* eslint-disable camelcase */
                         content_type: 'image/jpeg', data: ''
@@ -2577,10 +2619,10 @@ registerTest(async function():Promise<void> {
                             content_type: 'image/jpeg', data: ''
                             /* eslint-enable camelcase */
                         }},
-                        a: ''
+                        a: 'a'
                     },
-                    incremental: {a: ''},
-                    '': {[typeName]: 'Test', a: ''}
+                    incremental: {a: 'a'},
+                    '': {[typeName]: 'Test', a: 'a'}
                 }],
                 [[{[typeName]: 'Test', [attachmentName]: {a: {
                     data: 'a', length: 1
@@ -2658,8 +2700,9 @@ registerTest(async function():Promise<void> {
                 {[typeName]: 'Test', a: '2'}
             ],
             [
-                [{[typeName]: 'Test', b: ''}, {[typeName]: 'Test', a: 1}],
-                {entities: {Test: {a: {}, b: {}}}}, {[typeName]: 'Test', b: ''}
+                [{[typeName]: 'Test', b: 'b'}, {[typeName]: 'Test', a: 1}],
+                {entities: {Test: {a: {}, b: {}}}},
+                {[typeName]: 'Test', b: 'b'}
             ],
             [
                 [{[typeName]: 'Test'}, {[typeName]: 'Test', a: 1}],
@@ -2699,16 +2742,16 @@ registerTest(async function():Promise<void> {
                 default: 2, type: ['number', 'boolean']
             }}}}, {[typeName]: 'Test', a: 2}],
             [[
-                {[typeName]: 'Test', b: ''},
+                {[typeName]: 'Test', b: 'b'},
                 {[typeName]: 'Test', [attachmentName]: {}}
-            ], {entities: {Test: {b: {}}}}, {[typeName]: 'Test', b: ''}],
-            [[{[typeName]: 'Test', b: ''}, {
+            ], {entities: {Test: {b: {}}}}, {[typeName]: 'Test', b: 'b'}],
+            [[{[typeName]: 'Test', b: 'b'}, {
                 [typeName]: 'Test', [attachmentName]: {
                     /* eslint-disable camelcase */
                     test: {data: '', content_type: 'text/plain'}
                     /* eslint-enable camelcase */
                 }
-            }], {entities: {Test: {b: {}}}}, {[typeName]: 'Test', b: ''}],
+            }], {entities: {Test: {b: {}}}}, {[typeName]: 'Test', b: 'b'}],
             [
                 [{[typeName]: 'Test'}, {[typeName]: 'Test'}],
                 {entities: {Test: {[attachmentName]: {'.*': {default: {test: {
