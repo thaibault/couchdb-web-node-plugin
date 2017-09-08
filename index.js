@@ -504,17 +504,29 @@ export default class Database {
                           empty instance and the "emptyEqualsToNull" property
                           is specified as positive.
                     */
-                    const ignoreNoChangeErrorBackup:boolean =
-                        configuration.database.ignoreNoChangeError
-                    configuration.database.ignoreNoChangeError = false
                     try {
                         DatabaseHelper.validateDocumentUpdate(
-                            newDocument,
+                            /*
+                                NOTE: Removed property marked with "null" will
+                                be removed so final removing would be skipped
+                                if we do not use a copy here.
+                            */
+                            Tools.copyLimitedRecursively(newDocument),
+                            /*
+                                NOTE: During processing attachments sub object
+                                will be manipulated so copying is needed to
+                                avoid unexpected behavior in this context.
+                            */
                             Tools.copyLimitedRecursively(document), {
                                 db: configuration.name,
                                 name: configuration.database.user.name,
                                 roles: ['_admin']
-                            }, Tools.copyLimitedRecursively(
+                            },
+                            /*
+                                NOTE: We need a copy to ignore validated
+                                document caches.
+                            */
+                            Tools.copyLimitedRecursively(
                                 configuration.database.security
                             ), models, modelConfiguration)
                     } catch (error) {
@@ -529,9 +541,6 @@ export default class Database {
                             continue
                         } else
                             throw error
-                    } finally {
-                        configuration.database.ignoreNoChangeError =
-                            ignoreNoChangeErrorBackup
                     }
                     try {
                         await services.database.connection.put(newDocument)
