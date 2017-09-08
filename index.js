@@ -499,7 +499,14 @@ export default class Database {
                         - Remove not specified old properties.
                         - Add properties whose are missing and a default value
                           is specified.
+                        - Trim existing strings if newly specified.
+                        - Remove property values if there values equals to an
+                          empty instance and the "emptyEqualsToNull" property
+                          is specified as positive.
                     */
+                    const ignoreNoChangeErrorBackup:boolean =
+                        configuration.database.ignoreNoChangeError
+                    configuration.database.ignoreNoChangeError = false
                     try {
                         DatabaseHelper.validateDocumentUpdate(
                             newDocument,
@@ -522,6 +529,9 @@ export default class Database {
                             continue
                         } else
                             throw error
+                    } finally {
+                        configuration.database.ignoreNoChangeError =
+                            ignoreNoChangeErrorBackup
                     }
                     try {
                         await services.database.connection.put(newDocument)
