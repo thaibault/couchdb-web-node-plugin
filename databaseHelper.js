@@ -1394,16 +1394,14 @@ export default class DatabaseHelper {
                     /* eslint-enable no-throw-literal */
                 // region migrate old attachments
                 let oldAttachments:any = null
-                if (oldDocument && oldDocument.hasOwnProperty(
-                    specialNames.attachment
-                )) {
+                if (
+                    oldDocument &&
+                    oldDocument.hasOwnProperty(specialNames.attachment)
+                ) {
                     oldAttachments = oldDocument[specialNames.attachment]
                     if (
                         oldAttachments !== null &&
-                        typeof oldAttachments === 'object' &&
-                        Object.getPrototypeOf(
-                            oldAttachments
-                        ) === Object.prototype
+                        typeof oldAttachments === 'object'
                     )
                         for (const fileName:string in oldAttachments)
                             if (oldAttachments.hasOwnProperty(fileName))
@@ -1484,8 +1482,9 @@ export default class DatabaseHelper {
                         if (!matched)
                             /* eslint-disable no-throw-literal */
                             throw {
-                                forbidden: 'AttachmentTypeMatch: None of the' +
-                                    ' specified attachment types ("' +
+                                forbidden:
+                                    'AttachmentTypeMatch: None of the ' +
+                                    'specified attachment types ("' +
                                     Object.keys(model[
                                         specialNames.attachment
                                     ]).join('", "') + '") matches given one ' +
