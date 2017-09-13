@@ -19,13 +19,19 @@ try {
     require('source-map-support/register')
 } catch (error) {}
 
-/* eslint-disable no-unused-vars */
 import type {
-    Constraint, AllowedModelRolesMapping, Model, Models,
-    NormalizedAllowedRoles, PropertySpecification, SecuritySettings,
-    SimpleModelConfiguration, UserContext
+    /* eslint-disable no-unused-vars */
+    Constraint,
+    /* eslint-enable no-unused-vars */
+    AllowedModelRolesMapping,
+    Model,
+    Models,
+    NormalizedAllowedRoles,
+    PropertySpecification,
+    SecuritySettings,
+    SimpleModelConfiguration,
+    UserContext
 } from './type'
-/* eslint-enable no-unused-vars */
 // endregion
 /**
  * A dumm plugin interface with all available hooks.
