@@ -52,14 +52,14 @@
     "watch:dll": "webOptimizer build:dll --watch"
   },
   "dependencies": {
-    "clientnode": "^1.0.239",
+    "clientnode": "^1.0.240",
     "node-fetch": "^1.7.1",
     "pouchdb": "^6.3.2",
     "pouchdb-find": "^6.3.2",
     "pouchdb-server": "^2.3.7"
   },
   "peerDependencies": {
-    "web-node": "^1.0.111"
+    "web-node": "^1.0.116"
   },
   "devDependencies": {
     "babel-eslint": "^7.2.3",
@@ -73,7 +73,7 @@
     "rimraf": "^2.6.1",
     "source-map-support": "^0.4.15",
     "web-node": "^1.0.111",
-    "weboptimizer": "^1.0.366",
+    "weboptimizer": "^1.0.368",
     "webpack": "^3.2.0",
     "webpack-dev-server": "^2.5.1"
   },
