@@ -19,13 +19,19 @@ try {
     require('source-map-support/register')
 } catch (error) {}
 
-/* eslint-disable no-unused-vars */
 import type {
-    Constraint, AllowedModelRolesMapping, Model, Models,
-    NormalizedAllowedRoles, PropertySpecification, SecuritySettings,
-    SimpleModelConfiguration, UserContext
+    /* eslint-disable no-unused-vars */
+    Constraint,
+    /* eslint-enable no-unused-vars */
+    AllowedModelRolesMapping,
+    Model,
+    Models,
+    NormalizedAllowedRoles,
+    PropertySpecification,
+    SecuritySettings,
+    SimpleModelConfiguration,
+    UserContext
 } from './type'
-/* eslint-enable no-unused-vars */
 // endregion
 /**
  * A dumm plugin interface with all available hooks.
@@ -596,7 +602,7 @@ export default class DatabaseHelper {
                     if (![undefined, null].includes(
                         propertySpecification.maximum
                     ) && newValue > propertySpecification.maximum)
-                        /* eslint-enable no-throw-literal */
+                        /* eslint-disable no-throw-literal */
                         throw {
                             forbidden:
                                 `Maximum: Property "${name}" (type ` +
@@ -608,7 +614,7 @@ export default class DatabaseHelper {
                                 `given ${newValue} with length ` +
                                 `${newValue.length}${pathDescription}.`
                         }
-                        /* eslint-disable no-throw-literal */
+                        /* eslint-enable no-throw-literal */
                 }
                 // endregion
                 // region selection
@@ -616,7 +622,7 @@ export default class DatabaseHelper {
                     propertySpecification.selection &&
                     !propertySpecification.selection.includes(newValue)
                 )
-                    /* eslint-enable no-throw-literal */
+                    /* eslint-disable no-throw-literal */
                     throw {
                         forbidden:
                             `Selection: Property "${name}" (type ` +
@@ -626,7 +632,7 @@ export default class DatabaseHelper {
                             propertySpecification.selection.join('", "') +
                             `". But is "${newValue}"${pathDescription}.`
                     }
-                    /* eslint-disable no-throw-literal */
+                    /* eslint-enable no-throw-literal */
                 // endregion
                 // region pattern
                 if (!(
@@ -638,7 +644,7 @@ export default class DatabaseHelper {
                         propertySpecification.regularExpressionPattern
                     ).test(newValue)
                 ))
-                    /* eslint-enable no-throw-literal */
+                    /* eslint-disable no-throw-literal */
                     throw {
                         forbidden:
                             `PatternMatch: Property "${name}" should match ` +
@@ -647,7 +653,7 @@ export default class DatabaseHelper {
                             propertySpecification.regularExpressionPattern +
                             ` (given "${newValue}")${pathDescription}.`
                     }
-                    /* eslint-disable no-throw-literal */
+                    /* eslint-enable no-throw-literal */
                 else if (!(
                     [undefined, null].includes(
                         propertySpecification.invertedRegularExpressionPattern
@@ -657,7 +663,7 @@ export default class DatabaseHelper {
                         propertySpecification.invertedRegularExpressionPattern
                     )).test(newValue)
                 ))
-                    /* eslint-enable no-throw-literal */
+                    /* eslint-disable no-throw-literal */
                     throw {
                         forbidden:
                             `InvertedPatternMatch: Property "${name}" should` +
@@ -667,7 +673,7 @@ export default class DatabaseHelper {
                                 .invertedRegularExpressionPattern +
                             ` (given "${newValue}")${pathDescription}.`
                     }
-                    /* eslint-disable no-throw-literal */
+                    /* eslint-enable no-throw-literal */
                 // endregion
                 checkPropertyConstraints(
                     newValue, name, propertySpecification, oldValue)
@@ -1335,14 +1341,14 @@ export default class DatabaseHelper {
                             // IgnoreTypeCheck
                             hook = new Function(...Object.keys(scope), code)
                         } catch (error) {
-                            /* eslint-enable no-throw-literal */
+                            /* eslint-disable no-throw-literal */
                             throw {
                                 forbidden: `Compilation: Hook "${type}" has ` +
                                     `invalid code "${code}": "` +
                                     serialize(error) +
                                     `"${pathDescription}.`
                             }
-                            /* eslint-disable no-throw-literal */
+                            /* eslint-enable no-throw-literal */
                         }
                         let satisfied:boolean = false
                         try {
@@ -1394,16 +1400,14 @@ export default class DatabaseHelper {
                     /* eslint-enable no-throw-literal */
                 // region migrate old attachments
                 let oldAttachments:any = null
-                if (oldDocument && oldDocument.hasOwnProperty(
-                    specialNames.attachment
-                )) {
+                if (
+                    oldDocument &&
+                    oldDocument.hasOwnProperty(specialNames.attachment)
+                ) {
                     oldAttachments = oldDocument[specialNames.attachment]
                     if (
                         oldAttachments !== null &&
-                        typeof oldAttachments === 'object' &&
-                        Object.getPrototypeOf(
-                            oldAttachments
-                        ) === Object.prototype
+                        typeof oldAttachments === 'object'
                     )
                         for (const fileName:string in oldAttachments)
                             if (oldAttachments.hasOwnProperty(fileName))
@@ -1484,8 +1488,9 @@ export default class DatabaseHelper {
                         if (!matched)
                             /* eslint-disable no-throw-literal */
                             throw {
-                                forbidden: 'AttachmentTypeMatch: None of the' +
-                                    ' specified attachment types ("' +
+                                forbidden:
+                                    'AttachmentTypeMatch: None of the ' +
+                                    'specified attachment types ("' +
                                     Object.keys(model[
                                         specialNames.attachment
                                     ]).join('", "') + '") matches given one ' +

@@ -23,7 +23,11 @@ try {
 } catch (error) {}
 
 import type {
-    AllowedModelRolesMapping, AllowedRoles, Model, ModelConfiguration, Models,
+    AllowedModelRolesMapping,
+    AllowedRoles,
+    Model,
+    ModelConfiguration,
+    Models,
     NormalizedAllowedRoles
 } from './type'
 // endregion
