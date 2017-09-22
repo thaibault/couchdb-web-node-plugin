@@ -602,7 +602,7 @@ export default class DatabaseHelper {
                     if (![undefined, null].includes(
                         propertySpecification.maximum
                     ) && newValue > propertySpecification.maximum)
-                        /* eslint-enable no-throw-literal */
+                        /* eslint-disable no-throw-literal */
                         throw {
                             forbidden:
                                 `Maximum: Property "${name}" (type ` +
@@ -614,7 +614,7 @@ export default class DatabaseHelper {
                                 `given ${newValue} with length ` +
                                 `${newValue.length}${pathDescription}.`
                         }
-                        /* eslint-disable no-throw-literal */
+                        /* eslint-enable no-throw-literal */
                 }
                 // endregion
                 // region selection
@@ -622,7 +622,7 @@ export default class DatabaseHelper {
                     propertySpecification.selection &&
                     !propertySpecification.selection.includes(newValue)
                 )
-                    /* eslint-enable no-throw-literal */
+                    /* eslint-disable no-throw-literal */
                     throw {
                         forbidden:
                             `Selection: Property "${name}" (type ` +
@@ -632,7 +632,7 @@ export default class DatabaseHelper {
                             propertySpecification.selection.join('", "') +
                             `". But is "${newValue}"${pathDescription}.`
                     }
-                    /* eslint-disable no-throw-literal */
+                    /* eslint-enable no-throw-literal */
                 // endregion
                 // region pattern
                 if (!(
@@ -644,7 +644,7 @@ export default class DatabaseHelper {
                         propertySpecification.regularExpressionPattern
                     ).test(newValue)
                 ))
-                    /* eslint-enable no-throw-literal */
+                    /* eslint-disable no-throw-literal */
                     throw {
                         forbidden:
                             `PatternMatch: Property "${name}" should match ` +
@@ -653,7 +653,7 @@ export default class DatabaseHelper {
                             propertySpecification.regularExpressionPattern +
                             ` (given "${newValue}")${pathDescription}.`
                     }
-                    /* eslint-disable no-throw-literal */
+                    /* eslint-enable no-throw-literal */
                 else if (!(
                     [undefined, null].includes(
                         propertySpecification.invertedRegularExpressionPattern
@@ -663,7 +663,7 @@ export default class DatabaseHelper {
                         propertySpecification.invertedRegularExpressionPattern
                     )).test(newValue)
                 ))
-                    /* eslint-enable no-throw-literal */
+                    /* eslint-disable no-throw-literal */
                     throw {
                         forbidden:
                             `InvertedPatternMatch: Property "${name}" should` +
@@ -673,7 +673,7 @@ export default class DatabaseHelper {
                                 .invertedRegularExpressionPattern +
                             ` (given "${newValue}")${pathDescription}.`
                     }
-                    /* eslint-disable no-throw-literal */
+                    /* eslint-enable no-throw-literal */
                 // endregion
                 checkPropertyConstraints(
                     newValue, name, propertySpecification, oldValue)
@@ -1341,14 +1341,14 @@ export default class DatabaseHelper {
                             // IgnoreTypeCheck
                             hook = new Function(...Object.keys(scope), code)
                         } catch (error) {
-                            /* eslint-enable no-throw-literal */
+                            /* eslint-disable no-throw-literal */
                             throw {
                                 forbidden: `Compilation: Hook "${type}" has ` +
                                     `invalid code "${code}": "` +
                                     serialize(error) +
                                     `"${pathDescription}.`
                             }
-                            /* eslint-disable no-throw-literal */
+                            /* eslint-enable no-throw-literal */
                         }
                         let satisfied:boolean = false
                         try {
