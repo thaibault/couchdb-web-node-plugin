@@ -53,7 +53,6 @@
     "watch:dll": "webOptimizer build:dll --watch"
   },
   "dependencies": {
-    "babel-runtime": "^6.26.0",
     "clientnode": "^1.0.269",
     "node-fetch": "^1.7.1",
     "pouchdb": "^6.3.2",
@@ -61,6 +60,7 @@
     "pouchdb-server": "^2.3.7"
   },
   "peerDependencies": {
+    "babel-runtime": "*",
     "web-node": "*"
   },
   "devDependencies": {
