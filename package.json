@@ -345,6 +345,9 @@
       "preprocessor": {
         "javaScript": {
           "options": {
+            "plugins": {
+              "__remove__": "transform-runtime"
+            },
             "presets": {
               "__evaluate__": "[['env', {targets: self.targetTechnology === 'node' ? {node: 'current'} : {browsers: 'last 2 versions', node: 'current'}}]].concat('stage-0')"
             }
