@@ -28,7 +28,7 @@ export type NormalizedAllowedRoles = {
 }
 export type AllowedModelRolesMapping = {[key:string]:NormalizedAllowedRoles}
 export type Constraint = {
-    description:?string;
+    description?:string;
     evaluation:string;
 }
 export type PropertySpecification = {
@@ -68,8 +68,8 @@ export type Model = {
     _extends?:Array<string>;
     _constraintExpressions?:Array<Constraint>;
     _constraintExecutions?:Array<Constraint>;
-    _maximumAggregatedSize?:number,
-    _minimumAggregatedSize?:number,
+    _maximumAggregatedSize?:number;
+    _minimumAggregatedSize?:number;
     [key:string]:PropertySpecification;
 }
 export type Models = {[key:string]:Model}
