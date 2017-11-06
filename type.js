@@ -28,48 +28,48 @@ export type NormalizedAllowedRoles = {
 }
 export type AllowedModelRolesMapping = {[key:string]:NormalizedAllowedRoles}
 export type Constraint = {
-    description:?string;
+    description?:string;
     evaluation:string;
 }
 export type PropertySpecification = {
-    allowedRoles?:?AllowedRoles;
-    conflictingConstraintExecution?:?Constraint;
-    conflictingConstraintExpression?:?Constraint;
-    constraintExecution?:?Constraint;
-    constraintExpression?:?Constraint;
-    contentTypeRegularExpressionPattern?:?string;
+    allowedRoles?:AllowedRoles;
+    conflictingConstraintExecution?:Constraint;
+    conflictingConstraintExpression?:Constraint;
+    constraintExecution?:Constraint;
+    constraintExpression?:Constraint;
+    contentTypeRegularExpressionPattern?:string;
     default?:any;
     emptyEqualsToNull?:boolean;
-    index?:?boolean;
-    invertedContentTypeRegularExpressionPattern?:?string;
-    invertedRegularExpressionPattern?:?string;
-    maximum?:?number;
-    minimum?:?number;
-    maximumLength?:?number;
+    index?:boolean;
+    invertedContentTypeRegularExpressionPattern?:string;
+    invertedRegularExpressionPattern?:string;
+    maximum?:number;
+    minimum?:number;
+    maximumLength?:number;
     minimumLength?:number;
-    maximumNumber?:?number;
+    maximumNumber?:number;
     minimumNumber?:number;
-    maximumSize?:?number;
+    maximumSize?:number;
     minimumSize?:number;
     mutable?:boolean;
     nullable?:boolean;
-    onCreateExecution?:?string;
-    onCreateExpression?:?string;
-    onUpdateExecution?:?string;
-    onUpdateExpression?:?string;
-    regularExpressionPattern?:?string;
-    selection?:?Array<any>;
+    onCreateExecution?:string;
+    onCreateExpression?:string;
+    onUpdateExecution?:string;
+    onUpdateExpression?:string;
+    regularExpressionPattern?:string;
+    selection?:Array<any>;
     trim?:boolean;
     type?:any;
     writable?:boolean;
 }
 export type Model = {
-    _allowedRoles?:?AllowedRoles;
-    _extends?:?Array<string>;
-    _constraintExpressions?:?Array<Constraint>;
-    _constraintExecutions?:?Array<Constraint>;
-    _maximumAggregatedSize?:?number,
-    _minimumAggregatedSize?:number,
+    _allowedRoles?:AllowedRoles;
+    _extends?:Array<string>;
+    _constraintExpressions?:Array<Constraint>;
+    _constraintExecutions?:Array<Constraint>;
+    _maximumAggregatedSize?:number;
+    _minimumAggregatedSize?:number;
     [key:string]:PropertySpecification;
 }
 export type Models = {[key:string]:Model}
