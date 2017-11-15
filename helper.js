@@ -37,7 +37,7 @@ global.fetch = fetch
 /**
  * A dumm plugin interface with all available hooks.
  */
-export default class Helper {
+export class Helper {
     /**
      * Updates/creates a design document in database with a validation function
      * set to given code.
@@ -296,6 +296,7 @@ export default class Helper {
     }
     // endregion
 }
+export default Helper
 // endregion
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
