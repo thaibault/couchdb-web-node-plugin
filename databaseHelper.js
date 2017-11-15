@@ -36,7 +36,7 @@ import type {
 /**
  * A dumm plugin interface with all available hooks.
  */
-export default class DatabaseHelper {
+export class DatabaseHelper {
     /**
      * Authenticates given document update against given mapping of allowed
      * roles for writing into corresponding model instances.
@@ -1820,6 +1820,7 @@ export default class DatabaseHelper {
         return result.newDocument
     }
 }
+export default DatabaseHelper
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
 // vim: foldmethod=marker foldmarker=region,endregion:
