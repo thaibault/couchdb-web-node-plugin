@@ -12,38 +12,64 @@
     3.0 unported license. see http://creativecommons.org/licenses/by/3.0/deed.de
     endregion
 */
+// region imports
+import type {PlainObject} from 'clientnode'
+// endregion
 // region exports
 // / region model
-export type AllowedModelRolesMapping = {[key:string]:Array<string>}
+export type AllowedRoles = string|Array<string>|{
+    read:string|Array<string>;
+    write:string|Array<string>;
+}
+export type NormalizedAllowedRoles = {
+    read:Array<string>;
+    write:Array<string>;
+    properties?:AllowedModelRolesMapping;
+}
+export type AllowedModelRolesMapping = {[key:string]:NormalizedAllowedRoles}
 export type Constraint = {
-    description:?string;
+    description?:string;
     evaluation:string;
 }
 export type PropertySpecification = {
-    conflictingConstraintExpression:?Constraint;
-    conflictingConstraintExecution:?Constraint;
-    constraintExpression:?Constraint;
-    constraintExecution:?Constraint;
-    contentTypeRegularExpressionPattern:?string;
-    default:any;
-    maximum:number;
-    minimum:number;
-    mutable:boolean;
-    nullable:boolean;
-    onCreateExpression:?string;
-    onCreateExecution:?string;
-    onUpdateExpression:?string;
-    onUpdateExecution:?string;
-    regularExpressionPattern:?string;
-    selection:?Array<any>;
-    type:string;
-    writable:boolean;
+    allowedRoles?:AllowedRoles;
+    conflictingConstraintExecution?:Constraint;
+    conflictingConstraintExpression?:Constraint;
+    constraintExecution?:Constraint;
+    constraintExpression?:Constraint;
+    contentTypeRegularExpressionPattern?:string;
+    default?:any;
+    emptyEqualsToNull?:boolean;
+    index?:boolean;
+    invertedContentTypeRegularExpressionPattern?:string;
+    invertedRegularExpressionPattern?:string;
+    maximum?:number;
+    minimum?:number;
+    maximumLength?:number;
+    minimumLength?:number;
+    maximumNumber?:number;
+    minimumNumber?:number;
+    maximumSize?:number;
+    minimumSize?:number;
+    mutable?:boolean;
+    nullable?:boolean;
+    onCreateExecution?:string;
+    onCreateExpression?:string;
+    onUpdateExecution?:string;
+    onUpdateExpression?:string;
+    regularExpressionPattern?:string;
+    selection?:Array<any>;
+    trim?:boolean;
+    type?:any;
+    writable?:boolean;
 }
 export type Model = {
-    _allowedRoles:?Array<string>;
-    _extends:?Array<string>;
-    _constraintExpressions:?Array<Constraint>;
-    _constraintExecutions:?Array<Constraint>;
+    _allowedRoles?:AllowedRoles;
+    _extends?:Array<string>;
+    _constraintExpressions?:Array<Constraint>;
+    _constraintExecutions?:Array<Constraint>;
+    _maximumAggregatedSize?:number;
+    _minimumAggregatedSize?:number;
     [key:string]:PropertySpecification;
 }
 export type Models = {[key:string]:Model}
@@ -56,39 +82,51 @@ export type RetrievedDocument = {
     id:string;
     doc:Document;
 }
+export type UpdateStrategy = ''|'fillUp'|'incremental'|'migrate'
 export type SpecialPropertyNames = {
-    allowedRoles:string;
-    attachments:string;
-    constraints:{
-        expression:string;
+    additional:string;
+    allowedRole:string;
+    attachment:string;
+    conflict:string;
+    constraint:{
         execution:string;
+        expression:string;
     },
+    deleted:string;
+    deletedConflict:string;
     extend:string;
+    id:string;
+    localSequence:string;
+    maximumAggregatedSize:string;
+    minimumAggregatedSize:string;
+    revision:string;
+    revisions:string;
+    revisionsInformation:string;
+    strategy:UpdateStrategy;
     type:string;
-    typeNameRegularExpressionPattern:{
+}
+export type PropertyNameConfiguration = {
+    reserved:Array<string>;
+    special:SpecialPropertyNames;
+    typeRegularExpressionPattern:{
         private:string;
         public:string;
     };
     validatedDocumentsCache:string;
 }
-export type UpdateStrategy = ''|'fillUp'|'incremental'|'migrate'
 export type ModelConfiguration = {
-    default:{
-        attachments:{
-            maximum:number;
-            minimum:number;
-            name:PropertySpecification;
-        };
-        propertySpecification:PropertySpecification;
-    },
-    models:Models;
-    reservedPropertyNames:Array<string>;
-    specialPropertyNames:SpecialPropertyNames;
+    entities:Models;
+    property:{
+        defaultSpecification:PropertySpecification;
+        name:PropertyNameConfiguration;
+    };
     updateStrategy:UpdateStrategy;
 }
 export type SimpleModelConfiguration = {
-    reservedPropertyNames:Array<string>;
-    specialPropertyNames:SpecialPropertyNames;
+    property:{
+        defaultSpecification:PropertySpecification;
+        name:PropertyNameConfiguration;
+    };
     updateStrategy:UpdateStrategy;
 }
 // / endregion
@@ -112,11 +150,14 @@ export type Configuration = {
             locations:Array<string>;
             name:string;
         };
+        connector:PlainObject;
         configurationFilePath:string;
+        createGenericFlatIndex:boolean;
         'httpd/host':string;
         local:boolean;
         'log/file':string;
         'log/level':string;
+        model:ModelConfiguration;
         path:string;
         port:number;
         security:SecuritySettings;
@@ -126,7 +167,6 @@ export type Configuration = {
             password:string;
         };
     };
-    modelConfiguration:ModelConfiguration;
 }
 // / endregion
 // / region database error

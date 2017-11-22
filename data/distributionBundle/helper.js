@@ -23,7 +23,12 @@ try {
 } catch (error) {}
 
 import type {
-    AllowedModelRolesMapping, Model, ModelConfiguration, Models
+    AllowedModelRolesMapping,
+    AllowedRoles,
+    Model,
+    ModelConfiguration,
+    Models,
+    NormalizedAllowedRoles
 } from './type'
 // endregion
 // NOTE: Remove when "fetch" is supported by node.
@@ -32,7 +37,7 @@ global.fetch = fetch
 /**
  * A dumm plugin interface with all available hooks.
  */
-export default class Helper {
+export class Helper {
     /**
      * Updates/creates a design document in database with a validation function
      * set to given code.
@@ -41,15 +46,13 @@ export default class Helper {
      * @param documentName - Design document name.
      * @param documentData - Design document data.
      * @param description - Used to produce semantic logging messages.
-     * @param libraries - Mapping of library names to their code as string.
      * @param log - Enables logging.
      * @returns Promise which will be resolved after given document has updated
      * successfully.
      */
     static async ensureValidationDocumentPresence(
         databaseConnection:Object, documentName:string,
-        documentData:PlainObject, description:string,
-        libraries:?{[key:string]:string} = null, log:boolean = true
+        documentData:PlainObject, description:string, log:boolean = true
     ):Promise<void> {
         const newDocument:{[key:string]:string} = Tools.extendObject({
             _id: `_design/${documentName}`, language: 'javascript'
@@ -91,22 +94,39 @@ export default class Helper {
     static determineAllowedModelRolesMapping(
         modelConfiguration:ModelConfiguration
     ):AllowedModelRolesMapping {
+        const allowedRoleName:string =
+            modelConfiguration.property.name.special.allowedRole
         const allowedModelRolesMapping:AllowedModelRolesMapping = {}
         const models:Models = Helper.extendModels(modelConfiguration)
         for (const modelName:string in models)
             if (models.hasOwnProperty(modelName) && models[
                 modelName
-            ].hasOwnProperty(
-                modelConfiguration.specialPropertyNames.allowedRoles
-            )) {
-                // IgnoreTypeCheck
-                const allowedRoles:Array<string> = models[modelName][
-                    modelConfiguration.specialPropertyNames.allowedRoles]
-                allowedModelRolesMapping[modelName] = allowedRoles
-            }
+            ].hasOwnProperty(allowedRoleName)) {
+                allowedModelRolesMapping[modelName] =
+                    Helper.normalizeAllowedModelRoles(
+                        // IgnoreTypeCheck
+                        models[modelName][allowedRoleName])
+                allowedModelRolesMapping[modelName].properties = {}
+                for (const name:string in models[modelName])
+                    if (
+                        models[modelName].hasOwnProperty(name) &&
+                        models[modelName][name].hasOwnProperty(
+                            'allowedRoles'
+                        ) &&
+                        models[modelName][name].allowedRoles
+                    )
+                        // IgnoreTypeCheck
+                        allowedModelRolesMapping[modelName].properties[name] =
+                            Helper.normalizeAllowedModelRoles(
+                                models[modelName][name].allowedRoles)
+            } else
+                allowedModelRolesMapping[modelName] = {
+                    read: [],
+                    write: [],
+                    properties: {}
+                }
         return allowedModelRolesMapping
     }
-    // TODO test
     /**
      * Determines all property names which are indexable in a generic manner.
      * @param modelConfiguration - Model specification object.
@@ -116,13 +136,37 @@ export default class Helper {
     static determineGenericIndexablePropertyNames(
         modelConfiguration:ModelConfiguration, model:Model
     ):Array<string> {
-        return Object.keys(model).filter((name:string):boolean => !(
-            name.startsWith('_') ||
-            modelConfiguration.reservedPropertyNames.includes(name) ||
-            modelConfiguration.specialPropertyNames.type === name ||
-            model[name].type && model[name].type.endsWith('[]') ||
-            modelConfiguration.models.hasOwnProperty(model[name].type)
-        )).concat('_id', '_rev')
+        const specialNames:PlainObject =
+            modelConfiguration.property.name.special
+        return Object.keys(model).filter((name:string):boolean =>
+            model[name].index || !(
+                model[name].hasOwnProperty('index') && !model[name].index ||
+                modelConfiguration.property.name.reserved.concat(
+                    specialNames.additional,
+                    specialNames.allowedRole,
+                    specialNames.attachment,
+                    specialNames.conflict,
+                    specialNames.constraint.execution,
+                    specialNames.constraint.expression,
+                    specialNames.deleted,
+                    specialNames.deleted_conflict,
+                    specialNames.extend,
+                    specialNames.id,
+                    specialNames.maximumAggregatedSize,
+                    specialNames.minimumAggregatedSize,
+                    specialNames.revision,
+                    specialNames.revisions,
+                    specialNames.revisionsInformation,
+                    specialNames.type
+                ).includes(name) || model[name].type && (
+                    typeof model[name].type === 'string' &&
+                    model[name].type.endsWith('[]') ||
+                    Array.isArray(model[name].type) &&
+                    model[name].type.length &&
+                    Array.isArray(model[name].type[0]) ||
+                    modelConfiguration.entities.hasOwnProperty(
+                        model[name].type))
+            )).concat(specialNames.id, specialNames.revision)
     }
     /**
      * Extend given model with all specified one.
@@ -164,68 +208,95 @@ export default class Helper {
      * @returns Models with extended specific specifications.
      */
     static extendModels(modelConfiguration:PlainObject):Models {
-        modelConfiguration = Tools.extendObject(true, {
-            default: {propertySpecification: {}},
-            specialPropertyNames: {
-                extend: '_extends',
-                typeNameRegularExpressionPattern: {
-                    private: '^_[a-z][A-Za-z0-9]+$',
-                    public: '^[A-Z][A-Za-z0-9]+$'
-                }
-            }
-        }, modelConfiguration)
+        const specialNames:PlainObject = modelConfiguration.property.name
+            .special
         const models:Models = {}
-        for (const modelName:string in modelConfiguration.models)
-            if (modelConfiguration.models.hasOwnProperty(
+        for (const modelName:string in modelConfiguration.entities)
+            if (modelConfiguration.entities.hasOwnProperty(
                 modelName
             )) {
-                if (!((new RegExp(
-                    modelConfiguration.specialPropertyNames
-                        .typeNameRegularExpressionPattern.public
-                )).test(modelName) || (new RegExp(
-                    modelConfiguration.specialPropertyNames
-                        .typeNameRegularExpressionPattern.private
-                )).test(modelName)))
+                if (!(
+                    new RegExp(
+                        modelConfiguration.property.name
+                            .typeRegularExpressionPattern.public
+                    ).test(modelName) ||
+                    (new RegExp(
+                        modelConfiguration.property.name
+                            .typeRegularExpressionPattern.private
+                    )).test(modelName)
+                ))
                     throw new Error(
                         'Model names have to match "' +
-                        modelConfiguration.specialPropertyNames
-                            .typeNameRegularExpressionPattern.public +
-                        '" or "' + modelConfiguration.specialPropertyNames
-                            .typeNameRegularExpressionPattern.private +
+                        modelConfiguration.property.name
+                            .typeRegularExpressionPattern.public +
+                        '" or "' + modelConfiguration.property.name
+                            .typeRegularExpressionPattern.private +
                         `" for private one (given name: "${modelName}").`)
                 models[modelName] = Helper.extendModel(
-                    modelName, modelConfiguration.models,
-                    modelConfiguration.specialPropertyNames.extend)
+                    modelName, modelConfiguration.entities, specialNames.extend
+                )
             }
         for (const modelName:string in models)
             if (models.hasOwnProperty(modelName))
                 for (const propertyName:string in models[modelName])
                     if (models[modelName].hasOwnProperty(propertyName))
-                        if (propertyName === modelConfiguration
-                            .specialPropertyNames.attachments
-                        )
+                        if (propertyName === specialNames.attachment) {
                             for (const type:string in models[modelName][
                                 propertyName
                             ])
-                                models[modelName][propertyName][
-                                    type
-                                ] = Tools.extendObject(
-                                    true, Tools.copyLimitedRecursively(
-                                        modelConfiguration.default
-                                        .propertySpecification
-                                    ), models[modelName][propertyName][type])
-                        else
+                                if (models[modelName][
+                                    propertyName
+                                ].hasOwnProperty(type))
+                                    models[modelName][propertyName][
+                                        type
+                                    ] = Tools.extendObject(
+                                        true, Tools.copyLimitedRecursively(
+                                            modelConfiguration.property
+                                                .defaultSpecification
+                                        ),
+                                        models[modelName][propertyName][type])
+                        } else if (![
+                            specialNames.allowedRole,
+                            specialNames.constraint.execution,
+                            specialNames.constraint.expression,
+                            specialNames.extend,
+                            specialNames.maximumAggregatedSize,
+                            specialNames.minimumAggregatedSize
+                        ].includes(propertyName))
                             models[modelName][
                                 propertyName
                             ] = Tools.extendObject(
                                 true, Tools.copyLimitedRecursively(
-                                    modelConfiguration.default
-                                    .propertySpecification,
+                                    modelConfiguration.property
+                                        .defaultSpecification,
                                 ), models[modelName][propertyName])
         return models
     }
+    /**
+     * Convert given roles to its normalized representation.
+     * @param roles - Unstructured roles description.
+     * @returns Normalized roles representation.
+     */
+    static normalizeAllowedModelRoles(
+        roles:AllowedRoles
+    ):NormalizedAllowedRoles {
+        if (Array.isArray(roles))
+            return {read: roles, write: roles}
+        if (typeof roles === 'object') {
+            const result:NormalizedAllowedRoles = {read: [], write: []}
+            for (const type:string in result)
+                if (roles.hasOwnProperty(type))
+                    if (Array.isArray(roles[type]))
+                        result[type] = roles[type]
+                    else
+                        result[type] = [roles[type]]
+            return result
+        }
+        return {read: [roles], write: [roles]}
+    }
     // endregion
 }
+export default Helper
 // endregion
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:

@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: index.compiled.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: index.compiled.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>module.exports =
+/******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+/******/
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId]) {
+/******/ 			return installedModules[moduleId].exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			i: moduleId,
+/******/ 			l: false,
+/******/ 			exports: {}
+/******/ 		};
+/******/
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/
+/******/ 		// Flag the module as loaded
+/******/ 		module.l = true;
+/******/
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/
+/******/
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+/******/
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+/******/
+/******/ 	// define getter function for harmony exports
+/******/ 	__webpack_require__.d = function(exports, name, getter) {
+/******/ 		if(!__webpack_require__.o(exports, name)) {
+/******/ 			Object.defineProperty(exports, name, {
+/******/ 				configurable: false,
+/******/ 				enumerable: true,
+/******/ 				get: getter
+/******/ 			});
+/******/ 		}
+/******/ 	};
+/******/
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__webpack_require__.n = function(module) {
+/******/ 		var getter = module &amp;&amp; module.__esModule ?
+/******/ 			function getDefault() { return module['default']; } :
+/******/ 			function getModuleExports() { return module; };
+/******/ 		__webpack_require__.d(getter, 'a', getter);
+/******/ 		return getter;
+/******/ 	};
+/******/
+/******/ 	// Object.prototype.hasOwnProperty.call
+/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
+/******/
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "";
+/******/
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(__webpack_require__.s = 8);
+/******/ })
+/************************************************************************/
+/******/ ([
+/* 0 */
+/***/ (function(module, exports) {
+
+module.exports = require("source-map-support/register");
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports) {
+
+module.exports = require("babel-runtime/core-js/object/keys");
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports) {
+
+module.exports = require("babel-runtime/helpers/asyncToGenerator");
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports) {
+
+module.exports = require("clientnode");
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+// -*- coding: utf-8 -*-
+/* !
+    region header
+    Copyright Torben Sickert (info["~at~"]torben.website) 16.12.2012
+
+    License
+    -------
+
+    This library written by Torben Sickert stand under a creative commons naming
+    3.0 unported license. see http://creativecommons.org/licenses/by/3.0/deed.de
+    endregion
+*/// region imports
+exports.__esModule=true;exports.Helper=undefined;var _keys=__webpack_require__(1);var _keys2=_interopRequireDefault(_keys);var _asyncToGenerator2=__webpack_require__(2);var _asyncToGenerator3=_interopRequireDefault(_asyncToGenerator2);var _clientnode=__webpack_require__(3);var _clientnode2=_interopRequireDefault(_clientnode);var _nodeFetch=__webpack_require__(5);var _nodeFetch2=_interopRequireDefault(_nodeFetch);function _interopRequireDefault(obj){return obj&amp;&amp;obj.__esModule?obj:{default:obj}}// NOTE: Only needed for debugging this file.
+try{__webpack_require__(0)}catch(error){}// NOTE: Remove when "fetch" is supported by node.
+// endregion
+// NOTE: Remove when "fetch" is supported by node.
+global.fetch=_nodeFetch2.default;// region methods
+/**
+ * A dumm plugin interface with all available hooks.
+ */class Helper{/**
+     * Updates/creates a design document in database with a validation function
+     * set to given code.
+     * @param databaseConnection - Database connection to use for document
+     * updates.
+     * @param documentName - Design document name.
+     * @param documentData - Design document data.
+     * @param description - Used to produce semantic logging messages.
+     * @param log - Enables logging.
+     * @returns Promise which will be resolved after given document has updated
+     * successfully.
+     */static ensureValidationDocumentPresence(databaseConnection,documentName,documentData,description,log=true){return(0,_asyncToGenerator3.default)(function*(){const newDocument=_clientnode2.default.extendObject({_id:`_design/${documentName}`,language:'javascript'},documentData);try{const oldDocument=yield databaseConnection.get(`_design/${documentName}`);newDocument._rev=oldDocument._rev;yield databaseConnection.put(newDocument);if(log)console.info(`${description} updated.`)}catch(error){if(log)if(error.error==='not_found')console.info(`${description} not available: create new one.`);else console.info(`${description} couldn't be updated: "`+`${_clientnode2.default.representObject(error)}" create new one.`);try{yield databaseConnection.put(newDocument);if(log)console.info(`${description} installed/updated.`)}catch(error){throw new Error(`${description} couldn't be installed/updated: "`+`${_clientnode2.default.representObject(error)}".`)}}})()}// region model
+/**
+     * Determines a mapping of all models to roles who are allowed to edit
+     * corresponding model instances.
+     * @param modelConfiguration - Model specification object.
+     * @returns The mapping object.
+     */static determineAllowedModelRolesMapping(modelConfiguration){const allowedRoleName=modelConfiguration.property.name.special.allowedRole;const allowedModelRolesMapping={};const models=Helper.extendModels(modelConfiguration);for(const modelName in models)if(models.hasOwnProperty(modelName)&amp;&amp;models[modelName].hasOwnProperty(allowedRoleName)){allowedModelRolesMapping[modelName]=Helper.normalizeAllowedModelRoles(// IgnoreTypeCheck
+models[modelName][allowedRoleName]);allowedModelRolesMapping[modelName].properties={};for(const name in models[modelName])if(models[modelName].hasOwnProperty(name)&amp;&amp;models[modelName][name].hasOwnProperty('allowedRoles')&amp;&amp;models[modelName][name].allowedRoles)// IgnoreTypeCheck
+allowedModelRolesMapping[modelName].properties[name]=Helper.normalizeAllowedModelRoles(models[modelName][name].allowedRoles)}else allowedModelRolesMapping[modelName]={read:[],write:[],properties:{}};return allowedModelRolesMapping}/**
+     * Determines all property names which are indexable in a generic manner.
+     * @param modelConfiguration - Model specification object.
+     * @param model - Model to determine property names from.
+     * @returns The mapping object.
+     */static determineGenericIndexablePropertyNames(modelConfiguration,model){const specialNames=modelConfiguration.property.name.special;return(0,_keys2.default)(model).filter(name=>model[name].index||!(model[name].hasOwnProperty('index')&amp;&amp;!model[name].index||modelConfiguration.property.name.reserved.concat(specialNames.additional,specialNames.allowedRole,specialNames.attachment,specialNames.conflict,specialNames.constraint.execution,specialNames.constraint.expression,specialNames.deleted,specialNames.deleted_conflict,specialNames.extend,specialNames.id,specialNames.maximumAggregatedSize,specialNames.minimumAggregatedSize,specialNames.revision,specialNames.revisions,specialNames.revisionsInformation,specialNames.type).includes(name)||model[name].type&amp;&amp;(typeof model[name].type==='string'&amp;&amp;model[name].type.endsWith('[]')||Array.isArray(model[name].type)&amp;&amp;model[name].type.length&amp;&amp;Array.isArray(model[name].type[0])||modelConfiguration.entities.hasOwnProperty(model[name].type)))).concat(specialNames.id,specialNames.revision)}/**
+     * Extend given model with all specified one.
+     * @param modelName - Name of model to extend.
+     * @param models - Pool of models to extend from.
+     * @param extendPropertyName - Property name which indicates model
+     * inheritance.
+     * @returns Given model in extended version.
+     */static extendModel(modelName,models,extendPropertyName='_extends'){if(modelName==='_base')return models[modelName];if(models.hasOwnProperty('_base'))if(models[modelName].hasOwnProperty(extendPropertyName))// IgnoreTypeCheck
+models[modelName][extendPropertyName]=['_base'].concat(models[modelName][extendPropertyName]);else// IgnoreTypeCheck
+models[modelName][extendPropertyName]='_base';if(models[modelName].hasOwnProperty(extendPropertyName)){// IgnoreTypeCheck
+for(const modelNameToExtend of[].concat(models[modelName][extendPropertyName]))models[modelName]=_clientnode2.default.extendObject(true,{},Helper.extendModel(modelNameToExtend,models,extendPropertyName),models[modelName]);delete models[modelName][extendPropertyName]}return models[modelName]}/**
+     * Extend default specification with specific one.
+     * @param modelConfiguration - Model specification object.
+     * @returns Models with extended specific specifications.
+     */static extendModels(modelConfiguration){const specialNames=modelConfiguration.property.name.special;const models={};for(const modelName in modelConfiguration.entities)if(modelConfiguration.entities.hasOwnProperty(modelName)){if(!(new RegExp(modelConfiguration.property.name.typeRegularExpressionPattern.public).test(modelName)||new RegExp(modelConfiguration.property.name.typeRegularExpressionPattern.private).test(modelName)))throw new Error('Model names have to match "'+modelConfiguration.property.name.typeRegularExpressionPattern.public+'" or "'+modelConfiguration.property.name.typeRegularExpressionPattern.private+`" for private one (given name: "${modelName}").`);models[modelName]=Helper.extendModel(modelName,modelConfiguration.entities,specialNames.extend)}for(const modelName in models)if(models.hasOwnProperty(modelName))for(const propertyName in models[modelName])if(models[modelName].hasOwnProperty(propertyName))if(propertyName===specialNames.attachment){for(const type in models[modelName][propertyName])if(models[modelName][propertyName].hasOwnProperty(type))models[modelName][propertyName][type]=_clientnode2.default.extendObject(true,_clientnode2.default.copyLimitedRecursively(modelConfiguration.property.defaultSpecification),models[modelName][propertyName][type])}else if(![specialNames.allowedRole,specialNames.constraint.execution,specialNames.constraint.expression,specialNames.extend,specialNames.maximumAggregatedSize,specialNames.minimumAggregatedSize].includes(propertyName))models[modelName][propertyName]=_clientnode2.default.extendObject(true,_clientnode2.default.copyLimitedRecursively(modelConfiguration.property.defaultSpecification),models[modelName][propertyName]);return models}/**
+     * Convert given roles to its normalized representation.
+     * @param roles - Unstructured roles description.
+     * @returns Normalized roles representation.
+     */static normalizeAllowedModelRoles(roles){if(Array.isArray(roles))return{read:roles,write:roles};if(typeof roles==='object'){const result={read:[],write:[]};for(const type in result)if(roles.hasOwnProperty(type))if(Array.isArray(roles[type]))result[type]=roles[type];else result[type]=[roles[type]];return result}return{read:[roles],write:[roles]}}// endregion
+}exports.Helper=Helper;exports.default=Helper;// endregion
+// region vim modline
+// vim: set tabstop=4 shiftwidth=4 expandtab:
+// vim: foldmethod=marker foldmarker=region,endregion:
+// endregion
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports) {
+
+module.exports = require("node-fetch");
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports) {
+
+module.exports = require("babel-runtime/core-js/json/stringify");
+
+/***/ }),
+/* 7 */,
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(9);
+
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+// #!/usr/bin/env node
+// -*- coding: utf-8 -*-
+/** @module databaseWebNodePlugin *//* !
+    region header
+    [Project page](http://torben.website/databaseWebNodePlugin)
+
+    Copyright Torben Sickert (info["~at~"]torben.website) 16.12.2012
+
+    License
+    -------
+
+    This library written by Torben Sickert stand under a creative commons
+    naming 3.0 unported license.
+    See http://creativecommons.org/licenses/by/3.0/deed.de
+    endregion
+*/// region imports
+exports.__esModule=true;exports.Database=undefined;var _stringify=__webpack_require__(6);var _stringify2=_interopRequireDefault(_stringify);var _promise=__webpack_require__(10);var _promise2=_interopRequireDefault(_promise);var _asyncToGenerator2=__webpack_require__(2);var _asyncToGenerator3=_interopRequireDefault(_asyncToGenerator2);var _child_process=__webpack_require__(11);var _clientnode=__webpack_require__(3);var _clientnode2=_interopRequireDefault(_clientnode);var _fs=__webpack_require__(12);var _fs2=_interopRequireDefault(_fs);var _path=__webpack_require__(13);var _path2=_interopRequireDefault(_path);var _pouchdb=__webpack_require__(14);var _pouchdb2=_interopRequireDefault(_pouchdb);var _pouchdbFind=__webpack_require__(15);var _pouchdbFind2=_interopRequireDefault(_pouchdbFind);var _databaseHelper=__webpack_require__(16);var _databaseHelper2=_interopRequireDefault(_databaseHelper);var _helper=__webpack_require__(4);var _helper2=_interopRequireDefault(_helper);function _interopRequireDefault(obj){return obj&amp;&amp;obj.__esModule?obj:{default:obj}}// NOTE: Only needed for debugging this file.
+/* eslint-enable no-unused-vars *//* eslint-disable no-unused-vars */try{__webpack_require__(0)}catch(error){}// endregion
+// region plugins/classes
+/**
+ * Launches an application server und triggers all some pluginable hooks on
+ * an event.
+ */class Database{/**
+     * Start database's child process and return a Promise which observes this
+     * service.
+     * @param servicePromises - An object with stored service promise
+     * instances.
+     * @param services - An object with stored service instances.
+     * @param configuration - Mutable by plugins extended configuration object.
+     * @returns A promise which correspond to the plugin specific continues
+     * service.
+     */static loadService(servicePromises,services,configuration){return(0,_asyncToGenerator3.default)(function*(){let promise=null;if(services.database.server.hasOwnProperty('binaryFilePath')){services.database.server.process=(0,_child_process.spawn)(services.database.server.binaryFilePath,['--config',configuration.database.configurationFilePath,'--dir',_path2.default.resolve(configuration.database.path),/*
+                        NOTE: This redundancy seems to be needed to forward
+                        ports in docker containers.
+                    */'--host',configuration.database['httpd/host'],'--port',`${configuration.database.port}`],{cwd:eval('process').cwd(),env:eval('process').env,shell:true,stdio:'inherit'});promise=new _promise2.default(function(resolve,reject){for(const closeEventName of _clientnode2.default.closeEventNames)services.database.server.process.on(closeEventName,_clientnode2.default.getProcessCloseHandler(resolve,reject,{reason:closeEventName,process:services.database.server.process}))});yield _clientnode2.default.checkReachability(_clientnode2.default.stringFormat(configuration.database.url,''),true)}if(services.database.hasOwnProperty('connection'))return{promise// region ensure presence of global admin user
+};if(configuration.database.ensureAdminPresence){const unauthenticatedUserDatabaseConnection=new services.database.connector(`${_clientnode2.default.stringFormat(configuration.database.url,'')}/`+`_users`,configuration.database.connector);try{yield unauthenticatedUserDatabaseConnection.allDocs();console.info('No admin user available. Automatically creating admin '+`user "${configuration.database.user.name}".`);yield fetch(`${_clientnode2.default.stringFormat(configuration.database.url,'')}/`+`_config/admins/${configuration.database.user.name}`,{method:'PUT',body:`"${configuration.database.user.password}"`})}catch(error){if(error.hasOwnProperty('name')&amp;&amp;error.name==='unauthorized'){const authenticatedUserDatabaseConnection=new services.database.connector(_clientnode2.default.stringFormat(configuration.database.url,`${configuration.database.user.name}:`+`${configuration.database.user.password}@`)+'/_users',configuration.database.connector);try{yield authenticatedUserDatabaseConnection.allDocs()}catch(error){console.error(`Can't login as existing admin user "`+`${configuration.database.user.name}": "`+`${_clientnode2.default.representObject(error)}".`)}finally{authenticatedUserDatabaseConnection.close()}}else console.error(`Can't create new admin user "`+`${configuration.database.user.name}": "`+`${_clientnode2.default.representObject(error)}".`)}finally{unauthenticatedUserDatabaseConnection.close()}}// endregion
+// region ensure presence of regular users
+if(configuration.database.ensureUserPresence)for(const type of['admins','members'])for(const name of configuration.database.security[type].names){const userDatabaseConnection=new services.database.connector(_clientnode2.default.stringFormat(configuration.database.url,`${configuration.database.user.name}:`+`${configuration.database.user.password}@`)+'/_users',configuration.database.connector);try{yield userDatabaseConnection.get(`org.couchdb.user:${name}`)}catch(error){if(error.hasOwnProperty('error')&amp;&amp;error.error==='not_found')try{yield userDatabaseConnection.put({[configuration.database.model.property.name.special.id]:`org.couchdb.user:${name}`,name,password:name,roles:[].concat(configuration.database.security[type].roles.includes(`${name}s`)?`${name}s`:[]),type:'user'})}catch(error){throw new Error(`Couldn't create missing user "${name}":`+` ${_clientnode2.default.representObject(error)}`)}else throw new Error(`Couldn't check for presence of user "`+`${name}": ${_clientnode2.default.representObject(error)}`)}finally{userDatabaseConnection.close()}}// endregion
+// region apply database/rest api configuration
+if(configuration.database.model.updateConfiguration)for(const configurationPath in configuration.database)if(configuration.database.hasOwnProperty(configurationPath)&amp;&amp;configurationPath.includes('/'))try{yield fetch(_clientnode2.default.stringFormat(configuration.database.url,`${configuration.database.user.name}:`+`${configuration.database.user.password}@`)+`/_config/${configurationPath}`,{method:'PUT',body:'"'+`${configuration.database[configurationPath]}"`})}catch(error){console.error(`Configuration "${configurationPath}" couldn't `+'be applied to "'+`${configuration.database[configurationPath]}": `+_clientnode2.default.representObject(error))}// endregion
+services.database.connection=new services.database.connector(_clientnode2.default.stringFormat(configuration.database.url,`${configuration.database.user.name}:`+`${configuration.database.user.password}@`)+`/${configuration.name}`,configuration.database.connector);services.database.connection.setMaxListeners(Infinity);const idName=configuration.database.model.property.name.special.id;const revisionName=configuration.database.model.property.name.special.revision;const typeName=configuration.database.model.property.name.special.type;// region apply "latest/upsert" and ignore "NoChange" error feature
+/*
+            NOTE: A "bulkDocs" plugin does not get called for every "put" and
+            "post" call so we have to wrap runtime generated methods.
+        */for(const pluginName of['post','put']){const nativeMethod=services.database.connection[pluginName].bind(services.database.connection);services.database.connection[pluginName]=(()=>{var _ref=(0,_asyncToGenerator3.default)(function*(firstParameter,...parameter){try{return yield nativeMethod(firstParameter,...parameter)}catch(error){if(idName in firstParameter&amp;&amp;configuration.database.ignoreNoChangeError&amp;&amp;'name'in error&amp;&amp;error.name==='forbidden'&amp;&amp;'message'in error&amp;&amp;error.message.startsWith('NoChange:')){const result={id:firstParameter[idName],ok:true};try{result.rev=revisionName in firstParameter&amp;&amp;!['latest','upsert'].includes(firstParameter[revisionName])?firstParameter[revisionName]:(yield this.get(result.id))[revisionName]}catch(error){throw error}return result}throw error}});return function(_x){return _ref.apply(this,arguments)}})()}// endregion
+// region ensure presence of database security settings
+if(configuration.database.ensureSecuritySettingsPresence)try{/*
+                    NOTE: As a needed side effect: This clears preexisting
+                    document references in "securitySettings[
+                        configuration.database.model.property.name
+                            .validatedDocumentsCache]".
+                */yield fetch(_clientnode2.default.stringFormat(configuration.database.url,`${configuration.database.user.name}:`+`${configuration.database.user.password}@`)+`/${configuration.name}/_security`,{method:'PUT',headers:{'Content-Type':'application/json'},body:(0,_stringify2.default)(configuration.database.security)})}catch(error){console.error(`Security object couldn't be applied.: `+_clientnode2.default.representObject(error))}// endregion
+const modelConfiguration=_clientnode2.default.copyLimitedRecursively(configuration.database.model);delete modelConfiguration.property.defaultSpecification;delete modelConfiguration.entities;const models=_helper2.default.extendModels(configuration.database.model);if(configuration.database.model.updateValidation){const databaseHelperCode=yield new _promise2.default(function(resolve,reject){return _fs2.default.readFile(/* eslint-disable no-eval */eval('require.resolve')('./databaseHelper.compiled'),/* eslint-enable no-eval */{encoding:configuration.encoding,flag:'r'},function(error,data){return error?reject(error):resolve(data)})});// region generate/update authentication/validation code
+// / region validation
+const validationCode='function(...parameter) {\n'+`    return require('helper').default.validateDocumentUpdate`+'(...parameter.concat(['+(0,_stringify2.default)(models)+', '+(0,_stringify2.default)(modelConfiguration)+']))\n'+'}';try{new Function(`return ${validationCode}`)}catch(error){throw new Error(`Generated validation code "${validationCode}" doesn't `+`compile: ${_clientnode2.default.representObject(error)}`)}if(configuration.debug)console.info('Specification \n\n"'+_clientnode2.default.representObject(configuration.database.model)+`"\n\nhas generated validation code: \n\n"`+`${validationCode}".`);yield _helper2.default.ensureValidationDocumentPresence(services.database.connection,'validation',{helper:databaseHelperCode,/* eslint-disable camelcase */validate_doc_update:validationCode/* eslint-enable camelcase */},'Model specification');// / endregion
+// / region authentication
+const authenticationCode='function(...parameter) {\n'+/* eslint-disable indent */`    return require('helper').default.authenticate(`+'...parameter.concat(['+(0,_stringify2.default)(_helper2.default.determineAllowedModelRolesMapping(configuration.database.model))+`, '${idName}', '${typeName}']))\n`+'}';/* eslint-enable indent */try{new Function(`return ${authenticationCode}`)}catch(error){throw new Error(`Generated authentication code "${authenticationCode}" `+`doesn't compile: ${_clientnode2.default.representObject(error)}`)}if(configuration.debug)console.info(`Authentication code "${authenticationCode}" generated.`);yield _helper2.default.ensureValidationDocumentPresence(services.database.connection,'authentication',{helper:databaseHelperCode,/* eslint-disable camelcase */validate_doc_update:authenticationCode/* eslint-enable camelcase */},'Authentication logic');// / endregion
+// endregion
+// region check if all constraint descriptions compile
+for(const modelName in models)if(models.hasOwnProperty(modelName))for(const name in models[modelName])if(models[modelName].hasOwnProperty(name))if([modelConfiguration.property.name.special.constraint.execution,modelConfiguration.property.name.special.constraint.expression].includes(name)){// IgnoreTypeCheck
+for(const constraint of models[modelName][name])if(constraint.hasOwnProperty('description')&amp;&amp;constraint.description)try{new Function('return '+constraint.description)}catch(error){throw new Error(`Specified constraint `+`description "`+`${constraint.description}" `+`for model "${modelName}" `+`doesn't compile: "`+_clientnode2.default.representObject(error)+'".')}}else for(const type of['conflictingConstraintExpression','conflictingConstraintExecution','constraintExpression','constraintExecution'])if(models[modelName][name][type]&amp;&amp;models[modelName][name][type].hasOwnProperty('description'))try{new Function(models[modelName][name][type].description)}catch(error){throw new Error(`Specified constraint `+`description "`+models[modelName][name][type].description+`" for model "${modelName}" `+`in property "${name}" as "`+`${type}" doesn't compile: "`+_clientnode2.default.representObject(error)+'".')}// endregion
+}// region ensure all constraints to have a consistent initial state
+if(configuration.database.model.autoMigrationPath){if(yield _clientnode2.default.isDirectory(_path2.default.resolve(configuration.database.model.autoMigrationPath)))for(const file of yield _clientnode2.default.walkDirectoryRecursively(_path2.default.resolve(configuration.database.model.autoMigrationPath))){const extension=_path2.default.extname(file.name);const basename=_path2.default.basename(file.name,extension);if(configuration.database.model.entities.hasOwnProperty(basename)&amp;&amp;extension==='.json')for(const document of JSON.parse((yield new _promise2.default(function(resolve,reject){return _fs2.default.readFile(file.path,{encoding:configuration.encoding,flag:'r'},function(error,data){return error?reject(error):resolve(data)})})))){document[typeName]=basename;try{yield services.database.connection.put(document)}catch(error){throw new Error(`Migrating document "`+`${document[idName]}" of type "`+`${document[typeName]}" has failed: `+_clientnode2.default.representObject(error))}console.info(`Including document "`+`${document[idName]}" of type "`+`${document[typeName]}" was successful.`)}}// TODO run migration scripts by providing an authenticated
+// database connection instance.
+for(const retrievedDocument of(yield services.database.connection.allDocs({/* eslint-disable camelcase */include_docs:true/* eslint-enable camelcase */})).rows)if(!(typeof retrievedDocument.id==='string'&amp;&amp;retrievedDocument.id.startsWith('_design/'))){const document=retrievedDocument.doc;const newDocument=_clientnode2.default.copyLimitedRecursively(document);newDocument[configuration.database.model.property.name.special.strategy]='migrate';/*
+                        Auto migration can:
+
+                        - Remove not specified old properties.
+                        - Add properties whose are missing and a default value
+                          is specified.
+                        - Trim existing strings if newly specified.
+                        - Remove property values if there values equals to an
+                          empty instance and the "emptyEqualsToNull" property
+                          is specified as positive.
+                    */try{_databaseHelper2.default.validateDocumentUpdate(/*
+                                NOTE: Removed property marked with "null" will
+                                be removed so final removing would be skipped
+                                if we do not use a copy here.
+                            */_clientnode2.default.copyLimitedRecursively(newDocument),/*
+                                NOTE: During processing attachments sub object
+                                will be manipulated so copying is needed to
+                                avoid unexpected behavior in this context.
+                            */_clientnode2.default.copyLimitedRecursively(document),{db:configuration.name,name:configuration.database.user.name,roles:['_admin']},/*
+                                NOTE: We need a copy to ignore validated
+                                document caches.
+                            */_clientnode2.default.copyLimitedRecursively(configuration.database.security),models,modelConfiguration)}catch(error){if('forbidden'in error){if(!error.forbidden.startsWith('NoChange:'))console.warn(`Document "`+`${_clientnode2.default.representObject(document)}" `+`doesn't satisfy its schema (and can not`+` be migrated automatically): `+_clientnode2.default.representObject(error));continue}else throw error}try{yield services.database.connection.put(newDocument)}catch(error){throw new Error(`Replaceing auto migrated document "`+`${newDocument[idName]}" has failed: `+_clientnode2.default.representObject(error))}console.info(`Auto migrating document "${newDocument[idName]}" `+'was successful.')}}// endregion
+// region create/remove needed/unneeded generic indexes
+if(configuration.database.createGenericFlatIndex&amp;&amp;configuration.database.model.autoMigrationPath){let indexes;try{indexes=(yield services.database.connection.getIndexes()).indexes}catch(error){throw error}for(const modelName in models)if(models.hasOwnProperty(modelName)&amp;&amp;new RegExp(configuration.database.model.property.name.typeRegularExpressionPattern.public).test(modelName))for(const propertyName of _helper2.default.determineGenericIndexablePropertyNames(configuration.database.model,models[modelName])){const name=`${modelName}-${propertyName}-GenericIndex`;let foundPosition=-1;let position=0;for(const index of indexes){if(index.name===name){foundPosition=position;break}position+=1}if(foundPosition===-1)try{yield services.database.connection.createIndex({index:{ddoc:name,fields:[typeName,propertyName],name}})}catch(error){throw error}else indexes.slice(position,1)}for(const index of indexes)if(index.name.endsWith('-GenericIndex')){let exists=false;for(const modelName in models)if(index.name.startsWith(`${modelName}-`)){for(const name of _helper2.default.determineGenericIndexablePropertyNames(configuration.database.model,models[modelName]))if(index.name===`${modelName}-${name}-GenericIndex`)exists=true;break}if(!exists)try{yield services.database.connection.deleteIndex(index)}catch(error){throw error}}}// endregion
+// TODO check conflicting constraints and mark them if necessary (check
+// how couchdb deals with "id" conflicts)
+return{name:'database',promise}})()}/**
+     * Appends an application server to the web node services.
+     * @param services - An object with stored service instances.
+     * @param configuration - Mutable by plugins extended configuration object.
+     * @returns Given and extended object of services.
+     */static preLoadService(services,configuration){return(0,_asyncToGenerator3.default)(function*(){if(!services.hasOwnProperty('database'))services.database={};if(!services.database.hasOwnProperty('connector')){const idName=configuration.database.model.property.name.special.id;const revisionName=configuration.database.model.property.name.special.revision;services.database.connector=_pouchdb2.default;// region apply "latest/upsert" and ignore "NoChange" error plugin
+const nativeBulkDocs=services.database.connector.prototype.bulkDocs;services.database.connector.plugin({bulkDocs:(()=>{var _ref2=(0,_asyncToGenerator3.default)(function*(firstParameter,...parameter){/*
+                    Implements a generic retry mechanism for "upsert" and
+                    "latest" updates and optionally supports to ignore
+                    "NoChange" errors.
+                */if(!Array.isArray(firstParameter)&amp;&amp;typeof firstParameter==='object'&amp;&amp;firstParameter!==null&amp;&amp;idName in firstParameter)firstParameter=[firstParameter];let result=yield nativeBulkDocs.call(this,firstParameter,...parameter);const conflictingIndexes=[];const conflicts=[];let index=0;for(const item of result){if(typeof firstParameter[index]==='object'&amp;&amp;firstParameter!==null)if(revisionName in firstParameter[index]&amp;&amp;item.name==='conflict'&amp;&amp;['latest','upsert'].includes(firstParameter[index][revisionName])){conflicts.push(item);conflictingIndexes.push(index)}else if(idName in firstParameter[index]&amp;&amp;configuration.database.ignoreNoChangeError&amp;&amp;'name'in item&amp;&amp;item.name==='forbidden'&amp;&amp;'message'in item&amp;&amp;item.message.startsWith('NoChange:')){result[index]={id:firstParameter[index][idName],ok:true};try{result[index].rev=revisionName in firstParameter[index]&amp;&amp;!['latest','upsert'].includes(firstParameter[index][revisionName])?firstParameter[index][revisionName]:(yield this.get(result[index].id))[revisionName]}catch(error){throw error}}index+=1}if(conflicts.length){firstParameter=conflicts;const retriedResults=yield this.bulkDocs(firstParameter,...parameter);for(const retriedResult of retriedResults)result[conflictingIndexes.shift()]=retriedResult}return result});return function bulkDocs(_x2){return _ref2.apply(this,arguments)}})()});// endregion
+if(configuration.database.debug)services.database.connector.debug.enable('*');services.database.connector=services.database.connector.plugin(_pouchdbFind2.default)}if(!services.database.hasOwnProperty('server')){services.database.server={};// region search for binary file to start database server
+for(const filePath of configuration.database.binary.locations){const binaryFilePath=_path2.default.resolve(filePath,configuration.database.binary.name);if(yield _clientnode2.default.isFile(binaryFilePath))services.database.server.binaryFilePath=binaryFilePath}if(!services.database.server.hasOwnProperty('binaryFilePath'))throw new Error('No binary file name "'+`${configuration.database.binary.name}" in one of the `+'following locations found: "'+`${configuration.database.binary.locations.join('", "')}`+'".');// endregion
+}return services})()}/**
+     * Application will be closed soon.
+     * @param services - An object with stored service instances.
+     * @param configuration - Mutable by plugins extended configuration object.
+     * @returns Given object of services.
+     */static shouldExit(services,configuration){return(0,_asyncToGenerator3.default)(function*(){const logFilePath='log.txt';if(yield _clientnode2.default.isFile(logFilePath))yield new _promise2.default(function(resolve,reject){return _fs2.default.unlink(logFilePath,function(error){return error?reject(error):resolve()})});services.database.connection.close();services.database.server.process.kill('SIGINT');yield _clientnode2.default.checkUnreachability(_clientnode2.default.stringFormat(configuration.database.url,''),true);delete services.database;return services})()}}exports.Database=Database;exports.default=Database;// endregion
+// region vim modline
+// vim: set tabstop=4 shiftwidth=4 expandtab:
+// vim: foldmethod=marker foldmarker=region,endregion:
+// endregion
+
+/***/ }),
+/* 10 */
+/***/ (function(module, exports) {
+
+module.exports = require("babel-runtime/core-js/promise");
+
+/***/ }),
+/* 11 */
+/***/ (function(module, exports) {
+
+module.exports = require("child_process");
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports) {
+
+module.exports = require("fs");
+
+/***/ }),
+/* 13 */
+/***/ (function(module, exports) {
+
+module.exports = require("path");
+
+/***/ }),
+/* 14 */
+/***/ (function(module, exports) {
+
+module.exports = require("pouchdb");
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports) {
+
+module.exports = require("pouchdb-find");
+
+/***/ }),
+/* 16 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+// -*- coding: utf-8 -*-
+/* !
+    region header
+    Copyright Torben Sickert (info["~at~"]torben.website) 16.12.2012
+
+    License
+    -------
+
+    This library written by Torben Sickert stand under a creative commons naming
+    3.0 unported license. see http://creativecommons.org/licenses/by/3.0/deed.de
+    endregion
+*/// region imports
+// NOTE: Only needed for debugging this file.
+exports.__esModule=true;exports.DatabaseHelper=undefined;var _set=__webpack_require__(17);var _set2=_interopRequireDefault(_set);var _getPrototypeOf=__webpack_require__(18);var _getPrototypeOf2=_interopRequireDefault(_getPrototypeOf);var _values=__webpack_require__(19);var _values2=_interopRequireDefault(_values);var _keys=__webpack_require__(1);var _keys2=_interopRequireDefault(_keys);var _stringify=__webpack_require__(6);var _stringify2=_interopRequireDefault(_stringify);function _interopRequireDefault(obj){return obj&amp;&amp;obj.__esModule?obj:{default:obj}}try{__webpack_require__(0)}catch(error){}// endregion
+/**
+ * A dumm plugin interface with all available hooks.
+ */class DatabaseHelper{/**
+     * Authenticates given document update against given mapping of allowed
+     * roles for writing into corresponding model instances.
+     * @param newDocument - Updated document.
+     * @param oldDocument - If an existing document should be updated its given
+     * here.
+     * @param userContext - Contains meta information about currently acting
+     * user.
+     * @param securitySettings - Database security settings.
+     * @param allowedModelRolesMapping - Allowed roles for given models.
+     * @param idPropertyName - Property name indicating the id field name.
+     * @param typePropertyName - Property name indicating to which model a
+     * document belongs to.
+     * @param read - Indicates whether a read or write of given document should
+     * be authorized or not.
+     * @returns Throws an exception if authorisation is not accepted and "true"
+     * otherwise.
+     */static authenticate(newDocument,oldDocument,userContext={db:'dummy',name:'"unknown"',roles:[]/* eslint-disable no-unused-vars */},securitySettings={admins:{names:[],roles:[]},members:{names:[],roles:[]/* eslint-enable no-unused-vars */}},allowedModelRolesMapping,idPropertyName,typePropertyName,read=false){/*
+            NOTE: Special documents and like changes sequences are going
+            through this function and should be ignored.
+        */if(!newDocument.hasOwnProperty(typePropertyName))return true;const allowedRoles={properties:{},read:['_admin','readonlyadmin'],write:['_admin']};if(newDocument.hasOwnProperty(idPropertyName)&amp;&amp;newDocument[idPropertyName].startsWith('_design/'))allowedRoles.read.push('readonlymember');let userRolesDescription=`Current user doesn't own any role`;const operationType=read?'read':'write';if(userContext){if(!('name'in userContext))userContext.name='"unknown"';if(allowedModelRolesMapping&amp;&amp;typePropertyName&amp;&amp;newDocument.hasOwnProperty(typePropertyName)&amp;&amp;allowedModelRolesMapping.hasOwnProperty(newDocument[typePropertyName]))for(const type in allowedRoles)if(allowedRoles.hasOwnProperty(type)&amp;&amp;newDocument.hasOwnProperty(typePropertyName))if(Array.isArray(allowedRoles[type]))allowedRoles[type]=allowedRoles[type].concat(allowedModelRolesMapping[newDocument[typePropertyName]][type]);else allowedRoles[type]=allowedModelRolesMapping[newDocument[typePropertyName]][type];if(userContext.roles.length){// TODO check for each property recursively
+const relevantRoles=allowedRoles[operationType];for(const userRole of userContext.roles)if(relevantRoles.includes(userRole))return true;// IgnoreTypeCheck
+userRolesDescription=`Current user "${userContext.name}" `+`owns the following roles: "`+`${userContext.roles.join('", "')}".`;//
+}else// IgnoreTypeCheck
+userRolesDescription=`Current user "${userContext.name}" `+`doesn't own any role`}/* eslint-disable no-throw-literal */throw{unauthorized:'Only users with a least on of these roles are allowed to '+`perform requested ${operationType} action: "`+`${allowedRoles[operationType].join('", "')}". `+`${userRolesDescription}.`/* eslint-enable no-throw-literal */}}/**
+     * Represents a design document validation function for given model
+     * specification.
+     * @param newDocument - Updated document.
+     * @param oldDocument - If an existing document should be updated its given
+     * here.
+     * @param userContext - Contains meta information about currently acting
+     * user.
+     * @param securitySettings - Database security settings.
+     * @param models - Models specification object.
+     * @param modelConfiguration - Model configuration object.
+     * @param toJSON - JSON stringifier.
+     * @returns Modified given new document.
+     */static validateDocumentUpdate(newDocument,oldDocument,userContext={db:'dummy',name:'admin',roles:['_admin']},securitySettings={admins:{names:[],roles:[]},members:{names:[],roles:[]}},models,modelConfiguration,toJSON=null){// region ensure needed environment
+const now=new Date;const nowUTCTimestamp=Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate(),now.getUTCHours(),now.getUTCMinutes(),now.getUTCSeconds(),now.getUTCMilliseconds())/1000;const specialNames=modelConfiguration.property.name.special;const idName=specialNames.id;const revisionName=specialNames.revision;/*
+            NOTE: Needed if we are able to validate users table.
+
+            if (
+                newDocument.hasOwnProperty('type') &amp;&amp;
+                newDocument.type === 'user' &amp;&amp;
+                newDocument.hasOwnProperty(idName) &amp;&amp;
+                newDocument[idName].startsWith('org.couchdb.user:')
+            )
+                return newDocument
+        */if(securitySettings.hasOwnProperty(modelConfiguration.property.name.validatedDocumentsCache)&amp;&amp;securitySettings[modelConfiguration.property.name.validatedDocumentsCache].has(`${newDocument[idName]}-${newDocument[revisionName]}`)){securitySettings[modelConfiguration.property.name.validatedDocumentsCache].delete(`${newDocument[idName]}-${newDocument[revisionName]}`);return newDocument}if(newDocument.hasOwnProperty(revisionName)&amp;&amp;['latest','upsert'].includes(newDocument[revisionName]))if(oldDocument&amp;&amp;oldDocument.hasOwnProperty(revisionName))newDocument[revisionName]=oldDocument[revisionName];else if(newDocument[revisionName]==='latest')/* eslint-disable no-throw-literal */throw{forbidden:'Revision: No old document available to update.'/* eslint-enable no-throw-literal */};else delete newDocument[revisionName];let updateStrategy=modelConfiguration.updateStrategy;if(newDocument.hasOwnProperty(specialNames.strategy)){updateStrategy=newDocument[specialNames.strategy];delete newDocument[specialNames.strategy]}let serialize;if(toJSON)serialize=toJSON;else if(JSON&amp;&amp;JSON.hasOwnProperty('stringify'))serialize=object=>(0,_stringify2.default)(object,null,4);else throw new Error('Needed "serialize" function is not available.');// endregion
+// region functions
+const getFilenameByPrefix=(attachments,prefix)=>{if(prefix){for(const name in attachments)if(attachments.hasOwnProperty(name)&amp;&amp;name.startsWith(prefix))return name}else{const keys=(0,_keys2.default)(attachments);if(keys.length)return keys[0]}return null};const attachmentWithPrefixExists=(newDocument,namePrefix)=>{if(newDocument.hasOwnProperty(specialNames.attachment)){const name=getFilenameByPrefix(newDocument[specialNames.attachment],namePrefix);if(name)return newDocument[specialNames.attachment][name].hasOwnProperty('stub')&amp;&amp;newDocument[specialNames.attachment][name].stub||newDocument[specialNames.attachment][name].hasOwnProperty('data')&amp;&amp;![undefined,null].includes(newDocument[specialNames.attachment][name].data)}return false};const checkDocument=(newDocument,oldDocument,parentNames=[])=>{const pathDescription=parentNames.length?` in ${parentNames.join(' -> ')}`:'';let changedPath=[];// region check for model type
+if(!newDocument.hasOwnProperty(specialNames.type))/* eslint-disable no-throw-literal */throw{forbidden:'Type: You have to specify a model type via '+`property "${specialNames.type}"${pathDescription}.`/* eslint-enable no-throw-literal */};if(!(parentNames.length||new RegExp(modelConfiguration.property.name.typeRegularExpressionPattern.public).test(newDocument[specialNames.type])))/* eslint-disable no-throw-literal */throw{forbidden:'TypeName: You have to specify a model type '+'which matches "'+modelConfiguration.property.name.typeRegularExpressionPattern.public+'" as public type (given "'+newDocument[specialNames.type]+`")${pathDescription}.`/* eslint-enable no-throw-literal */};if(!models.hasOwnProperty(newDocument[specialNames.type]))/* eslint-disable no-throw-literal */throw{forbidden:'Model: Given model "'+newDocument[specialNames.type]+`" is not specified${pathDescription}.`/* eslint-enable no-throw-literal */// endregion
+};const modelName=newDocument[specialNames.type];const model=models[modelName];let additionalPropertySpecification=null;if(model.hasOwnProperty(specialNames.additional)&amp;&amp;model[specialNames.additional])additionalPropertySpecification=model[specialNames.additional];// region document specific functions
+const checkPropertyConstraints=(newValue,name,propertySpecification,oldValue,types=['constraintExpression','constraintExecution'])=>{for(const type of types)if(propertySpecification[type]){let hook;const code=(type.endsWith('Expression')?'return ':'')+propertySpecification[type].evaluation;const scope={attachmentWithPrefixExists:attachmentWithPrefixExists.bind(newDocument,newDocument),checkDocument,checkPropertyContent,code,getFilenameByPrefix,model,modelConfiguration,modelName,models,name,newDocument,newValue,now,nowUTCTimestamp,oldDocument,oldValue,parentNames,pathDescription,propertySpecification,securitySettings,serialize,userContext// region compile
+};try{// IgnoreTypeCheck
+hook=new Function(...(0,_keys2.default)(scope),code)}catch(error){/* eslint-disable no-throw-literal */throw{forbidden:`Compilation: Hook "${type}" has invalid`+` code "${code}": "${serialize(error)}`+`"${pathDescription}.`/* eslint-enable no-throw-literal */}}// endregion
+let satisfied=false;// region run
+try{// IgnoreTypeCheck
+satisfied=hook(...(0,_values2.default)(scope))}catch(error){/* eslint-disable no-throw-literal */throw{forbidden:`Runtime: Hook "${type}" has throw an `+`error with code "${code}": "`+`${serialize(error)}"${pathDescription}.`/* eslint-enable no-throw-literal */}}// endregion
+if(!satisfied)/* eslint-disable no-throw-literal */throw{forbidden:type.charAt(0).toUpperCase()+type.substring(1)+`: `+(propertySpecification[type].description?// IgnoreTypeCheck
+new Function(...(0,_keys2.default)(scope),'return '+propertySpecification[type].description)(...(0,_values2.default)(scope)):`Property "${name}" should `+`satisfy constraint "${code}" (given "`+`${serialize(newValue)}")${pathDescription}.`)/* eslint-enable no-throw-literal */}}};const checkPropertyContent=(newValue,name,propertySpecification,oldValue=null)=>{let changedPath=[];// region type
+const types=Array.isArray(propertySpecification.type)?propertySpecification.type:[propertySpecification.type];// Derive nested missing explicit type definition if possible.
+if(typeof newValue==='object'&amp;&amp;(0,_getPrototypeOf2.default)(newValue)===Object.prototype&amp;&amp;!newValue.hasOwnProperty(specialNames.type)&amp;&amp;types.length===1&amp;&amp;models.hasOwnProperty(types[0]))newValue[specialNames.type]=types[0];let typeMatched=false;for(const type of types)if(models.hasOwnProperty(type)){if(typeof newValue==='object'&amp;&amp;(0,_getPrototypeOf2.default)(newValue)===Object.prototype&amp;&amp;newValue.hasOwnProperty(specialNames.type)&amp;&amp;newValue[specialNames.type]===type){const result=checkDocument(newValue,oldValue,parentNames.concat(name));if(result.changedPath.length)changedPath=result.changedPath;newValue=result.newDocument;if(serialize(newValue)===serialize({}))return{newValue:null,changedPath};typeMatched=true;break}else if(types.length===1)/* eslint-disable no-throw-literal */throw{forbidden:`NestedType: Under key "${name}" isn't `+`of type "${type}" (given "`+`${serialize(newValue)}" of type `+`${typeof newValue})${pathDescription}.`/* eslint-enable no-throw-literal */}}else if(type==='DateTime'){const initialNewValue=newValue;if(newValue!==null&amp;&amp;typeof newValue!=='number'){newValue=new Date(newValue);/* eslint-enable no-throw-literal */newValue=Date.UTC(newValue.getUTCFullYear(),newValue.getUTCMonth(),newValue.getUTCDate(),newValue.getUTCHours(),newValue.getUTCMinutes(),newValue.getUTCSeconds(),newValue.getUTCMilliseconds())/1000}if(typeof newValue!=='number'||isNaN(newValue)){if(types.length===1)/* eslint-disable no-throw-literal */throw{forbidden:`PropertyType: Property "${name}" `+`isn't of (valid) type "DateTime" (`+`given "`+serialize(initialNewValue).replace(/^"/,'').replace(/"$/,'')+`" of type "`+`${typeof initialNewValue}")`+`${pathDescription}.`/* eslint-enable no-throw-literal */}}else{typeMatched=true;break}}else if(['boolean','integer','number','string'].includes(type)){if(typeof newValue==='number'&amp;&amp;isNaN(newValue)||!(type==='integer'||typeof newValue===type)||type==='integer'&amp;&amp;parseInt(newValue)!==newValue){if(types.length===1)/* eslint-disable no-throw-literal */throw{forbidden:`PropertyType: Property "${name}"`+` isn't of (valid) type "${type}" (`+`given "${serialize(newValue)}" of `+`type "${typeof newValue}")`+`${pathDescription}.`/* eslint-enable no-throw-literal */}}else{typeMatched=true;break}}else if(typeof type==='string'&amp;&amp;type.startsWith('foreignKey:')){// IgnoreTypeCheck
+const foreignKeyType=models[type.substring('foreignKey:'.length)][idName].type;if(foreignKeyType===typeof newValue){typeMatched=true;break}else if(types.length===1)/* eslint-disable no-throw-literal */throw{forbidden:`PropertyType: Foreign key property "`+`${name}" isn't of type "`+`${foreignKeyType}" (given "`+`${serialize(newValue)}" of type "`+`${typeof newValue}")${pathDescription}.`/* eslint-enable no-throw-literal */}}else if(type==='any'||serialize(newValue)===serialize(type)){typeMatched=true;break}else if(types.length===1)/* eslint-disable no-throw-literal */throw{forbidden:`PropertyType: Property "${name}" isn't `+`value "${type}" (given "`+serialize(newValue).replace(/^"/,'').replace(/"$/,'')+`" of type "${typeof newValue}")`+`${pathDescription}.`/* eslint-disable no-throw-literal */};if(!typeMatched)/* eslint-disable no-throw-literal */throw{forbidden:'PropertyType: None of the specified types "'+`${types.join('", "')}" for property "${name}" `+`matches value "`+serialize(newValue).replace(/^"/,'').replace(/"$/,'')+`${newValue}" of type "${typeof newValue}")`+`${pathDescription}.`/* eslint-disable no-throw-literal */// endregion
+// region range
+};if(typeof newValue==='string'){if(![undefined,null].includes(propertySpecification.minimumLength)&amp;&amp;newValue.length&lt;propertySpecification.minimumLength)/* eslint-disable no-throw-literal */throw{forbidden:`MinimalLength: Property "${name}" must have`+' minimal length '+// IgnoreTypeCheck
+`${propertySpecification.minimumLength} (`+`given ${newValue} with length `+`${newValue.length})${pathDescription}.`/* eslint-enable no-throw-literal */};if(![undefined,null].includes(propertySpecification.maximumLength)&amp;&amp;newValue.length>propertySpecification.maximumLength)/* eslint-disable no-throw-literal */throw{forbidden:`MaximalLength: Property "${name}" must have`+' maximal length '+// IgnoreTypeCheck
+`${propertySpecification.maximumLength} (`+`given ${newValue} with length `+`${newValue.length})${pathDescription}.`/* eslint-enable no-throw-literal */}}if(typeof newValue==='number'){if(![undefined,null].includes(propertySpecification.minimum)&amp;&amp;newValue&lt;propertySpecification.minimum)/* eslint-disable no-throw-literal */throw{forbidden:`Minimum: Property "${name}" (type `+// IgnoreTypeCheck
+`${propertySpecification.type}) must `+'satisfy a minimum of '+// IgnoreTypeCheck
+`${propertySpecification.minimum} (`+`given ${newValue} with length `+`${newValue.length})${pathDescription}.`/* eslint-disable no-throw-literal */};if(![undefined,null].includes(propertySpecification.maximum)&amp;&amp;newValue>propertySpecification.maximum)/* eslint-disable no-throw-literal */throw{forbidden:`Maximum: Property "${name}" (type `+// IgnoreTypeCheck
+`${propertySpecification.type}) must `+'satisfy a maximum of '+// IgnoreTypeCheck
+`${propertySpecification.maximum} (`+`given ${newValue} with length `+`${newValue.length}${pathDescription}.`/* eslint-enable no-throw-literal */}}// endregion
+// region selection
+if(propertySpecification.selection&amp;&amp;!propertySpecification.selection.includes(newValue))/* eslint-disable no-throw-literal */throw{forbidden:`Selection: Property "${name}" (type `+// IgnoreTypeCheck
+`${propertySpecification.type}) should be one of`+' "'+propertySpecification.selection.join('", "')+`". But is "${newValue}"${pathDescription}.`/* eslint-enable no-throw-literal */// endregion
+// region pattern
+};if(!([undefined,null].includes(propertySpecification.regularExpressionPattern)||new RegExp(// IgnoreTypeCheck
+propertySpecification.regularExpressionPattern).test(newValue)))/* eslint-disable no-throw-literal */throw{forbidden:`PatternMatch: Property "${name}" should match `+'regular expression pattern '+// IgnoreTypeCheck
+propertySpecification.regularExpressionPattern+` (given "${newValue}")${pathDescription}.`/* eslint-enable no-throw-literal */};else if(!([undefined,null].includes(propertySpecification.invertedRegularExpressionPattern)||!new RegExp(// IgnoreTypeCheck
+propertySpecification.invertedRegularExpressionPattern).test(newValue)))/* eslint-disable no-throw-literal */throw{forbidden:`InvertedPatternMatch: Property "${name}" should`+' not match regular expression pattern '+// IgnoreTypeCheck
+propertySpecification.invertedRegularExpressionPattern+` (given "${newValue}")${pathDescription}.`/* eslint-enable no-throw-literal */// endregion
+};checkPropertyConstraints(newValue,name,propertySpecification,oldValue);if(serialize(newValue)!==serialize(oldValue))changedPath=parentNames.concat(name,'value updated');return{newValue,changedPath}};// / region create hook
+const runCreateHook=(propertySpecification,newDocument,oldDocument,name)=>{if(!oldDocument)for(const type of['onCreateExpression','onCreateExecution'])if(propertySpecification[type]){let hook;const scope={attachmentWithPrefixExists:attachmentWithPrefixExists.bind(newDocument,newDocument),checkDocument,checkPropertyContent,getFilenameByPrefix,model,modelConfiguration,modelName,models,name,newDocument,now,nowUTCTimestamp,oldDocument,propertySpecification,securitySettings,serialize,userContext};try{// IgnoreTypeCheck
+hook=new Function(...(0,_keys2.default)(scope),(type.endsWith('Expression')?'return ':'')+propertySpecification[type])}catch(error){/* eslint-disable no-throw-literal */throw{forbidden:`Compilation: Hook "${type}" has `+'invalid code "'+`${propertySpecification[type]}" for`+` property "${name}": `+serialize(error)+`${pathDescription}.`/* eslint-enable no-throw-literal */}}let result;try{result=hook(...(0,_values2.default)(scope))}catch(error){/* eslint-disable no-throw-literal */throw{forbidden:`Runtime: Hook "${type}" has throw `+'an error with code "'+`${propertySpecification[type]}" `+`for property "${name}": `+serialize(error)+`${pathDescription}.`/* eslint-enable no-throw-literal */}}if(![undefined,null].includes(result))newDocument[name]=result}};// / endregion
+// / region update hook
+const runUpdateHook=(propertySpecification,newDocument,oldDocument,name)=>{if(!newDocument.hasOwnProperty(name))return;if(propertySpecification.trim&amp;&amp;typeof newDocument[name]==='string')newDocument[name]=newDocument[name].trim();if(propertySpecification.emptyEqualsToNull&amp;&amp;(newDocument[name]===''||Array.isArray(newDocument[name])&amp;&amp;newDocument[name].length===0||typeof newDocument[name]==='object'&amp;&amp;newDocument[name]!==null&amp;&amp;(0,_keys2.default)(newDocument).length===0))newDocument[name]=null;for(const type of['onUpdateExpression','onUpdateExecution'])if(propertySpecification[type]){let hook;const scope={attachmentWithPrefixExists:attachmentWithPrefixExists.bind(newDocument,newDocument),checkDocument,checkPropertyContent,getFilenameByPrefix,model,modelConfiguration,modelName,models,name,newDocument,now,nowUTCTimestamp,oldDocument,propertySpecification,securitySettings,serialize,userContext};try{// IgnoreTypeCheck
+hook=new Function(...(0,_keys2.default)(scope),(type.endsWith('Expression')?'return ':'')+propertySpecification[type])}catch(error){/* eslint-disable no-throw-literal */throw{forbidden:`Compilation: Hook "${type}" has invalid`+` code "${propertySpecification[type]}" `+`for property "${name}": `+`${serialize(error)}${pathDescription}.`/* eslint-enable no-throw-literal */}}try{newDocument[name]=hook(...(0,_values2.default)(scope))}catch(error){/* eslint-disable no-throw-literal */throw{forbidden:`Runtime: Hook "${type}" has throw an `+'error with code "'+`${propertySpecification[type]}" for `+`property "${name}": ${serialize(error)}`+`${pathDescription}.`/* eslint-enable no-throw-literal */}}}};// / endregion
+// endregion
+const specifiedPropertyNames=(0,_keys2.default)(model).filter(name=>![specialNames.additional,specialNames.allowedRole,specialNames.constraint.execution,specialNames.constraint.expression,specialNames.extend,specialNames.maximumAggregatedSize,specialNames.minimumAggregatedSize].includes(name));for(const name of specifiedPropertyNames.concat(additionalPropertySpecification?(0,_keys2.default)(newDocument).filter(name=>!specifiedPropertyNames.includes(name)):[]))// region run hooks and check for presence of needed data
+if(specialNames.attachment===name)for(const type in model[name]){if(!newDocument.hasOwnProperty(name)||newDocument[name]===null)newDocument[name]={};if(oldDocument&amp;&amp;!oldDocument.hasOwnProperty(name))oldDocument[name]={};const newFileNames=(0,_keys2.default)(newDocument[name]).filter(fileName=>newDocument[name][fileName].data!==null&amp;&amp;new RegExp(type).test(fileName));let oldFileNames=[];if(oldDocument)oldFileNames=(0,_keys2.default)(oldDocument[name]).filter(fileName=>!(newDocument.hasOwnProperty(name)&amp;&amp;newDocument[name].hasOwnProperty(fileName)&amp;&amp;newDocument[name][fileName].hasOwnProperty('data')&amp;&amp;newDocument[name][fileName].data===null)&amp;&amp;// IgnoreTypeCheck
+oldDocument[name][fileName]&amp;&amp;oldDocument[name][fileName].data!==null&amp;&amp;new RegExp(type).test(fileName));for(const fileName of newFileNames)runCreateHook(model[name][type],newDocument[name],oldDocument&amp;&amp;oldDocument[name]?oldDocument[name]:null,fileName);for(const fileName of newFileNames)runUpdateHook(model[name][type],newDocument[name],oldDocument&amp;&amp;oldDocument[name]?oldDocument[name]:null,fileName);if([undefined,null].includes(model[name][type].default)){if(!(model[name][type].nullable||newFileNames.length>0||oldFileNames.length>0))/* eslint-disable no-throw-literal */throw{forbidden:'AttachmentMissing: Missing '+`attachment for type "${type}"`+`${pathDescription}.`/* eslint-enable no-throw-literal */};if(updateStrategy==='fillUp'&amp;&amp;newFileNames.length===0&amp;&amp;oldFileNames.length>0)for(const fileName of oldFileNames)if(newDocument[name][fileName]===null)changedPath=parentNames.concat(name,fileName,'file removed');else newDocument[name][fileName]=// IgnoreTypeCheck
+oldDocument[name][fileName]}else if(newFileNames.length===0)if(oldFileNames.length===0){for(const fileName in model[name][type].default)if(model[name][type].default.hasOwnProperty(fileName)){newDocument[name][fileName]=model[name][type].default[fileName];changedPath=parentNames.concat(name,type,'add default file')}}else if(updateStrategy==='fillUp')for(const fileName of oldFileNames)newDocument[name][fileName]=// IgnoreTypeCheck
+oldDocument[name][fileName]}else{const propertySpecification=// IgnoreTypeCheck
+specifiedPropertyNames.includes(name)?model[name]:additionalPropertySpecification;runCreateHook(propertySpecification,newDocument,oldDocument,name);runUpdateHook(propertySpecification,newDocument,oldDocument,name);if([undefined,null].includes(propertySpecification.default)){if(!(propertySpecification.nullable||newDocument.hasOwnProperty(name)||oldDocument&amp;&amp;oldDocument.hasOwnProperty(name)&amp;&amp;updateStrategy))/* eslint-disable no-throw-literal */throw{forbidden:'MissingProperty: Missing property "'+`${name}"${pathDescription}.`/* eslint-enable no-throw-literal */};if(!newDocument.hasOwnProperty(name)&amp;&amp;oldDocument&amp;&amp;oldDocument.hasOwnProperty(name))if(updateStrategy==='fillUp')newDocument[name]=oldDocument[name];else if(!updateStrategy)changedPath=parentNames.concat(name,'property removed')}else if(!newDocument.hasOwnProperty(name)||newDocument[name]===null)if(oldDocument&amp;&amp;oldDocument.hasOwnProperty(name)){if(updateStrategy==='fillUp')newDocument[name]=oldDocument[name];else if(updateStrategy==='migrate'){newDocument[name]=propertySpecification.default;changedPath=parentNames.concat(name,'migrate default value')}}else{newDocument[name]=propertySpecification.default;changedPath=changedPath.concat(name,'add default value')}}// endregion
+// region check given data
+// / region remove new data which already exists
+if(oldDocument&amp;&amp;updateStrategy==='incremental')for(const name in newDocument)if(newDocument.hasOwnProperty(name)&amp;&amp;oldDocument.hasOwnProperty(name)&amp;&amp;!modelConfiguration.property.name.reserved.concat(idName,revisionName,specialNames.conflict,specialNames.deleted,specialNames.deletedConflict,specialNames.localSequence,specialNames.revisions,specialNames.revisionsInformation,specialNames.type).includes(name)&amp;&amp;(oldDocument[name]===newDocument[name]||serialize(oldDocument[name])===serialize(newDocument[name]))){delete newDocument[name];continue}// / endregion
+for(const name in newDocument)if(newDocument.hasOwnProperty(name)&amp;&amp;!modelConfiguration.property.name.reserved.concat(revisionName,specialNames.conflict,specialNames.deleted,specialNames.deletedConflict,specialNames.localSequence,specialNames.revisions,specialNames.revisionsInformation,specialNames.strategy).includes(name)){let propertySpecification;if(model.hasOwnProperty(name))propertySpecification=model[name];else if(additionalPropertySpecification)propertySpecification=additionalPropertySpecification;else if(updateStrategy==='migrate'){delete newDocument[name];changedPath=parentNames.concat(name,'migrate removed property');continue}else/* eslint-disable no-throw-literal */throw{forbidden:'Property: Given property "'+`${name}" isn't specified in `+`model "${modelName}"${pathDescription}.`/* eslint-enable no-throw-literal */// NOTE: Only needed to avoid type check errors.
+};if(!propertySpecification)continue;// region writable/mutable/nullable
+const checkWriteableMutableNullable=(propertySpecification,newDocument,oldDocument,name)=>{// region writable
+if(!propertySpecification.writable)if(oldDocument){if(oldDocument.hasOwnProperty(name)&amp;&amp;serialize(newDocument[name])===serialize(oldDocument[name])){if(name!==idName&amp;&amp;updateStrategy==='incremental')delete newDocument[name];return true}else/* eslint-disable no-throw-literal */throw{forbidden:'Readonly: Property "'+`${name}" is not writable (old `+`document "`+`${serialize(oldDocument)}")`+`${pathDescription}.`/* eslint-enable no-throw-literal */};}else/* eslint-disable no-throw-literal */throw{forbidden:`Readonly: Property "${name}"`+` is not writable${pathDescription}.`/* eslint-enable no-throw-literal */// endregion
+// region mutable
+};if(!propertySpecification.mutable&amp;&amp;oldDocument&amp;&amp;oldDocument.hasOwnProperty(name))if(serialize(newDocument[name])===serialize(oldDocument[name])){if(updateStrategy==='incremental'&amp;&amp;!modelConfiguration.property.name.reserved.concat(specialNames.deleted,idName,revisionName).includes(name))delete newDocument[name];return true}else/* eslint-disable no-throw-literal */throw{forbidden:`Immutable: Property "${name}`+'" is not writable (old document "'+`${serialize(oldDocument)}")`+`${pathDescription}.`/* eslint-enable no-throw-literal */// endregion
+// region nullable
+};if(newDocument[name]===null)if(propertySpecification.nullable){delete newDocument[name];if(oldDocument&amp;&amp;oldDocument.hasOwnProperty(name))changedPath=parentNames.concat(name,'delete property');return true}else/* eslint-disable no-throw-literal */throw{forbidden:`NotNull: Property "${name}" `+'should not by "null"'+`${pathDescription}.`/* eslint-enable no-throw-literal */// endregion
+};return false};if(specialNames.attachment===name){for(const fileName in newDocument[name])if(newDocument[name].hasOwnProperty(fileName))for(const type in model[name])if(model[name].hasOwnProperty(type)&amp;&amp;new RegExp(type).test(fileName)){checkWriteableMutableNullable(model[name][type],newDocument,oldDocument,fileName);break}continue}else if(checkWriteableMutableNullable(propertySpecification,newDocument,oldDocument,name))continue;// endregion
+if(typeof propertySpecification.type==='string'&amp;&amp;propertySpecification.type.endsWith('[]')||Array.isArray(propertySpecification.type)&amp;&amp;propertySpecification.type.length&amp;&amp;Array.isArray(propertySpecification.type[0])){if(!Array.isArray(newDocument[name]))/* eslint-disable no-throw-literal */throw{forbidden:`PropertyType: Property "${name}" isn't `+`of type "array -> `+`${propertySpecification.type}" (given "`+`${serialize(newDocument[name])}")`+`${pathDescription}.`/* eslint-enable no-throw-literal */};else if(![undefined,null].includes(propertySpecification.minimumNumber)&amp;&amp;newDocument[name].length&lt;propertySpecification.minimumNumber)/* eslint-disable no-throw-literal */throw{forbidden:`MinimumArrayLength: Property "${name}" `+` (array of length `+`${newDocument[name].length}) doesn't `+`fullfill minimum array length of `+// IgnoreTypeCheck
+propertySpecification.minimumNumber+`${pathDescription}.`/* eslint-enable no-throw-literal */};else if(![undefined,null].includes(propertySpecification.maximumNumber)&amp;&amp;propertySpecification.maximumNumber&lt;newDocument[name].length)/* eslint-disable no-throw-literal */throw{forbidden:`MaximumArrayLength: Property "${name}" `+`(array of length `+`${newDocument[name].length}) doesn't `+`fullfill maximum array length of `+// IgnoreTypeCheck
+propertySpecification.maximumNumber+`${pathDescription}.`/* eslint-enable no-throw-literal */};checkPropertyConstraints(newDocument[name],name,propertySpecification,oldDocument&amp;&amp;oldDocument.hasOwnProperty(name)&amp;&amp;oldDocument[name]||undefined,['arrayConstraintExpression','arrayConstraintExecution']);const propertySpecificationCopy={};for(const key in propertySpecification)if(propertySpecification.hasOwnProperty(key))if(key==='type'){if(Array.isArray(propertySpecification[key]))propertySpecificationCopy[key]=propertySpecification[key][0];else propertySpecificationCopy[key// IgnoreTypeCheck
+]=[propertySpecification[key].substring(0,// IgnoreTypeCheck
+propertySpecification.type.length-'[]'.length)];}else propertySpecificationCopy[key]=propertySpecification[key];/*
+                            Derive nested missing explicit type definition if
+                            possible.
+                        */if(// IgnoreTypeCheck
+typeof propertySpecificationCopy.type.length===1&amp;&amp;models.hasOwnProperty(// IgnoreTypeCheck
+propertySpecificationCopy.type[0]))for(const value of newDocument[name].slice())if(typeof value==='object'&amp;&amp;(0,_getPrototypeOf2.default)(value)===Object.prototype&amp;&amp;!value.hasOwnProperty(specialNames.type))value[specialNames.type]=// IgnoreTypeCheck
+propertySpecificationCopy.type[0];let index=0;for(const value of newDocument[name].slice()){newDocument[name][index]=checkPropertyContent(value,`${index+1}. value in ${name}`,propertySpecificationCopy).newValue;if(value===null)newDocument[name].splice(index,1);index+=1}if(!(oldDocument&amp;&amp;oldDocument.hasOwnProperty(name)&amp;&amp;Array.isArray(oldDocument[name])&amp;&amp;oldDocument[name].length===newDocument[name].length&amp;&amp;serialize(oldDocument[name])===serialize(newDocument[name])))changedPath=parentNames.concat(name,'array updated')}else{const oldValue=oldDocument&amp;&amp;oldDocument.hasOwnProperty(name)?oldDocument[name]:null;const result=checkPropertyContent(newDocument[name],name,propertySpecification,oldValue);newDocument[name]=result.newValue;if(result.changedPath.length)changedPath=result.changedPath;if(newDocument[name]===null){if(oldValue!==null)changedPath=parentNames.concat(name,'property removed');delete newDocument[name]}}}// / region constraint
+for(let type in specialNames.constraint)if(specialNames.constraint.hasOwnProperty(type)&amp;&amp;(type=specialNames.constraint[type])&amp;&amp;model.hasOwnProperty(type)&amp;&amp;Array.isArray(model[type])&amp;&amp;model[type].length)for(const constraint of model[type]){let hook;const code=(type===specialNames.constraint.expression?'return ':'')+constraint.evaluation;const scope={attachmentWithPrefixExists:attachmentWithPrefixExists.bind(newDocument,newDocument),checkDocument,checkPropertyContent,code,getFilenameByPrefix,model,modelConfiguration,modelName,models,newDocument,now,nowUTCTimestamp,oldDocument,parentNames,pathDescription,securitySettings,serialize,userContext};try{// IgnoreTypeCheck
+hook=new Function(...(0,_keys2.default)(scope),code)}catch(error){/* eslint-disable no-throw-literal */throw{forbidden:`Compilation: Hook "${type}" has `+`invalid code "${code}": "`+serialize(error)+`"${pathDescription}.`/* eslint-enable no-throw-literal */}}let satisfied=false;try{// IgnoreTypeCheck
+satisfied=hook(...(0,_values2.default)(scope))}catch(error){/* eslint-disable no-throw-literal */throw{forbidden:`Runtime: Hook "${type}" has `+`thrown an error with code "${code}": `+`${serialize(error)}${pathDescription}.`/* eslint-enable no-throw-literal */}}if(!satisfied){const errorName=type.replace(/^[^a-zA-Z]+/,'');/* eslint-disable no-throw-literal */throw{forbidden:errorName.charAt(0).toUpperCase()+`${errorName.substring(1)}: `+(// IgnoreTypeCheck
+constraint.description?new Function(...(0,_keys2.default)(scope),`return ${constraint.description}`)(...(0,_values2.default)(scope)):`Model "${modelName}" should satisfy `+`constraint "${code}" (given "`+`${serialize(newDocument)}")`+`${pathDescription}.`)/* eslint-enable no-throw-literal */}}}// / endregion
+// / region attachment
+if(newDocument.hasOwnProperty(specialNames.attachment)){const newAttachments=newDocument[specialNames.attachment];if(typeof newAttachments!=='object'||(0,_getPrototypeOf2.default)(newAttachments)!==Object.prototype)/* eslint-disable no-throw-literal */throw{forbidden:'AttachmentType: given attachment has '+`invalid type${pathDescription}.`/* eslint-enable no-throw-literal */// region migrate old attachments
+};let oldAttachments=null;if(oldDocument&amp;&amp;oldDocument.hasOwnProperty(specialNames.attachment)){oldAttachments=oldDocument[specialNames.attachment];if(oldAttachments!==null&amp;&amp;typeof oldAttachments==='object')for(const fileName in oldAttachments)if(oldAttachments.hasOwnProperty(fileName))if(newAttachments.hasOwnProperty(fileName)){if(newAttachments[fileName]===null||newAttachments[fileName].data===null||newAttachments[fileName].content_type===oldAttachments[fileName].content_type&amp;&amp;newAttachments[fileName].data===oldAttachments[fileName].data){if(newAttachments[fileName]===null||newAttachments[fileName].data===null)changedPath=parentNames.concat(specialNames.attachment,fileName,'attachment removed');if(updateStrategy==='incremental')delete newAttachments[fileName]}else changedPath=parentNames.concat(specialNames.attachment,fileName,'attachment updated');}else if(updateStrategy==='fillUp')newAttachments[fileName]=oldAttachments[fileName];else if(!updateStrategy)changedPath=parentNames.concat(specialNames.attachment,fileName,'attachment removed')}for(const fileName in newAttachments)if(newAttachments.hasOwnProperty(fileName))if([undefined,null].includes(newAttachments[fileName])||newAttachments[fileName].data===null)delete newAttachments[fileName];else if(!(oldAttachments&amp;&amp;oldAttachments.hasOwnProperty(fileName)&amp;&amp;newAttachments[fileName].content_type===oldAttachments[fileName].content_type&amp;&amp;newAttachments[fileName].data===oldAttachments[fileName].data))changedPath=parentNames.concat(specialNames.attachment,fileName,'attachment updated');// endregion
+if((0,_keys2.default)(newAttachments).length===0)delete newDocument[specialNames.attachment];const attachmentToTypeMapping={};for(const type in model[specialNames.attachment])if(model[specialNames.attachment].hasOwnProperty(type))attachmentToTypeMapping[type]=[];for(const name in newAttachments)if(newAttachments.hasOwnProperty(name)){let matched=false;for(const type in model[specialNames.attachment])if(new RegExp(type).test(name)){attachmentToTypeMapping[type].push(name);matched=true;break}if(!matched)/* eslint-disable no-throw-literal */throw{forbidden:'AttachmentTypeMatch: None of the '+'specified attachment types ("'+(0,_keys2.default)(model[specialNames.attachment]).join('", "')+'") matches given one '+`("${name}")${pathDescription}.`/* eslint-enable no-throw-literal */}}let sumOfAggregatedSizes=0;for(const type in attachmentToTypeMapping){if(!attachmentToTypeMapping.hasOwnProperty(type))continue;const numberOfAttachments=attachmentToTypeMapping[type].length;if(model[specialNames.attachment][type].maximumNumber!==null&amp;&amp;numberOfAttachments>model[specialNames.attachment][type].maximumNumber)/* eslint-disable no-throw-literal */throw{forbidden:'AttachmentMaximum: given number of '+`attachments (${numberOfAttachments}) `+`doesn't satisfy specified maximum of `+model[specialNames.attachment][type].maximumNumber+` from type "${type}"${pathDescription}.`/* eslint-enable no-throw-literal */};if(!(model[specialNames.attachment][type].nullable&amp;&amp;numberOfAttachments===0)&amp;&amp;numberOfAttachments&lt;model[specialNames.attachment][type].minimumNumber)/* eslint-disable no-throw-literal */throw{forbidden:'AttachmentMinimum: given number of '+`attachments (${numberOfAttachments}) `+`doesn't satisfy specified minimum of `+model[specialNames.attachment][type].minimumNumber+` from type "${type}"${pathDescription}.`/* eslint-enable no-throw-literal */};let aggregatedSize=0;for(const fileName of attachmentToTypeMapping[type]){if(!([null,undefined].includes(model[specialNames.attachment][type].regularExpressionPattern)||new RegExp(model[specialNames.attachment][type].regularExpressionPattern).test(fileName)))/* eslint-disable no-throw-literal */throw{forbidden:'AttachmentName: given attachment name "'+`${fileName}" doesn't satisfy specified `+'regular expression pattern "'+model[specialNames.attachment][type].regularExpressionPattern+`" from type "${type}"${pathDescription}.`/* eslint-enable no-throw-literal */};else if(!([null,undefined].includes(model[specialNames.attachment][type].invertedRegularExpressionPattern)||!new RegExp(model[specialNames.attachment][type].invertedRegularExpressionPattern).test(fileName)))/* eslint-disable no-throw-literal */throw{forbidden:'InvertedAttachmentName: given '+`attachment name "${fileName}" doesn't `+'satisfy specified regular expression '+'pattern "'+model[specialNames.attachment][type].invertedRegularExpressionPattern+`" from type "${type}"${pathDescription}.`/* eslint-enable no-throw-literal */};else if(!([null,undefined].includes(model[specialNames.attachment][type].contentTypeRegularExpressionPattern)||newAttachments[fileName].hasOwnProperty('content_type')&amp;&amp;newAttachments[fileName].content_type&amp;&amp;new RegExp(model[specialNames.attachment][type].contentTypeRegularExpressionPattern).test(newAttachments[fileName].content_type)))/* eslint-disable no-throw-literal */throw{forbidden:'AttachmentContentType: given attachment'+' content type "'+newAttachments[fileName].content_type+`" doesn't satisfy specified regular`+' expression pattern "'+model[specialNames.attachment][type].contentTypeRegularExpressionPattern+`" from type "${type}"${pathDescription}.`/* eslint-enable no-throw-literal */};const pattern=model[specialNames.attachment][type].invertedContentTypeRegularExpressionPattern;if(!([null,undefined].includes(pattern)||newAttachments[fileName].hasOwnProperty('content_type')&amp;&amp;newAttachments[fileName].content_type&amp;&amp;// IgnoreTypeCheck
+!new RegExp(pattern).test(newAttachments[fileName].content_type)))/* eslint-disable no-throw-literal */throw{forbidden:'InvertedAttachmentContentType: given '+'attachment content type "'+newAttachments[fileName].content_type+`" doesn't satisfy specified regular`+// IgnoreTypeCheck
+` expression pattern "${pattern}" `+`from type "${type}"${pathDescription}.`/* eslint-enable no-throw-literal */};let length=0;if('length'in newAttachments[fileName])length=newAttachments[fileName].length;else if('data'in newAttachments[fileName])if(Buffer&amp;&amp;'byteLength'in Buffer)length=Buffer.byteLength(newAttachments[fileName].data,'base64');else length=newAttachments.data.length;if(![null,undefined].includes(model[specialNames.attachment][type].minimumSize)&amp;&amp;model[specialNames.attachment][type].minimumSize>length)/* eslint-disable no-throw-literal */throw{forbidden:'AttachmentMinimumSize: given attachment'+` size ${length} byte doesn't satisfy `+'specified minimum  of '+model[specialNames.attachment][type].minimumSize+` byte ${pathDescription}.`/* eslint-enable no-throw-literal */};else if(![null,undefined].includes(model[specialNames.attachment][type].maximumSize)&amp;&amp;model[specialNames.attachment][type].maximumSize&lt;length)/* eslint-disable no-throw-literal */throw{forbidden:'AttachmentMaximumSize: given attachment'+` size ${length} byte doesn't satisfy `+'specified maximum of '+model[specialNames.attachment][type].maximumSize+` byte ${pathDescription}.`/* eslint-enable no-throw-literal */};aggregatedSize+=length}if(![null,undefined].includes(model[specialNames.attachment][type].minimumAggregatedSize)&amp;&amp;model[specialNames.attachment][type].minimumAggregatedSize>aggregatedSize)/* eslint-disable no-throw-literal */throw{forbidden:'AttachmentAggregatedMinimumSize: given '+' aggregated size of attachments from type "'+`${type}" ${aggregatedSize} byte doesn't `+'satisfy specified minimum of '+model[specialNames.attachment][type].minimumAggregatedSize+` byte ${pathDescription}.`/* eslint-enable no-throw-literal */};else if(![null,undefined].includes(model[specialNames.attachment][type].maximumAggregatedSize)&amp;&amp;model[specialNames.attachment][type].maximumAggregatedSize&lt;aggregatedSize)/* eslint-disable no-throw-literal */throw{forbidden:'AttachmentAggregatedMaximumSize: given '+' aggregated size of attachments from type "'+`${type}" ${aggregatedSize} byte doesn't `+'satisfy specified maximum of '+model[specialNames.attachment][type].maximumAggregatedSize+` byte ${pathDescription}.`/* eslint-enable no-throw-literal */};sumOfAggregatedSizes+=aggregatedSize}if(model.hasOwnProperty(specialNames.minimumAggregatedSize)&amp;&amp;![null,undefined].includes(model[specialNames.minimumAggregatedSize])&amp;&amp;// IgnoreTypeCheck
+model[specialNames.minimumAggregatedSize]>sumOfAggregatedSizes)/* eslint-disable no-throw-literal */throw{forbidden:'AggregatedMinimumSize: given aggregated size '+`${sumOfAggregatedSizes} byte doesn't satisfy `+'specified minimum of '+// IgnoreTypeCheck
+model[specialNames.minimumAggregatedSize]+` byte ${pathDescription}.`/* eslint-enable no-throw-literal */};else if(model.hasOwnProperty(specialNames.maximumAggregatedSize)&amp;&amp;![null,undefined].includes(model[specialNames.maximumAggregatedSize])&amp;&amp;// IgnoreTypeCheck
+model[specialNames.maximumAggregatedSize]&lt;sumOfAggregatedSizes)/* eslint-disable no-throw-literal */throw{forbidden:'AggregatedMaximumSize: given aggregated size '+`${sumOfAggregatedSizes} byte doesn't satisfy `+'specified maximum of '+// IgnoreTypeCheck
+model[specialNames.maximumAggregatedSize]+` byte ${pathDescription}.`/* eslint-enable no-throw-literal */}}// / endregion
+// endregion
+if(oldDocument&amp;&amp;oldDocument.hasOwnProperty(specialNames.attachment)&amp;&amp;(0,_keys2.default)(oldDocument[specialNames.attachment]).length===0)delete oldDocument[specialNames.attachment];if(changedPath.length===0&amp;&amp;oldDocument&amp;&amp;updateStrategy==='migrate')for(const name in oldDocument)if(oldDocument.hasOwnProperty(name)&amp;&amp;!newDocument.hasOwnProperty(name))changedPath=parentNames.concat(name,'migrate removed property');return{changedPath,newDocument}};// endregion
+const result=checkDocument(newDocument,oldDocument);if(result.newDocument._deleted&amp;&amp;!oldDocument||!(result.newDocument._deleted&amp;&amp;oldDocument&amp;&amp;result.newDocument._deleted!==oldDocument._deleted||result.changedPath.length))/* eslint-disable no-throw-literal */throw{forbidden:'NoChange: No new data given. new document: '+`${serialize(newDocument)}; old document: `+`${serialize(oldDocument)}.`/* eslint-enable no-throw-literal */};if(securitySettings.hasOwnProperty('checkedDocuments'))securitySettings[modelConfiguration.property.name.validatedDocumentsCache].add(`${newDocument[idName]}-${newDocument[revisionName]}`);else securitySettings[modelConfiguration.property.name.validatedDocumentsCache]=new _set2.default([`${newDocument[idName]}-${newDocument[revisionName]}`]);return result.newDocument}}exports.DatabaseHelper=DatabaseHelper;exports.default=DatabaseHelper;// region vim modline
+// vim: set tabstop=4 shiftwidth=4 expandtab:
+// vim: foldmethod=marker foldmarker=region,endregion:
+// endregion
+
+/***/ }),
+/* 17 */
+/***/ (function(module, exports) {
+
+module.exports = require("babel-runtime/core-js/set");
+
+/***/ }),
+/* 18 */
+/***/ (function(module, exports) {
+
+module.exports = require("babel-runtime/core-js/object/get-prototype-of");
+
+/***/ }),
+/* 19 */
+/***/ (function(module, exports) {
+
+module.exports = require("babel-runtime/core-js/object/values");
+
+/***/ })
+/******/ ]);</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-databaseWebNodePlugin.html">databaseWebNodePlugin</a></li></ul><h3>Classes</h3><ul><li><a href="Helper.html">Helper</a></li><li><a href="module-databaseWebNodePlugin-Database.html">Database</a></li><li><a href="module-databaseWebNodePlugin-DatabaseHelper.html">DatabaseHelper</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Wed Nov 22 2017 19:36:32 GMT+0100 (CET)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
