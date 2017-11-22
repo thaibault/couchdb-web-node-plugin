@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: helper.compiled.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: helper.compiled.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>module.exports =
+/******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+/******/
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId]) {
+/******/ 			return installedModules[moduleId].exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			i: moduleId,
+/******/ 			l: false,
+/******/ 			exports: {}
+/******/ 		};
+/******/
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/
+/******/ 		// Flag the module as loaded
+/******/ 		module.l = true;
+/******/
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/
+/******/
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+/******/
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+/******/
+/******/ 	// define getter function for harmony exports
+/******/ 	__webpack_require__.d = function(exports, name, getter) {
+/******/ 		if(!__webpack_require__.o(exports, name)) {
+/******/ 			Object.defineProperty(exports, name, {
+/******/ 				configurable: false,
+/******/ 				enumerable: true,
+/******/ 				get: getter
+/******/ 			});
+/******/ 		}
+/******/ 	};
+/******/
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__webpack_require__.n = function(module) {
+/******/ 		var getter = module &amp;&amp; module.__esModule ?
+/******/ 			function getDefault() { return module['default']; } :
+/******/ 			function getModuleExports() { return module; };
+/******/ 		__webpack_require__.d(getter, 'a', getter);
+/******/ 		return getter;
+/******/ 	};
+/******/
+/******/ 	// Object.prototype.hasOwnProperty.call
+/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
+/******/
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "";
+/******/
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(__webpack_require__.s = 7);
+/******/ })
+/************************************************************************/
+/******/ ([
+/* 0 */
+/***/ (function(module, exports) {
+
+module.exports = require("source-map-support/register");
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports) {
+
+module.exports = require("babel-runtime/core-js/object/keys");
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports) {
+
+module.exports = require("babel-runtime/helpers/asyncToGenerator");
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports) {
+
+module.exports = require("clientnode");
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+// -*- coding: utf-8 -*-
+/* !
+    region header
+    Copyright Torben Sickert (info["~at~"]torben.website) 16.12.2012
+
+    License
+    -------
+
+    This library written by Torben Sickert stand under a creative commons naming
+    3.0 unported license. see http://creativecommons.org/licenses/by/3.0/deed.de
+    endregion
+*/// region imports
+exports.__esModule=true;exports.Helper=undefined;var _keys=__webpack_require__(1);var _keys2=_interopRequireDefault(_keys);var _asyncToGenerator2=__webpack_require__(2);var _asyncToGenerator3=_interopRequireDefault(_asyncToGenerator2);var _clientnode=__webpack_require__(3);var _clientnode2=_interopRequireDefault(_clientnode);var _nodeFetch=__webpack_require__(5);var _nodeFetch2=_interopRequireDefault(_nodeFetch);function _interopRequireDefault(obj){return obj&amp;&amp;obj.__esModule?obj:{default:obj}}// NOTE: Only needed for debugging this file.
+try{__webpack_require__(0)}catch(error){}// NOTE: Remove when "fetch" is supported by node.
+// endregion
+// NOTE: Remove when "fetch" is supported by node.
+global.fetch=_nodeFetch2.default;// region methods
+/**
+ * A dumm plugin interface with all available hooks.
+ */class Helper{/**
+     * Updates/creates a design document in database with a validation function
+     * set to given code.
+     * @param databaseConnection - Database connection to use for document
+     * updates.
+     * @param documentName - Design document name.
+     * @param documentData - Design document data.
+     * @param description - Used to produce semantic logging messages.
+     * @param log - Enables logging.
+     * @returns Promise which will be resolved after given document has updated
+     * successfully.
+     */static ensureValidationDocumentPresence(databaseConnection,documentName,documentData,description,log=true){return(0,_asyncToGenerator3.default)(function*(){const newDocument=_clientnode2.default.extendObject({_id:`_design/${documentName}`,language:'javascript'},documentData);try{const oldDocument=yield databaseConnection.get(`_design/${documentName}`);newDocument._rev=oldDocument._rev;yield databaseConnection.put(newDocument);if(log)console.info(`${description} updated.`)}catch(error){if(log)if(error.error==='not_found')console.info(`${description} not available: create new one.`);else console.info(`${description} couldn't be updated: "`+`${_clientnode2.default.representObject(error)}" create new one.`);try{yield databaseConnection.put(newDocument);if(log)console.info(`${description} installed/updated.`)}catch(error){throw new Error(`${description} couldn't be installed/updated: "`+`${_clientnode2.default.representObject(error)}".`)}}})()}// region model
+/**
+     * Determines a mapping of all models to roles who are allowed to edit
+     * corresponding model instances.
+     * @param modelConfiguration - Model specification object.
+     * @returns The mapping object.
+     */static determineAllowedModelRolesMapping(modelConfiguration){const allowedRoleName=modelConfiguration.property.name.special.allowedRole;const allowedModelRolesMapping={};const models=Helper.extendModels(modelConfiguration);for(const modelName in models)if(models.hasOwnProperty(modelName)&amp;&amp;models[modelName].hasOwnProperty(allowedRoleName)){allowedModelRolesMapping[modelName]=Helper.normalizeAllowedModelRoles(// IgnoreTypeCheck
+models[modelName][allowedRoleName]);allowedModelRolesMapping[modelName].properties={};for(const name in models[modelName])if(models[modelName].hasOwnProperty(name)&amp;&amp;models[modelName][name].hasOwnProperty('allowedRoles')&amp;&amp;models[modelName][name].allowedRoles)// IgnoreTypeCheck
+allowedModelRolesMapping[modelName].properties[name]=Helper.normalizeAllowedModelRoles(models[modelName][name].allowedRoles)}else allowedModelRolesMapping[modelName]={read:[],write:[],properties:{}};return allowedModelRolesMapping}/**
+     * Determines all property names which are indexable in a generic manner.
+     * @param modelConfiguration - Model specification object.
+     * @param model - Model to determine property names from.
+     * @returns The mapping object.
+     */static determineGenericIndexablePropertyNames(modelConfiguration,model){const specialNames=modelConfiguration.property.name.special;return(0,_keys2.default)(model).filter(name=>model[name].index||!(model[name].hasOwnProperty('index')&amp;&amp;!model[name].index||modelConfiguration.property.name.reserved.concat(specialNames.additional,specialNames.allowedRole,specialNames.attachment,specialNames.conflict,specialNames.constraint.execution,specialNames.constraint.expression,specialNames.deleted,specialNames.deleted_conflict,specialNames.extend,specialNames.id,specialNames.maximumAggregatedSize,specialNames.minimumAggregatedSize,specialNames.revision,specialNames.revisions,specialNames.revisionsInformation,specialNames.type).includes(name)||model[name].type&amp;&amp;(typeof model[name].type==='string'&amp;&amp;model[name].type.endsWith('[]')||Array.isArray(model[name].type)&amp;&amp;model[name].type.length&amp;&amp;Array.isArray(model[name].type[0])||modelConfiguration.entities.hasOwnProperty(model[name].type)))).concat(specialNames.id,specialNames.revision)}/**
+     * Extend given model with all specified one.
+     * @param modelName - Name of model to extend.
+     * @param models - Pool of models to extend from.
+     * @param extendPropertyName - Property name which indicates model
+     * inheritance.
+     * @returns Given model in extended version.
+     */static extendModel(modelName,models,extendPropertyName='_extends'){if(modelName==='_base')return models[modelName];if(models.hasOwnProperty('_base'))if(models[modelName].hasOwnProperty(extendPropertyName))// IgnoreTypeCheck
+models[modelName][extendPropertyName]=['_base'].concat(models[modelName][extendPropertyName]);else// IgnoreTypeCheck
+models[modelName][extendPropertyName]='_base';if(models[modelName].hasOwnProperty(extendPropertyName)){// IgnoreTypeCheck
+for(const modelNameToExtend of[].concat(models[modelName][extendPropertyName]))models[modelName]=_clientnode2.default.extendObject(true,{},Helper.extendModel(modelNameToExtend,models,extendPropertyName),models[modelName]);delete models[modelName][extendPropertyName]}return models[modelName]}/**
+     * Extend default specification with specific one.
+     * @param modelConfiguration - Model specification object.
+     * @returns Models with extended specific specifications.
+     */static extendModels(modelConfiguration){const specialNames=modelConfiguration.property.name.special;const models={};for(const modelName in modelConfiguration.entities)if(modelConfiguration.entities.hasOwnProperty(modelName)){if(!(new RegExp(modelConfiguration.property.name.typeRegularExpressionPattern.public).test(modelName)||new RegExp(modelConfiguration.property.name.typeRegularExpressionPattern.private).test(modelName)))throw new Error('Model names have to match "'+modelConfiguration.property.name.typeRegularExpressionPattern.public+'" or "'+modelConfiguration.property.name.typeRegularExpressionPattern.private+`" for private one (given name: "${modelName}").`);models[modelName]=Helper.extendModel(modelName,modelConfiguration.entities,specialNames.extend)}for(const modelName in models)if(models.hasOwnProperty(modelName))for(const propertyName in models[modelName])if(models[modelName].hasOwnProperty(propertyName))if(propertyName===specialNames.attachment){for(const type in models[modelName][propertyName])if(models[modelName][propertyName].hasOwnProperty(type))models[modelName][propertyName][type]=_clientnode2.default.extendObject(true,_clientnode2.default.copyLimitedRecursively(modelConfiguration.property.defaultSpecification),models[modelName][propertyName][type])}else if(![specialNames.allowedRole,specialNames.constraint.execution,specialNames.constraint.expression,specialNames.extend,specialNames.maximumAggregatedSize,specialNames.minimumAggregatedSize].includes(propertyName))models[modelName][propertyName]=_clientnode2.default.extendObject(true,_clientnode2.default.copyLimitedRecursively(modelConfiguration.property.defaultSpecification),models[modelName][propertyName]);return models}/**
+     * Convert given roles to its normalized representation.
+     * @param roles - Unstructured roles description.
+     * @returns Normalized roles representation.
+     */static normalizeAllowedModelRoles(roles){if(Array.isArray(roles))return{read:roles,write:roles};if(typeof roles==='object'){const result={read:[],write:[]};for(const type in result)if(roles.hasOwnProperty(type))if(Array.isArray(roles[type]))result[type]=roles[type];else result[type]=[roles[type]];return result}return{read:[roles],write:[roles]}}// endregion
+}exports.Helper=Helper;exports.default=Helper;// endregion
+// region vim modline
+// vim: set tabstop=4 shiftwidth=4 expandtab:
+// vim: foldmethod=marker foldmarker=region,endregion:
+// endregion
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports) {
+
+module.exports = require("node-fetch");
+
+/***/ }),
+/* 6 */,
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(4);
+
+
+/***/ })
+/******/ ]);</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-databaseWebNodePlugin.html">databaseWebNodePlugin</a></li></ul><h3>Classes</h3><ul><li><a href="Helper.html">Helper</a></li><li><a href="module-databaseWebNodePlugin-Database.html">Database</a></li><li><a href="module-databaseWebNodePlugin-DatabaseHelper.html">DatabaseHelper</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Wed Nov 22 2017 19:36:32 GMT+0100 (CET)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
