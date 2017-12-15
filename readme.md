@@ -1,6 +1,5 @@
 <!-- #!/usr/bin/env markdown
 -*- coding: utf-8 -*-
-
 region header
 Copyright Torben Sickert 16.12.2012
 
