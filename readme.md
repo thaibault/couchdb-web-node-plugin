@@ -18,7 +18,7 @@ endregion -->
 [![dependencies](https://img.shields.io/david/thaibault/databasewebnodeplugin.svg)](https://david-dm.org/thaibault/databasewebnodeplugin)
 [![devDependencies](https://img.shields.io/david/dev/thaibault/databasewebnodeplugin.svg)](https://david-dm.org/thaibault/databasewebnodeplugin?type=dev)
 [![peerDependencies](https://img.shields.io/david/peer/thaibault/databasewebnodeplugin.svg)](https://david-dm.org/thaibault/databasewebnodeplugin?type=peer)
-[![documentation-website](https://img.shields.io/website-up-down-green-red/http/torben.website/databasewebnodeplugin.svg?label=documentation-website)](http://torben.website/databasewebnodeplugin)
+[![documentation-website](https://img.shields.io/website-up-down-green-red/http/torben.website/databaseWebNodePlugin.svg?label=documentation-website)](http://torben.website/databaseWebNodePlugin)
 
 Use case
 --------
