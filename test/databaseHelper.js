@@ -174,6 +174,48 @@ registerTest(async function():Promise<void> {
                 [[{[typeName]: 'test'}], 'TypeName'],
                 [[{[typeName]: '_test'}], 'TypeName'],
                 [[{[typeName]: 'Test'}], 'Model'],
+                [
+                    [{[typeName]: 'Test'}],
+                    {entities: {Test: {[
+                        specialNames.create.execution
+                        ]: `
+                            newDocument['${typeName}'] = '_test'
+                            return newDocument
+                        `
+                    }}}, 'TypeName'
+                ],
+                [
+                    [{[typeName]: 'Test'}],
+                    {entities: {Test: {[
+                        specialNames.create.expression
+                        ]: `
+                            (newDocument['${typeName}'] = '_test') &&
+                            newDocument
+                        `
+                    }}},
+                    'TypeName'
+                ],
+                [
+                    [{[typeName]: 'Test'}],
+                    {entities: {Test: {[
+                        specialNames.update.execution
+                        ]: `
+                            newDocument['${typeName}'] = '_test'
+                            return newDocument
+                        `
+                    }}}, 'TypeName'
+                ],
+                [
+                    [{[typeName]: 'Test'}],
+                    {entities: {Test: {[
+                        specialNames.update.expression
+                        ]: `
+                            (newDocument['${typeName}'] = '_test') &&
+                            newDocument
+                        `
+                    }}},
+                    'TypeName'
+                ],
                 // endregion
                 // region hooks
                 // / region on create
