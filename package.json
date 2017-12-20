@@ -65,7 +65,7 @@
   },
   "devDependencies": {
     "babel-eslint": "^8.0.3",
-    "documentation-website": "^1.0.81",
+    "documentation-website": "^1.0.83",
     "eslint": "^4.12.0",
     "eslint-config-google": "^0.9.1",
     "eslint-plugin-flowtype": "^2.40.1",
@@ -271,8 +271,8 @@
               "strategy": "_updateStrategy",
               "type": "-type",
               "update": {
-                "execution": "_updateExecution",
-                "expression": "_updateExpression"
+                "execution": "_onUpdateExecution",
+                "expression": "_onUpdateExpression"
               }
             },
             "typeRegularExpressionPattern": {
