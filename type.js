@@ -72,8 +72,8 @@ export type Model = {
     _createExecution?:string;
     _maximumAggregatedSize?:number;
     _minimumAggregatedSize?:number;
-    _updateExecution?:string;
-    _updateExpression?:string;
+    _onUpdateExecution?:string;
+    _onUpdateExpression?:string;
     [key:string]:PropertySpecification;
 }
 export type Models = {[key:string]:Model}
