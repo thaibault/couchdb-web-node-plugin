@@ -169,37 +169,42 @@ export class DatabaseHelper {
             modelConfiguration.property.name.special
         const idName:string = specialNames.id
         const revisionName:string = specialNames.revision
+        const typeName:string = specialNames.type
+        let id:string = ''
+        let revision:string = ''
+        const setDocumentEnvironment:Function = ():void => {
+            id = newDocument.hasOwnProperty(idName) ? newDocument[idName] : ''
+            revision = newDocument.hasOwnProperty(revisionName) ?
+                newDocument[revisionName] : ''
+        }
+        setDocumentEnvironment()
         /*
             NOTE: Needed if we are able to validate users table.
 
             if (
                 newDocument.hasOwnProperty('type') &&
                 newDocument.type === 'user' &&
-                newDocument.hasOwnProperty(idName) &&
-                newDocument[idName].startsWith('org.couchdb.user:')
+                id.startsWith('org.couchdb.user:')
             )
                 return newDocument
         */
         if (
             securitySettings.hasOwnProperty(
                 modelConfiguration.property.name.validatedDocumentsCache
-            ) &&
-            securitySettings[
+            ) && securitySettings[
                 modelConfiguration.property.name.validatedDocumentsCache
-            ].has(`${newDocument[idName]}-${newDocument[revisionName]}`)
+            ].has(`${id}-${revision}`)
         ) {
             securitySettings[
                 modelConfiguration.property.name.validatedDocumentsCache
-            ].delete(`${newDocument[idName]}-${newDocument[revisionName]}`)
+            ].delete(`${id}-${revision}`)
             return newDocument
         }
-        if (
-            newDocument.hasOwnProperty(revisionName) &&
-            ['latest', 'upsert'].includes(newDocument[revisionName])
-        )
+        if (['latest', 'upsert'].includes(revision))
             if (oldDocument && oldDocument.hasOwnProperty(revisionName))
-                newDocument[revisionName] = oldDocument[revisionName]
-            else if (newDocument[revisionName] === 'latest')
+                revision = newDocument[revisionName] =
+                    oldDocument[revisionName]
+            else if (revision === 'latest')
                 /* eslint-disable no-throw-literal */
                 throw {
                     forbidden: 'Revision: No old document available to update.'
@@ -264,40 +269,41 @@ export class DatabaseHelper {
             const pathDescription:string =
                 parentNames.length ? ` in ${parentNames.join(' -> ')}` : ''
             let changedPath:Array<string> = []
-            // region check for model type
-            if (!newDocument.hasOwnProperty(specialNames.type))
-                /* eslint-disable no-throw-literal */
-                throw {
-                    forbidden: 'Type: You have to specify a model type via ' +
-                        `property "${specialNames.type}"${pathDescription}.`
-                }
-                /* eslint-enable no-throw-literal */
-            if (!(parentNames.length || (new RegExp(
-                modelConfiguration.property.name.typeRegularExpressionPattern
-                    .public
-            )).test(newDocument[specialNames.type])
-            ))
-                /* eslint-disable no-throw-literal */
-                throw {
-                    forbidden: 'TypeName: You have to specify a model type ' +
-                        'which matches "' +
-                        modelConfiguration.property.name
-                            .typeRegularExpressionPattern.public +
-                        '" as public type (given "' +
-                        newDocument[specialNames.type] +
-                        `")${pathDescription}.`
-                }
-                /* eslint-enable no-throw-literal */
-            if (!models.hasOwnProperty(newDocument[specialNames.type]))
-                /* eslint-disable no-throw-literal */
-                throw {
-                    forbidden: 'Model: Given model "' + newDocument[
-                        specialNames.type
-                    ] + `" is not specified${pathDescription}.`
-                }
-                /* eslint-enable no-throw-literal */
-            // endregion
-            const modelName:string = newDocument[specialNames.type]
+            const checkModelType:Function = ():void => {
+                // region check for model type
+                if (!newDocument.hasOwnProperty(typeName))
+                    /* eslint-disable no-throw-literal */
+                    throw {
+                        forbidden: 'Type: You have to specify a model type ' +
+                            `via property "${typeName}"${pathDescription}.`
+                    }
+                    /* eslint-enable no-throw-literal */
+                if (!(parentNames.length || (new RegExp(
+                    modelConfiguration.property.name
+                        .typeRegularExpressionPattern.public
+                )).test(newDocument[typeName])))
+                    /* eslint-disable no-throw-literal */
+                    throw {
+                        forbidden: 'TypeName: You have to specify a model ' +
+                            'type which matches "' +
+                            modelConfiguration.property.name
+                                .typeRegularExpressionPattern.public +
+                            `" as public type (given "` +
+                            `${newDocument[typeName]}")${pathDescription}.`
+                    }
+                    /* eslint-enable no-throw-literal */
+                if (!models.hasOwnProperty(newDocument[typeName]))
+                    /* eslint-disable no-throw-literal */
+                    throw {
+                        forbidden: `Model: Given model "` +
+                            `${newDocument[typeName]}" is not specified` +
+                            `${pathDescription}.`
+                    }
+                    /* eslint-enable no-throw-literal */
+                // endregion
+            }
+            checkModelType()
+            let modelName:string = newDocument[typeName]
             const model:Model = models[modelName]
             let additionalPropertySpecification:?PlainObject = null
             if (model.hasOwnProperty(specialNames.additional) && model[
@@ -310,7 +316,7 @@ export class DatabaseHelper {
                 newValue:any, name:string,
                 propertySpecification:PropertySpecification, oldValue:?any,
                 types:Array<string> = [
-                    'constraintExpression', 'constraintExecution']
+                    'constraintExecution', 'constraintExpression']
             ):void => {
                 for (const type:string of types)
                     if (propertySpecification[type]) {
@@ -322,14 +328,23 @@ export class DatabaseHelper {
                             attachmentWithPrefixExists:
                                 attachmentWithPrefixExists.bind(
                                     newDocument, newDocument),
-                            checkDocument, checkPropertyContent,
+                            checkDocument,
+                            checkPropertyContent,
                             code,
                             getFilenameByPrefix,
-                            model, modelConfiguration, modelName, models, name,
-                            newDocument, newValue,
-                            now, nowUTCTimestamp,
-                            oldDocument, oldValue,
-                            parentNames, pathDescription,
+                            model,
+                            modelConfiguration,
+                            modelName,
+                            models,
+                            name,
+                            newDocument,
+                            newValue,
+                            now,
+                            nowUTCTimestamp,
+                            oldDocument,
+                            oldValue,
+                            parentNames,
+                            pathDescription,
                             propertySpecification,
                             securitySettings,
                             serialize,
@@ -377,7 +392,7 @@ export class DatabaseHelper {
                                     new Function(
                                         ...Object.keys(scope), 'return ' +
                                             propertySpecification[type]
-                                                .description
+                                                .description.trim()
                                     )(...Object.values(scope)) :
                                     `Property "${name}" should ` +
                                 `satisfy constraint "${code}" (given "` +
@@ -400,11 +415,11 @@ export class DatabaseHelper {
                 if (
                     typeof newValue === 'object' &&
                     Object.getPrototypeOf(newValue) === Object.prototype &&
-                    !newValue.hasOwnProperty(specialNames.type) &&
+                    !newValue.hasOwnProperty(typeName) &&
                     types.length === 1 &&
                     models.hasOwnProperty(types[0])
                 )
-                    newValue[specialNames.type] = types[0]
+                    newValue[typeName] = types[0]
                 let typeMatched:boolean = false
                 for (const type:string of types)
                     if (models.hasOwnProperty(type)) {
@@ -412,8 +427,8 @@ export class DatabaseHelper {
                             typeof newValue === 'object' &&
                             Object.getPrototypeOf(newValue) ===
                                 Object.prototype &&
-                            newValue.hasOwnProperty(specialNames.type) &&
-                            newValue[specialNames.type] === type
+                            newValue.hasOwnProperty(typeName) &&
+                            newValue[typeName] === type
                         ) {
                             const result:{
                                 changedPath:Array<string>;newDocument:any
@@ -682,13 +697,13 @@ export class DatabaseHelper {
                 return {newValue, changedPath}
             }
             // / region create hook
-            const runCreateHook:Function = (
+            const runCreatePropertyHook:Function = (
                 propertySpecification:PropertySpecification,
                 newDocument:PlainObject, oldDocument:PlainObject, name:string
             ):void => {
                 if (!oldDocument)
                     for (const type:string of [
-                        'onCreateExpression', 'onCreateExecution'
+                        'onCreateExecution', 'onCreateExpression'
                     ])
                         if (propertySpecification[type]) {
                             let hook:Function
@@ -696,12 +711,17 @@ export class DatabaseHelper {
                                 attachmentWithPrefixExists:
                                     attachmentWithPrefixExists.bind(
                                         newDocument, newDocument),
-                                checkDocument, checkPropertyContent,
+                                checkDocument,
+                                checkPropertyContent,
                                 getFilenameByPrefix,
-                                model, modelConfiguration, modelName, models,
+                                model,
+                                modelConfiguration,
+                                modelName,
+                                models,
                                 name,
                                 newDocument,
-                                now, nowUTCTimestamp,
+                                now,
+                                nowUTCTimestamp,
                                 oldDocument,
                                 propertySpecification,
                                 securitySettings,
@@ -713,7 +733,7 @@ export class DatabaseHelper {
                                 hook = new Function(...Object.keys(scope), (
                                     type.endsWith('Expression') ? 'return ' :
                                     ''
-                                ) + propertySpecification[type])
+                                ) + propertySpecification[type].trim())
                             } catch (error) {
                                 /* eslint-disable no-throw-literal */
                                 throw {
@@ -749,7 +769,7 @@ export class DatabaseHelper {
             }
             // / endregion
             // / region update hook
-            const runUpdateHook:Function = (
+            const runUpdatePropertyHook:Function = (
                 propertySpecification:PropertySpecification,
                 newDocument:PlainObject, oldDocument:PlainObject, name:string
             ):void => {
@@ -770,7 +790,7 @@ export class DatabaseHelper {
                 ))
                     newDocument[name] = null
                 for (const type:string of [
-                    'onUpdateExpression', 'onUpdateExecution'
+                    'onUpdateExecution', 'onUpdateExpression'
                 ])
                     if (propertySpecification[type]) {
                         let hook:Function
@@ -778,11 +798,17 @@ export class DatabaseHelper {
                             attachmentWithPrefixExists:
                                 attachmentWithPrefixExists.bind(
                                     newDocument, newDocument),
-                            checkDocument, checkPropertyContent,
+                            checkDocument,
+                            checkPropertyContent,
                             getFilenameByPrefix,
-                            model, modelConfiguration, modelName, models, name,
+                            model,
+                            modelConfiguration,
+                            modelName,
+                            models,
+                            name,
                             newDocument,
-                            now, nowUTCTimestamp,
+                            now,
+                            nowUTCTimestamp,
                             oldDocument,
                             propertySpecification,
                             securitySettings,
@@ -793,7 +819,7 @@ export class DatabaseHelper {
                             // IgnoreTypeCheck
                             hook = new Function(...Object.keys(scope), (
                                 type.endsWith('Expression') ? 'return ' : ''
-                            ) + propertySpecification[type])
+                            ) + propertySpecification[type].trim())
                         } catch (error) {
                             /* eslint-disable no-throw-literal */
                             throw {
@@ -830,10 +856,152 @@ export class DatabaseHelper {
                 specialNames.allowedRole,
                 specialNames.constraint.execution,
                 specialNames.constraint.expression,
+                specialNames.create.execution,
+                specialNames.create.expression,
                 specialNames.extend,
                 specialNames.maximumAggregatedSize,
-                specialNames.minimumAggregatedSize
+                specialNames.minimumAggregatedSize,
+                specialNames.update.execution,
+                specialNames.update.expression
             ].includes(name))
+            // region run create document hook
+            if (!oldDocument)
+                for (const type:string of [
+                    modelConfiguration.property.name.special.create.execution,
+                    modelConfiguration.property.name.special.create.expression
+                ])
+                    if (model.hasOwnProperty(type) && model[type]) {
+                        let hook:Function
+                        const scope:Object = {
+                            attachmentWithPrefixExists:
+                                attachmentWithPrefixExists.bind(
+                                    newDocument, newDocument),
+                            checkDocument,
+                            checkPropertyContent,
+                            getFilenameByPrefix,
+                            model,
+                            modelConfiguration,
+                            modelName,
+                            models,
+                            id,
+                            newDocument,
+                            now,
+                            nowUTCTimestamp,
+                            oldDocument,
+                            securitySettings,
+                            serialize,
+                            userContext
+                        }
+                        try {
+                            // IgnoreTypeCheck
+                            hook = new Function(...Object.keys(scope), (
+                                type.endsWith('Expression') ? 'return ' : ''
+                            // IgnoreTypeCheck
+                            ) + model[type].trim())
+                        } catch (error) {
+                            /* eslint-disable no-throw-literal */
+                            throw {
+                                forbidden:
+                                    `Compilation: Hook "${type}" has invalid` +
+                                    // IgnoreTypeCheck
+                                    ` code "${model[type]}" for document "` +
+                                    `${modelName}": ${serialize(error)}` +
+                                    `${pathDescription}.`
+                            }
+                            /* eslint-enable no-throw-literal */
+                        }
+                        let result:any
+                        try {
+                            result = hook(...Object.values(scope))
+                        } catch (error) {
+                            /* eslint-disable no-throw-literal */
+                            throw {
+                                forbidden:
+                                    `Runtime: Hook "${type}" has throw an ` +
+                                    'error with code "' +
+                                    // IgnoreTypeCheck
+                                    `${model[type]}" for document "` +
+                                    `${modelName}": ${serialize(error)}` +
+                                    `${pathDescription}.`
+                            }
+                            /* eslint-enable no-throw-literal */
+                        }
+                        if (![undefined, null].includes(result))
+                            newDocument = result
+                        checkModelType()
+                        modelName = newDocument[typeName]
+                        if (parentNames.length === 0)
+                            setDocumentEnvironment()
+                    }
+            // endregion
+            // region run update document hook
+            for (const type:string of [
+                modelConfiguration.property.name.special.update.execution,
+                modelConfiguration.property.name.special.update.expression
+            ])
+                if (model.hasOwnProperty(type) && model[type]) {
+                    let hook:Function
+                    const scope:Object = {
+                        attachmentWithPrefixExists:
+                            attachmentWithPrefixExists.bind(
+                                newDocument, newDocument),
+                        checkDocument,
+                        checkPropertyContent,
+                        getFilenameByPrefix,
+                        model,
+                        modelConfiguration,
+                        modelName,
+                        models,
+                        id,
+                        newDocument,
+                        now,
+                        nowUTCTimestamp,
+                        oldDocument,
+                        securitySettings,
+                        serialize,
+                        userContext
+                    }
+                    try {
+                        // IgnoreTypeCheck
+                        hook = new Function(...Object.keys(scope), (
+                            type.endsWith('Expression') ? 'return ' : ''
+                        // IgnoreTypeCheck
+                        ) + model[type].trim())
+                    } catch (error) {
+                        /* eslint-disable no-throw-literal */
+                        throw {
+                            forbidden:
+                                `Compilation: Hook "${type}" has invalid ` +
+                                // IgnoreTypeCheck
+                                ` code "${model[type]}" for document "` +
+                                `${modelName}": ${serialize(error)}` +
+                                `${pathDescription}.`
+                        }
+                        /* eslint-enable no-throw-literal */
+                    }
+                    let result:any
+                    try {
+                        result = hook(...Object.values(scope))
+                    } catch (error) {
+                        /* eslint-disable no-throw-literal */
+                        throw {
+                            forbidden:
+                                `Runtime: Hook "${type}" has throw an error ` +
+                                // IgnoreTypeCheck
+                                `with code "${model[type]}" for document "` +
+                                `${modelName}": ${serialize(error)}` +
+                                `${pathDescription}.`
+                        }
+                        /* eslint-enable no-throw-literal */
+                    }
+                    if (![undefined, null].includes(result))
+                        newDocument = result
+                    checkModelType()
+                    modelName = newDocument[typeName]
+                    if (parentNames.length === 0)
+                        setDocumentEnvironment()
+                }
+            // endregion
             for (const name:string of specifiedPropertyNames.concat(
                 additionalPropertySpecification ? Object.keys(
                     newDocument
@@ -874,13 +1042,13 @@ export class DatabaseHelper {
                             oldDocument[name][fileName].data !== null &&
                             new RegExp(type).test(fileName))
                         for (const fileName:string of newFileNames)
-                            runCreateHook(
+                            runCreatePropertyHook(
                                 model[name][type], newDocument[name],
                                 oldDocument && oldDocument[
                                     name
                                 ] ? oldDocument[name] : null, fileName)
                         for (const fileName:string of newFileNames)
-                            runUpdateHook(
+                            runUpdatePropertyHook(
                                 model[name][type], newDocument[name],
                                 oldDocument && oldDocument[
                                     name
@@ -938,9 +1106,9 @@ export class DatabaseHelper {
                         // IgnoreTypeCheck
                         specifiedPropertyNames.includes(name) ? model[name] :
                         additionalPropertySpecification
-                    runCreateHook(
+                    runCreatePropertyHook(
                         propertySpecification, newDocument, oldDocument, name)
-                    runUpdateHook(
+                    runUpdatePropertyHook(
                         propertySpecification, newDocument, oldDocument, name)
                     if ([undefined, null].includes(
                         propertySpecification.default
@@ -1004,7 +1172,7 @@ export class DatabaseHelper {
                             specialNames.localSequence,
                             specialNames.revisions,
                             specialNames.revisionsInformation,
-                            specialNames.type
+                            typeName
                         ).includes(name) && (
                             oldDocument[name] === newDocument[name] ||
                             serialize(
@@ -1216,8 +1384,8 @@ export class DatabaseHelper {
                             oldDocument && oldDocument.hasOwnProperty(
                                 name
                             ) && oldDocument[name] || undefined, [
-                                'arrayConstraintExpression',
-                                'arrayConstraintExecution'])
+                                'arrayConstraintExecution',
+                                'arrayConstraintExpression'])
                         const propertySpecificationCopy:PropertySpecification =
                             {}
                         for (const key:string in propertySpecification)
@@ -1260,9 +1428,9 @@ export class DatabaseHelper {
                                     typeof value === 'object' &&
                                     Object.getPrototypeOf(value) ===
                                         Object.prototype &&
-                                    !value.hasOwnProperty(specialNames.type)
+                                    !value.hasOwnProperty(typeName)
                                 )
-                                    value[specialNames.type] =
+                                    value[typeName] =
                                         // IgnoreTypeCheck
                                         propertySpecificationCopy.type[0]
                         let index:number = 0
@@ -1320,19 +1488,25 @@ export class DatabaseHelper {
                         let hook:Function
                         const code:string = ((
                             type === specialNames.constraint.expression
-                        ) ? 'return ' : '') + constraint.evaluation
+                        ) ? 'return ' : '') + constraint.evaluation.trim()
                         const scope:Object = {
                             attachmentWithPrefixExists:
                                 attachmentWithPrefixExists.bind(
                                     newDocument, newDocument),
-                            checkDocument, checkPropertyContent,
+                            checkDocument,
+                            checkPropertyContent,
                             code,
                             getFilenameByPrefix,
-                            model, modelConfiguration, modelName, models,
+                            model,
+                            modelConfiguration,
+                            modelName,
+                            models,
                             newDocument,
-                            now, nowUTCTimestamp,
+                            now,
+                            nowUTCTimestamp,
                             oldDocument,
-                            parentNames, pathDescription,
+                            parentNames,
+                            pathDescription,
                             securitySettings,
                             serialize,
                             userContext
@@ -1373,7 +1547,8 @@ export class DatabaseHelper {
                                     // IgnoreTypeCheck
                                     constraint.description ? new Function(
                                         ...Object.keys(scope),
-                                        `return ${constraint.description}`
+                                        'return ' +
+                                        constraint.description.trim()
                                     )(...Object.values(scope)) :
                                     `Model "${modelName}" should satisfy ` +
                                     `constraint "${code}" (given "` +
@@ -1811,12 +1986,12 @@ export class DatabaseHelper {
         if (securitySettings.hasOwnProperty('checkedDocuments'))
             securitySettings[
                 modelConfiguration.property.name.validatedDocumentsCache
-            ].add(`${newDocument[idName]}-${newDocument[revisionName]}`)
+            ].add(`${id}-${revision}`)
         else
             securitySettings[
                 modelConfiguration.property.name.validatedDocumentsCache
             ] = new Set([
-                `${newDocument[idName]}-${newDocument[revisionName]}`])
+                `${id}-${revision}`])
         return result.newDocument
     }
 }

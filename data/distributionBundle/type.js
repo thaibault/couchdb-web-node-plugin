@@ -68,8 +68,12 @@ export type Model = {
     _extends?:Array<string>;
     _constraintExpressions?:Array<Constraint>;
     _constraintExecutions?:Array<Constraint>;
+    _createExpression?:string;
+    _createExecution?:string;
     _maximumAggregatedSize?:number;
     _minimumAggregatedSize?:number;
+    _onUpdateExecution?:string;
+    _onUpdateExpression?:string;
     [key:string]:PropertySpecification;
 }
 export type Models = {[key:string]:Model}
@@ -91,7 +95,11 @@ export type SpecialPropertyNames = {
     constraint:{
         execution:string;
         expression:string;
-    },
+    };
+    create:{
+        execution:string;
+        expression:string;
+    };
     deleted:string;
     deletedConflict:string;
     extend:string;
@@ -104,6 +112,10 @@ export type SpecialPropertyNames = {
     revisionsInformation:string;
     strategy:UpdateStrategy;
     type:string;
+    update:{
+        execution:string;
+        expression:string;
+    };
 }
 export type PropertyNameConfiguration = {
     reserved:Array<string>;
