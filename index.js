@@ -681,6 +681,12 @@ export class Database {
                     idName in firstParameter
                 )
                     firstParameter = [firstParameter]
+                /*
+                    NOTE: "bulkDocs()" does not get constructor given options
+                    if none were provided for a single function call.
+                */
+                if (parameter.length && typeof parameter[0] !== 'object')
+                    parameter.unshift(configuration.database.connector)
                 let result:Array<PlainObject> = await nativeBulkDocs.call(
                     this, firstParameter, ...parameter)
                 const conflictingIndexes:Array<number> = []
