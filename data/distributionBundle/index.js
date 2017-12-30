@@ -645,8 +645,18 @@ export class Database {
     static async preLoadService(
         services:Services, configuration:Configuration
     ):Promise<Services> {
-        if (!services.hasOwnProperty('database'))
+        if (!services.hasOwnProperty('database')) {
             services.database = {}
+            try {
+                require('request').Request.timeout =
+                    configuration.database.connector.ajax.timeout
+            } catch (error) {
+                console.warn(
+                    `Couldn't find module "request" to synchronize timeout ` +
+                    `option with pouchdb's one: ` +
+                    Tools.representObject(error))
+            }
+        }
         if (!services.database.hasOwnProperty('connector')) {
             const idName:string =
                 configuration.database.model.property.name.special.id
@@ -671,6 +681,12 @@ export class Database {
                     idName in firstParameter
                 )
                     firstParameter = [firstParameter]
+                /*
+                    NOTE: "bulkDocs()" does not get constructor given options
+                    if none were provided for a single function call.
+                */
+                if (parameter.length && typeof parameter[0] !== 'object')
+                    parameter.unshift(configuration.database.connector)
                 let result:Array<PlainObject> = await nativeBulkDocs.call(
                     this, firstParameter, ...parameter)
                 const conflictingIndexes:Array<number> = []
@@ -729,7 +745,8 @@ export class Database {
                 services.database.connector.debug.enable('*')
             services.database.connector = services.database.connector.plugin(
                 PouchDBFindPlugin)
-        } if (!services.database.hasOwnProperty('server')) {
+        }
+        if (!services.database.hasOwnProperty('server')) {
             services.database.server = {}
             // region search for binary file to start database server
             for (
