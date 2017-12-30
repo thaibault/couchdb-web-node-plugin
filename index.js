@@ -645,8 +645,18 @@ export class Database {
     static async preLoadService(
         services:Services, configuration:Configuration
     ):Promise<Services> {
-        if (!services.hasOwnProperty('database'))
+        if (!services.hasOwnProperty('database')) {
             services.database = {}
+            try {
+                require('request').Request.timeout =
+                    configuration.database.connector.ajax.timeout
+            } catch (error) {
+                console.warn(
+                    `Couldn't find module "request" to synchronize timeout ` +
+                    `option with pouchdb's one: ` +
+                    Tools.representObject(error))
+            }
+        }
         if (!services.database.hasOwnProperty('connector')) {
             const idName:string =
                 configuration.database.model.property.name.special.id
@@ -729,7 +739,8 @@ export class Database {
                 services.database.connector.debug.enable('*')
             services.database.connector = services.database.connector.plugin(
                 PouchDBFindPlugin)
-        } if (!services.database.hasOwnProperty('server')) {
+        }
+        if (!services.database.hasOwnProperty('server')) {
             services.database.server = {}
             // region search for binary file to start database server
             for (
