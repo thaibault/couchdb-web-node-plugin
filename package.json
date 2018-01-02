@@ -81,7 +81,7 @@
     "rimraf": "^2.6.1",
     "source-map-support": "^0.5.0",
     "web-node": "^1.0.139",
-    "weboptimizer": "^1.0.463",
+    "weboptimizer": "^1.0.464",
     "webpack": "^3.10.0",
     "webpack-dev-server": "^2.9.5"
   },
