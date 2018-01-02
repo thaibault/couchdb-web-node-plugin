@@ -685,7 +685,7 @@ export class Database {
                     NOTE: "bulkDocs()" does not get constructor given options
                     if none were provided for a single function call.
                 */
-                if (parameter.length && typeof parameter[0] !== 'object')
+                if (parameter.length === 0 || typeof parameter[0] !== 'object')
                     parameter.unshift(configuration.database.connector)
                 let result:Array<PlainObject> = await nativeBulkDocs.call(
                     this, firstParameter, ...parameter)
