@@ -298,8 +298,8 @@ export class Database {
                     Tools.representObject(error))
             }
         // endregion
-        const modelConfiguration:ModelConfiguration =
-            Tools.copyLimitedRecursively(configuration.database.model)
+        const modelConfiguration:ModelConfiguration = Tools.copy(
+            configuration.database.model)
         delete modelConfiguration.property.defaultSpecification
         delete modelConfiguration.entities
         const models:Models = Helper.extendModels(configuration.database.model)
@@ -487,8 +487,7 @@ export class Database {
                     retrievedDocument.id.startsWith('_design/')
                 )) {
                     const document:Document = retrievedDocument.doc
-                    const newDocument:PlainObject =
-                        Tools.copyLimitedRecursively(document)
+                    const newDocument:PlainObject = Tools.copy(document)
                     newDocument[
                         configuration.database.model.property.name.special
                             .strategy
@@ -511,13 +510,13 @@ export class Database {
                                 be removed so final removing would be skipped
                                 if we do not use a copy here.
                             */
-                            Tools.copyLimitedRecursively(newDocument),
+                            Tools.copy(newDocument),
                             /*
                                 NOTE: During processing attachments sub object
                                 will be manipulated so copying is needed to
                                 avoid unexpected behavior in this context.
                             */
-                            Tools.copyLimitedRecursively(document), {
+                            Tools.copy(document), {
                                 db: configuration.name,
                                 name: configuration.database.user.name,
                                 roles: ['_admin']
@@ -526,9 +525,8 @@ export class Database {
                                 NOTE: We need a copy to ignore validated
                                 document caches.
                             */
-                            Tools.copyLimitedRecursively(
-                                configuration.database.security
-                            ), models, modelConfiguration)
+                            Tools.copy(configuration.database.security),
+                            models, modelConfiguration)
                     } catch (error) {
                         if ('forbidden' in error) {
                             if (!error.forbidden.startsWith('NoChange:'))
@@ -686,7 +684,7 @@ export class Database {
                     if none were provided for a single function call.
                 */
                 if (parameter.length === 0 || typeof parameter[0] !== 'object')
-                    parameter.unshift(Tools.copyLimitedRecursively(
+                    parameter.unshift(Tools.copy(
                         configuration.database.connector))
                 let result:Array<PlainObject> = await nativeBulkDocs.call(
                     this, firstParameter, ...parameter)

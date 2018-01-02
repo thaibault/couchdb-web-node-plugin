@@ -247,10 +247,8 @@ export class Helper {
                                 if (models[modelName][
                                     propertyName
                                 ].hasOwnProperty(type))
-                                    models[modelName][propertyName][
-                                        type
-                                    ] = Tools.extendObject(
-                                        true, Tools.copyLimitedRecursively(
+                                    models[modelName][propertyName][type] =
+                                        Tools.extendObject(true, Tools.copy(
                                             modelConfiguration.property
                                                 .defaultSpecification
                                         ),
@@ -263,10 +261,8 @@ export class Helper {
                             specialNames.maximumAggregatedSize,
                             specialNames.minimumAggregatedSize
                         ].includes(propertyName))
-                            models[modelName][
-                                propertyName
-                            ] = Tools.extendObject(
-                                true, Tools.copyLimitedRecursively(
+                            models[modelName][propertyName] =
+                                Tools.extendObject(true, Tools.copy(
                                     modelConfiguration.property
                                         .defaultSpecification,
                                 ), models[modelName][propertyName])
