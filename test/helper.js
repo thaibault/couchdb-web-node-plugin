@@ -46,8 +46,8 @@ registerTest(async function():Promise<void> {
     })
     // / region model
     this.test('determineAllowedModelRolesMapping', (assert:Object):void => {
-        const modelConfiguration:ModelConfiguration =
-            Tools.copyLimitedRecursively(configuration.database.model)
+        const modelConfiguration:ModelConfiguration = Tools.copy(
+            configuration.database.model)
         modelConfiguration.entities = {}
         for (const test:Array<any> of [
             [{}, {}],
@@ -140,8 +140,8 @@ registerTest(async function():Promise<void> {
             assert.deepEqual(Helper.extendModel(test[0], test[1]), test[2])
     })
     this.test('extendModels', (assert:Object):void => {
-        const modelConfiguration:ModelConfiguration =
-            Tools.copyLimitedRecursively(configuration.database.model)
+        const modelConfiguration:ModelConfiguration = Tools.copy(
+            configuration.database.model)
         modelConfiguration.entities = {}
         modelConfiguration.property.defaultSpecification = {}
         const specialNames:PlainObject = modelConfiguration.property.name
