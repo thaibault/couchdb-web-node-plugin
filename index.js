@@ -683,9 +683,14 @@ export class Database {
                     NOTE: "bulkDocs()" does not get constructor given options
                     if none were provided for a single function call.
                 */
-                if (parameter.length === 0 || typeof parameter[0] !== 'object')
-                    parameter.unshift(Tools.copy(
-                        configuration.database.connector))
+                if (
+                    configuration.database.connector.ajax &&
+                    configuration.database.connector.ajax.timeout && (
+                        parameter.length === 0 ||
+                        typeof parameter[0] !== 'object')
+                )
+                    parameter.unshift({timeout:
+                        configuration.database.connector.ajax.timeout})
                 let result:Array<PlainObject> = await nativeBulkDocs.call(
                     this, firstParameter, ...parameter)
                 const conflictingIndexes:Array<number> = []
