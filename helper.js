@@ -13,10 +13,12 @@
     endregion
 */
 // region imports
+import {spawn as spawnChildProcess} from 'child_process'
 import Tools from 'clientnode'
 import type {PlainObject} from 'clientnode'
 // NOTE: Remove when "fetch" is supported by node.
 import fetch from 'node-fetch'
+import path from 'path'
 // NOTE: Only needed for debugging this file.
 try {
     require('source-map-support/register')
@@ -150,6 +152,100 @@ export class Helper {
             }
         }
         // endregion
+        return services
+    }
+    /**
+     * Starts server process.
+     * @param services - An object with stored service instances.
+     * @param configuration - Mutable by plugins extended configuration object.
+     * @returns A promise representing the server process wrapped in a promise
+     * which resolves after server is reachable.
+     */
+    static async startServer(
+        services:Services, configuration:Configuration
+    ):Promise<Promise<Object>> {
+        services.database.server.process = spawnChildProcess(
+            services.database.server.binaryFilePath, [
+                '--config', configuration.database.configurationFilePath,
+                '--dir', path.resolve(configuration.database.path),
+                /*
+                    NOTE: This redundancy seems to be needed to forward ports
+                    in docker containers.
+                */
+                '--host', configuration.database['httpd/host'],
+                '--port', `${configuration.database.port}`
+            ], {
+                cwd: eval('process').cwd(),
+                env: eval('process').env,
+                shell: true,
+                stdio: 'inherit'
+            })
+        const promise:Promise<Object> = new Promise((
+            resolve:Function, reject:Function
+        ):void => {
+            for (const closeEventName:string of Tools.closeEventNames)
+                services.database.server.process.on(
+                    closeEventName, Tools.getProcessCloseHandler(
+                        resolve, reject, {
+                            reason: closeEventName,
+                            process: services.database.server.process
+                        }))
+        })
+        promise.then(
+            (...parameter:Array<any>):void =>
+                services.database.server.resolve.apply(
+                    this, parameter),
+            (...parameter:Array<any>):void =>
+                services.database.server.reject.apply(
+                    this, parameter))
+        await Tools.checkReachability(
+            Tools.stringFormat(configuration.database.url, ''), true)
+        return promise
+    }
+    /**
+     * Stops open database connection if exist, stops server process, restarts
+     * server process and re-initializes server connection.
+     * @param services - An object with stored service instances.
+     * @param configuration - Mutable by plugins extended configuration object.
+     * @returns Given object of services wrapped in a promise resolving after
+     * after finish.
+     */
+    static async restartServer(
+        services:Services, configuration:Configuration
+    ):Promise<Services> {
+        const resolveServerProcessBackup:Function =
+            services.database.server.resolve
+        const rejectServerProcessBackup:Function =
+            services.database.server.reject
+        // Avoid to notify web node about server process stop.
+        services.database.server.resolve = services.database.server.reject =
+            Tools.noop
+        await Helper.stopServer(services, configuration)
+        // Reattach server process to web nodes process pool.
+        services.database.server.resolve = resolveServerProcessBackup
+        services.database.server.reject = rejectServerProcessBackup
+        await Helper.startServer(services, configuration)
+        Helper.initializeConnection(services, configuration)
+        // TODO call plugin api to allow reinitializing things on new database
+        // connection instance.
+        return services
+    }
+    /**
+     * Stops open database connection if exists and stops server process.
+     * @param services - An object with stored service instances.
+     * @param configuration - Mutable by plugins extended configuration object.
+     * @returns Given object of services wrapped in a promise resolving after
+     * after finish.
+     */
+    static async stopServer(
+        services:Services, configuration:Configuration
+    ):Promise<Services> {
+        if (services.database.connection)
+            services.database.connection.close()
+        if (services.database.server.process)
+            services.database.server.process.kill('SIGINT')
+        await Tools.checkUnreachability(
+            Tools.stringFormat(configuration.database.url, ''), true)
         return services
     }
     // region model
@@ -359,23 +455,6 @@ export class Helper {
         return {read: [roles], write: [roles]}
     }
     // endregion
-    /**
-     * Stops open database connection if exists and stops server process.
-     * @param services - An object with stored service instances.
-     * @param configuration - Mutable by plugins extended configuration object.
-     * @returns Given object of services wrapped in a promise resolving after
-     * after finish.
-     */
-    static async stopServer(
-        services:Services, configuration:Configuration
-    ):Promise<Services> {
-        if (services.database.connection)
-            services.database.connection.close()
-        services.database.server.process.kill('SIGINT')
-        await Tools.checkUnreachability(
-            Tools.stringFormat(configuration.database.url, ''), true)
-        return services
-    }
 }
 export default Helper
 // endregion

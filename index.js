@@ -18,7 +18,6 @@
     endregion
 */
 // region imports
-import {spawn as spawnChildProcess} from 'child_process'
 import Tools from 'clientnode'
 /* eslint-disable no-unused-vars */
 import type {File, PlainObject} from 'clientnode'
@@ -62,35 +61,18 @@ export class Database {
         configuration:Configuration
     ):Promise<{promise:?Promise<Object>}> {
         let promise:?Promise<Object> = null
-        if (services.database.server.hasOwnProperty('binaryFilePath')) {
-            services.database.server.process = spawnChildProcess(
-                services.database.server.binaryFilePath, [
-                    '--config', configuration.database.configurationFilePath,
-                    '--dir', path.resolve(configuration.database.path),
-                    /*
-                        NOTE: This redundancy seems to be needed to forward
-                        ports in docker containers.
-                    */
-                    '--host', configuration.database['httpd/host'],
-                    '--port', `${configuration.database.port}`
-                ], {
-                    cwd: eval('process').cwd(),
-                    env: eval('process').env,
-                    shell: true,
-                    stdio: 'inherit'
-                })
-            promise = new Promise((resolve:Function, reject:Function):void => {
-                for (const closeEventName:string of Tools.closeEventNames)
-                    services.database.server.process.on(
-                        closeEventName, Tools.getProcessCloseHandler(
-                            resolve, reject, {
-                                reason: closeEventName,
-                                process: services.database.server.process
-                            }))
+        if (services.database.server.hasOwnProperty('binaryFilePath'))
+            promise = new Promise(async (
+                resolve:Function, reject:Function
+            ):Promise<void> => {
+                await Helper.startServer(services, configuration)
+                /*
+                    NOTE: These callbacks can be reassigned during server
+                    restart.
+                */
+                services.database.server.resolve = resolve
+                services.database.server.reject = reject
             })
-            await Tools.checkReachability(
-                Tools.stringFormat(configuration.database.url, ''), true)
-        }
         if (services.database.hasOwnProperty('connection'))
             return {promise}
         // region ensure presence of global admin user
