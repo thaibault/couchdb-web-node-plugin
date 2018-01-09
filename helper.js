@@ -21,6 +21,7 @@ import fetch from 'node-fetch'
 try {
     require('source-map-support/register')
 } catch (error) {}
+import type {Configuration, Services} from 'web-node/type'
 
 import type {
     AllowedModelRolesMapping,
@@ -83,6 +84,90 @@ export class Helper {
                     `${Tools.representObject(error)}".`)
             }
         }
+    }
+    /**
+     * Initializes a database connection instance.
+     * @param services - An object with stored service instances.
+     * @param configuration - Mutable by plugins extended configuration object.
+     * @returns Given and extended object of services.
+     */
+    static initializeConnection(
+        services:Services, configuration:Configuration
+    ):Services {
+        services.database.connection = new services.database.connector(
+            Tools.stringFormat(
+                configuration.database.url,
+                `${configuration.database.user.name}:` +
+                `${configuration.database.user.password}@`
+            ) + `/${configuration.name}`, configuration.database.connector)
+        services.database.connection.setMaxListeners(Infinity)
+        const idName:string =
+            configuration.database.model.property.name.special.id
+        const revisionName:string =
+            configuration.database.model.property.name.special.revision
+        // region apply "latest/upsert" and ignore "NoChange" error feature
+        /*
+            NOTE: A "bulkDocs" plugin does not get called for every "put" and
+            "post" call so we have to wrap runtime generated methods.
+        */
+        for (const pluginName:string of ['post', 'put']) {
+            const nativeMethod:Function =
+                services.database.connection[pluginName].bind(
+                    services.database.connection)
+            services.database.connection[pluginName] = async function(
+                firstParameter:any, ...parameter:Array<any>
+            ):Promise<any> {
+                try {
+                    return await nativeMethod(firstParameter, ...parameter)
+                } catch (error) {
+                    if (
+                        idName in firstParameter &&
+                        configuration.database.ignoreNoChangeError &&
+                        'name' in error &&
+                        error.name === 'forbidden' &&
+                        'message' in error &&
+                        error.message.startsWith('NoChange:')
+                    ) {
+                        const result:PlainObject = {
+                            id: firstParameter[idName],
+                            ok: true
+                        }
+                        try {
+                            result.rev =
+                                revisionName in firstParameter &&
+                                !['latest', 'upsert'].includes(
+                                    firstParameter[revisionName]
+                                ) ? firstParameter[revisionName] : (
+                                    await this.get(result.id)
+                                )[revisionName]
+                        } catch (error) {
+                            throw error
+                        }
+                        return result
+                    }
+                    throw error
+                }
+            }
+        }
+        // endregion
+        return services
+    }
+    /**
+     * Stops open database connection if exists and stops server process.
+     * @param services - An object with stored service instances.
+     * @param configuration - Mutable by plugins extended configuration object.
+     * @returns Given object of services wrapped in a promise resolving after
+     * after finish.
+     */
+    static async stopServer(
+        services:Services, configuration:Configuration
+    ):Promise<Services> {
+        if (services.database.connection)
+            services.database.connection.close()
+        services.database.server.process.kill('SIGINT')
+        await Tools.checkUnreachability(
+            Tools.stringFormat(configuration.database.url, ''), true)
+        return services
     }
     // region model
     /**

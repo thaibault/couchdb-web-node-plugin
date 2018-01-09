@@ -216,64 +216,11 @@ export class Database {
                             Tools.representObject(error))
                     }
         // endregion
-        services.database.connection = new services.database.connector(
-            Tools.stringFormat(
-                configuration.database.url,
-                `${configuration.database.user.name}:` +
-                `${configuration.database.user.password}@`
-            ) + `/${configuration.name}`, configuration.database.connector)
-        services.database.connection.setMaxListeners(Infinity)
+        Database.initializeConnection(services, configuration)
         const idName:string =
             configuration.database.model.property.name.special.id
-        const revisionName:string =
-            configuration.database.model.property.name.special.revision
         const typeName:string =
             configuration.database.model.property.name.special.type
-        // region apply "latest/upsert" and ignore "NoChange" error feature
-        /*
-            NOTE: A "bulkDocs" plugin does not get called for every "put" and
-            "post" call so we have to wrap runtime generated methods.
-        */
-        for (const pluginName:string of ['post', 'put']) {
-            const nativeMethod:Function =
-                services.database.connection[pluginName].bind(
-                    services.database.connection)
-            services.database.connection[pluginName] = async function(
-                firstParameter:any, ...parameter:Array<any>
-            ):Promise<any> {
-                try {
-                    return await nativeMethod(firstParameter, ...parameter)
-                } catch (error) {
-                    if (
-                        idName in firstParameter &&
-                        configuration.database.ignoreNoChangeError &&
-                        'name' in error &&
-                        error.name === 'forbidden' &&
-                        'message' in error &&
-                        error.message.startsWith('NoChange:')
-                    ) {
-                        const result:PlainObject = {
-                            id: firstParameter[idName],
-                            ok: true
-                        }
-                        try {
-                            result.rev =
-                                revisionName in firstParameter &&
-                                !['latest', 'upsert'].includes(
-                                    firstParameter[revisionName]
-                                ) ? firstParameter[revisionName] : (
-                                    await this.get(result.id)
-                                )[revisionName]
-                        } catch (error) {
-                            throw error
-                        }
-                        return result
-                    }
-                    throw error
-                }
-            }
-        }
-        // endregion
         // region ensure presence of database security settings
         if (configuration.database.ensureSecuritySettingsPresence)
             try {
@@ -638,7 +585,8 @@ export class Database {
      * Appends an application server to the web node services.
      * @param services - An object with stored service instances.
      * @param configuration - Mutable by plugins extended configuration object.
-     * @returns Given and extended object of services.
+     * @returns Given and extended object of services wrapped in a promise
+     * resolving after pre-loading has finished.
      */
     static async preLoadService(
         services:Services, configuration:Configuration
@@ -774,10 +722,11 @@ export class Database {
         return services
     }
     /**
-     * Application will be closed soon.
+     * Triggered when application will be closed soon.
      * @param services - An object with stored service instances.
      * @param configuration - Mutable by plugins extended configuration object.
-     * @returns Given object of services.
+     * @returns Given object of services wrapped in a promise resolving after
+     * finish.
      */
     static async shouldExit(
         services:Services, configuration:Configuration
@@ -787,10 +736,7 @@ export class Database {
             await new Promise((resolve:Function, reject:Function):void =>
                 fileSystem.unlink(logFilePath, (error:?Error):void =>
                     error ? reject(error) : resolve()))
-        services.database.connection.close()
-        services.database.server.process.kill('SIGINT')
-        await Tools.checkUnreachability(
-            Tools.stringFormat(configuration.database.url, ''), true)
+        await Database.stopServer(services, configuration)
         delete services.database
         return services
     }
