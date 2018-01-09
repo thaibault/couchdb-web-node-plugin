@@ -152,23 +152,6 @@ export class Helper {
         // endregion
         return services
     }
-    /**
-     * Stops open database connection if exists and stops server process.
-     * @param services - An object with stored service instances.
-     * @param configuration - Mutable by plugins extended configuration object.
-     * @returns Given object of services wrapped in a promise resolving after
-     * after finish.
-     */
-    static async stopServer(
-        services:Services, configuration:Configuration
-    ):Promise<Services> {
-        if (services.database.connection)
-            services.database.connection.close()
-        services.database.server.process.kill('SIGINT')
-        await Tools.checkUnreachability(
-            Tools.stringFormat(configuration.database.url, ''), true)
-        return services
-    }
     // region model
     /**
      * Determines a mapping of all models to roles who are allowed to edit
@@ -376,6 +359,23 @@ export class Helper {
         return {read: [roles], write: [roles]}
     }
     // endregion
+    /**
+     * Stops open database connection if exists and stops server process.
+     * @param services - An object with stored service instances.
+     * @param configuration - Mutable by plugins extended configuration object.
+     * @returns Given object of services wrapped in a promise resolving after
+     * after finish.
+     */
+    static async stopServer(
+        services:Services, configuration:Configuration
+    ):Promise<Services> {
+        if (services.database.connection)
+            services.database.connection.close()
+        services.database.server.process.kill('SIGINT')
+        await Tools.checkUnreachability(
+            Tools.stringFormat(configuration.database.url, ''), true)
+        return services
+    }
 }
 export default Helper
 // endregion

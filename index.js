@@ -216,7 +216,7 @@ export class Database {
                             Tools.representObject(error))
                     }
         // endregion
-        Database.initializeConnection(services, configuration)
+        Helper.initializeConnection(services, configuration)
         const idName:string =
             configuration.database.model.property.name.special.id
         const typeName:string =
@@ -736,7 +736,7 @@ export class Database {
             await new Promise((resolve:Function, reject:Function):void =>
                 fileSystem.unlink(logFilePath, (error:?Error):void =>
                     error ? reject(error) : resolve()))
-        await Database.stopServer(services, configuration)
+        await Helper.stopServer(services, configuration)
         delete services.database
         return services
     }
