@@ -61,11 +61,9 @@ export class Database {
         configuration:Configuration
     ):Promise<{promise:?Promise<Object>}> {
         let promise:?Promise<Object> = null
-        if (services.database.server.hasOwnProperty('binaryFilePath'))
-            promise = new Promise(async (
-                resolve:Function, reject:Function
-            ):Promise<void> => {
-                await Helper.startServer(services, configuration)
+        if (services.database.server.hasOwnProperty('binaryFilePath')) {
+            await Helper.startServer(services, configuration)
+            promise = new Promise((resolve:Function, reject:Function):void => {
                 /*
                     NOTE: These callbacks can be reassigned during server
                     restart.
@@ -73,6 +71,7 @@ export class Database {
                 services.database.server.resolve = resolve
                 services.database.server.reject = reject
             })
+        }
         if (services.database.hasOwnProperty('connection'))
             return {promise}
         // region ensure presence of global admin user

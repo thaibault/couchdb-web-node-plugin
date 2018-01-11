@@ -164,7 +164,7 @@ export class Helper {
      */
     static async startServer(
         services:Services, configuration:Configuration
-    ):Promise<Promise<Object>> {
+    ):Promise<void> {
         services.database.server.process = spawnChildProcess(
             services.database.server.binaryFilePath, [
                 '--config', configuration.database.configurationFilePath,
@@ -180,10 +180,8 @@ export class Helper {
                 env: eval('process').env,
                 shell: true,
                 stdio: 'inherit'
-            })
-        const promise:Promise<Object> = new Promise((
-            resolve:Function, reject:Function
-        ):void => {
+            });
+        (new Promise((resolve:Function, reject:Function):void => {
             for (const closeEventName:string of Tools.closeEventNames)
                 services.database.server.process.on(
                     closeEventName, Tools.getProcessCloseHandler(
@@ -191,17 +189,17 @@ export class Helper {
                             reason: closeEventName,
                             process: services.database.server.process
                         }))
-        })
-        promise.then(
-            (...parameter:Array<any>):void =>
-                services.database.server.resolve.apply(
-                    this, parameter),
-            (...parameter:Array<any>):void =>
-                services.database.server.reject.apply(
-                    this, parameter))
+        })).then(
+            (...parameter:Array<any>):void => {
+                if (services.database && services.database.server)
+                    services.database.server.resolve.apply(this, parameter)
+            },
+            (...parameter:Array<any>):void => {
+                if (services.database && services.database.server)
+                    services.database.server.reject.apply(this, parameter)
+            })
         await Tools.checkReachability(
             Tools.stringFormat(configuration.database.url, ''), true)
-        return promise
     }
     /**
      * Stops open database connection if exist, stops server process, restarts
