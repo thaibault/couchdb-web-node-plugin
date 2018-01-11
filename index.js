@@ -63,6 +63,9 @@ export class Database {
         let promise:?Promise<Object> = null
         if (services.database.server.hasOwnProperty('binaryFilePath')) {
             await Helper.startServer(services, configuration)
+            services.database.server.restart = Helper.restartServer
+            services.database.server.start = Helper.startServer
+            services.database.server.stop = Helper.stopServer
             promise = new Promise((resolve:Function, reject:Function):void => {
                 /*
                     NOTE: These callbacks can be reassigned during server
