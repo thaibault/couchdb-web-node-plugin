@@ -23,7 +23,8 @@ import path from 'path'
 try {
     require('source-map-support/register')
 } catch (error) {}
-import type {Configuration, Services} from 'web-node/type'
+import WebNodePluginAPI from 'web-node/pluginAPI'
+import type {Configuration, Plugin, Services} from 'web-node/type'
 
 import type {
     AllowedModelRolesMapping,
@@ -207,11 +208,12 @@ export class Helper {
      * server process and re-initializes server connection.
      * @param services - An object with stored service instances.
      * @param configuration - Mutable by plugins extended configuration object.
+     * @param plugins - Topological sorted list of plugins.
      * @returns Given object of services wrapped in a promise resolving after
      * after finish.
      */
     static async restartServer(
-        services:Services, configuration:Configuration
+        services:Services, configuration:Configuration, plugins:Array<Plugin>
     ):Promise<Services> {
         const resolveServerProcessBackup:Function =
             services.database.server.resolve
@@ -226,8 +228,8 @@ export class Helper {
         services.database.server.reject = rejectServerProcessBackup
         await Helper.startServer(services, configuration)
         Helper.initializeConnection(services, configuration)
-        // TODO call plugin api to allow reinitializing things on new database
-        // connection instance.
+        await WebNodePluginAPI.callStack(
+            'restartDatabase', plugins, configuration, services)
         return services
     }
     /**
