@@ -191,11 +191,19 @@ export class Helper {
                         }))
         })).then(
             (...parameter:Array<any>):void => {
-                if (services.database && services.database.server)
+                if (
+                    services.database &&
+                    services.database.server &&
+                    services.database.server.resolve
+                )
                     services.database.server.resolve.apply(this, parameter)
             },
             (...parameter:Array<any>):void => {
-                if (services.database && services.database.server)
+                if (
+                    services.database &&
+                    services.database.server &&
+                    services.database.server.resolve
+                )
                     services.database.server.reject.apply(this, parameter)
             })
         await Tools.checkReachability(
