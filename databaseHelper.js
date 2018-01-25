@@ -1010,98 +1010,105 @@ export class DatabaseHelper {
                 ) : []
             ))
                 // region run hooks and check for presence of needed data
-                if (specialNames.attachment === name)
-                    for (const type:string in model[name]) {
-                        if (
-                            !newDocument.hasOwnProperty(name) ||
-                            newDocument[name] === null
-                        )
-                            newDocument[name] = {}
-                        if (oldDocument && !oldDocument.hasOwnProperty(name))
-                            oldDocument[name] = {}
-                        const newFileNames:Array<string> = Object.keys(
-                            newDocument[name]
-                        ).filter((fileName:string):boolean => newDocument[
-                            name
-                        ][fileName].data !== null &&
-                        new RegExp(type).test(fileName))
-                        let oldFileNames:Array<string> = []
-                        if (oldDocument)
-                            oldFileNames = Object.keys(
-                                oldDocument[name]
-                            ).filter((fileName:string):boolean => !(
-                                newDocument.hasOwnProperty(name) &&
-                                newDocument[name].hasOwnProperty(fileName) &&
-                                newDocument[name][fileName].hasOwnProperty(
-                                    'data'
-                                ) &&
-                                newDocument[name][fileName].data === null
-                            ) &&
-                            // IgnoreTypeCheck
-                            oldDocument[name][fileName] &&
-                            oldDocument[name][fileName].data !== null &&
-                            new RegExp(type).test(fileName))
-                        for (const fileName:string of newFileNames)
-                            runCreatePropertyHook(
-                                model[name][type], newDocument[name],
-                                oldDocument && oldDocument[
-                                    name
-                                ] ? oldDocument[name] : null, fileName)
-                        for (const fileName:string of newFileNames)
-                            runUpdatePropertyHook(
-                                model[name][type], newDocument[name],
-                                oldDocument && oldDocument[
-                                    name
-                                ] ? oldDocument[name] : null, fileName)
-                        if ([undefined, null].includes(
-                            model[name][type].default
-                        )) {
-                            if (!(model[name][type].nullable || (
-                                newFileNames.length > 0 ||
-                                oldFileNames.length > 0
-                            )))
-                                /* eslint-disable no-throw-literal */
-                                throw {
-                                    forbidden:
-                                        'AttachmentMissing: Missing ' +
-                                        `attachment for type "${type}"` +
-                                        `${pathDescription}.`
-                                }
-                                /* eslint-enable no-throw-literal */
+                if (specialNames.attachment === name) {
+                    for (const type:string in model[name])
+                        if (model[name].hasOwnProperty(type)) {
                             if (
-                                updateStrategy === 'fillUp' &&
-                                newFileNames.length === 0 &&
-                                oldFileNames.length > 0
+                                !newDocument.hasOwnProperty(name) ||
+                                newDocument[name] === null
                             )
-                                for (const fileName:string of oldFileNames)
-                                    if (newDocument[name][fileName] === null)
-                                        changedPath = parentNames.concat(
-                                            name, fileName, 'file removed')
-                                    else
+                                newDocument[name] = {}
+                            if (
+                                oldDocument &&
+                                !oldDocument.hasOwnProperty(name)
+                            )
+                                oldDocument[name] = {}
+                            const newFileNames:Array<string> = Object.keys(
+                                newDocument[name]
+                            ).filter((fileName:string):boolean => newDocument[
+                                name
+                            ][fileName].data !== null &&
+                            new RegExp(type).test(fileName))
+                            let oldFileNames:Array<string> = []
+                            if (oldDocument)
+                                oldFileNames = Object.keys(
+                                    oldDocument[name]
+                                ).filter((fileName:string):boolean => !(
+                                    newDocument.hasOwnProperty(name) &&
+                                    newDocument[name].hasOwnProperty(
+                                        fileName) &&
+                                    newDocument[name][fileName].hasOwnProperty(
+                                        'data'
+                                    ) &&
+                                    newDocument[name][fileName].data === null
+                                ) &&
+                                // IgnoreTypeCheck
+                                oldDocument[name][fileName] &&
+                                oldDocument[name][fileName].data !== null &&
+                                new RegExp(type).test(fileName))
+                            for (const fileName:string of newFileNames)
+                                runCreatePropertyHook(
+                                    model[name][type], newDocument[name],
+                                    oldDocument && oldDocument[
+                                        name
+                                    ] ? oldDocument[name] : null, fileName)
+                            for (const fileName:string of newFileNames)
+                                runUpdatePropertyHook(
+                                    model[name][type], newDocument[name],
+                                    oldDocument && oldDocument[
+                                        name
+                                    ] ? oldDocument[name] : null, fileName)
+                            if ([undefined, null].includes(
+                                model[name][type].default
+                            )) {
+                                if (!(model[name][type].nullable || (
+                                    newFileNames.length > 0 ||
+                                    oldFileNames.length > 0
+                                )))
+                                    /* eslint-disable no-throw-literal */
+                                    throw {
+                                        forbidden:
+                                            'AttachmentMissing: Missing ' +
+                                            `attachment for type "${type}"` +
+                                            `${pathDescription}.`
+                                    }
+                                    /* eslint-enable no-throw-literal */
+                                if (
+                                    updateStrategy === 'fillUp' &&
+                                    newFileNames.length === 0 &&
+                                    oldFileNames.length > 0
+                                )
+                                    for (const fileName:string of oldFileNames)
+                                        if (newDocument[name][
+                                            fileName
+                                        ] === null)
+                                            changedPath = parentNames.concat(
+                                                name, fileName, 'file removed')
+                                        else
+                                            newDocument[name][fileName] =
+                                                // IgnoreTypeCheck
+                                                oldDocument[name][fileName]
+                            } else if (newFileNames.length === 0)
+                                if (oldFileNames.length === 0) {
+                                    for (const fileName:string in model[name][
+                                        type
+                                    ].default)
+                                        if (model[name][
+                                            type
+                                        ].default.hasOwnProperty(fileName)) {
+                                            newDocument[name][fileName] =
+                                                model[name][type].default[
+                                                    fileName]
+                                            changedPath = parentNames.concat(
+                                                name, type, 'add default file')
+                                        }
+                                } else if (updateStrategy === 'fillUp')
+                                    for (const fileName:string of oldFileNames)
                                         newDocument[name][fileName] =
                                             // IgnoreTypeCheck
                                             oldDocument[name][fileName]
-                        } else if (newFileNames.length === 0)
-                            if (oldFileNames.length === 0) {
-                                for (const fileName:string in model[name][
-                                    type
-                                ].default)
-                                    if (model[name][
-                                        type
-                                    ].default.hasOwnProperty(fileName)) {
-                                        newDocument[name][fileName] =
-                                            model[name][type].default[
-                                                fileName]
-                                        changedPath = parentNames.concat(
-                                            name, type, 'add default file')
-                                    }
-                            } else if (updateStrategy === 'fillUp')
-                                for (const fileName:string of oldFileNames)
-                                    newDocument[name][fileName] =
-                                        // IgnoreTypeCheck
-                                        oldDocument[name][fileName]
-                    }
-                else {
+                        }
+                } else {
                     const propertySpecification:PropertySpecification =
                         // IgnoreTypeCheck
                         specifiedPropertyNames.includes(name) ? model[name] :
