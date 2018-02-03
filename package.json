@@ -55,11 +55,11 @@
     "watch:dll": "webOptimizer build:dll --watch"
   },
   "dependencies": {
-    "clientnode": "^1.0.324",
+    "clientnode": "^1.0.329",
     "node-fetch": "^1.7.1",
-    "pouchdb": "^6.4.2",
-    "pouchdb-find": "^6.4.2",
-    "pouchdb-server": "^2.3.7"
+    "pouchdb": "^6.4.3",
+    "pouchdb-find": "^6.4.3",
+    "pouchdb-server": "^4.0.0"
   },
   "peerDependencies": {
     "babel-runtime": "*",
@@ -69,19 +69,19 @@
   "devDependencies": {
     "babel-eslint": "^8.2.1",
     "coveralls": "^3.0.0",
-    "documentation-website": "^1.0.90",
-    "eslint": "^4.16.0",
+    "documentation-website": "^1.0.95",
+    "eslint": "^4.17.0",
     "eslint-config-google": "^0.9.1",
-    "eslint-plugin-flowtype": "^2.41.1",
+    "eslint-plugin-flowtype": "^2.42.0",
     "eslint-plugin-jsdoc": "^3.3.0",
     "flow-bin": "^0.64.0",
     "jsdoc": "^3.5.2",
     "nyc": "^11.4.1",
     "qunit": "^2.5.0",
     "rimraf": "^2.6.1",
-    "source-map-support": "^0.5.2",
-    "web-node": "^1.0.142",
-    "weboptimizer": "^1.0.472",
+    "source-map-support": "^0.5.3",
+    "web-node": "^1.0.145",
+    "weboptimizer": "^1.0.489",
     "webpack": "^3.10.0",
     "webpack-dev-server": "^2.10.1"
   },
