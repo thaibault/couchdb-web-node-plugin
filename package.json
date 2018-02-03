@@ -69,7 +69,7 @@
   "devDependencies": {
     "babel-eslint": "^8.2.1",
     "coveralls": "^3.0.0",
-    "documentation-website": "^1.0.95",
+    "documentation-website": "^1.0.96",
     "eslint": "^4.17.0",
     "eslint-config-google": "^0.9.1",
     "eslint-plugin-flowtype": "^2.42.0",
