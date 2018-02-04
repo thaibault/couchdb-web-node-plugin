@@ -55,8 +55,8 @@
     "watch:dll": "webOptimizer build:dll --watch"
   },
   "dependencies": {
-    "clientnode": "^1.0.329",
-    "node-fetch": "^1.7.1",
+    "clientnode": "^1.0.330",
+    "node-fetch": "^2.0.0",
     "pouchdb": "^6.4.3",
     "pouchdb-find": "^6.4.3",
     "pouchdb-server": "^4.0.0"
