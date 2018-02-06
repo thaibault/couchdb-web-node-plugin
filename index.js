@@ -44,8 +44,16 @@ import type {
 /**
  * Launches an application server und triggers all some pluginable hooks on
  * an event.
+ * @property static:skipIDDetermining - Indicates whether id's should be
+ * determined if "bulkDocs" had skipped a real change due to ignore a
+ * "NoChange" error.
+ * @property static:toggleIDDetermining - Token to give a "bulkDocs" method
+ * call to indicate id determination skip or not (depends on the static
+ * "skipIDDetermining" configuration).
  */
 export class Database {
+    static skipIDDetermining:boolean = true
+    static toggleIDDetermining:any = Symbol('toggleIDDetermining')
     /**
      * Start database's child process and return a Promise which observes this
      * service.
@@ -599,6 +607,15 @@ export class Database {
             services.database.connector.plugin({bulkDocs: async function(
                 firstParameter:any, ...parameter:Array<any>
             ):Promise<Array<PlainObject>> {
+                const toggleIDDetermining:boolean = (
+                    parameter.length > 0 &&
+                    parameter[
+                        parameter.length - 1
+                    ] === Database.toggleIDDetermining)
+                const skipIDDetermining:boolean = toggleIDDetermining ?
+                    !Database.skipIDDetermining : Database.skipIDDetermining
+                if (toggleIDDetermining)
+                    parameter.pop()
                 /*
                     Implements a generic retry mechanism for "upsert" and
                     "latest" updates and optionally supports to ignore
@@ -653,22 +670,28 @@ export class Database {
                                 id: firstParameter[index][idName],
                                 ok: true
                             }
-                            try {
-                                result[index].rev =
-                                    revisionName in firstParameter[index] &&
-                                    !['latest', 'upsert'].includes(
-                                        firstParameter[index][revisionName]
-                                    ) ? firstParameter[index][revisionName] : (
-                                        await this.get(result[index].id)
-                                    )[revisionName]
-                            } catch (error) {
-                                throw error
-                            }
+                            if (!skipIDDetermining)
+                                try {
+                                    result[index].rev =
+                                        revisionName in firstParameter[
+                                            index
+                                        ] &&
+                                        !['latest', 'upsert'].includes(
+                                            firstParameter[index][revisionName]
+                                        ) ? firstParameter[index][
+                                            revisionName
+                                        ] : (await this.get(result[index].id))[
+                                            revisionName]
+                                } catch (error) {
+                                    throw error
+                                }
                         }
                     index += 1
                 }
                 if (conflicts.length) {
                     firstParameter = conflicts
+                    if (toggleIDDetermining)
+                        parameter.push(Database.toggleIDDetermining)
                     const retriedResults:Array<PlainObject> =
                         await this.bulkDocs(firstParameter, ...parameter)
                     for (const retriedResult:PlainObject of retriedResults)
