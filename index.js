@@ -105,9 +105,10 @@ export class Database {
                         body: `"${configuration.database.user.password}"`
                     })
             } catch (error) {
-                if (error.hasOwnProperty(
-                    'name'
-                ) && error.name === 'unauthorized') {
+                if (
+                    error.hasOwnProperty('name') &&
+                    error.name === 'unauthorized'
+                ) {
                     const authenticatedUserDatabaseConnection =
                         new services.database.connector(Tools.stringFormat(
                             configuration.database.url,
@@ -138,8 +139,8 @@ export class Database {
         if (configuration.database.ensureUserPresence)
             for (const type:string of ['admins', 'members'])
                 for (
-                    const name:string of configuration.database.security[type]
-                        .names
+                    const name:string of
+                        configuration.database.security[type].names
                 ) {
                     const userDatabaseConnection:Object =
                         new services.database.connector(Tools.stringFormat(
