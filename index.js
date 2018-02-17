@@ -140,7 +140,7 @@ export class Database {
             for (const type:string of ['admins', 'members'])
                 for (
                     const name:string of
-                        configuration.database.security[type].names
+                    configuration.database.security[type].names
                 ) {
                     const userDatabaseConnection:Object =
                         new services.database.connector(Tools.stringFormat(
