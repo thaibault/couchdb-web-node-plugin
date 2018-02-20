@@ -38,7 +38,7 @@
   },
   "scripts": {
     "build": "npm run build:databaseHelper && webOptimizer build",
-    "build:databaseHelper": "webOptimizer build '{development:{tool:false},injection:{internal:{__evaluate__: \"{databaseHelper: \\\"./databaseHelper\\\"}\"}},inPlace:{externalLibrary:{normal:true}},module:{preprocessor:{javaScript:{options:{plugins:{__remove__:\"transform-runtime\"}}}}}}'",
+    "build:databaseHelper": "webOptimizer build '{__reference__: \"databaseHelper\"}'",
     "build:dll": "webOptimizer build:dll",
     "clear": "webOptimizer clear && rimraf log.txt",
     "document": "webOptimizer document",
@@ -55,7 +55,7 @@
     "watch:dll": "webOptimizer build:dll --watch"
   },
   "dependencies": {
-    "clientnode": "^1.0.339",
+    "clientnode": "^1.0.342",
     "node-fetch": "^2.0.0",
     "pouchdb": "^6.4.3",
     "pouchdb-find": "^6.4.3",
@@ -70,18 +70,18 @@
     "babel-eslint": "^8.2.2",
     "coveralls": "^3.0.0",
     "documentation-website": "^1.0.100",
-    "eslint": "^4.18.0",
+    "eslint": "^4.18.1",
     "eslint-config-google": "^0.9.1",
     "eslint-plugin-flowtype": "^2.45.0",
-    "eslint-plugin-jsdoc": "^3.4.1",
+    "eslint-plugin-jsdoc": "^3.5.0",
     "flow-bin": "^0.66.0",
     "jsdoc": "^3.5.2",
     "nyc": "^11.5.0",
     "qunit": "^2.5.0",
     "rimraf": "^2.6.1",
     "source-map-support": "^0.5.3",
-    "web-node": "^1.0.151",
-    "weboptimizer": "^1.0.514",
+    "web-node": "^1.0.152",
+    "weboptimizer": "^1.0.522",
     "webpack": "^3.11.0",
     "webpack-dev-server": "^2.10.1"
   },
@@ -326,6 +326,32 @@
       "javaScript": {
         "excludeFilePathRegularExpression": {
           "__evaluate__": "2 < self.givenCommandLineArguments.length && self.givenCommandLineArguments[2] === 'test' ? '^$' : '.+'"
+        }
+      }
+    },
+    "databaseHelper": {
+      "development": {
+        "tool": false
+      },
+      "injection": {
+        "internal": {
+          "__evaluate__": "{databaseHelper: './databaseHelper'}"
+        }
+      },
+      "inPlace": {
+        "externalLibrary": {
+          "normal": true
+        }
+      },
+      "module": {
+        "preprocessor": {
+          "javaScript": {
+            "options": {
+              "plugins": {
+                "__remove__": "transform-runtime"
+              }
+            }
+          }
         }
       }
     },
