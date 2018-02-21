@@ -13,14 +13,18 @@
     endregion
 */
 // region imports
+import {spawn as spawnChildProcess} from 'child_process'
 import Tools from 'clientnode'
 import type {PlainObject} from 'clientnode'
 // NOTE: Remove when "fetch" is supported by node.
 import fetch from 'node-fetch'
+import path from 'path'
 // NOTE: Only needed for debugging this file.
 try {
     require('source-map-support/register')
 } catch (error) {}
+import WebNodePluginAPI from 'web-node/pluginAPI'
+import type {Configuration, Plugin, Services} from 'web-node/type'
 
 import type {
     AllowedModelRolesMapping,
@@ -83,6 +87,174 @@ export class Helper {
                     `${Tools.representObject(error)}".`)
             }
         }
+    }
+    /**
+     * Initializes a database connection instance.
+     * @param services - An object with stored service instances.
+     * @param configuration - Mutable by plugins extended configuration object.
+     * @returns Given and extended object of services.
+     */
+    static initializeConnection(
+        services:Services, configuration:Configuration
+    ):Services {
+        services.database.connection = new services.database.connector(
+            Tools.stringFormat(
+                configuration.database.url,
+                `${configuration.database.user.name}:` +
+                `${configuration.database.user.password}@`
+            ) + `/${configuration.name}`, configuration.database.connector)
+        services.database.connection.setMaxListeners(Infinity)
+        const idName:string =
+            configuration.database.model.property.name.special.id
+        const revisionName:string =
+            configuration.database.model.property.name.special.revision
+        // region apply "latest/upsert" and ignore "NoChange" error feature
+        /*
+            NOTE: A "bulkDocs" plugin does not get called for every "put" and
+            "post" call so we have to wrap runtime generated methods.
+        */
+        for (const pluginName:string of ['post', 'put']) {
+            const nativeMethod:Function =
+                services.database.connection[pluginName].bind(
+                    services.database.connection)
+            services.database.connection[pluginName] = async function(
+                firstParameter:any, ...parameter:Array<any>
+            ):Promise<any> {
+                try {
+                    return await nativeMethod(firstParameter, ...parameter)
+                } catch (error) {
+                    if (
+                        idName in firstParameter &&
+                        configuration.database.ignoreNoChangeError &&
+                        'name' in error &&
+                        error.name === 'forbidden' &&
+                        'message' in error &&
+                        error.message.startsWith('NoChange:')
+                    ) {
+                        const result:PlainObject = {
+                            id: firstParameter[idName],
+                            ok: true
+                        }
+                        try {
+                            result.rev =
+                                revisionName in firstParameter &&
+                                !['latest', 'upsert'].includes(
+                                    firstParameter[revisionName]
+                                ) ? firstParameter[revisionName] : (
+                                    await this.get(result.id)
+                                )[revisionName]
+                        } catch (error) {
+                            throw error
+                        }
+                        return result
+                    }
+                    throw error
+                }
+            }
+        }
+        // endregion
+        return services
+    }
+    /**
+     * Starts server process.
+     * @param services - An object with stored service instances.
+     * @param configuration - Mutable by plugins extended configuration object.
+     * @returns A promise representing the server process wrapped in a promise
+     * which resolves after server is reachable.
+     */
+    static async startServer(
+        services:Services, configuration:Configuration
+    ):Promise<void> {
+        services.database.server.process = spawnChildProcess(
+            services.database.server.binaryFilePath, [
+                '--config', configuration.database.configurationFilePath,
+                '--dir', path.resolve(configuration.database.path),
+                /*
+                    NOTE: This redundancy seems to be needed to forward ports
+                    in docker containers.
+                */
+                '--host', configuration.database['httpd/host'],
+                '--port', `${configuration.database.port}`
+            ], {
+                cwd: eval('process').cwd(),
+                env: eval('process').env,
+                shell: true,
+                stdio: 'inherit'
+            });
+        (new Promise((resolve:Function, reject:Function):void => {
+            for (const closeEventName:string of Tools.closeEventNames)
+                services.database.server.process.on(
+                    closeEventName, Tools.getProcessCloseHandler(
+                        resolve, reject, {
+                            reason: closeEventName,
+                            process: services.database.server.process
+                        }))
+        })).then(
+            (...parameter:Array<any>):void => {
+                if (
+                    services.database &&
+                    services.database.server &&
+                    services.database.server.resolve
+                )
+                    services.database.server.resolve.apply(this, parameter)
+            },
+            (...parameter:Array<any>):void => {
+                if (
+                    services.database &&
+                    services.database.server &&
+                    services.database.server.resolve
+                )
+                    services.database.server.reject.apply(this, parameter)
+            })
+        await Tools.checkReachability(
+            Tools.stringFormat(configuration.database.url, ''), true)
+    }
+    /**
+     * Stops open database connection if exist, stops server process, restarts
+     * server process and re-initializes server connection.
+     * @param services - An object with stored service instances.
+     * @param configuration - Mutable by plugins extended configuration object.
+     * @param plugins - Topological sorted list of plugins.
+     * @returns Given object of services wrapped in a promise resolving after
+     * after finish.
+     */
+    static async restartServer(
+        services:Services, configuration:Configuration, plugins:Array<Plugin>
+    ):Promise<Services> {
+        const resolveServerProcessBackup:Function =
+            services.database.server.resolve
+        const rejectServerProcessBackup:Function =
+            services.database.server.reject
+        // Avoid to notify web node about server process stop.
+        services.database.server.resolve = services.database.server.reject =
+            Tools.noop
+        await Helper.stopServer(services, configuration)
+        // Reattach server process to web nodes process pool.
+        services.database.server.resolve = resolveServerProcessBackup
+        services.database.server.reject = rejectServerProcessBackup
+        await Helper.startServer(services, configuration)
+        Helper.initializeConnection(services, configuration)
+        await WebNodePluginAPI.callStack(
+            'restartDatabase', plugins, configuration, services)
+        return services
+    }
+    /**
+     * Stops open database connection if exists and stops server process.
+     * @param services - An object with stored service instances.
+     * @param configuration - Mutable by plugins extended configuration object.
+     * @returns Given object of services wrapped in a promise resolving after
+     * after finish.
+     */
+    static async stopServer(
+        services:Services, configuration:Configuration
+    ):Promise<Services> {
+        if (services.database.connection)
+            services.database.connection.close()
+        if (services.database.server.process)
+            services.database.server.process.kill('SIGINT')
+        await Tools.checkUnreachability(
+            Tools.stringFormat(configuration.database.url, ''), true)
+        return services
     }
     // region model
     /**
@@ -247,10 +419,8 @@ export class Helper {
                                 if (models[modelName][
                                     propertyName
                                 ].hasOwnProperty(type))
-                                    models[modelName][propertyName][
-                                        type
-                                    ] = Tools.extendObject(
-                                        true, Tools.copyLimitedRecursively(
+                                    models[modelName][propertyName][type] =
+                                        Tools.extendObject(true, Tools.copy(
                                             modelConfiguration.property
                                                 .defaultSpecification
                                         ),
@@ -263,10 +433,8 @@ export class Helper {
                             specialNames.maximumAggregatedSize,
                             specialNames.minimumAggregatedSize
                         ].includes(propertyName))
-                            models[modelName][
-                                propertyName
-                            ] = Tools.extendObject(
-                                true, Tools.copyLimitedRecursively(
+                            models[modelName][propertyName] =
+                                Tools.extendObject(true, Tools.copy(
                                     modelConfiguration.property
                                         .defaultSpecification,
                                 ), models[modelName][propertyName])
