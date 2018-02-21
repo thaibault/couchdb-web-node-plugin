@@ -18,7 +18,6 @@
     endregion
 */
 // region imports
-import {spawn as spawnChildProcess} from 'child_process'
 import Tools from 'clientnode'
 /* eslint-disable no-unused-vars */
 import type {File, PlainObject} from 'clientnode'
@@ -45,8 +44,16 @@ import type {
 /**
  * Launches an application server und triggers all some pluginable hooks on
  * an event.
+ * @property static:skipIDDetermining - Indicates whether id's should be
+ * determined if "bulkDocs" had skipped a real change due to ignore a
+ * "NoChange" error.
+ * @property static:toggleIDDetermining - Token to give a "bulkDocs" method
+ * call to indicate id determination skip or not (depends on the static
+ * "skipIDDetermining" configuration).
  */
 export class Database {
+    static skipIDDetermining:boolean = true
+    static toggleIDDetermining:any = Symbol('toggleIDDetermining')
     /**
      * Start database's child process and return a Promise which observes this
      * service.
@@ -63,33 +70,18 @@ export class Database {
     ):Promise<{promise:?Promise<Object>}> {
         let promise:?Promise<Object> = null
         if (services.database.server.hasOwnProperty('binaryFilePath')) {
-            services.database.server.process = spawnChildProcess(
-                services.database.server.binaryFilePath, [
-                    '--config', configuration.database.configurationFilePath,
-                    '--dir', path.resolve(configuration.database.path),
-                    /*
-                        NOTE: This redundancy seems to be needed to forward
-                        ports in docker containers.
-                    */
-                    '--host', configuration.database['httpd/host'],
-                    '--port', `${configuration.database.port}`
-                ], {
-                    cwd: eval('process').cwd(),
-                    env: eval('process').env,
-                    shell: true,
-                    stdio: 'inherit'
-                })
+            await Helper.startServer(services, configuration)
+            services.database.server.restart = Helper.restartServer
+            services.database.server.start = Helper.startServer
+            services.database.server.stop = Helper.stopServer
             promise = new Promise((resolve:Function, reject:Function):void => {
-                for (const closeEventName:string of Tools.closeEventNames)
-                    services.database.server.process.on(
-                        closeEventName, Tools.getProcessCloseHandler(
-                            resolve, reject, {
-                                reason: closeEventName,
-                                process: services.database.server.process
-                            }))
+                /*
+                    NOTE: These callbacks can be reassigned during server
+                    restart.
+                */
+                services.database.server.resolve = resolve
+                services.database.server.reject = reject
             })
-            await Tools.checkReachability(
-                Tools.stringFormat(configuration.database.url, ''), true)
         }
         if (services.database.hasOwnProperty('connection'))
             return {promise}
@@ -113,9 +105,10 @@ export class Database {
                         body: `"${configuration.database.user.password}"`
                     })
             } catch (error) {
-                if (error.hasOwnProperty(
-                    'name'
-                ) && error.name === 'unauthorized') {
+                if (
+                    error.hasOwnProperty('name') &&
+                    error.name === 'unauthorized'
+                ) {
                     const authenticatedUserDatabaseConnection =
                         new services.database.connector(Tools.stringFormat(
                             configuration.database.url,
@@ -146,8 +139,8 @@ export class Database {
         if (configuration.database.ensureUserPresence)
             for (const type:string of ['admins', 'members'])
                 for (
-                    const name:string of configuration.database.security[type]
-                        .names
+                    const name:string of
+                    configuration.database.security[type].names
                 ) {
                     const userDatabaseConnection:Object =
                         new services.database.connector(Tools.stringFormat(
@@ -216,64 +209,11 @@ export class Database {
                             Tools.representObject(error))
                     }
         // endregion
-        services.database.connection = new services.database.connector(
-            Tools.stringFormat(
-                configuration.database.url,
-                `${configuration.database.user.name}:` +
-                `${configuration.database.user.password}@`
-            ) + `/${configuration.name}`, configuration.database.connector)
-        services.database.connection.setMaxListeners(Infinity)
+        Helper.initializeConnection(services, configuration)
         const idName:string =
             configuration.database.model.property.name.special.id
-        const revisionName:string =
-            configuration.database.model.property.name.special.revision
         const typeName:string =
             configuration.database.model.property.name.special.type
-        // region apply "latest/upsert" and ignore "NoChange" error feature
-        /*
-            NOTE: A "bulkDocs" plugin does not get called for every "put" and
-            "post" call so we have to wrap runtime generated methods.
-        */
-        for (const pluginName:string of ['post', 'put']) {
-            const nativeMethod:Function =
-                services.database.connection[pluginName].bind(
-                    services.database.connection)
-            services.database.connection[pluginName] = async function(
-                firstParameter:any, ...parameter:Array<any>
-            ):Promise<any> {
-                try {
-                    return await nativeMethod(firstParameter, ...parameter)
-                } catch (error) {
-                    if (
-                        idName in firstParameter &&
-                        configuration.database.ignoreNoChangeError &&
-                        'name' in error &&
-                        error.name === 'forbidden' &&
-                        'message' in error &&
-                        error.message.startsWith('NoChange:')
-                    ) {
-                        const result:PlainObject = {
-                            id: firstParameter[idName],
-                            ok: true
-                        }
-                        try {
-                            result.rev =
-                                revisionName in firstParameter &&
-                                !['latest', 'upsert'].includes(
-                                    firstParameter[revisionName]
-                                ) ? firstParameter[revisionName] : (
-                                    await this.get(result.id)
-                                )[revisionName]
-                        } catch (error) {
-                            throw error
-                        }
-                        return result
-                    }
-                    throw error
-                }
-            }
-        }
-        // endregion
         // region ensure presence of database security settings
         if (configuration.database.ensureSecuritySettingsPresence)
             try {
@@ -298,8 +238,8 @@ export class Database {
                     Tools.representObject(error))
             }
         // endregion
-        const modelConfiguration:ModelConfiguration =
-            Tools.copyLimitedRecursively(configuration.database.model)
+        const modelConfiguration:ModelConfiguration = Tools.copy(
+            configuration.database.model)
         delete modelConfiguration.property.defaultSpecification
         delete modelConfiguration.entities
         const models:Models = Helper.extendModels(configuration.database.model)
@@ -487,8 +427,7 @@ export class Database {
                     retrievedDocument.id.startsWith('_design/')
                 )) {
                     const document:Document = retrievedDocument.doc
-                    const newDocument:PlainObject =
-                        Tools.copyLimitedRecursively(document)
+                    const newDocument:PlainObject = Tools.copy(document)
                     newDocument[
                         configuration.database.model.property.name.special
                             .strategy
@@ -511,13 +450,13 @@ export class Database {
                                 be removed so final removing would be skipped
                                 if we do not use a copy here.
                             */
-                            Tools.copyLimitedRecursively(newDocument),
+                            Tools.copy(newDocument),
                             /*
                                 NOTE: During processing attachments sub object
                                 will be manipulated so copying is needed to
                                 avoid unexpected behavior in this context.
                             */
-                            Tools.copyLimitedRecursively(document), {
+                            Tools.copy(document), {
                                 db: configuration.name,
                                 name: configuration.database.user.name,
                                 roles: ['_admin']
@@ -526,9 +465,8 @@ export class Database {
                                 NOTE: We need a copy to ignore validated
                                 document caches.
                             */
-                            Tools.copyLimitedRecursively(
-                                configuration.database.security
-                            ), models, modelConfiguration)
+                            Tools.copy(configuration.database.security),
+                            models, modelConfiguration)
                     } catch (error) {
                         if ('forbidden' in error) {
                             if (!error.forbidden.startsWith('NoChange:'))
@@ -640,7 +578,8 @@ export class Database {
      * Appends an application server to the web node services.
      * @param services - An object with stored service instances.
      * @param configuration - Mutable by plugins extended configuration object.
-     * @returns Given and extended object of services.
+     * @returns Given and extended object of services wrapped in a promise
+     * resolving after pre-loading has finished.
      */
     static async preLoadService(
         services:Services, configuration:Configuration
@@ -669,6 +608,15 @@ export class Database {
             services.database.connector.plugin({bulkDocs: async function(
                 firstParameter:any, ...parameter:Array<any>
             ):Promise<Array<PlainObject>> {
+                const toggleIDDetermining:boolean = (
+                    parameter.length > 0 &&
+                    parameter[
+                        parameter.length - 1
+                    ] === Database.toggleIDDetermining)
+                const skipIDDetermining:boolean = toggleIDDetermining ?
+                    !Database.skipIDDetermining : Database.skipIDDetermining
+                if (toggleIDDetermining)
+                    parameter.pop()
                 /*
                     Implements a generic retry mechanism for "upsert" and
                     "latest" updates and optionally supports to ignore
@@ -685,8 +633,14 @@ export class Database {
                     NOTE: "bulkDocs()" does not get constructor given options
                     if none were provided for a single function call.
                 */
-                if (parameter.length && typeof parameter[0] !== 'object')
-                    parameter.unshift(configuration.database.connector)
+                if (
+                    configuration.database.connector.ajax &&
+                    configuration.database.connector.ajax.timeout && (
+                        parameter.length === 0 ||
+                        typeof parameter[0] !== 'object')
+                )
+                    parameter.unshift({timeout:
+                        configuration.database.connector.ajax.timeout})
                 let result:Array<PlainObject> = await nativeBulkDocs.call(
                     this, firstParameter, ...parameter)
                 const conflictingIndexes:Array<number> = []
@@ -717,22 +671,28 @@ export class Database {
                                 id: firstParameter[index][idName],
                                 ok: true
                             }
-                            try {
-                                result[index].rev =
-                                    revisionName in firstParameter[index] &&
-                                    !['latest', 'upsert'].includes(
-                                        firstParameter[index][revisionName]
-                                    ) ? firstParameter[index][revisionName] : (
-                                        await this.get(result[index].id)
-                                    )[revisionName]
-                            } catch (error) {
-                                throw error
-                            }
+                            if (!skipIDDetermining)
+                                try {
+                                    result[index].rev =
+                                        revisionName in firstParameter[
+                                            index
+                                        ] &&
+                                        !['latest', 'upsert'].includes(
+                                            firstParameter[index][revisionName]
+                                        ) ? firstParameter[index][
+                                            revisionName
+                                        ] : (await this.get(result[index].id))[
+                                            revisionName]
+                                } catch (error) {
+                                    throw error
+                                }
                         }
                     index += 1
                 }
                 if (conflicts.length) {
                     firstParameter = conflicts
+                    if (toggleIDDetermining)
+                        parameter.push(Database.toggleIDDetermining)
                     const retriedResults:Array<PlainObject> =
                         await this.bulkDocs(firstParameter, ...parameter)
                     for (const retriedResult:PlainObject of retriedResults)
@@ -770,10 +730,11 @@ export class Database {
         return services
     }
     /**
-     * Application will be closed soon.
+     * Triggered when application will be closed soon.
      * @param services - An object with stored service instances.
      * @param configuration - Mutable by plugins extended configuration object.
-     * @returns Given object of services.
+     * @returns Given object of services wrapped in a promise resolving after
+     * finish.
      */
     static async shouldExit(
         services:Services, configuration:Configuration
@@ -783,10 +744,7 @@ export class Database {
             await new Promise((resolve:Function, reject:Function):void =>
                 fileSystem.unlink(logFilePath, (error:?Error):void =>
                     error ? reject(error) : resolve()))
-        services.database.connection.close()
-        services.database.server.process.kill('SIGINT')
-        await Tools.checkUnreachability(
-            Tools.stringFormat(configuration.database.url, ''), true)
+        await Helper.stopServer(services, configuration)
         delete services.database
         return services
     }
