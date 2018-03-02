@@ -428,6 +428,24 @@ export class DatabaseHelper {
                             Object.getPrototypeOf(newValue) ===
                                 Object.prototype &&
                             newValue.hasOwnProperty(typeName) &&
+                            newValue[typeName] !== type &&
+                            updateStrategy === 'migrate' &&
+                            types.length === 1
+                        ) {
+                            /*
+                                Derive nested (object based) maybe compatible
+                                type definition. Nested types have to be
+                                checked than.
+                            */
+                            newValue[typeName] = type
+                            changedPath = parentNames.concat(
+                                name, 'migrate nested object type')
+                        }
+                        if (
+                            typeof newValue === 'object' &&
+                            Object.getPrototypeOf(newValue) ===
+                                Object.prototype &&
+                            newValue.hasOwnProperty(typeName) &&
                             newValue[typeName] === type
                         ) {
                             const result:{
@@ -1249,9 +1267,9 @@ export class DatabaseHelper {
                                 } else
                                     /* eslint-disable no-throw-literal */
                                     throw {
-                                        forbidden: 'Readonly: Property "' +
-                                            `${name}" is not writable (old ` +
-                                            `document "` +
+                                        forbidden:
+                                            `Readonly: Property "${name}" is` +
+                                            ` not writable (old document "` +
                                             `${serialize(oldDocument)}")` +
                                             `${pathDescription}.`
                                     }
@@ -1259,8 +1277,9 @@ export class DatabaseHelper {
                             else
                                 /* eslint-disable no-throw-literal */
                                 throw {
-                                    forbidden: `Readonly: Property "${name}"` +
-                                    ` is not writable${pathDescription}.`
+                                    forbidden:
+                                        `Readonly: Property "${name}" is not` +
+                                        ` writable${pathDescription}.`
                                 }
                                 /* eslint-enable no-throw-literal */
                         // endregion
@@ -1283,11 +1302,12 @@ export class DatabaseHelper {
                                 )
                                     delete newDocument[name]
                                 return true
-                            } else
+                            } else if (updateStrategy !== 'migrate')
                                 /* eslint-disable no-throw-literal */
                                 throw {
-                                    forbidden: `Immutable: Property "${name}` +
-                                        '" is not writable (old document "' +
+                                    forbidden:
+                                        `Immutable: Property "${name}" is ` +
+                                        'not writable (old document "' +
                                         `${serialize(oldDocument)}")` +
                                         `${pathDescription}.`
                                 }

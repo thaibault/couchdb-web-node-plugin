@@ -150,7 +150,7 @@
             "_additional": {
               "constraintExecution": {
                 "description": "`Given value \"${newValue}\" should be able to be compiled as template string: ${(() => {try { new Function(newValue) } catch (error) { return error }})()}`",
-                "evaluate": "try { new Function(newValue) } catch (error) { return false }; return true"
+                "evaluation": "try { new Function(`return \\`${newValue}\\``) } catch (error) { return false }; return true"
               }
             },
             "_extends": "_stringMapping"
