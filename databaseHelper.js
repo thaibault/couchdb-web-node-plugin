@@ -1985,7 +1985,8 @@ export class DatabaseHelper {
         ))
             /* eslint-disable no-throw-literal */
             throw {
-                forbidden: 'NoChange: No new data given. new document: ' +
+                forbidden:
+                    'NoChange: No new data given. new document: ' +
                     `${serialize(newDocument)}; old document: ` +
                     `${serialize(oldDocument)}.`
             }
@@ -1997,8 +1998,7 @@ export class DatabaseHelper {
         else
             securitySettings[
                 modelConfiguration.property.name.validatedDocumentsCache
-            ] = new Set([
-                `${id}-${revision}`])
+            ] = new Set([`${id}-${revision}`])
         return result.newDocument
     }
 }
