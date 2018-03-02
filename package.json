@@ -69,7 +69,7 @@
   "devDependencies": {
     "babel-eslint": "^8.2.2",
     "coveralls": "^3.0.0",
-    "documentation-website": "^1.0.106",
+    "documentation-website": "^1.0.107",
     "eslint": "^4.18.1",
     "eslint-config-google": "^0.9.1",
     "eslint-plugin-flowtype": "^2.46.1",
@@ -77,7 +77,7 @@
     "flow-bin": "^0.66.0",
     "jsdoc": "^3.5.2",
     "nyc": "^11.5.0",
-    "qunit": "^2.5.0",
+    "qunit": "^2.5.1",
     "rimraf": "^2.6.1",
     "source-map-support": "^0.5.3",
     "web-node": "^1.0.157",
@@ -146,6 +146,15 @@
               }
             }
           },
+          "_expressionMapping": {
+            "_additional": {
+              "constraintExecution": {
+                "description": "`Given value \"${newValue}\" should be able to be compiled as template string: ${(() => {try { new Function(newValue) } catch (error) { return error }})()}`",
+                "evaluate": "try { new Function(newValue) } catch (error) { return false }; return true"
+              }
+            },
+            "_extends": "_stringMapping"
+          },
           "_interval": {
             "_constraintExpressions": [
               {
@@ -166,6 +175,26 @@
               "type": "DateTime"
             }
           },
+          "_scope": {
+            "_additional": {
+              "declaration": "Templatedata",
+              "description": "Values for template and language specific placeholder.",
+              "type": "_expressionMapping"
+            },
+            "parameter": {
+              "declaration": "Templateparameter",
+              "description": "Template specific option values.",
+              "type": "any"
+            }
+          },
+          "_stringMapping": {
+            "_additional": {
+              "declaration": "Templatedata",
+              "description": "Values for template specific placeholder.",
+              "emptyEqualsToNull": false,
+              "type": "string"
+            }
+          },
           "_timeTrackable": {
             "creationDateTime": {
               "minimum": 1,
@@ -184,26 +213,6 @@
               "nullable": false,
               "onUpdateExpression": "modelConfiguration.updateStrategy === 'migrate' && oldDocument ? oldDocument[name] : nowUTCTimestamp",
               "type": "DateTime"
-            }
-          },
-          "_scope": {
-            "_additional": {
-              "declaration": "Templatedata",
-              "description": "Values for template and language specific placeholder.",
-              "type": "_stringMapping"
-            },
-            "parameter": {
-              "declaration": "Templateparameter",
-              "description": "Template specific option values.",
-              "type": "any"
-            }
-          },
-          "_stringMapping": {
-            "_additional": {
-              "declaration": "Templatedata",
-              "description": "Values for template specific placeholder.",
-              "emptyEqualsToNull": false,
-              "type": "string"
             }
           },
           "_userTrackable": {
