@@ -651,21 +651,23 @@ export class DatabaseHelper {
                 }
                 // endregion
                 // region selection
-                if (
-                    propertySpecification.selection &&
-                    !propertySpecification.selection.includes(newValue)
-                )
-                    /* eslint-disable no-throw-literal */
-                    throw {
-                        forbidden:
-                            `Selection: Property "${name}" (type ` +
-                            // IgnoreTypeCheck
-                            `${propertySpecification.type}) should be one of` +
-                            ' "' +
-                            propertySpecification.selection.join('", "') +
-                            `". But is "${newValue}"${pathDescription}.`
-                    }
-                    /* eslint-enable no-throw-literal */
+                if (propertySpecification.selection) {
+                    const selection = Array.isArray(
+                        propertySpecification.selection
+                    ) ? propertySpecification.selection :
+                        Object.values(propertySpecification.selection)
+                    if (!selection.includes(newValue))
+                        /* eslint-disable no-throw-literal */
+                        throw {
+                            forbidden:
+                                `Selection: Property "${name}" (type ` +
+                                // IgnoreTypeCheck
+                                `${propertySpecification.type}) should be ` +
+                                `one of "${selection.join('", "')}". But is ` +
+                                `"${newValue}"${pathDescription}.`
+                        }
+                        /* eslint-enable no-throw-literal */
+                }
                 // endregion
                 // region pattern
                 if (!(
