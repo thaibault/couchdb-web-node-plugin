@@ -449,6 +449,8 @@ export class Database {
                                 databaseHelper: DatabaseHelper,
                                 idName,
                                 migrater,
+                                models,
+                                modelConfiguration,
                                 selfFilePath: name,
                                 services,
                                 tools: Tools,
@@ -489,7 +491,8 @@ export class Database {
                             /*
                                 NOTE: During processing attachments sub object
                                 will be manipulated so copying is needed to
-                                avoid unexpected behavior in this context.
+                                copy to avoid unexpected behavior in this
+                                context.
                             */
                             Tools.copy(document), {
                                 db: configuration.name,
