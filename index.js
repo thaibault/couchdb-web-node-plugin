@@ -464,7 +464,7 @@ export class Database {
                         console.info(
                             `Running migrater "${name}" for document "` +
                             `${newDocument[idName]}" (of type "` +
-                            `${newDocument[typeName]}")was successful.`)
+                            `${newDocument[typeName]}") was successful.`)
                     }
                     /*
                         Auto migration can:
