@@ -373,8 +373,9 @@ export class Database {
                                         }
             // endregion
         }
-        // region ensure all constraints to have a consistent initial state
+        // region run automigration
         if (configuration.database.model.autoMigrationPath) {
+            const migrater:{[key:string]:Function} = {}
             if (await Tools.isDirectory(path.resolve(
                 configuration.database.model.autoMigrationPath
             )))
@@ -384,9 +385,12 @@ export class Database {
                 )) {
                     const extension:string = path.extname(file.name)
                     const basename = path.basename(file.name, extension)
-                    if (configuration.database.model.entities.hasOwnProperty(
-                        basename
-                    ) && extension === '.json')
+                    if (
+                        configuration.database.model.entities.hasOwnProperty(
+                            basename
+                        ) &&
+                        extension === '.json'
+                    )
                         for (const document:Document of JSON.parse(
                             await new Promise((
                                 resolve:Function, reject:Function
@@ -412,9 +416,14 @@ export class Database {
                                 `${document[idName]}" of type "` +
                                 `${document[typeName]}" was successful.`)
                         }
+                    else if (path.extname(file.name) === '.js')
+                        // region collect migrater
+                        migrater[file.path] = eval('require')(
+                            file.path
+                        ).default
+                        // endregion
                 }
-            // TODO run migration scripts by providing an authenticated
-            // database connection instance.
+            // region ensure all constraints to have a consistent initial state
             for (const retrievedDocument:RetrievedDocument of (
                 await services.database.connection.allDocs({
                     /* eslint-disable camelcase */
@@ -427,11 +436,23 @@ export class Database {
                     retrievedDocument.id.startsWith('_design/')
                 )) {
                     const document:Document = retrievedDocument.doc
-                    const newDocument:PlainObject = Tools.copy(document)
+                    let newDocument:PlainObject = Tools.copy(document)
                     newDocument[
                         configuration.database.model.property.name.special
                             .strategy
                     ] = 'migrate'
+                    for (const name:string in migrater)
+                        if (migrater.hasOwnProperty(name)) {
+                            console.info(`Run migrater "${name}":`)
+                            try {
+                                newDocument = migrater[name](newDocument)
+                            } catch (error) {
+                                throw new Error(
+                                    `Running migrater "${name}" in document ` +
+                                    `${Tools.representObject(document)}" ` +
+                                    `failed: ${Tools.representObject(error)}`)
+                            }
+                        }
                     /*
                         Auto migration can:
 
@@ -442,6 +463,10 @@ export class Database {
                         - Remove property values if there values equals to an
                           empty instance and the "emptyEqualsToNull" property
                           is specified as positive.
+                        - Rename custom type properties if new specified model
+                          provides is a super set of existing properties.
+                        - TODO: Renames property names if "oldPropertyName" is
+                          provided in model specification.
                     */
                     try {
                         DatabaseHelper.validateDocumentUpdate(
@@ -492,6 +517,7 @@ export class Database {
                         `Auto migrating document "${newDocument[idName]}" ` +
                         'was successful.')
                 }
+            // endregion
         }
         // endregion
         // region create/remove needed/unneeded generic indexes
