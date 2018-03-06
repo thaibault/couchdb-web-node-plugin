@@ -373,7 +373,7 @@ export class Database {
                                         }
             // endregion
         }
-        // region run automigration
+        // region run auto-migration
         if (configuration.database.model.autoMigrationPath) {
             const migrater:{[key:string]:Function} = {}
             if (await Tools.isDirectory(path.resolve(
@@ -441,18 +441,28 @@ export class Database {
                         configuration.database.model.property.name.special
                             .strategy
                     ] = 'migrate'
-                    for (const name:string in migrater)
-                        if (migrater.hasOwnProperty(name)) {
-                            console.info(`Run migrater "${name}":`)
-                            try {
-                                newDocument = migrater[name](newDocument)
-                            } catch (error) {
-                                throw new Error(
-                                    `Running migrater "${name}" in document ` +
-                                    `${Tools.representObject(document)}" ` +
-                                    `failed: ${Tools.representObject(error)}`)
-                            }
+                    for (const name:string of Object.keys(migrater).sort()) {
+                        console.info(`Run migrater "${name}".`)
+                        try {
+                            newDocument = migrater[name](newDocument, {
+                                configuration,
+                                databaseHelper: DatabaseHelper,
+                                idName,
+                                migrater,
+                                selfFilePath: name,
+                                services,
+                                tools: Tools,
+                                typeName
+                            })
+                        } catch (error) {
+                            throw new Error(
+                                `Running migrater "${name}" in document ` +
+                                `${Tools.representObject(document)}" ` +
+                                `failed: ${Tools.representObject(error)}`)
                         }
+                        console.info(
+                            `Running migrater "${name}" was successful.`)
+                    }
                     /*
                         Auto migration can:
 
