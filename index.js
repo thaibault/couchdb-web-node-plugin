@@ -442,8 +442,9 @@ export class Database {
                             .strategy
                     ] = 'migrate'
                     for (const name:string of Object.keys(migrater).sort()) {
+                        let result:PlainObject|null
                         try {
-                            newDocument = migrater[name](newDocument, {
+                            result = migrater[name](newDocument, {
                                 configuration,
                                 databaseHelper: DatabaseHelper,
                                 idName,
@@ -461,10 +462,13 @@ export class Database {
                                 `${Tools.representObject(document)}" ` +
                                 `failed: ${Tools.representObject(error)}`)
                         }
-                        console.info(
-                            `Running migrater "${name}" for document "` +
-                            `${newDocument[idName]}" (of type "` +
-                            `${newDocument[typeName]}") was successful.`)
+                        if (result) {
+                            newDocument = result
+                            console.info(
+                                `Running migrater "${name}" for document "` +
+                                `${newDocument[idName]}" (of type "` +
+                                `${newDocument[typeName]}") was successful.`)
+                        }
                     }
                     /*
                         Auto migration can:
