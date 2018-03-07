@@ -332,6 +332,7 @@ export class DatabaseHelper {
                             checkPropertyContent,
                             code,
                             getFilenameByPrefix,
+                            idName,
                             model,
                             modelConfiguration,
                             modelName,
@@ -346,8 +347,11 @@ export class DatabaseHelper {
                             parentNames,
                             pathDescription,
                             propertySpecification,
+                            revisionName,
                             securitySettings,
                             serialize,
+                            specialNames,
+                            typeName,
                             userContext
                         }
                         // region compile
@@ -734,6 +738,7 @@ export class DatabaseHelper {
                                 checkDocument,
                                 checkPropertyContent,
                                 getFilenameByPrefix,
+                                idName,
                                 model,
                                 modelConfiguration,
                                 modelName,
@@ -744,8 +749,11 @@ export class DatabaseHelper {
                                 nowUTCTimestamp,
                                 oldDocument,
                                 propertySpecification,
+                                revisionName,
                                 securitySettings,
                                 serialize,
+                                specialNames,
+                                typeName,
                                 userContext
                             }
                             try {
@@ -821,6 +829,7 @@ export class DatabaseHelper {
                             checkDocument,
                             checkPropertyContent,
                             getFilenameByPrefix,
+                            idName,
                             model,
                             modelConfiguration,
                             modelName,
@@ -831,8 +840,11 @@ export class DatabaseHelper {
                             nowUTCTimestamp,
                             oldDocument,
                             propertySpecification,
+                            revisionName,
                             securitySettings,
                             serialize,
+                            specialNames,
+                            typeName,
                             userContext
                         }
                         try {
@@ -899,17 +911,21 @@ export class DatabaseHelper {
                             checkDocument,
                             checkPropertyContent,
                             getFilenameByPrefix,
+                            id,
+                            idName,
                             model,
                             modelConfiguration,
                             modelName,
                             models,
-                            id,
                             newDocument,
                             now,
                             nowUTCTimestamp,
                             oldDocument,
+                            revisionName,
                             securitySettings,
                             serialize,
+                            specialNames,
+                            typeName,
                             userContext
                         }
                         try {
@@ -968,6 +984,7 @@ export class DatabaseHelper {
                         checkDocument,
                         checkPropertyContent,
                         getFilenameByPrefix,
+                        idName,
                         model,
                         modelConfiguration,
                         modelName,
@@ -977,8 +994,11 @@ export class DatabaseHelper {
                         now,
                         nowUTCTimestamp,
                         oldDocument,
+                        revisionName,
                         securitySettings,
                         serialize,
+                        specialNames,
+                        typeName,
                         userContext
                     }
                     try {
@@ -1526,6 +1546,7 @@ export class DatabaseHelper {
                             checkPropertyContent,
                             code,
                             getFilenameByPrefix,
+                            idName,
                             model,
                             modelConfiguration,
                             modelName,
@@ -1536,8 +1557,11 @@ export class DatabaseHelper {
                             oldDocument,
                             parentNames,
                             pathDescription,
+                            revisionName,
                             securitySettings,
                             serialize,
+                            specialNames,
+                            typeName,
                             userContext
                         }
                         try {
