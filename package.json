@@ -55,7 +55,7 @@
     "watch:dll": "webOptimizer build:dll --watch"
   },
   "dependencies": {
-    "clientnode": "^2.0.1",
+    "clientnode": "^3.0.1",
     "node-fetch": "^2.0.0",
     "pouchdb": "^6.4.3",
     "pouchdb-find": "^6.4.3",
@@ -74,16 +74,17 @@
     "eslint-config-google": "^0.9.1",
     "eslint-plugin-flowtype": "^2.46.1",
     "eslint-plugin-jsdoc": "^3.5.0",
-    "flow-bin": "^0.66.0",
+    "flow-bin": "^0.67.1",
     "jsdoc": "^3.5.2",
     "nyc": "^11.5.0",
     "qunit": "^2.5.1",
     "rimraf": "^2.6.1",
     "source-map-support": "^0.5.3",
     "web-node": "^1.0.158",
-    "weboptimizer": "^1.0.533",
-    "webpack": "^3.11.0",
-    "webpack-dev-server": "^2.11.2"
+    "weboptimizer": "^2.0.15",
+    "webpack": "^4.1.1",
+    "webpack-cli": "^2.0.11",
+    "webpack-dev-server": "^3.1.1"
   },
   "webNode": {
     "database": {
@@ -367,6 +368,11 @@
     "exportFormat": {
       "external": "commonjs2",
       "self": "commonjs2"
+    },
+    "files": {
+      "compose": {
+        "cascadingStyleSheet": null
+      }
     },
     "injection": {
       "internal": {
