@@ -55,7 +55,7 @@
     "watch:dll": "webOptimizer build:dll --watch"
   },
   "dependencies": {
-    "clientnode": "^3.0.5",
+    "clientnode": "^3.0.8",
     "node-fetch": "^2.0.0",
     "pouchdb": "^6.4.3",
     "pouchdb-find": "^6.4.3",
@@ -69,7 +69,7 @@
   "devDependencies": {
     "babel-eslint": "^8.2.2",
     "coveralls": "^3.0.0",
-    "documentation-website": "^1.0.112",
+    "documentation-website": "^1.0.113",
     "eslint": "^4.18.1",
     "eslint-config-google": "^0.9.1",
     "eslint-plugin-flowtype": "^2.46.1",
@@ -80,10 +80,10 @@
     "qunit": "^2.5.1",
     "rimraf": "^2.6.1",
     "source-map-support": "^0.5.3",
-    "web-node": "^1.0.162",
-    "weboptimizer": "^2.0.22",
+    "web-node": "^1.0.163",
+    "weboptimizer": "^2.0.26",
     "webpack": "^4.1.1",
-    "webpack-cli": "^2.0.11",
+    "webpack-cli": "^2.0.12",
     "webpack-dev-server": "^3.1.1"
   },
   "webNode": {
