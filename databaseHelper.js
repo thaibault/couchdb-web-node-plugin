@@ -418,6 +418,7 @@ export class DatabaseHelper {
                 // Derive nested missing explicit type definition if possible.
                 if (
                     typeof newValue === 'object' &&
+                    // IgnoreTypeCheck
                     Object.getPrototypeOf(newValue) === Object.prototype &&
                     !newValue.hasOwnProperty(typeName) &&
                     types.length === 1 &&
@@ -429,8 +430,10 @@ export class DatabaseHelper {
                     if (models.hasOwnProperty(type)) {
                         if (
                             typeof newValue === 'object' &&
-                            Object.getPrototypeOf(newValue) ===
-                                Object.prototype &&
+                            Object.getPrototypeOf(
+                                newValue
+                            // IgnoreTypeCheck
+                            ) === Object.prototype &&
                             newValue.hasOwnProperty(typeName) &&
                             newValue[typeName] !== type &&
                             updateStrategy === 'migrate' &&
@@ -447,8 +450,10 @@ export class DatabaseHelper {
                         }
                         if (
                             typeof newValue === 'object' &&
-                            Object.getPrototypeOf(newValue) ===
-                                Object.prototype &&
+                            Object.getPrototypeOf(
+                                newValue
+                            // IgnoreTypeCheck
+                            ) === Object.prototype &&
                             newValue.hasOwnProperty(typeName) &&
                             newValue[typeName] === type
                         ) {
@@ -1475,8 +1480,10 @@ export class DatabaseHelper {
                             for (const value:any of newDocument[name].slice())
                                 if (
                                     typeof value === 'object' &&
-                                    Object.getPrototypeOf(value) ===
-                                        Object.prototype &&
+                                    Object.getPrototypeOf(
+                                        value
+                                    // IgnoreTypeCheck
+                                    ) === Object.prototype &&
                                     !value.hasOwnProperty(typeName)
                                 )
                                     value[typeName] =
@@ -1618,6 +1625,7 @@ export class DatabaseHelper {
                     specialNames.attachment]
                 if (
                     typeof newAttachments !== 'object' ||
+                    // IgnoreTypeCheck
                     Object.getPrototypeOf(newAttachments) !== Object.prototype
                 )
                     /* eslint-disable no-throw-literal */

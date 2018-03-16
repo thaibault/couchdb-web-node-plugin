@@ -74,7 +74,7 @@
     "eslint-config-google": "^0.9.1",
     "eslint-plugin-flowtype": "^2.46.1",
     "eslint-plugin-jsdoc": "^3.5.0",
-    "flow-bin": "^0.67.1",
+    "flow-bin": "^0.68.0",
     "jsdoc": "^3.5.2",
     "nyc": "^11.6.0",
     "qunit": "^2.5.1",
