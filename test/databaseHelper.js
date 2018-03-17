@@ -177,42 +177,42 @@ registerTest(async function():Promise<void> {
                 [
                     [{[typeName]: 'Test'}],
                     {entities: {Test: {[
-                        specialNames.create.execution
-                        ]: `
-                            newDocument['${typeName}'] = '_test'
-                            return newDocument
-                        `
+                    specialNames.create.execution
+                    ]: `
+                        newDocument['${typeName}'] = '_test'
+                        return newDocument
+                    `
                     }}}, 'TypeName'
                 ],
                 [
                     [{[typeName]: 'Test'}],
                     {entities: {Test: {[
-                        specialNames.create.expression
-                        ]: `
-                            (newDocument['${typeName}'] = '_test') &&
-                            newDocument
-                        `
+                    specialNames.create.expression
+                    ]: `
+                        (newDocument['${typeName}'] = '_test') &&
+                        newDocument
+                    `
                     }}},
                     'TypeName'
                 ],
                 [
                     [{[typeName]: 'Test'}],
                     {entities: {Test: {[
-                        specialNames.update.execution
-                        ]: `
-                            newDocument['${typeName}'] = '_test'
-                            return newDocument
-                        `
+                    specialNames.update.execution
+                    ]: `
+                        newDocument['${typeName}'] = '_test'
+                        return newDocument
+                    `
                     }}}, 'TypeName'
                 ],
                 [
                     [{[typeName]: 'Test'}],
                     {entities: {Test: {[
-                        specialNames.update.expression
-                        ]: `
-                            (newDocument['${typeName}'] = '_test') &&
-                            newDocument
-                        `
+                    specialNames.update.expression
+                    ]: `
+                        (newDocument['${typeName}'] = '_test') &&
+                        newDocument
+                    `
                     }}},
                     'TypeName'
                 ],

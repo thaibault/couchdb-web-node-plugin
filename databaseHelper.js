@@ -175,7 +175,8 @@ export class DatabaseHelper {
         const setDocumentEnvironment:Function = ():void => {
             id = newDocument.hasOwnProperty(idName) ? newDocument[idName] : ''
             revision = newDocument.hasOwnProperty(revisionName) ?
-                newDocument[revisionName] : ''
+                newDocument[revisionName] :
+                ''
         }
         setDocumentEnvironment()
         /*
