@@ -55,7 +55,7 @@
     "watch:dll": "webOptimizer build:dll --watch"
   },
   "dependencies": {
-    "clientnode": "^3.0.24",
+    "clientnode": "^3.0.27",
     "node-fetch": "^2.1.2",
     "pouchdb": "^6.4.3",
     "pouchdb-find": "^6.4.3",
@@ -74,15 +74,14 @@
     "eslint-config-google": "^0.9.1",
     "eslint-plugin-flowtype": "^2.46.1",
     "eslint-plugin-jsdoc": "^3.5.0",
-    "flow-bin": "^0.68.0",
+    "flow-bin": "^0.69.0",
     "jsdoc": "^3.5.2",
     "nyc": "^11.6.0",
     "qunit": "^2.6.0",
     "rimraf": "^2.6.1",
-    "source-map-support": "^0.5.3",
-    "web-node": "^1.0.171",
-    "weboptimizer": "^2.0.74",
-    "webpack": "^4.3.0",
+    "web-node": "^1.0.172",
+    "weboptimizer": "^2.0.79",
+    "webpack": "^4.4.1",
     "webpack-cli": "^2.0.13",
     "webpack-dev-server": "^3.1.1"
   },
@@ -291,8 +290,8 @@
               }
             },
             "typeRegularExpressionPattern": {
-              "public": "^[A-Z][A-Za-z0-9]+$",
-              "private": "^_[a-z][A-Za-z0-9]+$"
+              "private": "^_[a-z][A-Za-z0-9]+$",
+              "public": "^[A-Z][A-Za-z0-9]+$"
             },
             "validatedDocumentsCache": "_validatedDocuments"
           }
