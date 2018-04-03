@@ -19,10 +19,6 @@ import type {PlainObject} from 'clientnode'
 // NOTE: Remove when "fetch" is supported by node.
 import fetch from 'node-fetch'
 import path from 'path'
-// NOTE: Only needed for debugging this file.
-try {
-    require('source-map-support/register')
-} catch (error) {}
 import WebNodePluginAPI from 'web-node/pluginAPI'
 import type {Configuration, Plugin, Services} from 'web-node/type'
 

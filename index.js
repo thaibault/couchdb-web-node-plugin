@@ -26,10 +26,6 @@ import fileSystem from 'fs'
 import path from 'path'
 import PouchDB from 'pouchdb'
 import PouchDBFindPlugin from 'pouchdb-find'
-// NOTE: Only needed for debugging this file.
-try {
-    require('source-map-support/register')
-} catch (error) {}
 import type {Configuration, ServicePromises, Services} from 'web-node/type'
 
 import DatabaseHelper from './databaseHelper'

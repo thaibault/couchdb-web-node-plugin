@@ -13,11 +13,7 @@
     endregion
 */
 // region imports
-// NOTE: Only needed for debugging this file.
 import type {PlainObject} from 'clientnode'
-try {
-    require('source-map-support/register')
-} catch (error) {}
 
 import type {
     /* eslint-disable no-unused-vars */
