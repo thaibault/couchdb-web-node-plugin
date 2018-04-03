@@ -55,7 +55,7 @@
     "watch:dll": "webOptimizer build:dll --watch"
   },
   "dependencies": {
-    "clientnode": "^3.0.27",
+    "clientnode": "^3.0.30",
     "node-fetch": "^2.1.2",
     "pouchdb": "^6.4.3",
     "pouchdb-find": "^6.4.3",
@@ -79,8 +79,8 @@
     "nyc": "^11.6.0",
     "qunit": "^2.6.0",
     "rimraf": "^2.6.1",
-    "web-node": "^1.0.172",
-    "weboptimizer": "^2.0.79",
+    "web-node": "^1.0.174",
+    "weboptimizer": "^2.0.84",
     "webpack": "^4.4.1",
     "webpack-cli": "^2.0.13",
     "webpack-dev-server": "^3.1.1"
