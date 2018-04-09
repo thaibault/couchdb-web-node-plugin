@@ -550,7 +550,12 @@ export class Database {
                 if (models.hasOwnProperty(modelName) && (new RegExp(
                     configuration.database.model.property.name
                         .typeRegularExpressionPattern.public
-                )).test(modelName))
+                )).test(modelName)) {
+                    await services.database.connection.createIndex({index: {
+                        ddoc: `${modelName}-GenericIndex`,
+                        fields: [typeName],
+                        name: `${modelName}-GenericIndex`
+                    }})
                     for (
                         const propertyName:string of
                         Helper.determineGenericIndexablePropertyNames(
@@ -583,6 +588,7 @@ export class Database {
                         else
                             indexes.slice(position, 1)
                     }
+                }
             for (const index:PlainObject of indexes)
                 if (index.name.endsWith('-GenericIndex')) {
                     let exists:boolean = false
