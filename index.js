@@ -600,9 +600,10 @@ export class Database {
                                     configuration.database.model,
                                     models[modelName])
                             )
-                                if (index.name ===
-                                    `${modelName}-${name}-GenericIndex`
-                                )
+                                if ([
+                                    `${modelName}-${name}-GenericIndex`,
+                                    `${modelName}-GenericIndex`
+                                ].includes(index.name))
                                     exists = true
                             break
                         }
