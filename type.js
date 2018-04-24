@@ -158,6 +158,7 @@ export type SecuritySettings = {
 }
 export type Configuration = {
     database:{
+        attachAutoRestarter:boolean;
         binary:{
             locations:Array<string>;
             name:string;
