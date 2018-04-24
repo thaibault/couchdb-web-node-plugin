@@ -26,7 +26,10 @@ import fileSystem from 'fs'
 import path from 'path'
 import PouchDB from 'pouchdb'
 import PouchDBFindPlugin from 'pouchdb-find'
-import type {Configuration, ServicePromises, Services} from 'web-node/type'
+import WebNodePluginAPI from 'web-node/pluginAPI'
+import type {
+    Configuration, Plugin, ServicePromises, Services
+} from 'web-node/type'
 
 import DatabaseHelper from './databaseHelper'
 import Helper from './helper'
@@ -40,6 +43,7 @@ import type {
 /**
  * Launches an application server und triggers all some pluginable hooks on
  * an event.
+ * @property static:changesStream - Stream which triggers database events.
  * @property static:skipIDDetermining - Indicates whether id's should be
  * determined if "bulkDocs" had skipped a real change due to ignore a
  * "NoChange" error.
@@ -48,6 +52,7 @@ import type {
  * "skipIDDetermining" configuration).
  */
 export class Database {
+    static changesStream:Object
     static skipIDDetermining:boolean = true
     static toggleIDDetermining:any = Symbol('toggleIDDetermining')
     /**
@@ -61,7 +66,8 @@ export class Database {
      * service.
      */
     static async loadService(
-        servicePromises:ServicePromises, services:Services,
+        servicePromises:ServicePromises,
+        services:Services,
         configuration:Configuration
     ):Promise<{promise:?Promise<Object>}> {
         let promise:?Promise<Object> = null
@@ -621,6 +627,92 @@ export class Database {
         // how couchdb deals with "id" conflicts)
         return {name: 'database', promise}
     }
+    /**
+     * Add database event listener to auto restart database server on
+     * unexpected server issues.
+     * @param servicePromises - An object with stored service promise
+     * instances.
+     * @param services - An object with stored service instances.
+     * @param configuration - Mutable by plugins extended configuration object.
+     * @param plugins - Topological sorted list of loaded plugins.
+     * @returns A promise which wraps plugin promises to represent plugin
+     * continues services.
+     */
+    static postLoadService(
+        servicePromises:ServicePromises,
+        services:Services,
+        configuration:Configuration,
+        plugins:Array<Plugin>
+    ):ServicePromises {
+        // region register database changes stream
+        let numberOfErrorsThrough:number = 0
+        const periodToClearNumberOfErrorsInSeconds:number = 30
+        setInterval(():void => {
+            if (numberOfErrorsThrough > 0) {
+                console.info(
+                    'No additional errors (initially got ' +
+                    `${numberOfErrorsThrough} errors through) occurred ` +
+                    'during observing changes stream for ' +
+                    `${periodToClearNumberOfErrorsInSeconds} seconds. ` +
+                    'Clearing saved number of errors through.')
+                numberOfErrorsThrough = 0
+            }
+        }, periodToClearNumberOfErrorsInSeconds * 1000)
+        /*
+            NOTE: Use this code to test changes stream reinitialisation and
+            database server restarts. Play with length of interval to trigger
+            error events.
+        */
+        /*
+        setInterval(():void =>
+            Database.changesStream.emit('error', {test: 2}), 6 * 1000)
+        */
+        const initialize:Function = Tools.debounce(async ():Promise<void> => {
+            if (Database.changesStream)
+                Database.changesStream.cancel()
+            /* eslint-disable camelcase */
+            Database.changesStream = services.database.connection.changes({
+                include_docs: true,
+                live: true,
+                since: 'now',
+                timeout: false
+            })
+            /* eslint-enable camelcase */
+            Database.changesStream.on('error', async (
+                error:Error
+            ):Promise<void> => {
+                numberOfErrorsThrough += 1
+                if (numberOfErrorsThrough > 3) {
+                    console.warn(
+                        'Observing changes feed throws an error for ' +
+                        `${numberOfErrorsThrough} times through: ` +
+                        `${Tools.representObject(error)}. Restarting ` +
+                        'database server and reinitialize changes stream...')
+                    numberOfErrorsThrough = 0
+                    Database.changesStream.cancel()
+                    await services.database.server.restart(
+                        services, configuration, plugins)
+                } else
+                    console.warn(
+                        'Observing changes feed throws an error for ' +
+                        `${numberOfErrorsThrough} times through: ` +
+                        `${Tools.representObject(error)}. Reinitializing ` +
+                        'changes stream...')
+                initialize()
+            })
+            await WebNodePluginAPI.callStack(
+                'databaseInitializeChangesStream',
+                plugins,
+                configuration,
+                Database.changesStream,
+                services)
+        })
+        if (!configuration.database.attachAutoRestarter)
+            initialize()
+        // endregion
+        return servicePromises
+    }
+
     /**
      * Appends an application server to the web node services.
      * @param services - An object with stored service instances.
