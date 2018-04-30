@@ -1605,6 +1605,7 @@ export class DatabaseHelper {
                                     constraint.description ? new Function(
                                         ...Object.keys(scope),
                                         'return ' +
+                                        // IgnoreTypeCheck
                                         constraint.description.trim()
                                     )(...Object.values(scope)) :
                                     `Model "${modelName}" should satisfy ` +
