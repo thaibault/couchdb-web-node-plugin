@@ -707,7 +707,7 @@ export class Database {
                 Database.changesStream,
                 services)
         })
-        if (!configuration.database.attachAutoRestarter)
+        if (configuration.database.attachAutoRestarter)
             initialize()
         // endregion
         return servicePromises
