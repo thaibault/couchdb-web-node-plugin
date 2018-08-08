@@ -55,11 +55,11 @@
     "watch:dll": "webOptimizer build:dll --watch"
   },
   "dependencies": {
-    "clientnode": "^3.0.54",
-    "node-fetch": "^2.1.2",
-    "pouchdb": "^6.4.3",
-    "pouchdb-find": "^6.4.3",
-    "pouchdb-server": "^4.0.0"
+    "clientnode": "^3.0.72",
+    "node-fetch": "^2.2.0",
+    "pouchdb": "^7.0.0",
+    "pouchdb-find": "^7.0.0",
+    "pouchdb-server": "^4.0.1"
   },
   "peerDependencies": {
     "babel-runtime": "*",
@@ -67,23 +67,23 @@
     "web-node": "*"
   },
   "devDependencies": {
-    "babel-eslint": "^8.2.3",
-    "coveralls": "^3.0.1",
-    "documentation-website": "^1.0.132",
-    "eslint": "^4.19.1",
+    "babel-eslint": "^8.2.6",
+    "coveralls": "^3.0.2",
+    "documentation-website": "^1.0.134",
+    "eslint": "^5.3.0",
     "eslint-config-google": "^0.9.1",
-    "eslint-plugin-flowtype": "^2.46.3",
-    "eslint-plugin-jsdoc": "^3.6.3",
-    "flow-bin": "^0.71.0",
+    "eslint-plugin-flowtype": "^2.50.0",
+    "eslint-plugin-jsdoc": "^3.7.1",
+    "flow-bin": "^0.78.0",
     "jsdoc": "^3.5.2",
-    "nyc": "^11.7.1",
-    "qunit": "^2.6.0",
+    "nyc": "^12.0.2",
+    "qunit": "^2.6.1",
     "rimraf": "^2.6.1",
-    "web-node": "^1.0.187",
-    "weboptimizer": "^2.0.124",
-    "webpack": "^4.8.0",
-    "webpack-cli": "^2.1.3",
-    "webpack-dev-server": "^3.1.4"
+    "web-node": "^1.0.189",
+    "weboptimizer": "^2.0.177",
+    "webpack": "^4.16.5",
+    "webpack-cli": "^3.1.0",
+    "webpack-dev-server": "^3.1.5"
   },
   "webNode": {
     "database": {
@@ -381,15 +381,16 @@
     },
     "module": {
       "aliases": {
+        "#": "We want to use compiled versions of each artefact.",
         "clientnode/test$": "clientnode/test.compiled",
         "web-node/configurator$": "web-node/configurator.compiled",
-        "web-node/pluginAPI$": "web-node/pluginAPI.compiled"
+        "web-node/pluginAPI$": "web-node/pluginAPI.compiled",
+        "#": "Standard import is \"node-fetch/lib/index.mjs\" which has import declarations which aren't allowed for javascript module files.",
+        "node-fetch$": "node-fetch/lib/index.js"
       },
       "optimizer": {
         "babelMinify": {
           "module": {
-            "mangle": false,
-            "simplify": false
           }
         }
       },

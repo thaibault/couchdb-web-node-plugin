@@ -1086,6 +1086,7 @@ export class DatabaseHelper {
                                 ) &&
                                 // IgnoreTypeCheck
                                 oldDocument[name][fileName] &&
+                                // IgnoreTypeCheck
                                 oldDocument[name][fileName].data !== null &&
                                 new RegExp(type).test(fileName))
                             for (const fileName:string of newFileNames)
