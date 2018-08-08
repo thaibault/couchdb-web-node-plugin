@@ -1,6 +1,6 @@
 {
   "name": "databasewebnodeplugin",
-  "version": "1.0.279",
+  "version": "1.0.280",
   "license": "CC-BY-3.0",
   "description": "A database server, model instance conflict handler, rest api, authentication, session management, schema validator and model relation guarantee for webNode.",
   "homepage": "http://torben.website/databaseWebNodePlugin",
@@ -381,17 +381,15 @@
     },
     "module": {
       "aliases": {
-        "#": "We want to use compiled versions of each artefact.",
+        "#": "Standard import is \"node-fetch/lib/index.mjs\" which has import declarations which aren't allowed for javascript module files.",
         "clientnode/test$": "clientnode/test.compiled",
         "web-node/configurator$": "web-node/configurator.compiled",
         "web-node/pluginAPI$": "web-node/pluginAPI.compiled",
-        "#": "Standard import is \"node-fetch/lib/index.mjs\" which has import declarations which aren't allowed for javascript module files.",
         "node-fetch$": "node-fetch/lib/index.js"
       },
       "optimizer": {
         "babelMinify": {
-          "module": {
-          }
+          "module": {}
         }
       },
       "skipParseRegularExpressions": {
