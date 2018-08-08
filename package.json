@@ -387,11 +387,6 @@
         "web-node/pluginAPI$": "web-node/pluginAPI.compiled",
         "node-fetch$": "node-fetch/lib/index.js"
       },
-      "optimizer": {
-        "babelMinify": {
-          "module": {}
-        }
-      },
       "skipParseRegularExpressions": {
         "__evaluate__": "/(?:(?:bindings\\/bindings)|(?:colors\\/lib\\/(?:colors)|(?:extendStringPrototype))|(?:encoding\\/lib\\/iconv-loader)|(?:global)|(?:module))\\.js(?:\\?.+|$)/"
       }
