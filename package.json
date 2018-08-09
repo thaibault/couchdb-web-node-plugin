@@ -55,7 +55,7 @@
     "watch:dll": "webOptimizer build:dll --watch"
   },
   "dependencies": {
-    "clientnode": "^3.0.72",
+    "clientnode": "^3.0.78",
     "node-fetch": "^2.2.0",
     "pouchdb": "^7.0.0",
     "pouchdb-find": "^7.0.0",
@@ -79,8 +79,8 @@
     "nyc": "^12.0.2",
     "qunit": "^2.6.1",
     "rimraf": "^2.6.1",
-    "web-node": "^1.0.189",
-    "weboptimizer": "^2.0.177",
+    "web-node": "^1.0.190",
+    "weboptimizer": "^2.0.181",
     "webpack": "^4.16.5",
     "webpack-cli": "^3.1.0",
     "webpack-dev-server": "^3.1.5"
@@ -381,10 +381,11 @@
     },
     "module": {
       "aliases": {
-        "#": "Standard import is \"node-fetch/lib/index.mjs\" which has import declarations which aren't allowed for javascript module files.",
+        "#": "Use the pre-compiled artefacts.",
         "clientnode/test$": "clientnode/test.compiled",
         "web-node/configurator$": "web-node/configurator.compiled",
         "web-node/pluginAPI$": "web-node/pluginAPI.compiled",
+        "#0": "Standard import is \"node-fetch/lib/index.mjs\" which has import declarations which aren't allowed for javascript module files.",
         "node-fetch$": "node-fetch/lib/index.js"
       },
       "skipParseRegularExpressions": {
