@@ -625,6 +625,15 @@ export class Database {
         // endregion
         // TODO check conflicting constraints and mark them if necessary (check
         // how couchdb deals with "id" conflicts)
+        // region initial compaction
+        try {
+            await services.database.connection.compact()
+        } catch (error) {
+            throw new Error(
+                'Initial database compaction has failed: ' +
+                Tools.representObject(error))
+        }
+        // endregion
         return {name: 'database', promise}
     }
     /**
@@ -712,7 +721,6 @@ export class Database {
         // endregion
         return servicePromises
     }
-
     /**
      * Appends an application server to the web node services.
      * @param services - An object with stored service instances.
