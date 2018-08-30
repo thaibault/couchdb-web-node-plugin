@@ -873,26 +873,30 @@ registerTest(async function():Promise<void> {
                         test[2])
                     continue
                 }
-                assert.throws((
-                ):Object => DatabaseHelper.validateDocumentUpdate(
-                    ...parameter
-                ), (error:DatabaseForbiddenError):boolean => {
-                    if (error.hasOwnProperty('forbidden')) {
-                        const result:boolean = error.forbidden.startsWith(
-                            `${test[2]}:`)
-                        if (!result)
-                            console.error(
-                                `Error "${error.forbidden}" doesn't start ` +
-                                `with "${test[2]}:". Given arguments: "` +
-                                parameter.map((value:any):string =>
-                                    Tools.representObject(value)
-                                ).join('", "') + '".')
-                        return result
-                    }
-                    // IgnoreTypeCheck
-                    console.error(`Unexpeced error "${error}" was thrown.`)
-                    return false
-                })
+                assert.throws(
+                    ():Object => DatabaseHelper.validateDocumentUpdate(
+                        ...parameter),
+                    /*
+                        NOTE: "assert.throws" doesn't expect an arrow function
+                        here.
+                    */
+                    function(error:DatabaseForbiddenError):boolean {
+                        if (error.hasOwnProperty('forbidden')) {
+                            const result:boolean = error.forbidden.startsWith(
+                                `${test[2]}:`)
+                            if (!result)
+                                console.error(
+                                    `Error "${error.forbidden}" doesn't start ` +
+                                    `with "${test[2]}:". Given arguments: "` +
+                                    parameter.map((value:any):string =>
+                                        Tools.representObject(value)
+                                    ).join('", "') + '".')
+                            return result
+                        }
+                        // IgnoreTypeCheck
+                        console.error(`Unexpeced error "${error}" was thrown.`)
+                        return false
+                    })
             }
             // endregion
             // region allowed writes
