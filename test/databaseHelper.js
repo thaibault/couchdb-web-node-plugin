@@ -886,8 +886,9 @@ registerTest(async function():Promise<void> {
                                 `${test[2]}:`)
                             if (!result)
                                 console.error(
-                                    `Error "${error.forbidden}" doesn't start ` +
-                                    `with "${test[2]}:". Given arguments: "` +
+                                    `Error "${error.forbidden}" doesn't ` +
+                                    `start with "${test[2]}:". Given ` +
+                                    `arguments: "` +
                                     parameter.map((value:any):string =>
                                         Tools.representObject(value)
                                     ).join('", "') + '".')
