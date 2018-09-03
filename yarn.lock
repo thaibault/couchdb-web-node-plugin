@@ -1252,8 +1252,8 @@ babel-jest@^23.4.2:
     babel-preset-jest "^23.2.0"
 
 babel-loader@*:
-  version "8.0.0"
-  resolved "https://registry.yarnpkg.com/babel-loader/-/babel-loader-8.0.0.tgz#c42f2bef268d0d8bb4ceec5d02b540a9055d58a0"
+  version "8.0.2"
+  resolved "https://registry.yarnpkg.com/babel-loader/-/babel-loader-8.0.2.tgz#2079b8ec1628284a929241da3d90f5b3de2a5ae5"
   dependencies:
     find-cache-dir "^1.0.0"
     loader-utils "^1.0.2"
@@ -2151,8 +2151,8 @@ cli-width@^2.0.0:
   resolved "https://registry.yarnpkg.com/cli-width/-/cli-width-2.2.0.tgz#ff19ede8a9a5e579324147b0c11f0fbcbabed639"
 
 clientnode@*:
-  version "3.0.104"
-  resolved "https://registry.yarnpkg.com/clientnode/-/clientnode-3.0.104.tgz#8b716ea81ebaa10484a01033e88ea1d721f3abe4"
+  version "3.0.107"
+  resolved "https://registry.yarnpkg.com/clientnode/-/clientnode-3.0.107.tgz#6c18e29cb9c3ddc2c34e8a7c60d465fc4d786e91"
   dependencies:
     colors "*"
 
@@ -2787,8 +2787,8 @@ doctrine@^2.1.0:
     esutils "^2.0.2"
 
 documentation-website@*:
-  version "1.0.142"
-  resolved "https://registry.yarnpkg.com/documentation-website/-/documentation-website-1.0.142.tgz#0fa3ed0f1839b04c6a1270f75428e53907f79593"
+  version "1.0.143"
+  resolved "https://registry.yarnpkg.com/documentation-website/-/documentation-website-1.0.143.tgz#0725e5cd07f15c390761bbb13ec40849da2e292c"
   dependencies:
     boostnode "*"
     bootstrap "^3.3.7"
@@ -4344,8 +4344,8 @@ internal-ip@^3.0.1:
     ipaddr.js "^1.5.2"
 
 internationalisation@*:
-  version "1.0.107"
-  resolved "https://registry.yarnpkg.com/internationalisation/-/internationalisation-1.0.107.tgz#664584df8b49de0f0ddc984e11399f81fcc96e31"
+  version "1.0.109"
+  resolved "https://registry.yarnpkg.com/internationalisation/-/internationalisation-1.0.109.tgz#17044f5b27cd8122c1cae9f7c885014cf4ea4476"
 
 interpret@^1.1.0:
   version "1.1.0"
@@ -6173,8 +6173,8 @@ number-is-nan@^1.0.0:
   resolved "https://registry.yarnpkg.com/number-is-nan/-/number-is-nan-1.0.1.tgz#097b602b53422a522c1afb8790318336941a011d"
 
 nwsapi@^2.0.7, nwsapi@^2.0.8:
-  version "2.0.8"
-  resolved "https://registry.yarnpkg.com/nwsapi/-/nwsapi-2.0.8.tgz#e3603579b7e162b3dbedae4fb24e46f771d8fa24"
+  version "2.0.9"
+  resolved "https://registry.yarnpkg.com/nwsapi/-/nwsapi-2.0.9.tgz#77ac0cdfdcad52b6a1151a84e73254edc33ed016"
 
 nyc@*:
   version "13.0.1"
@@ -9121,8 +9121,8 @@ wbuf@^1.1.0, wbuf@^1.7.2:
     minimalistic-assert "^1.0.0"
 
 web-node@*:
-  version "1.0.204"
-  resolved "https://registry.yarnpkg.com/web-node/-/web-node-1.0.204.tgz#66dd2bfac287b3a8553142e49c970cc6bfd95579"
+  version "1.0.205"
+  resolved "https://registry.yarnpkg.com/web-node/-/web-node-1.0.205.tgz#4f4428305133f78aac31ca52961795246fc365cf"
   dependencies:
     clientnode "*"
     keypress "*"
@@ -9132,8 +9132,8 @@ webidl-conversions@^4.0.2:
   resolved "https://registry.yarnpkg.com/webidl-conversions/-/webidl-conversions-4.0.2.tgz#a855980b1f0b6b359ba1d5d9fb39ae941faa63ad"
 
 weboptimizer@*:
-  version "2.0.232"
-  resolved "https://registry.yarnpkg.com/weboptimizer/-/weboptimizer-2.0.232.tgz#6c3f1a8f5b5102c7acec8760a7bdcda71b96d12c"
+  version "2.0.234"
+  resolved "https://registry.yarnpkg.com/weboptimizer/-/weboptimizer-2.0.234.tgz#1735033e1a675ae417ecd0b5069603e7a28e5dfb"
   dependencies:
     "@babel/core" "*"
     "@babel/plugin-proposal-class-properties" "*"
@@ -9269,8 +9269,8 @@ webpack@*:
     webpack-sources "^1.0.1"
 
 website-utilities@*:
-  version "1.0.124"
-  resolved "https://registry.yarnpkg.com/website-utilities/-/website-utilities-1.0.124.tgz#2e54e9be172fbf90de0a9d6a4eb1a79745f7bc15"
+  version "1.0.127"
+  resolved "https://registry.yarnpkg.com/website-utilities/-/website-utilities-1.0.127.tgz#3cca910fdce881ba07eec1de58ea5deb124291c9"
   dependencies:
     clientnode "*"
     internationalisation "*"

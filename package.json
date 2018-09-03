@@ -358,7 +358,7 @@
           "javaScript": {
             "options": {
               "plugins": {
-                "__remove__": "transform-runtime"
+                "__remove__": "@babel/plugin-transform-runtime"
               }
             }
           }
