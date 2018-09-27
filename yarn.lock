@@ -2773,8 +2773,8 @@ doctrine@^2.1.0:
     esutils "^2.0.2"
 
 documentation-website@*:
-  version "1.0.156"
-  resolved "https://registry.yarnpkg.com/documentation-website/-/documentation-website-1.0.156.tgz#6e60b42cc1c4348a914c5e71ee965b8f874a8c36"
+  version "1.0.157"
+  resolved "https://registry.yarnpkg.com/documentation-website/-/documentation-website-1.0.157.tgz#eebd26275e50e65535bea0e37e26193ae7626f80"
   dependencies:
     boostnode "*"
     bootstrap "^3.3.7"
