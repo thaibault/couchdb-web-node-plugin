@@ -788,7 +788,7 @@ export class Database {
                 )
                     parameter.unshift({timeout:
                         configuration.database.connector.ajax.timeout})
-                let result:Array<PlainObject> = await nativeBulkDocs.call(
+                const result:Array<PlainObject> = await nativeBulkDocs.call(
                     this, firstParameter, ...parameter)
                 const conflictingIndexes:Array<number> = []
                 const conflicts:Array<PlainObject> = []
