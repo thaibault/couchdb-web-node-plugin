@@ -134,6 +134,7 @@
             },
             "_maximumAggregatedSize": 100000000,
             "_minimumAggregatedSize": 0,
+            "_oldType": null,
             "_rev": {
               "mutable": false
             },
@@ -250,6 +251,7 @@
             "nullable": true,
             "onCreateExecution": null,
             "onCreateExpression": null,
+            "oldName": null,
             "onUpdateExecution": null,
             "onUpdateExpression": null,
             "regularExpressionPattern": null,
@@ -280,6 +282,7 @@
               "localSequence": "_local_seq",
               "maximumAggregatedSize": "_maximumAggregatedSize",
               "minimumAggregatedSize": "_minimumAggregatedSize",
+              "oldType": "_oldType",
               "revision": "_rev",
               "revisions": "_revisions",
               "revisionsInformation": "_revs_info",
