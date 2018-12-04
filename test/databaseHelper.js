@@ -102,20 +102,34 @@ registerTest(async function():Promise<void> {
                 ],
                 // endregion
                 // region changes
-                [[{[typeName]: 'Test'}, {[typeName]: 'Test'}], {entities: {
-                    Test: {a: {}}
-                }}, 'NoChange'],
-                [[
-                    {[typeName]: 'Test', [specialNames.strategy]: 'migrate'},
-                    {[typeName]: 'Test'}
-                ], {entities: {Test: {a: {}}}}, 'NoChange'],
-                [[{
-                    [typeName]: 'Test',
-                    [specialNames.strategy]: 'migrate',
-                    a: ''
-                }, {[typeName]: 'Test', a: ''}], {entities: {Test: {a: {
-                    emptyEqualsToNull: false
-                }}}}, 'NoChange'],
+                [
+                    [{[typeName]: 'Test'}, {[typeName]: 'Test'}],
+                    {entities: {Test: {a: {}}}},
+                    'NoChange'
+                ],
+                [
+                    [
+                        {
+                            [typeName]: 'Test',
+                            [specialNames.strategy]: 'migrate'
+                        },
+                        {[typeName]: 'Test'}
+                    ],
+                    {entities: {Test: {a: {}}}},
+                    'NoChange'
+                ],
+                [
+                    [
+                        {
+                            [typeName]: 'Test',
+                            [specialNames.strategy]: 'migrate',
+                            a: ''
+                        },
+                        {[typeName]: 'Test', a: ''}
+                    ],
+                    {entities: {Test: {a: {emptyEqualsToNull: false}}}},
+                    'NoChange'
+                ],
                 [[{
                     [typeName]: 'Test',
                     [specialNames.strategy]: 'migrate',
@@ -456,7 +470,7 @@ registerTest(async function():Promise<void> {
                     'PropertyType'
                 ],
                 // // endregion
-                // // region property existents
+                // // region property existence
                 [
                     [{[typeName]: 'Test', a: {[typeName]: 'Test', b: 2}}],
                     {entities: {Test: {a: {type: 'Test'}}}}, 'Property'
@@ -2734,35 +2748,55 @@ registerTest(async function():Promise<void> {
             ) && propertyName !== typeName)
                 delete defaultModelConfiguration.entities._base[propertyName]
         for (const test:Array<any> of [
+            // Remove obsolete properties.
             [
-                [{[typeName]: 'Test', a: 2}], {entities: {Test: {}}},
+                [{[typeName]: 'Test', a: 2}],
+                {entities: {Test: {}}},
                 {[typeName]: 'Test'}
             ],
+            // Create missing properties with default value.
             [
-                [{[typeName]: 'Test'}], {entities: {Test: {a: {default: '2'}}}},
+                [{[typeName]: 'Test'}],
+                {entities: {Test: {a: {default: '2'}}}},
                 {[typeName]: 'Test', a: '2'}
             ],
+            // Do not change valid properties.
             [
-                [{[typeName]: 'Test', a: '2'}], {entities: {Test: {a: {}}}},
+                [{[typeName]: 'Test', a: '2'}],
+                {entities: {Test: {a: {}}}},
                 {[typeName]: 'Test', a: '2'}
             ],
+            // Ignore wrong specified non required properties in old document.
             [
                 [{[typeName]: 'Test', b: 'b'}, {[typeName]: 'Test', a: 1}],
                 {entities: {Test: {a: {}, b: {}}}},
                 {[typeName]: 'Test', b: 'b'}
             ],
+            // Ignore not specified properties in old document.
             [
                 [{[typeName]: 'Test'}, {[typeName]: 'Test', a: 1}],
-                {entities: {Test: {}}}, {[typeName]: 'Test'}
+                {entities: {Test: {}}},
+                {[typeName]: 'Test'}
             ],
-            [[{[typeName]: 'Test', a: null}], {entities: {Test: {a: {
-                default: '2'
-            }}}}, {[typeName]: 'Test', a: '2'}],
+            // Set property to default value if explicitly set to "null".
+            [
+                [{[typeName]: 'Test', a: null}],
+                {entities: {Test: {a: {default: '2'}}}},
+                {[typeName]: 'Test', a: '2'}
+            ],
+            /*
+                Set property to default value if explicitly set to "null" by
+                ignoring maybe existing old documents value.
+            */
             [
                 [{[typeName]: 'Test', a: null}, {[typeName]: 'Test', a: '1'}],
                 {entities: {Test: {a: {default: '2'}}}},
                 {[typeName]: 'Test', a: '2'}
             ],
+            /*
+                Set property to default value if property is missing which has
+                a specified default value.
+            */
             [
                 [{[typeName]: 'Test'}, {[typeName]: 'Test', a: '1'}],
                 {entities: {Test: {a: {default: '2'}}}},
@@ -2810,6 +2844,12 @@ registerTest(async function():Promise<void> {
                     data: '', content_type: 'text/plain'
                     /* eslint-enable camelcase */
                 }}}
+            ],
+            // Migrate model type if old one is provided.
+            [
+                [{[typeName]: 'OldTest'}],
+                {entities: {Test: {_oldType: 'OldTest'}}},
+                {[typeName]: 'Test'}
             ]
         ]) {
             const models:Models = Helper.extendModels(Tools.extendObject(

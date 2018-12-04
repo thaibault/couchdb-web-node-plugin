@@ -144,14 +144,18 @@ export class DatabaseHelper {
      * @returns Modified given new document.
      */
     static validateDocumentUpdate(
-        newDocument:PlainObject, oldDocument:?PlainObject,
+        newDocument:PlainObject,
+        oldDocument:?PlainObject,
         userContext:UserContext = {
             db: 'dummy',
             name: 'admin',
             roles: ['_admin']
-        }, securitySettings:SecuritySettings = {
+        },
+        securitySettings:SecuritySettings = {
             admins: {names: [], roles: []}, members: {names: [], roles: []}
-        }, models:Models, modelConfiguration:SimpleModelConfiguration,
+        },
+        models:Models,
+        modelConfiguration:SimpleModelConfiguration,
         toJSON:?Function = null
     ):PlainObject {
         // region ensure needed environment
@@ -923,6 +927,7 @@ export class DatabaseHelper {
                 specialNames.extend,
                 specialNames.maximumAggregatedSize,
                 specialNames.minimumAggregatedSize,
+                specialNames.oldType,
                 specialNames.update.execution,
                 specialNames.update.expression
             ].includes(name))
