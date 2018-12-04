@@ -55,6 +55,7 @@ export type PropertySpecification = {
     nullable?:boolean;
     onCreateExecution?:string;
     onCreateExpression?:string;
+    oldName?:string|Array<string>;
     onUpdateExecution?:string;
     onUpdateExpression?:string;
     regularExpressionPattern?:string;
@@ -72,6 +73,7 @@ export type Model = {
     _createExecution?:string;
     _maximumAggregatedSize?:number;
     _minimumAggregatedSize?:number;
+    _oldType?:string|Array<string>;
     _onUpdateExecution?:string;
     _onUpdateExpression?:string;
     [key:string]:PropertySpecification;
@@ -107,6 +109,7 @@ export type SpecialPropertyNames = {
     localSequence:string;
     maximumAggregatedSize:string;
     minimumAggregatedSize:string;
+    oldType:string;
     revision:string;
     revisions:string;
     revisionsInformation:string;

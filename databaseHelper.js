@@ -188,7 +188,8 @@ export class DatabaseHelper {
         if (
             securitySettings.hasOwnProperty(
                 modelConfiguration.property.name.validatedDocumentsCache
-            ) && securitySettings[
+            ) &&
+            securitySettings[
                 modelConfiguration.property.name.validatedDocumentsCache
             ].has(`${id}-${revision}`)
         ) {
@@ -221,6 +222,21 @@ export class DatabaseHelper {
             serialize = (object:any):string => JSON.stringify(object, null, 4)
         else
             throw new Error('Needed "serialize" function is not available.')
+        // / region collect old model types to migrate.
+        const oldModelMapping:{[key:string]:string} = {}
+        if (updateStrategy === 'migrate')
+            for (const name:string in models)
+                if (
+                    models.hasOwnProperty(name) &&
+                    ![null, undefined].includes(
+                        models[name][specialNames.oldType])
+                )
+                    // IgnoreTypeCheck
+                    for (const oldName:string of [].concat(
+                        models[name][specialNames.oldType]
+                    ))
+                        oldModelMapping[oldName] = name
+        // / endregion
         // endregion
         // region functions
         const getFilenameByPrefix:Function = (
@@ -260,14 +276,15 @@ export class DatabaseHelper {
             return false
         }
         const checkDocument:Function = (
-            newDocument:PlainObject, oldDocument:?PlainObject,
+            newDocument:PlainObject,
+            oldDocument:?PlainObject,
             parentNames:Array<string> = []
         ):PlainObject => {
             const pathDescription:string =
                 parentNames.length ? ` in ${parentNames.join(' -> ')}` : ''
             let changedPath:Array<string> = []
             const checkModelType:Function = ():void => {
-                // region check for model type
+                // region check for model type (optionally migrate them)
                 if (!newDocument.hasOwnProperty(typeName))
                     /* eslint-disable no-throw-literal */
                     throw {
@@ -290,13 +307,17 @@ export class DatabaseHelper {
                     }
                     /* eslint-enable no-throw-literal */
                 if (!models.hasOwnProperty(newDocument[typeName]))
-                    /* eslint-disable no-throw-literal */
-                    throw {
-                        forbidden: `Model: Given model "` +
-                            `${newDocument[typeName]}" is not specified` +
-                            `${pathDescription}.`
-                    }
-                    /* eslint-enable no-throw-literal */
+                    if (oldModelMapping.hasOwnProperty(newDocument[typeName]))
+                        newDocument[typeName] =
+                            oldModelMapping[newDocument[typeName]]
+                    else
+                        /* eslint-disable no-throw-literal */
+                        throw {
+                            forbidden: `Model: Given model "` +
+                                `${newDocument[typeName]}" is not specified` +
+                                `${pathDescription}.`
+                        }
+                        /* eslint-enable no-throw-literal */
                 // endregion
             }
             checkModelType()
@@ -310,8 +331,10 @@ export class DatabaseHelper {
                     specialNames.additional]
             // region document specific functions
             const checkPropertyConstraints:Function = (
-                newValue:any, name:string,
-                propertySpecification:PropertySpecification, oldValue:?any,
+                newValue:any,
+                name:string,
+                propertySpecification:PropertySpecification,
+                oldValue:?any,
                 types:Array<string> = [
                     'constraintExecution', 'constraintExpression']
             ):void => {
@@ -403,7 +426,8 @@ export class DatabaseHelper {
                     }
             }
             const checkPropertyContent:Function = (
-                newValue:any, name:string,
+                newValue:any,
+                name:string,
                 propertySpecification:PropertySpecification,
                 oldValue:?any = null
             ):{changedPath:Array<string>;newValue:any;} => {
@@ -725,7 +749,9 @@ export class DatabaseHelper {
             // / region create hook
             const runCreatePropertyHook:Function = (
                 propertySpecification:PropertySpecification,
-                newDocument:PlainObject, oldDocument:PlainObject, name:string
+                newDocument:PlainObject,
+                oldDocument:PlainObject,
+                name:string
             ):void => {
                 if (!oldDocument)
                     for (const type:string of [
@@ -801,7 +827,9 @@ export class DatabaseHelper {
             // / region update hook
             const runUpdatePropertyHook:Function = (
                 propertySpecification:PropertySpecification,
-                newDocument:PlainObject, oldDocument:PlainObject, name:string
+                newDocument:PlainObject,
+                oldDocument:PlainObject,
+                name:string
             ):void => {
                 if (!newDocument.hasOwnProperty(name))
                     return
@@ -898,6 +926,19 @@ export class DatabaseHelper {
                 specialNames.update.execution,
                 specialNames.update.expression
             ].includes(name))
+            // region migrate old model specific property names
+            if (updateStrategy === 'migrate')
+                for (const name:string of specifiedPropertyNames)
+                    if (![null, undefined].includes(model[name].oldName))
+                        // IgnoreTypeCheck
+                        for (const oldName:string of [].concat(
+                            model[name].oldName
+                        ))
+                            if (newDocument.hasOwnProperty(oldName)) {
+                                newDocument[name] = newDocument[oldName]
+                                delete newDocument[oldName]
+                            }
+            // endregion
             // region run create document hook
             if (!oldDocument)
                 for (const type:string of [
