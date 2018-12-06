@@ -2850,6 +2850,12 @@ registerTest(async function():Promise<void> {
                 [{[typeName]: 'OldTest'}],
                 {entities: {Test: {_oldType: 'OldTest'}}},
                 {[typeName]: 'Test'}
+            ],
+            // Migrate property names if old name is provided.
+            [
+                [{[typeName]: 'Test', a: 'a'}],
+                {entities: {Test: {b: {oldName: 'a'}}}},
+                {[typeName]: 'Test', b: 'a'}
             ]
         ]) {
             const models:Models = Helper.extendModels(Tools.extendObject(
