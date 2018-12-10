@@ -267,9 +267,10 @@ export class Helper {
         const allowedModelRolesMapping:AllowedModelRolesMapping = {}
         const models:Models = Helper.extendModels(modelConfiguration)
         for (const modelName:string in models)
-            if (models.hasOwnProperty(modelName) && models[
-                modelName
-            ].hasOwnProperty(allowedRoleName)) {
+            if (
+                models.hasOwnProperty(modelName) &&
+                models[modelName].hasOwnProperty(allowedRoleName)
+            ) {
                 allowedModelRolesMapping[modelName] =
                     Helper.normalizeAllowedModelRoles(
                         // IgnoreTypeCheck
@@ -278,6 +279,7 @@ export class Helper {
                 for (const name:string in models[modelName])
                     if (
                         models[modelName].hasOwnProperty(name) &&
+                        typeof models[modelName][name] === 'object' &&
                         models[modelName][name].hasOwnProperty(
                             'allowedRoles'
                         ) &&
@@ -308,7 +310,8 @@ export class Helper {
             modelConfiguration.property.name.special
         return Object.keys(model).filter((name:string):boolean =>
             model[name].index || !(
-                model[name].hasOwnProperty('index') && !model[name].index ||
+                model[name].hasOwnProperty('index') &&
+                !model[name].index ||
                 modelConfiguration.property.name.reserved.concat(
                     specialNames.additional,
                     specialNames.allowedRole,
@@ -326,14 +329,17 @@ export class Helper {
                     specialNames.revisions,
                     specialNames.revisionsInformation,
                     specialNames.type
-                ).includes(name) || model[name].type && (
+                ).includes(name) ||
+                model[name].type &&
+                (
                     typeof model[name].type === 'string' &&
                     model[name].type.endsWith('[]') ||
                     Array.isArray(model[name].type) &&
                     model[name].type.length &&
                     Array.isArray(model[name].type[0]) ||
                     modelConfiguration.entities.hasOwnProperty(
-                        model[name].type))
+                        model[name].type)
+                )
             )).concat(specialNames.id, specialNames.revision)
     }
     /**
