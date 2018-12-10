@@ -353,6 +353,10 @@ export class Database {
                                 ])
                                     if (
                                         models[modelName][name][type] &&
+                                        models[modelName][name][type] !==
+                                            null &&
+                                        models[modelName][name][type] ===
+                                            'object' &&
                                         models[modelName][name][type]
                                             .hasOwnProperty('description')
                                     )
