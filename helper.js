@@ -279,6 +279,7 @@ export class Helper {
                 for (const name:string in models[modelName])
                     if (
                         models[modelName].hasOwnProperty(name) &&
+                        models[modelName][name] !== null &&
                         typeof models[modelName][name] === 'object' &&
                         models[modelName][name].hasOwnProperty(
                             'allowedRoles'
