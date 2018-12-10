@@ -354,6 +354,7 @@ export class Database {
                                     if (
                                         models[modelName][name] !== null &&
                                         models[modelName][name] === 'object' &&
+                                        // IgnoreTypeCheck
                                         models[modelName][name][type] !==
                                             null &&
                                         models[modelName][name][type] ===
@@ -364,12 +365,14 @@ export class Database {
                                         try {
                                             new Function(models[modelName][
                                                 name
+                                            // IgnoreTypeCheck
                                             ][type].description)
                                         } catch (error) {
                                             throw new Error(
                                                 `Specified constraint ` +
                                                 `description "` + models[
                                                     modelName
+                                                // IgnoreTypeCheck
                                                 ][name][type].description +
                                                 `" for model "${modelName}" ` +
                                                 `in property "${name}" as "` +
