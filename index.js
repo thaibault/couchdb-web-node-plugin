@@ -352,7 +352,8 @@ export class Database {
                                     'constraintExecution'
                                 ])
                                     if (
-                                        models[modelName][name][type] &&
+                                        models[modelName][name] !== null &&
+                                        models[modelName][name] === 'object' &&
                                         models[modelName][name][type] !==
                                             null &&
                                         models[modelName][name][type] ===
