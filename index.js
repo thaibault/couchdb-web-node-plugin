@@ -446,6 +446,18 @@ export class Database {
                     retrievedDocument.id.startsWith('_design/')
                 )) {
                     const document:Document = retrievedDocument.doc
+                    let documentRepresentation:string = Tools.representObject(
+                        document)
+                    if (
+                        documentRepresentation.length >
+                            configuration.database.maximumRepresentationLength
+                    )
+                        documentRepresentation =
+                            documentRepresentation.substring(
+                                0,
+                                configuration.database
+                                    .maximumRepresentationLength - '...'.length
+                            ) + '...'
                     let newDocument:PlainObject = Tools.copy(document)
                     newDocument[
                         configuration.database.model.property.name.special
@@ -469,8 +481,8 @@ export class Database {
                         } catch (error) {
                             throw new Error(
                                 `Running migrater "${name}" in document ` +
-                                `${Tools.representObject(document)}" ` +
-                                `failed: ${Tools.representObject(error)}`)
+                                `${documentRepresentation}" failed: ` +
+                                Tools.representObject(error))
                         }
                         if (result) {
                             newDocument = result
@@ -525,9 +537,9 @@ export class Database {
                             if (!error.forbidden.startsWith('NoChange:'))
                                 console.warn(
                                     `Document "` +
-                                    `${Tools.representObject(document)}" ` +
-                                    `doesn't satisfy its schema (and can not` +
-                                    ` be migrated automatically): ` +
+                                    `${documentRepresentation}" doesn't ` +
+                                    'satisfy its schema (and can not be ' +
+                                    'migrated automatically): ' +
                                     Tools.representObject(error))
                             continue
                         } else

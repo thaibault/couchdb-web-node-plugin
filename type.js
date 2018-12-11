@@ -173,6 +173,7 @@ export type Configuration = {
         local:boolean;
         'log/file':string;
         'log/level':string;
+        maximumRepresentationLength:number;
         model:ModelConfiguration;
         path:string;
         port:number;

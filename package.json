@@ -120,6 +120,7 @@
       "local": false,
       "log/file": "/dev/stdout",
       "log/level": "info",
+      "maximumRepresentationLength": 1000,
       "model": {
         "autoMigrationPath": "migration",
         "entities": {
