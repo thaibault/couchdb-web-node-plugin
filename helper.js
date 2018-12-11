@@ -326,6 +326,7 @@ export class Helper {
                     specialNames.id,
                     specialNames.maximumAggregatedSize,
                     specialNames.minimumAggregatedSize,
+                    specialNames.oldType,
                     specialNames.revision,
                     specialNames.revisions,
                     specialNames.revisionsInformation,
@@ -383,8 +384,8 @@ export class Helper {
      * @returns Models with extended specific specifications.
      */
     static extendModels(modelConfiguration:PlainObject):Models {
-        const specialNames:PlainObject = modelConfiguration.property.name
-            .special
+        const specialNames:PlainObject =
+            modelConfiguration.property.name.special
         const models:Models = {}
         for (const modelName:string in modelConfiguration.entities)
             if (modelConfiguration.entities.hasOwnProperty(
@@ -434,7 +435,8 @@ export class Helper {
                             specialNames.constraint.expression,
                             specialNames.extend,
                             specialNames.maximumAggregatedSize,
-                            specialNames.minimumAggregatedSize
+                            specialNames.minimumAggregatedSize,
+                            specialNames.oldType
                         ].includes(propertyName))
                             models[modelName][propertyName] =
                                 Tools.extendObject(true, Tools.copy(
