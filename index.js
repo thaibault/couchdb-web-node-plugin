@@ -573,10 +573,13 @@ export class Database {
                 throw error
             }
             for (const modelName:string in models)
-                if (models.hasOwnProperty(modelName) && (new RegExp(
-                    configuration.database.model.property.name
-                        .typeRegularExpressionPattern.public
-                )).test(modelName)) {
+                if (
+                    models.hasOwnProperty(modelName) &&
+                    (new RegExp(
+                        configuration.database.model.property.name
+                            .typeRegularExpressionPattern.public
+                    )).test(modelName)
+                ) {
                     await services.database.connection.createIndex({index: {
                         ddoc: `${modelName}-GenericIndex`,
                         fields: [typeName],
