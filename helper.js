@@ -310,39 +310,46 @@ export class Helper {
         const specialNames:PlainObject =
             modelConfiguration.property.name.special
         return Object.keys(model).filter((name:string):boolean =>
-            model[name].index || !(
+            model[name] !== null &&
+            typeof model[name] === 'object' &&
+            (
                 model[name].hasOwnProperty('index') &&
-                !model[name].index ||
-                modelConfiguration.property.name.reserved.concat(
-                    specialNames.additional,
-                    specialNames.allowedRole,
-                    specialNames.attachment,
-                    specialNames.conflict,
-                    specialNames.constraint.execution,
-                    specialNames.constraint.expression,
-                    specialNames.deleted,
-                    specialNames.deleted_conflict,
-                    specialNames.extend,
-                    specialNames.id,
-                    specialNames.maximumAggregatedSize,
-                    specialNames.minimumAggregatedSize,
-                    specialNames.oldType,
-                    specialNames.revision,
-                    specialNames.revisions,
-                    specialNames.revisionsInformation,
-                    specialNames.type
-                ).includes(name) ||
-                model[name].type &&
-                (
-                    typeof model[name].type === 'string' &&
-                    model[name].type.endsWith('[]') ||
-                    Array.isArray(model[name].type) &&
-                    model[name].type.length &&
-                    Array.isArray(model[name].type[0]) ||
-                    modelConfiguration.entities.hasOwnProperty(
-                        model[name].type)
+                model[name].index ||
+                !(
+                    model[name].hasOwnProperty('index') &&
+                    !model[name].index ||
+                    modelConfiguration.property.name.reserved.concat(
+                        specialNames.additional,
+                        specialNames.allowedRole,
+                        specialNames.attachment,
+                        specialNames.conflict,
+                        specialNames.constraint.execution,
+                        specialNames.constraint.expression,
+                        specialNames.deleted,
+                        specialNames.deleted_conflict,
+                        specialNames.extend,
+                        specialNames.id,
+                        specialNames.maximumAggregatedSize,
+                        specialNames.minimumAggregatedSize,
+                        specialNames.oldType,
+                        specialNames.revision,
+                        specialNames.revisions,
+                        specialNames.revisionsInformation,
+                        specialNames.type
+                    ).includes(name) ||
+                    model[name].type &&
+                    (
+                        typeof model[name].type === 'string' &&
+                        model[name].type.endsWith('[]') ||
+                        Array.isArray(model[name].type) &&
+                        model[name].type.length &&
+                        Array.isArray(model[name].type[0]) ||
+                        modelConfiguration.entities.hasOwnProperty(
+                            model[name].type)
+                    )
                 )
-            )).concat(specialNames.id, specialNames.revision)
+            )
+        ).concat(specialNames.id, specialNames.revision)
     }
     /**
      * Extend given model with all specified one.
