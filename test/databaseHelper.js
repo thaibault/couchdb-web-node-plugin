@@ -2795,33 +2795,54 @@ registerTest(async function():Promise<void> {
             ],
             /*
                 Set property to default value if property is missing which has
-                a specified default value.
+                a specified default (string) value.
             */
             [
                 [{[typeName]: 'Test'}, {[typeName]: 'Test', a: '1'}],
                 {entities: {Test: {a: {default: '2'}}}},
                 {[typeName]: 'Test', a: '2'}
             ],
+            /*
+                Set property to default value if property is missing which has
+                a specified default value and remove not existing properties.
+            */
             [
                 [{[typeName]: 'Test', b: '3'}, {[typeName]: 'Test', a: '1'}],
                 {entities: {Test: {a: {default: '2'}}}},
                 {[typeName]: 'Test', a: '2'}
             ],
+            /*
+                Set property to default value if property is missing which has
+                a specified default (number) value.
+            */
             [
                 [{[typeName]: 'Test'}],
                 {entities: {Test: {a: {default: 2, type: 'number'}}}},
                 {[typeName]: 'Test', a: 2}
             ],
+            /*
+                Set property to default value if property is missing which has
+                a specified default (any) value.
+            */
             [
                 [{[typeName]: 'Test'}],
                 {entities: {Test: {a: {default: 2, type: 'any'}}}},
                 {[typeName]: 'Test', a: 2}
             ],
+            /*
+                Set property to default value if property is missing which has
+                a specified default value (where on is any).
+            */
             [
                 [{[typeName]: 'Test'}],
                 {entities: {Test: {a: {default: 2, type: ['any']}}}},
                 {[typeName]: 'Test', a: 2}
             ],
+            /*
+                Set property to default value if property is missing which has
+                a specified default value (where a selection of types is
+                provided).
+            */
             [
                 [{[typeName]: 'Test'}],
                 {entities: {
@@ -2837,23 +2858,34 @@ registerTest(async function():Promise<void> {
                 }}}},
                 {[typeName]: 'Test', a: 2}
             ],
+            // Ignore not specified attachment properties in old document.
             [
                 [
                     {[typeName]: 'Test', b: 'b'},
                     {[typeName]: 'Test', [attachmentName]: {}}
                 ],
-                {entities: {Test: {b: {}}}}, {[typeName]: 'Test', b: 'b'}
+                {entities: {Test: {b: {}}}},
+                {[typeName]: 'Test', b: 'b'}
             ],
             [
-                [{[typeName]: 'Test', b: 'b'}, {
-                    [typeName]: 'Test', [attachmentName]: {
-                        /* eslint-disable camelcase */
-                        test: {data: '', content_type: 'text/plain'}
-                        /* eslint-enable camelcase */
+                [
+                    {[typeName]: 'Test', b: 'b'},
+                    {
+                        [typeName]: 'Test',
+                        [attachmentName]: {
+                            /* eslint-disable camelcase */
+                            test: {data: '', content_type: 'text/plain'}
+                            /* eslint-enable camelcase */
+                        }
                     }
-                }],
-                {entities: {Test: {b: {}}}}, {[typeName]: 'Test', b: 'b'}
+                ],
+                {entities: {Test: {b: {}}}},
+                {[typeName]: 'Test', b: 'b'}
             ],
+            /*
+                Set attachment to a default one if it is missing and has a
+                specified default one.
+            */
             [
                 [{[typeName]: 'Test'}, {[typeName]: 'Test'}],
                 {entities: {Test: {[attachmentName]: {'.*': {default: {test: {
@@ -2861,11 +2893,14 @@ registerTest(async function():Promise<void> {
                     data: '', content_type: 'text/plain'
                     /* eslint-enable camelcase */
                 }}}}}}},
-                {[typeName]: 'Test', [attachmentName]: {test: {
-                    /* eslint-disable camelcase */
-                    data: '', content_type: 'text/plain'
-                    /* eslint-enable camelcase */
-                }}}
+                {
+                    [typeName]: 'Test',
+                    [attachmentName]: {test: {
+                        /* eslint-disable camelcase */
+                        data: '', content_type: 'text/plain'
+                        /* eslint-enable camelcase */
+                    }}
+                }
             ],
             // Migrate model type if old one is provided.
             [
