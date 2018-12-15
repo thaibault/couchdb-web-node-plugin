@@ -2807,39 +2807,61 @@ registerTest(async function():Promise<void> {
                 {entities: {Test: {a: {default: '2'}}}},
                 {[typeName]: 'Test', a: '2'}
             ],
-            [[{[typeName]: 'Test'}], {entities: {Test: {a: {
-                default: 2, type: 'number'
-            }}}}, {[typeName]: 'Test', a: 2}],
-            [[{[typeName]: 'Test'}], {entities: {Test: {a: {
-                default: 2, type: 'any'
-            }}}}, {[typeName]: 'Test', a: 2}],
-            [[{[typeName]: 'Test'}], {entities: {Test: {a: {
-                default: 2, type: ['any']
-            }}}}, {[typeName]: 'Test', a: 2}],
-            [[{[typeName]: 'Test'}], {entities: {Test: {a: {
-                default: 2, type: ['any', 'boolean']
-            }}}}, {[typeName]: 'Test', a: 2}],
-            [[{[typeName]: 'Test'}], {entities: {Test: {a: {
-                default: 2, type: ['number', 'boolean']
-            }}}}, {[typeName]: 'Test', a: 2}],
-            [[
-                {[typeName]: 'Test', b: 'b'},
-                {[typeName]: 'Test', [attachmentName]: {}}
-            ], {entities: {Test: {b: {}}}}, {[typeName]: 'Test', b: 'b'}],
-            [[{[typeName]: 'Test', b: 'b'}, {
-                [typeName]: 'Test', [attachmentName]: {
-                    /* eslint-disable camelcase */
-                    test: {data: '', content_type: 'text/plain'}
-                    /* eslint-enable camelcase */
-                }
-            }], {entities: {Test: {b: {}}}}, {[typeName]: 'Test', b: 'b'}],
+            [
+                [{[typeName]: 'Test'}],
+                {entities: {Test: {a: {default: 2, type: 'number'}}}},
+                {[typeName]: 'Test', a: 2}
+            ],
+            [
+                [{[typeName]: 'Test'}],
+                {entities: {Test: {a: {default: 2, type: 'any'}}}},
+                {[typeName]: 'Test', a: 2}
+            ],
+            [
+                [{[typeName]: 'Test'}],
+                {entities: {Test: {a: {default: 2, type: ['any']}}}},
+                {[typeName]: 'Test', a: 2}
+            ],
+            [
+                [{[typeName]: 'Test'}],
+                {entities: {
+                    Test: {a: {default: 2, type: ['any', 'boolean']}}
+                }},
+                {[typeName]: 'Test', a: 2}
+            ],
+            [
+                [{[typeName]: 'Test'}],
+                {entities: {Test: {a: {
+                    default: 2,
+                    type: ['number', 'boolean']
+                }}}},
+                {[typeName]: 'Test', a: 2}
+            ],
+            [
+                [
+                    {[typeName]: 'Test', b: 'b'},
+                    {[typeName]: 'Test', [attachmentName]: {}}
+                ],
+                {entities: {Test: {b: {}}}}, {[typeName]: 'Test', b: 'b'}
+            ],
+            [
+                [{[typeName]: 'Test', b: 'b'}, {
+                    [typeName]: 'Test', [attachmentName]: {
+                        /* eslint-disable camelcase */
+                        test: {data: '', content_type: 'text/plain'}
+                        /* eslint-enable camelcase */
+                    }
+                }],
+                {entities: {Test: {b: {}}}}, {[typeName]: 'Test', b: 'b'}
+            ],
             [
                 [{[typeName]: 'Test'}, {[typeName]: 'Test'}],
                 {entities: {Test: {[attachmentName]: {'.*': {default: {test: {
                     /* eslint-disable camelcase */
                     data: '', content_type: 'text/plain'
                     /* eslint-enable camelcase */
-                }}}}}}}, {[typeName]: 'Test', [attachmentName]: {test: {
+                }}}}}}},
+                {[typeName]: 'Test', [attachmentName]: {test: {
                     /* eslint-disable camelcase */
                     data: '', content_type: 'text/plain'
                     /* eslint-enable camelcase */
@@ -2848,8 +2870,50 @@ registerTest(async function():Promise<void> {
             // Migrate model type if old one is provided.
             [
                 [{[typeName]: 'OldTest'}],
-                {entities: {Test: {_oldType: 'OldTest'}}},
+                {entities: {Test: {[specialNames.oldType]: 'OldTest'}}},
                 {[typeName]: 'Test'}
+            ],
+            // Migrate nested property model type if old one is provided.
+            [
+                [{[typeName]: 'Test', a: {[typeName]: 'OldTest', b: 'b'}}],
+                {entities: {Test: {
+                    a: {type: 'Test'},
+                    [specialNames.oldType]: 'OldTest',
+                    b: {}
+                }}},
+                {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'b'}}
+            ],
+            // Migrate nested array model type if old one is provided.
+            [
+                [{[typeName]: 'Test', a: [{[typeName]: 'OldTest', b: 'b'}]}],
+                {entities: {Test: {
+                    a: {type: 'Test[]'},
+                    [specialNames.oldType]: 'OldTest',
+                    b: {}
+                }}},
+                {[typeName]: 'Test', a: [{[typeName]: 'Test', b: 'b'}]}
+            ],
+            // Migrate nested array property model type if old one is provided.
+            [
+                [{
+                    [typeName]: 'Test',
+                    a: [{
+                        [typeName]: 'Test',
+                        a: [{[typeName]: 'OldTest', b: 'b'}]
+                    }]
+                }],
+                {entities: {Test: {
+                    a: {type: 'Test[]'},
+                    [specialNames.oldType]: 'OldTest',
+                    b: {}
+                }}},
+                {
+                    [typeName]: 'Test',
+                    a: [{
+                        [typeName]: 'Test',
+                        a: [{[typeName]: 'Test', b: 'b'}]
+                    }]
+                }
             ],
             // Migrate property names if old name is provided.
             [
@@ -2865,10 +2929,13 @@ registerTest(async function():Promise<void> {
             delete modelConfiguration.property.defaultSpecification
             delete modelConfiguration.entities
             try {
-                assert.deepEqual(DatabaseHelper.validateDocumentUpdate(
-                    ...test[0].concat([null, {}, {}].slice(
-                        test[0].length - 1
-                    )).concat([models, modelConfiguration])), test[2])
+                assert.deepEqual(
+                    DatabaseHelper.validateDocumentUpdate(
+                        ...test[0]
+                            .concat([null, {}, {}].slice(test[0].length - 1))
+                            .concat([models, modelConfiguration])),
+                    test[2]
+                )
             } catch (error) {
                 console.error(error)
             }

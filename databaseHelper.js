@@ -296,10 +296,13 @@ export class DatabaseHelper {
                             `via property "${typeName}"${pathDescription}.`
                     }
                     /* eslint-enable no-throw-literal */
-                if (!(parentNames.length || (new RegExp(
-                    modelConfiguration.property.name
-                        .typeRegularExpressionPattern.public
-                )).test(newDocument[typeName])))
+                if (!(
+                    parentNames.length ||
+                    (new RegExp(
+                        modelConfiguration.property.name
+                            .typeRegularExpressionPattern.public
+                    )).test(newDocument[typeName])
+                ))
                     /* eslint-disable no-throw-literal */
                     throw {
                         forbidden: 'TypeName: You have to specify a model ' +
@@ -512,7 +515,8 @@ export class DatabaseHelper {
                             /* eslint-enable no-throw-literal */
                             newValue = Date.UTC(
                                 newValue.getUTCFullYear(),
-                                newValue.getUTCMonth(), newValue.getUTCDate(),
+                                newValue.getUTCMonth(),
+                                newValue.getUTCDate(),
                                 newValue.getUTCHours(),
                                 newValue.getUTCMinutes(),
                                 newValue.getUTCSeconds(),
@@ -565,9 +569,10 @@ export class DatabaseHelper {
                             typeMatched = true
                             break
                         }
-                    else if (typeof type === 'string' && type.startsWith(
-                        'foreignKey:'
-                    )) {
+                    else if (
+                        typeof type === 'string' &&
+                        type.startsWith('foreignKey:')
+                    ) {
                         // IgnoreTypeCheck
                         const foreignKeyType:string = models[type.substring(
                             'foreignKey:'.length
@@ -586,9 +591,10 @@ export class DatabaseHelper {
                                     `${typeof newValue}")${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
-                    } else if (type === 'any' || serialize(
-                        newValue
-                    ) === serialize(type)) {
+                    } else if (
+                        type === 'any' ||
+                        serialize(newValue) === serialize(type)
+                    ) {
                         typeMatched = true
                         break
                     } else if (types.length === 1)
