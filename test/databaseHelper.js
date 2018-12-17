@@ -85,6 +85,10 @@ registerTest(async function():Promise<void> {
             // region forbidden writes
             for (const test:Array<any> of [
                 // region general environment
+                /*
+                    Get an exception if an expected previous document does not
+                    exist (or has no revision).
+                */
                 [
                     [{[typeName]: 'Test', [revisionName]: 'latest'}, null],
                     'Revision'
@@ -102,6 +106,12 @@ registerTest(async function():Promise<void> {
                 ],
                 // endregion
                 // region changes
+                /*
+                    Get an exception if nothing really changes. Those database
+                    requests should be avoid by the application to improve
+                    performance and avoiding to have useless document
+                    revisions.
+                */
                 [
                     [{[typeName]: 'Test'}, {[typeName]: 'Test'}],
                     {entities: {Test: {a: {}}}},
@@ -118,6 +128,10 @@ registerTest(async function():Promise<void> {
                     {entities: {Test: {a: {}}}},
                     'NoChange'
                 ],
+                /*
+                    Empty values should be normalized according and identified
+                    as nothing really changes.
+                */
                 [
                     [
                         {
@@ -130,155 +144,259 @@ registerTest(async function():Promise<void> {
                     {entities: {Test: {a: {emptyEqualsToNull: false}}}},
                     'NoChange'
                 ],
-                [[{
-                    [typeName]: 'Test',
-                    [specialNames.strategy]: 'migrate',
-                    a: ''
-                }, {[typeName]: 'Test'}], {entities: {Test: {a: {
-                }}}}, 'NoChange'],
-                [[
-                    {[typeName]: 'Test', [specialNames.strategy]: 'migrate'},
-                    {[typeName]: 'Test'}
-                ], {entities: {Test: {[attachmentName]: {a: {
-                }}}}}, 'NoChange'],
-                [[
-                    {[typeName]: 'Test', a: '2'},
-                    {[typeName]: 'Test', a: '2'}
-                ], {entities: {Test: {a: {}}}}, 'NoChange'],
-                [[
-                    {[typeName]: 'Test', a: 'a '},
-                    {[typeName]: 'Test', a: 'a'}
-                ], {entities: {Test: {a: {}}}}, 'NoChange'],
-                [[{[typeName]: 'Test', a: []}, {[typeName]: 'Test'}], {
-                    entities: {Test: {a: {type: 'integer[]'}}}
-                }, 'NoChange'],
-                [[{[typeName]: 'Test', a: []}, {[typeName]: 'Test', a: []}], {
-                    entities: {Test: {a: {
+                [
+                    [
+                        {
+                            [typeName]: 'Test',
+                            [specialNames.strategy]: 'migrate',
+                            a: ''
+                        },
+                        {[typeName]: 'Test'}
+                    ],
+                    {entities: {Test: {a: {}}}},
+                    'NoChange'
+                ],
+                [
+                    [
+                        {
+                            [specialNames.strategy]: 'migrate',
+                            [typeName]: 'Test'
+                        },
+                        {[typeName]: 'Test'}
+                    ],
+                    {entities: {Test: {[attachmentName]: {a: {}}}}},
+                    'NoChange'
+                ],
+                /*
+                    Equal existing and new values should not trigger a new
+                    document revision.
+                */
+                [
+                    [
+                        {[typeName]: 'Test', a: '2'},
+                        {[typeName]: 'Test', a: '2'}
+                    ],
+                    {entities: {Test: {a: {}}}},
+                    'NoChange'
+                ],
+                /*
+                    Normalized equal existing and new values should not trigger
+                    a new document revision.
+                */
+                [
+                    [
+                        {[typeName]: 'Test', a: 'a '},
+                        {[typeName]: 'Test', a: 'a'}
+                    ],
+                    {entities: {Test: {a: {}}}},
+                    'NoChange'
+                ],
+                [
+                    [{[typeName]: 'Test', a: []}, {[typeName]: 'Test'}],
+                    {entities: {Test: {a: {type: 'integer[]'}}}},
+                    'NoChange'
+                ],
+                [
+                    [{[typeName]: 'Test', a: []}, {[typeName]: 'Test', a: []}],
+                    {entities: {Test: {a: {
                         type: 'integer[]', emptyEqualsToNull: false
-                    }}}
-                }, 'NoChange'],
-                [[{[typeName]: 'Test', a: [1, 2]}, {[typeName]: 'Test', a: [
-                    1, 2
-                ]}], {entities: {Test: {a: {type: 'integer[]'}}}}, 'NoChange'],
-                [[
-                    {[typeName]: 'Test', a: {b: 1}},
-                    {[typeName]: 'Test', a: {b: 1}}
-                ], {entities: {Test: {a: {type: {b: 1}}}}}, 'NoChange'],
-                [[
-                    {[typeName]: 'Test', a: {[typeName]: '_test', b: 1}},
-                    {[typeName]: 'Test', a: {[typeName]: '_test', b: 1}}
-                ], {entities: {
-                    _test: {b: {type: 'number'}},
-                    Test: {a: {type: '_test'}}
-                }}, 'NoChange'],
-                [[
-                    {[typeName]: 'Test', a: new Date(0)},
-                    {[typeName]: 'Test', a: 0}
-                ], {entities: {Test: {a: {type: 'DateTime'}}}}, 'NoChange'],
+                    }}}},
+                    'NoChange'
+                ],
+                [
+                    [
+                        {[typeName]: 'Test', a: [1, 2]},
+                        {[typeName]: 'Test', a: [1, 2]}
+                    ],
+                    {entities: {Test: {a: {type: 'integer[]'}}}},
+                    'NoChange'
+                ],
+                [
+                    [
+                        {[typeName]: 'Test', a: {b: 1}},
+                        {[typeName]: 'Test', a: {b: 1}}
+                    ],
+                    {entities: {Test: {a: {type: {b: 1}}}}},
+                    'NoChange'
+                ],
+                [
+                    [
+                        {[typeName]: 'Test', a: {[typeName]: '_test', b: 1}},
+                        {[typeName]: 'Test', a: {[typeName]: '_test', b: 1}}
+                    ],
+                    {entities: {
+                        _test: {b: {type: 'number'}},
+                        Test: {a: {type: '_test'}}
+                    }},
+                    'NoChange'
+                ],
+                [
+                    [
+                        {[typeName]: 'Test', a: new Date(0)},
+                        {[typeName]: 'Test', a: 0}
+                    ],
+                    {entities: {Test: {a: {type: 'DateTime'}}}},
+                    'NoChange'
+                ],
                 [
                     [{[typeName]: 'Test', _deleted: true}],
-                    {entities: {Test: {}}}, 'NoChange'
+                    {entities: {Test: {}}},
+                    'NoChange'
                 ],
-                [[{[typeName]: 'Test'}, {[typeName]: 'Test', a: '1'}], {
-                    entities: {Test: {a: {}}}
-                }, updateStrategy ? 'NoChange' : {[typeName]: 'Test'}],
+                [
+                    [{[typeName]: 'Test'}, {[typeName]: 'Test', a: '1'}],
+                    {entities: {Test: {a: {}}}},
+                    updateStrategy ? 'NoChange' : {[typeName]: 'Test'}
+                ],
                 // endregion
                 // region model
+                // No specified type should result in an exception.
                 [[{}, {}], 'Type'],
+                /*
+                    Am explicit type name has to follow the convention (have to
+                    start with an uppercase character).
+                */
                 [[{[typeName]: 'test'}], 'TypeName'],
                 [[{[typeName]: '_test'}], 'TypeName'],
+                // A given type has to be specified.
                 [[{[typeName]: 'Test'}], 'Model'],
+                /*
+                    A valid specified type which will be changed to an invalid
+                    one (on update trigger) should result in an exception.
+                */
                 [
                     [{[typeName]: 'Test'}],
-                    {entities: {Test: {[
-                    specialNames.create.execution
-                    ]: `
+                    {entities: {Test: {[specialNames.create.execution]: `
                         newDocument['${typeName}'] = '_test'
                         return newDocument
-                    `
-                    }}}, 'TypeName'
-                ],
-                [
-                    [{[typeName]: 'Test'}],
-                    {entities: {Test: {[
-                    specialNames.create.expression
-                    ]: `
-                        (newDocument['${typeName}'] = '_test') &&
-                        newDocument
-                    `
-                    }}},
+                    `}}},
                     'TypeName'
                 ],
                 [
                     [{[typeName]: 'Test'}],
-                    {entities: {Test: {[
-                    specialNames.update.execution
-                    ]: `
-                        newDocument['${typeName}'] = '_test'
-                        return newDocument
-                    `
-                    }}}, 'TypeName'
+                    {entities: {Test: {[specialNames.create.expression]: `
+                        (newDocument['${typeName}'] = '_test') &&
+                        newDocument
+                    `}}},
+                    'TypeName'
                 ],
                 [
                     [{[typeName]: 'Test'}],
-                    {entities: {Test: {[
-                    specialNames.update.expression
-                    ]: `
+                    {entities: {Test: {[specialNames.update.execution]: `
+                        newDocument['${typeName}'] = '_test'
+                        return newDocument
+                    `}}},
+                    'TypeName'
+                ],
+                [
+                    [{[typeName]: 'Test'}],
+                    {entities: {Test: {[specialNames.update.expression]: `
                         (newDocument['${typeName}'] = '_test') &&
                         newDocument
-                    `
-                    }}},
+                    `}}},
                     'TypeName'
                 ],
                 // endregion
                 // region hooks
                 // / region on create
-                [[{[typeName]: 'Test', a: ''}], {entities: {Test: {a: {
-                    onCreateExpression: '+'
-                }}}}, 'Compilation'],
-                [[{[typeName]: 'Test', a: ''}], {entities: {Test: {a: {
-                    onCreateExecution: 'return +'
-                }}}}, 'Compilation'],
-                [[{[typeName]: 'Test', a: ''}], {entities: {Test: {a: {
-                    onCreateExpression: 'undefinedVariableName'
-                }}}}, 'Runtime'],
-                [[{[typeName]: 'Test', a: ''}], {entities: {Test: {a: {
-                    onCreateExecution: 'return undefinedVariableName'
-                }}}}, 'Runtime'],
+                /*
+                    Syntactically invalid create expressions should lead to an
+                    exception.
+                */
+                [
+                    [{[typeName]: 'Test', a: ''}],
+                    {entities: {Test: {a: {onCreateExpression: '+'}}}},
+                    'Compilation'
+                ],
+                [
+                    [{[typeName]: 'Test', a: ''}],
+                    {entities: {Test: {a: {onCreateExecution: 'return +'}}}},
+                    'Compilation'
+                ],
+                /*
+                    Runtime errors during running create expressions should
+                    lead to an exception.
+                */
+                [
+                    [{[typeName]: 'Test', a: ''}],
+                    {entities: {Test: {a: {
+                        onCreateExpression: 'undefinedVariableName'
+                    }}}},
+                    'Runtime'
+                ],
+                [
+                    [{[typeName]: 'Test', a: ''}],
+                    {entities: {Test: {a: {
+                        onCreateExecution: 'return undefinedVariableName'
+                    }}}},
+                    'Runtime'
+                ],
                 // / endregion
                 // / region on update
-                [[{[typeName]: 'Test', a: ''}], {entities: {Test: {a: {
-                    onUpdateExpression: '+'
-                }}}}, 'Compilation'],
-                [[{[typeName]: 'Test', a: ''}], {entities: {Test: {a: {
-                    onUpdateExecution: 'return +'
-                }}}}, 'Compilation'],
-                [[{[typeName]: 'Test', a: ''}], {entities: {Test: {a: {
-                    onUpdateExpression: 'undefinedVariableName'
-                }}}}, 'Runtime'],
-                [[{[typeName]: 'Test', a: ''}], {entities: {Test: {a: {
-                    onUpdateExecution: 'return undefinedVariableName'
-                }}}}, 'Runtime'],
+                /*
+                    Syntactically invalid update expressions should lead to an
+                    exception.
+                */
+                [
+                    [{[typeName]: 'Test', a: ''}],
+                    {entities: {Test: {a: {onUpdateExpression: '+'}}}},
+                    'Compilation'
+                ],
+                [
+                    [{[typeName]: 'Test', a: ''}],
+                    {entities: {Test: {a: {onUpdateExecution: 'return +'}}}},
+                    'Compilation'
+                ],
+                /*
+                    Runtime errors during running create expressions should
+                    lead to an exception.
+                */
+                [
+                    [{[typeName]: 'Test', a: ''}],
+                    {entities: {Test: {a: {
+                        onUpdateExpression: 'undefinedVariableName'
+                    }}}},
+                    'Runtime'
+                ],
+                [
+                    [{[typeName]: 'Test', a: ''}],
+                    {entities: {Test: {a: {
+                        onUpdateExecution: 'return undefinedVariableName'
+                    }}}},
+                    'Runtime'
+                ],
                 // / endregion
                 // endregion
                 // region property writable/mutable
                 [
                     [{[typeName]: 'Test', a: 'b'}, {[typeName]: 'Test'}],
-                    {entities: {Test: {a: {writable: false}}}}, 'Readonly'
+                    {entities: {Test: {a: {writable: false}}}},
+                    'Readonly'
                 ],
-                [[
-                    {[typeName]: 'Test', a: 'b'},
-                    {[typeName]: 'Test', a: 'a'}
-                ], {entities: {Test: {a: {writable: false}}}}, 'Readonly'],
+                [
+                    [
+                        {[typeName]: 'Test', a: 'b'},
+                        {[typeName]: 'Test', a: 'a'}
+                    ],
+                    {entities: {Test: {a: {writable: false}}}},
+                    'Readonly'
+                ],
                 // endregion
                 // region property existents
+                // Not specified properties should result in an exception.
                 [
-                    [{[typeName]: 'Test', a: 2}], {entities: {Test: {}}},
+                    [{[typeName]: 'Test', a: 2}],
+                    {entities: {Test: {}}},
                     'Property'
                 ],
+                /*
+                    Required fields have to be defined properly (not null or
+                    undefined).
+                */
                 [
                     [{[typeName]: 'Test', a: null}],
-                    {entities: {Test: {a: {nullable: false}}}}, 'NotNull'
+                    {entities: {Test: {a: {nullable: false}}}},
+                    'NotNull'
                 ],
                 [
                     [{[typeName]: 'Test'}],
@@ -292,37 +410,49 @@ registerTest(async function():Promise<void> {
                 ],
                 // endregion
                 // region property type
+                /*
+                    Properties have to be its specified type (string is
+                    default).
+                */
                 [
-                    [{[typeName]: 'Test', a: 2}], {entities: {Test: {a: {}}}},
+                    [{[typeName]: 'Test', a: 2}],
+                    {entities: {Test: {a: {}}}},
                     'PropertyType'
                 ],
                 [
                     [{[typeName]: 'Test', a: 'b'}],
-                    {entities: {Test: {a: {type: 'number'}}}}, 'PropertyType'
+                    {entities: {Test: {a: {type: 'number'}}}},
+                    'PropertyType'
                 ],
                 [
                     [{[typeName]: 'Test', a: parseInt('a')}],
-                    {entities: {Test: {a: {type: 'number'}}}}, 'PropertyType'
+                    {entities: {Test: {a: {type: 'number'}}}},
+                    'PropertyType'
                 ],
                 [
                     [{[typeName]: 'Test', a: 'b'}],
-                    {entities: {Test: {a: {type: 'integer'}}}}, 'PropertyType'
+                    {entities: {Test: {a: {type: 'integer'}}}},
+                    'PropertyType'
                 ],
                 [
                     [{[typeName]: 'Test', a: 2.2}],
-                    {entities: {Test: {a: {type: 'integer'}}}}, 'PropertyType'
+                    {entities: {Test: {a: {type: 'integer'}}}},
+                    'PropertyType'
                 ],
                 [
                     [{[typeName]: 'Test', a: 1}],
-                    {entities: {Test: {a: {type: 'boolean'}}}}, 'PropertyType'
+                    {entities: {Test: {a: {type: 'boolean'}}}},
+                    'PropertyType'
                 ],
                 [
                     [{[typeName]: 'Test', a: 'a'}],
-                    {entities: {Test: {a: {type: 'DateTime'}}}}, 'PropertyType'
+                    {entities: {Test: {a: {type: 'DateTime'}}}},
+                    'PropertyType'
                 ],
                 [
                     [{[typeName]: 'Test', a: new Date('a')}],
-                    {entities: {Test: {a: {type: 'DateTime'}}}}, 'PropertyType'
+                    {entities: {Test: {a: {type: 'DateTime'}}}},
+                    'PropertyType'
                 ],
                 [
                     [{[typeName]: 'Test', a: '1'}],
@@ -342,7 +472,8 @@ registerTest(async function():Promise<void> {
                 // // region type
                 [
                     [{[typeName]: 'Test', a: 2}],
-                    {entities: {Test: {a: {type: 'string[]'}}}}, 'PropertyType'
+                    {entities: {Test: {a: {type: 'string[]'}}}},
+                    'PropertyType'
                 ],
                 [
                     [{[typeName]: 'Test', a: [2]}],
@@ -590,6 +721,7 @@ registerTest(async function():Promise<void> {
                 }}}}, 'PropertyType'],
                 // endregion
                 // region property range
+                // Values have to be in their specified range.
                 [
                     [{[typeName]: 'Test', a: 2}],
                     {entities: {Test: {a: {type: 'number', minimum: 3}}}},
@@ -617,6 +749,7 @@ registerTest(async function():Promise<void> {
                 ],
                 // endregion
                 // region selection
+                // Values have to be in their specified limits.
                 [
                     [{[typeName]: 'Test', a: 2}],
                     {entities: {Test: {a: {type: 'number', selection: []}}}},
@@ -636,14 +769,25 @@ registerTest(async function():Promise<void> {
                 ],
                 // endregion
                 // region property pattern
-                [[{[typeName]: 'Test', a: 'b'}], {entities: {Test: {a: {
-                    regularExpressionPattern: 'a'
-                }}}}, 'PatternMatch'],
-                [[{[typeName]: 'Test', a: 'a'}], {entities: {Test: {a: {
-                    invertedRegularExpressionPattern: 'a'
-                }}}}, 'InvertedPatternMatch'],
+                // Values have to match their specified pattern.
+                [
+                    [{[typeName]: 'Test', a: 'b'}],
+                    {entities: {Test: {a: {regularExpressionPattern: 'a'}}}},
+                    'PatternMatch'
+                ],
+                [
+                    [{[typeName]: 'Test', a: 'a'}],
+                    {entities: {Test: {a: {
+                        invertedRegularExpressionPattern: 'a'
+                    }}}},
+                    'InvertedPatternMatch'
+                ],
                 // endregion
                 // region property constraint
+                /*
+                    Values have to satisfy their constraints so a given
+                    constraint expression has to resolve to "true".
+                */
                 [
                     [{[typeName]: 'Test', a: 'b'}],
                     {entities: {Test: {a: {constraintExpression: {
@@ -655,7 +799,8 @@ registerTest(async function():Promise<void> {
                     [{[typeName]: 'Test', a: 'b'}],
                     {entities: {Test: {a: {constraintExecution: {
                         evaluation: 'return false'
-                    }}}}}, 'ConstraintExecution'
+                    }}}}},
+                    'ConstraintExecution'
                 ],
                 [
                     [{[typeName]: 'Test', a: 'b'}],
@@ -664,115 +809,198 @@ registerTest(async function():Promise<void> {
                     }}}}},
                     'Compilation'
                 ],
-                [[{[typeName]: 'Test', a: 'b'}], {entities: {Test: {a: {
-                    constraintExpression: {evaluation: 'undefinedVariableName'}
-                }}}}, 'Runtime'],
-                [[{[typeName]: 'Test', a: 'b'}], {entities: {Test: {a: {
-                    constraintExecution: {
+                [
+                    [{[typeName]: 'Test', a: 'b'}],
+                    {entities: {Test: {a: {constraintExpression: {
+                        evaluation: 'undefinedVariableName'
+                    }}}}},
+                    'Runtime'
+                ],
+                [
+                    [{[typeName]: 'Test', a: 'b'}],
+                    {entities: {Test: {a: {constraintExecution: {
                         evaluation: 'return undefinedVariableName'
-                    }
-                }}}}, 'Runtime'],
-                [[{[typeName]: 'Test', a: 'b'}], {entities: {Test: {a: {
-                    constraintExpression: {
+                    }}}}},
+                    'Runtime'
+                ],
+                [
+                    [{[typeName]: 'Test', a: 'b'}],
+                    {entities: {Test: {a: {constraintExpression: {
                         evaluation: 'newValue === "a"'
-                    }
-                }}}}, 'ConstraintExpression'],
+                    }}}}},
+                    'ConstraintExpression'
+                ],
                 // endregion
                 // region constraint
-                [[{[typeName]: 'Test', a: 'a', b: 'b'}], {entities: {Test: {
-                    _constraintExpressions: [{evaluation: 'false'}],
-                    a: {},
-                    b: {}
-                }}}, 'ConstraintExpressions'],
-                [[{[typeName]: 'Test', a: 'a', b: 'b'}], {entities: {Test: {
-                    _constraintExecutions: [{evaluation: 'return false'}],
-                    a: {},
-                    b: {}
-                }}}, 'ConstraintExecutions'],
-                [[{[typeName]: 'Test', a: 'a', b: 'b'}], {entities: {Test: {
-                    _constraintExecutions: [{
-                        description: '`Fails always!`',
-                        evaluation: 'return false'
-                    }],
-                    a: {},
-                    b: {}
-                }}}, 'ConstraintExecutions'],
-                [[{[typeName]: 'Test', a: 'a', b: 'b'}], {entities: {Test: {
-                    _constraintExecutions: [{
-                        description: '`a: ${newDocument.a} failed!`',
-                        evaluation: 'return newDocument.a === newDocument.b'
-                    }],
-                    a: {},
-                    b: {}
-                }}}, 'ConstraintExecutions'],
+                /*
+                    Models have to satisfy their constraints so a given
+                    constraint expression has to resolve to "true".
+                */
+                [
+                    [{[typeName]: 'Test', a: 'a', b: 'b'}],
+                    {entities: {Test: {
+                        _constraintExpressions: [{evaluation: 'false'}],
+                        a: {},
+                        b: {}
+                    }}},
+                    'ConstraintExpressions'
+                ],
+                [
+                    [{[typeName]: 'Test', a: 'a', b: 'b'}],
+                    {entities: {Test: {
+                        _constraintExecutions: [{evaluation: 'return false'}],
+                        a: {},
+                        b: {}
+                    }}},
+                    'ConstraintExecutions'
+                ],
+                [
+                    [{[typeName]: 'Test', a: 'a', b: 'b'}],
+                    {entities: {Test: {
+                        _constraintExecutions: [{
+                            description: '`Fails always!`',
+                            evaluation: 'return false'
+                        }],
+                        a: {},
+                        b: {}
+                    }}},
+                    'ConstraintExecutions'
+                ],
+                [
+                    [{[typeName]: 'Test', a: 'a', b: 'b'}],
+                    {entities: {Test: {
+                        _constraintExecutions: [{
+                            description: '`a: ${newDocument.a} failed!`',
+                            evaluation: 'return newDocument.a === newDocument.b'
+                        }],
+                        a: {},
+                        b: {}
+                    }}},
+                    'ConstraintExecutions'
+                ],
                 // endregion
                 // region attachment
+                // Non specified attachments aren't allowed.
                 [
                     [{[typeName]: 'Test', [attachmentName]: {}}],
-                    {entities: {Test: {}}}, 'Property'
+                    {entities: {Test: {}}},
+                    'Property'
                 ],
-                [[{[typeName]: 'Test'}], {entities: {Test: {[attachmentName]: {
-                    '.*': {minimumNumber: 1, nullable: false}
-                }}}}, 'AttachmentMissing'],
-                [[{[typeName]: 'Test', [attachmentName]: {test: {
-                    data: null
-                }}}], {entities: {Test: {[attachmentName]: {'.*': {
-                    nullable: false
-                }}}}}, 'AttachmentMissing'],
-                [[{
-                    [typeName]: 'Test',
-                    [attachmentName]: {test: {data: null}}
-                }], {
-                    entities: {Test: {[attachmentName]: {'.*': {
+                // Required attachments have to be present.
+                [
+                    [{[typeName]: 'Test'}],
+                    {entities: {Test: {[attachmentName]: {
+                        '.*': {minimumNumber: 1, nullable: false}
+                    }}}},
+                    'AttachmentMissing'
+                ],
+                [
+                    [{[typeName]: 'Test', [attachmentName]: {test: {
+                        data: null
+                    }}}],
+                    {entities: {Test: {[attachmentName]: {'.*': {
+                        nullable: false
+                    }}}}},
+                    'AttachmentMissing'
+                ],
+                [
+                    [{
+                        [typeName]: 'Test',
+                        [attachmentName]: {test: {data: null}}
+                    }],
+                    {entities: {Test: {[attachmentName]: {'.*': {
                         minimumNumber: 1, nullable: false
-                    }}}}
-                }, 'AttachmentMissing'],
-                [[{[typeName]: 'Test', [attachmentName]: {
-                    /* eslint-disable camelcase */
-                    a: {data: '', content_type: 'text/plain'}
-                    /* eslint-enable camelcase */
-                }}], {entities: {Test: {[attachmentName]: {
-                    a: {minimumNumber: 1, nullable: false},
-                    b: {minimumNumber: 1, nullable: false}
-                }}}}, 'AttachmentMissing'],
-                [[{[typeName]: 'Test'}], {entities: {Test: {[attachmentName]: {
-                    a: {minimumNumber: 1, nullable: false}
-                }}}}, 'AttachmentMissing'],
-                [[{[typeName]: 'Test', [attachmentName]: null}], {entities: {
-                    Test: {[attachmentName]: {'.*': {
+                    }}}}},
+                    'AttachmentMissing'
+                ],
+                // Every required attachments have to be present.
+                [
+                    [{[typeName]: 'Test', [attachmentName]: {
+                        /* eslint-disable camelcase */
+                        a: {data: '', content_type: 'text/plain'}
+                        /* eslint-enable camelcase */
+                    }}],
+                    {entities: {Test: {[attachmentName]: {
+                        a: {minimumNumber: 1, nullable: false},
+                        b: {minimumNumber: 1, nullable: false}
+                    }}}},
+                    'AttachmentMissing'
+                ],
+                [
+                    [{[typeName]: 'Test'}],
+                    {entities: {Test: {[attachmentName]: {a: {
                         minimumNumber: 1, nullable: false
-                    }}}
-                }}, 'AttachmentMissing'],
+                    }}}}},
+                    'AttachmentMissing'
+                ],
+                [
+                    [{[typeName]: 'Test', [attachmentName]: null}],
+                    {entities: {Test: {[attachmentName]: {'.*': {
+                        minimumNumber: 1, nullable: false
+                    }}}}},
+                    'AttachmentMissing'
+                ],
+                // Attachments have to be attachments types.
                 [
                     [{[typeName]: 'Test', [attachmentName]: new Date()}],
                     {entities: {Test: {[attachmentName]: {'.*': {}}}}},
                     'AttachmentType'
                 ],
-                [[{[typeName]: 'Test', [attachmentName]: {
-                    /* eslint-disable camelcase */
-                    a: {data: '', content_type: 'text/plain'},
-                    b: {data: '', content_type: 'text/plain'}
-                    /* eslint-enable camelcase */
-                }}], {entities: {Test: {[attachmentName]: {'.*': {
-                    maximumNumber: 1
-                }}}}}, 'AttachmentMaximum'],
-                [[{[typeName]: 'Test', [attachmentName]: {}}], {entities: {
-                    Test: {[attachmentName]: {'.*': {
-                        minimumNumber: 1, nullable: false
-                    }}}
-                }}, 'AttachmentMissing'],
-                [[{[typeName]: 'Test', [attachmentName]: {test: {
-                    data: null
-                }}}, {
-                    [typeName]: 'Test',
-                    [attachmentName]: {test: {
+                // Number of attachments have to be in its specified bounds.
+                [
+                    [{[typeName]: 'Test', [attachmentName]: {
                         /* eslint-disable camelcase */
-                        content_type: 'text/plain', data: ''
+                        a: {data: '', content_type: 'text/plain'},
+                        b: {data: '', content_type: 'text/plain'}
                         /* eslint-enable camelcase */
-                    }}
-                }], {entities: {Test: {[attachmentName]: {'.*': {
-                    nullable: false
-                }}}}}, 'AttachmentMissing'],
+                    }}],
+                    {entities: {Test: {[attachmentName]: {'.*': {
+                        maximumNumber: 1
+                    }}}}},
+                    'AttachmentMaximum'
+                ],
+                [
+                    [{[typeName]: 'Test', [attachmentName]: {test: {
+                        /* eslint-disable camelcase */
+                        data: '', content_type: 'text/plain'
+                        /* eslint-enable camelcase */
+                    }}}],
+                    {entities: {Test: {[attachmentName]: {'.*': {
+                        minimumNumber: 2
+                    }}}}},
+                    'AttachmentMinimum'
+                ],
+                [
+                    [{[typeName]: 'Test', [attachmentName]: {}}],
+                    {entities: {Test: {[attachmentName]: {'.*': {
+                        minimumNumber: 1, nullable: false
+                    }}}}},
+                    'AttachmentMissing'
+                ],
+                /*
+                    Needed attachments should be removable if no proper
+                    replacement is provided.
+                */
+                [
+                    [
+                        {[typeName]: 'Test', [attachmentName]: {test: {
+                            data: null
+                        }}},
+                        {
+                            [typeName]: 'Test',
+                            [attachmentName]: {test: {
+                                /* eslint-disable camelcase */
+                                content_type: 'text/plain', data: ''
+                                /* eslint-enable camelcase */
+                            }}
+                        }
+                    ],
+                    {entities: {Test: {[attachmentName]: {'.*': {
+                        nullable: false
+                    }}}}},
+                    'AttachmentMissing'
+                ],
+                // Attachments types should match their specification.
                 [
                     [{[typeName]: 'Test', [attachmentName]: {a: {
                         /* eslint-disable camelcase */
@@ -791,83 +1019,123 @@ registerTest(async function():Promise<void> {
                     {entities: {Test: {[attachmentName]: {b: {}, c: {}}}}},
                     'AttachmentTypeMatch'
                 ],
-                [[{[typeName]: 'Test', [attachmentName]: {test: {
-                    /* eslint-disable camelcase */
-                    data: '', content_type: 'text/plain'
-                    /* eslint-enable camelcase */
-                }}}], {entities: {Test: {[attachmentName]: {'.*': {
-                    minimumNumber: 2
-                }}}}}, 'AttachmentMinimum'],
-                [[{[typeName]: 'Test', [attachmentName]: {a: {
-                    /* eslint-disable camelcase */
-                    data: '', content_type: 'text/plain'
-                    /* eslint-enable camelcase */
-                }}}], {entities: {Test: {[attachmentName]: {'.*': {
-                    regularExpressionPattern: /b/g
-                }}}}}, 'AttachmentName'],
-                [[{[typeName]: 'Test', [attachmentName]: {a: {
-                    /* eslint-disable camelcase */
-                    data: '', content_type: 'text/plain'
-                    /* eslint-enable camelcase */
-                }}}], {entities: {Test: {[attachmentName]: {'.*': {
-                    invertedRegularExpressionPattern: /a/g
-                }}}}}, 'InvertedAttachmentName'],
-                [[{[typeName]: 'Test', [attachmentName]: {
-                    /* eslint-disable camelcase */
-                    a: {data: '', content_type: 'text/plain'},
-                    b: {data: '', content_type: 'text/plain'}
-                    /* eslint-enable camelcase */
-                }}], {entities: {Test: {[attachmentName]: {'.*': {
-                    regularExpressionPattern: /a/
-                }}}}}, 'AttachmentName'],
-                [[{[typeName]: 'Test', [attachmentName]: {
-                    /* eslint-disable camelcase */
-                    a: {data: '', content_type: 'text/plain'},
-                    b: {data: '', content_type: 'text/plain'}
-                    /* eslint-enable camelcase */
-                }}], {entities: {Test: {[attachmentName]: {'.*': {
-                    invertedRegularExpressionPattern: /a/
-                }}}}}, 'InvertedAttachmentName'],
-                [[{[typeName]: 'Test', [attachmentName]: {
-                    /* eslint-disable camelcase */
-                    a: {data: '', content_type: 'text/plain'},
-                    b: {data: '', content_type: 'image/jpg'}
-                    /* eslint-enable camelcase */
-                }}], {entities: {Test: {[attachmentName]: {'.*': {
-                    contentTypeRegularExpressionPattern: /text\/plain/
-                }}}}}, 'AttachmentContentType'],
-                [[{[typeName]: 'Test', [attachmentName]: {a: {
-                    data: 'a', length: 1
-                }}}], {entities: {Test: {[attachmentName]: {a: {
-                    minimumSize: 2
-                }}}}}, 'AttachmentMinimumSize'],
-                [[{[typeName]: 'Test', [attachmentName]: {a: {
-                    data: 'abcd', length: 3
-                }}}], {entities: {Test: {[attachmentName]: {a: {
-                    maximumSize: 2
-                }}}}}, 'AttachmentMaximumSize'],
-                [[{[typeName]: 'Test', [attachmentName]: {a: {
-                    data: 'a', length: 1
-                }}}], {entities: {Test: {[attachmentName]: {a: {
-                    minimumAggregatedSize: 2
-                }}}}}, 'AttachmentAggregatedMinimumSize'],
-                [[{[typeName]: 'Test', [attachmentName]: {a: {
-                    data: 'abcd', length: 3
-                }}}], {entities: {Test: {[attachmentName]: {a: {
-                    maximumAggregatedSize: 2
-                }}}}}, 'AttachmentAggregatedMaximumSize'],
-                [[{[typeName]: 'Test', [attachmentName]: {a: {
-                    data: 'a', length: 1
-                }}}], {entities: {Test: {
-                    _minimumAggregatedSize: 2,
-                    [attachmentName]: {a: {}}
-                }}}, 'AggregatedMinimumSize'],
-                [[{[typeName]: 'Test', [attachmentName]: {a: {
-                    data: 'abcd', length: 3
-                }}}], {entities: {Test: {
-                    _maximumAggregatedSize: 2,
-                    [attachmentName]: {a: {}}
-                }}}, 'AggregatedMaximumSize']
+                // Attachments names should match their specification.
+                [
+                    [{[typeName]: 'Test', [attachmentName]: {a: {
+                        /* eslint-disable camelcase */
+                        data: '', content_type: 'text/plain'
+                        /* eslint-enable camelcase */
+                    }}}],
+                    {entities: {Test: {[attachmentName]: {'.*': {
+                        regularExpressionPattern: /b/g
+                    }}}}},
+                    'AttachmentName'
+                ],
+                [
+                    [{[typeName]: 'Test', [attachmentName]: {a: {
+                        /* eslint-disable camelcase */
+                        data: '', content_type: 'text/plain'
+                        /* eslint-enable camelcase */
+                    }}}],
+                    {entities: {Test: {[attachmentName]: {'.*': {
+                        invertedRegularExpressionPattern: /a/g
+                    }}}}},
+                    'InvertedAttachmentName'
+                ],
+                [
+                    [{[typeName]: 'Test', [attachmentName]: {
+                        /* eslint-disable camelcase */
+                        a: {data: '', content_type: 'text/plain'},
+                        b: {data: '', content_type: 'text/plain'}
+                        /* eslint-enable camelcase */
+                    }}],
+                    {entities: {Test: {[attachmentName]: {'.*': {
+                        regularExpressionPattern: /a/
+                    }}}}},
+                    'AttachmentName'
+                ],
+                [
+                    [{[typeName]: 'Test', [attachmentName]: {
+                        /* eslint-disable camelcase */
+                        a: {data: '', content_type: 'text/plain'},
+                        b: {data: '', content_type: 'text/plain'}
+                        /* eslint-enable camelcase */
+                    }}],
+                    {entities: {Test: {[attachmentName]: {'.*': {
+                        invertedRegularExpressionPattern: /a/
+                    }}}}},
+                    'InvertedAttachmentName'
+                ],
+                // Attachments content type should match their specification.
+                [
+                    [{[typeName]: 'Test', [attachmentName]: {
+                        /* eslint-disable camelcase */
+                        a: {data: '', content_type: 'text/plain'},
+                        b: {data: '', content_type: 'image/jpg'}
+                        /* eslint-enable camelcase */
+                    }}],
+                    {entities: {Test: {[attachmentName]: {'.*': {
+                        contentTypeRegularExpressionPattern: /text\/plain/
+                    }}}}},
+                    'AttachmentContentType'
+                ],
+                // Attachments specified sizes should be ensured.
+                [
+                    [{[typeName]: 'Test', [attachmentName]: {a: {
+                        data: 'a', length: 1
+                    }}}],
+                    {entities: {Test: {[attachmentName]: {a: {
+                        minimumSize: 2
+                    }}}}},
+                    'AttachmentMinimumSize'
+                ],
+                [
+                    [{[typeName]: 'Test', [attachmentName]: {a: {
+                        data: 'abcd', length: 3
+                    }}}],
+                    {entities: {Test: {[attachmentName]: {a: {maximumSize: 2
+                    }}}}},
+                    'AttachmentMaximumSize'
+                ],
+                // Overall attachments specified sizes should be ensured.
+                [
+                    [{[typeName]: 'Test', [attachmentName]: {a: {
+                        data: 'a', length: 1
+                    }}}],
+                    {entities: {Test: {[attachmentName]: {a: {
+                        minimumAggregatedSize: 2
+                    }}}}},
+                    'AttachmentAggregatedMinimumSize'
+                ],
+                [
+                    [{[typeName]: 'Test', [attachmentName]: {a: {
+                        data: 'abcd', length: 3
+                    }}}],
+                    {entities: {Test: {[attachmentName]: {a: {
+                        maximumAggregatedSize: 2
+                    }}}}},
+                    'AttachmentAggregatedMaximumSize'
+                ],
+                [
+                    [{[typeName]: 'Test', [attachmentName]: {a: {
+                        data: 'a', length: 1
+                    }}}],
+                    {entities: {Test: {
+                        _minimumAggregatedSize: 2,
+                        [attachmentName]: {a: {}}
+                    }}},
+                    'AggregatedMinimumSize'
+                ],
+                [
+                    [{[typeName]: 'Test', [attachmentName]: {a: {
+                        data: 'abcd', length: 3
+                    }}}],
+                    {entities: {Test: {
+                        _maximumAggregatedSize: 2,
+                        [attachmentName]: {a: {}}
+                    }}},
+                    'AggregatedMaximumSize'
+                ]
                 // endregion
             ]) {
                 if (test.length < 3)
