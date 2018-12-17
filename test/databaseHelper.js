@@ -1224,6 +1224,7 @@ registerTest(async function():Promise<void> {
                         }
                     ],
                 */
+                // It should be possible to remove existing documents.
                 [
                     [
                         {[typeName]: 'Test', _deleted: true},
@@ -1236,6 +1237,10 @@ registerTest(async function():Promise<void> {
                         '': {[typeName]: 'Test', _deleted: true}
                     }
                 ],
+                /*
+                    It should be possible to migrate documents with non
+                    specified properties.
+                */
                 [
                     [{
                         a: 2,
@@ -1249,12 +1254,10 @@ registerTest(async function():Promise<void> {
                         '': {[typeName]: 'Test'}
                     }
                 ],
+                // TODO document what is really tested.
                 [
                     [
-                        {
-                            [idName]: 1,
-                            [revisionName]: 1
-                        },
+                        {[idName]: 1, [revisionName]: 1},
                         null,
                         {},
                         {
@@ -1372,251 +1375,356 @@ registerTest(async function():Promise<void> {
                 ],
                 // endregion
                 // region model
-                [[{[typeName]: 'Test'}], {entities: {Test: {}}}, {
-                    fillUp: {[typeName]: 'Test'},
-                    incremental: {[typeName]: 'Test'},
-                    '': {[typeName]: 'Test'}
-                }],
-                [[{[typeName]: 'Test'}], {entities: {Test: {}}}, {
-                    fillUp: {[typeName]: 'Test'},
-                    incremental: {[typeName]: 'Test'},
-                    '': {[typeName]: 'Test'}
-                }],
-                [[{[typeName]: 'Test'}], {entities: {Test: {class: {}}}}, {
-                    fillUp: {[typeName]: 'Test'},
-                    incremental: {[typeName]: 'Test'},
-                    '': {[typeName]: 'Test'}
-                }],
-                [[
-                    {[typeName]: 'Test', b: 'b'},
-                    {[typeName]: 'Test', a: '2'}
-                ], {
-                    entities: {Test: {a: {}, b: {}}}
-                }, {
-                    fillUp: {[typeName]: 'Test', a: '2', b: 'b'},
-                    incremental: {b: 'b'},
-                    '': {[typeName]: 'Test', b: 'b'}
-                }],
-                [[
-                    {[typeName]: 'Test', a: '3'},
-                    {[typeName]: 'Test', a: '2'}
-                ], {entities: {Test: {a: {}}}}, {
-                    fillUp: {a: '3', [typeName]: 'Test'},
-                    incremental: {a: '3'},
-                    '': {[typeName]: 'Test', a: '3'}
-                }],
-                [[{[typeName]: 'Test', a: {[typeName]: '_test'}}], {
-                    entities: {Test: {a: {type: '_test'}}, _test: {}}
-                }, {
-                    fillUp: {[typeName]: 'Test', a: {[typeName]: '_test'}},
-                    incremental: {
-                        [typeName]: 'Test',
-                        a: {[typeName]: '_test'}
-                    },
-                    '': {[typeName]: 'Test', a: {[typeName]: '_test'}}
-                }],
+                // It specified be possible to created specified documents.
+                [
+                    [{[typeName]: 'Test'}],
+                    {entities: {Test: {}}}, {
+                        fillUp: {[typeName]: 'Test'},
+                        incremental: {[typeName]: 'Test'},
+                        '': {[typeName]: 'Test'}
+                    }
+                ],
+                [
+                    [{[typeName]: 'Test'}],
+                    {entities: {Test: {}}},
+                    {
+                        fillUp: {[typeName]: 'Test'},
+                        incremental: {[typeName]: 'Test'},
+                        '': {[typeName]: 'Test'}
+                    }
+                ],
+                [
+                    [{[typeName]: 'Test'}],
+                    {entities: {Test: {class: {}}}},
+                    {
+                        fillUp: {[typeName]: 'Test'},
+                        incremental: {[typeName]: 'Test'},
+                        '': {[typeName]: 'Test'}
+                    }
+                ],
+                [
+                    [
+                        {[typeName]: 'Test', b: 'b'},
+                        {[typeName]: 'Test', a: '2'}
+                    ],
+                    {entities: {Test: {a: {}, b: {}}}},
+                    {
+                        fillUp: {[typeName]: 'Test', a: '2', b: 'b'},
+                        incremental: {b: 'b'},
+                        '': {[typeName]: 'Test', b: 'b'}
+                    }
+                ],
+                [
+                    [
+                        {[typeName]: 'Test', a: '3'},
+                        {[typeName]: 'Test', a: '2'}
+                    ],
+                    {entities: {Test: {a: {}}}},
+                    {
+                        fillUp: {a: '3', [typeName]: 'Test'},
+                        incremental: {a: '3'},
+                        '': {[typeName]: 'Test', a: '3'}
+                    }
+                ],
+                [
+                    [{[typeName]: 'Test', a: {[typeName]: '_test'}}],
+                    {entities: {Test: {a: {type: '_test'}}, _test: {}}},
+                    {
+                        fillUp: {[typeName]: 'Test', a: {[typeName]: '_test'}},
+                        incremental: {
+                            [typeName]: 'Test',
+                            a: {[typeName]: '_test'}
+                        },
+                        '': {[typeName]: 'Test', a: {[typeName]: '_test'}}
+                    }
+                ],
                 // endregion
                 // region hooks
                 // / region on create
-                [[{[typeName]: 'Test', a: ''}], {entities: {Test: {a: {
-                    onCreateExpression: `'2'`
-                }}}}, {
-                    fillUp: {[typeName]: 'Test', a: '2'},
-                    incremental: {[typeName]: 'Test', a: '2'},
-                    '': {[typeName]: 'Test', a: '2'}
-                }],
-                [[{[typeName]: 'Test', [attachmentName]: {test: {
-                    /* eslint-disable camelcase */
-                    data: 'payload', content_type: 'text/plain'
-                    /* eslint-enable camelcase */
-                }}}], {entities: {Test: {[attachmentName]: {'.*': {
-                    onCreateExpression:
-                        `(newDocument[name].data += ' footer') && ` +
-                        'newDocument[name]'
-                }}}}}, {
-                    fillUp: {[typeName]: 'Test', [attachmentName]: {test: {
-                        /* eslint-disable camelcase */
-                        data: 'payload footer', content_type: 'text/plain'
-                        /* eslint-enable camelcase */
-                    }}},
-                    incremental: {[typeName]: 'Test', [attachmentName]: {
-                        test: {
+                [
+                    [{[typeName]: 'Test', a: ''}],
+                    {entities: {Test: {a: {onCreateExpression: `'2'`}}}},
+                    {
+                        fillUp: {[typeName]: 'Test', a: '2'},
+                        incremental: {[typeName]: 'Test', a: '2'},
+                        '': {[typeName]: 'Test', a: '2'}
+                    }
+                ],
+                [
+                    [{
+                        [typeName]: 'Test',
+                        [attachmentName]: {test: {
                             /* eslint-disable camelcase */
-                            data: 'payload footer', content_type: 'text/plain'
+                            data: 'payload', content_type: 'text/plain'
                             /* eslint-enable camelcase */
-                        }
-                    }},
-                    '': {[typeName]: 'Test', [attachmentName]: {test: {
-                        /* eslint-disable camelcase */
-                        data: 'payload footer', content_type: 'text/plain'
-                        /* eslint-enable camelcase */
-                    }}}
-                }],
-                [[{[typeName]: 'Test', [attachmentName]: {test: {
-                    /* eslint-disable camelcase */
-                    data: 'payload', content_type: 'text/plain'
-                    /* eslint-enable camelcase */
-                }}}, {[typeName]: 'Test'}], {entities: {Test: {
-                    [attachmentName]: {'.*': {
+                        }}
+                    }],
+                    {entities: {Test: {[attachmentName]: {'.*': {
                         onCreateExpression:
                             `(newDocument[name].data += ' footer') && ` +
                             'newDocument[name]'
-                    }}
-                }}}, {
-                    fillUp: {[typeName]: 'Test', [attachmentName]: {test: {
-                        /* eslint-disable camelcase */
-                        data: 'payload', content_type: 'text/plain'
-                        /* eslint-enable camelcase */
+                    }}}}},
+                    {
+                        fillUp: {
+                            [typeName]: 'Test',
+                            [attachmentName]: {test: {
+                                /* eslint-disable camelcase */
+                                data: 'payload footer', content_type: 'text/plain'
+                                /* eslint-enable camelcase */
+                            }}
+                        },
+                        incremental: {
+                            [typeName]: 'Test',
+                            [attachmentName]: {test: {
+                                /* eslint-disable camelcase */
+                                data: 'payload footer', content_type: 'text/plain'
+                                /* eslint-enable camelcase */
+                            }}
+                        },
+                        '': {
+                            [typeName]: 'Test',
+                            [attachmentName]: {test: {
+                                /* eslint-disable camelcase */
+                                data: 'payload footer', content_type: 'text/plain'
+                                /* eslint-enable camelcase */
+                            }}
+                        }
+                    }
+                ],
+                [
+                    [
+                        {
+                            [typeName]: 'Test',
+                            [attachmentName]: {test: {
+                                /* eslint-disable camelcase */
+                                data: 'payload', content_type: 'text/plain'
+                                /* eslint-enable camelcase */
+                            }}
+                        },
+                        {[typeName]: 'Test'}
+                    ],
+                    {entities: {Test: {[attachmentName]: {'.*': {
+                        onCreateExpression:
+                            `(newDocument[name].data += ' footer') && ` +
+                            'newDocument[name]'
+                    }}}}},
+                    {
+                        fillUp: {
+                            [typeName]: 'Test',
+                            [attachmentName]: {test: {
+                                /* eslint-disable camelcase */
+                                data: 'payload', content_type: 'text/plain'
+                                /* eslint-enable camelcase */
+                            }}
+                        },
+                        incremental: {[attachmentName]: {test: {
+                            /* eslint-disable camelcase */
+                            data: 'payload', content_type: 'text/plain'
+                            /* eslint-enable camelcase */
+                        }}},
+                        '': {
+                            [typeName]: 'Test',
+                            [attachmentName]: {test: {
+                                /* eslint-disable camelcase */
+                                data: 'payload', content_type: 'text/plain'
+                                /* eslint-enable camelcase */
+                            }}
+                        }
+                    }
+                ],
+                [
+                    [{[typeName]: 'Test', a: ''}],
+                    {entities: {Test: {a: {onCreateExecution: `return '2'`}}}},
+                    {
+                        fillUp: {[typeName]: 'Test', a: '2'},
+                        incremental: {[typeName]: 'Test', a: '2'},
+                        '': {[typeName]: 'Test', a: '2'}
+                    }
+                ],
+                [
+                    [
+                        {[typeName]: 'Test', a: '3', b: 'b'},
+                        {[typeName]: 'Test', a: '3'}
+                    ],
+                    {entities: {Test: {
+                        a: {onCreateExecution: `return '2'`},
+                        b: {}
                     }}},
-                    incremental: {[attachmentName]: {test: {
-                        /* eslint-disable camelcase */
-                        data: 'payload', content_type: 'text/plain'
-                        /* eslint-enable camelcase */
-                    }}},
-                    '': {[typeName]: 'Test', [attachmentName]: {test: {
-                        /* eslint-disable camelcase */
-                        data: 'payload', content_type: 'text/plain'
-                        /* eslint-enable camelcase */
-                    }}}
-                }],
-                [[{[typeName]: 'Test', a: ''}], {entities: {Test: {a: {
-                    onCreateExecution: `return '2'`
-                }}}}, {
-                    fillUp: {[typeName]: 'Test', a: '2'},
-                    incremental: {[typeName]: 'Test', a: '2'},
-                    '': {[typeName]: 'Test', a: '2'}
-                }],
-                [[
-                    {[typeName]: 'Test', a: '3', b: 'b'},
-                    {[typeName]: 'Test', a: '3'}
-                ], {entities: {Test: {
-                    a: {onCreateExecution: `return '2'`},
-                    b: {}
-                }}}, {
-                    fillUp: {[typeName]: 'Test', a: '3', b: 'b'},
-                    incremental: {b: 'b'},
-                    '': {[typeName]: 'Test', a: '3', b: 'b'}
-                }],
+                    {
+                        fillUp: {[typeName]: 'Test', a: '3', b: 'b'},
+                        incremental: {b: 'b'},
+                        '': {[typeName]: 'Test', a: '3', b: 'b'}
+                    }
+                ],
                 // / endregion
                 // / region on update
-                [[{[typeName]: 'Test', a: ''}], {entities: {Test: {a: {
-                    onUpdateExpression: `'2'`
-                }}}}, {
-                    fillUp: {[typeName]: 'Test', a: '2'},
-                    incremental: {[typeName]: 'Test', a: '2'},
-                    '': {[typeName]: 'Test', a: '2'}
-                }],
-                [[{[typeName]: 'Test', a: ''}], {entities: {Test: {a: {
-                    onUpdateExecution: `return '2'`
-                }}}}, {
-                    fillUp: {[typeName]: 'Test', a: '2'},
-                    incremental: {[typeName]: 'Test', a: '2'},
-                    '': {[typeName]: 'Test', a: '2'}
-                }],
-                [[
-                    {[typeName]: 'Test', a: '1', b: ''},
-                    {[typeName]: 'Test', a: '2'}
-                ], {entities: {Test: {
-                    a: {onUpdateExpression: `'2'`},
-                    b: {emptyEqualsToNull: false}
-                }}}, {
-                    fillUp: {[typeName]: 'Test', a: '2', b: ''},
-                    incremental: {b: ''},
-                    '': {[typeName]: 'Test', a: '2', b: ''}
-                }],
-                [[{[typeName]: 'Test', [attachmentName]: {test: {
-                    /* eslint-disable camelcase */
-                    data: 'payload', content_type: 'text/plain'
-                    /* eslint-enable camelcase */
-                }}}], {entities: {Test: {[attachmentName]: {'.*': {
-                    onUpdateExpression:
-                        `(newDocument[name].data += ' footer') && ` +
-                        'newDocument[name]'
-                }}}}}, {
-                    fillUp: {[typeName]: 'Test', [attachmentName]: {test: {
-                        /* eslint-disable camelcase */
-                        data: 'payload footer', content_type: 'text/plain'
-                        /* eslint-enable camelcase */
+                [
+                    [{[typeName]: 'Test', a: ''}],
+                    {entities: {Test: {a: {onUpdateExpression: `'2'`}}}},
+                    {
+                        fillUp: {[typeName]: 'Test', a: '2'},
+                        incremental: {[typeName]: 'Test', a: '2'},
+                        '': {[typeName]: 'Test', a: '2'}
+                    }
+                ],
+                [
+                    [{[typeName]: 'Test', a: ''}],
+                    {entities: {Test: {a: {onUpdateExecution: `return '2'`}}}},
+                    {
+                        fillUp: {[typeName]: 'Test', a: '2'},
+                        incremental: {[typeName]: 'Test', a: '2'},
+                        '': {[typeName]: 'Test', a: '2'}
+                    }
+                ],
+                [
+                    [
+                        {[typeName]: 'Test', a: '1', b: ''},
+                        {[typeName]: 'Test', a: '2'}
+                    ],
+                    {entities: {Test: {
+                        a: {onUpdateExpression: `'2'`},
+                        b: {emptyEqualsToNull: false}
                     }}},
-                    incremental: {[typeName]: 'Test', [attachmentName]: {test: {
-                        /* eslint-disable camelcase */
-                        data: 'payload footer', content_type: 'text/plain'
-                        /* eslint-enable camelcase */
-                    }}},
-                    '': {[typeName]: 'Test', [attachmentName]: {test: {
-                        /* eslint-disable camelcase */
-                        data: 'payload footer', content_type: 'text/plain'
-                        /* eslint-enable camelcase */
-                    }}}
-                }],
-                [[{[typeName]: 'Test', [attachmentName]: {test: {
-                    /* eslint-disable camelcase */
-                    data: 'payload', content_type: 'text/plain'
-                    /* eslint-enable camelcase */
-                }}}, {[typeName]: 'Test'}], {entities: {Test: {
-                    [attachmentName]: {'.*': {
+                    {
+                        fillUp: {[typeName]: 'Test', a: '2', b: ''},
+                        incremental: {b: ''},
+                        '': {[typeName]: 'Test', a: '2', b: ''}
+                    }
+                ],
+                [
+                    [{
+                        [typeName]: 'Test',
+                        [attachmentName]: {test: {
+                            /* eslint-disable camelcase */
+                            data: 'payload', content_type: 'text/plain'
+                            /* eslint-enable camelcase */
+                        }}
+                    }],
+                    {entities: {Test: {[attachmentName]: {'.*': {
                         onUpdateExpression:
                             `(newDocument[name].data += ' footer') && ` +
                             'newDocument[name]'
-                    }}
-                }}}, {
-                    fillUp: {[typeName]: 'Test', [attachmentName]: {test: {
-                        /* eslint-disable camelcase */
-                        data: 'payload footer', content_type: 'text/plain'
-                        /* eslint-enable camelcase */
+                    }}}}},
+                    {
+                        fillUp: {
+                            [typeName]: 'Test',
+                            [attachmentName]: {test: {
+                                /* eslint-disable camelcase */
+                                data: 'payload footer', content_type: 'text/plain'
+                                /* eslint-enable camelcase */
+                            }}
+                        },
+                        incremental: {
+                            [typeName]: 'Test',
+                            [attachmentName]: {test: {
+                                /* eslint-disable camelcase */
+                                data: 'payload footer', content_type: 'text/plain'
+                                /* eslint-enable camelcase */
+                            }}
+                        },
+                        '': {
+                            [typeName]: 'Test',
+                            [attachmentName]: {test: {
+                                /* eslint-disable camelcase */
+                                data: 'payload footer', content_type: 'text/plain'
+                                /* eslint-enable camelcase */
+                            }}
+                        }
+                    }
+                ],
+                [
+                    [
+                        {
+                            [typeName]: 'Test',
+                            [attachmentName]: {test: {
+                                /* eslint-disable camelcase */
+                                data: 'payload', content_type: 'text/plain'
+                                /* eslint-enable camelcase */
+                            }}
+                        },
+                        {[typeName]: 'Test'}
+                    ],
+                    {entities: {Test: {[attachmentName]: {'.*': {
+                        onUpdateExpression:
+                            `(newDocument[name].data += ' footer') && ` +
+                            'newDocument[name]'
+                    }}}}},
+                    {
+                        fillUp: {
+                            [typeName]: 'Test',
+                            [attachmentName]: {test: {
+                                /* eslint-disable camelcase */
+                                data: 'payload footer', content_type: 'text/plain'
+                                /* eslint-enable camelcase */
+                            }}
+                        },
+                        incremental: {[attachmentName]: {test: {
+                            /* eslint-disable camelcase */
+                            data: 'payload footer', content_type: 'text/plain'
+                            /* eslint-enable camelcase */
+                        }}},
+                        '': {
+                            [typeName]: 'Test',
+                            [attachmentName]: {test: {
+                                /* eslint-disable camelcase */
+                                data: 'payload footer', content_type: 'text/plain'
+                                /* eslint-enable camelcase */
+                            }}
+                        }
+                    }
+                ],
+                [
+                    [{[typeName]: 'Test', a: ''}, {[typeName]: 'Test'}],
+                    {entities: {Test: {
+                        [attachmentName]: {'.*': {
+                            onUpdateExpression:
+                                `(newDocument[name].data += ' footer') && ` +
+                                'newDocument[name]'
+                        }},
+                        a: {emptyEqualsToNull: false}
                     }}},
-                    incremental: {[attachmentName]: {test: {
-                        /* eslint-disable camelcase */
-                        data: 'payload footer', content_type: 'text/plain'
-                        /* eslint-enable camelcase */
-                    }}},
-                    '': {[typeName]: 'Test', [attachmentName]: {test: {
-                        /* eslint-disable camelcase */
-                        data: 'payload footer', content_type: 'text/plain'
-                        /* eslint-enable camelcase */
-                    }}}
-                }],
-                [[
-                    {[typeName]: 'Test', a: ''},
-                    {[typeName]: 'Test'}
-                ], {entities: {Test: {
-                    [attachmentName]: {'.*': {onUpdateExpression:
-                        `(newDocument[name].data += ' footer') && ` +
-                        'newDocument[name]'
-                    }},
-                    a: {emptyEqualsToNull: false}
-                }}}, {
-                    fillUp: {[typeName]: 'Test', a: ''},
-                    incremental: {a: ''},
-                    '': {[typeName]: 'Test', a: ''}
-                }],
+                    {
+                        fillUp: {[typeName]: 'Test', a: ''},
+                        incremental: {a: ''},
+                        '': {[typeName]: 'Test', a: ''}
+                    }
+                ],
                 // / endregion
                 // endregion
                 // region property writable/mutable
-                [[
-                    {[typeName]: 'Test', a: 'b', b: ''},
-                    {[typeName]: 'Test', a: 'b'}
-                ], {entities: {Test: {a: {writable: false}, b: {
-                    emptyEqualsToNull: false
-                }}}}, {
-                    fillUp: {[typeName]: 'Test', a: 'b', b: ''},
-                    incremental: {b: ''},
-                    '': {[typeName]: 'Test', a: 'b', b: ''}
-                }],
-                [[
-                    {[typeName]: 'Test', b: ''},
-                    {[typeName]: 'Test'}
-                ], {entities: {Test: {
-                    a: {writable: false},
-                    b: {emptyEqualsToNull: false}
-                }}}, {
-                    fillUp: {[typeName]: 'Test', b: ''},
-                    incremental: {b: ''},
-                    '': {[typeName]: 'Test', b: ''}
-                }],
+                [
+                    [
+                        {[typeName]: 'Test', a: 'b', b: ''},
+                        {[typeName]: 'Test', a: 'b'}
+                    ],
+                    {entities: {Test: {a: {writable: false}, b: {
+                        emptyEqualsToNull: false
+                    }}}},
+                    {
+                        fillUp: {[typeName]: 'Test', a: 'b', b: ''},
+                        incremental: {b: ''},
+                        '': {[typeName]: 'Test', a: 'b', b: ''}
+                    }
+                ],
+                [
+                    [
+                        {[typeName]: 'Test', b: ''},
+                        {[typeName]: 'Test'}
+                    ],
+                    {entities: {Test: {
+                        a: {writable: false},
+                        b: {emptyEqualsToNull: false}
+                    }}},
+                    {
+                        fillUp: {[typeName]: 'Test', b: ''},
+                        incremental: {b: ''},
+                        '': {[typeName]: 'Test', b: ''}
+                    }
+                ],
                 [
                     [{[typeName]: 'Test', a: '2'}, {[typeName]: 'Test'}],
-                    {entities: {Test: {a: {mutable: false}}}}, {
+                    {entities: {Test: {a: {mutable: false}}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: '2'},
                         incremental: {a: '2'},
                         '': {[typeName]: 'Test', a: '2'}
@@ -1624,72 +1732,91 @@ registerTest(async function():Promise<void> {
                 ],
                 // endregion
                 // region property existents
-                [[
-                    {[typeName]: 'Test', a: null}, {[typeName]: 'Test', a: ''}
-                ], {
-                    entities: {Test: {a: {emptyEqualsToNull: false}}}
-                }, {
-                    fillUp: {[typeName]: 'Test'},
-                    incremental: {},
-                    '': {[typeName]: 'Test'}
-                }],
-                [[{[typeName]: 'Test', a: 2}], {entities: {Test: {a: {
-                    type: 'number'
-                }}}}, {
-                    fillUp: {[typeName]: 'Test', a: 2},
-                    incremental: {[typeName]: 'Test', a: 2},
-                    '': {[typeName]: 'Test', a: 2}
-                }],
-                [[{[typeName]: 'Test', a: null}], {
-                    entities: {Test: {a: {}}}
-                }, {
-                    fillUp: {[typeName]: 'Test'},
-                    incremental: {[typeName]: 'Test'},
-                    '': {[typeName]: 'Test'}
-                }],
-                [[{[typeName]: 'Test', a: 'a'}], {entities: {Test: {a: {
-                    nullable: false
-                }}}}, {
-                    fillUp: {[typeName]: 'Test', a: 'a'},
-                    incremental: {[typeName]: 'Test', a: 'a'},
-                    '': {[typeName]: 'Test', a: 'a'}
-                }],
-                [[{[typeName]: 'Test'}], {entities: {Test: {a: {
-                    default: '2',
-                    nullable: false
-                }}}}, {
-                    fillUp: {[typeName]: 'Test', a: '2'},
-                    incremental: {[typeName]: 'Test', a: '2'},
-                    '': {[typeName]: 'Test', a: '2'}
-                }],
-                [[{[typeName]: 'Test'}], {entities: {Test: {[attachmentName]: {
-                    '.*': {
+                [
+                    [
+                        {[typeName]: 'Test', a: null},
+                        {[typeName]: 'Test', a: ''}
+                    ],
+                    {entities: {Test: {a: {emptyEqualsToNull: false}}}},
+                    {
+                        fillUp: {[typeName]: 'Test'},
+                        incremental: {},
+                        '': {[typeName]: 'Test'}
+                    }
+                ],
+                [
+                    [{[typeName]: 'Test', a: 2}],
+                    {entities: {Test: {a: {type: 'number'}}}},
+                    {
+                        fillUp: {[typeName]: 'Test', a: 2},
+                        incremental: {[typeName]: 'Test', a: 2},
+                        '': {[typeName]: 'Test', a: 2}
+                    }
+                ],
+                [
+                    [{[typeName]: 'Test', a: null}],
+                    {entities: {Test: {a: {}}}},
+                    {
+                        fillUp: {[typeName]: 'Test'},
+                        incremental: {[typeName]: 'Test'},
+                        '': {[typeName]: 'Test'}
+                    }
+                ],
+                [
+                    [{[typeName]: 'Test', a: 'a'}],
+                    {entities: {Test: {a: {nullable: false}}}},
+                    {
+                        fillUp: {[typeName]: 'Test', a: 'a'},
+                        incremental: {[typeName]: 'Test', a: 'a'},
+                        '': {[typeName]: 'Test', a: 'a'}
+                    }
+                ],
+                [
+                    [{[typeName]: 'Test'}],
+                    {entities: {Test: {a: {default: '2', nullable: false}}}},
+                    {
+                        fillUp: {[typeName]: 'Test', a: '2'},
+                        incremental: {[typeName]: 'Test', a: '2'},
+                        '': {[typeName]: 'Test', a: '2'}
+                    }
+                ],
+                [
+                    [{[typeName]: 'Test'}],
+                    {entities: {Test: {[attachmentName]: {'.*': {
                         default: {test: {
                             /* eslint-disable camelcase */
                             data: '', content_type: 'text/plain'
                             /* eslint-enable camelcase */
                         }},
                         nullable: false
-                    }
-                }}}}, {
-                    fillUp: {[typeName]: 'Test', [attachmentName]: {test: {
-                        /* eslint-disable camelcase */
-                        data: '', content_type: 'text/plain'
-                        /* eslint-enable camelcase */
-                    }}},
-                    incremental: {[typeName]: 'Test', [attachmentName]: {
-                        test: {
-                            /* eslint-disable camelcase */
-                            data: '', content_type: 'text/plain'
-                            /* eslint-enable camelcase */
+                    }}}}},
+                    {
+                        fillUp: {
+                            [typeName]: 'Test',
+                            [attachmentName]: {test: {
+                                /* eslint-disable camelcase */
+                                data: '', content_type: 'text/plain'
+                                /* eslint-enable camelcase */
+                            }}
+                        },
+                        incremental: {
+                            [typeName]: 'Test',
+                            [attachmentName]: {test: {
+                                /* eslint-disable camelcase */
+                                data: '', content_type: 'text/plain'
+                                /* eslint-enable camelcase */
+                            }}
+                        },
+                        '': {
+                            [typeName]: 'Test',
+                            [attachmentName]: {test: {
+                                /* eslint-disable camelcase */
+                                data: '', content_type: 'text/plain'
+                                /* eslint-enable camelcase */
+                            }}
                         }
-                    }},
-                    '': {[typeName]: 'Test', [attachmentName]: {test: {
-                        /* eslint-disable camelcase */
-                        data: '', content_type: 'text/plain'
-                        /* eslint-enable camelcase */
-                    }}}
-                }],
+                    }
+                ],
                 // endregion
                 // region property type
                 [
@@ -1718,7 +1845,8 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{[typeName]: 'Test', a: 3}, {[typeName]: 'Test', a: 2}],
-                    {entities: {Test: {a: {type: 'integer'}}}}, {
+                    {entities: {Test: {a: {type: 'integer'}}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: 3},
                         incremental: {a: 3},
                         '': {[typeName]: 'Test', a: 3}
@@ -1726,7 +1854,8 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{[typeName]: 'Test', a: 2.2}, {[typeName]: 'Test', a: 2}],
-                    {entities: {Test: {a: {type: 'number'}}}}, {
+                    {entities: {Test: {a: {type: 'number'}}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: 2.2},
                         incremental: {a: 2.2},
                         '': {[typeName]: 'Test', a: 2.2}
@@ -1738,8 +1867,7 @@ registerTest(async function():Promise<void> {
                         {[typeName]: 'Test', a: true}
                     ],
                     {entities: {Test: {
-                        a: {type: 'boolean'},
-                        b: {emptyEqualsToNull: false}
+                        a: {type: 'boolean'}, b: {emptyEqualsToNull: false}
                     }}},
                     {
                         fillUp: {[typeName]: 'Test', a: true, b: ''},
@@ -1753,8 +1881,7 @@ registerTest(async function():Promise<void> {
                         {[typeName]: 'Test', a: 1}
                     ],
                     {entities: {Test: {
-                        a: {type: 'DateTime'},
-                        b: {emptyEqualsToNull: false}
+                        a: {type: 'DateTime'}, b: {emptyEqualsToNull: false}
                     }}},
                     {
                         fillUp: {[typeName]: 'Test', a: 1, b: ''},
@@ -1763,17 +1890,21 @@ registerTest(async function():Promise<void> {
                     }
                 ],
                 [
-                    [{
-                        [typeName]: 'Test',
-                        a: new Date(1970, 0, 1, 0, -1 * (
-                            new Date(1970, 0, 1)
-                        ).getTimezoneOffset()),
-                        b: ''
-                    }, {[typeName]: 'Test', a: new Date(
-                        1970, 0, 1, 0, -1 * (new Date(
-                            1970, 0, 1
-                        )).getTimezoneOffset()
-                    )}],
+                    [
+                        {
+                            [typeName]: 'Test',
+                            a: new Date(1970, 0, 1, 0, -1 * (
+                                new Date(1970, 0, 1)
+                            ).getTimezoneOffset()),
+                            b: ''
+                        },
+                        {
+                            [typeName]: 'Test',
+                            a: new Date(1970, 0, 1, 0, -1 * (new Date(
+                                1970, 0, 1
+                            )).getTimezoneOffset())
+                        }
+                    ],
                     {entities: {Test: {a: {type: 'DateTime'}, b: {
                         emptyEqualsToNull: false
                     }}}},
@@ -1784,21 +1915,25 @@ registerTest(async function():Promise<void> {
                     }
                 ],
                 [
-                    [{
-                        [typeName]: 'Test',
-                        a: (new Date(1970, 0, 1, 0, -1 * (new Date(
-                            1970, 0, 1
-                        )).getTimezoneOffset())).toUTCString(),
-                        b: ''
-                    }, {
-                        [typeName]: 'Test',
-                        a: (new Date(1970, 0, 1, 0, -1 * (new Date(
-                            1970, 0, 1
-                        )).getTimezoneOffset())).toUTCString()
-                    }],
-                    {entities: {Test: {a: {type: 'DateTime'}, b: {
-                        emptyEqualsToNull: false
-                    }}}},
+                    [
+                        {
+                            [typeName]: 'Test',
+                            a: (new Date(1970, 0, 1, 0, -1 * (new Date(
+                                1970, 0, 1
+                            )).getTimezoneOffset())).toUTCString(),
+                            b: ''
+                        },
+                        {
+                            [typeName]: 'Test',
+                            a: (new Date(1970, 0, 1, 0, -1 * (new Date(
+                                1970, 0, 1
+                            )).getTimezoneOffset())).toUTCString()
+                        }
+                    ],
+                    {entities: {Test: {
+                        a: {type: 'DateTime'},
+                        b: {emptyEqualsToNull: false}
+                    }}},
                     {
                         fillUp: {[typeName]: 'Test', a: 0, b: ''},
                         incremental: {b: ''},
@@ -1806,35 +1941,48 @@ registerTest(async function():Promise<void> {
                     }
                 ],
                 [
-                    [{
-                        [typeName]: 'Test',
-                        a: new Date(1970, 0, 1, 0, -1 * (new Date(
-                            1970, 0, 1
-                        )).getTimezoneOffset()).toLocaleString(),
-                        b: ''
-                    }, {[typeName]: 'Test', a: new Date(1970, 0, 1, 0, -1 * (
-                        new Date(1970, 0, 1)
-                    ).getTimezoneOffset()).toLocaleString()}],
-                    {entities: {Test: {a: {type: 'DateTime'}, b: {
-                        emptyEqualsToNull: false
-                    }}}},
-                    {
-                        fillUp: {[typeName]: 'Test', a: 0, b: ''},
-                        incremental: {b: ''},
-                        '': {[typeName]: 'Test', a: 0, b: ''}
-                    }
-                ],
-                [
-                    [{
-                        [typeName]: 'Test',
-                        a: new Date(1970, 0, 1, 0, -1 * (new Date(
-                            1970, 0, 1
-                        )).getTimezoneOffset(), 1, 0),
-                        b: ''
+                    [
+                        {
+                            [typeName]: 'Test',
+                            a: new Date(1970, 0, 1, 0, -1 * (new Date(
+                                1970, 0, 1
+                            )).getTimezoneOffset()).toLocaleString(),
+                            b: ''
+                        },
+                        {
+                            [typeName]: 'Test',
+                            a: new Date(1970, 0, 1, 0, -1 * (new Date(
+                                1970, 0, 1
+                            )).getTimezoneOffset()).toLocaleString()
+                        }
+                    ],
+                    {entities: {Test: {
+                        a: {type: 'DateTime'},
+                        b: {emptyEqualsToNull: false}}}
                     },
-                    {[typeName]: 'Test', a: new Date(1970, 0, 1, 0, -1 * (
-                        new Date(1970, 0, 1)
-                    ).getTimezoneOffset(), 1, 0)}],
+                    {
+                        fillUp: {[typeName]: 'Test', a: 0, b: ''},
+                        incremental: {b: ''},
+                        '': {[typeName]: 'Test', a: 0, b: ''}
+                    }
+                ],
+                // TODO structural
+                [
+                    [
+                        {
+                            [typeName]: 'Test',
+                            a: new Date(1970, 0, 1, 0, -1 * (new Date(
+                                1970, 0, 1
+                            )).getTimezoneOffset(), 1, 0),
+                            b: ''
+                        },
+                        {
+                            [typeName]: 'Test',
+                            a: new Date(1970, 0, 1, 0, -1 * (new Date(
+                                1970, 0, 1
+                            )).getTimezoneOffset(), 1, 0)
+                        }
+                    ],
                     {entities: {Test: {a: {type: 'DateTime'}, b: {
                         emptyEqualsToNull: false
                     }}}},
@@ -1845,33 +1993,46 @@ registerTest(async function():Promise<void> {
                     }
                 ],
                 [
-                    [{
-                        [typeName]: 'Test',
-                        a: new Date(1970, 0, 1, 0, -1 * (new Date(
-                            1970, 0, 1
-                        )).getTimezoneOffset(), 2).toUTCString(),
-                        b: ''
-                    }, {[typeName]: 'Test', a: new Date(1970, 0, 1, 0, -1 * (
-                        new Date(1970, 0, 1)
-                    ).getTimezoneOffset(), 2).toUTCString()}],
+                    [
+                        {
+                            [typeName]: 'Test',
+                            a: new Date(1970, 0, 1, 0, -1 * (new Date(
+                                1970, 0, 1
+                            )).getTimezoneOffset(), 2).toUTCString(),
+                            b: ''
+                        },
+                        {
+                            [typeName]: 'Test',
+                            a: new Date(1970, 0, 1, 0, -1 * (new Date(
+                                1970, 0, 1
+                            )).getTimezoneOffset(), 2).toUTCString()
+                        }
+                    ],
                     {entities: {Test: {a: {type: 'DateTime'}, b: {
                         emptyEqualsToNull: false
-                    }}}}, {
+                    }}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: 2, b: ''},
                         incremental: {b: ''},
                         '': {[typeName]: 'Test', a: 2, b: ''}
                     }
                 ],
                 [
-                    [{
-                        [typeName]: 'Test',
-                        a: new Date(1970, 0, 1, 5, -1 * (new Date(
-                            1970, 0, 1
-                        )).getTimezoneOffset(), 2).toISOString(),
-                        b: ''
-                    }, {[typeName]: 'Test', a: new Date(1970, 0, 1, 5, -1 * (
-                        new Date(1970, 0, 1)
-                    ).getTimezoneOffset(), 2).toISOString()}],
+                    [
+                        {
+                            [typeName]: 'Test',
+                            a: new Date(1970, 0, 1, 5, -1 * (new Date(
+                                1970, 0, 1
+                            )).getTimezoneOffset(), 2).toISOString(),
+                            b: ''
+                        },
+                        {
+                            [typeName]: 'Test',
+                            a: new Date(1970, 0, 1, 5, -1 * (new Date(
+                                1970, 0, 1
+                            )).getTimezoneOffset(), 2).toISOString()
+                        }
+                    ],
                     {entities: {Test: {a: {type: 'DateTime'}, b: {
                         emptyEqualsToNull: false
                     }}}},
@@ -1919,7 +2080,8 @@ registerTest(async function():Promise<void> {
                     ],
                     {entities: {Test: {a: {type: 'string[]'}, b: {
                         emptyEqualsToNull: false
-                    }}}}, {
+                    }}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: ['2'], b: ''},
                         incremental: {b: ''},
                         '': {[typeName]: 'Test', a: ['2'], b: ''}
@@ -1930,7 +2092,8 @@ registerTest(async function():Promise<void> {
                         {[typeName]: 'Test', a: ['2']},
                         {[typeName]: 'Test', a: ['2', '3']}
                     ],
-                    {entities: {Test: {a: {type: 'string[]'}}}}, {
+                    {entities: {Test: {a: {type: 'string[]'}}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: ['2']},
                         incremental: {a: ['2']},
                         '': {[typeName]: 'Test', a: ['2']}
@@ -1941,7 +2104,8 @@ registerTest(async function():Promise<void> {
                         {[typeName]: 'Test', a: ['3']},
                         {[typeName]: 'Test', a: ['2']}
                     ],
-                    {entities: {Test: {a: {type: 'string[]'}}}}, {
+                    {entities: {Test: {a: {type: 'string[]'}}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: ['3']},
                         incremental: {a: ['3']},
                         '': {[typeName]: 'Test', a: ['3']}
@@ -1949,25 +2113,31 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{[typeName]: 'Test', a: ['2']}, {[typeName]: 'Test'}],
-                    {entities: {Test: {a: {type: 'string[]'}}}}, {
+                    {entities: {Test: {a: {type: 'string[]'}}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: ['2']},
                         incremental: {a: ['2']},
                         '': {[typeName]: 'Test', a: ['2']}
                     }
                 ],
-                [[
-                    {[typeName]: 'Test', a: null, b: ''},
-                    {[typeName]: 'Test'}
-                ], {entities: {Test: {a: {type: 'string[]'}, b: {
-                    emptyEqualsToNull: false
-                }}}}, {
-                    fillUp: {[typeName]: 'Test', b: ''},
-                    incremental: {b: ''},
-                    '': {[typeName]: 'Test', b: ''}
-                }],
+                [
+                    [
+                        {[typeName]: 'Test', a: null, b: ''},
+                        {[typeName]: 'Test'}
+                    ],
+                    {entities: {Test: {a: {type: 'string[]'}, b: {
+                        emptyEqualsToNull: false
+                    }}}},
+                    {
+                        fillUp: {[typeName]: 'Test', b: ''},
+                        incremental: {b: ''},
+                        '': {[typeName]: 'Test', b: ''}
+                    }
+                ],
                 [
                     [{[typeName]: 'Test', a: [2]}, {[typeName]: 'Test'}],
-                    {entities: {Test: {a: {type: 'integer[]'}}}}, {
+                    {entities: {Test: {a: {type: 'integer[]'}}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: [2]},
                         incremental: {a: [2]},
                         '': {[typeName]: 'Test', a: [2]}
@@ -1975,7 +2145,8 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{[typeName]: 'Test', a: [2.3]}, {[typeName]: 'Test'}],
-                    {entities: {Test: {a: {type: 'number[]'}}}}, {
+                    {entities: {Test: {a: {type: 'number[]'}}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: [2.3]},
                         incremental: {a: [2.3]},
                         '': {[typeName]: 'Test', a: [2.3]}
@@ -1983,7 +2154,8 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{[typeName]: 'Test', a: [true]}, {[typeName]: 'Test'}],
-                    {entities: {Test: {a: {type: 'boolean[]'}}}}, {
+                    {entities: {Test: {a: {type: 'boolean[]'}}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: [true]},
                         incremental: {a: [true]},
                         '': {[typeName]: 'Test', a: [true]}
@@ -1991,7 +2163,8 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{[typeName]: 'Test', a: [1]}, {[typeName]: 'Test'}],
-                    {entities: {Test: {a: {type: 'DateTime[]'}}}}, {
+                    {entities: {Test: {a: {type: 'DateTime[]'}}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: [1]},
                         incremental: {a: [1]},
                         '': {[typeName]: 'Test', a: [1]}
@@ -2001,7 +2174,8 @@ registerTest(async function():Promise<void> {
                     [{[typeName]: 'Test', a: []}, {[typeName]: 'Test'}],
                     {entities: {Test: {a: {
                         emptyEqualsToNull: false, type: 'DateTime[]'
-                    }}}}, {
+                    }}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: []},
                         incremental: {a: []},
                         '': {[typeName]: 'Test', a: []}
@@ -2011,70 +2185,83 @@ registerTest(async function():Promise<void> {
                     [{[typeName]: 'Test', a: [2]}, {[typeName]: 'Test'}],
                     {entities: {Test: {a: {
                         type: 'DateTime[]', mutable: false
-                    }}}}, {
+                    }}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: [2]},
                         incremental: {a: [2]},
                         '': {[typeName]: 'Test', a: [2]}
                     }
                 ],
-                [[
-                    {[typeName]: 'Test', a: [2, 1.1]},
-                    {[typeName]: 'Test', a: [2]}
-                ], {entities: {Test: {a: {type: 'number[]'}}}}, {
-                    fillUp: {[typeName]: 'Test', a: [2, 1.1]},
-                    incremental: {a: [2, 1.1]},
-                    '': {[typeName]: 'Test', a: [2, 1.1]}
-                }],
                 [
-                    [{[typeName]: 'Test', a: [2, 1]}], {entities: {Test: {a: {
+                    [
+                        {[typeName]: 'Test', a: [2, 1.1]},
+                        {[typeName]: 'Test', a: [2]}
+                    ],
+                    {entities: {Test: {a: {type: 'number[]'}}}},
+                    {
+                        fillUp: {[typeName]: 'Test', a: [2, 1.1]},
+                        incremental: {a: [2, 1.1]},
+                        '': {[typeName]: 'Test', a: [2, 1.1]}
+                    }
+                ],
+                [
+                    [{[typeName]: 'Test', a: [2, 1]}],
+                    {entities: {Test: {a: {
                         type: 'integer[]', maximumNumber: 2, minimumNumber: 1
-                    }}}}, {
+                    }}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: [2, 1]},
                         incremental: {[typeName]: 'Test', a: [2, 1]},
                         '': {[typeName]: 'Test', a: [2, 1]}
                     }
                 ],
                 [
-                    [{[typeName]: 'Test', a: [2, 1]}], {entities: {Test: {a: {
+                    [{[typeName]: 'Test', a: [2, 1]}],
+                    {entities: {Test: {a: {
                         type: 'integer[]', maximumNumber: Infinity,
                         minimumNumber: 0
-                    }}}}, {
+                    }}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: [2, 1]},
                         incremental: {[typeName]: 'Test', a: [2, 1]},
                         '': {[typeName]: 'Test', a: [2, 1]}
                     }
                 ],
                 [
-                    [{[typeName]: 'Test', a: [2]}], {entities: {Test: {a: {
+                    [{[typeName]: 'Test', a: [2]}],
+                    {entities: {Test: {a: {
                         type: 'integer[]', maximum: 2, maximumNumber: 1
-                    }}}}, {
+                    }}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: [2]},
                         incremental: {[typeName]: 'Test', a: [2]},
                         '': {[typeName]: 'Test', a: [2]}
                     }
                 ],
                 [
-                    [{[typeName]: 'Test', a: []}], {entities: {Test: {a: {
+                    [{[typeName]: 'Test', a: []}],
+                    {entities: {Test: {a: {
                         type: 'integer[]', maximum: 2, maximumNumber: 0
-                    }}}}, {
+                    }}}},
+                    {
                         fillUp: {[typeName]: 'Test'},
                         incremental: {[typeName]: 'Test'},
                         '': {[typeName]: 'Test'}
                     }
                 ],
                 [
-                    [{[typeName]: 'Test', a: [2, '2']}], {entities: {Test: {
-                        a: {type: 'any[]'}
-                    }}}, {
+                    [{[typeName]: 'Test', a: [2, '2']}],
+                    {entities: {Test: {a: {type: 'any[]'}}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: [2, '2']},
                         incremental: {[typeName]: 'Test', a: [2, '2']},
                         '': {[typeName]: 'Test', a: [2, '2']}
                     }
                 ],
                 [
-                    [{[typeName]: 'Test', a: [2, '2']}], {entities: {Test: {
-                        a: {type: [['number', 'string']]}
-                    }}}, {
+                    [{[typeName]: 'Test', a: [2, '2']}],
+                    {entities: {Test: {a: {type: [['number', 'string']]}}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: [2, '2']},
                         incremental: {[typeName]: 'Test', a: [2, '2']},
                         '': {[typeName]: 'Test', a: [2, '2']}
@@ -2082,7 +2269,8 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{[typeName]: 'Test', a: [{b: 'b'}]}],
-                    {entities: {Test: {a: {type: 'Test[]'}, b: {}}}}, {
+                    {entities: {Test: {a: {type: 'Test[]'}, b: {}}}},
+                    {
                         fillUp: {
                             [typeName]: 'Test',
                             a: [{
@@ -2109,37 +2297,13 @@ registerTest(async function():Promise<void> {
                 // / endregion
                 // / region nested property
                 // // region property type
-                [[
-                    {[typeName]: 'Test', a: {[typeName]: 'Test'}, b: 'b'},
-                    {[typeName]: 'Test', a: {[typeName]: 'Test'}}
-                ], {entities: {Test: {a: {type: 'Test'}, b: {}}}}, {
-                    fillUp: {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test'},
-                        b: 'b'
-                    },
-                    incremental: {b: 'b'},
-                    '': {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test'},
-                        b: 'b'
-                    }
-                }],
-                [[
-                    {[typeName]: 'Test', a: null, b: 'b'},
-                    {[typeName]: 'Test'}
-                ], {entities: {Test: {a: {type: 'Test'}, b: {}}}}, {
-                    fillUp: {[typeName]: 'Test', b: 'b'},
-                    incremental: {b: 'b'},
-                    '': {[typeName]: 'Test', b: 'b'}
-                }],
                 [
                     [
-                        {[typeName]: 'Test', a: {
-                            [typeName]: 'Test', b: null
-                        }, b: 'b'},
+                        {[typeName]: 'Test', a: {[typeName]: 'Test'}, b: 'b'},
                         {[typeName]: 'Test', a: {[typeName]: 'Test'}}
-                    ], {entities: {Test: {a: {type: 'Test'}, b: {}}}}, {
+                    ],
+                    {entities: {Test: {a: {type: 'Test'}, b: {}}}},
+                    {
                         fillUp: {
                             [typeName]: 'Test',
                             a: {[typeName]: 'Test'},
@@ -2153,60 +2317,107 @@ registerTest(async function():Promise<void> {
                         }
                     }
                 ],
-                [[
+                [
+                    [
+                        {[typeName]: 'Test', a: null, b: 'b'},
+                        {[typeName]: 'Test'}
+                    ],
+                    {entities: {Test: {a: {type: 'Test'}, b: {}}}},
                     {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: '2'},
-                        b: 'b'
-                    }, {[typeName]: 'Test', a: {[typeName]: 'Test', b: '2'}}
-                ], {entities: {Test: {a: {type: 'Test'}, b: {}}}}, {
-                    fillUp: {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: '2'},
-                        b: 'b'
-                    },
-                    incremental: {b: 'b'},
-                    '': {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: '2'},
-                        b: 'b'
+                        fillUp: {[typeName]: 'Test', b: 'b'},
+                        incremental: {b: 'b'},
+                        '': {[typeName]: 'Test', b: 'b'}
                     }
-                }],
-                [[
+                ],
+                [
+                    [
+                        {
+                            [typeName]: 'Test',
+                            a: {[typeName]: 'Test', b: null},
+                            b: 'b'
+                        },
+                        {[typeName]: 'Test', a: {[typeName]: 'Test'}}
+                    ],
+                    {entities: {Test: {a: {type: 'Test'}, b: {}}}},
                     {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: 'a'},
-                        b: '3'
-                    },
+                        fillUp: {
+                            [typeName]: 'Test',
+                            a: {[typeName]: 'Test'},
+                            b: 'b'
+                        },
+                        incremental: {b: 'b'},
+                        '': {
+                            [typeName]: 'Test',
+                            a: {[typeName]: 'Test'},
+                            b: 'b'
+                        }
+                    }
+                ],
+                [
+                    [
+                        {
+                            [typeName]: 'Test',
+                            a: {[typeName]: 'Test', b: '2'},
+                            b: 'b'
+                        },
+                        {[typeName]: 'Test', a: {[typeName]: 'Test', b: '2'}}
+                    ],
+                    {entities: {Test: {a: {type: 'Test'}, b: {}}}},
                     {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: 'a'},
-                        b: '2'
+                        fillUp: {
+                            [typeName]: 'Test',
+                            a: {[typeName]: 'Test', b: '2'},
+                            b: 'b'
+                        },
+                        incremental: {b: 'b'},
+                        '': {
+                            [typeName]: 'Test',
+                            a: {[typeName]: 'Test', b: '2'},
+                            b: 'b'
+                        }
                     }
-                ], {entities: {Test: {a: {type: 'Test'}, b: {}}}}, {
-                    fillUp: {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: 'a'},
-                        b: '3'
-                    },
-                    incremental: {b: '3'},
-                    '': {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: 'a'},
-                        b: '3'
+                ],
+                [
+                    [
+                        {
+                            [typeName]: 'Test',
+                            a: {[typeName]: 'Test', b: 'a'},
+                            b: '3'
+                        },
+                        {
+                            [typeName]: 'Test',
+                            a: {[typeName]: 'Test', b: 'a'},
+                            b: '2'
+                        }
+                    ],
+                    {entities: {Test: {a: {type: 'Test'}, b: {}}}},
+                    {
+                        fillUp: {
+                            [typeName]: 'Test',
+                            a: {[typeName]: 'Test', b: 'a'},
+                            b: '3'
+                        },
+                        incremental: {b: '3'},
+                        '': {
+                            [typeName]: 'Test',
+                            a: {[typeName]: 'Test', b: 'a'},
+                            b: '3'
+                        }
                     }
-                }],
-                [[{[typeName]: 'Test', a: {[typeName]: 'Test', b: 2}}], {
-                    entities: {Test: {a: {type: 'Test'}, b: {type: 'any'}}}
-                }, {
-                    fillUp: {
-                        [typeName]: 'Test', a: {[typeName]: 'Test', b: 2}
-                    },
-                    incremental: {
-                        [typeName]: 'Test', a: {[typeName]: 'Test', b: 2}
-                    },
-                    '': {[typeName]: 'Test', a: {[typeName]: 'Test', b: 2}}
-                }],
+                ],
+                [
+                    [{[typeName]: 'Test', a: {[typeName]: 'Test', b: 2}}],
+                    {entities: {Test: {a: {type: 'Test'}, b: {type: 'any'}}}},
+                    {
+                        fillUp: {
+                            [typeName]: 'Test', a: {[typeName]: 'Test', b: 2}
+                        },
+                        incremental: {
+                            [typeName]: 'Test', a: {[typeName]: 'Test', b: 2}
+                        },
+                        '': {[typeName]: 'Test', a: {[typeName]: 'Test', b: 2}}
+                    }
+                ],
                 [
                     [{[typeName]: 'Test', a: {b: 'b'}}],
                     {entities: {Test: {a: {type: 'Test'}, b: {}}}},
@@ -2227,157 +2438,193 @@ registerTest(async function():Promise<void> {
                 ],
                 // // endregion
                 // // region property existents
-                [[
-                    {[typeName]: 'Test', a: {[typeName]: 'Test'}, b: 'b'},
-                    {[typeName]: 'Test', a: {[typeName]: 'Test'}}
-                ], {entities: {Test: {a: {type: 'Test'}, b: {}}}}, {
-                    fillUp: {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test'},
-                        b: 'b'
-                    },
-                    incremental: {b: 'b'},
-                    '': {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test'},
-                        b: 'b'
-                    }
-                }],
-                [[
+                [
+                    [
+                        {[typeName]: 'Test', a: {[typeName]: 'Test'}, b: 'b'},
+                        {[typeName]: 'Test', a: {[typeName]: 'Test'}}
+                    ],
+                    {entities: {Test: {a: {type: 'Test'}, b: {}}}},
                     {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: null},
-                        b: 'b'
-                    },
-                    {[typeName]: 'Test', a: {[typeName]: 'Test'}, b: 'a'}
-                ], {entities: {Test: {a: {type: 'Test'}, b: {}}}}, {
-                    fillUp: {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test'},
-                        b: 'b'
-                    },
-                    incremental: {b: 'b'},
-                    '': {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test'},
-                        b: 'b'
+                        fillUp: {
+                            [typeName]: 'Test',
+                            a: {[typeName]: 'Test'},
+                            b: 'b'
+                        },
+                        incremental: {b: 'b'},
+                        '': {
+                            [typeName]: 'Test',
+                            a: {[typeName]: 'Test'},
+                            b: 'b'
+                        }
                     }
-                }],
-                [[
+                ],
+                [
+                    [
+                        {
+                            [typeName]: 'Test',
+                            a: {[typeName]: 'Test', b: null},
+                            b: 'b'
+                        },
+                        {[typeName]: 'Test', a: {[typeName]: 'Test'}, b: 'a'}
+                    ],
+                    {entities: {Test: {a: {type: 'Test'}, b: {}}}},
                     {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: '2'},
-                        b: 'b'
-                    },
+                        fillUp: {
+                            [typeName]: 'Test',
+                            a: {[typeName]: 'Test'},
+                            b: 'b'
+                        },
+                        incremental: {b: 'b'},
+                        '': {
+                            [typeName]: 'Test',
+                            a: {[typeName]: 'Test'},
+                            b: 'b'
+                        }
+                    }
+                ],
+                [
+                    [
+                        {
+                            [typeName]: 'Test',
+                            a: {[typeName]: 'Test', b: '2'},
+                            b: 'b'
+                        },
+                        {
+                            [typeName]: 'Test',
+                            a: {[typeName]: 'Test', b: '2'},
+                            b: 'a'
+                        }
+                    ],
+                    {entities: {Test: {
+                        a: {type: 'Test'},
+                        b: {nullable: false}
+                    }}},
                     {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: '2'},
-                        b: 'a'
+                        fillUp: {
+                            [typeName]: 'Test',
+                            a: {[typeName]: 'Test', b: '2'},
+                            b: 'b'
+                        },
+                        incremental: {b: 'b'},
+                        '': {
+                            [typeName]: 'Test',
+                            a: {[typeName]: 'Test', b: '2'},
+                            b: 'b'
+                        }
                     }
-                ], {entities: {Test: {a: {type: 'Test'}, b: {
-                    nullable: false
-                }}}}, {
-                    fillUp: {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: '2'},
-                        b: 'b'
-                    },
-                    incremental: {b: 'b'},
-                    '': {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: '2'},
-                        b: 'b'
-                    }
-                }],
+                ],
                 // // endregion
                 // // region property readonly
-                [[
+                [
+                    [
+                        {
+                            [typeName]: 'Test',
+                            a: {[typeName]: 'Test', b: 'b'},
+                            c: 'c'
+                        },
+                        {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'b'}}
+                    ],
+                    {entities: {Test: {
+                        a: {type: 'Test'},
+                        b: {writable: false},
+                        c: {}
+                    }}},
                     {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: 'b'},
-                        c: 'c'
-                    },
-                    {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'b'}}
-                ], {entities: {Test: {
-                    a: {type: 'Test'},
-                    b: {writable: false},
-                    c: {}
-                }}}, {
-                    fillUp: {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: 'b'},
-                        c: 'c'
-                    },
-                    incremental: {c: 'c'},
-                    '': {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: 'b'},
-                        c: 'c'
+                        fillUp: {
+                            [typeName]: 'Test',
+                            a: {[typeName]: 'Test', b: 'b'},
+                            c: 'c'
+                        },
+                        incremental: {c: 'c'},
+                        '': {
+                            [typeName]: 'Test',
+                            a: {[typeName]: 'Test', b: 'b'},
+                            c: 'c'
+                        }
                     }
-                }],
-                [[
-                    {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: 'a'},
-                        b: 'b'
-                    },
-                    {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'a'}}
                 ],
-                {entities: {Test: {a: {type: 'Test', writable: false}, b: {
-                }}}}, {
-                    fillUp: {[typeName]: 'Test', a: {
-                        [typeName]: 'Test', b: 'a'
-                    }, b: 'b'},
-                    incremental: {b: 'b'},
-                    '': {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: 'a'},
-                        b: 'b'
+                [
+                    [
+                        {
+                            [typeName]: 'Test',
+                            a: {[typeName]: 'Test', b: 'a'},
+                            b: 'b'
+                        },
+                        {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'a'}}
+                    ],
+                    {entities: {Test: {
+                        a: {type: 'Test', writable: false},
+                        b: {}}}
+                    },
+                    {
+                        fillUp: {[typeName]: 'Test', a: {
+                            [typeName]: 'Test', b: 'a'
+                        }, b: 'b'},
+                        incremental: {b: 'b'},
+                        '': {
+                            [typeName]: 'Test',
+                            a: {[typeName]: 'Test', b: 'a'},
+                            b: 'b'
+                        }
                     }
-                }],
+                ],
                 // // endregion
                 // // region property range
-                [[
-                    {[typeName]: 'Test', a: 4, b: {[typeName]: 'Test', a: 3}},
-                    {[typeName]: 'Test'}
-                ], {entities: {Test: {
-                    a: {type: 'integer', minimum: 3},
-                    b: {type: 'Test'}
-                }}}, {
-                    fillUp: {[typeName]: 'Test', a: 4, b: {
-                        [typeName]: 'Test', a: 3
-                    }},
-                    incremental: {a: 4, b: {[typeName]: 'Test', a: 3}},
-                    '': {
-                        [typeName]: 'Test',
-                        a: 4,
-                        b: {[typeName]: 'Test', a: 3}
+                [
+                    [
+                        {
+                            [typeName]: 'Test',
+                            a: 4,
+                            b: {[typeName]: 'Test', a: 3}
+                        },
+                        {[typeName]: 'Test'}
+                    ],
+                    {entities: {Test: {
+                        a: {type: 'integer', minimum: 3},
+                        b: {type: 'Test'}
+                    }}},
+                    {
+                        fillUp: {
+                            [typeName]: 'Test',
+                            a: 4,
+                            b: {[typeName]: 'Test', a: 3}
+                        },
+                        incremental: {a: 4, b: {[typeName]: 'Test', a: 3}},
+                        '': {
+                            [typeName]: 'Test',
+                            a: 4,
+                            b: {[typeName]: 'Test', a: 3}
+                        }
                     }
-                }],
-                [[{
-                    [typeName]: 'Test',
-                    a: '1',
-                    b: {[typeName]: 'Test', a: '1'}
-                }], {entities: {Test: {
-                    a: {maximumLength: 1},
-                    b: {type: 'Test'}
-                }}}, {
-                    fillUp: {
+                ],
+                [
+                    [{
                         [typeName]: 'Test',
                         a: '1',
                         b: {[typeName]: 'Test', a: '1'}
-                    },
-                    incremental: {
-                        [typeName]: 'Test',
-                        a: '1',
-                        b: {[typeName]: 'Test', a: '1'}
-                    },
-                    '': {
-                        [typeName]: 'Test',
-                        a: '1',
-                        b: {[typeName]: 'Test', a: '1'}
+                    }],
+                    {entities: {Test: {
+                        a: {maximumLength: 1},
+                        b: {type: 'Test'}
+                    }}},
+                    {
+                        fillUp: {
+                            [typeName]: 'Test',
+                            a: '1',
+                            b: {[typeName]: 'Test', a: '1'}
+                        },
+                        incremental: {
+                            [typeName]: 'Test',
+                            a: '1',
+                            b: {[typeName]: 'Test', a: '1'}
+                        },
+                        '': {
+                            [typeName]: 'Test',
+                            a: '1',
+                            b: {[typeName]: 'Test', a: '1'}
+                        }
                     }
-                }],
+                ],
                 // // endregion
                 // // region property pattern
                 [
@@ -2385,7 +2632,8 @@ registerTest(async function():Promise<void> {
                     {entities: {Test: {
                         a: {regularExpressionPattern: 'a'},
                         b: {type: 'Test'}
-                    }}}, {
+                    }}},
+                    {
                         fillUp: {[typeName]: 'Test', b: {
                             [typeName]: 'Test', a: 'a'
                         }},
@@ -2403,7 +2651,8 @@ registerTest(async function():Promise<void> {
                     {entities: {Test: {
                         a: {invertedRegularExpressionPattern: 'b'},
                         b: {type: 'Test'}
-                    }}}, {
+                    }}},
+                    {
                         fillUp: {[typeName]: 'Test', b: {
                             [typeName]: 'Test', a: 'a'
                         }},
@@ -2418,28 +2667,33 @@ registerTest(async function():Promise<void> {
                 ],
                 // // endregion
                 // // region property constraint
-                [[{
-                    [typeName]: 'Test', a: 'b', b: {[typeName]: 'Test', a: 'b'}
-                }], {entities: {Test: {
-                    a: {constraintExpression: {
-                        evaluation: 'newValue === "b"'
-                    }},
-                    b: {type: 'Test'}
-                }}}, {
-                    fillUp: {[typeName]: 'Test', a: 'b', b: {
-                        [typeName]: 'Test', a: 'b'
-                    }},
-                    incremental: {
+                [
+                    [{
                         [typeName]: 'Test',
                         a: 'b',
                         b: {[typeName]: 'Test', a: 'b'}
-                    },
-                    '': {
-                        [typeName]: 'Test',
-                        a: 'b',
-                        b: {[typeName]: 'Test', a: 'b'}
+                    }],
+                    {entities: {Test: {
+                        a: {constraintExpression: {
+                            evaluation: 'newValue === "b"'
+                        }},
+                        b: {type: 'Test'}
+                    }}},
+                    {
+                        fillUp: {[typeName]: 'Test', a: 'b', b: {
+                            [typeName]: 'Test', a: 'b'
+                        }},
+                        incremental: {
+                            [typeName]: 'Test',
+                            a: 'b',
+                            b: {[typeName]: 'Test', a: 'b'}
+                        },
+                        '': {
+                            [typeName]: 'Test',
+                            a: 'b',
+                            b: {[typeName]: 'Test', a: 'b'}
+                        }
                     }
-                }
                 ],
                 // // endregion
                 // / endregion
@@ -2448,7 +2702,8 @@ registerTest(async function():Promise<void> {
                     {entities: {
                         Test1: {a: {type: 'foreignKey:Test2'}},
                         Test2: {[idName]: {type: 'number'}}
-                    }}, {
+                    }},
+                    {
                         fillUp: {[typeName]: 'Test1', a: 2},
                         incremental: {[typeName]: 'Test1', a: 2},
                         '': {[typeName]: 'Test1', a: 2}
@@ -2531,18 +2786,20 @@ registerTest(async function():Promise<void> {
                 // endregion
                 // region selection
                 [
-                    [{[typeName]: 'Test', a: 2}], {entities: {Test: {a: {
-                        type: 'number', selection: [2]
-                    }}}}, {
+                    [{[typeName]: 'Test', a: 2}],
+                    {entities: {Test: {a: {type: 'number', selection: [2]}}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: 2},
                         incremental: {[typeName]: 'Test', a: 2},
                         '': {[typeName]: 'Test', a: 2}
                     }
                 ],
                 [
-                    [{[typeName]: 'Test', a: 2}], {entities: {Test: {a: {
+                    [{[typeName]: 'Test', a: 2}],
+                    {entities: {Test: {a: {
                         type: 'number', selection: [1, 2]
-                    }}}}, {
+                    }}}},
+                    {
                         fillUp: {[typeName]: 'Test', a: 2},
                         incremental: {[typeName]: 'Test', a: 2},
                         '': {[typeName]: 'Test', a: 2}
@@ -2550,439 +2807,601 @@ registerTest(async function():Promise<void> {
                 ],
                 // endregion
                 // region property pattern
-                [[{[typeName]: 'Test', a: 'a'}], {entities: {Test: {a: {
-                    regularExpressionPattern: 'a'
-                }}}}, {
-                    fillUp: {[typeName]: 'Test', a: 'a'},
-                    incremental: {[typeName]: 'Test', a: 'a'},
-                    '': {[typeName]: 'Test', a: 'a'}
-                }],
-                [[{[typeName]: 'Test', a: 'a'}], {entities: {Test: {a: {
-                    invertedRegularExpressionPattern: 'b'
-                }}}}, {
-                    fillUp: {[typeName]: 'Test', a: 'a'},
-                    incremental: {[typeName]: 'Test', a: 'a'},
-                    '': {[typeName]: 'Test', a: 'a'}
-                }],
+                [
+                    [{[typeName]: 'Test', a: 'a'}],
+                    {entities: {Test: {a: {regularExpressionPattern: 'a'}}}},
+                    {
+                        fillUp: {[typeName]: 'Test', a: 'a'},
+                        incremental: {[typeName]: 'Test', a: 'a'},
+                        '': {[typeName]: 'Test', a: 'a'}
+                    }
+                ],
+                [
+                    [{[typeName]: 'Test', a: 'a'}],
+                    {entities: {Test: {a: {
+                        invertedRegularExpressionPattern: 'b'
+                    }}}},
+                    {
+                        fillUp: {[typeName]: 'Test', a: 'a'},
+                        incremental: {[typeName]: 'Test', a: 'a'},
+                        '': {[typeName]: 'Test', a: 'a'}
+                    }
+                ],
                 // endregion
                 // region property constraint
-                [[{[typeName]: 'Test', a: 'b'}], {entities: {Test: {a: {
-                    constraintExpression: {evaluation: 'true'}
-                }}}}, {
-                    fillUp: {[typeName]: 'Test', a: 'b'},
-                    incremental: {[typeName]: 'Test', a: 'b'},
-                    '': {[typeName]: 'Test', a: 'b'}
-                }],
-                [[{[typeName]: 'Test', a: 'a'}], {entities: {Test: {a: {
-                    constraintExpression: {evaluation: 'newValue === "a"'}
-                }}}}, {
-                    fillUp: {[typeName]: 'Test', a: 'a'},
-                    incremental: {[typeName]: 'Test', a: 'a'},
-                    '': {[typeName]: 'Test', a: 'a'}
-                }],
-                [[{[typeName]: 'Test', a: 'a'}], {entities: {Test: {a: {
-                    constraintExecution: {
-                        evaluation: 'return newValue === "a"'
+                [
+                    [{[typeName]: 'Test', a: 'b'}],
+                    {entities: {Test: {a: {
+                        constraintExpression: {evaluation: 'true'}
+                    }}}},
+                    {
+                        fillUp: {[typeName]: 'Test', a: 'b'},
+                        incremental: {[typeName]: 'Test', a: 'b'},
+                        '': {[typeName]: 'Test', a: 'b'}
                     }
-                }}}}, {
-                    fillUp: {[typeName]: 'Test', a: 'a'},
-                    incremental: {[typeName]: 'Test', a: 'a'},
-                    '': {[typeName]: 'Test', a: 'a'}
-                }],
-                [[{[typeName]: 'Test', a: 'a'}], {entities: {Test: {a: {
-                    constraintExecution: {
+                ],
+                [
+                    [{[typeName]: 'Test', a: 'a'}],
+                    {entities: {Test: {a: {
+                        constraintExpression: {evaluation: 'newValue === "a"'}
+                    }}}},
+                    {
+                        fillUp: {[typeName]: 'Test', a: 'a'},
+                        incremental: {[typeName]: 'Test', a: 'a'},
+                        '': {[typeName]: 'Test', a: 'a'}
+                    }
+                ],
+                [
+                    [{[typeName]: 'Test', a: 'a'}],
+                    {entities: {Test: {a: {constraintExecution: {
                         evaluation: 'return newValue === "a"'
-                    },
-                    description: '`Value have to be "a" not "${newValue}".`'
-                }}}}, {
-                    fillUp: {[typeName]: 'Test', a: 'a'},
-                    incremental: {[typeName]: 'Test', a: 'a'},
-                    '': {[typeName]: 'Test', a: 'a'}
-                }],
+                    }}}}},
+                    {
+                        fillUp: {[typeName]: 'Test', a: 'a'},
+                        incremental: {[typeName]: 'Test', a: 'a'},
+                        '': {[typeName]: 'Test', a: 'a'}
+                    }
+                ],
+                [
+                    [{[typeName]: 'Test', a: 'a'}],
+                    {entities: {Test: {a: {
+                        constraintExecution: {
+                            evaluation: 'return newValue === "a"'
+                        },
+                        description: '`Value have to be "a" not "${newValue}".`'
+                    }}}},
+                    {
+                        fillUp: {[typeName]: 'Test', a: 'a'},
+                        incremental: {[typeName]: 'Test', a: 'a'},
+                        '': {[typeName]: 'Test', a: 'a'}
+                    }
+                ],
                 // endregion
                 // region constraint
-                [[{[typeName]: 'Test', a: 'a', b: 'b'}], {entities: {Test: {
-                    _constraintExpressions: [{evaluation: 'true'}],
-                    a: {},
-                    b: {}
-                }}}, {
-                    fillUp: {[typeName]: 'Test', a: 'a', b: 'b'},
-                    incremental: {[typeName]: 'Test', a: 'a', b: 'b'},
-                    '': {[typeName]: 'Test', a: 'a', b: 'b'}
-                }],
-                [[{[typeName]: 'Test', a: 'a', b: 'b'}], {entities: {Test: {
-                    _constraintExecutions: [{
-                        description: '`Always valid: "${newDocument.a}".`',
-                        evaluation: 'return true'
-                    }],
-                    a: {},
-                    b: {}
-                }}}, {
-                    fillUp: {[typeName]: 'Test', a: 'a', b: 'b'},
-                    incremental: {[typeName]: 'Test', a: 'a', b: 'b'},
-                    '': {[typeName]: 'Test', a: 'a', b: 'b'}
-                }],
-                [[{[typeName]: 'Test', a: 'a', b: 'a'}], {entities: {Test: {
-                    _constraintExpressions: [{
-                        evaluation: 'newDocument.a === newDocument.b'
-                    }],
-                    a: {},
-                    b: {}
-                }}}, {
-                    fillUp: {[typeName]: 'Test', a: 'a', b: 'a'},
-                    incremental: {[typeName]: 'Test', a: 'a', b: 'a'},
-                    '': {[typeName]: 'Test', a: 'a', b: 'a'}
-                }],
+                [
+                    [{[typeName]: 'Test', a: 'a', b: 'b'}],
+                    {entities: {Test: {
+                        _constraintExpressions: [{evaluation: 'true'}],
+                        a: {},
+                        b: {}
+                    }}},
+                    {
+                        fillUp: {[typeName]: 'Test', a: 'a', b: 'b'},
+                        incremental: {[typeName]: 'Test', a: 'a', b: 'b'},
+                        '': {[typeName]: 'Test', a: 'a', b: 'b'}
+                    }
+                ],
+                [
+                    [{[typeName]: 'Test', a: 'a', b: 'b'}],
+                    {entities: {Test: {
+                        _constraintExecutions: [{
+                            description: '`Always valid: "${newDocument.a}".`',
+                            evaluation: 'return true'
+                        }],
+                        a: {},
+                        b: {}
+                    }}},
+                    {
+                        fillUp: {[typeName]: 'Test', a: 'a', b: 'b'},
+                        incremental: {[typeName]: 'Test', a: 'a', b: 'b'},
+                        '': {[typeName]: 'Test', a: 'a', b: 'b'}
+                    }
+                ],
+                [
+                    [{[typeName]: 'Test', a: 'a', b: 'a'}],
+                    {entities: {Test: {
+                        _constraintExpressions: [{
+                            evaluation: 'newDocument.a === newDocument.b'
+                        }],
+                        a: {},
+                        b: {}
+                    }}},
+                    {
+                        fillUp: {[typeName]: 'Test', a: 'a', b: 'a'},
+                        incremental: {[typeName]: 'Test', a: 'a', b: 'a'},
+                        '': {[typeName]: 'Test', a: 'a', b: 'a'}
+                    }
+                ],
                 // endregion
                 // region attachment
-                [[{[typeName]: 'Test'}], {entities: {Test: {[attachmentName]: {
-                    '.*': {minimumNumber: 1}
-                }}}}, {
-                    fillUp: {[typeName]: 'Test'},
-                    incremental: {[typeName]: 'Test'},
-                    '': {[typeName]: 'Test'}
-                }],
-                [[{[typeName]: 'Test', [attachmentName]: {test: {
-                    /* eslint-disable camelcase */
-                    content_type: 'text/plain', data: ''
-                    /* eslint-enable camelcase */
-                }}}], {entities: {Test: {[attachmentName]: {'.*': {
-                    maximumNumber: 1
-                }}}}}, {
-                    fillUp: {[typeName]: 'Test', [attachmentName]: {test: {
-                        /* eslint-disable camelcase */
-                        content_type: 'text/plain', data: ''
-                        /* eslint-enable camelcase */
-                    }}},
-                    incremental: {[typeName]: 'Test', [attachmentName]: {
-                        /* eslint-disable camelcase */
-                        test: {content_type: 'text/plain', data: ''}
-                        /* eslint-enable camelcase */
-                    }},
-                    '': {[typeName]: 'Test', [attachmentName]: {test: {
-                        /* eslint-disable camelcase */
-                        content_type: 'text/plain', data: ''
-                        /* eslint-enable camelcase */
-                    }}}
-                }],
-                [[{[typeName]: 'Test', [attachmentName]: {'favicon.png': {
-                    /* eslint-disable camelcase */
-                    content_type: 'image/png', data: 'abc'
-                    /* eslint-enable camelcase */
-                }}}], {entities: {Test: {[attachmentName]: {
-                    '.+\\.(?:jpe?g|png|svg)': {
-                        contentTypeRegularExpressionPattern:
-                            'image/(?:p?jpe?g|png|svg)',
-                        maximumNumber: 1,
-                        nullable: false
+                [
+                    [{[typeName]: 'Test'}],
+                    {entities: {Test: {[attachmentName]: {
+                        '.*': {minimumNumber: 1}
+                    }}}},
+                    {
+                        fillUp: {[typeName]: 'Test'},
+                        incremental: {[typeName]: 'Test'},
+                        '': {[typeName]: 'Test'}
                     }
-                }}}}, {
-                    fillUp: {[typeName]: 'Test', [attachmentName]: {
-                        'favicon.png': {
-                            /* eslint-disable camelcase */
-                            content_type: 'image/png', data: 'abc'
-                            /* eslint-enable camelcase */
-                        }
-                    }},
-                    incremental: {[typeName]: 'Test', [attachmentName]: {
-                        'favicon.png': {
-                            /* eslint-disable camelcase */
-                            content_type: 'image/png', data: 'abc'
-                            /* eslint-enable camelcase */
-                        }
-                    }},
-                    '': {[typeName]: 'Test', [attachmentName]: {
-                        /* eslint-disable camelcase */
-                        'favicon.png': {content_type: 'image/png', data: 'abc'}
-                        /* eslint-enable camelcase */
-                    }}
-                }],
-                [[{[typeName]: 'Test', [attachmentName]: {test: {
-                    /* eslint-disable camelcase */
-                    content_type: 'text/plain', data: ''
-                    /* eslint-enable camelcase */
-                }}}], {entities: {Test: {[attachmentName]: {'.*': {
-                    nullable: false
-                }}}}}, {
-                    fillUp: {[typeName]: 'Test', [attachmentName]: {test: {
-                        /* eslint-disable camelcase */
-                        content_type: 'text/plain', data: ''
-                        /* eslint-enable camelcase */
-                    }}},
-                    incremental: {
+                ],
+                [
+                    [{
                         [typeName]: 'Test',
                         [attachmentName]: {test: {
                             /* eslint-disable camelcase */
                             content_type: 'text/plain', data: ''
                             /* eslint-enable camelcase */
                         }}
-                    },
-                    '': {[typeName]: 'Test', [attachmentName]: {test: {
-                        /* eslint-disable camelcase */
-                        content_type: 'text/plain', data: ''
-                        /* eslint-enable camelcase */
-                    }}}
-                }],
-                [[{[typeName]: 'Test', [attachmentName]: {
-                    /* eslint-disable camelcase */
-                    a: {content_type: 'text/plain', data: ''},
-                    b: {content_type: 'text/plain', data: ''}
-                    /* eslint-enable camelcase */
-                }}], {entities: {Test: {[attachmentName]: {'.*': {
-                    maximumNumber: 2, minimumNumber: 2
-                }}}}}, {
-                    fillUp: {[typeName]: 'Test', [attachmentName]: {
-                        /* eslint-disable camelcase */
-                        a: {content_type: 'text/plain', data: ''},
-                        b: {content_type: 'text/plain', data: ''}
-                        /* eslint-enable camelcase */
-                    }},
-                    incremental: {[typeName]: 'Test', [attachmentName]: {
-                        /* eslint-disable camelcase */
-                        a: {content_type: 'text/plain', data: ''},
-                        b: {content_type: 'text/plain', data: ''}
-                        /* eslint-enable camelcase */
-                    }},
-                    '': {[typeName]: 'Test', [attachmentName]: {
-                        /* eslint-disable camelcase */
-                        a: {content_type: 'text/plain', data: ''},
-                        b: {content_type: 'text/plain', data: ''}
-                        /* eslint-enable camelcase */
-                    }}
-                }],
-                [[{[typeName]: 'Test', [attachmentName]: {
-                    /* eslint-disable camelcase */
-                    a: {content_type: 'text/plain', data: ''},
-                    b: {content_type: 'text/plain', data: ''}
-                    /* eslint-enable camelcase */
-                }}], {entities: {Test: {[attachmentName]: {'.*': {
-                    maximumNumber: 2, regularExpressionPattern: 'a|b'
-                }}}}}, {
-                    fillUp: {[typeName]: 'Test', [attachmentName]: {
-                        /* eslint-disable camelcase */
-                        a: {content_type: 'text/plain', data: ''},
-                        b: {content_type: 'text/plain', data: ''}
-                        /* eslint-enable camelcase */
-                    }},
-                    incremental: {[typeName]: 'Test', [attachmentName]: {
-                        /* eslint-disable camelcase */
-                        a: {content_type: 'text/plain', data: ''},
-                        b: {content_type: 'text/plain', data: ''}
-                        /* eslint-enable camelcase */
-                    }},
-                    '': {[typeName]: 'Test', [attachmentName]: {
-                        /* eslint-disable camelcase */
-                        a: {content_type: 'text/plain', data: ''},
-                        b: {content_type: 'text/plain', data: ''}
-                        /* eslint-enable camelcase */
-                    }}
-                }],
-                [[{[typeName]: 'Test', [attachmentName]: {
-                    /* eslint-disable camelcase */
-                    a: {content_type: 'text/plain', data: ''},
-                    b: {content_type: 'text/plain', data: ''}
-                    /* eslint-enable camelcase */
-                }}], {entities: {Test: {[attachmentName]: {'.*': {
-                    maximumNumber: 2, invertedRegularExpressionPattern: 'c|d'
-                }}}}}, {
-                    fillUp: {[typeName]: 'Test', [attachmentName]: {
-                        /* eslint-disable camelcase */
-                        a: {content_type: 'text/plain', data: ''},
-                        b: {content_type: 'text/plain', data: ''}
-                        /* eslint-enable camelcase */
-                    }},
-                    incremental: {[typeName]: 'Test', [attachmentName]: {
-                        /* eslint-disable camelcase */
-                        a: {content_type: 'text/plain', data: ''},
-                        b: {content_type: 'text/plain', data: ''}
-                        /* eslint-enable camelcase */
-                    }},
-                    '': {[typeName]: 'Test', [attachmentName]: {
-                        /* eslint-disable camelcase */
-                        a: {content_type: 'text/plain', data: ''},
-                        b: {content_type: 'text/plain', data: ''}
-                        /* eslint-enable camelcase */
-                    }}
-                }],
-                [[{[typeName]: 'Test', [attachmentName]: {
-                    /* eslint-disable camelcase */
-                    a: {content_type: 'image/png', data: ''},
-                    b: {content_type: 'image/jpeg', data: ''}
-                    /* eslint-enable camelcase */
-                }}], {entities: {Test: {[attachmentName]: {'.*': {
-                    contentTypeRegularExpressionPattern: /image\/.+/,
-                    regularExpressionPattern: 'a|b'
-                }}}}}, {
-                    fillUp: {[typeName]: 'Test', [attachmentName]: {
-                        /* eslint-disable camelcase */
-                        a: {content_type: 'image/png', data: ''},
-                        b: {content_type: 'image/jpeg', data: ''}
-                        /* eslint-enable camelcase */
-                    }},
-                    incremental: {[typeName]: 'Test', [attachmentName]: {
-                        /* eslint-disable camelcase */
-                        a: {content_type: 'image/png', data: ''},
-                        b: {content_type: 'image/jpeg', data: ''}
-                        /* eslint-enable camelcase */
-                    }},
-                    '': {[typeName]: 'Test', [attachmentName]: {
-                        /* eslint-disable camelcase */
-                        a: {content_type: 'image/png', data: ''},
-                        b: {content_type: 'image/jpeg', data: ''}
-                        /* eslint-enable camelcase */
-                    }}
-                }],
-                [[{[typeName]: 'Test', [attachmentName]: {
-                    /* eslint-disable camelcase */
-                    a: {content_type: 'image/png', data: ''}
-                    /* eslint-enable camelcase */
-                }}, {[typeName]: 'Test', [attachmentName]: {
-                    /* eslint-disable camelcase */
-                    b: {content_type: 'image/jpeg', data: ''}
-                    /* eslint-enable camelcase */
-                }}], {entities: {Test: {[attachmentName]: {'.*': {}}}}}, {
-                    fillUp: {[typeName]: 'Test', [attachmentName]: {
-                        /* eslint-disable camelcase */
-                        a: {content_type: 'image/png', data: ''},
-                        b: {content_type: 'image/jpeg', data: ''}
-                        /* eslint-enable camelcase */
-                    }},
-                    incremental: {[attachmentName]: {
-                        /* eslint-disable camelcase */
-                        a: {content_type: 'image/png', data: ''}
-                        /* eslint-enable camelcase */
-                    }},
-                    '': {[typeName]: 'Test', [attachmentName]: {
-                        /* eslint-disable camelcase */
-                        a: {content_type: 'image/png', data: ''}
-                        /* eslint-enable camelcase */
-                    }}
-                }],
-                [[
+                    }],
+                    {entities: {Test: {[attachmentName]: {'.*': {
+                        maximumNumber: 1
+                    }}}}},
                     {
-                        [typeName]: 'Test',
-                        [attachmentName]: {a: {data: null}},
-                        b: 'b'
-                    }, {
-                        [typeName]: 'Test',
-                        [attachmentName]: {a: {
+                        fillUp: {[typeName]: 'Test', [attachmentName]: {test: {
                             /* eslint-disable camelcase */
-                            content_type: 'image/jpeg', data: ''
+                            content_type: 'text/plain', data: ''
+                            /* eslint-enable camelcase */
+                        }}},
+                        incremental: {[typeName]: 'Test', [attachmentName]: {
+                            /* eslint-disable camelcase */
+                            test: {content_type: 'text/plain', data: ''}
+                            /* eslint-enable camelcase */
+                        }},
+                        '': {[typeName]: 'Test', [attachmentName]: {test: {
+                            /* eslint-disable camelcase */
+                            content_type: 'text/plain', data: ''
+                            /* eslint-enable camelcase */
+                        }}}
+                    }
+                ],
+                [
+                    [{
+                        [typeName]: 'Test',
+                        [attachmentName]: {'favicon.png': {
+                            /* eslint-disable camelcase */
+                            content_type: 'image/png', data: 'abc'
+                            /* eslint-enable camelcase */
+                        }}
+                    }],
+                    {entities: {Test: {[attachmentName]: {
+                        '.+\\.(?:jpe?g|png|svg)': {
+                            contentTypeRegularExpressionPattern:
+                                'image/(?:p?jpe?g|png|svg)',
+                            maximumNumber: 1,
+                            nullable: false
+                        }
+                    }}}},
+                    {
+                        fillUp: {[typeName]: 'Test', [attachmentName]: {
+                            'favicon.png': {
+                                /* eslint-disable camelcase */
+                                content_type: 'image/png', data: 'abc'
+                                /* eslint-enable camelcase */
+                            }
+                        }},
+                        incremental: {[typeName]: 'Test', [attachmentName]: {
+                            'favicon.png': {
+                                /* eslint-disable camelcase */
+                                content_type: 'image/png', data: 'abc'
+                                /* eslint-enable camelcase */
+                            }
+                        }},
+                        '': {[typeName]: 'Test', [attachmentName]: {
+                            /* eslint-disable camelcase */
+                            'favicon.png': {content_type: 'image/png', data: 'abc'}
                             /* eslint-enable camelcase */
                         }}
                     }
-                ], {entities: {Test: {[attachmentName]: {'.*': {}}, b: {}}}}, {
-                    fillUp: {[typeName]: 'Test', b: 'b'},
-                    incremental: {b: 'b'},
-                    '': {[typeName]: 'Test', b: 'b'}
-                }],
-                [[
-                    {
+                ],
+                [
+                    [{
                         [typeName]: 'Test',
-                        [attachmentName]: {a: {data: null}},
-                        b: 'b'
-                    }, {
-                        [typeName]: 'Test',
-                        [attachmentName]: {a: {
+                        [attachmentName]: {test: {
                             /* eslint-disable camelcase */
-                            content_type: 'image/jpeg', data: ''
+                            content_type: 'text/plain', data: ''
+                            /* eslint-enable camelcase */
+                        }}
+                    }],
+                    {entities: {Test: {[attachmentName]: {'.*': {
+                        nullable: false
+                    }}}}},
+                    {
+                        fillUp: {[typeName]: 'Test', [attachmentName]: {test: {
+                            /* eslint-disable camelcase */
+                            content_type: 'text/plain', data: ''
+                            /* eslint-enable camelcase */
+                        }}},
+                        incremental: {
+                            [typeName]: 'Test',
+                            [attachmentName]: {test: {
+                                /* eslint-disable camelcase */
+                                content_type: 'text/plain', data: ''
+                                /* eslint-enable camelcase */
+                            }}
+                        },
+                        '': {[typeName]: 'Test', [attachmentName]: {test: {
+                            /* eslint-disable camelcase */
+                            content_type: 'text/plain', data: ''
+                            /* eslint-enable camelcase */
+                        }}}
+                    }
+                ],
+                [
+                    [{
+                        [typeName]: 'Test',
+                        [attachmentName]: {
+                            /* eslint-disable camelcase */
+                            a: {content_type: 'text/plain', data: ''},
+                            b: {content_type: 'text/plain', data: ''}
+                            /* eslint-enable camelcase */
+                        }
+                    }],
+                    {entities: {Test: {[attachmentName]: {'.*': {
+                        maximumNumber: 2, minimumNumber: 2
+                    }}}}},
+                    {
+                        fillUp: {[typeName]: 'Test', [attachmentName]: {
+                            /* eslint-disable camelcase */
+                            a: {content_type: 'text/plain', data: ''},
+                            b: {content_type: 'text/plain', data: ''}
+                            /* eslint-enable camelcase */
+                        }},
+                        incremental: {[typeName]: 'Test', [attachmentName]: {
+                            /* eslint-disable camelcase */
+                            a: {content_type: 'text/plain', data: ''},
+                            b: {content_type: 'text/plain', data: ''}
+                            /* eslint-enable camelcase */
+                        }},
+                        '': {[typeName]: 'Test', [attachmentName]: {
+                            /* eslint-disable camelcase */
+                            a: {content_type: 'text/plain', data: ''},
+                            b: {content_type: 'text/plain', data: ''}
                             /* eslint-enable camelcase */
                         }}
                     }
-                ], {entities: {Test: {[attachmentName]: {'.*': {}}, b: {}}}}, {
-                    fillUp: {[typeName]: 'Test', b: 'b'},
-                    incremental: {b: 'b'},
-                    '': {[typeName]: 'Test', b: 'b'}
-                }],
-                [[
-                    {[typeName]: 'Test', a: 'a'},
-                    {[typeName]: 'Test', [attachmentName]: {a: {
-                        /* eslint-disable camelcase */
-                        content_type: 'image/jpeg', data: ''
-                        /* eslint-enable camelcase */
-                    }}}
-                ], {entities: {Test: {[attachmentName]: {'.*': {}}, a: {}}}}, {
-                    fillUp: {
-                        [typeName]: 'Test', [attachmentName]: {a: {
+                ],
+                [
+                    [{
+                        [typeName]: 'Test',
+                        [attachmentName]: {
+                            /* eslint-disable camelcase */
+                            a: {content_type: 'text/plain', data: ''},
+                            b: {content_type: 'text/plain', data: ''}
+                            /* eslint-enable camelcase */
+                        }
+                    }],
+                    {entities: {Test: {[attachmentName]: {'.*': {
+                        maximumNumber: 2, regularExpressionPattern: 'a|b'
+                    }}}}},
+                    {
+                        fillUp: {[typeName]: 'Test', [attachmentName]: {
+                            /* eslint-disable camelcase */
+                            a: {content_type: 'text/plain', data: ''},
+                            b: {content_type: 'text/plain', data: ''}
+                            /* eslint-enable camelcase */
+                        }},
+                        incremental: {[typeName]: 'Test', [attachmentName]: {
+                            /* eslint-disable camelcase */
+                            a: {content_type: 'text/plain', data: ''},
+                            b: {content_type: 'text/plain', data: ''}
+                            /* eslint-enable camelcase */
+                        }},
+                        '': {[typeName]: 'Test', [attachmentName]: {
+                            /* eslint-disable camelcase */
+                            a: {content_type: 'text/plain', data: ''},
+                            b: {content_type: 'text/plain', data: ''}
+                            /* eslint-enable camelcase */
+                        }}
+                    }
+                ],
+                [
+                    [{
+                        [typeName]: 'Test',
+                        [attachmentName]: {
+                            /* eslint-disable camelcase */
+                            a: {content_type: 'text/plain', data: ''},
+                            b: {content_type: 'text/plain', data: ''}
+                            /* eslint-enable camelcase */
+                        }
+                    }],
+                    {entities: {Test: {[attachmentName]: {'.*': {
+                        maximumNumber: 2,
+                        invertedRegularExpressionPattern: 'c|d'
+                    }}}}},
+                    {
+                        fillUp: {
+                            [typeName]: 'Test',
+                            [attachmentName]: {
+                                /* eslint-disable camelcase */
+                                a: {content_type: 'text/plain', data: ''},
+                                b: {content_type: 'text/plain', data: ''}
+                                /* eslint-enable camelcase */
+                            }
+                        },
+                        incremental: {
+                            [typeName]: 'Test',
+                            [attachmentName]: {
+                                /* eslint-disable camelcase */
+                                a: {content_type: 'text/plain', data: ''},
+                                b: {content_type: 'text/plain', data: ''}
+                                /* eslint-enable camelcase */
+                            }
+                        },
+                        '': {
+                            [typeName]: 'Test',
+                            [attachmentName]: {
+                                /* eslint-disable camelcase */
+                                a: {content_type: 'text/plain', data: ''},
+                                b: {content_type: 'text/plain', data: ''}
+                                /* eslint-enable camelcase */
+                            }
+                        }
+                    }
+                ],
+                [
+                    [{
+                        [typeName]: 'Test',
+                        [attachmentName]: {
+                            /* eslint-disable camelcase */
+                            a: {content_type: 'image/png', data: ''},
+                            b: {content_type: 'image/jpeg', data: ''}
+                            /* eslint-enable camelcase */
+                        }
+                    }],
+                    {entities: {Test: {[attachmentName]: {'.*': {
+                        contentTypeRegularExpressionPattern: /image\/.+/,
+                        regularExpressionPattern: 'a|b'
+                    }}}}},
+                    {
+                        fillUp: {
+                            [typeName]: 'Test',
+                            [attachmentName]: {
+                                /* eslint-disable camelcase */
+                                a: {content_type: 'image/png', data: ''},
+                                b: {content_type: 'image/jpeg', data: ''}
+                                /* eslint-enable camelcase */
+                            }
+                        },
+                        incremental: {
+                            [typeName]: 'Test',
+                            [attachmentName]: {
+                                /* eslint-disable camelcase */
+                                a: {content_type: 'image/png', data: ''},
+                                b: {content_type: 'image/jpeg', data: ''}
+                                /* eslint-enable camelcase */
+                            }
+                        },
+                        '': {
+                            [typeName]: 'Test',
+                            [attachmentName]: {
+                                /* eslint-disable camelcase */
+                                a: {content_type: 'image/png', data: ''},
+                                b: {content_type: 'image/jpeg', data: ''}
+                                /* eslint-enable camelcase */
+                            }
+                        }
+                    }
+                ],
+                [
+                    [
+                        {
+                            [typeName]: 'Test',
+                            [attachmentName]: {
+                                /* eslint-disable camelcase */
+                                a: {content_type: 'image/png', data: ''}
+                                /* eslint-enable camelcase */
+                            }
+                        },
+                        {
+                            [typeName]: 'Test',
+                            [attachmentName]: {
+                                /* eslint-disable camelcase */
+                                b: {content_type: 'image/jpeg', data: ''}
+                                /* eslint-enable camelcase */
+                            }
+                        }
+                    ],
+                    {entities: {Test: {[attachmentName]: {'.*': {}}}}},
+                    {
+                        fillUp: {[typeName]: 'Test', [attachmentName]: {
+                            /* eslint-disable camelcase */
+                            a: {content_type: 'image/png', data: ''},
+                            b: {content_type: 'image/jpeg', data: ''}
+                            /* eslint-enable camelcase */
+                        }},
+                        incremental: {[attachmentName]: {
+                            /* eslint-disable camelcase */
+                            a: {content_type: 'image/png', data: ''}
+                            /* eslint-enable camelcase */
+                        }},
+                        '': {[typeName]: 'Test', [attachmentName]: {
+                            /* eslint-disable camelcase */
+                            a: {content_type: 'image/png', data: ''}
+                            /* eslint-enable camelcase */
+                        }}
+                    }
+                ],
+                [
+                    [
+                        {
+                            [typeName]: 'Test',
+                            [attachmentName]: {a: {data: null}},
+                            b: 'b'
+                        }, {
+                            [typeName]: 'Test',
+                            [attachmentName]: {a: {
+                                /* eslint-disable camelcase */
+                                content_type: 'image/jpeg', data: ''
+                                /* eslint-enable camelcase */
+                            }}
+                        }
+                    ],
+                    {entities: {Test: {[attachmentName]: {'.*': {}}, b: {}}}},
+                    {
+                        fillUp: {[typeName]: 'Test', b: 'b'},
+                        incremental: {b: 'b'},
+                        '': {[typeName]: 'Test', b: 'b'}
+                    }
+                ],
+                [
+                    [
+                        {
+                            [typeName]: 'Test',
+                            [attachmentName]: {a: {data: null}},
+                            b: 'b'
+                        }, {
+                            [typeName]: 'Test',
+                            [attachmentName]: {a: {
+                                /* eslint-disable camelcase */
+                                content_type: 'image/jpeg', data: ''
+                                /* eslint-enable camelcase */
+                            }}
+                        }
+                    ],
+                    {entities: {Test: {[attachmentName]: {'.*': {}}, b: {}}}},
+                    {
+                        fillUp: {[typeName]: 'Test', b: 'b'},
+                        incremental: {b: 'b'},
+                        '': {[typeName]: 'Test', b: 'b'}
+                    }
+                ],
+                [
+                    [
+                        {[typeName]: 'Test', a: 'a'},
+                        {[typeName]: 'Test', [attachmentName]: {a: {
                             /* eslint-disable camelcase */
                             content_type: 'image/jpeg', data: ''
                             /* eslint-enable camelcase */
-                        }},
-                        a: 'a'
-                    },
-                    incremental: {a: 'a'},
-                    '': {[typeName]: 'Test', a: 'a'}
-                }],
-                [[
-                    {[typeName]: 'Test', a: 'a'},
-                    {[typeName]: 'Test', [attachmentName]: {a: {
-                        /* eslint-disable camelcase */
-                        content_type: 'image/jpeg', data: ''
-                        /* eslint-enable camelcase */
-                    }}}
-                ], {entities: {Test: {[attachmentName]: {a: {}}, a: {}}}}, {
-                    fillUp: {
-                        [typeName]: 'Test', [attachmentName]: {a: {
+                        }}}
+                    ],
+                    {entities: {Test: {[attachmentName]: {'.*': {}}, a: {}}}},
+                    {
+                        fillUp: {
+                            [typeName]: 'Test', [attachmentName]: {a: {
+                                /* eslint-disable camelcase */
+                                content_type: 'image/jpeg', data: ''
+                                /* eslint-enable camelcase */
+                            }},
+                            a: 'a'
+                        },
+                        incremental: {a: 'a'},
+                        '': {[typeName]: 'Test', a: 'a'}
+                    }
+                ],
+                [
+                    [
+                        {[typeName]: 'Test', a: 'a'},
+                        {[typeName]: 'Test', [attachmentName]: {a: {
                             /* eslint-disable camelcase */
                             content_type: 'image/jpeg', data: ''
                             /* eslint-enable camelcase */
+                        }}}
+                    ],
+                    {entities: {Test: {[attachmentName]: {a: {}}, a: {}}}},
+                    {
+                        fillUp: {
+                            [typeName]: 'Test', [attachmentName]: {a: {
+                                /* eslint-disable camelcase */
+                                content_type: 'image/jpeg', data: ''
+                                /* eslint-enable camelcase */
+                            }},
+                            a: 'a'
+                        },
+                        incremental: {a: 'a'},
+                        '': {[typeName]: 'Test', a: 'a'}
+                    }
+                ],
+                [
+                    [
+                        {[typeName]: 'Test', a: 'a'},
+                        {
+                            [typeName]: 'Test',
+                            [attachmentName]: {a: {
+                                /* eslint-disable camelcase */
+                                content_type: 'image/jpeg', data: ''
+                                /* eslint-enable camelcase */
+                            }}
+                        }
+                    ],
+                    {entities: {Test: {
+                        [attachmentName]: {a: {
+                            minimumNumber: 0, nullable: false
                         }},
-                        a: 'a'
-                    },
-                    incremental: {a: 'a'},
-                    '': {[typeName]: 'Test', a: 'a'}
-                }],
-                [[
-                    {[typeName]: 'Test', a: 'a'},
-                    {[typeName]: 'Test', [attachmentName]: {a: {
-                        /* eslint-disable camelcase */
-                        content_type: 'image/jpeg', data: ''
-                        /* eslint-enable camelcase */
-                    }}}
-                ], {entities: {Test: {[attachmentName]: {a: {
-                    minimumNumber: 0, nullable: false
-                }}, a: {}}}}, {
-                    fillUp: {
-                        [typeName]: 'Test', [attachmentName]: {a: {
-                            /* eslint-disable camelcase */
-                            content_type: 'image/jpeg', data: ''
-                            /* eslint-enable camelcase */
-                        }},
-                        a: 'a'
-                    },
-                    incremental: {a: 'a'},
-                    '': {[typeName]: 'Test', a: 'a'}
-                }],
-                [[{[typeName]: 'Test', [attachmentName]: {a: {
-                    data: 'a', length: 1
-                }}}], {entities: {Test: {[attachmentName]: {a: {
-                    minimumSize: 1
-                }}}}}, {
-                    fillUp: {[typeName]: 'Test', [attachmentName]: {a: {
-                        data: 'a', length: 1
+                        a: {}
                     }}},
-                    incremental: {[typeName]: 'Test', [attachmentName]: {a: {
-                        data: 'a', length: 1
-                    }}},
-                    '': {[typeName]: 'Test', [attachmentName]: {a: {
-                        data: 'a', length: 1
-                    }}}
-                }],
-                [[{[typeName]: 'Test', [attachmentName]: {a: {
-                    data: 'abc', length: 3
-                }}}], {entities: {Test: {[attachmentName]: {a: {
-                    maximumSize: 3, minimumSize: 2
-                }}}}}, {
-                    fillUp: {[typeName]: 'Test', [attachmentName]: {a: {
-                        data: 'abc', length: 3
-                    }}},
-                    incremental: {[typeName]: 'Test', [attachmentName]: {a: {
-                        data: 'abc', length: 3
-                    }}},
-                    '': {[typeName]: 'Test', [attachmentName]: {a: {
-                        data: 'abc', length: 3
-                    }}}
-                }]
+                    {
+                        fillUp: {
+                            [typeName]: 'Test',
+                            [attachmentName]: {a: {
+                                /* eslint-disable camelcase */
+                                content_type: 'image/jpeg', data: ''
+                                /* eslint-enable camelcase */
+                            }},
+                            a: 'a'
+                        },
+                        incremental: {a: 'a'},
+                        '': {[typeName]: 'Test', a: 'a'}
+                    }
+                ],
+                [
+                    [{
+                        [typeName]: 'Test',
+                        [attachmentName]: {a: {data: 'a', length: 1}}
+                    }],
+                    {entities: {Test: {[attachmentName]: {a: {
+                        minimumSize: 1
+                    }}}}},
+                    {
+                        fillUp: {
+                            [typeName]: 'Test',
+                            [attachmentName]: {a: {data: 'a', length: 1}}
+                        },
+                        incremental: {
+                            [typeName]: 'Test',
+                            [attachmentName]: {a: {data: 'a', length: 1}}
+                        },
+                        '': {
+                            [typeName]: 'Test',
+                            [attachmentName]: {a: {data: 'a', length: 1}}
+                        }
+                    }
+                ],
+                [
+                    [{
+                        [typeName]: 'Test',
+                        [attachmentName]: {a: {
+                            data: 'abc', length: 3
+                        }}
+                    }],
+                    {entities: {Test: {[attachmentName]: {a: {
+                        maximumSize: 3, minimumSize: 2
+                    }}}}},
+                    {
+                        fillUp: {
+                            [typeName]: 'Test',
+                            [attachmentName]: {a: {data: 'abc', length: 3}}
+                        },
+                        incremental: {
+                            [typeName]: 'Test',
+                            [attachmentName]: {a: {data: 'abc', length: 3}}
+                        },
+                        '': {
+                            [typeName]: 'Test',
+                            [attachmentName]: {a: {data: 'abc', length: 3}}
+                        }
+                    }
+                ]
                 // endregion
             ]) {
                 const modelConfiguration:ModelConfiguration =
