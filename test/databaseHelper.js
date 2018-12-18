@@ -1261,7 +1261,8 @@ registerTest(async function():Promise<void> {
                         null,
                         {},
                         {
-                            [configuration.database.model.property.name
+                            [
+                            configuration.database.model.property.name
                                 .validatedDocumentsCache
                             ]: new Set(['1-1'])
                         }
@@ -1469,7 +1470,8 @@ registerTest(async function():Promise<void> {
                             [typeName]: 'Test',
                             [attachmentName]: {test: {
                                 /* eslint-disable camelcase */
-                                data: 'payload footer', content_type: 'text/plain'
+                                content_type: 'text/plain',
+                                data: 'payload footer'
                                 /* eslint-enable camelcase */
                             }}
                         },
@@ -1477,7 +1479,8 @@ registerTest(async function():Promise<void> {
                             [typeName]: 'Test',
                             [attachmentName]: {test: {
                                 /* eslint-disable camelcase */
-                                data: 'payload footer', content_type: 'text/plain'
+                                content_type: 'text/plain',
+                                data: 'payload footer'
                                 /* eslint-enable camelcase */
                             }}
                         },
@@ -1485,7 +1488,8 @@ registerTest(async function():Promise<void> {
                             [typeName]: 'Test',
                             [attachmentName]: {test: {
                                 /* eslint-disable camelcase */
-                                data: 'payload footer', content_type: 'text/plain'
+                                content_type: 'text/plain',
+                                data: 'payload footer'
                                 /* eslint-enable camelcase */
                             }}
                         }
@@ -1596,7 +1600,8 @@ registerTest(async function():Promise<void> {
                         [typeName]: 'Test',
                         [attachmentName]: {test: {
                             /* eslint-disable camelcase */
-                            data: 'payload', content_type: 'text/plain'
+                            content_type: 'text/plain',
+                            data: 'payload'
                             /* eslint-enable camelcase */
                         }}
                     }],
@@ -1610,7 +1615,8 @@ registerTest(async function():Promise<void> {
                             [typeName]: 'Test',
                             [attachmentName]: {test: {
                                 /* eslint-disable camelcase */
-                                data: 'payload footer', content_type: 'text/plain'
+                                content_type: 'text/plain',
+                                data: 'payload footer'
                                 /* eslint-enable camelcase */
                             }}
                         },
@@ -1618,7 +1624,8 @@ registerTest(async function():Promise<void> {
                             [typeName]: 'Test',
                             [attachmentName]: {test: {
                                 /* eslint-disable camelcase */
-                                data: 'payload footer', content_type: 'text/plain'
+                                content_type: 'text/plain',
+                                data: 'payload footer'
                                 /* eslint-enable camelcase */
                             }}
                         },
@@ -1626,7 +1633,8 @@ registerTest(async function():Promise<void> {
                             [typeName]: 'Test',
                             [attachmentName]: {test: {
                                 /* eslint-disable camelcase */
-                                data: 'payload footer', content_type: 'text/plain'
+                                content_type: 'text/plain',
+                                data: 'payload footer'
                                 /* eslint-enable camelcase */
                             }}
                         }
@@ -1638,7 +1646,8 @@ registerTest(async function():Promise<void> {
                             [typeName]: 'Test',
                             [attachmentName]: {test: {
                                 /* eslint-disable camelcase */
-                                data: 'payload', content_type: 'text/plain'
+                                content_type: 'text/plain',
+                                data: 'payload'
                                 /* eslint-enable camelcase */
                             }}
                         },
@@ -1654,20 +1663,23 @@ registerTest(async function():Promise<void> {
                             [typeName]: 'Test',
                             [attachmentName]: {test: {
                                 /* eslint-disable camelcase */
-                                data: 'payload footer', content_type: 'text/plain'
+                                content_type: 'text/plain',
+                                data: 'payload footer'
                                 /* eslint-enable camelcase */
                             }}
                         },
                         incremental: {[attachmentName]: {test: {
                             /* eslint-disable camelcase */
-                            data: 'payload footer', content_type: 'text/plain'
+                            content_type: 'text/plain',
+                            data: 'payload footer'
                             /* eslint-enable camelcase */
                         }}},
                         '': {
                             [typeName]: 'Test',
                             [attachmentName]: {test: {
                                 /* eslint-disable camelcase */
-                                data: 'payload footer', content_type: 'text/plain'
+                                content_type: 'text/plain',
+                                data: 'payload footer'
                                 /* eslint-enable camelcase */
                             }}
                         }
@@ -1966,7 +1978,6 @@ registerTest(async function():Promise<void> {
                         '': {[typeName]: 'Test', a: 0, b: ''}
                     }
                 ],
-                // TODO structural
                 [
                     [
                         {
@@ -1983,9 +1994,10 @@ registerTest(async function():Promise<void> {
                             )).getTimezoneOffset(), 1, 0)
                         }
                     ],
-                    {entities: {Test: {a: {type: 'DateTime'}, b: {
-                        emptyEqualsToNull: false
-                    }}}},
+                    {entities: {Test: {
+                        a: {type: 'DateTime'},
+                        b: {emptyEqualsToNull: false}
+                    }}},
                     {
                         fillUp: {[typeName]: 'Test', a: 1, b: ''},
                         incremental: {b: ''},
@@ -2008,9 +2020,10 @@ registerTest(async function():Promise<void> {
                             )).getTimezoneOffset(), 2).toUTCString()
                         }
                     ],
-                    {entities: {Test: {a: {type: 'DateTime'}, b: {
-                        emptyEqualsToNull: false
-                    }}}},
+                    {entities: {Test: {
+                        a: {type: 'DateTime'},
+                        b: {emptyEqualsToNull: false}
+                    }}},
                     {
                         fillUp: {[typeName]: 'Test', a: 2, b: ''},
                         incremental: {b: ''},
@@ -2033,9 +2046,10 @@ registerTest(async function():Promise<void> {
                             )).getTimezoneOffset(), 2).toISOString()
                         }
                     ],
-                    {entities: {Test: {a: {type: 'DateTime'}, b: {
-                        emptyEqualsToNull: false
-                    }}}},
+                    {entities: {Test: {
+                        a: {type: 'DateTime'},
+                        b: {emptyEqualsToNull: false}
+                    }}},
                     {
                         fillUp: {
                             [typeName]: 'Test',
@@ -2078,9 +2092,9 @@ registerTest(async function():Promise<void> {
                         {[typeName]: 'Test', a: ['2'], b: ''},
                         {[typeName]: 'Test', a: ['2']}
                     ],
-                    {entities: {Test: {a: {type: 'string[]'}, b: {
-                        emptyEqualsToNull: false
-                    }}}},
+                    {entities: {Test: {
+                        a: {type: 'string[]'}, b: {emptyEqualsToNull: false}
+                    }}},
                     {
                         fillUp: {[typeName]: 'Test', a: ['2'], b: ''},
                         incremental: {b: ''},
@@ -2125,9 +2139,9 @@ registerTest(async function():Promise<void> {
                         {[typeName]: 'Test', a: null, b: ''},
                         {[typeName]: 'Test'}
                     ],
-                    {entities: {Test: {a: {type: 'string[]'}, b: {
-                        emptyEqualsToNull: false
-                    }}}},
+                    {entities: {Test: {
+                        a: {type: 'string[]'}, b: {emptyEqualsToNull: false}
+                    }}},
                     {
                         fillUp: {[typeName]: 'Test', b: ''},
                         incremental: {b: ''},
@@ -2218,8 +2232,9 @@ registerTest(async function():Promise<void> {
                 [
                     [{[typeName]: 'Test', a: [2, 1]}],
                     {entities: {Test: {a: {
-                        type: 'integer[]', maximumNumber: Infinity,
-                        minimumNumber: 0
+                        maximumNumber: Infinity,
+                        minimumNumber: 0,
+                        type: 'integer[]'
                     }}}},
                     {
                         fillUp: {[typeName]: 'Test', a: [2, 1]},
@@ -2496,8 +2511,7 @@ registerTest(async function():Promise<void> {
                         }
                     ],
                     {entities: {Test: {
-                        a: {type: 'Test'},
-                        b: {nullable: false}
+                        a: {type: 'Test'}, b: {nullable: false}
                     }}},
                     {
                         fillUp: {
@@ -2553,13 +2567,14 @@ registerTest(async function():Promise<void> {
                         {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'a'}}
                     ],
                     {entities: {Test: {
-                        a: {type: 'Test', writable: false},
-                        b: {}}}
+                        a: {type: 'Test', writable: false}, b: {}}}
                     },
                     {
-                        fillUp: {[typeName]: 'Test', a: {
-                            [typeName]: 'Test', b: 'a'
-                        }, b: 'b'},
+                        fillUp: {
+                            [typeName]: 'Test',
+                            a: {[typeName]: 'Test', b: 'a'},
+                            b: 'b'
+                        },
                         incremental: {b: 'b'},
                         '': {
                             [typeName]: 'Test',
@@ -2604,8 +2619,7 @@ registerTest(async function():Promise<void> {
                         b: {[typeName]: 'Test', a: '1'}
                     }],
                     {entities: {Test: {
-                        a: {maximumLength: 1},
-                        b: {type: 'Test'}
+                        a: {maximumLength: 1}, b: {type: 'Test'}
                     }}},
                     {
                         fillUp: {
@@ -2680,9 +2694,11 @@ registerTest(async function():Promise<void> {
                         b: {type: 'Test'}
                     }}},
                     {
-                        fillUp: {[typeName]: 'Test', a: 'b', b: {
-                            [typeName]: 'Test', a: 'b'
-                        }},
+                        fillUp: {
+                            [typeName]: 'Test',
+                            a: 'b',
+                            b: {[typeName]: 'Test', a: 'b'}
+                        },
                         incremental: {
                             [typeName]: 'Test',
                             a: 'b',
@@ -2831,9 +2847,9 @@ registerTest(async function():Promise<void> {
                 // region property constraint
                 [
                     [{[typeName]: 'Test', a: 'b'}],
-                    {entities: {Test: {a: {
-                        constraintExpression: {evaluation: 'true'}
-                    }}}},
+                    {entities: {Test: {a: {constraintExpression: {
+                        evaluation: 'true'
+                    }}}}},
                     {
                         fillUp: {[typeName]: 'Test', a: 'b'},
                         incremental: {[typeName]: 'Test', a: 'b'},
@@ -2842,9 +2858,9 @@ registerTest(async function():Promise<void> {
                 ],
                 [
                     [{[typeName]: 'Test', a: 'a'}],
-                    {entities: {Test: {a: {
-                        constraintExpression: {evaluation: 'newValue === "a"'}
-                    }}}},
+                    {entities: {Test: {a: {constraintExpression: {
+                        evaluation: 'newValue === "a"'
+                    }}}}},
                     {
                         fillUp: {[typeName]: 'Test', a: 'a'},
                         incremental: {[typeName]: 'Test', a: 'a'},
@@ -2926,9 +2942,9 @@ registerTest(async function():Promise<void> {
                 // region attachment
                 [
                     [{[typeName]: 'Test'}],
-                    {entities: {Test: {[attachmentName]: {
-                        '.*': {minimumNumber: 1}
-                    }}}},
+                    {entities: {Test: {[attachmentName]: {'.*': {
+                        minimumNumber: 1
+                    }}}}},
                     {
                         fillUp: {[typeName]: 'Test'},
                         incremental: {[typeName]: 'Test'},
@@ -2999,7 +3015,10 @@ registerTest(async function():Promise<void> {
                         }},
                         '': {[typeName]: 'Test', [attachmentName]: {
                             /* eslint-disable camelcase */
-                            'favicon.png': {content_type: 'image/png', data: 'abc'}
+                            'favicon.png': {
+                                content_type: 'image/png',
+                                data: 'abc'
+                            }
                             /* eslint-enable camelcase */
                         }}
                     }
@@ -3288,7 +3307,8 @@ registerTest(async function():Promise<void> {
                     {entities: {Test: {[attachmentName]: {'.*': {}}, a: {}}}},
                     {
                         fillUp: {
-                            [typeName]: 'Test', [attachmentName]: {a: {
+                            [typeName]: 'Test',
+                            [attachmentName]: {a: {
                                 /* eslint-disable camelcase */
                                 content_type: 'image/jpeg', data: ''
                                 /* eslint-enable camelcase */
@@ -3302,11 +3322,14 @@ registerTest(async function():Promise<void> {
                 [
                     [
                         {[typeName]: 'Test', a: 'a'},
-                        {[typeName]: 'Test', [attachmentName]: {a: {
-                            /* eslint-disable camelcase */
-                            content_type: 'image/jpeg', data: ''
-                            /* eslint-enable camelcase */
-                        }}}
+                        {
+                            [typeName]: 'Test',
+                            [attachmentName]: {a: {
+                                /* eslint-disable camelcase */
+                                content_type: 'image/jpeg', data: ''
+                                /* eslint-enable camelcase */
+                            }}
+                        }
                     ],
                     {entities: {Test: {[attachmentName]: {a: {}}, a: {}}}},
                     {
@@ -3380,9 +3403,7 @@ registerTest(async function():Promise<void> {
                 [
                     [{
                         [typeName]: 'Test',
-                        [attachmentName]: {a: {
-                            data: 'abc', length: 3
-                        }}
+                        [attachmentName]: {a: {data: 'abc', length: 3}}
                     }],
                     {entities: {Test: {[attachmentName]: {a: {
                         maximumSize: 3, minimumSize: 2
