@@ -1466,10 +1466,12 @@ export class DatabaseHelper {
                                     `${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
-                        else if (![undefined, null].includes(
-                            propertySpecification.maximumNumber
-                        ) && propertySpecification.maximumNumber <
-                            newDocument[name].length
+                        else if (
+                            ![undefined, null].includes(
+                                propertySpecification.maximumNumber
+                            ) &&
+                            propertySpecification.maximumNumber <
+                                newDocument[name].length
                         )
                             /* eslint-disable no-throw-literal */
                             throw {
