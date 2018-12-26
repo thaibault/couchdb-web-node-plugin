@@ -178,6 +178,24 @@
               "type": "DateTime"
             }
           },
+          "_location": {
+            "latitude": {
+              "declaration": "Latitude degree of the represented position.",
+              "description": "Latitude",
+              "maximum": 90,
+              "minimum": -90,
+              "nullable": false,
+              "type": "number"
+            },
+            "longitude": {
+              "declaration": "Longitude degree of the represented position.",
+              "description": "Longitude",
+              "maximum": 180,
+              "minimum": -180,
+              "nullable": false,
+              "type": "number"
+            }
+          },
           "_scope": {
             "_additional": {
               "declaration": "Templatedata",
