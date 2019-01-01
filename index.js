@@ -268,20 +268,27 @@ export class Database {
             } catch (error) {
                 throw new Error(
                     `Generated validation code "${validationCode}" doesn't ` +
-                    `compile: ${Tools.representObject(error)}`)
+                    `compile: ${Tools.representObject(error)}`
+                )
             }
             if (configuration.debug)
-                console.info('Specification \n\n"' + Tools.representObject(
-                    configuration.database.model
-                ) + `"\n\nhas generated validation code: \n\n"` +
-                `${validationCode}".`)
+                console.info(
+                    'Specification \n\n"' + Tools.representObject(
+                        configuration.database.model
+                    ) + `"\n\nhas generated validation code: \n\n"` +
+                    `${validationCode}".`
+                )
             await Helper.ensureValidationDocumentPresence(
-                services.database.connection, 'validation', {
+                services.database.connection,
+                'validation',
+                {
                     helper: databaseHelperCode,
                     /* eslint-disable camelcase */
                     validate_doc_update: validationCode
                     /* eslint-enable camelcase */
-                }, 'Model specification')
+                },
+                'Model specification'
+            )
             // / endregion
             // / region authentication
             const authenticationCode:string = 'function(...parameter) {\n' +
