@@ -530,11 +530,11 @@ export class DatabaseHelper {
                                     forbidden:
                                         `PropertyType: Property "${name}" ` +
                                         `isn't of (valid) type "DateTime" (` +
-                                        `given "` +
+                                        'given "' +
                                         serialize(initialNewValue).replace(
                                             /^"/, ''
                                         ).replace(/"$/, '') +
-                                        `" of type "` +
+                                        '" of type "' +
                                         `${typeof initialNewValue}")` +
                                         `${pathDescription}.`
                                 }
@@ -547,7 +547,8 @@ export class DatabaseHelper {
                         'boolean', 'integer', 'number', 'string'
                     ].includes(type))
                         if (
-                            typeof newValue === 'number' && isNaN(newValue) ||
+                            typeof newValue === 'number' &&
+                            isNaN(newValue) ||
                             !(
                                 type === 'integer' || typeof newValue === type
                             ) ||
@@ -558,8 +559,8 @@ export class DatabaseHelper {
                                 /* eslint-disable no-throw-literal */
                                 throw {
                                     forbidden:
-                                        `PropertyType: Property "${name}"` +
-                                        ` isn't of (valid) type "${type}" (` +
+                                        `PropertyType: Property "${name}" ` +
+                                        `isn't of (valid) type "${type}" (` +
                                         `given "${serialize(newValue)}" of ` +
                                         `type "${typeof newValue}")` +
                                         `${pathDescription}.`
