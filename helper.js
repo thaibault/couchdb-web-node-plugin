@@ -378,9 +378,13 @@ export class Helper {
                 modelName
             ][extendPropertyName]))
                 models[modelName] = Tools.extendObject(
-                    true, {}, Helper.extendModel(
+                    true,
+                    {},
+                    Helper.extendModel(
                         modelNameToExtend, models, extendPropertyName
-                    ), models[modelName])
+                    ),
+                    models[modelName]
+                )
             delete models[modelName][extendPropertyName]
         }
         return models[modelName]
