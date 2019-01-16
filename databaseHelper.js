@@ -440,9 +440,7 @@ export class DatabaseHelper {
             ):{changedPath:Array<string>;newValue:any;} => {
                 let changedPath:Array<string> = []
                 // region type
-                const types:Array<any> = Array.isArray(
-                    propertySpecification.type
-                ) ? propertySpecification.type : [propertySpecification.type]
+                const types:Array<any> = [].concat(propertySpecification.type)
                 // Derive nested missing explicit type definition if possible.
                 if (
                     typeof newValue === 'object' &&
@@ -1591,7 +1589,8 @@ export class DatabaseHelper {
                     specialNames.constraint.hasOwnProperty(type) &&
                     (type = specialNames.constraint[type]) &&
                     model.hasOwnProperty(type) &&
-                    Array.isArray(model[type]) && model[type].length
+                    Array.isArray(model[type]) &&
+                    model[type].length
                 )
                     for (const constraint:Constraint of model[type]) {
                         let hook:Function
@@ -1601,7 +1600,8 @@ export class DatabaseHelper {
                         const scope:Object = {
                             attachmentWithPrefixExists:
                                 attachmentWithPrefixExists.bind(
-                                    newDocument, newDocument),
+                                    newDocument, newDocument
+                                ),
                             checkDocument,
                             checkPropertyContent,
                             code,
