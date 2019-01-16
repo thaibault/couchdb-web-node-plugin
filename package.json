@@ -185,7 +185,7 @@
               "maximum": 90,
               "minimum": -90,
               "nullable": false,
-              "type": "number"
+              "type": ["number", "UNRESOLVED"]
             },
             "longitude": {
               "declaration": "Longitude degree of the represented position.",
@@ -193,7 +193,7 @@
               "maximum": 180,
               "minimum": -180,
               "nullable": false,
-              "type": "number"
+              "type": ["number", "UNRESOLVED"]
             }
           },
           "_scope": {
