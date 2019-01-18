@@ -1312,9 +1312,10 @@ export class DatabaseHelper {
                     } else
                         /* eslint-disable no-throw-literal */
                         throw {
-                            forbidden: 'Property: Given property "' +
-                                `${name}" isn't specified in ` +
-                                `model "${modelName}"${pathDescription}.`
+                            forbidden:
+                                `Property: Given property "`${name}" isn't ` +
+                                `specified in model "${modelName}"` +
+                                `${pathDescription}.`
                         }
                         /* eslint-enable no-throw-literal */
                     // NOTE: Only needed to avoid type check errors.
@@ -1485,12 +1486,18 @@ export class DatabaseHelper {
                             }
                             /* eslint-enable no-throw-literal */
                         checkPropertyConstraints(
-                            newDocument[name], name, propertySpecification,
-                            oldDocument && oldDocument.hasOwnProperty(
-                                name
-                            ) && oldDocument[name] || undefined, [
+                            newDocument[name],
+                            name,
+                            propertySpecification,
+                            oldDocument &&
+                            oldDocument.hasOwnProperty(name) &&
+                            oldDocument[name] ||
+                            undefined,
+                            [
                                 'arrayConstraintExecution',
-                                'arrayConstraintExpression'])
+                                'arrayConstraintExpression'
+                            ]
+                        )
                         const propertySpecificationCopy:PropertySpecification =
                             {}
                         for (const key:string in propertySpecification)
