@@ -1313,7 +1313,7 @@ export class DatabaseHelper {
                         /* eslint-disable no-throw-literal */
                         throw {
                             forbidden:
-                                `Property: Given property "`${name}" isn't ` +
+                                `Property: Given property "${name}" isn't ` +
                                 `specified in model "${modelName}"` +
                                 `${pathDescription}.`
                         }
