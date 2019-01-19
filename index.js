@@ -736,7 +736,8 @@ export class Database {
                         'Observing changes feed throws an error for ' +
                         `${numberOfErrorsThrough} times through: ` +
                         `${Tools.representObject(error)}. Reinitializing ` +
-                        'changes stream...')
+                        'changes stream...'
+                    )
                 initialize()
             })
             await WebNodePluginAPI.callStack(
@@ -744,7 +745,8 @@ export class Database {
                 plugins,
                 configuration,
                 Database.changesStream,
-                services)
+                services
+            )
         })
         if (configuration.database.attachAutoRestarter)
             initialize()
