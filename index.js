@@ -553,7 +553,7 @@ export class Database {
                                     Tools.representObject(error))
                             continue
                         } else
-                            throw error
+                            throw Error(error)
                     }
                     try {
                         await services.database.connection.put(newDocument)
@@ -575,13 +575,9 @@ export class Database {
             configuration.database.createGenericFlatIndex &&
             configuration.database.model.autoMigrationPath
         ) {
-            let indexes:Array<PlainObject>
-            try {
-                indexes = (await services.database.connection.getIndexes(
-                )).indexes
-            } catch (error) {
-                throw error
-            }
+            const indexes:Array<PlainObject> = (
+                await services.database.connection.getIndexes()
+            ).indexes
             for (const modelName:string in models)
                 if (
                     models.hasOwnProperty(modelName) &&
@@ -612,18 +608,13 @@ export class Database {
                             position += 1
                         }
                         if (foundPosition === -1)
-                            try {
-                                await services.database.connection.createIndex(
-                                    {
-                                        index: {
-                                            ddoc: name,
-                                            fields: [typeName, propertyName],
-                                            name
-                                        }
-                                    })
-                            } catch (error) {
-                                throw error
-                            }
+                            await services.database.connection.createIndex({
+                                index: {
+                                    ddoc: name,
+                                    fields: [typeName, propertyName],
+                                    name
+                                }
+                            })
                         else
                             indexes.slice(position, 1)
                     }
@@ -647,12 +638,7 @@ export class Database {
                             break
                         }
                     if (!exists)
-                        try {
-                            await services.database.connection.deleteIndex(
-                                index)
-                        } catch (error) {
-                            throw error
-                        }
+                        await services.database.connection.deleteIndex(index)
                 }
         }
         // endregion
@@ -856,20 +842,14 @@ export class Database {
                                 ok: true
                             }
                             if (!skipIDDetermining)
-                                try {
-                                    result[index].rev =
-                                        revisionName in firstParameter[
-                                            index
-                                        ] &&
-                                        !['latest', 'upsert'].includes(
-                                            firstParameter[index][revisionName]
-                                        ) ? firstParameter[index][
-                                            revisionName
-                                        ] : (await this.get(result[index].id))[
-                                            revisionName]
-                                } catch (error) {
-                                    throw error
-                                }
+                                result[index].rev =
+                                    revisionName in firstParameter[index] &&
+                                    !['latest', 'upsert'].includes(
+                                        firstParameter[index][revisionName]
+                                    ) ? firstParameter[index][
+                                        revisionName
+                                    ] : (await this.get(result[index].id))[
+                                        revisionName]
                         }
                     index += 1
                 }
