@@ -141,11 +141,11 @@ export class Helper {
                                     await this.get(result.id)
                                 )[revisionName]
                         } catch (error) {
-                            throw error
+                            throw Error(error)
                         }
                         return result
                     }
-                    throw error
+                    throw Error(error)
                 }
             }
         }
