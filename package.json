@@ -95,6 +95,12 @@
         ],
         "name": "pouchdb-server"
       },
+      "changesStream": {
+        "include_docs": true,
+        "live": true,
+        "since": "now",
+        "timeout": false
+      },
       "configurationFilePath": {
         "__evaluate__": "`./${self.database.path}/database.json`"
       },

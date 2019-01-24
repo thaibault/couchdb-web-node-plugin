@@ -70,9 +70,8 @@ registerTest(async function():Promise<void> {
         for (const updateStrategy:UpdateStrategy of [
             '', 'fillUp', 'incremental'
         ]) {
-            const defaultModelConfiguration:ModelConfiguration =
-                Tools.extendObject(true, {}, configuration.database.model, {
-                    updateStrategy})
+            const defaultModelConfiguration:ModelConfiguration = Tools.extend(
+                true, {}, configuration.database.model, {updateStrategy})
             for (
                 const propertyName:string in
                 defaultModelConfiguration.entities._base
@@ -1140,9 +1139,8 @@ registerTest(async function():Promise<void> {
             ]) {
                 if (test.length < 3)
                     test.splice(1, 0, {})
-                const modelConfiguration:ModelConfiguration =
-                    Tools.extendObject(
-                        true, {}, defaultModelConfiguration, test[1])
+                const modelConfiguration:ModelConfiguration = Tools.extend(
+                    true, {}, defaultModelConfiguration, test[1])
                 const models:Models = Helper.extendModels(modelConfiguration)
                 delete modelConfiguration.property.defaultSpecification
                 delete modelConfiguration.entities
@@ -3426,8 +3424,7 @@ registerTest(async function():Promise<void> {
                 // endregion
             ]) {
                 const modelConfiguration:ModelConfiguration =
-                    Tools.extendObject(
-                        true, {}, defaultModelConfiguration, test[1])
+                    Tools.extend(true, {}, defaultModelConfiguration, test[1])
                 const models:Models = Helper.extendModels(modelConfiguration)
                 delete modelConfiguration.property.defaultSpecification
                 delete modelConfiguration.entities
@@ -3444,9 +3441,9 @@ registerTest(async function():Promise<void> {
             // endregion
         }
         // region migration writes
-        const defaultModelConfiguration:ModelConfiguration =
-            Tools.extendObject(true, {}, configuration.database.model, {
-                updateStrategy: 'migrate'})
+        const defaultModelConfiguration:ModelConfiguration = Tools.extend(
+            true, {}, configuration.database.model, {updateStrategy: 'migrate'}
+        )
         for (
             const propertyName:string in
             defaultModelConfiguration.entities._base
@@ -3665,18 +3662,17 @@ registerTest(async function():Promise<void> {
                 {[typeName]: 'Test', b: 'a'}
             ]
         ]) {
-            const models:Models = Helper.extendModels(Tools.extendObject(
+            const models:Models = Helper.extendModels(Tools.extend(
                 true, {}, defaultModelConfiguration, test[1]))
-            const modelConfiguration:ModelConfiguration = Tools.extendObject(
+            const modelConfiguration:ModelConfiguration = Tools.extend(
                 true, {}, defaultModelConfiguration, test[1])
             delete modelConfiguration.property.defaultSpecification
             delete modelConfiguration.entities
             try {
-                assert.deepEqual(
-                    DatabaseHelper.validateDocumentUpdate(
-                        ...test[0]
-                            .concat([null, {}, {}].slice(test[0].length - 1))
-                            .concat([models, modelConfiguration])),
+                assert.deepEqual(DatabaseHelper.validateDocumentUpdate(
+                    ...test[0]
+                        .concat([null, {}, {}].slice(test[0].length - 1))
+                        .concat([models, modelConfiguration])),
                     test[2]
                 )
             } catch (error) {

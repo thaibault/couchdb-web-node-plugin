@@ -80,9 +80,12 @@ registerTest(async function():Promise<void> {
                 entities: {Test: {roles: {read: 'a', write: ['b']}}}
             }, {Test: {properties: {}, read: ['a'], write: ['b']}}]
         ])
-            assert.deepEqual(Helper.determineAllowedModelRolesMapping(
-                Tools.extendObject(true, {}, modelConfiguration, test[0])
-            ), test[1])
+            assert.deepEqual(
+                Helper.determineAllowedModelRolesMapping(
+                    Tools.extend(true, {}, modelConfiguration, test[0])
+                ),
+                test[1]
+            )
     })
     this.test('determineGenericIndexablePropertyNames', (
         assert:Object
@@ -97,8 +100,9 @@ registerTest(async function():Promise<void> {
             ]]
         ])
             assert.deepEqual(Helper.determineGenericIndexablePropertyNames(
-                Tools.extendObject(true, {
-                }, configuration.database.model, test[0]), test[1]
+                Tools.extend(
+                    true, {}, configuration.database.model, test[0]),
+                test[1]
             ).sort(), test[2])
     })
     this.test('extendModel', (assert:Object):void => {
@@ -181,16 +185,27 @@ registerTest(async function():Promise<void> {
                 {Test: {[specialNames.attachment]: {a: {minimum: 1}}}}
             ]
         ])
-            assert.deepEqual(Helper.extendModels(Tools.extendObject(
-                true, {}, modelConfiguration, test[0]
-            )), test[1])
-        assert.throws(():Models => Helper.extendModels(Tools.extendObject(
+            assert.deepEqual(
+                Helper.extendModels(
+                    Tools.extend(true, {}, modelConfiguration, test[0])),
+                test[1]
+            )
+        assert.throws(():Models => Helper.extendModels(Tools.extend(
             true, {}, modelConfiguration, {entities: {a: {}}})))
-        assert.deepEqual(Helper.extendModels(Tools.extendObject(true, {
-        }, modelConfiguration, {
-            property: {name: {typeRegularExpressionPattern: {public: 'a'}}},
-            entities: {a: {}}
-        })), {a: {}})
+        assert.deepEqual(
+            Helper.extendModels(Tools.extend(
+                true,
+                {},
+                modelConfiguration,
+                {
+                    property: {name: {typeRegularExpressionPattern: {
+                        public: 'a'
+                    }}},
+                    entities: {a: {}}
+                }
+            )),
+            {a: {}}
+        )
     })
     this.test('normalizeAllowedModelRoles', (assert:Object):void => {
         for (const test:Array<any> of [
