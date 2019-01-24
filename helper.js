@@ -54,9 +54,10 @@ export class Helper {
         databaseConnection:Object, documentName:string,
         documentData:PlainObject, description:string, log:boolean = true
     ):Promise<void> {
-        const newDocument:{[key:string]:string} = Tools.extendObject({
-            _id: `_design/${documentName}`, language: 'javascript'
-        }, documentData)
+        const newDocument:{[key:string]:string} = Tools.extend(
+            {_id: `_design/${documentName}`, language: 'javascript'},
+            documentData
+        )
         try {
             const oldDocument:PlainObject = await databaseConnection.get(
                 `_design/${documentName}`)
@@ -377,7 +378,7 @@ export class Helper {
             for (const modelNameToExtend:string of [].concat(models[
                 modelName
             ][extendPropertyName]))
-                models[modelName] = Tools.extendObject(
+                models[modelName] = Tools.extend(
                     true,
                     {},
                     Helper.extendModel(
@@ -435,7 +436,7 @@ export class Helper {
                                     propertyName
                                 ].hasOwnProperty(type))
                                     models[modelName][propertyName][type] =
-                                        Tools.extendObject(true, Tools.copy(
+                                        Tools.extend(true, Tools.copy(
                                             modelConfiguration.property
                                                 .defaultSpecification
                                         ),
@@ -449,11 +450,14 @@ export class Helper {
                             specialNames.minimumAggregatedSize,
                             specialNames.oldType
                         ].includes(propertyName))
-                            models[modelName][propertyName] =
-                                Tools.extendObject(true, Tools.copy(
+                            models[modelName][propertyName] = Tools.extend(
+                                true,
+                                Tools.copy(
                                     modelConfiguration.property
-                                        .defaultSpecification,
-                                ), models[modelName][propertyName])
+                                    .defaultSpecification,
+                                ),
+                                models[modelName][propertyName]
+                            )
         return models
     }
     /**

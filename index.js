@@ -43,6 +43,8 @@ import type {
 /**
  * Launches an application server und triggers all some pluginable hooks on
  * an event.
+ * @property static:additionalChangesStreamOptions - Can provide additional
+ * (non static) changes stream options.
  * @property static:changesStream - Stream which triggers database events.
  * @property static:skipIDDetermining - Indicates whether id's should be
  * determined if "bulkDocs" had skipped a real change due to ignore a
@@ -52,6 +54,7 @@ import type {
  * "skipIDDetermining" configuration).
  */
 export class Database {
+    static additionalChangesStreamOptions:Object = {}
     static changesStream:Object
     static skipIDDetermining:boolean = true
     static toggleIDDetermining:any = Symbol('toggleIDDetermining')
@@ -710,12 +713,14 @@ export class Database {
             if (Database.changesStream)
                 Database.changesStream.cancel()
             /* eslint-disable camelcase */
-            Database.changesStream = services.database.connection.changes({
-                include_docs: true,
-                live: true,
-                since: 'now',
-                timeout: false
-            })
+            Database.changesStream = services.database.connection.changes(
+                Tools.extend(
+                    true,
+                    {},
+                    configuration.database.changesStream,
+                    Database.additionalChangesStreamOptions
+                )
+            )
             /* eslint-enable camelcase */
             Database.changesStream.on('error', async (
                 error:Error
