@@ -456,18 +456,26 @@ export class Database {
                     retrievedDocument.id.startsWith('_design/')
                 )) {
                     const document:Document = retrievedDocument.doc
-                    let documentRepresentation:string = Tools.representObject(
-                        document)
+                    let documentRepresentation:string =
+                        'DOCUMENT IS TOO BIG TO REPRESENT'
                     if (
-                        documentRepresentation.length >
+                        documentRepresentation.length <
+                        configuration.database.maximumRepresentationTryLength
+                    ) {
+                        documentRepresentation = Tools.representObject(
+                            document)
+                        if (
+                            documentRepresentation.length >
                             configuration.database.maximumRepresentationLength
-                    )
-                        documentRepresentation =
-                            documentRepresentation.substring(
-                                0,
-                                configuration.database
-                                    .maximumRepresentationLength - '...'.length
-                            ) + '...'
+                        )
+                            documentRepresentation =
+                                documentRepresentation.substring(
+                                    0,
+                                    configuration.database
+                                        .maximumRepresentationLength -
+                                    '...'.length
+                                ) + '...'
+                    }
                     let newDocument:PlainObject = Tools.copy(document)
                     newDocument[
                         configuration.database.model.property.name.special

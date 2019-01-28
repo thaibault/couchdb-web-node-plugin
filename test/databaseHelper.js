@@ -3669,10 +3669,12 @@ registerTest(async function():Promise<void> {
             delete modelConfiguration.property.defaultSpecification
             delete modelConfiguration.entities
             try {
-                assert.deepEqual(DatabaseHelper.validateDocumentUpdate(
-                    ...test[0]
-                        .concat([null, {}, {}].slice(test[0].length - 1))
-                        .concat([models, modelConfiguration])),
+                assert.deepEqual(
+                    DatabaseHelper.validateDocumentUpdate(
+                        ...test[0]
+                            .concat([null, {}, {}].slice(test[0].length - 1))
+                            .concat([models, modelConfiguration])
+                    ),
                     test[2]
                 )
             } catch (error) {

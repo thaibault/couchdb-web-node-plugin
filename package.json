@@ -127,6 +127,7 @@
       "log/file": "/dev/stdout",
       "log/level": "info",
       "maximumRepresentationLength": 1000,
+      "maximumRepresentationTryLength": 1000000,
       "model": {
         "autoMigrationPath": "migration",
         "entities": {

@@ -454,7 +454,7 @@ export class Helper {
                                 true,
                                 Tools.copy(
                                     modelConfiguration.property
-                                    .defaultSpecification,
+                                        .defaultSpecification,
                                 ),
                                 models[modelName][propertyName]
                             )
