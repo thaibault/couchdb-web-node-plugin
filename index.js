@@ -456,26 +456,6 @@ export class Database {
                     retrievedDocument.id.startsWith('_design/')
                 )) {
                     const document:Document = retrievedDocument.doc
-                    let documentRepresentation:string =
-                        'DOCUMENT IS TOO BIG TO REPRESENT'
-                    if (
-                        documentRepresentation.length <
-                        configuration.database.maximumRepresentationTryLength
-                    ) {
-                        documentRepresentation = Tools.representObject(
-                            document)
-                        if (
-                            documentRepresentation.length >
-                            configuration.database.maximumRepresentationLength
-                        )
-                            documentRepresentation =
-                                documentRepresentation.substring(
-                                    0,
-                                    configuration.database
-                                        .maximumRepresentationLength -
-                                    '...'.length
-                                ) + '...'
-                    }
                     let newDocument:PlainObject = Tools.copy(document)
                     newDocument[
                         configuration.database.model.property.name.special
@@ -499,8 +479,15 @@ export class Database {
                         } catch (error) {
                             throw new Error(
                                 `Running migrater "${name}" in document ` +
-                                `${documentRepresentation}" failed: ` +
-                                Tools.representObject(error))
+                                Helper.determineRepresentation(
+                                    document,
+                                    configuration.database
+                                        .maximumRepresentationTryLength,
+                                    configuration.database
+                                        .maximumRepresentationLength
+                                ) +
+                                `" failed: ${Tools.representObject(error)}`
+                            )
                         }
                         if (result) {
                             newDocument = result
@@ -555,9 +542,15 @@ export class Database {
                             if (!error.forbidden.startsWith('NoChange:'))
                                 console.warn(
                                     `Document "` +
-                                    `${documentRepresentation}" doesn't ` +
-                                    'satisfy its schema (and can not be ' +
-                                    'migrated automatically): ' +
+                                    Helper.determineRepresentation(
+                                        document,
+                                        configuration.database
+                                            .maximumRepresentationTryLength,
+                                        configuration.database
+                                            .maximumRepresentationLength
+                                    ) +
+                                    `" doesn't satisfy its schema (and can ` +
+                                    'not be migrated automatically): ' +
                                     Tools.representObject(error))
                             continue
                         } else

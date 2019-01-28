@@ -39,6 +39,30 @@ global.fetch = fetch
  */
 export class Helper {
     /**
+     * Determines a representation for given plain object.
+     * @param data - Object to represent.
+     * @param maximumRepresentationTryLength - Maximum representation string to
+     * process.
+     * @param maximumRepresentationLength - Maximum length of returned
+     * representation.
+     * @returns Representation string.
+     */
+    static determineRepresentation(
+        data:PlainObject,
+        maximumRepresentationTryLength:number,
+        maximumRepresentationLength:number
+    ):string {
+        let representation:string = Tools.representObject(data)
+        if (representation.length <= maximumRepresentationTryLength) {
+            if (representation.length > maximumRepresentationLength)
+                representation = representation.substring(
+                    0, maximumRepresentationLength - '...'.length
+                ) + '...'
+        } else
+            return 'DOCUMENT IS TOO BIG TO REPRESENT'
+        return representation
+    }
+    /**
      * Updates/creates a design document in database with a validation function
      * set to given code.
      * @param databaseConnection - Database connection to use for document
@@ -51,8 +75,11 @@ export class Helper {
      * successfully.
      */
     static async ensureValidationDocumentPresence(
-        databaseConnection:Object, documentName:string,
-        documentData:PlainObject, description:string, log:boolean = true
+        databaseConnection:Object,
+        documentName:string,
+        documentData:PlainObject,
+        description:string,
+        log:boolean = true
     ):Promise<void> {
         const newDocument:{[key:string]:string} = Tools.extend(
             {_id: `_design/${documentName}`, language: 'javascript'},
