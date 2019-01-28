@@ -405,12 +405,7 @@ export class Database {
                 )) {
                     const extension:string = path.extname(file.name)
                     const basename = path.basename(file.name, extension)
-                    if (
-                        configuration.database.model.entities.hasOwnProperty(
-                            basename
-                        ) &&
-                        extension === '.json'
-                    )
+                    if (extension === '.json')
                         for (const document:Document of JSON.parse(
                             await new Promise((
                                 resolve:Function, reject:Function
