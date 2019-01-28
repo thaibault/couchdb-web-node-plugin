@@ -420,7 +420,7 @@ export class Database {
                             }, (error:?Error, data:string):void =>
                                 error ? reject(error) : resolve(data)))
                         )) {
-                            document[typeName] = basename
+                            document[idName] = basename
                             try {
                                 await services.database.connection.put(
                                     document)
