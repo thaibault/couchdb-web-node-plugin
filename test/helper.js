@@ -31,7 +31,7 @@ registerTest(async function():Promise<void> {
     this.module('helper')
     // region tests
     this.test('determineRepresentation', (assert:Object):void => {
-        for (const test:Array<Array<any>> of [
+        for (const test:Array<any> of [
             [{}, 1, 1, 'DOCUMENT IS TOO BIG TO REPRESENT'],
             [{}, 2, 2, '{}'],
             [{}, 1000, 100, '{}'],

@@ -405,33 +405,38 @@ export class Database {
                 )) {
                     const extension:string = path.extname(file.name)
                     const basename = path.basename(file.name, extension)
-                    if (extension === '.json')
-                        for (const document:Document of JSON.parse(
-                            await new Promise((
-                                resolve:Function, reject:Function
-                            ):void => fileSystem.readFile(file.path, {
-                                encoding: (configuration.encoding:string),
-                                flag: 'r'
-                            }, (error:?Error, data:string):void =>
-                                error ? reject(error) : resolve(data)))
-                        )) {
-                            document[idName] = basename
-                            try {
-                                await services.database.connection.put(
-                                    document)
-                            } catch (error) {
-                                throw new Error(
-                                    `Migrating document "` +
-                                    `${document[idName]}" of type "` +
-                                    `${document[typeName]}" has failed: ` +
-                                    Tools.representObject(error))
-                            }
-                            console.info(
-                                `Including document "` +
-                                `${document[idName]}" of type "` +
-                                `${document[typeName]}" was successful.`)
+                    if (extension === '.json') {
+                        let document:Document
+                        try {
+                            document = JSON.parse(
+                                await new Promise((
+                                    resolve:Function, reject:Function
+                                ):void => fileSystem.readFile(file.path, {
+                                    encoding: (configuration.encoding:string),
+                                    flag: 'r'
+                                }, (error:?Error, data:string):void =>
+                                    error ? reject(error) : resolve(data)))
+                            )
+                        } catch (error) {
+                            throw new Error(
+                                `Parsing document "${file.path}" to include ` +
+                                'by automigration of has failed: ' +
+                                Tools.representObject(error))
                         }
-                    else if (path.extname(file.name) === '.js')
+                        document[idName] = basename
+                        try {
+                            await services.database.connection.put(
+                                document)
+                        } catch (error) {
+                            throw new Error(
+                                `Migrating document "${document[idName]}" of` +
+                                ` type "${document[typeName]}" has failed: ` +
+                                Tools.representObject(error))
+                        }
+                        console.info(
+                            `Including document "${document[idName]}" of ` +
+                            `type "${document[typeName]}" was successful.`)
+                    } else if (path.extname(file.name) === '.js')
                         // region collect migrater
                         migrater[file.path] = eval('require')(
                             file.path
