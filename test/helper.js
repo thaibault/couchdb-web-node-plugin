@@ -30,6 +30,25 @@ import type {ModelConfiguration, Models} from '../type'
 registerTest(async function():Promise<void> {
     this.module('helper')
     // region tests
+    this.test('determineRepresentation', (assert:Object):void => {
+        for (const test:Array<Array<any>> of [
+            [{}, 1, 1, 'DOCUMENT IS TOO BIG TO REPRESENT'],
+            [{}, 2, 2, '{}'],
+            [{}, 1000, 100, '{}'],
+            [
+                {a: 2, b: 3},
+                100,
+                15,
+                `{
+                    a: 2,
+                ...`.replace(/ {16}/g, '')
+            ]
+        ])
+            assert.strictEqual(
+                Helper.determineRepresentation(test[0], test[1], test[2]),
+                test[3]
+            )
+    })
     this.test('ensureValidationDocumentPresence', async (
         assert:Object
     ):Promise<void> => {
