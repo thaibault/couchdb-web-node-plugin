@@ -554,7 +554,7 @@ export class Database {
                                     Tools.representObject(error))
                             continue
                         } else
-                            throw Error(error)
+                            throw error
                     }
                     try {
                         await services.database.connection.put(newDocument)
