@@ -421,9 +421,14 @@ export class Database {
                             throw new Error(
                                 `Parsing document "${file.path}" to include ` +
                                 'by automigration of has failed: ' +
-                                Tools.representObject(error))
+                                Tools.representObject(error)
+                            )
                         }
                         document[idName] = basename
+                        document[
+                            configuration.database.model.property.name.special
+                                .revision
+                        ] = 'latest'
                         try {
                             await services.database.connection.put(
                                 document)
