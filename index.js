@@ -428,11 +428,20 @@ export class Database {
                         document[
                             configuration.database.model.property.name.special
                                 .revision
-                        ] = 'latest'
+                        ] = 'upsert'
                         try {
                             await services.database.connection.put(
                                 document)
                         } catch (error) {
+                            if (
+                                'forbidden' in error &&
+                                error.forbidden.startsWith('NoChange:')
+                            )
+                                console.info(
+                                    `Including document "${document[idName]}` +
+                                    `" of type "${document[typeName]}" ` +
+                                    `hasn't changed existing document.`
+                                )
                             throw new Error(
                                 `Migrating document "${document[idName]}" of` +
                                 ` type "${document[typeName]}" has failed: ` +
