@@ -1349,27 +1349,19 @@ registerTest(async function():Promise<void> {
                         '': {[typeName]: 'Test', [revisionName]: 1, a: 'a'}
                     }
                 ],
+                /*
+                    Only explicitly specified properties should be
+                    automatically filled up from old documents.
+                */
                 [
-                    [{
-                        [typeName]: 'Test',
-                        [specialNames.constraint.expression]: 2
-                    }],
+                    [{[typeName]: 'Test', a: 1}, {[typeName]: 'Test', b: 2}],
                     {entities: {Test: {[specialNames.additional]: {
                         type: 'any'
                     }}}},
                     {
-                        fillUp: {
-                            [typeName]: 'Test',
-                            [specialNames.constraint.expression]: 2
-                        },
-                        incremental: {
-                            [typeName]: 'Test',
-                            [specialNames.constraint.expression]: 2
-                        },
-                        '': {
-                            [typeName]: 'Test',
-                            [specialNames.constraint.expression]: 2
-                        }
+                        fillUp: {[typeName]: 'Test', a: 1},
+                        incremental: {a: 1},
+                        '': {[typeName]: 'Test', a: 1}
                     }
                 ],
                 // endregion

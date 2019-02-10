@@ -1105,6 +1105,7 @@ export class DatabaseHelper {
             ))
                 // region run hooks and check for presence of needed data
                 if (specialNames.attachment === name) {
+                    // region attachment
                     for (const type:string in model[name])
                         if (model[name].hasOwnProperty(type)) {
                             if (
@@ -1203,6 +1204,7 @@ export class DatabaseHelper {
                                             // IgnoreTypeCheck
                                             oldDocument[name][fileName]
                         }
+                    // endregion
                 } else {
                     const propertySpecification:PropertySpecification =
                         // IgnoreTypeCheck
@@ -1215,12 +1217,14 @@ export class DatabaseHelper {
                     if ([undefined, null].includes(
                         propertySpecification.default
                     )) {
-                        if (!(propertySpecification.nullable || (
-                            newDocument.hasOwnProperty(name) ||
-                            oldDocument && oldDocument.hasOwnProperty(
-                                name
-                            ) && updateStrategy
-                        )))
+                        if (
+                            !(propertySpecification.nullable || (
+                                newDocument.hasOwnProperty(name) ||
+                                oldDocument &&
+                                oldDocument.hasOwnProperty(name) &&
+                                updateStrategy
+                            ))
+                        )
                             /* eslint-disable no-throw-literal */
                             throw {
                                 forbidden:
@@ -1275,7 +1279,8 @@ export class DatabaseHelper {
                             specialNames.revisions,
                             specialNames.revisionsInformation,
                             typeName
-                        ).includes(name) && (
+                        ).includes(name) &&
+                        (
                             oldDocument[name] === newDocument[name] ||
                             serialize(
                                 oldDocument[name]
