@@ -376,7 +376,7 @@
     },
     "databaseHelper": {
       "injection": {
-        "internal": {
+        "entry": {
           "__evaluate__": "{databaseHelper: './databaseHelper'}"
         }
       },
@@ -407,7 +407,7 @@
       }
     },
     "injection": {
-      "internal": {
+      "entry": {
         "__evaluate__": "2 < self.givenCommandLineArguments.length && self.givenCommandLineArguments[2] === 'test' ? 'test' : {helper: './helper', index: './index'}"
       }
     },
