@@ -38,7 +38,7 @@
   },
   "scripts": {
     "build": "yarn build:databaseHelper && webOptimizer build",
-    "build:databaseHelper": "webOptimizer build '{__reference__: \"databaseHelper\"}'",
+    "build:databaseHelper": "webOptimizer build '{__reference__: \"target:databaseHelper\"}'",
     "build:dll": "webOptimizer build:dll",
     "clear": "webOptimizer clear && rimraf log.txt",
     "document": "webOptimizer document",
@@ -374,29 +374,6 @@
         }
       }
     },
-    "databaseHelper": {
-      "injection": {
-        "entry": {
-          "__evaluate__": "{databaseHelper: './databaseHelper'}"
-        }
-      },
-      "inPlace": {
-        "externalLibrary": {
-          "normal": true
-        }
-      },
-      "module": {
-        "preprocessor": {
-          "javaScript": {
-            "options": {
-              "plugins": {
-                "__remove__": "@babel/plugin-transform-runtime"
-              }
-            }
-          }
-        }
-      }
-    },
     "exportFormat": {
       "external": "commonjs2",
       "self": "commonjs2"
@@ -424,6 +401,29 @@
         "__evaluate__": "/(?:(?:bindings\\/bindings)|(?:colors\\/lib\\/(?:colors)|(?:extendStringPrototype))|(?:encoding\\/lib\\/iconv-loader)|(?:global)|(?:module))\\.js(?:\\?.+|$)/"
       }
     },
-    "targetTechnology": "node"
+    "targetTechnology": "node",
+    "target:databaseHelper": {
+      "injection": {
+        "entry": {
+          "__evaluate__": "{databaseHelper: './databaseHelper'}"
+        }
+      },
+      "inPlace": {
+        "externalLibrary": {
+          "normal": true
+        }
+      },
+      "module": {
+        "preprocessor": {
+          "javaScript": {
+            "options": {
+              "plugins": {
+                "__remove__": "@babel/plugin-transform-runtime"
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }
