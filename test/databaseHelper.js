@@ -18,10 +18,6 @@
 import type {PlainObject} from 'clientnode'
 import Tools from 'clientnode'
 import registerTest from 'clientnode/test'
-// NOTE: Only needed for debugging this file.
-try {
-    require('source-map-support/register')
-} catch (error) {}
 import configuration from 'web-node/configurator'
 
 import DatabaseHelper from '../databaseHelper'
