@@ -249,15 +249,13 @@ export class Database {
         delete modelConfiguration.entities
         const models:Models = Helper.extendModels(configuration.database.model)
         if (configuration.database.model.updateValidation) {
-            const databaseHelperCode:string = await new Promise((
-                resolve:Function, reject:Function
-            ):void => fileSystem.readFile(
-                /* eslint-disable no-eval */
-                eval('require.resolve')('./databaseHelper.compiled'),
-                /* eslint-enable no-eval */
-                {encoding: (configuration.encoding:string), flag: 'r'},
-                (error:?Error, data:string):void =>
-                    error ? reject(error) : resolve(data)))
+            const databaseHelperCode:string =
+                await fileSystem.promises.readFile(
+                    /* eslint-disable no-eval */
+                    eval('require.resolve')('./databaseHelper.compiled'),
+                    /* eslint-enable no-eval */
+                    {encoding: (configuration.encoding:string), flag: 'r'}
+                )
             // region generate/update authentication/validation code
             // / region validation
             const validationCode:string = 'function(...parameter) {\n' +
@@ -409,13 +407,14 @@ export class Database {
                         let document:Document
                         try {
                             document = JSON.parse(
-                                await new Promise((
-                                    resolve:Function, reject:Function
-                                ):void => fileSystem.readFile(file.path, {
-                                    encoding: (configuration.encoding:string),
-                                    flag: 'r'
-                                }, (error:?Error, data:string):void =>
-                                    error ? reject(error) : resolve(data)))
+                                await fileSystem.promises.readFile(
+                                    file.path,
+                                    {
+                                        encoding:
+                                            (configuration.encoding:string),
+                                        flag: 'r'
+                                    }
+                                )
                             )
                         } catch (error) {
                             throw new Error(
@@ -920,9 +919,7 @@ export class Database {
     ):Promise<Services> {
         const logFilePath:string = 'log.txt'
         if (await Tools.isFile(logFilePath))
-            await new Promise((resolve:Function, reject:Function):void =>
-                fileSystem.unlink(logFilePath, (error:?Error):void =>
-                    error ? reject(error) : resolve()))
+            await fileSystem.promises.unlink(logFilePath)
         await Helper.stopServer(services, configuration)
         delete services.database
         return services
