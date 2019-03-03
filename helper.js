@@ -20,7 +20,7 @@ import type {PlainObject} from 'clientnode'
 // NOTE: Remove when "fetch" is supported by node.
 import fetch from 'node-fetch'
 import path from 'path'
-import WebNodePluginAPI from 'web-node/pluginAPI'
+import {PluginAPI} from 'web-node'
 import type {Configuration, Plugin, Services} from 'web-node/type'
 
 import type {
@@ -259,7 +259,7 @@ export class Helper {
         services.database.server.reject = rejectServerProcessBackup
         await Helper.startServer(services, configuration)
         Helper.initializeConnection(services, configuration)
-        await WebNodePluginAPI.callStack(
+        await PluginAPI.callStack(
             'restartDatabase', plugins, configuration, services)
         return services
     }

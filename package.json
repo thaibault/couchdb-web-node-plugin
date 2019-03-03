@@ -378,11 +378,6 @@
       "external": "commonjs2",
       "self": "commonjs2"
     },
-    "files": {
-      "compose": {
-        "cascadingStyleSheet": null
-      }
-    },
     "injection": {
       "entry": {
         "__evaluate__": "2 < self.givenCommandLineArguments.length && self.givenCommandLineArguments[2] === 'test' ? 'test' : {helper: './helper', index: './index'}"
@@ -390,11 +385,7 @@
     },
     "module": {
       "aliases": {
-        "#": "Use the pre-compiled artefacts.",
-        "clientnode/test$": "clientnode/test.compiled",
-        "web-node/configurator$": "web-node/configurator.compiled",
-        "web-node/pluginAPI$": "web-node/pluginAPI.compiled",
-        "#0": "Standard import is \"node-fetch/lib/index.mjs\" which has import declarations which aren't allowed for javascript module files.",
+        "#": "Standard import is \"node-fetch/lib/index.mjs\" which has import declarations which aren't allowed for javascript module files.",
         "node-fetch$": "node-fetch/lib/index.js"
       },
       "skipParseRegularExpressions": {

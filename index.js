@@ -26,7 +26,7 @@ import fileSystem from 'fs'
 import path from 'path'
 import PouchDB from 'pouchdb'
 import PouchDBFindPlugin from 'pouchdb-find'
-import WebNodePluginAPI from 'web-node/pluginAPI'
+import {PluginAPI} from 'web-node'
 import type {
     Configuration, Plugin, ServicePromises, Services
 } from 'web-node/type'
@@ -249,15 +249,14 @@ export class Database {
         delete modelConfiguration.entities
         const models:Models = Helper.extendModels(configuration.database.model)
         if (configuration.database.model.updateValidation) {
-            const databaseHelperCode:string = await new Promise((
-                resolve:Function, reject:Function
-            ):void => fileSystem.readFile(
-                /* eslint-disable no-eval */
-                eval('require.resolve')('./databaseHelper.compiled'),
-                /* eslint-enable no-eval */
-                {encoding: (configuration.encoding:string), flag: 'r'},
-                (error:?Error, data:string):void =>
-                    error ? reject(error) : resolve(data)))
+            const databaseHelperCode:string =
+                // IgnoreTypeCheck
+                await fileSystem.promises.readFile(
+                    /* eslint-disable no-eval */
+                    eval('require.resolve')('./databaseHelper.compiled'),
+                    /* eslint-enable no-eval */
+                    {encoding: configuration.encoding, flag: 'r'}
+                )
             // region generate/update authentication/validation code
             // / region validation
             const validationCode:string = 'function(...parameter) {\n' +
@@ -409,13 +408,14 @@ export class Database {
                         let document:Document
                         try {
                             document = JSON.parse(
-                                await new Promise((
-                                    resolve:Function, reject:Function
-                                ):void => fileSystem.readFile(file.path, {
-                                    encoding: (configuration.encoding:string),
-                                    flag: 'r'
-                                }, (error:?Error, data:string):void =>
-                                    error ? reject(error) : resolve(data)))
+                                // IgnoreTypeCheck
+                                await fileSystem.promises.readFile(
+                                    file.path,
+                                    {
+                                        encoding: configuration.encoding,
+                                        flag: 'r'
+                                    }
+                                )
                             )
                         } catch (error) {
                             throw new Error(
@@ -746,7 +746,7 @@ export class Database {
                     )
                 initialize()
             })
-            await WebNodePluginAPI.callStack(
+            await PluginAPI.callStack(
                 'databaseInitializeChangesStream',
                 plugins,
                 configuration,
@@ -920,9 +920,7 @@ export class Database {
     ):Promise<Services> {
         const logFilePath:string = 'log.txt'
         if (await Tools.isFile(logFilePath))
-            await new Promise((resolve:Function, reject:Function):void =>
-                fileSystem.unlink(logFilePath, (error:?Error):void =>
-                    error ? reject(error) : resolve()))
+            await fileSystem.promises.unlink(logFilePath)
         await Helper.stopServer(services, configuration)
         delete services.database
         return services

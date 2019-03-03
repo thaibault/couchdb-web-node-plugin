@@ -16,7 +16,7 @@
 */
 // region imports
 import registerTest from 'clientnode/test'
-import configuration from 'web-node/configurator'
+import {configuration} from 'web-node'
 import type {Services} from 'web-node/type'
 
 import Index from '../index'
