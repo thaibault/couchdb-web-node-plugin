@@ -26,7 +26,7 @@ import fileSystem from 'fs'
 import path from 'path'
 import PouchDB from 'pouchdb'
 import PouchDBFindPlugin from 'pouchdb-find'
-import WebNodePluginAPI from 'web-node/pluginAPI'
+import {PluginAPI} from 'web-node'
 import type {
     Configuration, Plugin, ServicePromises, Services
 } from 'web-node/type'
@@ -250,11 +250,12 @@ export class Database {
         const models:Models = Helper.extendModels(configuration.database.model)
         if (configuration.database.model.updateValidation) {
             const databaseHelperCode:string =
+                // IgnoreTypeCheck
                 await fileSystem.promises.readFile(
                     /* eslint-disable no-eval */
                     eval('require.resolve')('./databaseHelper.compiled'),
                     /* eslint-enable no-eval */
-                    {encoding: (configuration.encoding:string), flag: 'r'}
+                    {encoding: configuration.encoding, flag: 'r'}
                 )
             // region generate/update authentication/validation code
             // / region validation
@@ -407,11 +408,11 @@ export class Database {
                         let document:Document
                         try {
                             document = JSON.parse(
+                                // IgnoreTypeCheck
                                 await fileSystem.promises.readFile(
                                     file.path,
                                     {
-                                        encoding:
-                                            (configuration.encoding:string),
+                                        encoding: configuration.encoding,
                                         flag: 'r'
                                     }
                                 )
@@ -745,7 +746,7 @@ export class Database {
                     )
                 initialize()
             })
-            await WebNodePluginAPI.callStack(
+            await PluginAPI.callStack(
                 'databaseInitializeChangesStream',
                 plugins,
                 configuration,

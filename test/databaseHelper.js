@@ -18,7 +18,7 @@
 import type {PlainObject} from 'clientnode'
 import Tools from 'clientnode'
 import registerTest from 'clientnode/test'
-import configuration from 'web-node/configurator'
+import {configuration} from 'web-node'
 
 import DatabaseHelper from '../databaseHelper'
 import Helper from '../helper'
