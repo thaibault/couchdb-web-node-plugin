@@ -260,7 +260,7 @@
         },
         "property": {
           "defaultSpecification": {
-            "calculated": false,
+            "computed": false,
             "conflictingConstraintExecution": null,
             "conflictingConstraintExpression": null,
             "constraintExecution": null,
