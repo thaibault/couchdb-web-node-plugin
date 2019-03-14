@@ -367,6 +367,7 @@
       }
     }
   },
+  "sideEffects": false,
   "webOptimizer": {
     "assetPattern": {
       "javaScript": {
