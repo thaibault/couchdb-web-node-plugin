@@ -194,7 +194,7 @@ export class Helper {
             (
                 configuration.database.binary.memoryInMegaByte === 'default' ?
                     services.database.server.binaryFilePath :
-                    services.database.server.binaryFilePath.nodePath
+                    configuration.database.binary.nodePath
             ),
             (
                 configuration.database.binary.memoryInMegaByte === 'default' ?
