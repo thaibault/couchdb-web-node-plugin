@@ -291,12 +291,20 @@ export class DatabaseHelper {
             const checkModelType:Function = ():void => {
                 // region check for model type (optionally migrate them)
                 if (!newDocument.hasOwnProperty(typeName))
-                    /* eslint-disable no-throw-literal */
-                    throw {
-                        forbidden: 'Type: You have to specify a model type ' +
-                            `via property "${typeName}"${pathDescription}.`
-                    }
-                    /* eslint-enable no-throw-literal */
+                    if (
+                        oldDocument &&
+                        oldDocument.hasOwnProperty(typeName) &&
+                        ['fillUp', 'migrate'].includes(updateStrategy)
+                    )
+                        newDocument[typeName] = oldDocument[typeName]
+                    else
+                        /* eslint-disable no-throw-literal */
+                        throw {
+                            forbidden:
+                                'Type: You have to specify a model type via ' +
+                                `property "${typeName}"${pathDescription}.`
+                        }
+                        /* eslint-enable no-throw-literal */
                 if (!(
                     parentNames.length ||
                     (new RegExp(
@@ -306,8 +314,9 @@ export class DatabaseHelper {
                 ))
                     /* eslint-disable no-throw-literal */
                     throw {
-                        forbidden: 'TypeName: You have to specify a model ' +
-                            'type which matches "' +
+                        forbidden:
+                            'TypeName: You have to specify a model type ' +
+                            'which matches "' +
                             modelConfiguration.property.name
                                 .typeRegularExpressionPattern.public +
                             `" as public type (given "` +
@@ -321,7 +330,8 @@ export class DatabaseHelper {
                     else
                         /* eslint-disable no-throw-literal */
                         throw {
-                            forbidden: `Model: Given model "` +
+                            forbidden:
+                                `Model: Given model "` +
                                 `${newDocument[typeName]}" is not specified` +
                                 `${pathDescription}.`
                         }
@@ -1330,7 +1340,8 @@ export class DatabaseHelper {
                     // region writable/mutable/nullable
                     const checkWriteableMutableNullable:Function = (
                         propertySpecification:PropertySpecification,
-                        newDocument:PlainObject, oldDocument:?PlainObject,
+                        newDocument:PlainObject,
+                        oldDocument:?PlainObject,
                         name:string
                     ):boolean => {
                         // region writable
@@ -1410,9 +1421,9 @@ export class DatabaseHelper {
                             } else
                                 /* eslint-disable no-throw-literal */
                                 throw {
-                                    forbidden: `NotNull: Property "${name}" ` +
-                                        'should not by "null"' +
-                                        `${pathDescription}.`
+                                    forbidden:
+                                        `NotNull: Property "${name}" should ` +
+                                        `not by "null"${pathDescription}.`
                                 }
                                 /* eslint-enable no-throw-literal */
                         // endregion
@@ -1427,8 +1438,11 @@ export class DatabaseHelper {
                                         (new RegExp(type)).test(fileName)
                                     ) {
                                         checkWriteableMutableNullable(
-                                            model[name][type], newDocument,
-                                            oldDocument, fileName)
+                                            model[name][type],
+                                            newDocument,
+                                            oldDocument,
+                                            fileName
+                                        )
                                         break
                                     }
                         continue
@@ -1577,9 +1591,10 @@ export class DatabaseHelper {
                                 name, 'array updated')
                     } else {
                         const oldValue:any =
-                            oldDocument && oldDocument.hasOwnProperty(
-                                name
-                            ) ? oldDocument[name] : null
+                            oldDocument &&
+                            oldDocument.hasOwnProperty(name) ?
+                                oldDocument[name] :
+                                null
                         const result:{
                             changedPath:Array<string>;newValue:any;
                         } = checkPropertyContent(
@@ -2099,11 +2114,16 @@ export class DatabaseHelper {
         const result:{
             changedPath:Array<string>;newDocument:PlainObject;
         } = checkDocument(newDocument, oldDocument)
-        if (result.newDocument._deleted && !oldDocument || !(
-            result.newDocument._deleted && oldDocument &&
-            result.newDocument._deleted !== oldDocument._deleted ||
-            result.changedPath.length
-        ))
+        if (
+            result.newDocument._deleted &&
+            !oldDocument ||
+            !(
+                result.newDocument._deleted &&
+                oldDocument &&
+                result.newDocument._deleted !== oldDocument._deleted ||
+                result.changedPath.length
+            )
+        )
             /* eslint-disable no-throw-literal */
             throw {
                 forbidden:
