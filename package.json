@@ -93,7 +93,9 @@
           "node_modules/.bin/",
           "../.bin/"
         ],
-        "name": "pouchdb-server"
+        "memoryInMegaByte": "default",
+        "name": "pouchdb-server",
+        "nodePath": "/usr/bin/node"
       },
       "changesStream": {
         "include_docs": true,
