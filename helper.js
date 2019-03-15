@@ -191,7 +191,20 @@ export class Helper {
         services:Services, configuration:Configuration
     ):Promise<void> {
         services.database.server.process = spawnChildProcess(
-            services.database.server.binaryFilePath, [
+            (
+                configuration.database.binary.memoryInMegaByte === 'default' ?
+                    services.database.server.binaryFilePath :
+                    services.database.server.binaryFilePath.nodePath
+            ),
+            (
+                configuration.database.binary.memoryInMegaByte === 'default' ?
+                    [] :
+                    [
+                        '--max-old-space-size=' +
+                            configuration.database.binary.memoryInMegaByte,
+                        services.database.server.binaryFilePath
+                    ]
+            ).concat([
                 '--config', configuration.database.configurationFilePath,
                 '--dir', path.resolve(configuration.database.path),
                 /*
@@ -200,12 +213,14 @@ export class Helper {
                 */
                 '--host', configuration.database['httpd/host'],
                 '--port', `${configuration.database.port}`
-            ], {
+            ]),
+            {
                 cwd: eval('process').cwd(),
                 env: eval('process').env,
                 shell: true,
                 stdio: 'inherit'
-            });
+            }
+        );
         (new Promise((resolve:Function, reject:Function):void => {
             for (const closeEventName:string of Tools.closeEventNames)
                 services.database.server.process.on(
