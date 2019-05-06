@@ -123,11 +123,13 @@ export class DatabaseHelper {
                     `doesn't own any role`
         }
         /* eslint-disable no-throw-literal */
-        throw {unauthorized:
-            'Only users with a least on of these roles are allowed to ' +
-            `perform requested ${operationType} action: "` +
-            `${allowedRoles[operationType].join('", "')}". ` +
-            `${userRolesDescription}.`}
+        throw {
+            unauthorized:
+                'Only users with a least on of these roles are allowed to ' +
+                `perform requested ${operationType} action: "` +
+                `${allowedRoles[operationType].join('", "')}". ` +
+                `${userRolesDescription}.`
+        }
         /* eslint-enable no-throw-literal */
     }
     /**

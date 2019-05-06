@@ -126,7 +126,8 @@ export class Database {
                         console.error(
                             `Can't login as existing admin user "` +
                             `${configuration.database.user.name}": "` +
-                            `${Tools.representObject(error)}".`)
+                            `${Tools.represent(error)}".`
+                        )
                     } finally {
                         authenticatedUserDatabaseConnection.close()
                     }
@@ -134,7 +135,8 @@ export class Database {
                     console.error(
                         `Can't create new admin user "` +
                         `${configuration.database.user.name}": "` +
-                        `${Tools.representObject(error)}".`)
+                        `${Tools.represent(error)}".`
+                    )
             } finally {
                 unauthenticatedUserDatabaseConnection.close()
             }
@@ -179,12 +181,14 @@ export class Database {
                             } catch (error) {
                                 throw new Error(
                                     `Couldn't create missing user "${name}":` +
-                                    ` ${Tools.representObject(error)}`)
+                                    ` ${Tools.represent(error)}`
+                                )
                             }
                         else
                             throw new Error(
                                 `Couldn't check for presence of user "` +
-                                `${name}": ${Tools.representObject(error)}`)
+                                `${name}": ${Tools.represent(error)}`
+                            )
                     } finally {
                         userDatabaseConnection.close()
                     }
@@ -211,7 +215,8 @@ export class Database {
                             `Configuration "${configurationPath}" couldn't ` +
                             'be applied to "' +
                             `${configuration.database[configurationPath]}": ` +
-                            Tools.representObject(error))
+                            Tools.represent(error)
+                        )
                     }
         // endregion
         Helper.initializeConnection(services, configuration)
@@ -240,7 +245,8 @@ export class Database {
             } catch (error) {
                 console.error(
                     `Security object couldn't be applied.: ` +
-                    Tools.representObject(error))
+                    Tools.represent(error)
+                )
             }
         // endregion
         const modelConfiguration:ModelConfiguration = Tools.copy(
@@ -270,14 +276,14 @@ export class Database {
             } catch (error) {
                 throw new Error(
                     `Generated validation code "${validationCode}" doesn't ` +
-                    `compile: ${Tools.representObject(error)}`
+                    `compile: ${Tools.represent(error)}`
                 )
             }
             if (configuration.debug)
                 console.info(
-                    'Specification \n\n"' + Tools.representObject(
-                        configuration.database.model
-                    ) + `"\n\nhas generated validation code: \n\n"` +
+                    'Specification \n\n"' +
+                    Tools.represent(configuration.database.model) +
+                    `"\n\nhas generated validation code: \n\n"` +
                     `${validationCode}".`
                 )
             await Helper.ensureValidationDocumentPresence(
@@ -307,7 +313,8 @@ export class Database {
             } catch (error) {
                 throw new Error(
                     `Generated authentication code "${authenticationCode}" ` +
-                    `doesn't compile: ${Tools.representObject(error)}`)
+                    `doesn't compile: ${Tools.represent(error)}`
+                )
             }
             if (configuration.debug)
                 console.info(
@@ -349,8 +356,7 @@ export class Database {
                                                 `${constraint.description}" ` +
                                                 `for model "${modelName}" ` +
                                                 `doesn't compile: "` +
-                                                Tools.representObject(error) +
-                                                '".'
+                                                `${Tools.represent(error)}".`
                                             )
                                         }
                             } else
@@ -386,8 +392,7 @@ export class Database {
                                                 `" for model "${modelName}" ` +
                                                 `in property "${name}" as "` +
                                                 `${type}" doesn't compile: "` +
-                                                Tools.representObject(error) +
-                                                '".'
+                                                `${Tools.represent(error)}".`
                                             )
                                         }
             // endregion
@@ -421,7 +426,7 @@ export class Database {
                             throw new Error(
                                 `Parsing document "${file.path}" to include ` +
                                 'by automigration of has failed: ' +
-                                Tools.representObject(error)
+                                Tools.represent(error)
                             )
                         }
                         document[idName] = basename
@@ -445,7 +450,8 @@ export class Database {
                             throw new Error(
                                 `Migrating document "${document[idName]}" of` +
                                 ` type "${document[typeName]}" has failed: ` +
-                                Tools.representObject(error))
+                                Tools.represent(error)
+                            )
                         }
                         console.info(
                             `Including document "${document[idName]}" of ` +
@@ -500,7 +506,7 @@ export class Database {
                                     configuration.database
                                         .maximumRepresentationLength
                                 ) +
-                                `" failed: ${Tools.representObject(error)}`
+                                `" failed: ${Tools.represent(error)}`
                             )
                         }
                         if (result) {
@@ -565,7 +571,8 @@ export class Database {
                                     ) +
                                     `" doesn't satisfy its schema (and can ` +
                                     'not be migrated automatically): ' +
-                                    Tools.representObject(error))
+                                    Tools.represent(error)
+                                )
                             continue
                         } else
                             throw error
@@ -576,7 +583,8 @@ export class Database {
                         throw new Error(
                             `Replaceing auto migrated document "` +
                             `${newDocument[idName]}" has failed: ` +
-                            Tools.representObject(error))
+                            Tools.represent(error)
+                        )
                     }
                     console.info(
                         `Auto migrating document "${newDocument[idName]}" ` +
@@ -665,7 +673,8 @@ export class Database {
         } catch (error) {
             throw new Error(
                 'Initial database compaction has failed: ' +
-                Tools.representObject(error))
+                Tools.represent(error)
+            )
         }
         // endregion
         return {name: 'database', promise}
@@ -731,8 +740,9 @@ export class Database {
                     console.warn(
                         'Observing changes feed throws an error for ' +
                         `${numberOfErrorsThrough} times through: ` +
-                        `${Tools.representObject(error)}. Restarting ` +
-                        'database server and reinitialize changes stream...')
+                        `${Tools.represent(error)}. Restarting database ` +
+                        'server and reinitialize changes stream...'
+                    )
                     numberOfErrorsThrough = 0
                     Database.changesStream.cancel()
                     await services.database.server.restart(
@@ -741,8 +751,8 @@ export class Database {
                     console.warn(
                         'Observing changes feed throws an error for ' +
                         `${numberOfErrorsThrough} times through: ` +
-                        `${Tools.representObject(error)}. Reinitializing ` +
-                        'changes stream...'
+                        `${Tools.represent(error)}. Reinitializing changes ` +
+                        'stream...'
                     )
                 initialize()
             })
@@ -777,8 +787,8 @@ export class Database {
             } catch (error) {
                 console.warn(
                     `Couldn't find module "request" to synchronize timeout ` +
-                    `option with pouchdb's one: ` +
-                    Tools.representObject(error))
+                    `option with pouchdb's one: ${Tools.represent(error)}`
+                )
             }
         }
         if (!services.database.hasOwnProperty('connector')) {

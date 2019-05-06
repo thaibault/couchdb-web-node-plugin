@@ -53,7 +53,7 @@ export class Helper {
         maximumRepresentationTryLength:number,
         maximumRepresentationLength:number
     ):string {
-        let representation:string = Tools.representObject(data)
+        let representation:string = Tools.represent(data)
         if (representation.length <= maximumRepresentationTryLength) {
             if (representation.length > maximumRepresentationLength)
                 representation = representation.substring(
@@ -97,11 +97,13 @@ export class Helper {
             if (log)
                 if (error.error === 'not_found')
                     console.info(
-                        `${description} not available: create new one.`)
+                        `${description} not available: create new one.`
+                    )
                 else
                     console.info(
                         `${description} couldn't be updated: "` +
-                        `${Tools.representObject(error)}" create new one.`)
+                        `${Tools.represent(error)}" create new one.`
+                    )
             try {
                 await databaseConnection.put(newDocument)
                 if (log)
@@ -109,7 +111,8 @@ export class Helper {
             } catch (error) {
                 throw new Error(
                     `${description} couldn't be installed/updated: "` +
-                    `${Tools.representObject(error)}".`)
+                    `${Tools.represent(error)}".`
+                )
             }
         }
     }
