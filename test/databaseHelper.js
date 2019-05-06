@@ -1166,8 +1166,10 @@ registerTest(async function():Promise<void> {
                                     `start with "${test[2]}:". Given ` +
                                     `arguments: "` +
                                     parameter.map((value:any):string =>
-                                        Tools.representObject(value)
-                                    ).join('", "') + '".')
+                                        Tools.represent(value)
+                                    ).join('", "') +
+                                    '".'
+                                )
                             return result
                         }
                         // IgnoreTypeCheck
