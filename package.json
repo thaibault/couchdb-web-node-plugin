@@ -89,12 +89,16 @@
     "database": {
       "attachAutoRestarter": true,
       "binary": {
-        "locations": [
+        "location": [
+          "/usr/lib/couchdb/bin/",
           "node_modules/.bin/",
           "../.bin/"
         ],
         "memoryInMegaByte": "default",
-        "name": "pouchdb-server",
+        "name": [
+          "couchdb",
+          "pouchdb-server"
+        },
         "nodePath": "/usr/bin/node"
       },
       "changesStream": {

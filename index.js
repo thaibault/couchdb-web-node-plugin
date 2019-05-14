@@ -898,22 +898,34 @@ export class Database {
         if (!services.database.hasOwnProperty('server')) {
             services.database.server = {}
             // region search for binary file to start database server
-            for (
-                const filePath:string of
+            for (const path:string of [].concat(
                 configuration.database.binary.locations
-            ) {
-                const binaryFilePath:string = path.resolve(
-                    filePath, configuration.database.binary.name)
-                if (await Tools.isFile(binaryFilePath))
-                    services.database.server.binaryFilePath = binaryFilePath
+            )) {
+                for (const fileName:string of [].concat(
+                    configuration.database.binary.name
+                )) {
+                    const binaryFilePath:string = path.resolve(path, name)
+                    if (await Tools.isFile(binaryFilePath)) {
+                        services.database.server.binaryFilePath =
+                            binaryFilePath
+                        break
+                    }
+                }
+                if (services.database.server.hasOwnProperty('binaryFilePath'))
+                    break
             }
             if (!services.database.server.hasOwnProperty('binaryFilePath'))
                 throw new Error(
                     'No binary file name "' +
-                    `${configuration.database.binary.name}" in one of the ` +
-                    'following locations found: "' +
-                    `${configuration.database.binary.locations.join('", "')}` +
-                    '".')
+                    [].concat(configuration.database.binary.name).join(
+                        '", "'
+                    ) +
+                    '" in one of the following locations found: "' +
+                    [].concat(configuration.database.binary.location).join(
+                        '", "'
+                    ) +
+                    '".'
+                )
             // endregion
         }
         return services
