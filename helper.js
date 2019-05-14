@@ -56,9 +56,11 @@ export class Helper {
         let representation:string = Tools.represent(data)
         if (representation.length <= maximumRepresentationTryLength) {
             if (representation.length > maximumRepresentationLength)
-                representation = representation.substring(
-                    0, maximumRepresentationLength - '...'.length
-                ) + '...'
+                representation =
+                    representation.substring(
+                        0, maximumRepresentationLength - '...'.length
+                    ) +
+                    '...'
         } else
             return 'DOCUMENT IS TOO BIG TO REPRESENT'
         return representation
@@ -130,7 +132,10 @@ export class Helper {
                 configuration.database.url,
                 `${configuration.database.user.name}:` +
                 `${configuration.database.user.password}@`
-            ) + `/${configuration.name}`, configuration.database.connector)
+            ) +
+            `/${configuration.name}`,
+            configuration.database.connector
+        )
         services.database.connection.setMaxListeners(Infinity)
         const idName:string =
             configuration.database.model.property.name.special.id
@@ -219,7 +224,11 @@ export class Helper {
             ]),
             {
                 cwd: eval('process').cwd(),
-                env: eval('process').env,
+                env: Tools.extend(
+                    {},
+                    eval('process').env,
+                    configuration.database.binary.environment
+                },
                 shell: true,
                 stdio: 'inherit'
             }
@@ -228,10 +237,14 @@ export class Helper {
             for (const closeEventName:string of Tools.closeEventNames)
                 services.database.server.process.on(
                     closeEventName, Tools.getProcessCloseHandler(
-                        resolve, reject, {
+                        resolve,
+                        reject,
+                        {
                             reason: closeEventName,
                             process: services.database.server.process
-                        }))
+                        }
+                    )
+                )
         })).then(
             (...parameter:Array<any>):void => {
                 if (

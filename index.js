@@ -96,30 +96,37 @@ export class Database {
                 new services.database.connector(
                     `${Tools.stringFormat(configuration.database.url, '')}/` +
                         `_users`,
-                    configuration.database.connector)
+                    configuration.database.connector
+                )
             try {
                 await unauthenticatedUserDatabaseConnection.allDocs()
                 console.info(
                     'No admin user available. Automatically creating admin ' +
-                    `user "${configuration.database.user.name}".`)
+                    `user "${configuration.database.user.name}".`
+                )
                 await fetch(
                     `${Tools.stringFormat(configuration.database.url, '')}/` +
                     `_config/admins/${configuration.database.user.name}`,
                     {
                         method: 'PUT',
                         body: `"${configuration.database.user.password}"`
-                    })
+                    }
+                )
             } catch (error) {
                 if (
                     error.hasOwnProperty('name') &&
                     error.name === 'unauthorized'
                 ) {
                     const authenticatedUserDatabaseConnection =
-                        new services.database.connector(Tools.stringFormat(
-                            configuration.database.url,
-                            `${configuration.database.user.name}:` +
-                            `${configuration.database.user.password}@`
-                        ) + '/_users', configuration.database.connector)
+                        new services.database.connector(
+                            Tools.stringFormat(
+                                configuration.database.url,
+                                `${configuration.database.user.name}:` +
+                                `${configuration.database.user.password}@`
+                            ) +
+                            '/_users',
+                            configuration.database.connector
+                        )
                     try {
                         await authenticatedUserDatabaseConnection.allDocs()
                     } catch (error) {
