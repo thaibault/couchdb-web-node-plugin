@@ -898,13 +898,13 @@ export class Database {
         if (!services.database.hasOwnProperty('server')) {
             services.database.server = {}
             // region search for binary file to start database server
-            for (const path:string of [].concat(
-                configuration.database.binary.locations
+            for (const filePath:string of [].concat(
+                configuration.database.binary.location
             )) {
-                for (const fileName:string of [].concat(
+                for (const name:string of [].concat(
                     configuration.database.binary.name
                 )) {
-                    const binaryFilePath:string = path.resolve(path, name)
+                    const binaryFilePath:string = path.resolve(filePath, name)
                     if (await Tools.isFile(binaryFilePath)) {
                         services.database.server.binaryFilePath =
                             binaryFilePath

@@ -98,7 +98,7 @@
         "name": [
           "couchdb",
           "pouchdb-server"
-        },
+        ],
         "nodePath": "/usr/bin/node"
       },
       "changesStream": {
