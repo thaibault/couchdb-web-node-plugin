@@ -89,6 +89,9 @@
     "database": {
       "attachAutoRestarter": true,
       "binary": {
+        "environment": {
+          "ERL_FLAGS": "-couch_ini /usr/lib/couchdb/etc/default.ini /usr/lib/couchdb/etc/datadirs.ini /etc/couchdb/local.ini"
+        },
         "location": [
           "/usr/lib/couchdb/bin/",
           "node_modules/.bin/",
