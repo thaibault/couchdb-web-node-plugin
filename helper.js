@@ -228,7 +228,7 @@ export class Helper {
                     {},
                     eval('process').env,
                     configuration.database.binary.environment
-                },
+                ),
                 shell: true,
                 stdio: 'inherit'
             }
