@@ -35,7 +35,7 @@ import DatabaseHelper from './databaseHelper'
 import Helper from './helper'
 import type {
     /* eslint-disable no-unused-vars */
-    Constraint, Document, ModelConfiguration, Models, RetrievedDocument
+    Constraint, Document, ModelConfiguration, Models, RetrievedDocument, Runner
     /* eslint-enable no-unused-vars */
 } from './type'
 // endregion
@@ -74,7 +74,7 @@ export class Database {
         configuration:Configuration
     ):Promise<{promise:?Promise<Object>}> {
         let promise:?Promise<Object> = null
-        if (services.database.server.hasOwnProperty('binaryFilePath')) {
+        if (services.database.server.hasOwnProperty('runner')) {
             await Helper.startServer(services, configuration)
             services.database.server.restart = Helper.restartServer
             services.database.server.start = Helper.startServer
@@ -905,33 +905,33 @@ export class Database {
         if (!services.database.hasOwnProperty('server')) {
             services.database.server = {}
             // region search for binary file to start database server
-            for (const filePath:string of [].concat(
-                configuration.database.binary.location
+            const triedPaths:Array<string> = []
+            for (const runner:Runner of [].concat(
+                configuration.database.binary.runner
             )) {
-                for (const name:string of [].concat(
-                    configuration.database.binary.name
+                for (const directoryPath:string of [].concat(
+                    runner.location
                 )) {
-                    const binaryFilePath:string = path.resolve(filePath, name)
-                    if (await Tools.isFile(binaryFilePath)) {
-                        services.database.server.binaryFilePath =
-                            binaryFilePath
-                        break
+                    for (const name:string of [].concat(runner.name)) {
+                        const binaryFilePath:string = path.resolve(
+                            directoryPath, name)
+                        triedPaths.push(binaryFilePath)
+                        if (await Tools.isFile(binaryFilePath)) {
+                            runner.binaryFilePath = binaryFilePath
+                            services.database.server.runner = runner
+                            break
+                        }
                     }
+                    if (services.database.server.hasOwnProperty('runner'))
+                        break
                 }
-                if (services.database.server.hasOwnProperty('binaryFilePath'))
+                if (services.database.server.hasOwnProperty('runner'))
                     break
             }
-            if (!services.database.server.hasOwnProperty('binaryFilePath'))
+            if (!services.database.server.hasOwnProperty('runner'))
                 throw new Error(
-                    'No binary file name "' +
-                    [].concat(configuration.database.binary.name).join(
-                        '", "'
-                    ) +
-                    '" in one of the following locations found: "' +
-                    [].concat(configuration.database.binary.location).join(
-                        '", "'
-                    ) +
-                    '".'
+                    'No binary file in one of the following locations found:' +
+                    ` "${triedPaths.join('", "')}".`
                 )
             // endregion
         }

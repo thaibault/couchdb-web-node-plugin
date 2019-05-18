@@ -89,18 +89,30 @@
     "database": {
       "attachAutoRestarter": true,
       "binary": {
-        "environment": {
-          "ERL_FLAGS": "-couch_ini /usr/lib/couchdb/etc/default.ini /usr/lib/couchdb/etc/datadirs.ini /etc/couchdb/local.ini"
-        },
-        "location": [
-          "/usr/lib/couchdb/bin/",
-          "node_modules/.bin/",
-          "../.bin/"
-        ],
         "memoryInMegaByte": "default",
-        "name": [
-          "couchdb",
-          "pouchdb-server"
+        "nodePath": "/usr/bin/node",
+        "runner": [
+          {
+            "environment": {
+              "ERL_FLAGS": "-couch_ini /usr/lib/couchdb/etc/default.ini /usr/lib/couchdb/etc/datadirs.ini /etc/couchdb/local.ini"
+            },
+            "location": "/usr/lib/couchdb/bin/",
+            "name": "couchdb"
+          },
+          {
+            "arguments": [
+                "--config", {"__evaluate__": "`./${self.database.path}/database.json`"},
+                "--dir", {"__evaluate__": "path.resolve(self.database.path)"},
+                "#: NOTE: This redundancy seems to be needed to forward ports in docker containers.",
+                "--host", {"__evaluate__": "self.database['httpd/host']"},
+                "--port", {"__evaluate__": "`${self.database.port}`"}
+            ],
+            "location": [
+              "node_modules/.bin/",
+              "../.bin/"
+            ],
+            "name": "pouchdb-server"
+          }
         ],
         "nodePath": "/usr/bin/node"
       },
@@ -109,9 +121,6 @@
         "live": true,
         "since": "now",
         "timeout": false
-      },
-      "configurationFilePath": {
-        "__evaluate__": "`./${self.database.path}/database.json`"
       },
       "connector": {
         "ajax": {
