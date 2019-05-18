@@ -156,6 +156,13 @@ export type DatabaseUserConfiguration = {
     names:Array<string>;
     roles:Array<string>;
 }
+export type Runner = {
+    arguments?:Array<string>;
+    binaryFilePath:string;
+    environment?:PlainObject;
+    location:Array<string>|string;
+    name:Array<string>|string;
+}
 export type SecuritySettings = {
     admins:DatabaseUserConfiguration;
     members:DatabaseUserConfiguration;
@@ -164,8 +171,9 @@ export type Configuration = {
     database:{
         attachAutoRestarter:boolean;
         binary:{
-            locations:Array<string>;
-            name:string;
+            memoryInMegaByte:string;
+            nodePath:string;
+            runner:Runner;
         };
         connector:PlainObject;
         configurationFilePath:string;

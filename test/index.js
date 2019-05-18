@@ -36,7 +36,7 @@ registerTest(async function():Promise<void> {
     this.test('preLoadService', async (assert:Object):Promise<void> => {
         try {
             assert.strictEqual(typeof (await Index.preLoadService({
-            }, configuration)).database.server.binaryFilePath, 'string')
+            }, configuration)).database.server.runner.binaryFilePath, 'string')
         } catch (error) {
             console.error(error)
         }

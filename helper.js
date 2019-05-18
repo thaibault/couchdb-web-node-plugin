@@ -201,7 +201,7 @@ export class Helper {
         services.database.server.process = spawnChildProcess(
             (
                 configuration.database.binary.memoryInMegaByte === 'default' ?
-                    services.database.server.binaryFilePath :
+                    services.database.server.runner.binaryFilePath :
                     configuration.database.binary.nodePath
             ),
             (
@@ -210,24 +210,21 @@ export class Helper {
                     [
                         '--max-old-space-size=' +
                             configuration.database.binary.memoryInMegaByte,
-                        services.database.server.binaryFilePath
+                        services.database.server.runner.binaryFilePath
                     ]
-            ).concat([
-                '--config', configuration.database.configurationFilePath,
-                '--dir', path.resolve(configuration.database.path),
-                /*
-                    NOTE: This redundancy seems to be needed to forward ports
-                    in docker containers.
-                */
-                '--host', configuration.database['httpd/host'],
-                '--port', `${configuration.database.port}`
-            ]),
+            ).concat(services.database.server.runner.arguments),
             {
                 cwd: eval('process').cwd(),
-                env: Tools.extend(
-                    {},
-                    eval('process').env,
-                    configuration.database.binary.environment
+                env: (
+                    services.database.server.runner.hasOwnProperty(
+                        'environment'
+                    ) ?
+                        Tools.extend(
+                            {},
+                            eval('process').env,
+                            services.database.server.runner.environment
+                        ) :
+                            eval('process').env
                 ),
                 shell: true,
                 stdio: 'inherit'
