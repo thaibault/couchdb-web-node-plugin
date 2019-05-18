@@ -1,6 +1,6 @@
 {
   "name": "databasewebnodeplugin",
-  "version": "1.0.403",
+  "version": "1.0.404",
   "license": "CC-BY-3.0",
   "description": "A database server, model instance conflict handler, rest api, authentication, session management, schema validator and model relation guarantee for webNode.",
   "homepage": "https://torben.website/databaseWebNodePlugin",
@@ -101,11 +101,23 @@
           },
           {
             "arguments": [
-                "--config", {"__evaluate__": "`./${self.database.path}/database.json`"},
-                "--dir", {"__evaluate__": "path.resolve(self.database.path)"},
-                "#: NOTE: This redundancy seems to be needed to forward ports in docker containers.",
-                "--host", {"__evaluate__": "self.database['httpd/host']"},
-                "--port", {"__evaluate__": "`${self.database.port}`"}
+              "--config",
+              {
+                "__evaluate__": "`./${self.database.path}/database.json`"
+              },
+              "--dir",
+              {
+                "__evaluate__": "path.resolve(self.database.path)"
+              },
+              "#: NOTE: This redundancy seems to be needed to forward ports in docker containers.",
+              "--host",
+              {
+                "__evaluate__": "self.database['httpd/host']"
+              },
+              "--port",
+              {
+                "__evaluate__": "`${self.database.port}`"
+              }
             ],
             "location": [
               "node_modules/.bin/",
@@ -113,8 +125,7 @@
             ],
             "name": "pouchdb-server"
           }
-        ],
-        "nodePath": "/usr/bin/node"
+        ]
       },
       "changesStream": {
         "include_docs": true,
