@@ -204,19 +204,27 @@ export class Database {
         // region apply database/rest api configuration
         if (configuration.database.model.updateConfiguration)
             for (const configurationPath:string in configuration.database)
-                if (configuration.database.hasOwnProperty(
-                    configurationPath
-                ) && configurationPath.includes('/'))
+                if (
+                    configuration.database.hasOwnProperty(
+                        configurationPath
+                    ) &&
+                    configurationPath.includes('/')
+                )
                     try {
-                        await fetch(Tools.stringFormat(
-                            configuration.database.url,
-                            `${configuration.database.user.name}:` +
-                            `${configuration.database.user.password}@`
-                        ) + `/_config/${configurationPath}`, {
-                            method: 'PUT',
-                            body: '"' +
-                                `${configuration.database[configurationPath]}"`
-                        })
+                        await fetch(
+                            Tools.stringFormat(
+                                configuration.database.url,
+                                `${configuration.database.user.name}:` +
+                                `${configuration.database.user.password}@`
+                            ) + `/_config/${configurationPath}`,
+                            {
+                                method: 'PUT',
+                                body:
+                                    '"' +
+                                    configuration.database[configurationPath] +
+                                    '"'
+                            }
+                        )
                     } catch (error) {
                         console.error(
                             `Configuration "${configurationPath}" couldn't ` +
