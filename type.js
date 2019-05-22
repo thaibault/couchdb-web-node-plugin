@@ -158,7 +158,7 @@ export type DatabaseUserConfiguration = {
 }
 export type Runner = {
     arguments?:Array<string>;
-    binaryFilePath:string;
+    binaryFilePath?:string;
     environment?:PlainObject;
     location:Array<string>|string;
     name:Array<string>|string;
@@ -170,18 +170,19 @@ export type SecuritySettings = {
 export type Configuration = {
     database:{
         attachAutoRestarter:boolean;
+        backend:{
+            configuration:PlainObject;
+            prefixes:Array<string>;
+        };
         binary:{
             memoryInMegaByte:string;
             nodePath:string;
-            runner:Runner;
+            runner:Array<Runner>;
         };
         connector:PlainObject;
         configurationFilePath:string;
         createGenericFlatIndex:boolean;
-        'httpd/host':string;
         local:boolean;
-        'log/file':string;
-        'log/level':string;
         maximumRepresentationLength:number;
         model:ModelConfiguration;
         path:string;

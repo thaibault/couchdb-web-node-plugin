@@ -53,17 +53,22 @@ export class DatabaseHelper {
      * otherwise.
      */
     static authenticate(
-        newDocument:PlainObject, oldDocument:?PlainObject,
+        newDocument:PlainObject,
+        oldDocument:?PlainObject,
         userContext:UserContext = {
             db: 'dummy',
             name: '"unknown"',
             roles: []
         /* eslint-disable no-unused-vars */
-        }, securitySettings:SecuritySettings = {
+        },
+        securitySettings:SecuritySettings = {
             admins: {names: [], roles: []}, members: {names: [], roles: []}
         /* eslint-enable no-unused-vars */
-        }, allowedModelRolesMapping:AllowedModelRolesMapping,
-        idPropertyName:string, typePropertyName:string, read:boolean = false
+        },
+        allowedModelRolesMapping:AllowedModelRolesMapping,
+        idPropertyName:string,
+        typePropertyName:string,
+        read:boolean = false
     ):?true {
         /*
             NOTE: Special documents and like changes sequences are going
@@ -87,7 +92,8 @@ export class DatabaseHelper {
             if (!('name' in userContext))
                 userContext.name = '"unknown"'
             if (
-                allowedModelRolesMapping && typePropertyName &&
+                allowedModelRolesMapping &&
+                typePropertyName &&
                 newDocument.hasOwnProperty(typePropertyName) &&
                 allowedModelRolesMapping.hasOwnProperty(
                     newDocument[typePropertyName])
