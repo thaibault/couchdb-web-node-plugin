@@ -19,7 +19,6 @@ import Tools from 'clientnode'
 import type {PlainObject} from 'clientnode'
 // NOTE: Remove when "fetch" is supported by node.
 import fetch from 'node-fetch'
-import path from 'path'
 import {PluginAPI} from 'web-node'
 import type {Configuration, Plugin, Services} from 'web-node/type'
 
@@ -224,7 +223,7 @@ export class Helper {
                             eval('process').env,
                             services.database.server.runner.environment
                         ) :
-                            eval('process').env
+                        eval('process').env
                 ),
                 shell: true,
                 stdio: 'inherit'

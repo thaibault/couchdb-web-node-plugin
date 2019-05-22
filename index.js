@@ -203,35 +203,60 @@ export class Database {
         // endregion
         // region apply database/rest api configuration
         if (configuration.database.model.updateConfiguration)
-            for (const configurationPath:string in configuration.database)
-                if (
-                    configuration.database.hasOwnProperty(
-                        configurationPath
-                    ) &&
-                    configurationPath.includes('/')
+            for (
+                const prefix:string of configuration.database.backend.prefixes
+            )
+                for (
+                    const subPath:string in
+                    configuration.database.backend.configuration
                 )
-                    try {
-                        await fetch(
+                    if (configuration.database.backend.configuration
+                        .hasOwnProperty(subPath)
+                    ) {
+                        const path:string =
+                            `/${prefix}${prefix.trim() ? '/' : ''}${subPath}`
+                        const url:string =
                             Tools.stringFormat(
                                 configuration.database.url,
                                 `${configuration.database.user.name}:` +
                                 `${configuration.database.user.password}@`
-                            ) + `/_config/${configurationPath}`,
-                            {
-                                method: 'PUT',
-                                body:
-                                    '"' +
-                                    configuration.database[configurationPath] +
-                                    '"'
+                            ) +
+                            path
+                        let response:Object = null
+                        try {
+                            response = await fetch(url)
+                        } catch (error) {
+                            console.warn(
+                                `Configuration "${path}" couldn't be ` +
+                                `determined: ${Tools.represent(error)}`
+                            )
+                        }
+                        if (response.ok)
+                            try {
+                                await fetch(
+                                    url,
+                                    {
+                                        method: 'PUT',
+                                        body:
+                                            '"' +
+                                            configuration.database.backend
+                                                .configuration[subPath] +
+                                            '"'
+                                    }
+                                )
+                            } catch (error) {
+                                console.error(
+                                    `Configuration "${path}" couldn't be ` +
+                                    `applied to "` +
+                                    `${configuration.database[subPath]}": ` +
+                                    Tools.represent(error)
+                                )
                             }
-                        )
-                    } catch (error) {
-                        console.error(
-                            `Configuration "${configurationPath}" couldn't ` +
-                            'be applied to "' +
-                            `${configuration.database[configurationPath]}": ` +
-                            Tools.represent(error)
-                        )
+                        else
+                            console.info(
+                                `Configuration "${path}" does not exist. ` +
+                                `Response code is ${response.status}.`
+                            )
                     }
         // endregion
         Helper.initializeConnection(services, configuration)

@@ -88,6 +88,36 @@
   "webNode": {
     "database": {
       "attachAutoRestarter": true,
+      "backend": {
+        "prefixes": ["_node/_local/_config", "_config"],
+        "configuration": {
+          "couchdb/database_dir": {
+            "__evaluate__": "path.resolve(self.database.path)"
+          },
+          "couchdb/max_attachment_chunk_size": "4294967296",
+          "couchdb/os_process_timeout": "25000",
+          "couchdb/view_index_dir": {
+            "__evaluate__": "path.resolve(self.database.path)"
+          },
+
+          "couch_httpd_auth/timeout": 7200,
+
+          "httpd/allow_jsonp": true,
+          "httpd/bind_address": {
+            "__evaluate__": "self.database.backend.configuration['httpd/host']"
+          },
+          "httpd/enable_cors": true,
+          "httpd/host": {
+            "__evaluate__": "self.hasOwnProperty('server') ? self.server.application.hostName : '0.0.0.0'"
+          },
+          "httpd/port": {
+            "__evaluate__": "`${self.database.port}`"
+          },
+
+          "log/file": "/dev/stdout",
+          "log/level": "info"
+        }
+      },
       "binary": {
         "memoryInMegaByte": "default",
         "nodePath": "/usr/bin/node",
@@ -107,7 +137,7 @@
               },
               "--dir",
               {
-                "__evaluate__": "path.resolve(self.database.path)"
+                "__evaluate__": "self.database.backend.configuration['couchdb/database_dir']"
               },
               "#: NOTE: This redundancy seems to be needed to forward ports in docker containers.",
               "--host",
@@ -143,18 +173,12 @@
         "revs_limit": 100
       },
       "createGenericFlatIndex": true,
-      "couch_httpd_auth/timeout": 7200,
       "debug": false,
       "ensureAdminPresence": true,
       "ensureSecuritySettingsPresence": true,
       "ensureUserPresence": true,
-      "httpd/host": {
-        "__evaluate__": "self.hasOwnProperty('server') ? self.server.application.hostName : '0.0.0.0'"
-      },
       "ignoreNoChangeError": true,
       "local": false,
-      "log/file": "/dev/stdout",
-      "log/level": "info",
       "maximumRepresentationLength": 1000,
       "maximumRepresentationTryLength": 1000000,
       "model": {
