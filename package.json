@@ -1,6 +1,6 @@
 {
   "name": "databasewebnodeplugin",
-  "version": "1.0.404",
+  "version": "1.0.405",
   "license": "CC-BY-3.0",
   "description": "A database server, model instance conflict handler, rest api, authentication, session management, schema validator and model relation guarantee for webNode.",
   "homepage": "https://torben.website/databaseWebNodePlugin",
@@ -89,7 +89,10 @@
     "database": {
       "attachAutoRestarter": true,
       "backend": {
-        "prefixes": ["_node/_local/_config", "_config"],
+        "prefixes": [
+          "_node/_local/_config",
+          "_config"
+        ],
         "configuration": {
           "couchdb/database_dir": {
             "__evaluate__": "path.resolve(self.database.path)"
@@ -99,9 +102,7 @@
           "couchdb/view_index_dir": {
             "__evaluate__": "path.resolve(self.database.path)"
           },
-
           "couch_httpd_auth/timeout": 7200,
-
           "httpd/allow_jsonp": true,
           "httpd/bind_address": {
             "__evaluate__": "self.database.backend.configuration['httpd/host']"
@@ -113,7 +114,6 @@
           "httpd/port": {
             "__evaluate__": "`${self.database.port}`"
           },
-
           "log/file": "/dev/stdout",
           "log/level": "info"
         }
