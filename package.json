@@ -108,12 +108,8 @@
             "__evaluate__": "self.database.backend.configuration['httpd/host']"
           },
           "httpd/enable_cors": true,
-          "httpd/host": {
-            "__evaluate__": "self.hasOwnProperty('server') ? self.server.application.hostName : '0.0.0.0'"
-          },
-          "httpd/port": {
-            "__evaluate__": "`${self.database.port}`"
-          },
+          "httpd/host": "0.0.0.0",
+          "httpd/port": 5984,
           "log/file": "/dev/stdout",
           "log/level": "info"
         }
@@ -142,11 +138,11 @@
               "#: NOTE: This redundancy seems to be needed to forward ports in docker containers.",
               "--host",
               {
-                "__evaluate__": "self.database['httpd/host']"
+                "__evaluate__": "self.database.backend.configuration['httpd/host']"
               },
               "--port",
               {
-                "__evaluate__": "`${self.database.port}`"
+                "__evaluate__": "`${self.database.backend.configuration['httpd/port']}`"
               }
             ],
             "location": [
@@ -391,7 +387,6 @@
         "updateValidation": true
       },
       "path": "database",
-      "port": 5984,
       "security": {
         "admins": {
           "names": [
@@ -412,7 +407,7 @@
         }
       },
       "url": {
-        "__evaluate__": "`http://{1}${self.database['httpd/host']}:${self.database.port}`"
+        "__evaluate__": "`http://{1}${self.database.backend.configuration['httpd/host']}:${self.database.backend.configuration['httpd/port']}`"
       },
       "user": {
         "name": "admin",
