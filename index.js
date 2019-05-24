@@ -271,7 +271,8 @@ export class Database {
                     NOTE: As a needed side effect: This clears preexisting
                     document references in "securitySettings[
                         configuration.database.model.property.name
-                            .validatedDocumentsCache]".
+                            .validatedDocumentsCache
+                    ]".
                 */
                 await fetch(Tools.stringFormat(
                     configuration.database.url,
