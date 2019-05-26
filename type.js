@@ -159,6 +159,10 @@ export type DatabaseUserConfiguration = {
 export type Runner = {
     arguments?:Array<string>;
     binaryFilePath?:string;
+    configurationFile?:{
+        content:string;
+        path:string;
+    };
     environment?:PlainObject;
     location:Array<string>|string;
     name:Array<string>|string;

@@ -119,8 +119,18 @@
         "nodePath": "/usr/bin/node",
         "runner": [
           {
+            "configurationFile": {
+              "content": {
+                "__evaluate__": "`[couchdb]\\ndatabase_dir = ${path.resolve(self.database.path)}\\nview_index_dir = ${path.resolve(self.database.path)}`"
+              },
+              "path": {
+                "__evaluate__": "path.resolve(self.database.path, '/local.ini')"
+              }
+            },
             "environment": {
-              "ERL_FLAGS": "-couch_ini /usr/lib/couchdb/etc/default.ini /usr/lib/couchdb/etc/datadirs.ini /etc/couchdb/local.ini"
+              "ERL_FLAGS": {
+                "__evaluate__": "`-couch_ini /usr/lib/couchdb/etc/default.ini /usr/lib/couchdb/etc/datadirs.ini /etc/couchdb/local.ini ${path.resolve(self.database.path, '/local.ini')}`"
+              }
             },
             "location": "/usr/lib/couchdb/bin/",
             "name": "couchdb"
