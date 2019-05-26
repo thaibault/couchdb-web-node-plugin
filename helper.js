@@ -17,8 +17,10 @@
 import {spawn as spawnChildProcess} from 'child_process'
 import Tools from 'clientnode'
 import type {PlainObject} from 'clientnode'
+import {promises as fileSystem} from 'fs'
 // NOTE: Remove when "fetch" is supported by node.
 import fetch from 'node-fetch'
+import path from 'path'
 import {PluginAPI} from 'web-node'
 import type {Configuration, Plugin, Services} from 'web-node/type'
 
@@ -197,6 +199,28 @@ export class Helper {
     static async startServer(
         services:Services, configuration:Configuration
     ):Promise<void> {
+        // region create configuration file if needed
+        if (services.database.server.runner.hasOwnProperty(
+            'configurationFile'
+        )) {
+            try {
+                await fileSystem.mkdir(
+                    services.database.server.runner.configuration.file.path,
+                    {recursive: true}
+                )
+            } catch (error) {
+                if (error.code !== 'EEXIST')
+                    throw error
+            }
+            await fileSystem.writeFile(
+                path.dirname(
+                    services.database.server.runner.configuration.file.path
+                ),
+                services.database.server.runner.configuration.file.content,
+                {encoding: configuration.encoding}
+            )
+        }
+        // endregion
         services.database.server.process = spawnChildProcess(
             (
                 configuration.database.binary.memoryInMegaByte === 'default' ?

@@ -747,7 +747,8 @@ export class Database {
                     `${numberOfErrorsThrough} errors through) occurred ` +
                     'during observing changes stream for ' +
                     `${periodToClearNumberOfErrorsInSeconds} seconds. ` +
-                    'Clearing saved number of errors through.')
+                    'Clearing saved number of errors through.'
+                )
                 numberOfErrorsThrough = 0
             }
         }, periodToClearNumberOfErrorsInSeconds * 1000)
