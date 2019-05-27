@@ -205,7 +205,7 @@ export class Helper {
         )) {
             try {
                 await fileSystem.mkdir(
-                    services.database.server.runner.configuration.file.path,
+                    services.database.server.runner.configurationFile.path,
                     {recursive: true}
                 )
             } catch (error) {
@@ -214,9 +214,9 @@ export class Helper {
             }
             await fileSystem.writeFile(
                 path.dirname(
-                    services.database.server.runner.configuration.file.path
+                    services.database.server.runner.configurationFile.path
                 ),
-                services.database.server.runner.configuration.file.content,
+                services.database.server.runner.configurationFile.content,
                 {encoding: configuration.encoding}
             )
         }
