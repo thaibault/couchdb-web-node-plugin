@@ -22,7 +22,7 @@ import Tools from 'clientnode'
 /* eslint-disable no-unused-vars */
 import type {File, PlainObject} from 'clientnode'
 /* eslint-enable no-unused-vars */
-import fileSystem from 'fs'
+import {promises as fileSystem} from 'fs'
 import path from 'path'
 import PouchDB from 'pouchdb'
 import PouchDBFindPlugin from 'pouchdb-find'
@@ -298,7 +298,7 @@ export class Database {
         if (configuration.database.model.updateValidation) {
             const databaseHelperCode:string =
                 // IgnoreTypeCheck
-                await fileSystem.promises.readFile(
+                await fileSystem.readFile(
                     /* eslint-disable no-eval */
                     eval('require.resolve')('./databaseHelper.compiled'),
                     /* eslint-enable no-eval */
@@ -455,7 +455,7 @@ export class Database {
                         try {
                             document = JSON.parse(
                                 // IgnoreTypeCheck
-                                await fileSystem.promises.readFile(
+                                await fileSystem.readFile(
                                     file.path,
                                     {
                                         encoding: configuration.encoding,
@@ -984,7 +984,7 @@ export class Database {
     ):Promise<Services> {
         const logFilePath:string = 'log.txt'
         if (await Tools.isFile(logFilePath))
-            await fileSystem.promises.unlink(logFilePath)
+            await fileSystem.unlink(logFilePath)
         await Helper.stopServer(services, configuration)
         delete services.database
         return services
