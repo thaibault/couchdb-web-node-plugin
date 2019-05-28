@@ -157,6 +157,7 @@ export type DatabaseUserConfiguration = {
     roles:Array<string>;
 }
 export type Runner = {
+    adminUserConfigurationPath:string;
     arguments?:Array<string>;
     binaryFilePath?:string;
     configurationFile?:{

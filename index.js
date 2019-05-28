@@ -99,6 +99,7 @@ export class Database {
                     configuration.database.connector
                 )
             try {
+                // NOTE: We check if we are in admin party mode.
                 await unauthenticatedUserDatabaseConnection.allDocs()
                 console.info(
                     'No admin user available. Automatically creating admin ' +
@@ -106,10 +107,12 @@ export class Database {
                 )
                 await fetch(
                     `${Tools.stringFormat(configuration.database.url, '')}/` +
-                    `_config/admins/${configuration.database.user.name}`,
+                    services.database.server.runner
+                        .adminUserConfigurationPath +
+                    `/${configuration.database.user.name}`,
                     {
-                        method: 'PUT',
-                        body: `"${configuration.database.user.password}"`
+                        body: `"${configuration.database.user.password}"`,
+                        method: 'PUT'
                     }
                 )
             } catch (error) {
