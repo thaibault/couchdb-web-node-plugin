@@ -479,8 +479,7 @@ export class Database {
                                 .revision
                         ] = 'upsert'
                         try {
-                            await services.database.connection.put(
-                                document)
+                            await services.database.connection.put(document)
                         } catch (error) {
                             if (
                                 'forbidden' in error &&
