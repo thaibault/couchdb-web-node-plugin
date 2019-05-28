@@ -216,7 +216,7 @@ export class Database {
                     if (configuration.database.backend.configuration
                         .hasOwnProperty(subPath)
                     ) {
-                        const path:string =
+                        const fullPath:string =
                             `/${prefix}${prefix.trim() ? '/' : ''}${subPath}`
                         const url:string =
                             Tools.stringFormat(
@@ -224,13 +224,13 @@ export class Database {
                                 `${configuration.database.user.name}:` +
                                 `${configuration.database.user.password}@`
                             ) +
-                            path
+                            fullPath
                         let response:Object = null
                         try {
                             response = await fetch(url)
                         } catch (error) {
                             console.warn(
-                                `Configuration "${path}" couldn't be ` +
+                                `Configuration "${fullPath}" couldn't be ` +
                                 `determined: ${Tools.represent(error)}`
                             )
                         }
@@ -249,16 +249,16 @@ export class Database {
                                 )
                             } catch (error) {
                                 console.error(
-                                    `Configuration "${path}" couldn't be ` +
-                                    `applied to "` +
+                                    `Configuration "${fullPath}" couldn't be` +
+                                    ` applied to "` +
                                     `${configuration.database[subPath]}": ` +
                                     Tools.represent(error)
                                 )
                             }
                         else
                             console.info(
-                                `Configuration "${path}" does not exist. ` +
-                                `Response code is ${response.status}.`
+                                `Configuration "${fullPath}" does not exist.` +
+                                ` Response code is ${response.status}.`
                             )
                     }
         // endregion
