@@ -22,7 +22,7 @@ import Tools from 'clientnode'
 /* eslint-disable no-unused-vars */
 import type {File, PlainObject} from 'clientnode'
 /* eslint-enable no-unused-vars */
-import fileSystem from 'fs'
+import {promises as fileSystem} from 'fs'
 import path from 'path'
 import PouchDB from 'pouchdb'
 import PouchDBFindPlugin from 'pouchdb-find'
@@ -99,6 +99,7 @@ export class Database {
                     configuration.database.connector
                 )
             try {
+                // NOTE: We check if we are in admin party mode.
                 await unauthenticatedUserDatabaseConnection.allDocs()
                 console.info(
                     'No admin user available. Automatically creating admin ' +
@@ -106,10 +107,12 @@ export class Database {
                 )
                 await fetch(
                     `${Tools.stringFormat(configuration.database.url, '')}/` +
-                    `_config/admins/${configuration.database.user.name}`,
+                    services.database.server.runner
+                        .adminUserConfigurationPath +
+                    `/${configuration.database.user.name}`,
                     {
-                        method: 'PUT',
-                        body: `"${configuration.database.user.password}"`
+                        body: `"${configuration.database.user.password}"`,
+                        method: 'PUT'
                     }
                 )
             } catch (error) {
@@ -213,7 +216,7 @@ export class Database {
                     if (configuration.database.backend.configuration
                         .hasOwnProperty(subPath)
                     ) {
-                        const path:string =
+                        const fullPath:string =
                             `/${prefix}${prefix.trim() ? '/' : ''}${subPath}`
                         const url:string =
                             Tools.stringFormat(
@@ -221,13 +224,13 @@ export class Database {
                                 `${configuration.database.user.name}:` +
                                 `${configuration.database.user.password}@`
                             ) +
-                            path
+                            fullPath
                         let response:Object = null
                         try {
                             response = await fetch(url)
                         } catch (error) {
                             console.warn(
-                                `Configuration "${path}" couldn't be ` +
+                                `Configuration "${fullPath}" couldn't be ` +
                                 `determined: ${Tools.represent(error)}`
                             )
                         }
@@ -246,16 +249,16 @@ export class Database {
                                 )
                             } catch (error) {
                                 console.error(
-                                    `Configuration "${path}" couldn't be ` +
-                                    `applied to "` +
+                                    `Configuration "${fullPath}" couldn't be` +
+                                    ` applied to "` +
                                     `${configuration.database[subPath]}": ` +
                                     Tools.represent(error)
                                 )
                             }
                         else
                             console.info(
-                                `Configuration "${path}" does not exist. ` +
-                                `Response code is ${response.status}.`
+                                `Configuration "${fullPath}" does not exist.` +
+                                ` Response code is ${response.status}.`
                             )
                     }
         // endregion
@@ -298,7 +301,7 @@ export class Database {
         if (configuration.database.model.updateValidation) {
             const databaseHelperCode:string =
                 // IgnoreTypeCheck
-                await fileSystem.promises.readFile(
+                await fileSystem.readFile(
                     /* eslint-disable no-eval */
                     eval('require.resolve')('./databaseHelper.compiled'),
                     /* eslint-enable no-eval */
@@ -455,7 +458,7 @@ export class Database {
                         try {
                             document = JSON.parse(
                                 // IgnoreTypeCheck
-                                await fileSystem.promises.readFile(
+                                await fileSystem.readFile(
                                     file.path,
                                     {
                                         encoding: configuration.encoding,
@@ -984,7 +987,7 @@ export class Database {
     ):Promise<Services> {
         const logFilePath:string = 'log.txt'
         if (await Tools.isFile(logFilePath))
-            await fileSystem.promises.unlink(logFilePath)
+            await fileSystem.unlink(logFilePath)
         await Helper.stopServer(services, configuration)
         delete services.database
         return services

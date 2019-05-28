@@ -119,6 +119,7 @@
         "nodePath": "/usr/bin/node",
         "runner": [
           {
+            "adminUserConfigurationPath": "_node/couchdb@127.0.0.1/_config/admins",
             "configurationFile": {
               "content": {
                 "__evaluate__": "`[couchdb]\\ndatabase_dir = ${path.resolve(self.database.path)}\\nview_index_dir = ${path.resolve(self.database.path)}`"
@@ -136,6 +137,7 @@
             "name": "couchdb"
           },
           {
+            "adminUserConfigurationPath": "_config/admins",
             "arguments": [
               "--config",
               {
