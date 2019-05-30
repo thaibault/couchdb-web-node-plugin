@@ -267,25 +267,60 @@ export class Database {
             configuration.database.model.property.name.special.id
         const typeName:string =
             configuration.database.model.property.name.special.type
-        // region ensure presence of database security settings
-        if (configuration.database.ensureSecuritySettingsPresence)
+        // region ensure database presence
+        if (configuration.database.ensureDatabasePresence)
             try {
                 /*
-                    NOTE: As a needed side effect: This clears preexisting
-                    document references in "securitySettings[
+                    NOTE: As a needed side effect:
+                    This clears preexisting document references in
+                    "securitySettings[
                         configuration.database.model.property.name
                             .validatedDocumentsCache
                     ]".
                 */
-                await fetch(Tools.stringFormat(
-                    configuration.database.url,
-                    `${configuration.database.user.name}:` +
-                    `${configuration.database.user.password}@`
-                ) + `/${configuration.name}/_security`, {
-                    method: 'PUT',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(configuration.database.security)
-                })
+                await fetch(
+                    Tools.stringFormat(
+                        configuration.database.url,
+                        `${configuration.database.user.name}:` +
+                        `${configuration.database.user.password}@`
+                    ) +
+                    `/${configuration.name}`,
+                    {
+                        headers: {'Content-Type': 'application/json'},
+                        method: 'PUT'
+                    }
+                )
+            } catch (error) {
+                console.error(
+                    `Security object couldn't be applied.: ` +
+                    Tools.represent(error)
+                )
+            }
+        // endregion
+        // region ensure presence of database security settings
+        if (configuration.database.ensureSecuritySettingsPresence)
+            try {
+                /*
+                    NOTE: As a needed side effect:
+                    This clears preexisting document references in
+                    "securitySettings[
+                        configuration.database.model.property.name
+                            .validatedDocumentsCache
+                    ]".
+                */
+                await fetch(
+                    Tools.stringFormat(
+                        configuration.database.url,
+                        `${configuration.database.user.name}:` +
+                        `${configuration.database.user.password}@`
+                    ) +
+                    `/${configuration.name}/_security`,
+                    {
+                        body: JSON.stringify(configuration.database.security),
+                        headers: {'Content-Type': 'application/json'},
+                        method: 'PUT'
+                    }
+                )
             } catch (error) {
                 console.error(
                     `Security object couldn't be applied.: ` +
@@ -364,12 +399,16 @@ export class Database {
                 console.info(
                     `Authentication code "${authenticationCode}" generated.`)
             await Helper.ensureValidationDocumentPresence(
-                services.database.connection, 'authentication', {
+                services.database.connection,
+                'authentication',
+                {
                     helper: databaseHelperCode,
                     /* eslint-disable camelcase */
                     validate_doc_update: authenticationCode
                     /* eslint-enable camelcase */
-                }, 'Authentication logic')
+                },
+                'Authentication logic'
+            )
             // / endregion
             // endregion
             // region check if all constraint descriptions compile
