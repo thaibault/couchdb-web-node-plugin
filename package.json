@@ -183,7 +183,6 @@
       "createGenericFlatIndex": true,
       "debug": false,
       "ensureAdminPresence": true,
-      "ensureDatabasePresence": true,
       "ensureSecuritySettingsPresence": true,
       "ensureUserPresence": true,
       "ignoreNoChangeError": true,

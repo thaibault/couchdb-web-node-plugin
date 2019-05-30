@@ -125,9 +125,9 @@ export class Helper {
      * @param configuration - Mutable by plugins extended configuration object.
      * @returns Given and extended object of services.
      */
-    static initializeConnection(
+    static async initializeConnection(
         services:Services, configuration:Configuration
-    ):Services {
+    ):Promise<Services> {
         services.database.connection = new services.database.connector(
             Tools.stringFormat(
                 configuration.database.url,
@@ -185,6 +185,30 @@ export class Helper {
                     throw error
                 }
             }
+        }
+        // endregion
+        // region ensure database presence
+        try {
+            /*
+                NOTE: As a needed side effect:
+                This clears preexisting document references in
+                "securitySettings[
+                    configuration.database.model.property.name
+                        .validatedDocumentsCache
+                ]".
+            */
+            await fetch(
+                Tools.stringFormat(
+                    configuration.database.url,
+                    `${configuration.database.user.name}:` +
+                    `${configuration.database.user.password}@`
+                ) +
+                `/${configuration.name}`,
+                {headers: {'Content-Type': 'application/json'}}
+            )
+        } catch (error) {
+            console.error(
+                `Database could not be retrieved: ${Tools.represent(error)}`)
         }
         // endregion
         return services

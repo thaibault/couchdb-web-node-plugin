@@ -262,41 +262,11 @@ export class Database {
                             )
                     }
         // endregion
-        Helper.initializeConnection(services, configuration)
+        await Helper.initializeConnection(services, configuration)
         const idName:string =
             configuration.database.model.property.name.special.id
         const typeName:string =
             configuration.database.model.property.name.special.type
-        // region ensure database presence
-        if (configuration.database.ensureDatabasePresence)
-            try {
-                /*
-                    NOTE: As a needed side effect:
-                    This clears preexisting document references in
-                    "securitySettings[
-                        configuration.database.model.property.name
-                            .validatedDocumentsCache
-                    ]".
-                */
-                await fetch(
-                    Tools.stringFormat(
-                        configuration.database.url,
-                        `${configuration.database.user.name}:` +
-                        `${configuration.database.user.password}@`
-                    ) +
-                    `/${configuration.name}`,
-                    {
-                        headers: {'Content-Type': 'application/json'},
-                        method: 'PUT'
-                    }
-                )
-            } catch (error) {
-                console.error(
-                    `Security object couldn't be applied.: ` +
-                    Tools.represent(error)
-                )
-            }
-        // endregion
         // region ensure presence of database security settings
         if (configuration.database.ensureSecuritySettingsPresence)
             try {
