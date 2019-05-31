@@ -128,15 +128,15 @@ export class Helper {
     static async initializeConnection(
         services:Services, configuration:Configuration
     ):Promise<Services> {
-        services.database.connection = new services.database.connector(
+        const url:string =
             Tools.stringFormat(
                 configuration.database.url,
                 `${configuration.database.user.name}:` +
                 `${configuration.database.user.password}@`
             ) +
-            `/${configuration.name}`,
-            configuration.database.connector
-        )
+            `/${configuration.name}`
+        services.database.connection = new services.database.connector(
+            url, configuration.database.connector)
         services.database.connection.setMaxListeners(Infinity)
         const idName:string =
             configuration.database.model.property.name.special.id
@@ -174,9 +174,9 @@ export class Helper {
                                 revisionName in firstParameter &&
                                 !['latest', 'upsert'].includes(
                                     firstParameter[revisionName]
-                                ) ? firstParameter[revisionName] : (
-                                    await this.get(result.id)
-                                )[revisionName]
+                                ) ?
+                                    firstParameter[revisionName] :
+                                    (await this.get(result.id))[revisionName]
                         } catch (error) {
                             throw error
                         }
@@ -189,26 +189,10 @@ export class Helper {
         // endregion
         // region ensure database presence
         try {
-            /*
-                NOTE: As a needed side effect:
-                This clears preexisting document references in
-                "securitySettings[
-                    configuration.database.model.property.name
-                        .validatedDocumentsCache
-                ]".
-            */
-            await fetch(
-                Tools.stringFormat(
-                    configuration.database.url,
-                    `${configuration.database.user.name}:` +
-                    `${configuration.database.user.password}@`
-                ) +
-                `/${configuration.name}`,
-                {headers: {'Content-Type': 'application/json'}}
-            )
+            await Tools.checkReachability(url)
         } catch (error) {
-            console.error(
-                `Database could not be retrieved: ${Tools.represent(error)}`)
+            console.info('Database could not be retrieved yet: Creating it.')
+            await fetch(url, {method: 'PUT'})
         }
         // endregion
         return services
