@@ -90,6 +90,11 @@ export class Database {
         }
         if (services.database.hasOwnProperty('connection'))
             return {promise}
+        const urlPrefix:string = Tools.stringFormat(
+            configuration.database.url,
+            `${configuration.database.user.name}:` +
+            `${configuration.database.user.password}@`
+        )
         // region ensure presence of global admin user
         if (configuration.database.ensureAdminPresence) {
             const unauthenticatedUserDatabaseConnection:PouchDB =
@@ -122,12 +127,7 @@ export class Database {
                 ) {
                     const authenticatedUserDatabaseConnection =
                         new services.database.connector(
-                            Tools.stringFormat(
-                                configuration.database.url,
-                                `${configuration.database.user.name}:` +
-                                `${configuration.database.user.password}@`
-                            ) +
-                            '/_users',
+                            `${urlPrefix}/_users`,
                             configuration.database.connector
                         )
                     try {
@@ -160,11 +160,10 @@ export class Database {
                     configuration.database.security[type].names
                 ) {
                     const userDatabaseConnection:Object =
-                        new services.database.connector(Tools.stringFormat(
-                            configuration.database.url,
-                            `${configuration.database.user.name}:` +
-                            `${configuration.database.user.password}@`
-                        ) + '/_users', configuration.database.connector)
+                        new services.database.connector(
+                            `${urlPrefix}/_users`,
+                            configuration.database.connector
+                        )
                     try {
                         await userDatabaseConnection.get(
                             `org.couchdb.user:${name}`)
@@ -218,13 +217,7 @@ export class Database {
                     ) {
                         const fullPath:string =
                             `/${prefix}${prefix.trim() ? '/' : ''}${subPath}`
-                        const url:string =
-                            Tools.stringFormat(
-                                configuration.database.url,
-                                `${configuration.database.user.name}:` +
-                                `${configuration.database.user.password}@`
-                            ) +
-                            fullPath
+                        const url:string = `${urlPrefix}${fullPath}`
                         let response:Object = null
                         try {
                             response = await fetch(url)
@@ -239,12 +232,12 @@ export class Database {
                                 await fetch(
                                     url,
                                     {
-                                        method: 'PUT',
                                         body:
                                             '"' +
                                             configuration.database.backend
                                                 .configuration[subPath] +
-                                            '"'
+                                            '"',
+                                        method: 'PUT'
                                     }
                                 )
                             } catch (error) {
@@ -279,15 +272,9 @@ export class Database {
                     ]".
                 */
                 await fetch(
-                    Tools.stringFormat(
-                        configuration.database.url,
-                        `${configuration.database.user.name}:` +
-                        `${configuration.database.user.password}@`
-                    ) +
-                    `/${configuration.name}/_security`,
+                    `${urlPrefix}/${configuration.name}/_security`,
                     {
                         body: JSON.stringify(configuration.database.security),
-                        headers: {'Content-Type': 'application/json'},
                         method: 'PUT'
                     }
                 )
