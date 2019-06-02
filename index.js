@@ -710,7 +710,7 @@ export class Database {
         try {
             await services.database.connection.compact()
         } catch (error) {
-            throw new Error(
+            console.warn(
                 'Initial database compaction has failed: ' +
                 Tools.represent(error)
             )
