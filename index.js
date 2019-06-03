@@ -227,7 +227,7 @@ export class Database {
                                 `determined: ${Tools.represent(error)}`
                             )
                         }
-                        if (response.ok)
+                        if (response && response.ok)
                             try {
                                 await fetch(
                                     url,
@@ -710,7 +710,7 @@ export class Database {
         try {
             await services.database.connection.compact()
         } catch (error) {
-            throw new Error(
+            console.warn(
                 'Initial database compaction has failed: ' +
                 Tools.represent(error)
             )
