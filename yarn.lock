@@ -2408,9 +2408,9 @@ cli-width@^2.0.0:
   integrity sha1-/xnt6Kml5XkyQUewwR8PvLq+1jk=
 
 clientnode@*:
-  version "3.0.331"
-  resolved "https://registry.yarnpkg.com/clientnode/-/clientnode-3.0.331.tgz#ef091a5ebeb522bd9fa224a0d962b225af7eeffd"
-  integrity sha512-VaPjejVv0J8s8rAfbgonqhpQUdW0zP9N1/trhq5fVB1O0VLRgTIJroN06WhRGZLMKtQp4aWElvaxeZymuidy7Q==
+  version "3.0.333"
+  resolved "https://registry.yarnpkg.com/clientnode/-/clientnode-3.0.333.tgz#38369578a49fe0481991229c475165720def1e0a"
+  integrity sha512-FxbiNoGeFKSGuRzrNreezRDcin2ftLhbKFFiF814/Xo2YrvLYhKFCaEfIIr9mq9nUPpj0VG0o2LpIryxu+IRrw==
   dependencies:
     colors "*"
 
@@ -3263,9 +3263,9 @@ ejs@*:
   integrity sha512-0xy4A/twfrRCnkhfk8ErDi5DqdAsAqeGxht4xkCUrsvhhbQNs7E+4jV0CN7+NKIY0aHE72+XvqtBIXzD31ZbXQ==
 
 electron-to-chromium@^1.3.137:
-  version "1.3.142"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.142.tgz#d3db509ac0f0f5a212af234ff3b500d8cc4ea812"
-  integrity sha512-GLOB/wAA2g9l5Hwg1XrPqd6br2WNOPIY8xl/q+g5zZdv3b5fB69oFOooxKxc0DfDfDS1RqaF6hKjwt6v4fuFUw==
+  version "1.3.143"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.143.tgz#8b2a631ab75157aa53d0c2933275643b99ef580b"
+  integrity sha512-J9jOpxIljQZlV6GIP2fwAWq0T69syawU0sH3EW3O2Bgxquiy+veeIT5mBDRz+i3oHUSL1tvVgRKH3/4QiQh9Pg==
 
 elliptic@^6.0.0:
   version "6.4.1"
@@ -4966,9 +4966,9 @@ internal-ip@^4.3.0:
     ipaddr.js "^1.9.0"
 
 internationalisation@*:
-  version "1.0.191"
-  resolved "https://registry.yarnpkg.com/internationalisation/-/internationalisation-1.0.191.tgz#fbf0fef657d84aa2d230aad9c50435ff4e74f893"
-  integrity sha512-5A7sIMhd6Go3FNQlg3KWju6pOP76fU62V4b4YNvWy8IFrIOCWN1kSItLeVeg/NMZO8VD9rWS+hJDZA9Bh5TQKg==
+  version "1.0.192"
+  resolved "https://registry.yarnpkg.com/internationalisation/-/internationalisation-1.0.192.tgz#7f19bbf2314ac58a4c2d2f422c9751dd50afc62e"
+  integrity sha512-cGvgLrGROSJvj0XPo+TsREP3D31jLrhjamXGIMnNF5Oio2gap7BgrdbRbsO0U/k9g89gHk/adD68Qjzv8YaSCA==
 
 interpret@^1.1.0:
   version "1.2.0"
@@ -9072,9 +9072,9 @@ resolve@1.9.0:
     path-parse "^1.0.6"
 
 resolve@^1.10.0, resolve@^1.3.2, resolve@^1.8.1:
-  version "1.11.0"
-  resolved "https://registry.yarnpkg.com/resolve/-/resolve-1.11.0.tgz#4014870ba296176b86343d50b60f3b50609ce232"
-  integrity sha512-WL2pBDjqT6pGUNSUzMw00o4T7If+z4H2x3Gz893WoUQ5KW8Vr9txp00ykiP16VBaZF5+j/OcXJHZ9+PCvdiDKw==
+  version "1.11.1"
+  resolved "https://registry.yarnpkg.com/resolve/-/resolve-1.11.1.tgz#ea10d8110376982fef578df8fc30b9ac30a07a3e"
+  integrity sha512-vIpgF6wfuJOZI7KKKSP+HmiKggadPQAdsp5HiC1mvqnfp0gF1vdwgBWZIdrVft9pgqoMFQN+R7BSWZiBxx+BBw==
   dependencies:
     path-parse "^1.0.6"
 
@@ -10604,9 +10604,9 @@ wbuf@^1.1.0, wbuf@^1.7.3:
     minimalistic-assert "^1.0.0"
 
 web-node@*:
-  version "1.0.298"
-  resolved "https://registry.yarnpkg.com/web-node/-/web-node-1.0.298.tgz#1e017c1bff2939007dfd4586077d53ced24f37a3"
-  integrity sha512-2a4cc45e8RlcWLfHAPIO7HBZgkfkNzmf7bY7zT9lf6VowRsKGm5ZhbZroYOYvOdpPbtwhtdYnGrr4cg4H9Xd0A==
+  version "1.0.299"
+  resolved "https://registry.yarnpkg.com/web-node/-/web-node-1.0.299.tgz#b4ab7ab14543071549f6a8769a23f36dd4b5e1c8"
+  integrity sha512-0JutMPN4kyNBc0lZsvFtp4PlnC0tEIh2T67dPAl5XO+/Qz+aCiSEtnRRJBJ8MPtZPZMJhpk62jaGPtCyXEHrbg==
   dependencies:
     clientnode "*"
     keypress "*"
@@ -10617,9 +10617,9 @@ webidl-conversions@^4.0.2:
   integrity sha512-YQ+BmxuTgd6UXZW3+ICGfyqRyHXVlD5GtQr5+qjiNW7bF0cqrzX500HVXPBOvgXb5YnzDd+h0zqyv61KUD7+Sg==
 
 weboptimizer@*:
-  version "2.0.505"
-  resolved "https://registry.yarnpkg.com/weboptimizer/-/weboptimizer-2.0.505.tgz#e8ff1b351f79912b46489aeb6f106464d9348ac2"
-  integrity sha512-N7uxM4ZCAvGzQ6xjxWIuXkAKwVUEyP0Eew11FroLkWb2qv3+Lr1hjrs5SVvCPRydtyY3L5E+FXER6paX2MSG1w==
+  version "2.0.509"
+  resolved "https://registry.yarnpkg.com/weboptimizer/-/weboptimizer-2.0.509.tgz#fbd129104faa5ef11dff205f7065ab654af279a0"
+  integrity sha512-6tM+Uca4LPfEE6Ye1I+aQjmByqzmSEDnL635iBEfyX3VeIv8l4JMwTu0WXtiPdHpm/YFUB3bVn07mbWwbwNzUQ==
   dependencies:
     "@babel/core" "*"
     "@babel/plugin-proposal-class-properties" "*"
