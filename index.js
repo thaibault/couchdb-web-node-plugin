@@ -227,7 +227,7 @@ export class Database {
                                 `determined: ${Tools.represent(error)}`
                             )
                         }
-                        if (response.ok)
+                        if (response && response.ok)
                             try {
                                 await fetch(
                                     url,
