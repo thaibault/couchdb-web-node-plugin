@@ -227,28 +227,65 @@ export class Database {
                                 `determined: ${Tools.represent(error)}`
                             )
                         }
-                        if (response && response.ok)
-                            try {
-                                await fetch(
-                                    url,
-                                    {
-                                        body:
-                                            '"' +
-                                            configuration.database.backend
-                                                .configuration[subPath] +
-                                            '"',
-                                        method: 'PUT'
-                                    }
+                        console.log()
+                        console.log(
+                            'A',
+                            response &&
+                            response.body &&
+                            response.text &&
+                            await response.text()
+                        )
+                        console.log()
+                        if (response && response.ok) {
+                            const value:any =
+                                configuration.database.backend
+                                .configuration[subPath]
+                            let changeNeeded:boolean = true
+                            if (
+                                response.body &&
+                                typeof response.text === 'function'
+                            )
+                                try {
+                                    changeNeeded = (value === await response[
+                                        typeof value === 'string' ?
+                                            'text' :
+                                            'json'
+                                    ]())
+                                } catch (error) {
+                                    console.warn(
+                                        'Error checking curent value of ' +
+                                        `"${fullPath}" to be "` +
+                                        `${Tools.represent(value)}": ` +
+                                        Tools.represent(error)
+                                    )
+                                }
+                            if (changeNeeded)
+                                try {
+                                    await fetch(
+                                        url,
+                                        {
+                                            body:
+                                                '"' +
+                                                configuration.database.backend
+                                                    .configuration[subPath] +
+                                                '"',
+                                            method: 'PUT'
+                                        }
+                                    )
+                                } catch (error) {
+                                    console.error(
+                                        `Configuration "${fullPath}" couldn't be` +
+                                        ` applied to "${value}": ` +
+                                        Tools.represent(error)
+                                    )
+                                }
+                            else
+                                console.info(
+                                    `Configuration "${fullPath}" is already ` +
+                                    'set to desired value "' +
+                                    `${Tools.represent(value)}".`
                                 )
-                            } catch (error) {
-                                console.error(
-                                    `Configuration "${fullPath}" couldn't be` +
-                                    ` applied to "` +
-                                    `${configuration.database[subPath]}": ` +
-                                    Tools.represent(error)
-                                )
-                            }
-                        else
+                        } else
                             console.info(
                                 `Configuration "${fullPath}" does not exist.` +
                                 ` Response code is ${response.status}.`
