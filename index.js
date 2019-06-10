@@ -218,33 +218,22 @@ export class Database {
                         const fullPath:string =
                             `/${prefix}${prefix.trim() ? '/' : ''}${subPath}`
                         const url:string = `${urlPrefix}${fullPath}`
+                        const value:any =
+                            configuration.database.backend
+                            .configuration[subPath]
                         let response:Object = null
                         try {
                             response = await fetch(url)
                         } catch (error) {
                             console.warn(
-                                `Configuration "${fullPath}" couldn't be ` +
-                                `determined: ${Tools.represent(error)}`
+                                `Configuration "${fullPath}" (with desired ` +
+                                `value "${Tools.represent(value)}") couldn't` +
+                                ` be determined: ${Tools.represent(error)}`
                             )
                         }
-                        console.log()
-                        console.log(
-                            'A',
-                            response &&
-                            response.body &&
-                            response.text &&
-                            await response.text()
-                        )
-                        console.log()
                         if (response && response.ok) {
-                            const value:any =
-                                configuration.database.backend
-                                .configuration[subPath]
                             let changeNeeded:boolean = true
-                            if (
-                                response.body &&
-                                typeof response.text === 'function'
-                            )
+                            if (typeof response.text === 'function')
                                 try {
                                     changeNeeded = (value === await response[
                                         typeof value === 'string' ?
@@ -274,8 +263,9 @@ export class Database {
                                     )
                                 } catch (error) {
                                     console.error(
-                                        `Configuration "${fullPath}" couldn't be` +
-                                        ` applied to "${value}": ` +
+                                        `Configuration "${fullPath}" ` +
+                                        `couldn't be applied to "` +
+                                        `${Tools.represent(value)}": ` +
                                         Tools.represent(error)
                                     )
                                 }
@@ -287,8 +277,9 @@ export class Database {
                                 )
                         } else
                             console.info(
-                                `Configuration "${fullPath}" does not exist.` +
-                                ` Response code is ${response.status}.`
+                                `Configuration "${fullPath}" does not exist ` +
+                                `(desired value "${Tools.represent(value)}")` +
+                                `. Response code is ${response.status}.`
                             )
                     }
         // endregion
