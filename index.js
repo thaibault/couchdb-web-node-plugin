@@ -218,40 +218,68 @@ export class Database {
                         const fullPath:string =
                             `/${prefix}${prefix.trim() ? '/' : ''}${subPath}`
                         const url:string = `${urlPrefix}${fullPath}`
+                        const value:any =
+                            configuration.database.backend
+                            .configuration[subPath]
                         let response:Object = null
                         try {
                             response = await fetch(url)
                         } catch (error) {
                             console.warn(
-                                `Configuration "${fullPath}" couldn't be ` +
-                                `determined: ${Tools.represent(error)}`
+                                `Configuration "${fullPath}" (with desired ` +
+                                `value "${Tools.represent(value)}") couldn't` +
+                                ` be determined: ${Tools.represent(error)}`
                             )
                         }
-                        if (response && response.ok)
-                            try {
-                                await fetch(
-                                    url,
-                                    {
-                                        body:
-                                            '"' +
-                                            configuration.database.backend
-                                                .configuration[subPath] +
-                                            '"',
-                                        method: 'PUT'
-                                    }
+                        if (response && response.ok) {
+                            let changeNeeded:boolean = true
+                            if (typeof response.text === 'function')
+                                try {
+                                    changeNeeded = (value === await response[
+                                        typeof value === 'string' ?
+                                            'text' :
+                                            'json'
+                                    ]())
+                                } catch (error) {
+                                    console.warn(
+                                        'Error checking curent value of ' +
+                                        `"${fullPath}" to be "` +
+                                        `${Tools.represent(value)}": ` +
+                                        Tools.represent(error)
+                                    )
+                                }
+                            if (changeNeeded)
+                                try {
+                                    await fetch(
+                                        url,
+                                        {
+                                            body:
+                                                '"' +
+                                                configuration.database.backend
+                                                    .configuration[subPath] +
+                                                '"',
+                                            method: 'PUT'
+                                        }
+                                    )
+                                } catch (error) {
+                                    console.error(
+                                        `Configuration "${fullPath}" ` +
+                                        `couldn't be applied to "` +
+                                        `${Tools.represent(value)}": ` +
+                                        Tools.represent(error)
+                                    )
+                                }
+                            else
+                                console.info(
+                                    `Configuration "${fullPath}" is already ` +
+                                    'set to desired value "' +
+                                    `${Tools.represent(value)}".`
                                 )
-                            } catch (error) {
-                                console.error(
-                                    `Configuration "${fullPath}" couldn't be` +
-                                    ` applied to "` +
-                                    `${configuration.database[subPath]}": ` +
-                                    Tools.represent(error)
-                                )
-                            }
-                        else
+                        } else
                             console.info(
-                                `Configuration "${fullPath}" does not exist.` +
-                                ` Response code is ${response.status}.`
+                                `Configuration "${fullPath}" does not exist ` +
+                                `(desired value "${Tools.represent(value)}")` +
+                                `. Response code is ${response.status}.`
                             )
                     }
         // endregion
