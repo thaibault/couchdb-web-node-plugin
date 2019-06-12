@@ -327,8 +327,7 @@ export class Database {
                     /* eslint-enable no-eval */
                     {encoding: configuration.encoding, flag: 'r'}
                 )
-            // region generate/update authentication/validation code
-            // / region validation
+            // region generate/update validation code
             const validationCode:string = 'function(...parameter) {\n' +
                 `    return require('helper').default.validateDocumentUpdate` +
                     '(...parameter.concat([' +
@@ -361,8 +360,8 @@ export class Database {
                 },
                 'Model specification'
             )
-            // / endregion
-            // / region authentication
+            // endregion
+            // region generate/update authentication code
             const authenticationCode:string = 'function(...parameter) {\n' +
                 /* eslint-disable indent */
                 `    return require('helper').default.authenticate(` +
@@ -394,7 +393,6 @@ export class Database {
                 },
                 'Authentication logic'
             )
-            // / endregion
             // endregion
             // region check if all constraint descriptions compile
             for (const modelName:string in models)
@@ -522,7 +520,8 @@ export class Database {
                         }
                         console.info(
                             `Including document "${document[idName]}" of ` +
-                            `type "${document[typeName]}" was successful.`)
+                            `type "${document[typeName]}" was successful.`
+                        )
                     } else if (path.extname(file.name) === '.js')
                         // region collect migrater
                         migrater[file.path] = eval('require')(
