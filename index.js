@@ -219,8 +219,8 @@ export class Database {
                             `/${prefix}${prefix.trim() ? '/' : ''}${subPath}`
                         const url:string = `${urlPrefix}${fullPath}`
                         const value:any =
-                            configuration.database.backend
-                            .configuration[subPath]
+                            configuration.database.backend.configuration[
+                                subPath]
                         let response:Object = null
                         try {
                             response = await fetch(url)
@@ -328,73 +328,60 @@ export class Database {
                     {encoding: configuration.encoding, flag: 'r'}
                 )
             // region generate/update authentication/validation code
-            // / region validation
-            const validationCode:string = 'function(...parameter) {\n' +
-                `    return require('helper').default.validateDocumentUpdate` +
-                    '(...parameter.concat([' +
-                        JSON.stringify(models) + ', ' +
-                        JSON.stringify(modelConfiguration) + ']))\n' +
-                '}'
-            try {
-                new Function(`return ${validationCode}`)
-            } catch (error) {
-                throw new Error(
-                    `Generated validation code "${validationCode}" doesn't ` +
-                    `compile: ${Tools.represent(error)}`
-                )
-            }
-            if (configuration.debug)
-                console.info(
-                    'Specification \n\n"' +
-                    Tools.represent(configuration.database.model) +
-                    `"\n\nhas generated validation code: \n\n"` +
-                    `${validationCode}".`
-                )
-            await Helper.ensureValidationDocumentPresence(
-                services.database.connection,
-                'validation',
+            for (const type:PlainObject of [
                 {
-                    helper: databaseHelperCode,
-                    /* eslint-disable camelcase */
-                    validate_doc_update: validationCode
-                    /* eslint-enable camelcase */
+                    description: 'Model specification',
+                    methodName: 'validateDocumentUpdate',
+                    name: 'validation',
+                    serializedParameter:
+                        `${JSON.stringify(models)}, ` +
+                        JSON.stringify(modelConfiguration)
                 },
-                'Model specification'
-            )
-            // / endregion
-            // / region authentication
-            const authenticationCode:string = 'function(...parameter) {\n' +
-                /* eslint-disable indent */
-                `    return require('helper').default.authenticate(` +
-                        '...parameter.concat([' + JSON.stringify(
+                {
+                    description: 'Authorisation',
+                    methodName: 'authenticate',
+                    name: 'authentication',
+                    parameter:
+                        JSON.stringify(
                             Helper.determineAllowedModelRolesMapping(
-                                configuration.database.model)
-                        ) + `, '${idName}', '${typeName}']))\n` +
-                '}'
-                /* eslint-enable indent */
-            try {
-                new Function(`return ${authenticationCode}`)
-            } catch (error) {
-                throw new Error(
-                    `Generated authentication code "${authenticationCode}" ` +
-                    `doesn't compile: ${Tools.represent(error)}`
+                                configuration.database.model
+                            )
+                        ) +
+                        `, '${idName}', '${typeName}'`
+                }
+            ]) {
+                /*
+                    NOTE: This code should be widely supported since not
+                    transpiler interacts here.
+                */
+                const code:string = 'function(...parameter) {\n' +
+                    `    return require('helper').default.${type.methodName}` +
+                        `(...parameter.concat([${type.serializedParameter}])` +
+                        ')\n' +
+                    '}'
+                try {
+                    new Function(`return ${code}`)
+                } catch (error) {
+                    throw new Error(
+                        `Generated ${type.name} code "${code}" doesn't ` +
+                        `compile: ${Tools.represent(error)}`
+                    )
+                }
+                if (configuration.debug)
+                    console.debug(
+                        `${type.name} code: \n\n"${code}" intgrated.`)
+                await Helper.ensureValidationDocumentPresence(
+                    services.database.connection,
+                    type.name,
+                    {
+                        helper: databaseHelperCode,
+                        /* eslint-disable camelcase */
+                        validate_doc_update: code
+                        /* eslint-enable camelcase */
+                    },
+                    type.description
                 )
             }
-            if (configuration.debug)
-                console.info(
-                    `Authentication code "${authenticationCode}" generated.`)
-            await Helper.ensureValidationDocumentPresence(
-                services.database.connection,
-                'authentication',
-                {
-                    helper: databaseHelperCode,
-                    /* eslint-disable camelcase */
-                    validate_doc_update: authenticationCode
-                    /* eslint-enable camelcase */
-                },
-                'Authentication logic'
-            )
-            // / endregion
             // endregion
             // region check if all constraint descriptions compile
             for (const modelName:string in models)
@@ -522,7 +509,8 @@ export class Database {
                         }
                         console.info(
                             `Including document "${document[idName]}" of ` +
-                            `type "${document[typeName]}" was successful.`)
+                            `type "${document[typeName]}" was successful.`
+                        )
                     } else if (path.extname(file.name) === '.js')
                         // region collect migrater
                         migrater[file.path] = eval('require')(
