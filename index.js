@@ -462,8 +462,8 @@ export class Database {
                     path.resolve(
                         configuration.database.model.autoMigrationPath),
                     configuration.database.debug ?
-                        ((file:File):boolean => file.name !== 'debug') :
-                        Tools.noop
+                        Tools.noop :
+                        ((file:File):boolean => file.name !== 'debug')
                 )) {
                     const extension:string = path.extname(file.name)
                     const basename = path.basename(file.name, extension)
