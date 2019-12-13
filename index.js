@@ -460,7 +460,10 @@ export class Database {
             )))
                 for (const file:File of await Tools.walkDirectoryRecursively(
                     path.resolve(
-                        configuration.database.model.autoMigrationPath)
+                        configuration.database.model.autoMigrationPath),
+                    configuration.database.debug ?
+                        ((file:File):boolean => file.name !== 'debug') :
+                        Tools.noop
                 )) {
                     const extension:string = path.extname(file.name)
                     const basename = path.basename(file.name, extension)
