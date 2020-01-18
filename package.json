@@ -394,6 +394,7 @@
             "validatedDocumentsCache": "_validatedDocuments"
           }
         },
+        "triggerInitialCompaction": true,
         "updateConfiguration": true,
         "updateStrategy": "fillUp",
         "updateValidation": true

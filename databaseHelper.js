@@ -570,7 +570,7 @@ export class DatabaseHelper {
                                 type === 'integer' || typeof newValue === type
                             ) ||
                             type === 'integer' &&
-                            parseInt(newValue) !== newValue
+                            parseInt(newValue, 10) !== newValue
                         ) {
                             if (types.length === 1)
                                 /* eslint-disable no-throw-literal */
