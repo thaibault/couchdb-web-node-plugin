@@ -726,14 +726,15 @@ export class Database {
         // TODO check conflicting constraints and mark them if necessary (check
         // how couchdb deals with "id" conflicts)
         // region initial compaction
-        try {
-            await services.database.connection.compact()
-        } catch (error) {
-            console.warn(
-                'Initial database compaction has failed: ' +
-                Tools.represent(error)
-            )
-        }
+        if (configuration.database.model.triggerInitialCompaction)
+            try {
+                await services.database.connection.compact()
+            } catch (error) {
+                console.warn(
+                    'Initial database compaction has failed: ' +
+                    Tools.represent(error)
+                )
+            }
         // endregion
         return {name: 'database', promise}
     }
