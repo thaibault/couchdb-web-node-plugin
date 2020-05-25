@@ -53,7 +53,7 @@ import type {
  * call to indicate id determination skip or not (depends on the static
  * "skipIDDetermining" configuration).
  */
-export class Database {
+export class Database implements PluginHandler {
     static additionalChangesStreamOptions:Object = {}
     static changesStream:Object
     static skipIDDetermining:boolean = true
