@@ -55,29 +55,19 @@
     "watch:dll": "webOptimizer build:dll --watch"
   },
   "dependencies": {
-    "clientnode": "*",
     "node-fetch": "*",
     "pouchdb": "*",
     "pouchdb-find": "*",
     "pouchdb-server": "*"
   },
-  "peerDependencies": {
-    "@babel/runtime": "*",
-    "request": "*",
-    "web-node": "*"
-  },
   "devDependencies": {
     "babel-eslint": "*",
-    "coveralls": "*",
+    "clientnode": "*",
     "documentation-website": "*",
     "eslint": "*",
     "eslint-config-google": "*",
-    "eslint-plugin-flowtype": "*",
     "eslint-plugin-jsdoc": "*",
-    "flow-bin": "*",
     "jsdoc": "*",
-    "nyc": "*",
-    "qunit": "*",
     "rimraf": "*",
     "web-node": "*",
     "weboptimizer": "*",
@@ -85,6 +75,13 @@
     "webpack-cli": "*",
     "webpack-dev-server": "*"
   },
+  "peerDependencies": {
+    "@babel/runtime": "*",
+    "clientnode": "*",
+    "request": "*",
+    "web-node": "*"
+  },
+  "sideEffects": true,
   "webNode": {
     "database": {
       "attachAutoRestarter": true,
