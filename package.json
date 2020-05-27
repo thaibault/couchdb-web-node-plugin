@@ -24,14 +24,14 @@
     "web"
   ],
   "files": [
+    "databaseHelper.ts",
     "databaseHelper.js",
-    "databaseHelper.compiled.js",
+    "helper.ts",
     "helper.js",
-    "helper.compiled.js",
-    "index.js",
-    "type.js"
+    "index.ts",
+    "type.ts"
   ],
-  "main": "index.compiled.js",
+  "main": "index.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/thaibault/databaseWebNodePlugin.git"
@@ -39,20 +39,18 @@
   "scripts": {
     "build": "yarn build:databaseHelper && webOptimizer build",
     "build:databaseHelper": "webOptimizer build '{__reference__: \"target:databaseHelper\"}'",
-    "build:dll": "webOptimizer build:dll",
+    "check:types": "webOptimizer check:types",
     "clear": "webOptimizer clear && rimraf log.txt",
     "document": "webOptimizer document",
-    "lint": "webOptimizer check:type; webOptimizer lint",
+    "lint": "webOptimizer lint",
     "prepare": "yarn build",
     "report:coverage": "nyc report --reporter=text-lcov | coveralls",
     "serve": "yarn build && webNode",
     "start": "yarn serve",
-    "test": "nyc yarn test:plain",
-    "test:plain": "webOptimizer test",
+    "test": "webOptimizer test",
     "update": "yarn version --patch && yarn publish",
     "update:documentation": "documentationWebsite --log-level info",
-    "watch": "webOptimizer build --watch",
-    "watch:dll": "webOptimizer build:dll --watch"
+    "watch": "webOptimizer build --watch"
   },
   "dependencies": {
     "node-fetch": "*",
@@ -61,12 +59,19 @@
     "pouchdb-server": "*"
   },
   "devDependencies": {
+    "@types/ejs": "*",
+    "@types/jest": "*",
+    "@types/loader-utils": "*",
+    "@types/node": "*",
+    "@typescript-eslint/eslint-plugin": "*",
+    "@typescript-eslint/parser": "*",
     "babel-eslint": "*",
     "clientnode": "*",
     "documentation-website": "*",
     "eslint": "*",
     "eslint-config-google": "*",
     "eslint-plugin-jsdoc": "*",
+    "jest": "*",
     "jsdoc": "*",
     "rimraf": "*",
     "web-node": "*",
