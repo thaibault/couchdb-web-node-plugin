@@ -1,4 +1,3 @@
-// @flow
 // -*- coding: utf-8 -*-
 'use strict'
 /* !
@@ -14,11 +13,11 @@
     endregion
 */
 // region imports
-import type {PlainObject} from 'clientnode'
+import {PlainObject} from 'clientnode/type'
 // endregion
 // region exports
 // / region model
-export type AllowedRoles = string|Array<string>|{
+export type AllowedRoles = Array<string>|string|{
     read:string|Array<string>;
     write:string|Array<string>;
 }

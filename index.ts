@@ -1,4 +1,3 @@
-// @flow
 // #!/usr/bin/env node
 // -*- coding: utf-8 -*-
 /** @module databaseWebNodePlugin */
@@ -19,24 +18,28 @@
 */
 // region imports
 import Tools from 'clientnode'
-/* eslint-disable no-unused-vars */
-import type {File, PlainObject} from 'clientnode'
-/* eslint-enable no-unused-vars */
+import {File, PlainObject} from 'clientnode/type'
 import {promises as fileSystem} from 'fs'
 import path from 'path'
 import PouchDB from 'pouchdb'
 import PouchDBFindPlugin from 'pouchdb-find'
 import {PluginAPI} from 'web-node'
-import type {
+import {
     Configuration, Plugin, ServicePromises, Services
 } from 'web-node/type'
 
 import DatabaseHelper from './databaseHelper'
 import Helper from './helper'
-import type {
-    /* eslint-disable no-unused-vars */
-    Constraint, Document, ModelConfiguration, Models, RetrievedDocument, Runner
-    /* eslint-enable no-unused-vars */
+import {
+    Configuration,
+    Constraint,
+    Document,
+    ModelConfiguration,
+    Models,
+    RetrievedDocument,
+    Runner
+    ServicePromises,
+    Services
 } from './type'
 // endregion
 // region plugins/classes
@@ -154,10 +157,9 @@ export class Database implements PluginHandler {
         // endregion
         // region ensure presence of regular users
         if (configuration.database.ensureUserPresence)
-            for (const type:string of ['admins', 'members'])
+            for (const type of ['admins', 'members'])
                 for (
-                    const name:string of
-                    configuration.database.security[type].names
+                    const name of configuration.database.security[type].names
                 ) {
                     const userDatabaseConnection:Object =
                         new services.database.connector(
@@ -205,11 +207,9 @@ export class Database implements PluginHandler {
         // endregion
         // region apply database/rest api configuration
         if (configuration.database.model.updateConfiguration)
-            for (
-                const prefix:string of configuration.database.backend.prefixes
-            )
+            for (const prefix of configuration.database.backend.prefixes)
                 for (
-                    const subPath:string in
+                    const subPath in
                     configuration.database.backend.configuration
                 )
                     if (configuration.database.backend.configuration
@@ -320,7 +320,6 @@ export class Database implements PluginHandler {
         const models:Models = Helper.extendModels(configuration.database.model)
         if (configuration.database.model.updateValidation) {
             const databaseHelperCode:string =
-                // IgnoreTypeCheck
                 await fileSystem.readFile(
                     /* eslint-disable no-eval */
                     eval('require.resolve')('./databaseHelper.compiled'),
@@ -328,7 +327,7 @@ export class Database implements PluginHandler {
                     {encoding: configuration.encoding, flag: 'r'}
                 )
             // region generate/update authentication/validation code
-            for (const type:PlainObject of [
+            for (const type of [
                 {
                     description: 'Model specification',
                     methodName: 'validateDocumentUpdate',
@@ -384,9 +383,9 @@ export class Database implements PluginHandler {
             }
             // endregion
             // region check if all constraint descriptions compile
-            for (const modelName:string in models)
+            for (const modelName in models)
                 if (models.hasOwnProperty(modelName))
-                    for (const name:string in models[modelName])
+                    for (const name in models[modelName])
                         if (models[modelName].hasOwnProperty(name))
                             if ([
                                 modelConfiguration.property.name.special
@@ -394,10 +393,9 @@ export class Database implements PluginHandler {
                                 modelConfiguration.property.name.special
                                     .constraint.expression
                             ].includes(name)) {
-                                // IgnoreTypeCheck
-                                for (const constraint:Constraint of models[
-                                    modelName
-                                ][name])
+                                for (
+                                    const constraint of models[modelName][name]
+                                )
                                     if (constraint.hasOwnProperty(
                                         'description'
                                     ) && constraint.description)
@@ -415,7 +413,7 @@ export class Database implements PluginHandler {
                                             )
                                         }
                             } else
-                                for (const type:string of [
+                                for (const type of [
                                     'conflictingConstraintExpression',
                                     'conflictingConstraintExecution',
                                     'constraintExpression',
@@ -424,7 +422,6 @@ export class Database implements PluginHandler {
                                     if (
                                         models[modelName][name] !== null &&
                                         models[modelName][name] === 'object' &&
-                                        // IgnoreTypeCheck
                                         models[modelName][name][type] !==
                                             null &&
                                         models[modelName][name][type] ===
@@ -435,14 +432,12 @@ export class Database implements PluginHandler {
                                         try {
                                             new Function(models[modelName][
                                                 name
-                                            // IgnoreTypeCheck
                                             ][type].description)
                                         } catch (error) {
                                             throw new Error(
                                                 `Specified constraint ` +
                                                 `description "` + models[
                                                     modelName
-                                                // IgnoreTypeCheck
                                                 ][name][type].description +
                                                 `" for model "${modelName}" ` +
                                                 `in property "${name}" as "` +
@@ -458,7 +453,7 @@ export class Database implements PluginHandler {
             if (await Tools.isDirectory(path.resolve(
                 configuration.database.model.autoMigrationPath
             )))
-                for (const file:File of await Tools.walkDirectoryRecursively(
+                for (const file of await Tools.walkDirectoryRecursively(
                     path.resolve(
                         configuration.database.model.autoMigrationPath),
                     configuration.database.debug ?
@@ -471,7 +466,6 @@ export class Database implements PluginHandler {
                         let document:Document
                         try {
                             document = JSON.parse(
-                                // IgnoreTypeCheck
                                 await fileSystem.readFile(
                                     file.path,
                                     {
@@ -522,7 +516,7 @@ export class Database implements PluginHandler {
                         // endregion
                 }
             // region ensure all constraints to have a consistent initial state
-            for (const retrievedDocument:RetrievedDocument of (
+            for (const retrievedDocument of (
                 await services.database.connection.allDocs({
                     /* eslint-disable camelcase */
                     include_docs: true
@@ -539,7 +533,7 @@ export class Database implements PluginHandler {
                         configuration.database.model.property.name.special
                             .strategy
                     ] = 'migrate'
-                    for (const name:string of Object.keys(migrater).sort()) {
+                    for (const name of Object.keys(migrater).sort()) {
                         let result:PlainObject|null
                         try {
                             result = migrater[name](newDocument, {
@@ -659,7 +653,7 @@ export class Database implements PluginHandler {
             const indexes:Array<PlainObject> = (
                 await services.database.connection.getIndexes()
             ).indexes
-            for (const modelName:string in models)
+            for (const modelName in models)
                 if (
                     models.hasOwnProperty(modelName) &&
                     (new RegExp(
@@ -673,7 +667,7 @@ export class Database implements PluginHandler {
                         name: `${modelName}-GenericIndex`
                     }})
                     for (
-                        const propertyName:string of
+                        const propertyName of
                         Helper.determineGenericIndexablePropertyNames(
                             configuration.database.model, models[modelName])
                     ) {
@@ -681,7 +675,7 @@ export class Database implements PluginHandler {
                             `${modelName}-${propertyName}-GenericIndex`
                         let foundPosition:number = -1
                         let position:number = 0
-                        for (const index:PlainObject of indexes) {
+                        for (const index of indexes) {
                             if (index.name === name) {
                                 foundPosition = position
                                 break
@@ -700,13 +694,13 @@ export class Database implements PluginHandler {
                             indexes.slice(position, 1)
                     }
                 }
-            for (const index:PlainObject of indexes)
+            for (const index of indexes)
                 if (index.name.endsWith('-GenericIndex')) {
                     let exists:boolean = false
-                    for (const modelName:string in models)
+                    for (const modelName in models)
                         if (index.name.startsWith(`${modelName}-`)) {
                             for (
-                                const name:string of
+                                const name of
                                 Helper.determineGenericIndexablePropertyNames(
                                     configuration.database.model,
                                     models[modelName])
@@ -901,7 +895,7 @@ export class Database implements PluginHandler {
                 const conflictingIndexes:Array<number> = []
                 const conflicts:Array<PlainObject> = []
                 let index:number = 0
-                for (const item:PlainObject of result) {
+                for (const item of result) {
                     if (
                         typeof firstParameter[index] === 'object' &&
                         firstParameter !== null
@@ -944,7 +938,7 @@ export class Database implements PluginHandler {
                         parameter.push(Database.toggleIDDetermining)
                     const retriedResults:Array<PlainObject> =
                         await this.bulkDocs(firstParameter, ...parameter)
-                    for (const retriedResult:PlainObject of retriedResults)
+                    for (const retriedResult of retriedResults)
                         result[conflictingIndexes.shift()] = retriedResult
                 }
                 return result
@@ -959,13 +953,11 @@ export class Database implements PluginHandler {
             services.database.server = {}
             // region search for binary file to start database server
             const triedPaths:Array<string> = []
-            for (const runner:Runner of [].concat(
+            for (const runner of [].concat(
                 configuration.database.binary.runner
             )) {
-                for (const directoryPath:string of [].concat(
-                    runner.location
-                )) {
-                    for (const name:string of [].concat(runner.name)) {
+                for (const directoryPath of [].concat(runner.location)) {
+                    for (const name of [].concat(runner.name)) {
                         const binaryFilePath:string = path.resolve(
                             directoryPath, name)
                         triedPaths.push(binaryFilePath)

@@ -1,4 +1,3 @@
-// @flow
 // -*- coding: utf-8 -*-
 'use strict'
 /* !
@@ -14,9 +13,9 @@
     endregion
 */
 // region imports
-import type {PlainObject} from 'clientnode'
+import {PlainObject} from 'clientnode/type'
 
-import type {
+import {
     /* eslint-disable no-unused-vars */
     Constraint,
     /* eslint-enable no-unused-vars */
@@ -98,7 +97,7 @@ export class DatabaseHelper {
                 allowedModelRolesMapping.hasOwnProperty(
                     newDocument[typePropertyName])
             )
-                for (const type:string in allowedRoles)
+                for (const type in allowedRoles)
                     if (
                         allowedRoles.hasOwnProperty(type) &&
                         newDocument.hasOwnProperty(typePropertyName)
@@ -115,16 +114,14 @@ export class DatabaseHelper {
             if (userContext.roles.length) {
                 // TODO check for each property recursively
                 const relevantRoles:Array<string> = allowedRoles[operationType]
-                for (const userRole:string of userContext.roles)
+                for (const userRole of userContext.roles)
                     if (relevantRoles.includes(userRole))
                         return true
-                // IgnoreTypeCheck
                 userRolesDescription = `Current user "${userContext.name}" ` +
                     `owns the following roles: "` +
                     `${userContext.roles.join('", "')}".`
                 //
             } else
-                // IgnoreTypeCheck
                 userRolesDescription = `Current user "${userContext.name}" ` +
                     `doesn't own any role`
         }
@@ -238,14 +235,13 @@ export class DatabaseHelper {
         // / region collect old model types to migrate.
         const oldModelMapping:{[key:string]:string} = {}
         if (updateStrategy === 'migrate')
-            for (const name:string in models)
+            for (const name in models)
                 if (
                     models.hasOwnProperty(name) &&
                     ![null, undefined].includes(
                         models[name][specialNames.oldType])
                 )
-                    // IgnoreTypeCheck
-                    for (const oldName:string of [].concat(
+                    for (const oldName of [].concat(
                         models[name][specialNames.oldType]
                     ))
                         oldModelMapping[oldName] = name
@@ -256,7 +252,7 @@ export class DatabaseHelper {
             attachments:PlainObject, prefix:?string
         ):?string => {
             if (prefix) {
-                for (const name:string in attachments)
+                for (const name in attachments)
                     if (attachments.hasOwnProperty(name) && name.startsWith(
                         prefix
                     ))
@@ -364,7 +360,7 @@ export class DatabaseHelper {
                 types:Array<string> = [
                     'constraintExecution', 'constraintExpression']
             ):void => {
-                for (const type:string of types)
+                for (const type of types)
                     if (propertySpecification[type]) {
                         let hook:Function
                         const code:string = (
@@ -402,7 +398,6 @@ export class DatabaseHelper {
                         }
                         // region compile
                         try {
-                            // IgnoreTypeCheck
                             hook = new Function(...Object.keys(scope), code)
                         } catch (error) {
                             /* eslint-disable no-throw-literal */
@@ -418,7 +413,6 @@ export class DatabaseHelper {
                         let satisfied:boolean = false
                         // region run
                         try {
-                            // IgnoreTypeCheck
                             satisfied = hook(...Object.values(scope))
                         } catch (error) {
                             /* eslint-disable no-throw-literal */
@@ -438,7 +432,6 @@ export class DatabaseHelper {
                                 type.substring(1) +
                                 `: ` +
                                 (propertySpecification[type].description ?
-                                    // IgnoreTypeCheck
                                     new Function(
                                         ...Object.keys(scope), 'return ' +
                                             propertySpecification[type]
@@ -463,7 +456,6 @@ export class DatabaseHelper {
                 // Derive nested missing explicit type definition if possible.
                 if (
                     typeof newValue === 'object' &&
-                    // IgnoreTypeCheck
                     Object.getPrototypeOf(newValue) === Object.prototype &&
                     !newValue.hasOwnProperty(typeName) &&
                     types.length === 1 &&
@@ -471,13 +463,12 @@ export class DatabaseHelper {
                 )
                     newValue[typeName] = types[0]
                 let typeMatched:boolean = false
-                for (const type:string of types)
+                for (const type of types)
                     if (models.hasOwnProperty(type)) {
                         if (
                             typeof newValue === 'object' &&
                             Object.getPrototypeOf(
                                 newValue
-                            // IgnoreTypeCheck
                             ) === Object.prototype &&
                             newValue.hasOwnProperty(typeName) &&
                             newValue[typeName] !== type &&
@@ -497,7 +488,6 @@ export class DatabaseHelper {
                             typeof newValue === 'object' &&
                             Object.getPrototypeOf(
                                 newValue
-                            // IgnoreTypeCheck
                             ) === Object.prototype &&
                             newValue.hasOwnProperty(typeName) &&
                             newValue[typeName] === type
@@ -591,7 +581,6 @@ export class DatabaseHelper {
                         typeof type === 'string' &&
                         type.startsWith('foreignKey:')
                     ) {
-                        // IgnoreTypeCheck
                         const foreignKeyType:string = models[type.substring(
                             'foreignKey:'.length
                         )][idName].type
@@ -652,7 +641,6 @@ export class DatabaseHelper {
                             forbidden:
                                 `MinimalLength: Property "${name}" must have` +
                                 ' minimal length ' +
-                                // IgnoreTypeCheck
                                 `${propertySpecification.minimumLength} (` +
                                 `given ${newValue} with length ` +
                                 `${newValue.length})${pathDescription}.`
@@ -666,7 +654,6 @@ export class DatabaseHelper {
                             forbidden:
                                 `MaximalLength: Property "${name}" must have` +
                                 ' maximal length ' +
-                                // IgnoreTypeCheck
                                 `${propertySpecification.maximumLength} (` +
                                 `given ${newValue} with length ` +
                                 `${newValue.length})${pathDescription}.`
@@ -681,10 +668,8 @@ export class DatabaseHelper {
                         throw {
                             forbidden:
                                 `Minimum: Property "${name}" (type ` +
-                                // IgnoreTypeCheck
                                 `${propertySpecification.type}) must ` +
                                 'satisfy a minimum of ' +
-                                // IgnoreTypeCheck
                                 `${propertySpecification.minimum} (` +
                                 `given ${newValue} with length ` +
                                 `${newValue.length})${pathDescription}.`
@@ -697,10 +682,8 @@ export class DatabaseHelper {
                         throw {
                             forbidden:
                                 `Maximum: Property "${name}" (type ` +
-                                // IgnoreTypeCheck
                                 `${propertySpecification.type}) must ` +
                                 'satisfy a maximum of ' +
-                                // IgnoreTypeCheck
                                 `${propertySpecification.maximum} (` +
                                 `given ${newValue} with length ` +
                                 `${newValue.length}${pathDescription}.`
@@ -719,7 +702,6 @@ export class DatabaseHelper {
                         throw {
                             forbidden:
                                 `Selection: Property "${name}" (type ` +
-                                // IgnoreTypeCheck
                                 `${propertySpecification.type}) should be ` +
                                 `one of "${selection.join('", "')}". But is ` +
                                 `"${newValue}"${pathDescription}.`
@@ -733,7 +715,6 @@ export class DatabaseHelper {
                         propertySpecification.regularExpressionPattern
                     ) ||
                     new RegExp(
-                        // IgnoreTypeCheck
                         propertySpecification.regularExpressionPattern
                     ).test(newValue)
                 ))
@@ -742,7 +723,6 @@ export class DatabaseHelper {
                         forbidden:
                             `PatternMatch: Property "${name}" should match ` +
                             'regular expression pattern ' +
-                            // IgnoreTypeCheck
                             propertySpecification.regularExpressionPattern +
                             ` (given "${newValue}")${pathDescription}.`
                     }
@@ -752,7 +732,6 @@ export class DatabaseHelper {
                         propertySpecification.invertedRegularExpressionPattern
                     ) ||
                     !(new RegExp(
-                        // IgnoreTypeCheck
                         propertySpecification.invertedRegularExpressionPattern
                     )).test(newValue)
                 ))
@@ -761,7 +740,6 @@ export class DatabaseHelper {
                         forbidden:
                             `InvertedPatternMatch: Property "${name}" should` +
                             ' not match regular expression pattern ' +
-                            // IgnoreTypeCheck
                             propertySpecification
                                 .invertedRegularExpressionPattern +
                             ` (given "${newValue}")${pathDescription}.`
@@ -782,7 +760,7 @@ export class DatabaseHelper {
                 name:string
             ):void => {
                 if (!oldDocument)
-                    for (const type:string of [
+                    for (const type of [
                         'onCreateExecution', 'onCreateExpression'
                     ])
                         if (propertySpecification[type]) {
@@ -813,7 +791,6 @@ export class DatabaseHelper {
                                 userContext
                             }
                             try {
-                                // IgnoreTypeCheck
                                 hook = new Function(...Object.keys(scope), (
                                     type.endsWith('Expression') ? 'return ' :
                                     ''
@@ -875,9 +852,7 @@ export class DatabaseHelper {
                     Object.keys(newDocument).length === 0
                 ))
                     newDocument[name] = null
-                for (const type:string of [
-                    'onUpdateExecution', 'onUpdateExpression'
-                ])
+                for (const type of ['onUpdateExecution', 'onUpdateExpression'])
                     if (propertySpecification[type]) {
                         let hook:Function
                         const scope:Object = {
@@ -906,7 +881,6 @@ export class DatabaseHelper {
                             userContext
                         }
                         try {
-                            // IgnoreTypeCheck
                             hook = new Function(...Object.keys(scope), (
                                 type.endsWith('Expression') ? 'return ' : ''
                             ) + propertySpecification[type].trim())
@@ -957,12 +931,9 @@ export class DatabaseHelper {
             ].includes(name))
             // region migrate old model specific property names
             if (updateStrategy === 'migrate')
-                for (const name:string of specifiedPropertyNames)
+                for (const name of specifiedPropertyNames)
                     if (![null, undefined].includes(model[name].oldName))
-                        // IgnoreTypeCheck
-                        for (const oldName:string of [].concat(
-                            model[name].oldName
-                        ))
+                        for (const oldName of [].concat(model[name].oldName))
                             if (newDocument.hasOwnProperty(oldName)) {
                                 newDocument[name] = newDocument[oldName]
                                 delete newDocument[oldName]
@@ -970,7 +941,7 @@ export class DatabaseHelper {
             // endregion
             // region run create document hook
             if (!oldDocument)
-                for (const type:string of [
+                for (const type of [
                     modelConfiguration.property.name.special.create.execution,
                     modelConfiguration.property.name.special.create.expression
                 ])
@@ -1001,17 +972,14 @@ export class DatabaseHelper {
                             userContext
                         }
                         try {
-                            // IgnoreTypeCheck
                             hook = new Function(...Object.keys(scope), (
                                 type.endsWith('Expression') ? 'return ' : ''
-                            // IgnoreTypeCheck
                             ) + model[type].trim())
                         } catch (error) {
                             /* eslint-disable no-throw-literal */
                             throw {
                                 forbidden:
                                     `Compilation: Hook "${type}" has invalid` +
-                                    // IgnoreTypeCheck
                                     ` code "${model[type]}" for document "` +
                                     `${modelName}": ${serialize(error)}` +
                                     `${pathDescription}.`
@@ -1027,7 +995,6 @@ export class DatabaseHelper {
                                 forbidden:
                                     `Runtime: Hook "${type}" has throw an ` +
                                     'error with code "' +
-                                    // IgnoreTypeCheck
                                     `${model[type]}" for document "` +
                                     `${modelName}": ${serialize(error)}` +
                                     `${pathDescription}.`
@@ -1043,7 +1010,7 @@ export class DatabaseHelper {
                     }
             // endregion
             // region run update document hook
-            for (const type:string of [
+            for (const type of [
                 modelConfiguration.property.name.special.update.execution,
                 modelConfiguration.property.name.special.update.expression
             ])
@@ -1074,17 +1041,14 @@ export class DatabaseHelper {
                         userContext
                     }
                     try {
-                        // IgnoreTypeCheck
                         hook = new Function(...Object.keys(scope), (
                             type.endsWith('Expression') ? 'return ' : ''
-                        // IgnoreTypeCheck
                         ) + model[type].trim())
                     } catch (error) {
                         /* eslint-disable no-throw-literal */
                         throw {
                             forbidden:
                                 `Compilation: Hook "${type}" has invalid ` +
-                                // IgnoreTypeCheck
                                 ` code "${model[type]}" for document "` +
                                 `${modelName}": ${serialize(error)}` +
                                 `${pathDescription}.`
@@ -1099,7 +1063,6 @@ export class DatabaseHelper {
                         throw {
                             forbidden:
                                 `Runtime: Hook "${type}" has throw an error ` +
-                                // IgnoreTypeCheck
                                 `with code "${model[type]}" for document "` +
                                 `${modelName}": ${serialize(error)}` +
                                 `${pathDescription}.`
@@ -1114,7 +1077,7 @@ export class DatabaseHelper {
                         setDocumentEnvironment()
                 }
             // endregion
-            for (const name:string of specifiedPropertyNames.concat(
+            for (const name of specifiedPropertyNames.concat(
                 additionalPropertySpecification ? Object.keys(
                     newDocument
                 ).filter((name:string):boolean =>
@@ -1124,7 +1087,7 @@ export class DatabaseHelper {
                 // region run hooks and check for presence of needed data
                 if (specialNames.attachment === name) {
                     // region attachment
-                    for (const type:string in model[name])
+                    for (const type in model[name])
                         if (model[name].hasOwnProperty(type)) {
                             if (
                                 !newDocument.hasOwnProperty(name) ||
@@ -1155,18 +1118,16 @@ export class DatabaseHelper {
                                     ) &&
                                     newDocument[name][fileName].data === null
                                 ) &&
-                                // IgnoreTypeCheck
                                 oldDocument[name][fileName] &&
-                                // IgnoreTypeCheck
                                 oldDocument[name][fileName].data !== null &&
                                 new RegExp(type).test(fileName))
-                            for (const fileName:string of newFileNames)
+                            for (const fileName of newFileNames)
                                 runCreatePropertyHook(
                                     model[name][type], newDocument[name],
                                     oldDocument && oldDocument[
                                         name
                                     ] ? oldDocument[name] : null, fileName)
-                            for (const fileName:string of newFileNames)
+                            for (const fileName of newFileNames)
                                 runUpdatePropertyHook(
                                     model[name][type], newDocument[name],
                                     oldDocument && oldDocument[
@@ -1192,7 +1153,7 @@ export class DatabaseHelper {
                                     newFileNames.length === 0 &&
                                     oldFileNames.length > 0
                                 )
-                                    for (const fileName:string of oldFileNames)
+                                    for (const fileName of oldFileNames)
                                         if (newDocument[name][
                                             fileName
                                         ] === null)
@@ -1200,11 +1161,10 @@ export class DatabaseHelper {
                                                 name, fileName, 'file removed')
                                         else
                                             newDocument[name][fileName] =
-                                                // IgnoreTypeCheck
                                                 oldDocument[name][fileName]
                             } else if (newFileNames.length === 0)
                                 if (oldFileNames.length === 0) {
-                                    for (const fileName:string in model[name][
+                                    for (const fileName in model[name][
                                         type
                                     ].default)
                                         if (model[name][
@@ -1217,15 +1177,13 @@ export class DatabaseHelper {
                                                 name, type, 'add default file')
                                         }
                                 } else if (updateStrategy === 'fillUp')
-                                    for (const fileName:string of oldFileNames)
+                                    for (const fileName of oldFileNames)
                                         newDocument[name][fileName] =
-                                            // IgnoreTypeCheck
                                             oldDocument[name][fileName]
                         }
                     // endregion
                 } else {
                     const propertySpecification:PropertySpecification =
-                        // IgnoreTypeCheck
                         specifiedPropertyNames.includes(name) ? model[name] :
                         additionalPropertySpecification
                     runCreatePropertyHook(
@@ -1283,7 +1241,7 @@ export class DatabaseHelper {
             // region check given data
             // / region remove new data which already exists
             if (oldDocument && updateStrategy === 'incremental')
-                for (const name:string in newDocument)
+                for (const name in newDocument)
                     if (
                         newDocument.hasOwnProperty(name) &&
                         oldDocument.hasOwnProperty(name) &&
@@ -1309,7 +1267,7 @@ export class DatabaseHelper {
                         continue
                     }
             // / endregion
-            for (const name:string in newDocument)
+            for (const name in newDocument)
                 if (
                     newDocument.hasOwnProperty(name) &&
                     !modelConfiguration.property.name.reserved.concat(
@@ -1438,9 +1396,9 @@ export class DatabaseHelper {
                         return false
                     }
                     if (specialNames.attachment === name) {
-                        for (const fileName:string in newDocument[name])
+                        for (const fileName in newDocument[name])
                             if (newDocument[name].hasOwnProperty(fileName))
-                                for (const type:string in model[name])
+                                for (const type in model[name])
                                     if (
                                         model[name].hasOwnProperty(type) &&
                                         (new RegExp(type)).test(fileName)
@@ -1489,7 +1447,6 @@ export class DatabaseHelper {
                                     ` (array of length ` +
                                     `${newDocument[name].length}) doesn't ` +
                                     `fullfill minimum array length of ` +
-                                    // IgnoreTypeCheck
                                     propertySpecification.minimumNumber +
                                     `${pathDescription}.`
                             }
@@ -1508,7 +1465,6 @@ export class DatabaseHelper {
                                     `(array of length ` +
                                     `${newDocument[name].length}) doesn't ` +
                                     `fullfill maximum array length of ` +
-                                    // IgnoreTypeCheck
                                     propertySpecification.maximumNumber +
                                     `${pathDescription}.`
                             }
@@ -1528,7 +1484,7 @@ export class DatabaseHelper {
                         )
                         const propertySpecificationCopy:PropertySpecification =
                             {}
-                        for (const key:string in propertySpecification)
+                        for (const key in propertySpecification)
                             if (propertySpecification.hasOwnProperty(key))
                                 if (key === 'type')
                                     if (Array.isArray(propertySpecification[
@@ -1540,12 +1496,10 @@ export class DatabaseHelper {
                                     else
                                         propertySpecificationCopy[
                                             key
-                                        // IgnoreTypeCheck
                                         ] = [propertySpecification[
                                             key
                                         ].substring(
                                             0,
-                                            // IgnoreTypeCheck
                                             propertySpecification.type.length -
                                                 '[]'.length)]
                                 else
@@ -1556,27 +1510,23 @@ export class DatabaseHelper {
                             possible.
                         */
                         if (
-                            // IgnoreTypeCheck
                             typeof propertySpecificationCopy.type.length ===
                                 1 &&
                             models.hasOwnProperty(
-                            // IgnoreTypeCheck
                                 propertySpecificationCopy.type[0])
                         )
-                            for (const value:any of newDocument[name].slice())
+                            for (const value of newDocument[name].slice())
                                 if (
                                     typeof value === 'object' &&
                                     Object.getPrototypeOf(
                                         value
-                                    // IgnoreTypeCheck
                                     ) === Object.prototype &&
                                     !value.hasOwnProperty(typeName)
                                 )
                                     value[typeName] =
-                                        // IgnoreTypeCheck
                                         propertySpecificationCopy.type[0]
                         let index:number = 0
-                        for (const value:any of newDocument[name].slice()) {
+                        for (const value of newDocument[name].slice()) {
                             newDocument[name][index] = checkPropertyContent(
                                 value, `${index + 1}. value in ${name}`,
                                 propertySpecificationCopy
@@ -1620,7 +1570,7 @@ export class DatabaseHelper {
                     }
                 }
             // / region constraint
-            for (let type:string in specialNames.constraint)
+            for (let type in specialNames.constraint)
                 if (
                     specialNames.constraint.hasOwnProperty(type) &&
                     (type = specialNames.constraint[type]) &&
@@ -1628,7 +1578,7 @@ export class DatabaseHelper {
                     Array.isArray(model[type]) &&
                     model[type].length
                 )
-                    for (const constraint:Constraint of model[type]) {
+                    for (const constraint of model[type]) {
                         let hook:Function
                         const code:string = ((
                             type === specialNames.constraint.expression
@@ -1661,7 +1611,6 @@ export class DatabaseHelper {
                             userContext
                         }
                         try {
-                            // IgnoreTypeCheck
                             hook = new Function(...Object.keys(scope), code)
                         } catch (error) {
                             /* eslint-disable no-throw-literal */
@@ -1675,7 +1624,6 @@ export class DatabaseHelper {
                         }
                         let satisfied:boolean = false
                         try {
-                            // IgnoreTypeCheck
                             satisfied = hook(...Object.values(scope))
                         } catch (error) {
                             /* eslint-disable no-throw-literal */
@@ -1693,11 +1641,9 @@ export class DatabaseHelper {
                             throw {
                                 forbidden: errorName.charAt(0).toUpperCase() +
                                 `${errorName.substring(1)}: ` + (
-                                    // IgnoreTypeCheck
                                     constraint.description ? new Function(
                                         ...Object.keys(scope),
                                         'return ' +
-                                        // IgnoreTypeCheck
                                         constraint.description.trim()
                                     )(...Object.values(scope)) :
                                     `Model "${modelName}" should satisfy ` +
@@ -1715,7 +1661,6 @@ export class DatabaseHelper {
                     specialNames.attachment]
                 if (
                     typeof newAttachments !== 'object' ||
-                    // IgnoreTypeCheck
                     Object.getPrototypeOf(newAttachments) !== Object.prototype
                 )
                     /* eslint-disable no-throw-literal */
@@ -1735,7 +1680,7 @@ export class DatabaseHelper {
                         oldAttachments !== null &&
                         typeof oldAttachments === 'object'
                     )
-                        for (const fileName:string in oldAttachments)
+                        for (const fileName in oldAttachments)
                             if (oldAttachments.hasOwnProperty(fileName))
                                 if (newAttachments.hasOwnProperty(fileName))
                                     if (
@@ -1776,7 +1721,7 @@ export class DatabaseHelper {
                                         specialNames.attachment, fileName,
                                         'attachment removed')
                 }
-                for (const fileName:string in newAttachments)
+                for (const fileName in newAttachments)
                     if (newAttachments.hasOwnProperty(fileName))
                         if ([undefined, null].includes(
                             newAttachments[fileName]
@@ -1797,13 +1742,13 @@ export class DatabaseHelper {
                 if (Object.keys(newAttachments).length === 0)
                     delete newDocument[specialNames.attachment]
                 const attachmentToTypeMapping:{[key:string]:Array<string>} = {}
-                for (const type:string in model[specialNames.attachment])
+                for (const type in model[specialNames.attachment])
                     if (model[specialNames.attachment].hasOwnProperty(type))
                         attachmentToTypeMapping[type] = []
-                for (const name:string in newAttachments)
+                for (const name in newAttachments)
                     if (newAttachments.hasOwnProperty(name)) {
                         let matched:boolean = false
-                        for (const type:string in model[
+                        for (const type in model[
                             specialNames.attachment
                         ])
                             if ((new RegExp(type)).test(name)) {
@@ -1825,7 +1770,7 @@ export class DatabaseHelper {
                             /* eslint-enable no-throw-literal */
                     }
                 let sumOfAggregatedSizes:number = 0
-                for (const type:string in attachmentToTypeMapping) {
+                for (const type in attachmentToTypeMapping) {
                     if (!attachmentToTypeMapping.hasOwnProperty(type))
                         continue
                     const numberOfAttachments:number =
@@ -1869,9 +1814,7 @@ export class DatabaseHelper {
                         }
                         /* eslint-enable no-throw-literal */
                     let aggregatedSize:number = 0
-                    for (const fileName:string of attachmentToTypeMapping[
-                        type
-                    ]) {
+                    for (const fileName of attachmentToTypeMapping[type]) {
                         if (!(
                             [null, undefined].includes(model[
                                 specialNames.attachment
@@ -1948,7 +1891,6 @@ export class DatabaseHelper {
                                 'content_type'
                             ) &&
                             newAttachments[fileName].content_type &&
-                            // IgnoreTypeCheck
                             !(new RegExp(pattern)).test(
                                 newAttachments[fileName].content_type
                             )
@@ -1960,7 +1902,6 @@ export class DatabaseHelper {
                                     'attachment content type "' +
                                     newAttachments[fileName].content_type +
                                     `" doesn't satisfy specified regular` +
-                                    // IgnoreTypeCheck
                                     ` expression pattern "${pattern}" ` +
                                     `from type "${type}"${pathDescription}.`
                             }
@@ -2060,7 +2001,6 @@ export class DatabaseHelper {
                     ![null, undefined].includes(model[
                         specialNames.minimumAggregatedSize
                     ]) &&
-                    // IgnoreTypeCheck
                     model[specialNames.minimumAggregatedSize] >
                         sumOfAggregatedSizes
                 )
@@ -2070,7 +2010,6 @@ export class DatabaseHelper {
                             'AggregatedMinimumSize: given aggregated size ' +
                             `${sumOfAggregatedSizes} byte doesn't satisfy ` +
                             'specified minimum of ' +
-                            // IgnoreTypeCheck
                             model[specialNames.minimumAggregatedSize] +
                             ` byte ${pathDescription}.`
                     }
@@ -2080,7 +2019,6 @@ export class DatabaseHelper {
                     ![null, undefined].includes(model[
                         specialNames.maximumAggregatedSize
                     ]) &&
-                    // IgnoreTypeCheck
                     model[specialNames.maximumAggregatedSize] <
                     sumOfAggregatedSizes
                 )
@@ -2090,7 +2028,6 @@ export class DatabaseHelper {
                             'AggregatedMaximumSize: given aggregated size ' +
                             `${sumOfAggregatedSizes} byte doesn't satisfy ` +
                             'specified maximum of ' +
-                                // IgnoreTypeCheck
                                 model[specialNames.maximumAggregatedSize] +
                             ` byte ${pathDescription}.`
                     }
@@ -2109,7 +2046,7 @@ export class DatabaseHelper {
                 oldDocument &&
                 updateStrategy === 'migrate'
             )
-                for (const name:string in oldDocument)
+                for (const name in oldDocument)
                     if (
                         oldDocument.hasOwnProperty(name) &&
                         !newDocument.hasOwnProperty(name)

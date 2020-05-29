@@ -1,4 +1,3 @@
-// @flow
 // -*- coding: utf-8 -*-
 'use strict'
 /* !
@@ -16,21 +15,23 @@
 // region imports
 import {spawn as spawnChildProcess} from 'child_process'
 import Tools from 'clientnode'
-import type {PlainObject} from 'clientnode'
+import {CloseEventNames, PlainObject} from 'clientnode/type'
 import {promises as fileSystem} from 'fs'
 // NOTE: Remove when "fetch" is supported by node.
 import fetch from 'node-fetch'
 import path from 'path'
 import {PluginAPI} from 'web-node'
-import type {Configuration, Plugin, Services} from 'web-node/type'
+import {Plugin} from 'web-node/type'
 
-import type {
+import {
     AllowedModelRolesMapping,
     AllowedRoles,
+    Configuration,
     Model,
     ModelConfiguration,
     Models,
-    NormalizedAllowedRoles
+    NormalizedAllowedRoles,
+    Services
 } from './type'
 // endregion
 // NOTE: Remove when "fetch" is supported by node.
@@ -147,7 +148,7 @@ export class Helper {
             NOTE: A "bulkDocs" plugin does not get called for every "put" and
             "post" call so we have to wrap runtime generated methods.
         */
-        for (const pluginName:string of ['post', 'put']) {
+        for (const pluginName of ['post', 'put']) {
             const nativeMethod:Function =
                 services.database.connection[pluginName].bind(
                     services.database.connection)
@@ -262,7 +263,7 @@ export class Helper {
             }
         );
         (new Promise((resolve:Function, reject:Function):void => {
-            for (const closeEventName:string of Tools.closeEventNames)
+            for (const closeEventName of CloseEventNames)
                 services.database.server.process.on(
                     closeEventName, Tools.getProcessCloseHandler(
                         resolve,
@@ -354,17 +355,17 @@ export class Helper {
             modelConfiguration.property.name.special.allowedRole
         const allowedModelRolesMapping:AllowedModelRolesMapping = {}
         const models:Models = Helper.extendModels(modelConfiguration)
-        for (const modelName:string in models)
+        for (const modelName in models)
             if (
                 models.hasOwnProperty(modelName) &&
                 models[modelName].hasOwnProperty(allowedRoleName)
             ) {
                 allowedModelRolesMapping[modelName] =
                     Helper.normalizeAllowedModelRoles(
-                        // IgnoreTypeCheck
-                        models[modelName][allowedRoleName])
+                        models[modelName][allowedRoleName]
+                    )
                 allowedModelRolesMapping[modelName].properties = {}
-                for (const name:string in models[modelName])
+                for (const name in models[modelName])
                     if (
                         models[modelName].hasOwnProperty(name) &&
                         models[modelName][name] !== null &&
@@ -374,10 +375,10 @@ export class Helper {
                         ) &&
                         models[modelName][name].allowedRoles
                     )
-                        // IgnoreTypeCheck
                         allowedModelRolesMapping[modelName].properties[name] =
                             Helper.normalizeAllowedModelRoles(
-                                models[modelName][name].allowedRoles)
+                                models[modelName][name].allowedRoles
+                            )
             } else
                 allowedModelRolesMapping[modelName] = {
                     read: [],
@@ -454,17 +455,15 @@ export class Helper {
             return models[modelName]
         if (models.hasOwnProperty('_base'))
             if (models[modelName].hasOwnProperty(extendPropertyName))
-                // IgnoreTypeCheck
                 models[modelName][extendPropertyName] = ['_base'].concat(
-                    models[modelName][extendPropertyName])
+                    models[modelName][extendPropertyName]
+                )
             else
-                // IgnoreTypeCheck
                 models[modelName][extendPropertyName] = '_base'
         if (models[modelName].hasOwnProperty(extendPropertyName)) {
-            // IgnoreTypeCheck
-            for (const modelNameToExtend:string of [].concat(models[
-                modelName
-            ][extendPropertyName]))
+            for (const modelNameToExtend of [].concat(
+                models[modelName][extendPropertyName]
+            ))
                 models[modelName] = Tools.extend(
                     true,
                     {},
@@ -486,7 +485,7 @@ export class Helper {
         const specialNames:PlainObject =
             modelConfiguration.property.name.special
         const models:Models = {}
-        for (const modelName:string in modelConfiguration.entities)
+        for (const modelName in modelConfiguration.entities)
             if (modelConfiguration.entities.hasOwnProperty(
                 modelName
             )) {
@@ -511,14 +510,12 @@ export class Helper {
                     modelName, modelConfiguration.entities, specialNames.extend
                 )
             }
-        for (const modelName:string in models)
+        for (const modelName in models)
             if (models.hasOwnProperty(modelName))
-                for (const propertyName:string in models[modelName])
+                for (const propertyName in models[modelName])
                     if (models[modelName].hasOwnProperty(propertyName))
                         if (propertyName === specialNames.attachment) {
-                            for (const type:string in models[modelName][
-                                propertyName
-                            ])
+                            for (const type in models[modelName][propertyName])
                                 if (models[modelName][
                                     propertyName
                                 ].hasOwnProperty(type))
@@ -559,7 +556,7 @@ export class Helper {
             return {read: roles, write: roles}
         if (typeof roles === 'object') {
             const result:NormalizedAllowedRoles = {read: [], write: []}
-            for (const type:string in result)
+            for (const type in result)
                 if (roles.hasOwnProperty(type))
                     if (Array.isArray(roles[type]))
                         result[type] = roles[type]
