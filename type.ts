@@ -20,6 +20,7 @@ import {
     PluginHandler as BasePluginHandler,
     Services as BaseServices
 } from 'web-node/type'
+import {ChangesOptions as ChangesStreamOptions} from 'pouchdb-core'
 // endregion
 // region exports
 // / region model
@@ -188,6 +189,7 @@ export type Configuration = BaseConfiguration & {
             nodePath:string;
             runner:Array<Runner>;
         };
+        changesStream:ChangesOptions;
         connector:PlainObject;
         configurationFilePath:string;
         createGenericFlatIndex:boolean;
