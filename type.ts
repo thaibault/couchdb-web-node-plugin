@@ -13,7 +13,13 @@
     endregion
 */
 // region imports
-import {PlainObject} from 'clientnode/type'
+import {Mapping, PlainObject} from 'clientnode/type'
+import {
+    Configuration as BaseConfiguration,
+    Plugin,
+    PluginHandler as BasePluginHandler,
+    Services as BaseServices
+} from 'web-node/type'
 // endregion
 // region exports
 // / region model
@@ -26,11 +32,12 @@ export type NormalizedAllowedRoles = {
     write:Array<string>;
     properties?:AllowedModelRolesMapping;
 }
-export type AllowedModelRolesMapping = {[key:string]:NormalizedAllowedRoles}
+export type AllowedModelRolesMapping = Mapping<NormalizedAllowedRoles>
 export type Constraint = {
     description?:string;
     evaluation:string;
 }
+export type Type = Array<Type>|string|'any'|'boolean'|'integer'|'number'|'string'|'DateTime'
 export type PropertySpecification = {
     allowedRoles?:AllowedRoles;
     conflictingConstraintExecution?:Constraint;
@@ -61,10 +68,10 @@ export type PropertySpecification = {
     regularExpressionPattern?:string;
     selection?:Array<any>;
     trim?:boolean;
-    type?:any;
+    type?:Type;
     writable?:boolean;
 }
-export type Model = {
+export type Model = Mapping<PropertySpecification> & {
     _allowedRoles?:AllowedRoles;
     _extends?:Array<string>;
     _constraintExpressions?:Array<Constraint>;
@@ -76,13 +83,11 @@ export type Model = {
     _oldType?:string|Array<string>;
     _onUpdateExecution?:string;
     _onUpdateExpression?:string;
-    [key:string]:PropertySpecification;
 }
 export type Models = {[key:string]:Model}
-export type Document = {
+export type Document = Mapping<any> && {
     _id:string;
     _rev:string;
-    [key:string]:any;
 }
 export type RetrievedDocument = {
     id:string;
@@ -171,7 +176,7 @@ export type SecuritySettings = {
     admins:DatabaseUserConfiguration;
     members:DatabaseUserConfiguration;
 }
-export type Configuration = {
+export type Configuration = BaseConfiguration & {
     database:{
         attachAutoRestarter:boolean;
         backend:{
@@ -211,6 +216,23 @@ export type DatabaseForbiddenError = {
 }
 export type DatabaseError = DatabaseAuthorisationError|DatabaseForbiddenError
 // / endregion
+export interface PluginHandler extends BasePluginHandler {
+    /**
+     * Hook after each data change.
+     * @param changesStream - Stream of database changes.
+     * @param services - List of other web-node plugin services.
+     * @param configuration - Configuration object extended by each plugin
+     * specific configuration.
+     * @param plugins - Topological sorted list of plugins.
+     * @returns Given entry files.
+     */
+    static async databaseInitializeChangesStream?() {
+        changesStream:ChangesStream,
+        services:Services,
+        configuration:Configuration,
+        plugins:Array<Plugin>
+    }
+}
 // endregion
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:

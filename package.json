@@ -63,6 +63,7 @@
     "@types/jest": "*",
     "@types/loader-utils": "*",
     "@types/node": "*",
+    "@types/pouchdb": "*",
     "@typescript-eslint/eslint-plugin": "*",
     "@typescript-eslint/parser": "*",
     "babel-eslint": "*",
@@ -91,10 +92,6 @@
     "database": {
       "attachAutoRestarter": true,
       "backend": {
-        "prefixes": [
-          "_node/_local/_config",
-          "_config"
-        ],
         "configuration": {
           "couchdb/database_dir": {
             "__evaluate__": "path.resolve(self.database.path)"
@@ -114,7 +111,11 @@
           "httpd/port": 5984,
           "log/file": "/dev/stdout",
           "log/level": "info"
-        }
+        },
+        "prefixes": [
+          "_node/_local/_config",
+          "_config"
+        ]
       },
       "binary": {
         "memoryInMegaByte": "default",
