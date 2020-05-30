@@ -292,7 +292,8 @@ export class Helper {
                     services.database.server.reject.apply(this, parameter)
             })
         await Tools.checkReachability(
-            Tools.stringFormat(configuration.database.url, ''), true)
+            Tools.stringFormat(configuration.database.url, ''), true
+        )
     }
     /**
      * Stops open database connection if exist, stops server process, restarts
@@ -305,7 +306,7 @@ export class Helper {
      */
     static async restartServer(
         services:Services, configuration:Configuration, plugins:Array<Plugin>
-    ):Promise<Services> {
+    ):Promise<void> {
         const resolveServerProcessBackup:Function =
             services.database.server.resolve
         const rejectServerProcessBackup:Function =
@@ -320,8 +321,8 @@ export class Helper {
         await Helper.startServer(services, configuration)
         Helper.initializeConnection(services, configuration)
         await PluginAPI.callStack(
-            'restartDatabase', plugins, configuration, services)
-        return services
+            'restartDatabase', plugins, configuration, services
+        )
     }
     /**
      * Stops open database connection if exists and stops server process.
@@ -332,14 +333,13 @@ export class Helper {
      */
     static async stopServer(
         services:Services, configuration:Configuration
-    ):Promise<Services> {
+    ):Promise<void> {
         if (services.database.connection)
             services.database.connection.close()
         if (services.database.server.process)
             services.database.server.process.kill('SIGINT')
         await Tools.checkUnreachability(
             Tools.stringFormat(configuration.database.url, ''), true)
-        return services
     }
     // region model
     /**
@@ -381,9 +381,9 @@ export class Helper {
                             )
             } else
                 allowedModelRolesMapping[modelName] = {
+                    properties: {},
                     read: [],
-                    write: [],
-                    properties: {}
+                    write: []
                 }
         return allowedModelRolesMapping
     }

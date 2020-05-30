@@ -13,25 +13,34 @@
     endregion
 */
 // region imports
-import {Mapping, PlainObject} from 'clientnode/type'
+import {Mapping, PlainObject, ProcessCloseReason} from 'clientnode/type'
+import PouchDB from 'pouchdb'
 import {
     Configuration as BaseConfiguration,
     Plugin,
     PluginHandler as BasePluginHandler,
+    Service as BaseService,
     Services as BaseServices
 } from 'web-node/type'
-import {ChangesOptions as ChangesStreamOptions} from 'pouchdb-core'
 // endregion
 // region exports
+// / region database implementation
+export type Attachments = PouchDB.Core.Attachments
+export type ChangesStream<Type=any> = PouchDB.Core.Changes<Type>
+export type ChangesStreamOptions = PouchDB.Core.ChangesOptions
+export type Connector = PouchDB.Static
+export type IdMeta = PouchDB.Core.IdMeta
+export type RevisionIdMeta = PouchDB.Core.RevisionIdMeta
+// / endregion
 // / region model
 export type AllowedRoles = Array<string>|string|{
     read:string|Array<string>;
     write:string|Array<string>;
 }
 export type NormalizedAllowedRoles = {
+    properties?:AllowedModelRolesMapping;
     read:Array<string>;
     write:Array<string>;
-    properties?:AllowedModelRolesMapping;
 }
 export type AllowedModelRolesMapping = Mapping<NormalizedAllowedRoles>
 export type Constraint = {
@@ -63,7 +72,7 @@ export type PropertySpecification = {
     nullable?:boolean;
     onCreateExecution?:string;
     onCreateExpression?:string;
-    oldName?:string|Array<string>;
+    oldName?:Array<string>|string;
     onUpdateExecution?:string;
     onUpdateExpression?:string;
     regularExpressionPattern?:string;
@@ -74,26 +83,19 @@ export type PropertySpecification = {
 }
 export type Model = Mapping<PropertySpecification> & {
     _allowedRoles?:AllowedRoles;
-    _extends?:Array<string>;
     _constraintExpressions?:Array<Constraint>;
     _constraintExecutions?:Array<Constraint>;
     _createExpression?:string;
     _createExecution?:string;
+    _extends?:Array<string>;
     _maximumAggregatedSize?:number;
     _minimumAggregatedSize?:number;
     _oldType?:string|Array<string>;
     _onUpdateExecution?:string;
     _onUpdateExpression?:string;
 }
-export type Models = {[key:string]:Model}
-export type Document = Mapping<any> && {
-    _id:string;
-    _rev:string;
-}
-export type RetrievedDocument = {
-    id:string;
-    doc:Document;
-}
+export type Models = Mapping<Model>
+export type Document = IdMeta & Mapping<any> & RevisionIdMeta
 export type UpdateStrategy = ''|'fillUp'|'incremental'|'migrate'
 export type SpecialPropertyNames = {
     additional:string;
@@ -154,7 +156,7 @@ export type SimpleModelConfiguration = {
 // / region configuration
 export type UserContext = {
     db:string;
-    name:?string;
+    name?:string;
     roles:Array<string>;
 }
 export type DatabaseUserConfiguration = {
@@ -189,7 +191,7 @@ export type Configuration = BaseConfiguration & {
             nodePath:string;
             runner:Array<Runner>;
         };
-        changesStream:ChangesOptions;
+        changesStream:ChangesStreamOptions;
         connector:PlainObject;
         configurationFilePath:string;
         createGenericFlatIndex:boolean;
@@ -203,14 +205,14 @@ export type Configuration = BaseConfiguration & {
         user:{
             name:string;
             password:string;
-        };
-    };
+        }
+    }
 }
 // / endregion
 // / region database error
 export type DatabaseAuthorisationError = {
-    unauthorized:string;
     toString:() => string;
+    unauthorized:string;
 }
 export type DatabaseForbiddenError = {
     forbidden:string;
@@ -218,6 +220,29 @@ export type DatabaseForbiddenError = {
 }
 export type DatabaseError = DatabaseAuthorisationError|DatabaseForbiddenError
 // / endregion
+export type Service = BaseService & {
+    name:'database';
+    promise:null|Promise<ProcessCloseReason>;
+}
+export type Services = BaseServices & {
+    database:{
+        connector:Connector;
+        server:{
+            reject:Function;
+            resolve:Function;
+            restart:(
+                services:Services,
+                configuration:Configuration,
+                plugins:Array<Plugin>
+            ) => Promise<void>;
+            runner:Runner;
+            start:(services:Services, configuration:Configuration) =>
+                Promise<void>;
+            stop:(services:Services, configuration:Configuration) =>
+                Promise<void>;
+        };
+    }
+}
 export interface PluginHandler extends BasePluginHandler {
     /**
      * Hook after each data change.
@@ -228,12 +253,23 @@ export interface PluginHandler extends BasePluginHandler {
      * @param plugins - Topological sorted list of plugins.
      * @returns Given entry files.
      */
-    static async databaseInitializeChangesStream?() {
+    databaseInitializeChangesStream?(
         changesStream:ChangesStream,
         services:Services,
         configuration:Configuration,
         plugins:Array<Plugin>
-    }
+    ):ChangesStream
+    /**
+     * Hook after each data base restart.
+     * @param services - List of other web-node plugin services.
+     * @param configuration - Configuration object extended by each plugin
+     * specific configuration.
+     * @param plugins - Topological sorted list of plugins.
+     * @returns Given entry files.
+     */
+    restartDatabase?(
+        services:Services, configuration:Configuration, plugins:Array<Plugin>
+    ):Services
 }
 // endregion
 // region vim modline

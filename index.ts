@@ -36,8 +36,7 @@ import {
     Document,
     ModelConfiguration,
     Models,
-    RetrievedDocument,
-    Runner
+    Service,
     ServicePromises,
     Services
 } from './type'
@@ -60,7 +59,7 @@ export class Database implements PluginHandler {
     static additionalChangesStreamOptions:Object = {}
     static changesStream:Object
     static skipIDDetermining:boolean = true
-    static toggleIDDetermining:any = Symbol('toggleIDDetermining')
+    static toggleIDDetermining = Symbol('toggleIDDetermining')
     /**
      * Start database's child process and return a Promise which observes this
      * service.
@@ -75,8 +74,8 @@ export class Database implements PluginHandler {
         servicePromises:ServicePromises,
         services:Services,
         configuration:Configuration
-    ):Promise<{promise:?Promise<Object>}> {
-        let promise:?Promise<Object> = null
+    ):Promise<Service> {
+        let promise:null|Promise<Object> = null
         if (services.database.server.hasOwnProperty('runner')) {
             await Helper.startServer(services, configuration)
             services.database.server.restart = Helper.restartServer
@@ -87,7 +86,7 @@ export class Database implements PluginHandler {
                     NOTE: These callbacks can be reassigned during server
                     restart.
                 */
-                services.database.server.resolve = resolve
+                services.database.server.esolve = resolve
                 services.database.server.reject = reject
             })
         }
@@ -959,7 +958,8 @@ export class Database implements PluginHandler {
                 for (const directoryPath of [].concat(runner.location)) {
                     for (const name of [].concat(runner.name)) {
                         const binaryFilePath:string = path.resolve(
-                            directoryPath, name)
+                            directoryPath, name
+                        )
                         triedPaths.push(binaryFilePath)
                         if (await Tools.isFile(binaryFilePath)) {
                             runner.binaryFilePath = binaryFilePath

@@ -13,19 +13,19 @@
     endregion
 */
 // region imports
-import {PlainObject} from 'clientnode/type'
+import {Mapping, PlainObject, ProcedureFunction} from 'clientnode/type'
 
 import {
-    /* eslint-disable no-unused-vars */
-    Constraint,
-    /* eslint-enable no-unused-vars */
     AllowedModelRolesMapping,
+    Attachments,
+    Document,
     Model,
     Models,
     NormalizedAllowedRoles,
     PropertySpecification,
     SecuritySettings,
     SimpleModelConfiguration,
+    SpecialPropertyNames,
     UserContext
 } from './type'
 // endregion
@@ -52,23 +52,21 @@ export class DatabaseHelper {
      * otherwise.
      */
     static authenticate(
-        newDocument:PlainObject,
-        oldDocument:?PlainObject,
+        newDocument:Document,
+        oldDocument:Document|null,
         userContext:UserContext = {
             db: 'dummy',
             name: '"unknown"',
             roles: []
-        /* eslint-disable no-unused-vars */
         },
         securitySettings:SecuritySettings = {
             admins: {names: [], roles: []}, members: {names: [], roles: []}
-        /* eslint-enable no-unused-vars */
         },
         allowedModelRolesMapping:AllowedModelRolesMapping,
         idPropertyName:string,
         typePropertyName:string,
-        read:boolean = false
-    ):?true {
+        read = false
+    ):true {
         /*
             NOTE: Special documents and like changes sequences are going
             through this function and should be ignored.
@@ -102,13 +100,26 @@ export class DatabaseHelper {
                         allowedRoles.hasOwnProperty(type) &&
                         newDocument.hasOwnProperty(typePropertyName)
                     )
-                        if (Array.isArray(allowedRoles[type]))
-                            allowedRoles[type] = allowedRoles[type].concat(
+                        if (Array.isArray(allowedRoles[
+                            type as keyof NormalizedAllowedRoles
+                        ]))
+                            (
+                                allowedRoles[
+                                    type as keyof NormalizedAllowedRoles
+                                ] as Array<string>
+                            ) = (
+                                allowedRoles[
+                                    type as keyof NormalizedAllowedRoles
+                                ] as Array<string>
+                            ).concat(
                                 allowedModelRolesMapping[newDocument[
                                     typePropertyName
-                                ]][type])
+                                ]][type as keyof NormalizedAllowedRoles]
+                            )
                         else
-                            allowedRoles[type] = allowedModelRolesMapping[
+                            allowedRoles[
+                                type as keyof NormalizedAllowedRoles
+                            ] = allowedModelRolesMapping[
                                 newDocument[typePropertyName]
                             ][type]
             if (userContext.roles.length) {
@@ -122,8 +133,8 @@ export class DatabaseHelper {
                     `${userContext.roles.join('", "')}".`
                 //
             } else
-                userRolesDescription = `Current user "${userContext.name}" ` +
-                    `doesn't own any role`
+                userRolesDescription =
+                    `Current user "${userContext.name}" doesn't own any role`
         }
         /* eslint-disable no-throw-literal */
         throw {
@@ -150,8 +161,8 @@ export class DatabaseHelper {
      * @returns Modified given new document.
      */
     static validateDocumentUpdate(
-        newDocument:PlainObject,
-        oldDocument:?PlainObject,
+        newDocument:Document,
+        oldDocument?:Document,
         userContext:UserContext = {
             db: 'dummy',
             name: 'admin',
@@ -162,23 +173,23 @@ export class DatabaseHelper {
         },
         models:Models,
         modelConfiguration:SimpleModelConfiguration,
-        toJSON:?Function = null
-    ):PlainObject {
-        // region ensure needed environment
+        toJSON:Function|null = null
+    ):Document {
+        // region en sure needed environment
         const now:Date = new Date()
         const nowUTCTimestamp:number = Date.UTC(
             now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
             now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds(),
             now.getUTCMilliseconds()
         ) / 1000
-        const specialNames:PlainObject =
+        const specialNames:SpecialPropertyNames =
             modelConfiguration.property.name.special
         const idName:string = specialNames.id
         const revisionName:string = specialNames.revision
         const typeName:string = specialNames.type
         let id:string = ''
         let revision:string = ''
-        const setDocumentEnvironment:Function = ():void => {
+        const setDocumentEnvironment:ProcedureFunction = ():void => {
             id = newDocument.hasOwnProperty(idName) ? newDocument[idName] : ''
             revision = newDocument.hasOwnProperty(revisionName) ?
                 newDocument[revisionName] :
@@ -210,7 +221,8 @@ export class DatabaseHelper {
         }
         if (['latest', 'upsert'].includes(revision))
             if (oldDocument && oldDocument.hasOwnProperty(revisionName))
-                revision = newDocument[revisionName] =
+                revision =
+                    newDocument[revisionName] =
                     oldDocument[revisionName]
             else if (revision === 'latest')
                 /* eslint-disable no-throw-literal */
@@ -233,13 +245,14 @@ export class DatabaseHelper {
         else
             throw new Error('Needed "serialize" function is not available.')
         // / region collect old model types to migrate.
-        const oldModelMapping:{[key:string]:string} = {}
+        const oldModelMapping:Mapping = {}
         if (updateStrategy === 'migrate')
             for (const name in models)
                 if (
                     models.hasOwnProperty(name) &&
                     ![null, undefined].includes(
-                        models[name][specialNames.oldType])
+                        models[name][specialNames.oldType]
+                    )
                 )
                     for (const oldName of [].concat(
                         models[name][specialNames.oldType]
@@ -249,13 +262,14 @@ export class DatabaseHelper {
         // endregion
         // region functions
         const getFilenameByPrefix:Function = (
-            attachments:PlainObject, prefix:?string
-        ):?string => {
+            attachments:Attachments, prefix?:string
+        ):null|string => {
             if (prefix) {
                 for (const name in attachments)
-                    if (attachments.hasOwnProperty(name) && name.startsWith(
-                        prefix
-                    ))
+                    if (
+                        attachments.hasOwnProperty(name) &&
+                        name.startsWith(prefix)
+                    )
                         return name
             } else {
                 const keys:Array<string> = Object.keys(attachments)
@@ -269,7 +283,8 @@ export class DatabaseHelper {
         ):boolean => {
             if (newDocument.hasOwnProperty(specialNames.attachment)) {
                 const name:string = getFilenameByPrefix(
-                    newDocument[specialNames.attachment], namePrefix)
+                    newDocument[specialNames.attachment], namePrefix
+                )
                 if (name)
                     return newDocument[specialNames.attachment][
                         name
