@@ -18,13 +18,13 @@ import {Mapping, PlainObject, ProcedureFunction} from 'clientnode/type'
 import {
     AllowedModelRolesMapping,
     Attachments,
+    BaseModelConfiguration,
     Document,
     Model,
     Models,
     NormalizedAllowedRoles,
     PropertySpecification,
     SecuritySettings,
-    SimpleModelConfiguration,
     SpecialPropertyNames,
     UserContext
 } from './type'
@@ -172,7 +172,7 @@ export class DatabaseHelper {
             admins: {names: [], roles: []}, members: {names: [], roles: []}
         },
         models:Models,
-        modelConfiguration:SimpleModelConfiguration,
+        modelConfiguration:BaseModelConfiguration,
         toJSON:Function|null = null
     ):Document {
         // region en sure needed environment

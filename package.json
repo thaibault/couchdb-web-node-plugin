@@ -175,13 +175,11 @@
         "timeout": false
       },
       "connector": {
-        "ajax": {
+        "fetch": {
           "timeout": {
             "__evaluate__": "5 * 60 * 1000"
           }
-        },
-        "auto_compaction": true,
-        "revs_limit": 100
+        }
       },
       "createGenericFlatIndex": true,
       "debug": false,
@@ -324,7 +322,6 @@
         },
         "property": {
           "defaultSpecification": {
-            "computed": false,
             "conflictingConstraintExecution": null,
             "conflictingConstraintExpression": null,
             "constraintExecution": null,

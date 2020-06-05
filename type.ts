@@ -31,6 +31,8 @@ export type ChangesStreamOptions = PouchDB.Core.ChangesOptions
 export type Connector = PouchDB.Static
 export type IdMeta = PouchDB.Core.IdMeta
 export type RevisionIdMeta = PouchDB.Core.RevisionIdMeta
+export type ConnectorConfiguration =
+    PouchDB.Core.Configuration.RemoteDatabaseConfiguration
 // / endregion
 // / region model
 export type AllowedRoles = Array<string>|string|{
@@ -137,20 +139,19 @@ export type PropertyNameConfiguration = {
     };
     validatedDocumentsCache:string;
 }
-export type ModelConfiguration = {
-    entities:Models;
+export type BaseModelConfiguration = {
     property:{
         defaultSpecification:PropertySpecification;
         name:PropertyNameConfiguration;
     };
     updateStrategy:UpdateStrategy;
 }
-export type SimpleModelConfiguration = {
-    property:{
-        defaultSpecification:PropertySpecification;
-        name:PropertyNameConfiguration;
-    };
-    updateStrategy:UpdateStrategy;
+export type ModelConfiguration = BaseModelConfiguration & {
+    autoMigrationPath:string;
+    entities:Models;
+    triggerInitialCompaction:boolean;
+    updateConfiguration:boolean;
+    updateValidation:boolean;
 }
 // / endregion
 // / region configuration
@@ -192,14 +193,18 @@ export type Configuration = BaseConfiguration & {
             runner:Array<Runner>;
         };
         changesStream:ChangesStreamOptions;
-        connector:PlainObject;
-        configurationFilePath:string;
+        connector:ConnectorConfiguration;
         createGenericFlatIndex:boolean;
+        debug:boolean;
+        ensureAdminPresence:boolean;
+        ensureSecuritySettingsPresence:boolean;
+        ensureUserPresence:boolean;
+        ignoreNoChangeError:boolean;
         local:boolean;
         maximumRepresentationLength:number;
+        maximumRepresentationTryLength:number;
         model:ModelConfiguration;
         path:string;
-        port:number;
         security:SecuritySettings;
         url:string;
         user:{
