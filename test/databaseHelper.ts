@@ -14,44 +14,75 @@
     endregion
 */
 // region imports
-import type {PlainObject} from 'clientnode'
 import Tools from 'clientnode'
-import registerTest from 'clientnode/test'
-import {configuration} from 'web-node'
 
 import DatabaseHelper from '../databaseHelper'
 import Helper from '../helper'
-import type {
-    /* eslint-disable no-unused-vars */
-    DatabaseForbiddenError, ModelConfiguration, Models, UpdateStrategy
-    /* eslint-enable no-unused-vars */
+import packageConfiguration from '../package.json'
+import {
+    Configuration,
+    DatabaseForbiddenError,
+    ModelConfiguration,
+    Models,
+    UpdateStrategy
 } from '../type'
 // endregion
-registerTest(async function():Promise<void> {
-    this.module('databaseHelper')
+describe('databaseHelper', ():void => {
+    const configuration:Configuration =
+        packageConfiguration.webNode.database as Configuration
     // region tests
-    this.test('authenticate', (assert:Object):void => {
+    test('authenticate', ():void => {
         for (const test:Array<any> of [
-            [{type: 'Test'}, {}, {roles: []}, {}, {Test: {
-                properties: {}, read: ['users'], write: []
-            }}, 'id', 'type'],
-            [{type: 'Test'}, {}, {roles: ['users']}, {}, {Test: {
-                properties: {}, read: [], write: []
-            }}, 'id', 'type']
+            [
+                {type: 'Test'},
+                {},
+                {roles: []},
+                {},
+                {Test: {read: 'users'}},
+                'id',
+                'type'
+            ],
+            [
+                {type: 'Test'},
+                {},
+                {roles: ['users']},
+                {},
+                {},
+                'id',
+                'type'
+            ]
         ])
             assert.throws(():?true => DatabaseHelper.authenticate(...test))
         for (const test:Array<any> of [
             [{}],
             [{}, null, {roles: ['_admin']}],
-            [{}, {}, {roles: ['_admin']}, {}, {
-                properties: {}, read: [], write: []
-            }, 'id', 'type'],
-            [{type: 'Test'}, {}, {roles: ['users']}, {}, {Test: {
-                properties: {}, read: [], write: ['users']
-            }}, 'id', 'type'],
-            [{type: 'Test'}, {}, {roles: ['users']}, {}, {Test: {
-                propertues: {}, read: [], write: ['users']
-            }}, 'id', 'type']
+            [
+                {},
+                {},
+                {roles: ['_admin']},
+                {},
+                {},
+                'id',
+                'type'
+            ],
+            [
+                {type: 'Test'},
+                {},
+                {roles: ['users']},
+                {},
+                {Test: {write: ['users']}},
+                'id',
+                'type'
+            ],
+            [
+                {type: 'Test'},
+                {},
+                {roles: ['users']},
+                {},
+                {Test: {write: ['users']}},
+                'id',
+                'type'
+            ]
         ])
             assert.ok(DatabaseHelper.authenticate(...test))
     })
@@ -1140,8 +1171,8 @@ registerTest(async function():Promise<void> {
                 delete modelConfiguration.property.defaultSpecification
                 delete modelConfiguration.entities
                 const parameter:Array<any> = test[0].concat([null, {}, {
-                }].slice(test[0].length - 1)).concat([
-                    models, modelConfiguration])
+                }].slice(test[0].length - 1)).concat(
+                    modelConfiguration, models)
                 if (typeof test[2] !== 'string') {
                     assert.deepEqual(
                         DatabaseHelper.validateDocumentUpdate(...parameter),
@@ -3421,7 +3452,7 @@ registerTest(async function():Promise<void> {
                     assert.deepEqual(DatabaseHelper.validateDocumentUpdate(
                         ...test[0].concat([null, {}, {}].slice(
                             test[0].length - 1
-                        )).concat([models, modelConfiguration])
+                        )).concat(modelConfiguration, models)
                     ), test[2][updateStrategy])
                 } catch (error) {
                     console.error(error)
@@ -3662,7 +3693,7 @@ registerTest(async function():Promise<void> {
                     DatabaseHelper.validateDocumentUpdate(
                         ...test[0]
                             .concat([null, {}, {}].slice(test[0].length - 1))
-                            .concat([models, modelConfiguration])
+                            .concat(modelConfiguration, models)
                     ),
                     test[2]
                 )
@@ -3672,8 +3703,8 @@ registerTest(async function():Promise<void> {
         }
         // endregion
     })
-// endregion
-}, 'plain')
+    // endregion
+})
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
 // vim: foldmethod=marker foldmarker=region,endregion:

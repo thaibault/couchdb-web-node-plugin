@@ -36,14 +36,19 @@ export type ConnectorConfiguration =
 // / endregion
 // / region model
 export type AllowedRoles = Array<string>|string|{
-    read:string|Array<string>;
-    write:string|Array<string>;
+    read:Array<string>|string;
+    write:Array<string>|string;
 }
+// Recursive mapping from operations to their allowed roles.
 export type NormalizedAllowedRoles = {
     properties?:AllowedModelRolesMapping;
-    read:Array<string>;
-    write:Array<string>;
+    read?:Array<string>|string;
+    write?:Array<string>|string;
 }
+/*
+    Maps an artefact (usually type or property) to corresponding operations
+    mapped to their allowed roles.
+*/
 export type AllowedModelRolesMapping = Mapping<NormalizedAllowedRoles>
 export type Constraint = {
     description?:string;

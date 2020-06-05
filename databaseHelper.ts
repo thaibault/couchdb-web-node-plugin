@@ -62,9 +62,9 @@ export class DatabaseHelper {
         securitySettings:SecuritySettings = {
             admins: {names: [], roles: []}, members: {names: [], roles: []}
         },
-        allowedModelRolesMapping:AllowedModelRolesMapping,
-        idPropertyName:string,
-        typePropertyName:string,
+        allowedModelRolesMapping?:AllowedModelRolesMapping,
+        idPropertyName:string = '_id',
+        typePropertyName:string = '-type',
         read = false
     ):true {
         /*
@@ -73,7 +73,11 @@ export class DatabaseHelper {
         */
         if (!newDocument.hasOwnProperty(typePropertyName))
             return true
-        const allowedRoles:NormalizedAllowedRoles = {
+        const allowedRoles:{
+            properties:AllowedModelRolesMapping;
+            read:Array<string>;
+            write:Array<string>;
+        } = {
             properties: {},
             read: ['_admin', 'readonlyadmin'],
             write: ['_admin']
@@ -84,45 +88,52 @@ export class DatabaseHelper {
         )
             allowedRoles.read.push('readonlymember')
         let userRolesDescription:string = `Current user doesn't own any role`
-        const operationType:string = read ? 'read': 'write'
+        const operationType:'read'|'write' = read ? 'read': 'write'
         if (userContext) {
             if (!('name' in userContext))
                 userContext.name = '"unknown"'
-            if (
-                allowedModelRolesMapping &&
-                typePropertyName &&
-                newDocument.hasOwnProperty(typePropertyName) &&
-                allowedModelRolesMapping.hasOwnProperty(
-                    newDocument[typePropertyName])
-            )
-                for (const type in allowedRoles)
-                    if (
-                        allowedRoles.hasOwnProperty(type) &&
-                        newDocument.hasOwnProperty(typePropertyName)
-                    )
-                        if (Array.isArray(allowedRoles[
-                            type as keyof NormalizedAllowedRoles
-                        ]))
-                            (
-                                allowedRoles[
-                                    type as keyof NormalizedAllowedRoles
-                                ] as Array<string>
-                            ) = (
-                                allowedRoles[
-                                    type as keyof NormalizedAllowedRoles
-                                ] as Array<string>
-                            ).concat(
-                                allowedModelRolesMapping[newDocument[
-                                    typePropertyName
-                                ]][type as keyof NormalizedAllowedRoles]
-                            )
-                        else
-                            allowedRoles[
-                                type as keyof NormalizedAllowedRoles
-                            ] = allowedModelRolesMapping[
-                                newDocument[typePropertyName]
-                            ][type]
             if (userContext.roles.length) {
+                // region determine model specific allowed roles
+                if (
+                    allowedModelRolesMapping &&
+                    typePropertyName &&
+                    newDocument.hasOwnProperty(typePropertyName) &&
+                    allowedModelRolesMapping.hasOwnProperty(
+                        newDocument[typePropertyName]
+                    )
+                )
+                    for (const type in allowedRoles)
+                        if (
+                            allowedRoles.hasOwnProperty(type) &&
+                            newDocument.hasOwnProperty(typePropertyName)
+                        )
+                            if (['read', 'write'].includes(type))
+                                (
+                                    allowedRoles[
+                                        type as keyof NormalizedAllowedRoles
+                                    ] as Array<string>
+                                ) = (
+                                    allowedRoles[
+                                        type as keyof NormalizedAllowedRoles
+                                    ] as Array<string>
+                                ).concat(
+                                    allowedModelRolesMapping[
+                                        newDocument[typePropertyName] as
+                                            keyof AllowedModelRolesMapping
+                                    ][type as keyof NormalizedAllowedRoles] as
+                                        Array<string> ||
+                                    []
+                                )
+                            else if (allowedModelRolesMapping[
+                                newDocument[typePropertyName] as
+                                    keyof AllowedModelRolesMapping
+                            ].hasOwnProperty(type))
+                                allowedRoles.properties =
+                                    allowedModelRolesMapping[
+                                        newDocument[typePropertyName] as
+                                            keyof AllowedModelRolesMapping
+                                    ].properties as AllowedModelRolesMapping
+                // endregion
                 // TODO check for each property recursively
                 const relevantRoles:Array<string> = allowedRoles[operationType]
                 for (const userRole of userContext.roles)
@@ -162,20 +173,14 @@ export class DatabaseHelper {
      */
     static validateDocumentUpdate(
         newDocument:Document,
-        oldDocument?:Document,
-        userContext:UserContext = {
-            db: 'dummy',
-            name: 'admin',
-            roles: ['_admin']
-        },
-        securitySettings:SecuritySettings = {
-            admins: {names: [], roles: []}, members: {names: [], roles: []}
-        },
-        models:Models,
+        oldDocument:Document|null,
+        userContext:UserContext,
+        securitySettings:SecuritySettings,
         modelConfiguration:BaseModelConfiguration,
-        toJSON:Function|null = null
+        models:Models = {},
+        toJSON?:Function
     ):Document {
-        // region en sure needed environment
+        // region ensure needed environment
         const now:Date = new Date()
         const nowUTCTimestamp:number = Date.UTC(
             now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),

@@ -332,8 +332,8 @@ export class Database implements PluginHandler {
                     methodName: 'validateDocumentUpdate',
                     name: 'validation',
                     serializedParameter:
-                        `${JSON.stringify(models)}, ` +
-                        JSON.stringify(modelConfiguration)
+                        `${JSON.stringify(modelConfiguration)}, ` +
+                        JSON.stringify(models)
                 },
                 {
                     description: 'Authorisation',
@@ -607,7 +607,9 @@ export class Database implements PluginHandler {
                                 document caches.
                             */
                             Tools.copy(configuration.database.security),
-                            models, modelConfiguration)
+                            modelConfiguration,
+                            models
+                        )
                     } catch (error) {
                         if ('forbidden' in error) {
                             if (!error.forbidden.startsWith('NoChange:'))
