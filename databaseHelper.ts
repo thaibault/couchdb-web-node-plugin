@@ -53,7 +53,7 @@ export class DatabaseHelper {
      */
     static authenticate(
         newDocument:Document,
-        oldDocument:Document|null,
+        oldDocument:Document|null = null,
         userContext:UserContext = {
             db: 'dummy',
             name: '"unknown"',

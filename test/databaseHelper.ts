@@ -31,62 +31,67 @@ describe('databaseHelper', ():void => {
     const configuration:Configuration =
         packageConfiguration.webNode.database as Configuration
     // region tests
-    test('authenticate', ():void => {
-        for (const test:Array<any> of [
-            [
-                {type: 'Test'},
-                {},
-                {roles: []},
-                {},
-                {Test: {read: 'users'}},
-                'id',
-                'type'
-            ],
-            [
-                {type: 'Test'},
-                {},
-                {roles: ['users']},
-                {},
-                {},
-                'id',
-                'type'
-            ]
-        ])
-            assert.throws(():?true => DatabaseHelper.authenticate(...test))
-        for (const test:Array<any> of [
-            [{}],
-            [{}, null, {roles: ['_admin']}],
-            [
-                {},
-                {},
-                {roles: ['_admin']},
-                {},
-                {},
-                'id',
-                'type'
-            ],
-            [
-                {type: 'Test'},
-                {},
-                {roles: ['users']},
-                {},
-                {Test: {write: ['users']}},
-                'id',
-                'type'
-            ],
-            [
-                {type: 'Test'},
-                {},
-                {roles: ['users']},
-                {},
-                {Test: {write: ['users']}},
-                'id',
-                'type'
-            ]
-        ])
-            assert.ok(DatabaseHelper.authenticate(...test))
-    })
-    this.test('validateDocumentUpdate', (assert:Object):void => {
+    test.each([
+        [{type: 'Test'}, {}, {roles: []}, {}, {Test: {read: 'users'}}],
+        [{type: 'Test'}, {}, {roles: ['users']}, {}, {}]
+    ])(
+        "authenticate(%p, %p, %p, %p, %p)",
+        (
+            newDocument:Document,
+            oldDocument:Document,
+            userContext:UserContext,
+            securitySettings:SecuritySettings,
+            allowedModelRolesMapping:AllowedModelRolesMapping
+        ):void => expect(():true => DatabaseHelper.authenticate(
+            newDocument,
+            oldDocument,
+            userContext,
+            securitySettings,
+            allowedModelRolesMapping
+        ))
+    )
+    test.each([
+        [{}],
+        [{}, null, {roles: ['_admin']}],
+        [
+            {},
+            {},
+            {roles: ['_admin']},
+            {},
+            {}
+        ],
+        [
+            {'-type': 'Test'},
+            {},
+            {roles: ['users']},
+            {},
+            {Test: {write: ['users']}}
+        ],
+        [
+            {'-type': 'Test'},
+            {},
+            {roles: ['users']},
+            {},
+            {Test: {write: ['users']}}
+        ]
+    ])(
+        "authenticate(%p, %p, %p, %p, %p)",
+        (
+            newDocument:Document,
+            oldDocument?:Document,
+            userContext?:UserContext,
+            securitySettings?:SecuritySettings,
+            allowedModelRolesMapping?:AllowedModelRolesMapping
+        ):void =>
+            expect(DatabaseHelper.authenticate(
+                newDocument,
+                oldDocument,
+                userContext,
+                securitySettings,
+                allowedModelRolesMapping
+            )).toStrictEqual(true)
+    )
+    test('validateDocumentUpdate', ():void => {
         const specialNames:PlainObject = configuration.database.model.property
             .name.special
         const attachmentName:string = specialNames.attachment
