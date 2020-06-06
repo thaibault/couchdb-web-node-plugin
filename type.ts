@@ -29,7 +29,9 @@ export type Attachments = PouchDB.Core.Attachments
 export type ChangesStream<Type=any> = PouchDB.Core.Changes<Type>
 export type ChangesStreamOptions = PouchDB.Core.ChangesOptions
 export type Connector = PouchDB.Static
+export type DatabaseError = PouchDB.Core.Error
 export type IdMeta = PouchDB.Core.IdMeta
+export type Index = PouchDB.Find.Index
 export type RevisionIdMeta = PouchDB.Core.RevisionIdMeta
 export type ConnectorConfiguration =
     PouchDB.Core.Configuration.RemoteDatabaseConfiguration
