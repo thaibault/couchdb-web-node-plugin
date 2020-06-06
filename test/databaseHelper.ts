@@ -13,7 +13,7 @@
     See https://creativecommons.org/licenses/by/3.0/deed.de
     endregion
 */
-// region imports
+// region imports 
 import Tools from 'clientnode'
 
 import DatabaseHelper from '../databaseHelper'
@@ -22,20 +22,30 @@ import packageConfiguration from '../package.json'
 import {
     Configuration,
     DatabaseForbiddenError,
+    Document,
     ModelConfiguration,
     Models,
+    SpecialPropertyNames,
     UpdateStrategy
 } from '../type'
 // endregion
 describe('databaseHelper', ():void => {
+    // region prepare environment
     const configuration:Configuration =
         packageConfiguration.webNode.database as Configuration
+    const specialNames:SpecialPropertyNames =
+        configuration.database.model.property.name.special
+    const attachmentName:string = specialNames.attachment
+    const idName:string = specialNames.id
+    const revisionName:string = specialNames.revision
+    const typeName:string = specialNames.type
+    // endregion
     // region tests
     test.each([
         [{type: 'Test'}, {}, {roles: []}, {}, {Test: {read: 'users'}}],
         [{type: 'Test'}, {}, {roles: ['users']}, {}, {}]
     ])(
-        "authenticate(%p, %p, %p, %p, %p)",
+        "authenticate(%p, %p, %p, %p, %p) => throw {unauthorized: ...}",
         (
             newDocument:Document,
             oldDocument:Document,
@@ -48,7 +58,7 @@ describe('databaseHelper', ():void => {
             userContext,
             securitySettings,
             allowedModelRolesMapping
-        ))
+        )).toThrow()
     )
     test.each([
         [{}],
@@ -75,7 +85,7 @@ describe('databaseHelper', ():void => {
             {Test: {write: ['users']}}
         ]
     ])(
-        "authenticate(%p, %p, %p, %p, %p)",
+        "authenticate(%p, %p, %p, %p, %p) === true",
         (
             newDocument:Document,
             oldDocument?:Document,
@@ -91,29 +101,26 @@ describe('databaseHelper', ():void => {
                 allowedModelRolesMapping
             )).toStrictEqual(true)
     )
-    test('validateDocumentUpdate', ():void => {
-        const specialNames:PlainObject = configuration.database.model.property
-            .name.special
-        const attachmentName:string = specialNames.attachment
-        const idName:string = specialNames.id
-        const revisionName:string = specialNames.revision
-        const typeName:string = specialNames.type
-        for (const updateStrategy:UpdateStrategy of [
-            '', 'fillUp', 'incremental'
-        ]) {
+    test.each(['', 'fillUp', 'incremental'])(
+        'validateDocumentUpdate (with update strategy "%s")',
+        (updateStrategy:string):void => {
             const defaultModelConfiguration:ModelConfiguration = Tools.extend(
-                true, {}, configuration.database.model, {updateStrategy})
-            for (
-                const propertyName:string in
-                defaultModelConfiguration.entities._base
+                true, {}, configuration.database.model, {updateStrategy}
             )
-                if (defaultModelConfiguration.entities._base.hasOwnProperty(
-                    propertyName
-                ) && propertyName !== typeName)
+            for (
+                const propertyName in defaultModelConfiguration.entities._base
+            )
+                if (
+                    defaultModelConfiguration.entities._base.hasOwnProperty(
+                        propertyName
+                    ) &&
+                    propertyName !== typeName
+                )
                     delete defaultModelConfiguration.entities._base[
-                        propertyName]
+                        propertyName
+                    ]
             // region forbidden writes
-            for (const test:Array<any> of [
+            for (const test of [
                 // region general environment
                 /*
                     Get an exception if an expected previous document does not
@@ -1171,50 +1178,26 @@ describe('databaseHelper', ():void => {
                 if (test.length < 3)
                     test.splice(1, 0, {})
                 const modelConfiguration:ModelConfiguration = Tools.extend(
-                    true, {}, defaultModelConfiguration, test[1])
+                    true, {}, defaultModelConfiguration, test[1]
+                )
                 const models:Models = Helper.extendModels(modelConfiguration)
                 delete modelConfiguration.property.defaultSpecification
                 delete modelConfiguration.entities
-                const parameter:Array<any> = test[0].concat([null, {}, {
-                }].slice(test[0].length - 1)).concat(
-                    modelConfiguration, models)
+                const parameter:Array<any> = test[0]
+                    .concat([null, {}, {}].slice(test[0].length - 1))
+                    .concat(modelConfiguration, models)
                 if (typeof test[2] !== 'string') {
-                    assert.deepEqual(
-                        DatabaseHelper.validateDocumentUpdate(...parameter),
-                        test[2])
+                    expect(DatabaseHelper.validateDocumentUpdate(...parameter))
+                        .toStrictEqual(test[2])
                     continue
                 }
-                assert.throws(
-                    ():Object => DatabaseHelper.validateDocumentUpdate(
-                        ...parameter),
-                    /*
-                        NOTE: "assert.throws" doesn't expect an arrow function
-                        here.
-                    */
-                    function(error:DatabaseForbiddenError):boolean {
-                        if (error.hasOwnProperty('forbidden')) {
-                            const result:boolean = error.forbidden.startsWith(
-                                `${test[2]}:`)
-                            if (!result)
-                                console.error(
-                                    `Error "${error.forbidden}" doesn't ` +
-                                    `start with "${test[2]}:". Given ` +
-                                    `arguments: "` +
-                                    parameter.map((value:any):string =>
-                                        Tools.represent(value)
-                                    ).join('", "') +
-                                    '".'
-                                )
-                            return result
-                        }
-                        // IgnoreTypeCheck
-                        console.error(`Unexpeced error "${error}" was thrown.`)
-                        return false
-                    })
+                expect(():Document =>
+                    DatabaseHelper.validateDocumentUpdate(...parameter)
+                ).toThrow({forbidden: new RegExp(`^${test[2]}: .+`}))
             }
             // endregion
             // region allowed writes
-            for (const test:Array<any> of [
+            for (const test of [
                 // region general environment
                 /*
                     NOTE: Needed if we are able to validate "_users" table:
@@ -3453,15 +3436,11 @@ describe('databaseHelper', ():void => {
                 const models:Models = Helper.extendModels(modelConfiguration)
                 delete modelConfiguration.property.defaultSpecification
                 delete modelConfiguration.entities
-                try {
-                    assert.deepEqual(DatabaseHelper.validateDocumentUpdate(
-                        ...test[0].concat([null, {}, {}].slice(
-                            test[0].length - 1
-                        )).concat(modelConfiguration, models)
-                    ), test[2][updateStrategy])
-                } catch (error) {
-                    console.error(error)
-                }
+                expect(DatabaseHelper.validateDocumentUpdate(
+                    ...test[0]
+                        .concat([null, {}, {}].slice(test[0].length - 1))
+                        .concat(modelConfiguration, models)
+                )).toStrictEqual(test[2][updateStrategy])
             }
             // endregion
         }
@@ -3469,15 +3448,15 @@ describe('databaseHelper', ():void => {
         const defaultModelConfiguration:ModelConfiguration = Tools.extend(
             true, {}, configuration.database.model, {updateStrategy: 'migrate'}
         )
-        for (
-            const propertyName:string in
-            defaultModelConfiguration.entities._base
-        )
-            if (defaultModelConfiguration.entities._base.hasOwnProperty(
-                propertyName
-            ) && propertyName !== typeName)
+        for (const propertyName in defaultModelConfiguration.entities._base)
+            if (
+                defaultModelConfiguration.entities._base.hasOwnProperty(
+                    propertyName
+                ) &&
+                propertyName !== typeName
+            )
                 delete defaultModelConfiguration.entities._base[propertyName]
-        for (const test:Array<any> of [
+        for (const test of [
             // Remove obsolete properties.
             [
                 [{[typeName]: 'Test', a: 2}],
@@ -3687,24 +3666,19 @@ describe('databaseHelper', ():void => {
                 {[typeName]: 'Test', b: 'a'}
             ]
         ]) {
-            const models:Models = Helper.extendModels(Tools.extend(
-                true, {}, defaultModelConfiguration, test[1]))
+            const models:Models = Helper.extendModels(
+                Tools.extend(true, {}, defaultModelConfiguration, test[1])
+            )
             const modelConfiguration:ModelConfiguration = Tools.extend(
-                true, {}, defaultModelConfiguration, test[1])
+                true, {}, defaultModelConfiguration, test[1]
+            )
             delete modelConfiguration.property.defaultSpecification
             delete modelConfiguration.entities
-            try {
-                assert.deepEqual(
-                    DatabaseHelper.validateDocumentUpdate(
-                        ...test[0]
-                            .concat([null, {}, {}].slice(test[0].length - 1))
-                            .concat(modelConfiguration, models)
-                    ),
-                    test[2]
-                )
-            } catch (error) {
-                console.error(error)
-            }
+            expect(DatabaseHelper.validateDocumentUpdate(
+                ...test[0]
+                    .concat([null, {}, {}].slice(test[0].length - 1))
+                    .concat(modelConfiguration, models)
+            )).toStrictEqual(test[2])
         }
         // endregion
     })

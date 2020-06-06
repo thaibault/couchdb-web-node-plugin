@@ -14,34 +14,29 @@
     endregion
 */
 // region imports
-import registerTest from 'clientnode/test'
-import {configuration} from 'web-node'
-import type {Services} from 'web-node/type'
-
 import Index from '../index'
+import packageConfiguration from '../package.json'
+import {Configuration, Services} from '../type'
 // endregion
-registerTest(async function():Promise<void> {
-    this.module('index')
+describe('index', ():void => {
+    // region prepare environment
+    const configuration:Configuration =
+        packageConfiguration.webNode.database as Configuration
+    // endregion
     // region tests
-    this.test('loadService', async (assert:Object):Promise<void> => {
-        try {
-            assert.deepEqual((await Index.loadService(
-                {}, {database: {connection: null, server: {}}}, configuration
-            )).promise, null)
-        } catch (error) {
-            console.error(error)
-        }
-    })
-    this.test('preLoadService', async (assert:Object):Promise<void> => {
-        try {
-            assert.strictEqual(typeof (await Index.preLoadService({
-            }, configuration)).database.server.runner.binaryFilePath, 'string')
-        } catch (error) {
-            console.error(error)
-        }
-    })
-    this.test('shouldExit', async (assert:Object):Promise<void> => {
-        const done:Function = assert.async()
+    test('loadService', ():void =>
+        expect(Index.loadService(
+            {}, {database: {connection: null, server: {}}}, configuration
+        )).resolves.toStrictEqual({promise: null})
+    )
+    test('preLoadService', ():void =>
+        expect(
+            Index.preLoadService({}, configuration)
+        ).resolves.toHaveProperty(
+            'database.server.runner.binaryFilePath', 'TODO'
+        )
+    )
+    test('shouldExit', ():void => {
         let testValue:number = 0
         const services:Services = {database: {
             connection: {close: ():void => {
@@ -51,18 +46,13 @@ registerTest(async function():Promise<void> {
                 testValue += 1
             }}}
         }}
-        try {
-            assert.deepEqual(
-                await Index.shouldExit(services, configuration), services)
-        } catch (error) {
-            console.error(error)
-        }
-        assert.deepEqual(services, {})
-        assert.strictEqual(testValue, 2)
-        done()
+        expect(Index.shouldExit(services, configuration))
+            .resolves.toStrictEqual(services)
+        expect(services).toStrictEqual({})
+        expect(testValue).toStrictEqual(2)
     })
 // endregion
-}, 'plain')
+})
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
 // vim: foldmethod=marker foldmarker=region,endregion:
