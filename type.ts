@@ -59,6 +59,8 @@ export type Constraint = {
 export type Type = Array<Type>|string|'any'|'boolean'|'integer'|'number'|'string'|'DateTime'
 export type PropertySpecification = {
     allowedRoles?:AllowedRoles|null;
+    arrayConstraintExecution?:Constraint|null;
+    arrayConstraintExpression?:Constraint|null;
     conflictingConstraintExecution?:Constraint|null;
     conflictingConstraintExpression?:Constraint|null;
     constraintExecution?:Constraint|null;

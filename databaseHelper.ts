@@ -26,6 +26,7 @@ import {
     PropertySpecification,
     SecuritySettings,
     SpecialPropertyNames,
+    Type,
     UserContext
 } from './type'
 // endregion
@@ -372,30 +373,36 @@ export class DatabaseHelper {
             checkModelType()
             let modelName:string = newDocument[typeName]
             const model:Model = models[modelName]
-            let additionalPropertySpecification:null|PlainObject = null
+            let additionalPropertySpecification:null|PropertySpecification =
+                null
             if (
                 model.hasOwnProperty(specialNames.additional) &&
                 model[specialNames.additional]
             )
                 additionalPropertySpecification = model[
-                    specialNames.additional]
+                    specialNames.additional
+                ]
             // region document specific functions
             const checkPropertyConstraints:Function = (
                 newValue:any,
                 name:string,
                 propertySpecification:PropertySpecification,
-                oldValue:?any,
+                oldValue?:any,
                 types:Array<string> = [
                     'constraintExecution', 'constraintExpression'
                 ]
             ):void => {
                 for (const type of types)
-                    if (propertySpecification[type]) {
+                    if (propertySpecification[
+                        type as keyof PropertySpecification
+                    ]) {
                         let hook:Function
                         const code:string =
                             (type.endsWith('Expression') ? 'return ' : '') +
-                            propertySpecification[type].evaluation
-                        const scope:Object = {
+                            propertySpecification[
+                                type as keyof PropertySpecification
+                            ].evaluation
+                        const scope:object = {
                             attachmentWithPrefixExists:
                                 attachmentWithPrefixExists.bind(
                                     newDocument, newDocument),
@@ -481,7 +488,9 @@ export class DatabaseHelper {
             ):{changedPath:Array<string>;newValue:any;} => {
                 let changedPath:Array<string> = []
                 // region type
-                const types:Array<any> = [].concat(propertySpecification.type)
+                const types:Array<Type> = ([] as Array<Type>).concat(
+                    propertySpecification.type
+                )
                 // Derive nested missing explicit type definition if possible.
                 if (
                     typeof newValue === 'object' &&
@@ -496,9 +505,8 @@ export class DatabaseHelper {
                     if (models.hasOwnProperty(type)) {
                         if (
                             typeof newValue === 'object' &&
-                            Object.getPrototypeOf(
-                                newValue
-                            ) === Object.prototype &&
+                            Object.getPrototypeOf(newValue) ===
+                                Object.prototype &&
                             newValue.hasOwnProperty(typeName) &&
                             newValue[typeName] !== type &&
                             updateStrategy === 'migrate' &&
@@ -515,9 +523,8 @@ export class DatabaseHelper {
                         }
                         if (
                             typeof newValue === 'object' &&
-                            Object.getPrototypeOf(
-                                newValue
-                            ) === Object.prototype &&
+                            Object.getPrototypeOf(newValue) ===
+                                Object.prototype &&
                             newValue.hasOwnProperty(typeName) &&
                             newValue[typeName] === type
                         ) {
@@ -725,7 +732,8 @@ export class DatabaseHelper {
                 if (propertySpecification.selection) {
                     const selection = Array.isArray(
                         propertySpecification.selection
-                    ) ? propertySpecification.selection :
+                    ) ?
+                        propertySpecification.selection :
                         Object.values(propertySpecification.selection)
                     if (!selection.includes(newValue))
                         /* eslint-disable no-throw-literal */
@@ -777,7 +785,8 @@ export class DatabaseHelper {
                     /* eslint-enable no-throw-literal */
                 // endregion
                 checkPropertyConstraints(
-                    newValue, name, propertySpecification, oldValue)
+                    newValue, name, propertySpecification, oldValue
+                )
                 if (serialize(newValue) !== serialize(oldValue))
                     changedPath = parentNames.concat(name, 'value updated')
                 return {newValue, changedPath}
@@ -795,7 +804,7 @@ export class DatabaseHelper {
                     ])
                         if (propertySpecification[type]) {
                             let hook:Function
-                            const scope:Object = {
+                            const scope:object = {
                                 attachmentWithPrefixExists:
                                     attachmentWithPrefixExists.bind(
                                         newDocument, newDocument),
@@ -885,7 +894,7 @@ export class DatabaseHelper {
                 for (const type of ['onUpdateExecution', 'onUpdateExpression'])
                     if (propertySpecification[type]) {
                         let hook:Function
-                        const scope:Object = {
+                        const scope:object = {
                             attachmentWithPrefixExists:
                                 attachmentWithPrefixExists.bind(
                                     newDocument, newDocument),
@@ -949,22 +958,21 @@ export class DatabaseHelper {
             }
             // / endregion
             // endregion
-            const specifiedPropertyNames:Array<string> = Object.keys(
-                model
-            ).filter((name:string):boolean => ![
-                specialNames.additional,
-                specialNames.allowedRole,
-                specialNames.constraint.execution,
-                specialNames.constraint.expression,
-                specialNames.create.execution,
-                specialNames.create.expression,
-                specialNames.extend,
-                specialNames.maximumAggregatedSize,
-                specialNames.minimumAggregatedSize,
-                specialNames.oldType,
-                specialNames.update.execution,
-                specialNames.update.expression
-            ].includes(name))
+            const specifiedPropertyNames:Array<string> = Object.keys(model)
+                .filter((name:string):boolean => ![
+                    specialNames.additional,
+                    specialNames.allowedRole,
+                    specialNames.constraint.execution,
+                    specialNames.constraint.expression,
+                    specialNames.create.execution,
+                    specialNames.create.expression,
+                    specialNames.extend,
+                    specialNames.maximumAggregatedSize,
+                    specialNames.minimumAggregatedSize,
+                    specialNames.oldType,
+                    specialNames.update.execution,
+                    specialNames.update.expression
+                ].includes(name))
             // region migrate old model specific property names
             if (updateStrategy === 'migrate')
                 for (const name of specifiedPropertyNames)
@@ -983,7 +991,7 @@ export class DatabaseHelper {
                 ])
                     if (model.hasOwnProperty(type) && model[type]) {
                         let hook:Function
-                        const scope:Object = {
+                        const scope:object = {
                             attachmentWithPrefixExists:
                                 attachmentWithPrefixExists.bind(
                                     newDocument, newDocument),
@@ -1052,7 +1060,7 @@ export class DatabaseHelper {
             ])
                 if (model.hasOwnProperty(type) && model[type]) {
                     let hook:Function
-                    const scope:Object = {
+                    const scope:object = {
                         attachmentWithPrefixExists:
                             attachmentWithPrefixExists.bind(
                                 newDocument, newDocument),
@@ -1116,11 +1124,11 @@ export class DatabaseHelper {
                 }
             // endregion
             for (const name of specifiedPropertyNames.concat(
-                additionalPropertySpecification ? Object.keys(
-                    newDocument
-                ).filter((name:string):boolean =>
-                    !specifiedPropertyNames.includes(name)
-                ) : []
+                additionalPropertySpecification ?
+                    Object.keys(newDocument).filter((name:string):boolean =>
+                        !specifiedPropertyNames.includes(name)
+                    ) :
+                    []
             ))
                 // region run hooks and check for presence of needed data
                 if (specialNames.attachment === name) {
@@ -1137,47 +1145,59 @@ export class DatabaseHelper {
                                 !oldDocument.hasOwnProperty(name)
                             )
                                 oldDocument[name] = {}
-                            const newFileNames:Array<string> = Object.keys(
-                                newDocument[name]
-                            ).filter((fileName:string):boolean => newDocument[
-                                name
-                            ][fileName].data !== null &&
-                            new RegExp(type).test(fileName))
+                            const newFileNames:Array<string> =
+                                Object.keys(newDocument[name]).filter((
+                                    fileName:string
+                                ):boolean =>
+                                    newDocument[name][
+                                        fileName
+                                    ].data !== null &&
+                                    new RegExp(type).test(fileName)
+                                )
                             let oldFileNames:Array<string> = []
                             if (oldDocument)
-                                oldFileNames = Object.keys(
-                                    oldDocument[name]
-                                ).filter((fileName:string):boolean => !(
-                                    newDocument.hasOwnProperty(name) &&
-                                    newDocument[name].hasOwnProperty(
-                                        fileName) &&
-                                    newDocument[name][fileName].hasOwnProperty(
-                                        'data'
-                                    ) &&
-                                    newDocument[name][fileName].data === null
-                                ) &&
-                                oldDocument[name][fileName] &&
-                                oldDocument[name][fileName].data !== null &&
-                                new RegExp(type).test(fileName))
+                                oldFileNames = Object.keys(oldDocument[name])
+                                    .filter((fileName:string):boolean =>
+                                        !(
+                                            newDocument.hasOwnProperty(name) &&
+                                            newDocument[name]
+                                                .hasOwnProperty(fileName) &&
+                                            newDocument[name][fileName]
+                                                .hasOwnProperty('data') &&
+                                            newDocument[name][fileName]
+                                                .data === null
+                                        ) &&
+                                        oldDocument[name][fileName] &&
+                                        oldDocument[name][fileName]
+                                            .data !== null &&
+                                        new RegExp(type).test(fileName)
+                                    )
                             for (const fileName of newFileNames)
                                 runCreatePropertyHook(
-                                    model[name][type], newDocument[name],
-                                    oldDocument && oldDocument[
-                                        name
-                                    ] ? oldDocument[name] : null, fileName)
+                                    model[name][type],
+                                    newDocument[name],
+                                    oldDocument && oldDocument[name] ?
+                                        oldDocument[name] :
+                                        null,
+                                    fileName
+                                )
                             for (const fileName of newFileNames)
                                 runUpdatePropertyHook(
-                                    model[name][type], newDocument[name],
-                                    oldDocument && oldDocument[
-                                        name
-                                    ] ? oldDocument[name] : null, fileName)
+                                    model[name][type],
+                                    newDocument[name],
+                                    oldDocument && oldDocument[name] ?
+                                        oldDocument[name] :
+                                        null,
+                                    fileName
+                                )
                             if ([undefined, null].includes(
                                 model[name][type].default
                             )) {
-                                if (!(model[name][type].nullable || (
+                                if (!(
+                                    model[name][type].nullable ||
                                     newFileNames.length > 0 ||
                                     oldFileNames.length > 0
-                                )))
+                                ))
                                     /* eslint-disable no-throw-literal */
                                     throw {
                                         forbidden:
@@ -1556,9 +1576,8 @@ export class DatabaseHelper {
                             for (const value of newDocument[name].slice())
                                 if (
                                     typeof value === 'object' &&
-                                    Object.getPrototypeOf(
-                                        value
-                                    ) === Object.prototype &&
+                                    Object.getPrototypeOf(value) ===
+                                        Object.prototype &&
                                     !value.hasOwnProperty(typeName)
                                 )
                                     value[typeName] =
@@ -1566,7 +1585,8 @@ export class DatabaseHelper {
                         let index:number = 0
                         for (const value of newDocument[name].slice()) {
                             newDocument[name][index] = checkPropertyContent(
-                                value, `${index + 1}. value in ${name}`,
+                                value,
+                                `${index + 1}. value in ${name}`,
                                 propertySpecificationCopy
                             ).newValue
                             if (value === null)
@@ -1623,7 +1643,7 @@ export class DatabaseHelper {
                                 'return ' :
                                 ''
                         ) + constraint.evaluation.trim()
-                        const scope:Object = {
+                        const scope:object = {
                             attachmentWithPrefixExists:
                                 attachmentWithPrefixExists.bind(
                                     newDocument, newDocument
