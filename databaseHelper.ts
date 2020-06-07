@@ -463,19 +463,25 @@ export class DatabaseHelper {
                         // endregion
                         if (!satisfied)
                             /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden: type.charAt(0).toUpperCase() +
+                            throw {forbidden:
+                                type.charAt(0).toUpperCase() +
                                 type.substring(1) +
                                 `: ` +
-                                (propertySpecification[type].description ?
-                                    new Function(
-                                        ...Object.keys(scope), 'return ' +
-                                            propertySpecification[type]
-                                                .description.trim()
-                                    )(...Object.values(scope)) :
-                                    `Property "${name}" should ` +
-                                `satisfy constraint "${code}" (given "` +
-                                `${serialize(newValue)}")${pathDescription}.`)
+                                (
+                                    propertySpecification[
+                                        type as keyof PropertySpecification
+                                    ].description ?
+                                        new Function(
+                                            ...Object.keys(scope),
+                                            'return ' +
+                                                propertySpecification[type]
+                                                    .description.trim()
+                                        )(...Object.valus(scope)) :
+                                        `Property "${name}" should ` +
+                                        `satisfy constraint "${code}" (given` +
+                                        ` "${serialize(newValue)}")` +
+                                        `${pathDescription}.`
+                                )
                             }
                             /* eslint-enable no-throw-literal */
                     }
@@ -484,7 +490,7 @@ export class DatabaseHelper {
                 newValue:any,
                 name:string,
                 propertySpecification:PropertySpecification,
-                oldValue:?any = null
+                oldValue?:any = null
             ):{changedPath:Array<string>;newValue:any;} => {
                 let changedPath:Array<string> = []
                 // region type
@@ -830,10 +836,15 @@ export class DatabaseHelper {
                                 userContext
                             }
                             try {
-                                hook = new Function(...Object.keys(scope), (
-                                    type.endsWith('Expression') ? 'return ' :
-                                    ''
-                                ) + propertySpecification[type].trim())
+                                hook = new Function(
+                                    ...Object.keys(scope),
+                                    (
+                                        type.endsWith('Expression') ?
+                                            'return ' :
+                                            ''
+                                    ) +
+                                    propertySpecification[type].trim()
+                                )
                             } catch (error) {
                                 /* eslint-disable no-throw-literal */
                                 throw {
@@ -1016,9 +1027,15 @@ export class DatabaseHelper {
                             userContext
                         }
                         try {
-                            hook = new Function(...Object.keys(scope), (
-                                type.endsWith('Expression') ? 'return ' : ''
-                            ) + model[type].trim())
+                            hook = new Function(
+                                ...Object.keys(scope),
+                                (
+                                    type.endsWith('Expression') ?
+                                        'return ' :
+                                        ''
+                                ) +
+                                model[type].trim()
+                            )
                         } catch (error) {
                             /* eslint-disable no-throw-literal */
                             throw {
@@ -1717,7 +1734,7 @@ export class DatabaseHelper {
             // / endregion
             // / region attachment
             if (newDocument.hasOwnProperty(specialNames.attachment)) {
-                const newAttachments:PlainObject =
+                const newAttachments:Attachments =
                     newDocument[specialNames.attachment]
                 if (
                     typeof newAttachments !== 'object' ||
