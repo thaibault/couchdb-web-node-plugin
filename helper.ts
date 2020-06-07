@@ -461,7 +461,7 @@ export class Helper {
             else
                 models[modelName][extendPropertyName] = '_base'
         if (models[modelName].hasOwnProperty(extendPropertyName)) {
-            for (const modelNameToExtend of [].concat(
+            for (const modelNameToExtend of ([] as Array<string>).concat(
                 models[modelName][extendPropertyName]
             ))
                 models[modelName] = Tools.extend(

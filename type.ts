@@ -1,4 +1,4 @@
-// -*- coding: utf-8 -*-
+
 'use strict'
 /* !
     region header
@@ -58,50 +58,50 @@ export type Constraint = {
 }
 export type Type = Array<Type>|string|'any'|'boolean'|'integer'|'number'|'string'|'DateTime'
 export type PropertySpecification = {
-    allowedRoles?:AllowedRoles;
-    conflictingConstraintExecution?:Constraint;
-    conflictingConstraintExpression?:Constraint;
-    constraintExecution?:Constraint;
-    constraintExpression?:Constraint;
-    contentTypeRegularExpressionPattern?:string;
+    allowedRoles?:AllowedRoles|null;
+    conflictingConstraintExecution?:Constraint|null;
+    conflictingConstraintExpression?:Constraint|null;
+    constraintExecution?:Constraint|null;
+    constraintExpression?:Constraint|null;
+    contentTypeRegularExpressionPattern?:null|string;
     default?:any;
-    emptyEqualsToNull?:boolean;
-    index?:boolean;
-    invertedContentTypeRegularExpressionPattern?:string;
-    invertedRegularExpressionPattern?:string;
-    maximum?:number;
-    minimum?:number;
-    maximumLength?:number;
-    minimumLength?:number;
-    maximumNumber?:number;
-    minimumNumber?:number;
-    maximumSize?:number;
-    minimumSize?:number;
-    mutable?:boolean;
-    nullable?:boolean;
-    onCreateExecution?:string;
-    onCreateExpression?:string;
-    oldName?:Array<string>|string;
-    onUpdateExecution?:string;
-    onUpdateExpression?:string;
-    regularExpressionPattern?:string;
-    selection?:Array<any>;
-    trim?:boolean;
-    type?:Type;
-    writable?:boolean;
+    emptyEqualsToNull?:boolean|null;
+    index?:boolean|null;
+    invertedContentTypeRegularExpressionPattern?:null|string;
+    invertedRegularExpressionPattern?:null|string;
+    maximum?:null|number;
+    minimum?:null|number;
+    maximumLength?:null|number;
+    minimumLength?:null|number;
+    maximumNumber?:null|number;
+    minimumNumber?:null|number;
+    maximumSize?:null|number;
+    minimumSize?:null|number;
+    mutable?:boolean|null;
+    nullable?:boolean|null;
+    onCreateExecution?:null|string;
+    onCreateExpression?:null|string;
+    oldName?:Array<string>|null|string;
+    onUpdateExecution?:null|string;
+    onUpdateExpression?:null|string;
+    regularExpressionPattern?:null|string;
+    selection?:Array<any>|null;
+    trim?:boolean|null;
+    type?:Type|null;
+    writable?:boolean|null;
 }
 export type Model = Mapping<PropertySpecification> & {
-    _allowedRoles?:AllowedRoles;
-    _constraintExpressions?:Array<Constraint>;
-    _constraintExecutions?:Array<Constraint>;
-    _createExpression?:string;
-    _createExecution?:string;
-    _extends?:Array<string>;
-    _maximumAggregatedSize?:number;
-    _minimumAggregatedSize?:number;
-    _oldType?:string|Array<string>;
-    _onUpdateExecution?:string;
-    _onUpdateExpression?:string;
+    _allowedRoles?:AllowedRoles|null;
+    _constraintExpressions?:Array<Constraint>|Constraint|null;
+    _constraintExecutions?:Array<Constraint>|Constraint|null;
+    _createExpression?:null|string;
+    _createExecution?:null|string;
+    _extends?:Array<string>|null|string;
+    _maximumAggregatedSize?:null|number;
+    _minimumAggregatedSize?:null|number;
+    _oldType?:Array<string>|null|string;
+    _onUpdateExecution?:null|string;
+    _onUpdateExpression?:null|string;
 }
 export type Models = Mapping<Model>
 export type Document = IdMeta & Mapping<any> & RevisionIdMeta
@@ -170,6 +170,7 @@ export type UserContext = {
 export type DatabaseUserConfiguration = {
     names:Array<string>;
     roles:Array<string>;
+    _validatedDocuments?:Set<string>;
 }
 export type Runner = {
     adminUserConfigurationPath:string;
