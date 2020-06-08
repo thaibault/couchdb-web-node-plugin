@@ -27,6 +27,7 @@ import {
     SecuritySettings,
     SpecialPropertyNames,
     Type,
+    TypeSpecification,
     UserContext
 } from './type'
 // endregion
@@ -474,12 +475,14 @@ export class DatabaseHelper {
                                         new Function(
                                             ...Object.keys(scope),
                                             'return ' +
-                                                propertySpecification[type]
-                                                    .description.trim()
-                                        )(...Object.valus(scope)) :
-                                        `Property "${name}" should ` +
-                                        `satisfy constraint "${code}" (given` +
-                                        ` "${serialize(newValue)}")` +
+                                                propertySpecification[
+                                                    type as
+                                                    keyof PropertySpecification
+                                                ].description.trim()
+                                        )(...Object.values(scope)) :
+                                        `Property "${name}" should satisfy ` +
+                                        `constraint "${code}" (given "` +
+                                        `${serialize(newValue)}")` +
                                         `${pathDescription}.`
                                 )
                             }
@@ -490,12 +493,14 @@ export class DatabaseHelper {
                 newValue:any,
                 name:string,
                 propertySpecification:PropertySpecification,
-                oldValue?:any = null
+                oldValue:any = null
             ):{changedPath:Array<string>;newValue:any;} => {
                 let changedPath:Array<string> = []
                 // region type
                 const types:Array<Type> = ([] as Array<Type>).concat(
-                    propertySpecification.type
+                    propertySpecification.type ?
+                        propertySpecification.type :
+                        []
                 )
                 // Derive nested missing explicit type definition if possible.
                 if (
@@ -624,9 +629,10 @@ export class DatabaseHelper {
                         typeof type === 'string' &&
                         type.startsWith('foreignKey:')
                     ) {
-                        const foreignKeyType:string = models[type.substring(
-                            'foreignKey:'.length
-                        )][idName].type
+                        const foreignKeyType:string =
+                            models[type.substring('foreignKey:'.length)][
+                                idName
+                            ].type as string
                         if (foreignKeyType === typeof newValue) {
                             typeMatched = true
                             break
@@ -676,9 +682,13 @@ export class DatabaseHelper {
                 // endregion
                 // region range
                 if (typeof newValue === 'string') {
-                    if (![undefined, null].includes(
-                        propertySpecification.minimumLength
-                    ) && newValue.length < propertySpecification.minimumLength)
+                    if (
+                        ![null, undefined].includes(
+                            propertySpecification.minimumLength as null
+                        ) &&
+                        newValue.length <
+                            (propertySpecification.minimumLength as number)
+                    )
                         /* eslint-disable no-throw-literal */
                         throw {
                             forbidden:
@@ -689,9 +699,13 @@ export class DatabaseHelper {
                                 `${newValue.length})${pathDescription}.`
                         }
                         /* eslint-enable no-throw-literal */
-                    if (![undefined, null].includes(
-                        propertySpecification.maximumLength
-                    ) && newValue.length > propertySpecification.maximumLength)
+                    if (
+                        ![null, undefined].includes(
+                            propertySpecification.maximumLength as null
+                        ) &&
+                        newValue.length >
+                            (propertySpecification.maximumLength as number)
+                    )
                         /* eslint-disable no-throw-literal */
                         throw {
                             forbidden:
@@ -704,9 +718,12 @@ export class DatabaseHelper {
                         /* eslint-enable no-throw-literal */
                 }
                 if (typeof newValue === 'number') {
-                    if (![undefined, null].includes(
-                        propertySpecification.minimum
-                    ) && newValue < propertySpecification.minimum)
+                    if (
+                        ![null, undefined].includes(
+                            propertySpecification.minimum as null
+                        ) &&
+                        newValue < (propertySpecification.minimum as number)
+                    )
                         /* eslint-disable no-throw-literal */
                         throw {
                             forbidden:
@@ -714,13 +731,16 @@ export class DatabaseHelper {
                                 `${propertySpecification.type}) must ` +
                                 'satisfy a minimum of ' +
                                 `${propertySpecification.minimum} (` +
-                                `given ${newValue} with length ` +
-                                `${newValue.length})${pathDescription}.`
+                                `given ${newValue} is too low)` +
+                                `${pathDescription}.`
                         }
                         /* eslint-disable no-throw-literal */
-                    if (![undefined, null].includes(
-                        propertySpecification.maximum
-                    ) && newValue > propertySpecification.maximum)
+                    if (
+                        ![null, undefined].includes(
+                            propertySpecification.maximum as null
+                        ) &&
+                        newValue > (propertySpecification.maximum as number)
+                    )
                         /* eslint-disable no-throw-literal */
                         throw {
                             forbidden:
@@ -728,8 +748,8 @@ export class DatabaseHelper {
                                 `${propertySpecification.type}) must ` +
                                 'satisfy a maximum of ' +
                                 `${propertySpecification.maximum} (` +
-                                `given ${newValue} with length ` +
-                                `${newValue.length}${pathDescription}.`
+                                `given ${newValue} is too high)` +
+                                `${pathDescription}.`
                         }
                         /* eslint-enable no-throw-literal */
                 }
@@ -755,12 +775,11 @@ export class DatabaseHelper {
                 // endregion
                 // region pattern
                 if (!(
-                    [undefined, null].includes(
-                        propertySpecification.regularExpressionPattern
+                    [null, undefined].includes(
+                        propertySpecification.regularExpressionPattern as null
                     ) ||
-                    new RegExp(
-                        propertySpecification.regularExpressionPattern
-                    ).test(newValue)
+                    new RegExp(propertySpecification.regularExpressionPattern)
+                        .test(newValue)
                 ))
                     /* eslint-disable no-throw-literal */
                     throw {
@@ -772,7 +791,7 @@ export class DatabaseHelper {
                     }
                     /* eslint-enable no-throw-literal */
                 else if (!(
-                    [undefined, null].includes(
+                    [null, undefined].includes(
                         propertySpecification.invertedRegularExpressionPattern
                     ) ||
                     !(new RegExp(

@@ -56,7 +56,8 @@ export type Constraint = {
     description?:string;
     evaluation:string;
 }
-export type Type = Array<Type>|string|'any'|'boolean'|'integer'|'number'|'string'|'DateTime'
+export type Type = string|'any'|'boolean'|'integer'|'number'|'string'|'DateTime'
+export type TypeSpecification = Array<Type>|Type
 export type PropertySpecification = {
     allowedRoles?:AllowedRoles|null;
     arrayConstraintExecution?:Constraint|null;
@@ -89,7 +90,7 @@ export type PropertySpecification = {
     regularExpressionPattern?:null|string;
     selection?:Array<any>|null;
     trim?:boolean|null;
-    type?:Type|null;
+    type?:TypeSpecification|null;
     writable?:boolean|null;
 }
 export type Model = Mapping<PropertySpecification> & {
