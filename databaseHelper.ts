@@ -394,6 +394,7 @@ export class DatabaseHelper {
                 ]
             ):void => {
                 for (const type of types)
+                    // TODO check this an following string as property name iterations (maybe missing hasOwnProperty) and global trim before using allocated expression.
                     if (propertySpecification[
                         type as keyof PropertySpecification
                     ]) {
@@ -494,7 +495,7 @@ export class DatabaseHelper {
                 name:string,
                 propertySpecification:PropertySpecification,
                 oldValue:any = null
-            ):{changedPath:Array<string>;newValue:any;} => {
+            ):{changedPath:Array<string>;newValue:any} => {
                 let changedPath:Array<string> = []
                 // region type
                 const types:Array<Type> = ([] as Array<Type>).concat(
@@ -778,8 +779,10 @@ export class DatabaseHelper {
                     [null, undefined].includes(
                         propertySpecification.regularExpressionPattern as null
                     ) ||
-                    new RegExp(propertySpecification.regularExpressionPattern)
-                        .test(newValue)
+                    new RegExp(
+                        propertySpecification.regularExpressionPattern as
+                            string
+                    ).test(newValue)
                 ))
                     /* eslint-disable no-throw-literal */
                     throw {
@@ -792,10 +795,12 @@ export class DatabaseHelper {
                     /* eslint-enable no-throw-literal */
                 else if (!(
                     [null, undefined].includes(
-                        propertySpecification.invertedRegularExpressionPattern
+                        propertySpecification
+                            .invertedRegularExpressionPattern as null
                     ) ||
                     !(new RegExp(
-                        propertySpecification.invertedRegularExpressionPattern
+                        propertySpecification
+                            .invertedRegularExpressionPattern as string
                     )).test(newValue)
                 ))
                     /* eslint-disable no-throw-literal */
@@ -826,13 +831,18 @@ export class DatabaseHelper {
                 if (!oldDocument)
                     for (const type of [
                         'onCreateExecution', 'onCreateExpression'
-                    ])
-                        if (propertySpecification[type]) {
+                    ]) {
+                        let expression:string = propertySpecification[
+                            type as keyof PropertySpecification
+                        ]
+                        if (expression.trim()) {
+                            expression = expression.trim()
                             let hook:Function
                             const scope:object = {
                                 attachmentWithPrefixExists:
                                     attachmentWithPrefixExists.bind(
-                                        newDocument, newDocument),
+                                        newDocument, newDocument
+                                    ),
                                 checkDocument,
                                 checkPropertyContent,
                                 getFilenameByPrefix,
@@ -862,15 +872,14 @@ export class DatabaseHelper {
                                             'return ' :
                                             ''
                                     ) +
-                                    propertySpecification[type].trim()
+                                    expression
                                 )
                             } catch (error) {
                                 /* eslint-disable no-throw-literal */
                                 throw {
                                     forbidden:
                                         `Compilation: Hook "${type}" has ` +
-                                        'invalid code "' +
-                                        `${propertySpecification[type]}" for` +
+                                        `invalid code "${expression}" for ` +
                                         ` property "${name}": ` +
                                         serialize(error) +
                                         `${pathDescription}.`
@@ -885,17 +894,17 @@ export class DatabaseHelper {
                                 throw {
                                     forbidden:
                                         `Runtime: Hook "${type}" has throw ` +
-                                        'an error with code "' +
-                                        `${propertySpecification[type]}" ` +
+                                        `an error with code "${expression}" ` +
                                         `for property "${name}": ` +
                                         serialize(error) +
                                         `${pathDescription}.`
                                 }
                                 /* eslint-enable no-throw-literal */
                             }
-                            if (![undefined, null].includes(result))
+                            if (![null, undefined].includes(result))
                                 newDocument[name] = result
                         }
+                    }
             }
             // / endregion
             // / region update hook
@@ -921,13 +930,20 @@ export class DatabaseHelper {
                     Object.keys(newDocument).length === 0
                 ))
                     newDocument[name] = null
-                for (const type of ['onUpdateExecution', 'onUpdateExpression'])
-                    if (propertySpecification[type]) {
+                for (const type of [
+                    'onUpdateExecution', 'onUpdateExpression']
+                ) {
+                    let expression:string = propertySpecification[
+                        type as keyof PropertySpecification
+                    ]
+                    if (expression.trim()) {
+                        expression = expression.trim()
                         let hook:Function
                         const scope:object = {
                             attachmentWithPrefixExists:
                                 attachmentWithPrefixExists.bind(
-                                    newDocument, newDocument),
+                                    newDocument, newDocument
+                            ),
                             checkDocument,
                             checkPropertyContent,
                             getFilenameByPrefix,
@@ -957,16 +973,16 @@ export class DatabaseHelper {
                                         'return ' :
                                         ''
                                 ) +
-                                propertySpecification[type].trim()
+                                expression
                             )
                         } catch (error) {
                             /* eslint-disable no-throw-literal */
                             throw {
                                 forbidden:
                                     `Compilation: Hook "${type}" has invalid` +
-                                    ` code "${propertySpecification[type]}" ` +
-                                    `for property "${name}": `+
-                                    `${serialize(error)}${pathDescription}.`
+                                    ` code "${expression}" for property "` +
+                                    `${name}": ${serialize(error)}` +
+                                    `${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
                         }
@@ -977,14 +993,14 @@ export class DatabaseHelper {
                             throw {
                                 forbidden:
                                     `Runtime: Hook "${type}" has throw an ` +
-                                    'error with code "' +
-                                    `${propertySpecification[type]}" for ` +
+                                    `error with code "${expression}" for ` +
                                     `property "${name}": ${serialize(error)}` +
                                     `${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
                         }
                     }
+                }
             }
             // / endregion
             // endregion
@@ -1006,8 +1022,12 @@ export class DatabaseHelper {
             // region migrate old model specific property names
             if (updateStrategy === 'migrate')
                 for (const name of specifiedPropertyNames)
-                    if (![null, undefined].includes(model[name].oldName))
-                        for (const oldName of [].concat(model[name].oldName))
+                    if (![null, undefined].includes(
+                        model[name].oldName as null
+                    ))
+                        for (const oldName of ([] as Array<string>).concat(
+                            model[name].oldName as Array<string>
+                        ))
                             if (newDocument.hasOwnProperty(oldName)) {
                                 newDocument[name] = newDocument[oldName]
                                 delete newDocument[oldName]
@@ -1016,15 +1036,18 @@ export class DatabaseHelper {
             // region run create document hook
             if (!oldDocument)
                 for (const type of [
-                    modelConfiguration.property.name.special.create.execution,
-                    modelConfiguration.property.name.special.create.expression
-                ])
-                    if (model.hasOwnProperty(type) && model[type]) {
+                    specialNames.create.execution,
+                    specialNames.create.expression
+                ]) {
+                    let expression:string = model[type]
+                    if (model.hasOwnProperty(type) && expression.trim()) {
+                        expression = expression.trim()
                         let hook:Function
                         const scope:object = {
                             attachmentWithPrefixExists:
                                 attachmentWithPrefixExists.bind(
-                                    newDocument, newDocument),
+                                    newDocument, newDocument
+                                ),
                             checkDocument,
                             checkPropertyContent,
                             getFilenameByPrefix,
@@ -1053,14 +1076,14 @@ export class DatabaseHelper {
                                         'return ' :
                                         ''
                                 ) +
-                                model[type].trim()
+                                expression
                             )
                         } catch (error) {
                             /* eslint-disable no-throw-literal */
                             throw {
                                 forbidden:
                                     `Compilation: Hook "${type}" has invalid` +
-                                    ` code "${model[type]}" for document "` +
+                                    ` code "${expression}" for document "` +
                                     `${modelName}": ${serialize(error)}` +
                                     `${pathDescription}.`
                             }
@@ -1074,25 +1097,24 @@ export class DatabaseHelper {
                             throw {
                                 forbidden:
                                     `Runtime: Hook "${type}" has throw an ` +
-                                    'error with code "' +
-                                    `${model[type]}" for document "` +
-                                    `${modelName}": ${serialize(error)}` +
-                                    `${pathDescription}.`
+                                    `error with code "${expression}" for ` +
+                                    `document "${modelName}": ` +
+                                    `${serialize(error)}${pathDescription}.`
                             }
                             /* eslint-enable no-throw-literal */
                         }
-                        if (![undefined, null].includes(result))
+                        if (![null, undefined].includes(result))
                             newDocument = result
                         checkModelType()
                         modelName = newDocument[typeName]
                         if (parentNames.length === 0)
                             setDocumentEnvironment()
                     }
+                }
             // endregion
             // region run update document hook
             for (const type of [
-                modelConfiguration.property.name.special.update.execution,
-                modelConfiguration.property.name.special.update.expression
+                specialNames.update.execution, specialNames.update.expression
             ])
                 if (model.hasOwnProperty(type) && model[type]) {
                     let hook:Function
