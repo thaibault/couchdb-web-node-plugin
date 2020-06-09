@@ -20,6 +20,7 @@ import {
     Attachments,
     BaseModelConfiguration,
     Document,
+    EvaluationResult,
     Model,
     Models,
     NormalizedAllowedRoles,
@@ -183,6 +184,17 @@ export class DatabaseHelper {
         toJSON?:(value:any) => string
     ):Document {
         // region ensure needed environment
+        const throwError:Function = (
+            message:string,
+            type:string = 'forbidden',
+            additionalErrorData:object = {}
+        ):never => {
+            const result = {[type]: message}
+            for (const name in additionalErrorData)
+                if (additionalErrorData.hasOwnProperty(name))
+                    result[name] = additionalErrorData[name as keyof object]
+            throw result
+        }
         const now:Date = new Date()
         const nowUTCTimestamp:number = Date.UTC(
             now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
@@ -238,11 +250,7 @@ export class DatabaseHelper {
                     newDocument[revisionName] =
                     oldDocument[revisionName]
             else if (revision === 'latest')
-                /* eslint-disable no-throw-literal */
-                throw {
-                    forbidden: 'Revision: No old document available to update.'
-                }
-                /* eslint-enable no-throw-literal */
+                throwError('Revision: No old document available to update.')
             else
                 delete newDocument[revisionName]
         let updateStrategy:string = modelConfiguration.updateStrategy
@@ -256,7 +264,7 @@ export class DatabaseHelper {
         else if (JSON && JSON.hasOwnProperty('stringify'))
             serialize = (object:any):string => JSON.stringify(object, null, 4)
         else
-            throw new Error('Needed "serialize" function is not available.')
+            throwError('Needed "serialize" function is not available.')
         // / region collect old model types to migrate.
         const oldModelMapping:Mapping = {}
         if (updateStrategy === 'migrate')
@@ -275,6 +283,13 @@ export class DatabaseHelper {
         // / endregion
         // endregion
         // region functions
+        const determineTrimmedString:Function = (
+            value?:null|string
+        ):string => {
+            if (typeof value === 'string')
+                return value.trim()
+            return ''
+        }
         const getFilenameByPrefix:Function = (
             attachments:Attachments, prefix?:string
         ):null|string => {
@@ -293,7 +308,7 @@ export class DatabaseHelper {
             return null
         }
         const attachmentWithPrefixExists:Function = (
-            newDocument:Document, namePrefix:string
+            namePrefix:string
         ):boolean => {
             if (newDocument.hasOwnProperty(specialNames.attachment)) {
                 const name:string = getFilenameByPrefix(
@@ -313,6 +328,71 @@ export class DatabaseHelper {
             }
             return false
         }
+        const evaluate:Function = (
+            givenExpression?:null|string,
+            isEvaluation:boolean = false,
+            givenScope:object = {}
+        ):EvaluationResult|void => {
+            const expression:string = determineTrimmedString(givenExpression)
+            if (expression) {
+                const code:string =
+                    (isEvaluation ? 'return ' : '') + expression
+                // region determine scope
+                const scope:object = {
+                    attachmentWithPrefixExists,
+                    checkDocument,
+                    code,
+                    getFilenameByPrefix,
+                    idName,
+                    modelConfiguration,
+                    models,
+                    now,
+                    nowUTCTimestamp,
+                    revisionName,
+                    securitySettings,
+                    serialize,
+                    specialNames,
+                    typeName,
+                    userContext
+                }
+                for (const name in givenScope)
+                    if (givenScope.hasOwnProperty(name))
+                        scope[name as keyof object] =
+                            givenScope[name as keyof object]
+                // endregion
+                // region compile
+                let callable:Function|undefined
+                try {
+                    callable = new Function(...Object.keys(scope), code)
+                } catch (error) {
+                    const message:string = serialize(error)
+                    throwError(
+                        message, 'compilation', {code, error, message, scope}
+                    )
+                }
+                // endregion
+                // region run
+                const result:EvaluationResult = {
+                    code,
+                    result: undefined,
+                    scope
+                }
+                try {
+                    result.result =
+                        (callable as Function)(...Object.values(scope))
+                } catch (error) {
+                    const message:string = serialize(error)
+                    throwError(
+                        serialize(error),
+                        'runtime',
+                        {code, error, message, scope}
+                    )
+                }
+                return result
+                // endregion
+            }
+            throwError(serialize(error), 'empty')
+        }
         const checkDocument:Function = (
             newDocument:Document,
             oldDocument?:Document,
@@ -331,13 +411,10 @@ export class DatabaseHelper {
                     )
                         newDocument[typeName] = oldDocument[typeName]
                     else
-                        /* eslint-disable no-throw-literal */
-                        throw {
-                            forbidden:
-                                'Type: You have to specify a model type via ' +
-                                `property "${typeName}"${pathDescription}.`
-                        }
-                        /* eslint-enable no-throw-literal */
+                        throwError(
+                            'Type: You have to specify a model type via ' +
+                            `property "${typeName}"${pathDescription}.`
+                        )
                 if (!(
                     parentNames.length ||
                     (new RegExp(
@@ -345,30 +422,23 @@ export class DatabaseHelper {
                             .typeRegularExpressionPattern.public
                     )).test(newDocument[typeName])
                 ))
-                    /* eslint-disable no-throw-literal */
-                    throw {
-                        forbidden:
-                            'TypeName: You have to specify a model type ' +
-                            'which matches "' +
-                            modelConfiguration.property.name
-                                .typeRegularExpressionPattern.public +
-                            `" as public type (given "` +
-                            `${newDocument[typeName]}")${pathDescription}.`
-                    }
-                    /* eslint-enable no-throw-literal */
+                    throwError(
+                        'TypeName: You have to specify a model type ' +
+                        'which matches "' +
+                        modelConfiguration.property.name
+                            .typeRegularExpressionPattern.public +
+                        `" as public type (given "${newDocument[typeName]}")` +
+                        `${pathDescription}.`
+                    )
                 if (!models.hasOwnProperty(newDocument[typeName]))
                     if (oldModelMapping.hasOwnProperty(newDocument[typeName]))
                         newDocument[typeName] =
                             oldModelMapping[newDocument[typeName]]
                     else
-                        /* eslint-disable no-throw-literal */
-                        throw {
-                            forbidden:
-                                `Model: Given model "` +
-                                `${newDocument[typeName]}" is not specified` +
-                                `${pathDescription}.`
-                        }
-                        /* eslint-enable no-throw-literal */
+                        throwError(
+                            `Model: Given model "${newDocument[typeName]}" ` +
+                            ` is not specified${pathDescription}.`
+                        )
                 // endregion
             }
             checkModelType()
@@ -394,100 +464,69 @@ export class DatabaseHelper {
                 ]
             ):void => {
                 for (const type of types)
-                    // TODO check this an following string as property name iterations (maybe missing hasOwnProperty) and global trim before using allocated expression.
-                    if (propertySpecification[
-                        type as keyof PropertySpecification
-                    ]) {
-                        let hook:Function
-                        const code:string =
-                            (type.endsWith('Expression') ? 'return ' : '') +
-                            propertySpecification[
-                                type as keyof PropertySpecification
-                            ].evaluation
-                        const scope:object = {
-                            attachmentWithPrefixExists:
-                                attachmentWithPrefixExists.bind(
-                                    newDocument, newDocument),
-                            checkDocument,
-                            checkPropertyContent,
-                            code,
-                            getFilenameByPrefix,
-                            idName,
-                            model,
-                            modelConfiguration,
-                            modelName,
-                            models,
-                            name,
-                            newDocument,
-                            newValue,
-                            now,
-                            nowUTCTimestamp,
-                            oldDocument,
-                            oldValue,
-                            parentNames,
-                            pathDescription,
-                            propertySpecification,
-                            revisionName,
-                            securitySettings,
-                            serialize,
-                            specialNames,
-                            typeName,
-                            userContext
-                        }
-                        // region compile
+                    if (propertySpecification.hasOwnProperty(type)) {
+                        let result:EvaluationResult<boolean>
                         try {
-                            hook = new Function(...Object.keys(scope), code)
-                        } catch (error) {
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden:
-                                    `Compilation: Hook "${type}" has invalid` +
-                                    ` code "${code}": "${serialize(error)}` +
-                                    `"${pathDescription}.`
-                            }
-                            /* eslint-enable no-throw-literal */
-                        }
-                        // endregion
-                        let satisfied:boolean = false
-                        // region run
-                        try {
-                            satisfied = hook(...Object.values(scope))
-                        } catch (error) {
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden:
-                                    `Runtime: Hook "${type}" has throw an ` +
-                                    `error with code "${code}": "` +
-                                    `${serialize(error)}"${pathDescription}.`
-                            }
-                            /* eslint-enable no-throw-literal */
-                        }
-                        // endregion
-                        if (!satisfied)
-                            /* eslint-disable no-throw-literal */
-                            throw {forbidden:
-                                type.charAt(0).toUpperCase() +
-                                type.substring(1) +
-                                `: ` +
-                                (
-                                    propertySpecification[
+                            result = evaluate(
+                                propertySpecification[
+                                    type as keyof PropertySpecification
+                                ].evaluation,
+                                type.endsWith('Expression'),
+                                {
+                                    checkPropertyContent,
+                                    code: propertySpecification[
                                         type as keyof PropertySpecification
-                                    ].description ?
-                                        new Function(
-                                            ...Object.keys(scope),
-                                            'return ' +
-                                                propertySpecification[
-                                                    type as
-                                                    keyof PropertySpecification
-                                                ].description.trim()
-                                        )(...Object.values(scope)) :
-                                        `Property "${name}" should satisfy ` +
-                                        `constraint "${code}" (given "` +
-                                        `${serialize(newValue)}")` +
-                                        `${pathDescription}.`
+                                    ].evaluation,
+                                    model,
+                                    modelName,
+                                    name,
+                                    newDocument,
+                                    newValue,
+                                    oldDocument,
+                                    oldValue,
+                                    parentNames,
+                                    pathDescription,
+                                    propertySpecification,
+                                    type
+                                }
+                            )
+                        } catch (error) {
+                            if (error.hasOwnProperty('compilation'))
+                                throwError(
+                                    `Compilation: Hook "${type}" has invalid` +
+                                    ` code "${error.code}": "` +
+                                    `${error.message}"${pathDescription}.`
                                 )
-                            }
-                            /* eslint-enable no-throw-literal */
+                            if (error.hasOwnProperty('runtime'))
+                                throwError(
+                                    `Runtime: Hook "${type}" has throw an ` +
+                                    `error with code "${error.code}": "` +
+                                    `${error.message}"${pathDescription}.`
+                                )
+                            if (!error.hasOwnProperty('empty'))
+                                throw error
+                        }
+                        if (!(result as EvaluationResult<boolean>).result) {
+                            const description:string = determineTrimmedString(
+                                propertySpecification[
+                                    type as keyof PropertySpecification
+                                ].description
+                            )
+                            throwError(
+                                type.charAt(0).toUpperCase() +
+                                `${type.substring(1)}: ` +
+                                (description ?
+                                    new Function(
+                                        ...Object.keys(result.scope),
+                                        `return ${description}`
+                                    )(...Object.values(result.scope)) :
+                                    `Property "${name}" should satisfy ` +
+                                    `constraint "${result.code}" (given "` +
+                                    `${serialize(newValue)}")` +
+                                    `${pathDescription}.`
+                                )
+                            )
+                        }
                     }
             }
             const checkPropertyContent:Function = (
@@ -553,22 +592,18 @@ export class DatabaseHelper {
                             typeMatched = true
                             break
                         } else if (types.length === 1)
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden:
-                                    `NestedType: Under key "${name}" isn't ` +
-                                    `of type "${type}" (given "` +
-                                    `${serialize(newValue)}" of type ` +
-                                    `${typeof newValue})${pathDescription}.`
-                            }
-                            /* eslint-enable no-throw-literal */
+                            throwError(
+                                `NestedType: Under key "${name}" isn't of ` +
+                                `type "${type}" (given "` +
+                                `${serialize(newValue)}" of type ` +
+                                `${typeof newValue})${pathDescription}.`
+                            )
                     } else if (type === 'DateTime') {
                         const initialNewValue:any = newValue
                         if (
                             newValue !== null && typeof newValue !== 'number'
                         ) {
                             newValue = new Date(newValue)
-                            /* eslint-enable no-throw-literal */
                             newValue = Date.UTC(
                                 newValue.getUTCFullYear(),
                                 newValue.getUTCMonth(),
@@ -581,20 +616,15 @@ export class DatabaseHelper {
                         }
                         if (typeof newValue !== 'number' || isNaN(newValue)) {
                             if (types.length === 1)
-                                /* eslint-disable no-throw-literal */
-                                throw {
-                                    forbidden:
-                                        `PropertyType: Property "${name}" ` +
-                                        `isn't of (valid) type "DateTime" (` +
-                                        'given "' +
-                                        serialize(initialNewValue).replace(
-                                            /^"/, ''
-                                        ).replace(/"$/, '') +
-                                        '" of type "' +
-                                        `${typeof initialNewValue}")` +
-                                        `${pathDescription}.`
-                                }
-                                /* eslint-enable no-throw-literal */
+                                throwError(
+                                    `PropertyType: Property "${name}" isn't ` +
+                                    'of (valid) type "DateTime" (given "' +
+                                    serialize(initialNewValue).replace(
+                                        /^"/, ''
+                                    ).replace(/"$/, '') +
+                                    `" of type "${typeof initialNewValue}")` +
+                                    `${pathDescription}.`
+                                )
                         } else {
                             typeMatched = true
                             break
@@ -612,16 +642,12 @@ export class DatabaseHelper {
                             parseInt(newValue, 10) !== newValue
                         ) {
                             if (types.length === 1)
-                                /* eslint-disable no-throw-literal */
-                                throw {
-                                    forbidden:
-                                        `PropertyType: Property "${name}" ` +
-                                        `isn't of (valid) type "${type}" (` +
-                                        `given "${serialize(newValue)}" of ` +
-                                        `type "${typeof newValue}")` +
-                                        `${pathDescription}.`
-                                }
-                                /* eslint-enable no-throw-literal */
+                                throErrorw(
+                                    `PropertyType: Property "${name}" isn't ` +
+                                    'of (valid) type "${type}" (given "' +
+                                    `${serialize(newValue)}" of type "` +
+                                    `${typeof newValue}")${pathDescription}.`
+                                )
                         } else {
                             typeMatched = true
                             break
@@ -638,16 +664,12 @@ export class DatabaseHelper {
                             typeMatched = true
                             break
                         } else if (types.length === 1)
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden:
-                                    `PropertyType: Foreign key property "` +
-                                    `${name}" isn't of type "` +
-                                    `${foreignKeyType}" (given "` +
-                                    `${serialize(newValue)}" of type "` +
-                                    `${typeof newValue}")${pathDescription}.`
-                            }
-                            /* eslint-enable no-throw-literal */
+                            throwError(
+                                `PropertyType: Foreign key property "${name}` +
+                                `" isn't of type "${foreignKeyType}" (given ` +
+                                `"${serialize(newValue)}" of type "` +
+                                `${typeof newValue}")${pathDescription}.`
+                            )
                     } else if (
                         type === 'any' ||
                         serialize(newValue) === serialize(type)
@@ -655,31 +677,26 @@ export class DatabaseHelper {
                         typeMatched = true
                         break
                     } else if (types.length === 1)
-                        /* eslint-disable no-throw-literal */
-                        throw {
-                            forbidden:
-                                `PropertyType: Property "${name}" isn't ` +
-                                `value "${type}" (given "` +
-                                serialize(newValue).replace(/^"/, '').replace(
-                                    /"$/, ''
-                                ) +
-                                `" of type "${typeof newValue}")` +
-                                `${pathDescription}.`
-                        }
-                        /* eslint-disable no-throw-literal */
-                if (!typeMatched)
-                    /* eslint-disable no-throw-literal */
-                    throw {
-                        forbidden:
-                            'PropertyType: None of the specified types "' +
-                            `${types.join('", "')}" for property "${name}" ` +
-                            `matches value "` +
-                            serialize(newValue).replace(/^"/, '').replace(
-                                /"$/, ''
-                            ) + `${newValue}" of type "${typeof newValue}")` +
+                        throwError(
+                            `PropertyType: Property "${name}" isn't value "` +
+                            `${type}" (given "` +
+                            serialize(newValue)
+                                .replace(/^"/, '')
+                                .replace(/"$/, '') +
+                            `" of type "${typeof newValue}")` +
                             `${pathDescription}.`
-                    }
-                    /* eslint-disable no-throw-literal */
+                        )
+                if (!typeMatched)
+                    throwError(
+                        'PropertyType: None of the specified types "' +
+                        `${types.join('", "')}" for property "${name}" ` +
+                        `matches value "` +
+                        serialize(newValue)
+                            .replace(/^"/, '')
+                            .replace(/"$/, '') +
+                        `${newValue}" of type "${typeof newValue}")` +
+                        `${pathDescription}.`
+                    )
                 // endregion
                 // region range
                 if (typeof newValue === 'string') {
@@ -690,16 +707,13 @@ export class DatabaseHelper {
                         newValue.length <
                             (propertySpecification.minimumLength as number)
                     )
-                        /* eslint-disable no-throw-literal */
-                        throw {
-                            forbidden:
-                                `MinimalLength: Property "${name}" must have` +
-                                ' minimal length ' +
-                                `${propertySpecification.minimumLength} (` +
-                                `given ${newValue} with length ` +
-                                `${newValue.length})${pathDescription}.`
-                        }
-                        /* eslint-enable no-throw-literal */
+                        throwError(
+                            `MinimalLength: Property "${name}" must have ` +
+                            'minimal length ' +
+                            `${propertySpecification.minimumLength} (given ` +
+                            `${newValue} with length ${newValue.length})` +
+                            `${pathDescription}.`
+                        )
                     if (
                         ![null, undefined].includes(
                             propertySpecification.maximumLength as null
@@ -707,16 +721,13 @@ export class DatabaseHelper {
                         newValue.length >
                             (propertySpecification.maximumLength as number)
                     )
-                        /* eslint-disable no-throw-literal */
-                        throw {
-                            forbidden:
-                                `MaximalLength: Property "${name}" must have` +
-                                ' maximal length ' +
-                                `${propertySpecification.maximumLength} (` +
-                                `given ${newValue} with length ` +
-                                `${newValue.length})${pathDescription}.`
-                        }
-                        /* eslint-enable no-throw-literal */
+                        throwError(
+                            `MaximalLength: Property "${name}" must have ` +
+                            'maximal length ' +
+                            `${propertySpecification.maximumLength} (given ` +
+                            `${newValue} with length ${newValue.length})` +
+                            `${pathDescription}.`
+                        )
                 }
                 if (typeof newValue === 'number') {
                     if (
@@ -725,34 +736,24 @@ export class DatabaseHelper {
                         ) &&
                         newValue < (propertySpecification.minimum as number)
                     )
-                        /* eslint-disable no-throw-literal */
-                        throw {
-                            forbidden:
-                                `Minimum: Property "${name}" (type ` +
-                                `${propertySpecification.type}) must ` +
-                                'satisfy a minimum of ' +
-                                `${propertySpecification.minimum} (` +
-                                `given ${newValue} is too low)` +
-                                `${pathDescription}.`
-                        }
-                        /* eslint-disable no-throw-literal */
+                        throwError(
+                            `Minimum: Property "${name}" (type ` +
+                            `${propertySpecification.type}) must satisfy a ` +
+                            `minimum of ${propertySpecification.minimum} (` +
+                            `given ${newValue} is too low)${pathDescription}.`
+                        )
                     if (
                         ![null, undefined].includes(
                             propertySpecification.maximum as null
                         ) &&
                         newValue > (propertySpecification.maximum as number)
                     )
-                        /* eslint-disable no-throw-literal */
-                        throw {
-                            forbidden:
-                                `Maximum: Property "${name}" (type ` +
-                                `${propertySpecification.type}) must ` +
-                                'satisfy a maximum of ' +
-                                `${propertySpecification.maximum} (` +
-                                `given ${newValue} is too high)` +
-                                `${pathDescription}.`
-                        }
-                        /* eslint-enable no-throw-literal */
+                        throwError(
+                            `Maximum: Property "${name}" (type ` +
+                            `${propertySpecification.type}) must satisfy a ` +
+                            `maximum of ${propertySpecification.maximum} (` +
+                            `given ${newValue} is too high)${pathDescription}.`
+                        )
                 }
                 // endregion
                 // region selection
@@ -763,15 +764,12 @@ export class DatabaseHelper {
                         propertySpecification.selection :
                         Object.values(propertySpecification.selection)
                     if (!selection.includes(newValue))
-                        /* eslint-disable no-throw-literal */
-                        throw {
-                            forbidden:
-                                `Selection: Property "${name}" (type ` +
-                                `${propertySpecification.type}) should be ` +
-                                `one of "${selection.join('", "')}". But is ` +
-                                `"${newValue}"${pathDescription}.`
-                        }
-                        /* eslint-enable no-throw-literal */
+                        throwError(
+                            `Selection: Property "${name}" (type ` +
+                            `${propertySpecification.type}) should be one of` +
+                            ` "${selection.join('", "')}". But is "` +
+                            `${newValue}"${pathDescription}.`
+                        )
                 }
                 // endregion
                 // region pattern
@@ -784,15 +782,12 @@ export class DatabaseHelper {
                             string
                     ).test(newValue)
                 ))
-                    /* eslint-disable no-throw-literal */
-                    throw {
-                        forbidden:
-                            `PatternMatch: Property "${name}" should match ` +
-                            'regular expression pattern ' +
-                            propertySpecification.regularExpressionPattern +
-                            ` (given "${newValue}")${pathDescription}.`
-                    }
-                    /* eslint-enable no-throw-literal */
+                    throwError(
+                        `PatternMatch: Property "${name}" should match ` +
+                        'regular expression pattern ' +
+                        propertySpecification.regularExpressionPattern +
+                        ` (given "${newValue}")${pathDescription}.`
+                    )
                 else if (!(
                     [null, undefined].includes(
                         propertySpecification
@@ -803,16 +798,13 @@ export class DatabaseHelper {
                             .invertedRegularExpressionPattern as string
                     )).test(newValue)
                 ))
-                    /* eslint-disable no-throw-literal */
-                    throw {
-                        forbidden:
-                            `InvertedPatternMatch: Property "${name}" should` +
-                            ' not match regular expression pattern ' +
-                            propertySpecification
-                                .invertedRegularExpressionPattern +
-                            ` (given "${newValue}")${pathDescription}.`
-                    }
-                    /* eslint-enable no-throw-literal */
+                    throwError(
+                        `InvertedPatternMatch: Property "${name}" should ` +
+                        'not match regular expression pattern ' +
+                        propertySpecification
+                            .invertedRegularExpressionPattern +
+                        ` (given "${newValue}")${pathDescription}.`
+                    )
                 // endregion
                 checkPropertyConstraints(
                     newValue, name, propertySpecification, oldValue
@@ -831,80 +823,50 @@ export class DatabaseHelper {
                 if (!oldDocument)
                     for (const type of [
                         'onCreateExecution', 'onCreateExpression'
-                    ]) {
-                        let expression:string = propertySpecification[
-                            type as keyof PropertySpecification
-                        ]
-                        if (expression.trim()) {
-                            expression = expression.trim()
-                            let hook:Function
-                            const scope:object = {
-                                attachmentWithPrefixExists:
-                                    attachmentWithPrefixExists.bind(
-                                        newDocument, newDocument
-                                    ),
-                                checkDocument,
-                                checkPropertyContent,
-                                getFilenameByPrefix,
-                                idName,
-                                model,
-                                modelConfiguration,
-                                modelName,
-                                models,
-                                name,
-                                newDocument,
-                                now,
-                                nowUTCTimestamp,
-                                oldDocument,
-                                propertySpecification,
-                                revisionName,
-                                securitySettings,
-                                serialize,
-                                specialNames,
-                                typeName,
-                                userContext
-                            }
+                    ])
+                        if (propertySpecification.hasOwnProperty(type)) {
+                            let result:EvaluationResult|undefined
                             try {
-                                hook = new Function(
-                                    ...Object.keys(scope),
-                                    (
-                                        type.endsWith('Expression') ?
-                                            'return ' :
-                                            ''
-                                    ) +
-                                    expression
+                                result = evaluate(
+                                    propertySpecification[
+                                        type as keyof PropertySpecification
+                                    ],
+                                    type.endsWith('Expression'),
+                                    {
+                                        checkPropertyContent,
+                                        code: propertySpecification[
+                                            type as keyof PropertySpecification
+                                        ],
+                                        model,
+                                        modelName,
+                                        name,
+                                        newDocument,
+                                        oldDocument,
+                                        propertySpecification,
+                                        type
+                                    }
                                 )
                             } catch (error) {
-                                /* eslint-disable no-throw-literal */
-                                throw {
-                                    forbidden:
+                                if (error.hasOwnProperty('compilation'))
+                                    throwError(
                                         `Compilation: Hook "${type}" has ` +
-                                        `invalid code "${expression}" for ` +
-                                        ` property "${name}": ` +
-                                        serialize(error) +
-                                        `${pathDescription}.`
-                                }
-                                /* eslint-enable no-throw-literal */
-                            }
-                            let result:any
-                            try {
-                                result = hook(...Object.values(scope))
-                            } catch (error) {
-                                /* eslint-disable no-throw-literal */
-                                throw {
-                                    forbidden:
+                                        `invalid code "${error.code}" for ` +
+                                        `property "${name}": ` +
+                                        `${error.message}${pathDescription}.`
+                                    )
+                                if (error.hasOwnProperty('runtime'))
+                                    throwError(
                                         `Runtime: Hook "${type}" has throw ` +
-                                        `an error with code "${expression}" ` +
+                                        `an error with code "${error.code}" ` +
                                         `for property "${name}": ` +
-                                        serialize(error) +
-                                        `${pathDescription}.`
-                                }
-                                /* eslint-enable no-throw-literal */
+                                        `${error.message}${pathDescription}.`
+                                    )
+                                if (!error.hasOwnProperty('empty'))
+                                    throw error
                             }
-                            if (![null, undefined].includes(result))
+                            if (![null, undefined].includes(result.result))
                                 newDocument[name] = result
                         }
-                    }
             }
             // / endregion
             // / region update hook
@@ -930,77 +892,47 @@ export class DatabaseHelper {
                     Object.keys(newDocument).length === 0
                 ))
                     newDocument[name] = null
-                for (const type of [
-                    'onUpdateExecution', 'onUpdateExpression']
-                ) {
-                    let expression:string = propertySpecification[
-                        type as keyof PropertySpecification
-                    ]
-                    if (expression.trim()) {
-                        expression = expression.trim()
-                        let hook:Function
-                        const scope:object = {
-                            attachmentWithPrefixExists:
-                                attachmentWithPrefixExists.bind(
-                                    newDocument, newDocument
-                            ),
-                            checkDocument,
-                            checkPropertyContent,
-                            getFilenameByPrefix,
-                            idName,
-                            model,
-                            modelConfiguration,
-                            modelName,
-                            models,
-                            name,
-                            newDocument,
-                            now,
-                            nowUTCTimestamp,
-                            oldDocument,
-                            propertySpecification,
-                            revisionName,
-                            securitySettings,
-                            serialize,
-                            specialNames,
-                            typeName,
-                            userContext
-                        }
+                for (const type of ['onUpdateExecution', 'onUpdateExpression'])
+                    if (propertySpecification.hasOwnProperty(type))
                         try {
-                            hook = new Function(
-                                ...Object.keys(scope),
-                                (
-                                    type.endsWith('Expression') ?
-                                        'return ' :
-                                        ''
-                                ) +
-                                expression
-                            )
+                            newDocument[name] = evaluate(
+                                propertySpecification[
+                                    type as keyof PropertySpecification
+                                ],
+                                type.endsWith('Expression'),
+                                {
+                                    checkPropertyContent,
+                                    code: propertySpecification[
+                                        type as keyof PropertySpecification
+                                    ],
+                                    modelName,
+                                    name,
+                                    newDocument,
+                                    oldDocument,
+                                    parentNames,
+                                    pathDescription,
+                                    propertySpecification,
+                                    type
+                                }
+                            ).result
                         } catch (error) {
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden:
+                            if (error.hasOwnProperty('compilation'))
+                                throwError(
                                     `Compilation: Hook "${type}" has invalid` +
-                                    ` code "${expression}" for property "` +
-                                    `${name}": ${serialize(error)}` +
+                                    ` code "${error.code}" for property "` +
+                                    `${name}": ${error.message}` +
                                     `${pathDescription}.`
-                            }
-                            /* eslint-enable no-throw-literal */
-                        }
-                        try {
-                            newDocument[name] = hook(...Object.values(scope))
-                        } catch (error) {
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden:
+                                )
+                            if (error.hasOwnProperty('runtime'))
+                                throwError(
                                     `Runtime: Hook "${type}" has throw an ` +
-                                    `error with code "${expression}" for ` +
-                                    `property "${name}": ${serialize(error)}` +
+                                    `error with code "${error.code}" for ` +
+                                    `property "${name}": ${error.message}` +
                                     `${pathDescription}.`
-                            }
-                            /* eslint-enable no-throw-literal */
+                                )
+                            if (!error.hasOwnProperty('empty'))
+                                throw error
                         }
-                    }
-                }
             }
             // / endregion
             // endregion
@@ -1038,70 +970,43 @@ export class DatabaseHelper {
                 for (const type of [
                     specialNames.create.execution,
                     specialNames.create.expression
-                ]) {
-                    let expression:string = model[type]
-                    if (model.hasOwnProperty(type) && expression.trim()) {
-                        expression = expression.trim()
-                        let hook:Function
-                        const scope:object = {
-                            attachmentWithPrefixExists:
-                                attachmentWithPrefixExists.bind(
-                                    newDocument, newDocument
-                                ),
-                            checkDocument,
-                            checkPropertyContent,
-                            getFilenameByPrefix,
-                            id,
-                            idName,
-                            model,
-                            modelConfiguration,
-                            modelName,
-                            models,
-                            newDocument,
-                            now,
-                            nowUTCTimestamp,
-                            oldDocument,
-                            revisionName,
-                            securitySettings,
-                            serialize,
-                            specialNames,
-                            typeName,
-                            userContext
-                        }
+                ])
+                    if (model.hasOwnProperty(type)) {
+                        let result:EvaluationResult|undefined
                         try {
-                            hook = new Function(
-                                ...Object.keys(scope),
-                                (
-                                    type.endsWith('Expression') ?
-                                        'return ' :
-                                        ''
-                                ) +
-                                expression
-                            )
+                            result = evaluate(
+                                model[type],
+                                type.endsWith('Expression'),
+                                {
+                                    checkPropertyContent,
+                                    code: model[type],
+                                    id,
+                                    model,
+                                    modelName,
+                                    newDocument,
+                                    oldDocument,
+                                    parentNames,
+                                    pathDescription,
+                                    type
+                                }
+                            ).result
                         } catch (error) {
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden:
+                            if (error.hasOwnProperty('compilation'))
+                                throwError(
                                     `Compilation: Hook "${type}" has invalid` +
-                                    ` code "${expression}" for document "` +
-                                    `${modelName}": ${serialize(error)}` +
+                                    ` code "${error.code}" for document "` +
+                                    `${modelName}": ${error.message}` +
                                     `${pathDescription}.`
-                            }
-                            /* eslint-enable no-throw-literal */
-                        }
-                        let result:any
-                        try {
-                            result = hook(...Object.values(scope))
-                        } catch (error) {
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden:
+                                )
+                            if (error.hasOwnProperty('runtime'))
+                                throwError(
                                     `Runtime: Hook "${type}" has throw an ` +
-                                    `error with code "${expression}" for ` +
+                                    `error with code "${error.code}" for ` +
                                     `document "${modelName}": ` +
-                                    `${serialize(error)}${pathDescription}.`
-                            }
-                            /* eslint-enable no-throw-literal */
+                                    `${error.message}${pathDescription}.`
+                                )
+                            if (!error.hasOwnProperty('empty'))
+                                throw error
                         }
                         if (![null, undefined].includes(result))
                             newDocument = result
@@ -1110,68 +1015,47 @@ export class DatabaseHelper {
                         if (parentNames.length === 0)
                             setDocumentEnvironment()
                     }
-                }
             // endregion
             // region run update document hook
             for (const type of [
                 specialNames.update.execution, specialNames.update.expression
             ])
-                if (model.hasOwnProperty(type) && model[type]) {
-                    let hook:Function
-                    const scope:object = {
-                        attachmentWithPrefixExists:
-                            attachmentWithPrefixExists.bind(
-                                newDocument, newDocument),
-                        checkDocument,
-                        checkPropertyContent,
-                        getFilenameByPrefix,
-                        idName,
-                        model,
-                        modelConfiguration,
-                        modelName,
-                        models,
-                        id,
-                        newDocument,
-                        now,
-                        nowUTCTimestamp,
-                        oldDocument,
-                        revisionName,
-                        securitySettings,
-                        serialize,
-                        specialNames,
-                        typeName,
-                        userContext
-                    }
+                if (model.hasOwnProperty(type)) {
+                    let result:EvaluationResult|undefined
                     try {
-                        hook = new Function(
-                            ...Object.keys(scope),
-                            (type.endsWith('Expression') ? 'return ' : '') +
-                            model[type].trim()
-                        )
+                        result = evaluate(
+                            model[type],
+                            type.endsWith('Expression'),
+                            {
+                                checkPropertyContent,
+                                code: model[type],
+                                id,
+                                model,
+                                modelName,
+                                newDocument,
+                                oldDocument,
+                                parentNames,
+                                pathDescription,
+                                type
+                            }
+                        ).result
                     } catch (error) {
-                        /* eslint-disable no-throw-literal */
-                        throw {
-                            forbidden:
+                        if (error.hasOwnProperty('compilation'))
+                            throwError(
                                 `Compilation: Hook "${type}" has invalid ` +
-                                ` code "${model[type]}" for document "` +
-                                `${modelName}": ${serialize(error)}` +
+                                `code "${error.code}" for document "` +
+                                `${modelName}": ${error.message}` +
                                 `${pathDescription}.`
-                        }
-                        /* eslint-enable no-throw-literal */
-                    }
-                    let result:any
-                    try {
-                        result = hook(...Object.values(scope))
-                    } catch (error) {
-                        /* eslint-disable no-throw-literal */
-                        throw {
-                            forbidden:
+                            )
+                        if (error.hasOwnProperty('runtime'))
+                            throwError(
                                 `Runtime: Hook "${type}" has throw an error ` +
-                                `with code "${model[type]}" for document "` +
-                                `${modelName}": ${serialize(error)}` +
+                                `with code "${error.code}" for document "` +
+                                `${modelName}": ${error.message}` +
                                 `${pathDescription}.`
-                        }
-                        /* eslint-enable no-throw-literal */
+                            )
+                        if (!error.hasOwnProperty('empty'))
+                            throw error
                     }
                     if (![undefined, null].includes(result))
                         newDocument = result
@@ -1256,14 +1140,11 @@ export class DatabaseHelper {
                                     newFileNames.length > 0 ||
                                     oldFileNames.length > 0
                                 ))
-                                    /* eslint-disable no-throw-literal */
-                                    throw {
-                                        forbidden:
-                                            'AttachmentMissing: Missing ' +
-                                            `attachment for type "${type}"` +
-                                            `${pathDescription}.`
-                                    }
-                                    /* eslint-enable no-throw-literal */
+                                    throwError(
+                                        'AttachmentMissing: Missing ' +
+                                        `attachment for type "${type}"` +
+                                        `${pathDescription}.`
+                                    )
                                 if (
                                     updateStrategy === 'fillUp' &&
                                     newFileNames.length === 0 &&
@@ -1317,13 +1198,10 @@ export class DatabaseHelper {
                                 updateStrategy
                             ))
                         )
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden:
-                                    'MissingProperty: Missing property "' +
-                                    `${name}"${pathDescription}.`
-                            }
-                            /* eslint-enable no-throw-literal */
+                            throwError(
+                                `MissingProperty: Missing property "${name}"` +
+                                `${pathDescription}.`
+                            )
                         if (
                             !newDocument.hasOwnProperty(name) &&
                             oldDocument &&
@@ -1408,14 +1286,11 @@ export class DatabaseHelper {
                             name, 'migrate removed property')
                         continue
                     } else
-                        /* eslint-disable no-throw-literal */
-                        throw {
-                            forbidden:
-                                `Property: Given property "${name}" isn't ` +
-                                `specified in model "${modelName}"` +
-                                `${pathDescription}.`
-                        }
-                        /* eslint-enable no-throw-literal */
+                        throwError(
+                            `Property: Given property "${name}" isn't ` +
+                            `specified in model "${modelName}"` +
+                            `${pathDescription}.`
+                        )
                     // NOTE: Only needed to avoid type check errors.
                     if (!propertySpecification)
                         continue
@@ -1441,23 +1316,17 @@ export class DatabaseHelper {
                                         delete newDocument[name]
                                     return true
                                 } else
-                                    /* eslint-disable no-throw-literal */
-                                    throw {
-                                        forbidden:
-                                            `Readonly: Property "${name}" is` +
-                                            ` not writable (old document "` +
-                                            `${serialize(oldDocument)}")` +
-                                            `${pathDescription}.`
-                                    }
-                                    /* eslint-enable no-throw-literal */
-                            else
-                                /* eslint-disable no-throw-literal */
-                                throw {
-                                    forbidden:
+                                    throwError(
                                         `Readonly: Property "${name}" is not` +
-                                        ` writable${pathDescription}.`
-                                }
-                                /* eslint-enable no-throw-literal */
+                                        ` writable (old document "` +
+                                        `${serialize(oldDocument)}")` +
+                                        `${pathDescription}.`
+                                    )
+                            else
+                                throwError(
+                                    `Readonly: Property "${name}" is not ` +
+                                    `writable${pathDescription}.`
+                                )
                         // endregion
                         // region mutable
                         if (
@@ -1479,15 +1348,12 @@ export class DatabaseHelper {
                                     delete newDocument[name]
                                 return true
                             } else if (updateStrategy !== 'migrate')
-                                /* eslint-disable no-throw-literal */
-                                throw {
-                                    forbidden:
-                                        `Immutable: Property "${name}" is ` +
-                                        'not writable (old document "' +
-                                        `${serialize(oldDocument)}")` +
-                                        `${pathDescription}.`
-                                }
-                                /* eslint-enable no-throw-literal */
+                                throwError(
+                                    `Immutable: Property "${name}" is not ` +
+                                    'writable (old document "' +
+                                    `${serialize(oldDocument)}")` +
+                                    `${pathDescription}.`
+                                )
                         // endregion
                         // region nullable
                         if (newDocument[name] === null)
@@ -1501,13 +1367,10 @@ export class DatabaseHelper {
                                         name, 'delete property')
                                 return true
                             } else
-                                /* eslint-disable no-throw-literal */
-                                throw {
-                                    forbidden:
-                                        `NotNull: Property "${name}" should ` +
-                                        `not by "null"${pathDescription}.`
-                                }
-                                /* eslint-enable no-throw-literal */
+                                throwError(
+                                    `NotNull: Property "${name}" should not ` +
+                                    `by "null"${pathDescription}.`
+                                )
                         // endregion
                         return false
                     }
@@ -1541,50 +1404,41 @@ export class DatabaseHelper {
                         Array.isArray(propertySpecification.type[0])
                     ) {
                         if (!Array.isArray(newDocument[name]))
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden:
-                                    `PropertyType: Property "${name}" isn't ` +
-                                    `of type "array -> ` +
-                                    `${propertySpecification.type}" (given "` +
-                                    `${serialize(newDocument[name])}")` +
-                                    `${pathDescription}.`
-                            }
-                            /* eslint-enable no-throw-literal */
-                        else if (![undefined, null].includes(
-                            propertySpecification.minimumNumber
-                        ) && newDocument[name].length <
-                            propertySpecification.minimumNumber
-                        )
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden:
-                                    `MinimumArrayLength: Property "${name}" ` +
-                                    ` (array of length ` +
-                                    `${newDocument[name].length}) doesn't ` +
-                                    `fullfill minimum array length of ` +
-                                    propertySpecification.minimumNumber +
-                                    `${pathDescription}.`
-                            }
-                            /* eslint-enable no-throw-literal */
+                            throwError(
+                                `PropertyType: Property "${name}" isn't of ` +
+                                `type "array -> ` +
+                                `${propertySpecification.type}" (given "` +
+                                `${serialize(newDocument[name])}")` +
+                                `${pathDescription}.`
+                            )
                         else if (
-                            ![undefined, null].includes(
+                            ![null, undefined].includes(
+                                propertySpecification.minimumNumber
+                            ) &&
+                            newDocument[name].length <
+                                propertySpecification.minimumNumber
+                        )
+                            throwError(
+                                `MinimumArrayLength: Property "${name}" (` +
+                                `array of length ${newDocument[name].length}` +
+                                `) doesn't fullfill minimum array length of ` +
+                                propertySpecification.minimumNumber +
+                                `${pathDescription}.`
+                            )
+                        else if (
+                            ![null, undefined].includes(
                                 propertySpecification.maximumNumber
                             ) &&
                             propertySpecification.maximumNumber <
                                 newDocument[name].length
                         )
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden:
-                                    `MaximumArrayLength: Property "${name}" ` +
-                                    `(array of length ` +
-                                    `${newDocument[name].length}) doesn't ` +
-                                    `fullfill maximum array length of ` +
-                                    propertySpecification.maximumNumber +
-                                    `${pathDescription}.`
-                            }
-                            /* eslint-enable no-throw-literal */
+                            throwError(
+                                `MaximumArrayLength: Property "${name}" (` +
+                                `array of length ${newDocument[name].length}` +
+                                `) doesn't fullfill maximum array length of ` +
+                                propertySpecification.maximumNumber +
+                                `${pathDescription}.`
+                            )
                         checkPropertyConstraints(
                             newDocument[name],
                             name,
@@ -1606,18 +1460,18 @@ export class DatabaseHelper {
                                     if (Array.isArray(propertySpecification[
                                         key
                                     ]))
-                                        propertySpecificationCopy[
-                                            key
-                                        ] = propertySpecification[key][0]
+                                        propertySpecificationCopy[key] =
+                                            propertySpecification[key][0]
                                     else
-                                        propertySpecificationCopy[
-                                            key
-                                        ] = [propertySpecification[
-                                            key
-                                        ].substring(
-                                            0,
-                                            propertySpecification.type.length -
-                                                '[]'.length)]
+                                        propertySpecificationCopy[key] = [
+                                            propertySpecification[key]
+                                                .substring(
+                                                    0,
+                                                    propertySpecification.type
+                                                        .length -
+                                                        '[]'.length
+                                                )
+                                        ]
                                 else
                                     propertySpecificationCopy[key] =
                                         propertySpecification[key]
@@ -1629,7 +1483,8 @@ export class DatabaseHelper {
                             typeof propertySpecificationCopy.type.length ===
                                 1 &&
                             models.hasOwnProperty(
-                                propertySpecificationCopy.type[0])
+                                propertySpecificationCopy.type[0]
+                            )
                         )
                             for (const value of newDocument[name].slice())
                                 if (
@@ -1655,9 +1510,8 @@ export class DatabaseHelper {
                             oldDocument &&
                             oldDocument.hasOwnProperty(name) &&
                             Array.isArray(oldDocument[name]) &&
-                            oldDocument[name].length === newDocument[
-                                name
-                            ].length &&
+                            oldDocument[name].length ===
+                                newDocument[name].length &&
                             serialize(oldDocument[name]) ===
                                 serialize(newDocument[name])
                         ))
@@ -1672,15 +1526,19 @@ export class DatabaseHelper {
                         const result:{
                             changedPath:Array<string>;newValue:any;
                         } = checkPropertyContent(
-                            newDocument[name], name, propertySpecification,
-                            oldValue)
+                            newDocument[name],
+                            name,
+                            propertySpecification,
+                            oldValue
+                        )
                         newDocument[name] = result.newValue
                         if (result.changedPath.length)
                             changedPath = result.changedPath
                         if (newDocument[name] === null) {
                             if (oldValue !== null)
                                 changedPath = parentNames.concat(
-                                    name, 'property removed')
+                                    name, 'property removed'
+                                )
                             delete newDocument[name]
                         }
                     }
@@ -1695,81 +1553,59 @@ export class DatabaseHelper {
                     for (const constraint of ([] as Array<Constraint>).concat(
                         model[type]
                     )) {
-                        let hook:Function
-                        const code:string = (
-                            (type === specialNames.constraint.expression) ?
-                                'return ' :
-                                ''
-                        ) + constraint.evaluation.trim()
-                        const scope:object = {
-                            attachmentWithPrefixExists:
-                                attachmentWithPrefixExists.bind(
-                                    newDocument, newDocument
-                                ),
-                            checkDocument,
-                            checkPropertyContent,
-                            code,
-                            getFilenameByPrefix,
-                            idName,
-                            model,
-                            modelConfiguration,
-                            modelName,
-                            models,
-                            newDocument,
-                            now,
-                            nowUTCTimestamp,
-                            oldDocument,
-                            parentNames,
-                            pathDescription,
-                            revisionName,
-                            securitySettings,
-                            serialize,
-                            specialNames,
-                            typeName,
-                            userContext
-                        }
+                        let result:EvaluationResult<boolean>|undefined
                         try {
-                            hook = new Function(...Object.keys(scope), code)
+                            result = evaluate(
+                                constraint.evaluation,
+                                type === specialNames.constraint.expression,
+                                {
+                                    checkPropertyContent,
+                                    code: constraint.evaluation,
+                                    model,
+                                    modelName,
+                                    newDocument,
+                                    oldDocument,
+                                    parentNames,
+                                    pathDescription,
+                                    type
+                                }
+                            )
                         } catch (error) {
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden: `Compilation: Hook "${type}" has ` +
-                                    `invalid code "${code}": "` +
-                                    serialize(error) +
-                                    `"${pathDescription}.`
-                            }
-                            /* eslint-enable no-throw-literal */
+                            if (error.hasOwnProperty('compilation'))
+                                throwError(
+                                    `Compilation: Hook "${type}" has invalid` +
+                                    ` code "${error.code}": "` +
+                                    `${error.message}"${pathDescription}.`
+                                )
+                            if (error.hasOwnProperty('runtime'))
+                                throwError(
+                                    `Runtime: Hook "${type}" has thrown an ` +
+                                    `error with code "${error.code}": ` +
+                                    `${error.message}${pathDescription}.`
+                                )
+                            if (!error.hasOwnProperty('empty'))
+                                throw error
                         }
-                        let satisfied:boolean = false
-                        try {
-                            satisfied = hook(...Object.values(scope))
-                        } catch (error) {
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden: `Runtime: Hook "${type}" has ` +
-                                    `thrown an error with code "${code}": ` +
-                                    `${serialize(error)}${pathDescription}.`
-                            }
-                            /* eslint-enable no-throw-literal */
-                        }
-                        if (!satisfied) {
+                        if (!result.result) {
                             const errorName:string = type.replace(
-                                /^[^a-zA-Z]+/, '')
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden: errorName.charAt(0).toUpperCase() +
-                                `${errorName.substring(1)}: ` + (
-                                    constraint.description ? new Function(
-                                        ...Object.keys(scope),
-                                        'return ' +
-                                        constraint.description.trim()
-                                    )(...Object.values(scope)) :
-                                    `Model "${modelName}" should satisfy ` +
-                                    `constraint "${code}" (given "` +
-                                    `${serialize(newDocument)}")` +
-                                    `${pathDescription}.`)
-                            }
-                            /* eslint-enable no-throw-literal */
+                                /^[^a-zA-Z]+/, ''
+                            )
+                            throwError(
+                                errorName.charAt(0).toUpperCase() +
+                                `${errorName.substring(1)}: ` +
+                                (
+                                    constraint.description ?
+                                        new Function(
+                                            ...Object.keys(result.scope),
+                                            'return ' +
+                                            constraint.description.trim()
+                                        )(...Object.values(result.scope)) :
+                                        `Model "${modelName}" should satisfy` +
+                                        ` constraint "${result.code}" (given` +
+                                        ` "${serialize(newDocument)}")` +
+                                        `${pathDescription}.`
+                                )
+                            )
                         }
                     }
             // / endregion
@@ -1781,12 +1617,10 @@ export class DatabaseHelper {
                     typeof newAttachments !== 'object' ||
                     Object.getPrototypeOf(newAttachments) !== Object.prototype
                 )
-                    /* eslint-disable no-throw-literal */
-                    throw {
-                        forbidden: 'AttachmentType: given attachment has ' +
-                            `invalid type${pathDescription}.`
-                    }
-                    /* eslint-enable no-throw-literal */
+                    throwError(
+                        'AttachmentType: given attachment has invalid type' +
+                        `${pathDescription}.`
+                    )
                 // region migrate old attachments
                 let oldAttachments:any = null
                 if (
@@ -1803,47 +1637,52 @@ export class DatabaseHelper {
                                 if (newAttachments.hasOwnProperty(fileName))
                                     if (
                                         newAttachments[fileName] === null ||
-                                        newAttachments[
-                                            fileName
-                                        ].data === null ||
-                                        newAttachments[
-                                            fileName
-                                        ].content_type ===
-                                            oldAttachments[fileName]
-                                                .content_type &&
                                         newAttachments[fileName].data ===
-                                        oldAttachments[fileName].data
+                                            null ||
+                                        newAttachments[fileName]
+                                            .content_type ===
+                                                oldAttachments[fileName]
+                                                    .content_type &&
+                                        newAttachments[fileName].data ===
+                                            oldAttachments[fileName].data
                                     ) {
                                         if (
-                                            newAttachments[
-                                                fileName
-                                            ] === null ||
-                                            newAttachments[
-                                                fileName
-                                            ].data === null
+                                            newAttachments[fileName] ===
+                                                null ||
+                                            newAttachments[fileName].data ===
+                                                null
                                         )
                                             changedPath = parentNames.concat(
                                                 specialNames.attachment,
-                                                fileName, 'attachment removed')
+                                                fileName,
+                                                'attachment removed'
+                                            )
                                         if (updateStrategy === 'incremental')
                                             delete newAttachments[fileName]
                                     } else
                                         changedPath = parentNames.concat(
-                                            specialNames.attachment, fileName,
-                                            'attachment updated')
+                                            specialNames.attachment,
+                                            fileName,
+                                            'attachment updated'
+                                        )
                                 else if (updateStrategy === 'fillUp')
-                                    newAttachments[fileName] = oldAttachments[
-                                        fileName]
+                                    newAttachments[fileName] =
+                                        oldAttachments[fileName]
                                 else if (!updateStrategy)
                                     changedPath = parentNames.concat(
-                                        specialNames.attachment, fileName,
-                                        'attachment removed')
+                                        specialNames.attachment,
+                                        fileName,
+                                        'attachment removed'
+                                    )
                 }
                 for (const fileName in newAttachments)
                     if (newAttachments.hasOwnProperty(fileName))
-                        if ([undefined, null].includes(
-                            newAttachments[fileName]
-                        ) || newAttachments[fileName].data === null)
+                        if (
+                            [null, undefined].includes(
+                                newAttachments[fileName]
+                            ) ||
+                            newAttachments[fileName].data === null
+                        )
                             delete newAttachments[fileName]
                         else if (!(
                             oldAttachments &&
@@ -1854,8 +1693,10 @@ export class DatabaseHelper {
                                 oldAttachments[fileName].data
                         ))
                             changedPath = parentNames.concat(
-                                specialNames.attachment, fileName,
-                                'attachment updated')
+                                specialNames.attachment,
+                                fileName,
+                                'attachment updated'
+                            )
                 // endregion
                 if (Object.keys(newAttachments).length === 0)
                     delete newDocument[specialNames.attachment]
@@ -1866,26 +1707,21 @@ export class DatabaseHelper {
                 for (const name in newAttachments)
                     if (newAttachments.hasOwnProperty(name)) {
                         let matched:boolean = false
-                        for (const type in model[
-                            specialNames.attachment
-                        ])
+                        for (const type in model[specialNames.attachment])
                             if ((new RegExp(type)).test(name)) {
                                 attachmentToTypeMapping[type].push(name)
                                 matched = true
                                 break
                             }
                         if (!matched)
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden:
-                                    'AttachmentTypeMatch: None of the ' +
-                                    'specified attachment types ("' +
-                                    Object.keys(model[
-                                        specialNames.attachment
-                                    ]).join('", "') + '") matches given one ' +
-                                    `("${name}")${pathDescription}.`
-                            }
-                            /* eslint-enable no-throw-literal */
+                            throwError(
+                                'AttachmentTypeMatch: None of the specified ' +
+                                'attachment types ("' +
+                                Object.keys(model[specialNames.attachment])
+                                    .join('", "') +
+                                `") matches given one ("${name}")` +
+                                `${pathDescription}.`
+                            )
                     }
                 let sumOfAggregatedSizes:number = 0
                 for (const type in attachmentToTypeMapping) {
@@ -1900,37 +1736,28 @@ export class DatabaseHelper {
                             type
                         ].maximumNumber
                     )
-                        /* eslint-disable no-throw-literal */
-                        throw {
-                            forbidden: 'AttachmentMaximum: given number of ' +
-                                `attachments (${numberOfAttachments}) ` +
-                                `doesn't satisfy specified maximum of ` +
-                                model[specialNames.attachment][
-                                    type
-                                ].maximumNumber +
-                                ` from type "${type}"${pathDescription}.`
-                        }
-                        /* eslint-enable no-throw-literal */
+                        throwError(
+                            'AttachmentMaximum: given number of attachments ' +
+                            `(${numberOfAttachments}) doesn't satisfy ` +
+                            'specified maximum of ' +
+                            model[specialNames.attachment][type].maximumNumber +
+                            ` from type "${type}"${pathDescription}.`
+                        )
                     if (
                         !(
                             model[specialNames.attachment][type].nullable &&
                             numberOfAttachments === 0
                         ) &&
-                        numberOfAttachments < model[specialNames.attachment][
-                            type
-                        ].minimumNumber
+                        numberOfAttachments <
+                            model[specialNames.attachment][type].minimumNumber
                     )
-                        /* eslint-disable no-throw-literal */
-                        throw {
-                            forbidden: 'AttachmentMinimum: given number of ' +
-                                `attachments (${numberOfAttachments}) ` +
-                                `doesn't satisfy specified minimum of ` +
-                                model[specialNames.attachment][
-                                    type
-                                ].minimumNumber +
-                                ` from type "${type}"${pathDescription}.`
-                        }
-                        /* eslint-enable no-throw-literal */
+                        throwError(
+                            'AttachmentMinimum: given number of attachments ' +
+                            `(${numberOfAttachments}) doesn't satisfy ` +
+                            'specified minimum of ' +
+                            model[specialNames.attachment][type].minimumNumber +
+                            ` from type "${type}"${pathDescription}.`
+                        )
                     let aggregatedSize:number = 0
                     for (const fileName of attachmentToTypeMapping[type]) {
                         if (!(
@@ -1942,17 +1769,14 @@ export class DatabaseHelper {
                                     .regularExpressionPattern
                             ).test(fileName)
                         ))
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden:
-                                    'AttachmentName: given attachment name "' +
-                                    `${fileName}" doesn't satisfy specified ` +
-                                    'regular expression pattern "' +
-                                    model[specialNames.attachment][type]
-                                        .regularExpressionPattern +
-                                    `" from type "${type}"${pathDescription}.`
-                            }
-                            /* eslint-enable no-throw-literal */
+                            throwError(
+                                'AttachmentName: given attachment name "' +
+                                `${fileName}" doesn't satisfy specified ` +
+                                'regular expression pattern "' +
+                                model[specialNames.attachment][type]
+                                    .regularExpressionPattern +
+                                `" from type "${type}"${pathDescription}.`
+                            )
                         else if (!(
                             [null, undefined].includes(
                                 model[specialNames.attachment][type]
@@ -1960,20 +1784,17 @@ export class DatabaseHelper {
                             ) ||
                             !(new RegExp(model[specialNames.attachment][
                                 type
-                            ].invertedRegularExpressionPattern)).test(fileName)
+                            ].invertedRegularExpressionPattern))
+                                .test(fileName)
                         ))
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden:
-                                    'InvertedAttachmentName: given ' +
-                                    `attachment name "${fileName}" doesn't ` +
-                                    'satisfy specified regular expression ' +
-                                    'pattern "' +
-                                    model[specialNames.attachment][type]
-                                        .invertedRegularExpressionPattern +
-                                    `" from type "${type}"${pathDescription}.`
-                            }
-                            /* eslint-enable no-throw-literal */
+                            throwError(
+                                'InvertedAttachmentName: given attachment ' +
+                                `name "${fileName}" doesn't satisfy ` +
+                                'specified regular expression pattern "' +
+                                model[specialNames.attachment][type]
+                                    .invertedRegularExpressionPattern +
+                                `" from type "${type}"${pathDescription}.`
+                            )
                         else if (!(
                             [null, undefined].includes(
                                 model[specialNames.attachment][type]
@@ -1983,26 +1804,25 @@ export class DatabaseHelper {
                                 'content_type'
                             ) &&
                             newAttachments[fileName].content_type &&
-                            new RegExp(model[specialNames.attachment][type]
-                                .contentTypeRegularExpressionPattern
-                            ).test(newAttachments[fileName].content_type)
+                            new RegExp(
+                                model[specialNames.attachment][type]
+                                    .contentTypeRegularExpressionPattern
+                            )
+                                .test(newAttachments[fileName].content_type)
                         ))
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden:
-                                    'AttachmentContentType: given attachment' +
-                                    ' content type "' +
-                                    newAttachments[fileName].content_type +
-                                    `" doesn't satisfy specified regular` +
-                                    ' expression pattern "' +
-                                    model[specialNames.attachment][type]
-                                        .contentTypeRegularExpressionPattern +
-                                    `" from type "${type}"${pathDescription}.`
-                            }
-                            /* eslint-enable no-throw-literal */
-                        const pattern:?string = model[specialNames.attachment][
-                            type
-                        ].invertedContentTypeRegularExpressionPattern
+                            throwError(
+                                'AttachmentContentType: given attachment ' +
+                                'content type "' +
+                                `${newAttachments[fileName].content_type}" ` +
+                                `doesn't satisfy specified regular ` +
+                                'expression pattern "' +
+                                model[specialNames.attachment][type]
+                                    .contentTypeRegularExpressionPattern +
+                                `" from type "${type}"${pathDescription}.`
+                            )
+                        const pattern:?string =
+                            model[specialNames.attachment][type]
+                                .invertedContentTypeRegularExpressionPattern
                         if (!(
                             [null, undefined].includes(pattern) ||
                             newAttachments[fileName].hasOwnProperty(
@@ -2013,17 +1833,14 @@ export class DatabaseHelper {
                                 newAttachments[fileName].content_type
                             )
                         ))
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden:
-                                    'InvertedAttachmentContentType: given ' +
-                                    'attachment content type "' +
-                                    newAttachments[fileName].content_type +
-                                    `" doesn't satisfy specified regular` +
-                                    ` expression pattern "${pattern}" ` +
-                                    `from type "${type}"${pathDescription}.`
-                            }
-                            /* eslint-enable no-throw-literal */
+                            throwError(
+                                'InvertedAttachmentContentType: given ' +
+                                'attachment content type "' +
+                                `${newAttachments[fileName].content_type}" ` +
+                                `doesn't satisfy specified regular ` +
+                                `expression pattern "${pattern}" from type "` +
+                                `${type}"${pathDescription}.`
+                            )
                         let length:number = 0
                         if ('length' in newAttachments[fileName])
                             length = newAttachments[fileName].length
@@ -2041,17 +1858,13 @@ export class DatabaseHelper {
                             model[specialNames.attachment][type].minimumSize >
                                 length
                         )
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden:
-                                    'AttachmentMinimumSize: given attachment' +
-                                    ` size ${length} byte doesn't satisfy ` +
-                                    'specified minimum  of ' +
-                                    model[specialNames.attachment][type]
-                                        .minimumSize +
-                                    ` byte ${pathDescription}.`
-                            }
-                            /* eslint-enable no-throw-literal */
+                            throwError(
+                                'AttachmentMinimumSize: given attachment ' +
+                                `size ${length} byte doesn't satisfy ` +
+                                'specified minimum  of ' +
+                                model[specialNames.attachment][type].minimumSize +
+                                ` byte ${pathDescription}.`
+                            )
                         else if (
                             ![null, undefined].includes(
                                 model[specialNames.attachment][type]
@@ -2060,17 +1873,13 @@ export class DatabaseHelper {
                             model[specialNames.attachment][type].maximumSize <
                                 length
                         )
-                            /* eslint-disable no-throw-literal */
-                            throw {
-                                forbidden:
-                                    'AttachmentMaximumSize: given attachment' +
-                                    ` size ${length} byte doesn't satisfy ` +
-                                    'specified maximum of ' +
-                                    model[specialNames.attachment][type]
-                                        .maximumSize +
-                                    ` byte ${pathDescription}.`
-                            }
-                            /* eslint-enable no-throw-literal */
+                            throwError(
+                                'AttachmentMaximumSize: given attachment ' +
+                                `size ${length} byte doesn't satisfy ` +
+                                'specified maximum of ' +
+                                model[specialNames.attachment][type].maximumSize +
+                                ` byte ${pathDescription}.`
+                            )
                         aggregatedSize += length
                     }
                     if (
@@ -2081,37 +1890,32 @@ export class DatabaseHelper {
                         model[specialNames.attachment][type]
                             .minimumAggregatedSize > aggregatedSize
                     )
-                        /* eslint-disable no-throw-literal */
-                        throw {
-                            forbidden:
-                                'AttachmentAggregatedMinimumSize: given ' +
-                                ' aggregated size of attachments from type "' +
-                                `${type}" ${aggregatedSize} byte doesn't ` +
-                                'satisfy specified minimum of ' +
-                                model[specialNames.attachment][type]
-                                    .minimumAggregatedSize +
-                                ` byte ${pathDescription}.`
-                        }
-                        /* eslint-enable no-throw-literal */
+                        throwError(
+                            'AttachmentAggregatedMinimumSize: given ' +
+                            'aggregated size of attachments from type "' +
+                            `${type}" ${aggregatedSize} byte doesn't ` +
+                            'satisfy specified minimum of ' +
+                            model[specialNames.attachment][type]
+                                .minimumAggregatedSize +
+                            ` byte ${pathDescription}.`
+                        )
                     else if (
-                        ![null, undefined].includes(model[
-                            specialNames.attachment
-                        ][type].maximumAggregatedSize) &&
+                        ![null, undefined].includes(
+                            model[specialNames.attachment][type]
+                                .maximumAggregatedSize
+                        ) &&
                         model[specialNames.attachment][type]
                             .maximumAggregatedSize < aggregatedSize
                     )
-                        /* eslint-disable no-throw-literal */
-                        throw {
-                            forbidden:
-                                'AttachmentAggregatedMaximumSize: given ' +
-                                ' aggregated size of attachments from type "' +
-                                `${type}" ${aggregatedSize} byte doesn't ` +
-                                'satisfy specified maximum of ' +
-                                model[specialNames.attachment][type]
-                                    .maximumAggregatedSize +
-                                ` byte ${pathDescription}.`
-                        }
-                        /* eslint-enable no-throw-literal */
+                        throwError(
+                            'AttachmentAggregatedMaximumSize: given ' +
+                            'aggregated size of attachments from type "' +
+                            `${type}" ${aggregatedSize} byte doesn't ` +
+                            'satisfy specified maximum of ' +
+                            model[specialNames.attachment][type]
+                                .maximumAggregatedSize +
+                            ` byte ${pathDescription}.`
+                        )
                     sumOfAggregatedSizes += aggregatedSize
                 }
                 if (
@@ -2122,16 +1926,13 @@ export class DatabaseHelper {
                     model[specialNames.minimumAggregatedSize] >
                         sumOfAggregatedSizes
                 )
-                    /* eslint-disable no-throw-literal */
-                    throw {
-                        forbidden:
-                            'AggregatedMinimumSize: given aggregated size ' +
-                            `${sumOfAggregatedSizes} byte doesn't satisfy ` +
-                            'specified minimum of ' +
-                            model[specialNames.minimumAggregatedSize] +
-                            ` byte ${pathDescription}.`
-                    }
-                    /* eslint-enable no-throw-literal */
+                    throwError(
+                        'AggregatedMinimumSize: given aggregated size ' +
+                        `${sumOfAggregatedSizes} byte doesn't satisfy ` +
+                        'specified minimum of ' +
+                        model[specialNames.minimumAggregatedSize] +
+                        ` byte ${pathDescription}.`
+                    )
                 else if (
                     model.hasOwnProperty(specialNames.maximumAggregatedSize) &&
                     ![null, undefined].includes(model[
@@ -2140,16 +1941,13 @@ export class DatabaseHelper {
                     model[specialNames.maximumAggregatedSize] <
                     sumOfAggregatedSizes
                 )
-                    /* eslint-disable no-throw-literal */
-                    throw {
-                        forbidden:
-                            'AggregatedMaximumSize: given aggregated size ' +
-                            `${sumOfAggregatedSizes} byte doesn't satisfy ` +
-                            'specified maximum of ' +
-                                model[specialNames.maximumAggregatedSize] +
-                            ` byte ${pathDescription}.`
-                    }
-                    /* eslint-enable no-throw-literal */
+                    throwError(
+                        'AggregatedMaximumSize: given aggregated size ' +
+                        `${sumOfAggregatedSizes} byte doesn't satisfy ` +
+                        'specified maximum of ' +
+                            model[specialNames.maximumAggregatedSize] +
+                        ` byte ${pathDescription}.`
+                    )
             }
             // / endregion
             // endregion
@@ -2170,13 +1968,13 @@ export class DatabaseHelper {
                         !newDocument.hasOwnProperty(name)
                     )
                         changedPath = parentNames.concat(
-                            name, 'migrate removed property')
+                            name, 'migrate removed property'
+                        )
             return {changedPath, newDocument}
         }
         // endregion
-        const result:{
-            changedPath:Array<string>;newDocument:Document;
-        } = checkDocument(newDocument, oldDocument)
+        const result:{changedPath:Array<string>;newDocument:Document} =
+            checkDocument(newDocument, oldDocument)
         if (
             result.newDocument._deleted &&
             !oldDocument ||
@@ -2187,14 +1985,11 @@ export class DatabaseHelper {
                 result.changedPath.length
             )
         )
-            /* eslint-disable no-throw-literal */
-            throw {
-                forbidden:
-                    'NoChange: No new data given. new document: ' +
-                    `${serialize(newDocument)}; old document: ` +
-                    `${serialize(oldDocument)}.`
-            }
-            /* eslint-enable no-throw-literal */
+            throwError(
+                'NoChange: No new data given. new document: ' +
+                `${serialize(newDocument)}; old document: ` +
+                `${serialize(oldDocument)}.`
+            )
         if (securitySettings.hasOwnProperty(
             modelConfiguration.property.name.validatedDocumentsCache
         ))

@@ -236,6 +236,11 @@ export type DatabaseForbiddenError = {
 }
 export type DatabaseError = DatabaseAuthorisationError|DatabaseForbiddenError
 // / endregion
+export type EvaluationResult<Type = any> = {
+    code:string;
+    result:Type;
+    scope:object;
+}
 export type Service = BaseService & {
     name:'database';
     promise:null|Promise<ProcessCloseReason>;
