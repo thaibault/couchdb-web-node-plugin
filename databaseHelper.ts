@@ -391,7 +391,7 @@ export class DatabaseHelper {
                 return result
                 // endregion
             }
-            throwError(serialize(error), 'empty')
+            throwError('No expression to evaluate provided.', 'empty')
         }
         const checkDocument:Function = (
             newDocument:Document,
@@ -506,7 +506,7 @@ export class DatabaseHelper {
                             if (!error.hasOwnProperty('empty'))
                                 throw error
                         }
-                        if (!(result as EvaluationResult<boolean>).result) {
+                        if (!result!.result) {
                             const description:string = determineTrimmedString(
                                 propertySpecification[
                                     type as keyof PropertySpecification
@@ -517,11 +517,11 @@ export class DatabaseHelper {
                                 `${type.substring(1)}: ` +
                                 (description ?
                                     new Function(
-                                        ...Object.keys(result.scope),
+                                        ...Object.keys(result!.scope),
                                         `return ${description}`
-                                    )(...Object.values(result.scope)) :
+                                    )(...Object.values(result!.scope)) :
                                     `Property "${name}" should satisfy ` +
-                                    `constraint "${result.code}" (given "` +
+                                    `constraint "${result!.code}" (given "` +
                                     `${serialize(newValue)}")` +
                                     `${pathDescription}.`
                                 )
@@ -642,7 +642,7 @@ export class DatabaseHelper {
                             parseInt(newValue, 10) !== newValue
                         ) {
                             if (types.length === 1)
-                                throErrorw(
+                                throwError(
                                     `PropertyType: Property "${name}" isn't ` +
                                     'of (valid) type "${type}" (given "' +
                                     `${serialize(newValue)}" of type "` +
@@ -825,7 +825,7 @@ export class DatabaseHelper {
                         'onCreateExecution', 'onCreateExpression'
                     ])
                         if (propertySpecification.hasOwnProperty(type)) {
-                            let result:EvaluationResult|undefined
+                            let result:EvaluationResult
                             try {
                                 result = evaluate(
                                     propertySpecification[
@@ -864,8 +864,8 @@ export class DatabaseHelper {
                                 if (!error.hasOwnProperty('empty'))
                                     throw error
                             }
-                            if (![null, undefined].includes(result.result))
-                                newDocument[name] = result
+                            if (![null, undefined].includes(result!.result))
+                                newDocument[name] = result!.result
                         }
             }
             // / endregion
@@ -972,7 +972,7 @@ export class DatabaseHelper {
                     specialNames.create.expression
                 ])
                     if (model.hasOwnProperty(type)) {
-                        let result:EvaluationResult|undefined
+                        let result:Document|null|undefined
                         try {
                             result = evaluate(
                                 model[type],
@@ -1008,8 +1008,8 @@ export class DatabaseHelper {
                             if (!error.hasOwnProperty('empty'))
                                 throw error
                         }
-                        if (![null, undefined].includes(result))
-                            newDocument = result
+                        if (![null, undefined].includes(result as null))
+                            newDocument = result as Document
                         checkModelType()
                         modelName = newDocument[typeName]
                         if (parentNames.length === 0)
@@ -1021,7 +1021,7 @@ export class DatabaseHelper {
                 specialNames.update.execution, specialNames.update.expression
             ])
                 if (model.hasOwnProperty(type)) {
-                    let result:EvaluationResult|undefined
+                    let result:Document|null|undefined
                     try {
                         result = evaluate(
                             model[type],
@@ -1057,8 +1057,8 @@ export class DatabaseHelper {
                         if (!error.hasOwnProperty('empty'))
                             throw error
                     }
-                    if (![undefined, null].includes(result))
-                        newDocument = result
+                    if (![undefined, null].includes(result as null))
+                        newDocument = result as Document
                     checkModelType()
                     modelName = newDocument[typeName]
                     if (parentNames.length === 0)
@@ -1114,9 +1114,14 @@ export class DatabaseHelper {
                                             .data !== null &&
                                         new RegExp(type).test(fileName)
                                     )
+
+                            const propertySpecification:PropertySpecification =
+                                model[name][
+                                    type as keyof PropertySpecification
+                                ]
                             for (const fileName of newFileNames)
                                 runCreatePropertyHook(
-                                    model[name][type],
+                                    propertySpecification,
                                     newDocument[name],
                                     oldDocument && oldDocument[name] ?
                                         oldDocument[name] :
@@ -1125,18 +1130,18 @@ export class DatabaseHelper {
                                 )
                             for (const fileName of newFileNames)
                                 runUpdatePropertyHook(
-                                    model[name][type],
+                                    propertySpecification,
                                     newDocument[name],
                                     oldDocument && oldDocument[name] ?
                                         oldDocument[name] :
                                         null,
                                     fileName
                                 )
-                            if ([undefined, null].includes(
-                                model[name][type].default
+                            if ([null, undefined].includes(
+                                propertySpecification.default
                             )) {
                                 if (!(
-                                    model[name][type].nullable ||
+                                    propertySpecification.nullable ||
                                     newFileNames.length > 0 ||
                                     oldFileNames.length > 0
                                 ))
@@ -1151,43 +1156,55 @@ export class DatabaseHelper {
                                     oldFileNames.length > 0
                                 )
                                     for (const fileName of oldFileNames)
-                                        if (newDocument[name][
-                                            fileName
-                                        ] === null)
+                                        if (
+                                            newDocument[name][fileName] ===
+                                                null
+                                        )
                                             changedPath = parentNames.concat(
-                                                name, fileName, 'file removed')
+                                                name, fileName, 'file removed'
+                                            )
                                         else
-                                            newDocument[name][fileName] =
-                                                oldDocument[name][fileName]
+                                            newDocument[name][fileName] = (
+                                                oldDocument as Document
+                                            )[name][fileName]
                             } else if (newFileNames.length === 0)
                                 if (oldFileNames.length === 0) {
-                                    for (const fileName in model[name][
-                                        type
-                                    ].default)
-                                        if (model[name][
-                                            type
-                                        ].default.hasOwnProperty(fileName)) {
+                                    for (
+                                        const fileName in
+                                            propertySpecification.default
+                                    )
+                                        if (
+                                            propertySpecification.default
+                                                .hasOwnProperty(fileName)
+                                        ) {
                                             newDocument[name][fileName] =
-                                                model[name][type].default[
-                                                    fileName]
+                                                propertySpecification.default[
+                                                    fileName
+                                                ]
                                             changedPath = parentNames.concat(
-                                                name, type, 'add default file')
+                                                name, type, 'add default file'
+                                            )
                                         }
                                 } else if (updateStrategy === 'fillUp')
                                     for (const fileName of oldFileNames)
-                                        newDocument[name][fileName] =
-                                            oldDocument[name][fileName]
+                                        newDocument[name][fileName] = (
+                                            oldDocument as Document
+                                        )[name][fileName]
                         }
                     // endregion
                 } else {
                     const propertySpecification:PropertySpecification =
-                        specifiedPropertyNames.includes(name) ? model[name] :
-                        additionalPropertySpecification
+                        specifiedPropertyNames.includes(name) ?
+                            model[name] :
+                            additionalPropertySpecification as
+                                PropertySpecification
                     runCreatePropertyHook(
-                        propertySpecification, newDocument, oldDocument, name)
+                        propertySpecification, newDocument, oldDocument, name
+                    )
                     runUpdatePropertyHook(
-                        propertySpecification, newDocument, oldDocument, name)
-                    if ([undefined, null].includes(
+                        propertySpecification, newDocument, oldDocument, name
+                    )
+                    if ([null, undefined].includes(
                         propertySpecification.default
                     )) {
                         if (
@@ -1252,9 +1269,8 @@ export class DatabaseHelper {
                         ).includes(name) &&
                         (
                             oldDocument[name] === newDocument[name] ||
-                            serialize(
-                                oldDocument[name]
-                            ) === serialize(newDocument[name])
+                            serialize(oldDocument[name]) ===
+                                serialize(newDocument[name])
                         )
                     ) {
                         delete newDocument[name]
@@ -1275,7 +1291,7 @@ export class DatabaseHelper {
                         specialNames.strategy
                     ).includes(name)
                 ) {
-                    let propertySpecification:?PropertySpecification
+                    let propertySpecification:PropertySpecification|undefined
                     if (model.hasOwnProperty(name))
                         propertySpecification = model[name]
                     else if (additionalPropertySpecification)
@@ -1283,7 +1299,8 @@ export class DatabaseHelper {
                     else if (updateStrategy === 'migrate') {
                         delete newDocument[name]
                         changedPath = parentNames.concat(
-                            name, 'migrate removed property')
+                            name, 'migrate removed property'
+                        )
                         continue
                     } else
                         throwError(
@@ -1298,7 +1315,7 @@ export class DatabaseHelper {
                     const checkWriteableMutableNullable:Function = (
                         propertySpecification:PropertySpecification,
                         newDocument:Document,
-                        oldDocument?:Document,
+                        oldDocument:Document|null,
                         name:string
                     ):boolean => {
                         // region writable
@@ -1383,7 +1400,9 @@ export class DatabaseHelper {
                                         (new RegExp(type)).test(fileName)
                                     ) {
                                         checkWriteableMutableNullable(
-                                            model[name][type],
+                                            model[name][type as
+                                                keyof PropertySpecification
+                                            ],
                                             newDocument,
                                             oldDocument,
                                             fileName
@@ -1413,10 +1432,10 @@ export class DatabaseHelper {
                             )
                         else if (
                             ![null, undefined].includes(
-                                propertySpecification.minimumNumber
+                                propertySpecification.minimumNumber as null
                             ) &&
                             newDocument[name].length <
-                                propertySpecification.minimumNumber
+                                (propertySpecification.minimumNumber as number)
                         )
                             throwError(
                                 `MinimumArrayLength: Property "${name}" (` +
@@ -1427,9 +1446,9 @@ export class DatabaseHelper {
                             )
                         else if (
                             ![null, undefined].includes(
-                                propertySpecification.maximumNumber
+                                propertySpecification.maximumNumber as null
                             ) &&
-                            propertySpecification.maximumNumber <
+                            (propertySpecification.maximumNumber as number) <
                                 newDocument[name].length
                         )
                             throwError(
@@ -1460,28 +1479,34 @@ export class DatabaseHelper {
                                     if (Array.isArray(propertySpecification[
                                         key
                                     ]))
-                                        propertySpecificationCopy[key] =
-                                            propertySpecification[key][0]
+                                        propertySpecificationCopy[key] = (
+                                            propertySpecification[key] as
+                                                Array<string>
+                                        )[0]
                                     else
-                                        propertySpecificationCopy[key] = [
-                                            propertySpecification[key]
-                                                .substring(
-                                                    0,
-                                                    propertySpecification.type
-                                                        .length -
-                                                        '[]'.length
-                                                )
-                                        ]
+                                        propertySpecificationCopy[key] = [(
+                                            propertySpecification[key] as
+                                                string
+                                        ).substring(
+                                            0,
+                                            propertySpecification.type
+                                                .length -
+                                                '[]'.length
+                                        )]
                                 else
-                                    propertySpecificationCopy[key] =
-                                        propertySpecification[key]
+                                    propertySpecificationCopy[
+                                        key as keyof PropertySpecification
+                                    ] = propertySpecification[
+                                        key as keyof PropertySpecification
+                                    ]
+                        // TODO understand!
                         /*
                             Derive nested missing explicit type definition if
                             possible.
                         */
                         if (
-                            typeof propertySpecificationCopy.type.length ===
-                                1 &&
+                            propertySpecificationCopy.type &&
+                            propertySpecificationCopy.type.length === 1 &&
                             models.hasOwnProperty(
                                 propertySpecificationCopy.type[0]
                             )
@@ -1553,7 +1578,7 @@ export class DatabaseHelper {
                     for (const constraint of ([] as Array<Constraint>).concat(
                         model[type]
                     )) {
-                        let result:EvaluationResult<boolean>|undefined
+                        let result:EvaluationResult<boolean>
                         try {
                             result = evaluate(
                                 constraint.evaluation,
