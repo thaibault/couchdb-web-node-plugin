@@ -92,7 +92,8 @@ export class Helper {
         )
         try {
             const oldDocument:PlainObject = await databaseConnection.get(
-                `_design/${documentName}`)
+                `_design/${documentName}`
+            )
             newDocument._rev = oldDocument._rev
             await databaseConnection.put(newDocument)
             if (log)

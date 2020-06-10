@@ -1,4 +1,4 @@
-
+// -*- coding: utf-8 -*-
 'use strict'
 /* !
     region header
@@ -25,6 +25,8 @@ import {
 // endregion
 // region exports
 // / region database implementation
+export type FullAttachment = PouchDB.Core.FullAttachment
+export type StubAttachment = PouchDB.Core.StubAttachment
 export type Attachments = PouchDB.Core.Attachments
 export type ChangesStream<Type=any> = PouchDB.Core.Changes<Type>
 export type ChangesStreamOptions = PouchDB.Core.ChangesOptions
@@ -73,12 +75,14 @@ export type PropertySpecification = {
     invertedContentTypeRegularExpressionPattern?:null|string;
     invertedRegularExpressionPattern?:null|string;
     maximum?:null|number;
-    minimum?:null|number;
+    maximumAggregatedSize?:null|number;
     maximumLength?:null|number;
-    minimumLength?:null|number;
     maximumNumber?:null|number;
-    minimumNumber?:null|number;
     maximumSize?:null|number;
+    minimum?:null|number;
+    minimumAggregatedSize?:null|number;
+    minimumLength?:null|number;
+    minimumNumber?:null|number;
     minimumSize?:null|number;
     mutable?:boolean|null;
     nullable?:boolean|null;
@@ -95,10 +99,10 @@ export type PropertySpecification = {
 }
 export type Model = Mapping<PropertySpecification> & {
     _allowedRoles?:AllowedRoles|null;
-    _constraintExpressions?:Array<Constraint>|Constraint|null;
     _constraintExecutions?:Array<Constraint>|Constraint|null;
-    _createExpression?:null|string;
+    _constraintExpressions?:Array<Constraint>|Constraint|null;
     _createExecution?:null|string;
+    _createExpression?:null|string;
     _extends?:Array<string>|null|string;
     _maximumAggregatedSize?:null|number;
     _minimumAggregatedSize?:null|number;
@@ -173,7 +177,6 @@ export type UserContext = {
 export type DatabaseUserConfiguration = {
     names:Array<string>;
     roles:Array<string>;
-    _validatedDocuments?:Set<string>;
 }
 export type Runner = {
     adminUserConfigurationPath:string;
@@ -190,6 +193,7 @@ export type Runner = {
 export type SecuritySettings = {
     admins:DatabaseUserConfiguration;
     members:DatabaseUserConfiguration;
+    _validatedDocuments?:Set<string>;
 }
 export type Configuration = BaseConfiguration & {
     database:{
@@ -236,6 +240,10 @@ export type DatabaseForbiddenError = {
 }
 export type DatabaseError = DatabaseAuthorisationError|DatabaseForbiddenError
 // / endregion
+export type CheckedDocumentResult = {
+    changedPath:Array<string>;
+    newDocument:Document;
+}
 export type EvaluationResult<Type = any> = {
     code:string;
     result:Type;

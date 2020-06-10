@@ -19,14 +19,18 @@ import {
     AllowedModelRolesMapping,
     Attachments,
     BaseModelConfiguration,
+    CheckedDocumentResult,
+    Constraint,
     Document,
     EvaluationResult,
+    FullAttachment,
     Model,
     Models,
     NormalizedAllowedRoles,
     PropertySpecification,
     SecuritySettings,
     SpecialPropertyNames,
+    StubAttachment,
     Type,
     TypeSpecification,
     UserContext
@@ -258,7 +262,7 @@ export class DatabaseHelper {
             updateStrategy = newDocument[specialNames.strategy]
             delete newDocument[specialNames.strategy]
         }
-        let serialize:(value:any) => string
+        let serialize:(value:any) => string = (value:any) => `${value}`
         if (toJSON)
             serialize = toJSON
         else if (JSON && JSON.hasOwnProperty('stringify'))
@@ -397,7 +401,7 @@ export class DatabaseHelper {
             newDocument:Document,
             oldDocument?:Document,
             parentNames:Array<string> = []
-        ):Document => {
+        ):CheckedDocumentResult => {
             const pathDescription:string =
                 parentNames.length ? ` in ${parentNames.join(' -> ')}` : ''
             let changedPath:Array<string> = []
@@ -579,9 +583,7 @@ export class DatabaseHelper {
                             newValue.hasOwnProperty(typeName) &&
                             newValue[typeName] === type
                         ) {
-                            const result:{
-                                changedPath:Array<string>;newDocument:any
-                            } = checkDocument(
+                            const result:CheckedDocumentResult = checkDocument(
                                 newValue, oldValue, parentNames.concat(name)
                             )
                             if (result.changedPath.length)
@@ -1422,6 +1424,7 @@ export class DatabaseHelper {
                         propertySpecification.type.length &&
                         Array.isArray(propertySpecification.type[0])
                     ) {
+                        // region check arrays
                         if (!Array.isArray(newDocument[name]))
                             throwError(
                                 `PropertyType: Property "${name}" isn't of ` +
@@ -1471,6 +1474,7 @@ export class DatabaseHelper {
                                 'arrayConstraintExpression'
                             ]
                         )
+                        // / region check/migrate array content
                         const propertySpecificationCopy:PropertySpecification =
                             {}
                         for (const key in propertySpecification)
@@ -1499,10 +1503,11 @@ export class DatabaseHelper {
                                     ] = propertySpecification[
                                         key as keyof PropertySpecification
                                     ]
-                        // TODO understand!
+                        // // region add missing array item types
                         /*
                             Derive nested missing explicit type definition if
-                            possible.
+                            possible. Objects in arrays without explicit type
+                            definition will receive one.
                         */
                         if (
                             propertySpecificationCopy.type &&
@@ -1520,6 +1525,8 @@ export class DatabaseHelper {
                                 )
                                     value[typeName] =
                                         propertySpecificationCopy.type[0]
+                        // // endregion
+                        // // region check each array item
                         let index:number = 0
                         for (const value of newDocument[name].slice()) {
                             newDocument[name][index] = checkPropertyContent(
@@ -1531,6 +1538,7 @@ export class DatabaseHelper {
                                 newDocument[name].splice(index, 1)
                             index += 1
                         }
+                        // // endregion
                         if (!(
                             oldDocument &&
                             oldDocument.hasOwnProperty(name) &&
@@ -1541,7 +1549,10 @@ export class DatabaseHelper {
                                 serialize(newDocument[name])
                         ))
                             changedPath = parentNames.concat(
-                                name, 'array updated')
+                                name, 'array updated'
+                            )
+                        // / endregion
+                        // endregion
                     } else {
                         const oldValue:any =
                             oldDocument &&
@@ -1572,11 +1583,13 @@ export class DatabaseHelper {
             for (let type in specialNames.constraint)
                 if (
                     specialNames.constraint.hasOwnProperty(type) &&
-                    (type = specialNames.constraint[type]) &&
+                    (type = specialNames.constraint[
+                        type as keyof SpecialPropertyNames['constraint']]
+                    ) &&
                     model.hasOwnProperty(type)
                 )
                     for (const constraint of ([] as Array<Constraint>).concat(
-                        model[type]
+                        model[type as keyof Model] as Array<Constraint>
                     )) {
                         let result:EvaluationResult<boolean>
                         try {
@@ -1611,7 +1624,7 @@ export class DatabaseHelper {
                             if (!error.hasOwnProperty('empty'))
                                 throw error
                         }
-                        if (!result.result) {
+                        if (!result!.result) {
                             const errorName:string = type.replace(
                                 /^[^a-zA-Z]+/, ''
                             )
@@ -1621,12 +1634,12 @@ export class DatabaseHelper {
                                 (
                                     constraint.description ?
                                         new Function(
-                                            ...Object.keys(result.scope),
+                                            ...Object.keys(result!.scope),
                                             'return ' +
                                             constraint.description.trim()
-                                        )(...Object.values(result.scope)) :
+                                        )(...Object.values(result!.scope)) :
                                         `Model "${modelName}" should satisfy` +
-                                        ` constraint "${result.code}" (given` +
+                                        ` constraint "${result!.code}" (given` +
                                         ` "${serialize(newDocument)}")` +
                                         `${pathDescription}.`
                                 )
@@ -1662,20 +1675,25 @@ export class DatabaseHelper {
                                 if (newAttachments.hasOwnProperty(fileName))
                                     if (
                                         newAttachments[fileName] === null ||
-                                        newAttachments[fileName].data ===
-                                            null ||
+                                        (newAttachments[fileName] as
+                                            FullAttachment
+                                        ).data === null ||
                                         newAttachments[fileName]
                                             .content_type ===
                                                 oldAttachments[fileName]
                                                     .content_type &&
-                                        newAttachments[fileName].data ===
-                                            oldAttachments[fileName].data
+                                        (newAttachments[fileName] as
+                                            FullAttachment
+                                        ).data === (oldAttachments[fileName] as
+                                            FullAttachment
+                                        ).data
                                     ) {
                                         if (
                                             newAttachments[fileName] ===
                                                 null ||
-                                            newAttachments[fileName].data ===
-                                                null
+                                            (newAttachments[fileName] as
+                                                FullAttachment
+                                            ).data === null
                                         )
                                             changedPath = parentNames.concat(
                                                 specialNames.attachment,
@@ -1704,9 +1722,11 @@ export class DatabaseHelper {
                     if (newAttachments.hasOwnProperty(fileName))
                         if (
                             [null, undefined].includes(
-                                newAttachments[fileName]
+                                newAttachments[fileName] as unknown as null
                             ) ||
-                            newAttachments[fileName].data === null
+                            (
+                                newAttachments[fileName] as FullAttachment
+                            ).data === null
                         )
                             delete newAttachments[fileName]
                         else if (!(
@@ -1714,8 +1734,11 @@ export class DatabaseHelper {
                             oldAttachments.hasOwnProperty(fileName) &&
                             newAttachments[fileName].content_type ===
                                 oldAttachments[fileName].content_type &&
-                            newAttachments[fileName].data ===
-                                oldAttachments[fileName].data
+                            (
+                                newAttachments[fileName] as FullAttachment
+                            ).data === (
+                                oldAttachments[fileName] as FullAttachment
+                            ).data
                         ))
                             changedPath = parentNames.concat(
                                 specialNames.attachment,
@@ -1750,88 +1773,90 @@ export class DatabaseHelper {
                     }
                 let sumOfAggregatedSizes:number = 0
                 for (const type in attachmentToTypeMapping) {
+                    const specification:PropertySpecification =
+                        model[specialNames.attachment][
+                            type as keyof PropertySpecification
+                        ]
                     if (!attachmentToTypeMapping.hasOwnProperty(type))
                         continue
                     const numberOfAttachments:number =
                         attachmentToTypeMapping[type].length
                     if (
-                        model[specialNames.attachment][type].maximumNumber !==
-                            null &&
-                        numberOfAttachments > model[specialNames.attachment][
-                            type
-                        ].maximumNumber
+                        specification.maximumNumber !== null &&
+                        numberOfAttachments >
+                            (specification.maximumNumber as number)
                     )
                         throwError(
                             'AttachmentMaximum: given number of attachments ' +
                             `(${numberOfAttachments}) doesn't satisfy ` +
                             'specified maximum of ' +
-                            model[specialNames.attachment][type].maximumNumber +
-                            ` from type "${type}"${pathDescription}.`
+                            `${specification.maximumNumber} from type "` +
+                            `${type}"${pathDescription}.`
                         )
                     if (
                         !(
-                            model[specialNames.attachment][type].nullable &&
-                            numberOfAttachments === 0
+                            specification.nullable && numberOfAttachments === 0
                         ) &&
                         numberOfAttachments <
-                            model[specialNames.attachment][type].minimumNumber
+                            (specification.minimumNumber as number)
                     )
                         throwError(
                             'AttachmentMinimum: given number of attachments ' +
                             `(${numberOfAttachments}) doesn't satisfy ` +
                             'specified minimum of ' +
-                            model[specialNames.attachment][type].minimumNumber +
-                            ` from type "${type}"${pathDescription}.`
+                            `${specification.minimumNumber} from type "` +
+                            `${type}"${pathDescription}.`
                         )
                     let aggregatedSize:number = 0
                     for (const fileName of attachmentToTypeMapping[type]) {
                         if (!(
-                            [null, undefined].includes(model[
-                                specialNames.attachment
-                            ][type].regularExpressionPattern) ||
+                            [null, undefined].includes(
+                                specification.regularExpressionPattern as null
+                            ) ||
                             new RegExp(
-                                model[specialNames.attachment][type]
-                                    .regularExpressionPattern
+                                specification.regularExpressionPattern as
+                                    string
                             ).test(fileName)
                         ))
                             throwError(
                                 'AttachmentName: given attachment name "' +
                                 `${fileName}" doesn't satisfy specified ` +
                                 'regular expression pattern "' +
-                                model[specialNames.attachment][type]
-                                    .regularExpressionPattern +
+                                specification.regularExpressionPattern +
                                 `" from type "${type}"${pathDescription}.`
                             )
                         else if (!(
                             [null, undefined].includes(
-                                model[specialNames.attachment][type]
-                                    .invertedRegularExpressionPattern
+                                specification
+                                    .invertedRegularExpressionPattern as null
                             ) ||
-                            !(new RegExp(model[specialNames.attachment][
-                                type
-                            ].invertedRegularExpressionPattern))
-                                .test(fileName)
+                            !(new RegExp(
+                                specification
+                                    .invertedRegularExpressionPattern as string
+                            )).test(fileName)
                         ))
                             throwError(
                                 'InvertedAttachmentName: given attachment ' +
                                 `name "${fileName}" doesn't satisfy ` +
                                 'specified regular expression pattern "' +
-                                model[specialNames.attachment][type]
+                                specification
                                     .invertedRegularExpressionPattern +
                                 `" from type "${type}"${pathDescription}.`
                             )
                         else if (!(
                             [null, undefined].includes(
-                                model[specialNames.attachment][type]
-                                    .contentTypeRegularExpressionPattern
+                                specification
+                                    .contentTypeRegularExpressionPattern as
+                                        null
                             ) ||
                             newAttachments[fileName].hasOwnProperty(
                                 'content_type'
                             ) &&
                             newAttachments[fileName].content_type &&
                             new RegExp(
-                                model[specialNames.attachment][type]
-                                    .contentTypeRegularExpressionPattern
+                                specification
+                                    .contentTypeRegularExpressionPattern as
+                                        string
                             )
                                 .test(newAttachments[fileName].content_type)
                         ))
@@ -1841,22 +1866,20 @@ export class DatabaseHelper {
                                 `${newAttachments[fileName].content_type}" ` +
                                 `doesn't satisfy specified regular ` +
                                 'expression pattern "' +
-                                model[specialNames.attachment][type]
+                                specification
                                     .contentTypeRegularExpressionPattern +
                                 `" from type "${type}"${pathDescription}.`
                             )
-                        const pattern:?string =
-                            model[specialNames.attachment][type]
-                                .invertedContentTypeRegularExpressionPattern
+                        const pattern:null|string|undefined = specification
+                            .invertedContentTypeRegularExpressionPattern
                         if (!(
-                            [null, undefined].includes(pattern) ||
+                            [null, undefined].includes(pattern as null) ||
                             newAttachments[fileName].hasOwnProperty(
                                 'content_type'
                             ) &&
                             newAttachments[fileName].content_type &&
-                            !(new RegExp(pattern)).test(
-                                newAttachments[fileName].content_type
-                            )
+                            !(new RegExp(pattern as string))
+                                .test(newAttachments[fileName].content_type)
                         ))
                             throwError(
                                 'InvertedAttachmentContentType: given ' +
@@ -1868,87 +1891,88 @@ export class DatabaseHelper {
                             )
                         let length:number = 0
                         if ('length' in newAttachments[fileName])
-                            length = newAttachments[fileName].length
+                            length = (
+                                newAttachments[fileName] as StubAttachment
+                            ).length
                         else if ('data' in newAttachments[fileName])
                             if (Buffer && 'byteLength' in Buffer)
                                 length = Buffer.byteLength(
-                                    newAttachments[fileName].data, 'base64')
+                                    (newAttachments[fileName] as
+                                        FullAttachment
+                                    ).data as Buffer,
+                                    'base64'
+                                )
                             else
-                                length = newAttachments.data.length
+                                length = ((
+                                    newAttachments[fileName] as FullAttachment
+                                ).data as Buffer).length
                         if (
                             ![null, undefined].includes(
-                                model[specialNames.attachment][type]
-                                    .minimumSize
+                                specification.minimumSize as null
                             ) &&
-                            model[specialNames.attachment][type].minimumSize >
-                                length
+                            (specification.minimumSize as number) > length
                         )
                             throwError(
                                 'AttachmentMinimumSize: given attachment ' +
                                 `size ${length} byte doesn't satisfy ` +
                                 'specified minimum  of ' +
-                                model[specialNames.attachment][type].minimumSize +
-                                ` byte ${pathDescription}.`
+                                `${specification.minimumSize} byte ` +
+                                `${pathDescription}.`
                             )
                         else if (
                             ![null, undefined].includes(
-                                model[specialNames.attachment][type]
-                                    .maximumSize
+                                specification.maximumSize as null
                             ) &&
-                            model[specialNames.attachment][type].maximumSize <
-                                length
+                            (specification.maximumSize as number) < length
                         )
                             throwError(
                                 'AttachmentMaximumSize: given attachment ' +
                                 `size ${length} byte doesn't satisfy ` +
                                 'specified maximum of ' +
-                                model[specialNames.attachment][type].maximumSize +
-                                ` byte ${pathDescription}.`
+                                `${specification.maximumSize} byte ` +
+                                `${pathDescription}.`
                             )
                         aggregatedSize += length
                     }
                     if (
                         ![null, undefined].includes(
-                            model[specialNames.attachment][type]
-                                .minimumAggregatedSize
+                            specification.minimumAggregatedSize as null
                         ) &&
-                        model[specialNames.attachment][type]
-                            .minimumAggregatedSize > aggregatedSize
+                        (specification.minimumAggregatedSize as number) >
+                            aggregatedSize
                     )
                         throwError(
                             'AttachmentAggregatedMinimumSize: given ' +
                             'aggregated size of attachments from type "' +
                             `${type}" ${aggregatedSize} byte doesn't ` +
                             'satisfy specified minimum of ' +
-                            model[specialNames.attachment][type]
-                                .minimumAggregatedSize +
-                            ` byte ${pathDescription}.`
+                            `${specification.minimumAggregatedSize} byte ` +
+                            `${pathDescription}.`
                         )
                     else if (
                         ![null, undefined].includes(
-                            model[specialNames.attachment][type]
-                                .maximumAggregatedSize
+                            specification.maximumAggregatedSize as null
                         ) &&
-                        model[specialNames.attachment][type]
-                            .maximumAggregatedSize < aggregatedSize
+                        (specification.maximumAggregatedSize as number) <
+                            aggregatedSize
                     )
                         throwError(
                             'AttachmentAggregatedMaximumSize: given ' +
                             'aggregated size of attachments from type "' +
                             `${type}" ${aggregatedSize} byte doesn't ` +
                             'satisfy specified maximum of ' +
-                            model[specialNames.attachment][type]
-                                .maximumAggregatedSize +
-                            ` byte ${pathDescription}.`
+                            `${specification.maximumAggregatedSize} byte ` +
+                            `${pathDescription}.`
                         )
                     sumOfAggregatedSizes += aggregatedSize
                 }
                 if (
                     model.hasOwnProperty(specialNames.minimumAggregatedSize) &&
-                    ![null, undefined].includes(model[
-                        specialNames.minimumAggregatedSize
-                    ]) &&
-                    model[specialNames.minimumAggregatedSize] >
+                    ![null, undefined].includes(
+                        model[specialNames.minimumAggregatedSize] as
+                            unknown as null
+                    ) &&
+                    (model[specialNames.minimumAggregatedSize] as number) >
                         sumOfAggregatedSizes
                 )
                     throwError(
@@ -1960,18 +1984,19 @@ export class DatabaseHelper {
                     )
                 else if (
                     model.hasOwnProperty(specialNames.maximumAggregatedSize) &&
-                    ![null, undefined].includes(model[
-                        specialNames.maximumAggregatedSize
-                    ]) &&
-                    model[specialNames.maximumAggregatedSize] <
-                    sumOfAggregatedSizes
+                    ![null, undefined].includes(
+                        model[specialNames.maximumAggregatedSize] as
+                            unknown as null
+                    ) &&
+                    (model[specialNames.maximumAggregatedSize] as number) <
+                        sumOfAggregatedSizes
                 )
                     throwError(
                         'AggregatedMaximumSize: given aggregated size ' +
                         `${sumOfAggregatedSizes} byte doesn't satisfy ` +
                         'specified maximum of ' +
-                            model[specialNames.maximumAggregatedSize] +
-                        ` byte ${pathDescription}.`
+                        `${model[specialNames.maximumAggregatedSize]} byte ` +
+                        `${pathDescription}.`
                     )
             }
             // / endregion
@@ -1998,7 +2023,7 @@ export class DatabaseHelper {
             return {changedPath, newDocument}
         }
         // endregion
-        const result:{changedPath:Array<string>;newDocument:Document} =
+        const result:CheckedDocumentResult =
             checkDocument(newDocument, oldDocument)
         if (
             result.newDocument._deleted &&
@@ -2018,13 +2043,15 @@ export class DatabaseHelper {
         if (securitySettings.hasOwnProperty(
             modelConfiguration.property.name.validatedDocumentsCache
         ))
-            securitySettings[
-                modelConfiguration.property.name.validatedDocumentsCache
-            ].add(`${id}-${revision}`)
+            (securitySettings[
+                modelConfiguration.property.name.validatedDocumentsCache as
+                    keyof SecuritySettings
+            ] as Set<string>).add(`${id}-${revision}`)
         else
-            securitySettings[
-                modelConfiguration.property.name.validatedDocumentsCache
-            ] = new Set([`${id}-${revision}`])
+            (securitySettings[
+                modelConfiguration.property.name.validatedDocumentsCache as
+                    keyof SecuritySettings
+            ] as Set<string>) = new Set([`${id}-${revision}`])
         return result.newDocument
     }
 }
