@@ -558,7 +558,7 @@ export class Database implements PluginHandler {
                         } catch (error) {
                             throw new Error(
                                 `Running migrater "${name}" in document ` +
-                                Helper.determineRepresentation(
+                                Helper.mayStripRepresentation(
                                     document,
                                     configuration.database
                                         .maximumRepresentationTryLength,
@@ -623,7 +623,7 @@ export class Database implements PluginHandler {
                             if (!error.forbidden.startsWith('NoChange:'))
                                 console.warn(
                                     `Document "` +
-                                    Helper.determineRepresentation(
+                                    Helper.mayStripRepresentation(
                                         document,
                                         configuration.database
                                             .maximumRepresentationTryLength,

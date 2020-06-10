@@ -42,10 +42,10 @@ describe('helper', ():void => {
                 a: 2,
             ...`.replace(/ {16}/g, '')
         ]
-    ])('determineRepresentation()', ():void => {
+    ])('mayStripRepresentation()', ():void => {
         for (const test:Array<any> of )
             assert.strictEqual(
-                Helper.determineRepresentation(test[0], test[1], test[2]),
+                Helper.mayStripRepresentation(test[0], test[1], test[2]),
                 test[3]
             )
     })

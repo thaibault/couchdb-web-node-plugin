@@ -27,6 +27,7 @@ import {
     AllowedModelRolesMapping,
     AllowedRoles,
     Configuration,
+    Document,
     Model,
     ModelConfiguration,
     Models,
@@ -50,19 +51,18 @@ export class Helper {
      * representation.
      * @returns Representation string.
      */
-    static determineRepresentation(
-        data:PlainObject,
+    static mayStripRepresentation(
+        object:any,
         maximumRepresentationTryLength:number,
         maximumRepresentationLength:number
     ):string {
-        let representation:string = Tools.represent(data)
+        let representation:string = Tools.represent(object)
         if (representation.length <= maximumRepresentationTryLength) {
             if (representation.length > maximumRepresentationLength)
-                representation =
-                    representation.substring(
-                        0, maximumRepresentationLength - '...'.length
-                    ) +
-                    '...'
+                return representation.substring(
+                    0, maximumRepresentationLength - '...'.length
+                ) +
+                '...'
         } else
             return 'DOCUMENT IS TOO BIG TO REPRESENT'
         return representation
