@@ -13,6 +13,7 @@
     endregion
 */
 // region imports
+import {ChildProcess} from 'child_process'
 import {Mapping, PlainObject, ProcessCloseReason} from 'clientnode/type'
 import PouchDB from 'pouchdb'
 import {
@@ -30,10 +31,12 @@ export type StubAttachment = PouchDB.Core.StubAttachment
 export type Attachments = PouchDB.Core.Attachments
 export type ChangesStream<Type=any> = PouchDB.Core.Changes<Type>
 export type ChangesStreamOptions = PouchDB.Core.ChangesOptions
+export type Connection = PouchDB
 export type Connector = PouchDB.Static
 export type DatabaseError = PouchDB.Core.Error
 export type IdMeta = PouchDB.Core.IdMeta
 export type Index = PouchDB.Find.Index
+export type DatabaseResponse = PouchDB.Core.Response
 export type RevisionIdMeta = PouchDB.Core.RevisionIdMeta
 export type ConnectorConfiguration =
     PouchDB.Core.Configuration.RemoteDatabaseConfiguration
@@ -128,6 +131,7 @@ export type SpecialPropertyNames = {
     };
     deleted:string;
     deletedConflict:string;
+    designDocumentNamePrefix:string;
     extend:string;
     id:string;
     localSequence:string;
@@ -180,13 +184,13 @@ export type DatabaseUserConfiguration = {
 }
 export type Runner = {
     adminUserConfigurationPath:string;
-    arguments?:Array<string>;
-    binaryFilePath?:string;
-    configurationFile?:{
+    arguments?:Array<string>|null|string;
+    binaryFilePath?:null|string;
+    configurationFile?:null|{
         content:string;
         path:string;
     };
-    environment?:PlainObject;
+    environment?:null|PlainObject;
     location:Array<string>|string;
     name:Array<string>|string;
 }
@@ -255,8 +259,10 @@ export type Service = BaseService & {
 }
 export type Services = BaseServices & {
     database:{
+        connection:Connection;
         connector:Connector;
         server:{
+            process:ChildProcess;
             reject:Function;
             resolve:Function;
             restart:(

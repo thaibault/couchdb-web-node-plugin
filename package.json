@@ -349,6 +349,7 @@
               },
               "deleted": "_deleted",
               "deletedConflict": "_deleted_conflicts",
+              "designDocumentNamePrefix": "_design/",
               "extend": "_extends",
               "id": "_id",
               "localSequence": "_local_seq",

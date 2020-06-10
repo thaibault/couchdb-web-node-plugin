@@ -384,7 +384,11 @@ export class Database implements PluginHandler {
                         validate_doc_update: code
                         /* eslint-enable camelcase */
                     },
-                    type.description
+                    type.description,
+                    true,
+                    idName,
+                    modelConfiguration.property.name.special
+                        .designDocumentNamePrefix
                 )
             }
             // endregion
@@ -969,7 +973,7 @@ export class Database implements PluginHandler {
         }
         if (!services.database.hasOwnProperty('server')) {
             services.database.server = {}
-            // re gion search for binary file to start database server
+            // region search for binary file to start database server
             const triedPaths:Array<string> = []
             for (const runner of [].concat(
                 configuration.database.binary.runner
