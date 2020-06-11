@@ -15,7 +15,7 @@
 // region imports
 import {spawn as spawnChildProcess} from 'child_process'
 import Tools, {CloseEventNames} from 'clientnode'
-import {Mapping} from 'clientnode/type'
+import {Mapping, ProcessCloseReason} from 'clientnode/type'
 import {promises as fileSystem} from 'fs'
 // NOTE: Remove when "fetch" is supported by node.
 import fetch from 'node-fetch'
@@ -34,6 +34,7 @@ import {
     ModelConfiguration,
     Models,
     NormalizedAllowedRoles,
+    RevisionIDMeta,
     Services,
     SpecialPropertyNames
 } from './type'
@@ -159,11 +160,12 @@ export class Helper {
             "post" call so we have to wrap runtime generated methods.
         */
         for (const pluginName of ['post', 'put']) {
-            const nativeMethod:Function =
-                services.database.connection[pluginName].bind(
-                    services.database.connection
-                )
-            services.database.connection[pluginName] = async function(
+            const nativeMethod:Function = services.database.connection[
+                pluginName as 'get'|'post'
+            ].bind(services.database.connection)
+            services.database.connection[
+                pluginName as 'get'|'post'
+            ] = async function(
                 firstParameter:any, ...parameter:Array<any>
             ):Promise<any> {
                 try {
@@ -188,7 +190,9 @@ export class Helper {
                                     firstParameter[revisionName]
                                 ) ?
                                     firstParameter[revisionName] :
-                                    (await this.get(result.id))[revisionName]
+                                    (await this.get(result.id))[
+                                        revisionName as keyof RevisionIDMeta
+                                    ]
                         } catch (error) {
                             throw error
                         }
@@ -278,7 +282,10 @@ export class Helper {
                 stdio: 'inherit'
             }
         );
-        (new Promise((resolve:Function, reject:Function):void => {
+        (new Promise(
+            resolve:(reason:ProcessCloseReason) => void,
+            reject:(reason:ProcessError) => void
+        ):void => {
             for (const closeEventName of CloseEventNames)
                 services.database.server.process.on(
                     closeEventName,
@@ -286,8 +293,8 @@ export class Helper {
                         resolve,
                         reject,
                         {
-                            reason: closeEventName,
-                            process: services.database.server.process
+                            process: services.database.server.process,
+                            reason: closeEventName
                         }
                     )
                 )

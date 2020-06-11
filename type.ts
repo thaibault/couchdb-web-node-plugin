@@ -26,20 +26,21 @@ import {
 // endregion
 // region exports
 // / region database implementation
-export type FullAttachment = PouchDB.Core.FullAttachment
-export type StubAttachment = PouchDB.Core.StubAttachment
 export type Attachments = PouchDB.Core.Attachments
 export type ChangesStream<Type=any> = PouchDB.Core.Changes<Type>
 export type ChangesStreamOptions = PouchDB.Core.ChangesOptions
-export type Connection = PouchDB
+export type Connection = PouchDB.Database
 export type Connector = PouchDB.Static
-export type DatabaseError = PouchDB.Core.Error
-export type IdMeta = PouchDB.Core.IdMeta
-export type Index = PouchDB.Find.Index
-export type DatabaseResponse = PouchDB.Core.Response
-export type RevisionIdMeta = PouchDB.Core.RevisionIdMeta
 export type ConnectorConfiguration =
-    PouchDB.Core.Configuration.RemoteDatabaseConfiguration
+    PouchDB.Configuration.RemoteDatabaseConfiguration
+export type DatabaseError = PouchDB.Core.Error
+export type DatabaseResponse = PouchDB.Core.Response
+export type FullAttachment = PouchDB.Core.FullAttachment
+export type IDMeta = PouchDB.Core.IdMeta
+export type RevisionIDMeta = PouchDB.Core.RevisionIdMeta
+export type Index = PouchDB.Find.Index
+export type RevisionIdMeta = PouchDB.Core.RevisionIdMeta
+export type StubAttachment = PouchDB.Core.StubAttachment
 // / endregion
 // / region model
 export type AllowedRoles = Array<string>|string|{
@@ -232,17 +233,6 @@ export type Configuration = BaseConfiguration & {
         }
     }
 }
-// / endregion
-// / region database error
-export type DatabaseAuthorisationError = {
-    toString:() => string;
-    unauthorized:string;
-}
-export type DatabaseForbiddenError = {
-    forbidden:string;
-    toString:() => string;
-}
-export type DatabaseError = DatabaseAuthorisationError|DatabaseForbiddenError
 // / endregion
 export type CheckedDocumentResult = {
     changedPath:Array<string>;
