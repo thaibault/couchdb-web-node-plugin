@@ -115,7 +115,7 @@ export type Model = Mapping<PropertySpecification> & {
     _onUpdateExpression?:null|string;
 }
 export type Models = Mapping<Model>
-export type Document = IdMeta & Mapping<any> & RevisionIdMeta
+export type Document = IDMeta & PlainObject & RevisionIDMeta
 export type UpdateStrategy = ''|'fillUp'|'incremental'|'migrate'
 export type SpecialPropertyNames = {
     additional:string;
