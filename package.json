@@ -53,7 +53,6 @@
     "watch": "webOptimizer build --watch"
   },
   "dependencies": {
-    "node-fetch": "*",
     "pouchdb": "*",
     "pouchdb-find": "*",
     "pouchdb-server": "*"
@@ -63,6 +62,7 @@
     "@types/jest": "*",
     "@types/loader-utils": "*",
     "@types/node": "*",
+    "@types/node-fetch": "*",
     "@types/pouchdb": "*",
     "@typescript-eslint/eslint-plugin": "*",
     "@typescript-eslint/parser": "*",
@@ -74,6 +74,7 @@
     "eslint-plugin-jsdoc": "*",
     "jest": "*",
     "jsdoc": "*",
+    "node-fetch": "*",
     "rimraf": "*",
     "web-node": "*",
     "weboptimizer": "*",
@@ -84,6 +85,7 @@
   "peerDependencies": {
     "@babel/runtime": "*",
     "clientnode": "*",
+    "node-fetch": "*",
     "request": "*",
     "web-node": "*"
   },

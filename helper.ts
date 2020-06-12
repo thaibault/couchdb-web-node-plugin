@@ -15,9 +15,10 @@
 // region imports
 import {spawn as spawnChildProcess} from 'child_process'
 import Tools, {CloseEventNames} from 'clientnode'
-import {Mapping, ProcessCloseReason} from 'clientnode/type'
+import {
+    Mapping, ProcessCloseCallback, ProcessErrorCallback
+} from 'clientnode/type'
 import {promises as fileSystem} from 'fs'
-// NOTE: Remove when "fetch" is supported by node.
 import fetch from 'node-fetch'
 import path from 'path'
 import {PluginAPI} from 'web-node'
@@ -39,8 +40,6 @@ import {
     SpecialPropertyNames
 } from './type'
 // endregion
-// NOTE: Remove when "fetch" is supported by node.
-global.fetch = fetch
 // region classes
 /**
  * A dumm plugin interface with all available hooks.
@@ -282,9 +281,8 @@ export class Helper {
                 stdio: 'inherit'
             }
         );
-        (new Promise(
-            resolve:(reason:ProcessCloseReason) => void,
-            reject:(reason:ProcessError) => void
+        (new Promise((
+            resolve:ProcessCloseCallback, reject:ProcessErrorCallback
         ):void => {
             for (const closeEventName of CloseEventNames)
                 services.database.server.process.on(
@@ -314,7 +312,8 @@ export class Helper {
                     services.database.server.resolve
                 )
                     services.database.server.reject.apply(this, parameter)
-            })
+            }
+        )
         await Tools.checkReachability(
             Tools.stringFormat(configuration.database.url, ''), true
         )
