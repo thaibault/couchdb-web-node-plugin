@@ -72,6 +72,7 @@ export class DatabaseHelper {
         allowedModelRolesMapping?:AllowedModelRolesMapping,
         idPropertyName:string = '_id',
         typePropertyName:string = '-type',
+        designDocumentNamePrefix:string = '_design/',
         read = false
     ):true {
         /*
@@ -91,7 +92,10 @@ export class DatabaseHelper {
         }
         if (
             newDocument.hasOwnProperty(idPropertyName) &&
-            newDocument[idPropertyName].startsWith('_design/')
+            (newDocument[idPropertyName] as string).startsWith(
+                modelConfiguration.property.name.special
+                    .designDocumentNamePrefix
+            )
         )
             allowedRoles.read.push('readonlymember')
         let userRolesDescription:string = `Current user doesn't own any role`

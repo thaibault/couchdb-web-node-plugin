@@ -351,7 +351,10 @@ export class Database implements PluginHandler {
                                 configuration.database.model
                             )
                         ) +
-                        `, '${idName}', '${typeName}'`
+                        `, '${idName}', '${typeName}', '` +
+                        configuration.database.model.property.name
+                            .designDocumentNamePrefix +
+                        `'`
                 }
             ]) {
                 /*
