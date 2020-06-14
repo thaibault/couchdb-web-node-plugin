@@ -117,6 +117,8 @@ export type Model = Mapping<PropertySpecification> & {
     _onUpdateExpression?:null|string;
 }
 export type Models = Mapping<Model>
+export type DocumentContent =
+    Array<DocumentContent>|PlainObject<Primitive>|Primitive
 export type DocumentStrategyMeta = {_updateStrategy?:string}
 export type DocumentTypeMeta = {'-type':string}
 export type Document =

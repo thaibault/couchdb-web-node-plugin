@@ -20,7 +20,7 @@
 import Tools from 'clientnode'
 import {File, ProcessCloseReason} from 'clientnode/type'
 import {promises as fileSystem} from 'fs'
-import {Response} from 'node-fetch'
+import fetch, {Response as FetchResponse} from 'node-fetch'
 import path from 'path'
 import PouchDB from 'pouchdb'
 import PouchDBFindPlugin from 'pouchdb-find'
@@ -31,7 +31,7 @@ import DatabaseHelper from './databaseHelper'
 import Helper from './helper'
 import {
     Configuration,
-    Connector,
+    Connection,
     Constraint,
     DatabaseError,
     Document,
@@ -101,7 +101,7 @@ export class Database implements PluginHandler {
         )
         // region ensure presence of global admin user
         if (configuration.database.ensureAdminPresence) {
-            const unauthenticatedUserDatabaseConnection:Connector =
+            const unauthenticatedUserDatabaseConnection:Connection =
                 new services.database.connector(
                     `${Tools.stringFormat(configuration.database.url, '')}/` +
                         `_users`,
@@ -129,7 +129,7 @@ export class Database implements PluginHandler {
                     error.hasOwnProperty('name') &&
                     error.name === 'unauthorized'
                 ) {
-                    const authenticatedUserDatabaseConnection:Connector =
+                    const authenticatedUserDatabaseConnection:Connection =
                         new services.database.connector(
                             `${urlPrefix}/_users`,
                             configuration.database.connector
@@ -158,11 +158,12 @@ export class Database implements PluginHandler {
         // endregion
         // region ensure presence of regular users
         if (configuration.database.ensureUserPresence)
-            for (const type of ['admins', 'members'])
-                for (
-                    const name of configuration.database.security[type].names
-                ) {
-                    const userDatabaseConnection:Connector =
+            for (const type of [
+                configuration.database.security.admins,
+                configuration.database.security.members
+            ])
+                for (const name of type.names) {
+                    const userDatabaseConnection:Connection =
                         new services.database.connector(
                             `${urlPrefix}/_users`,
                             configuration.database.connector
@@ -184,10 +185,10 @@ export class Database implements PluginHandler {
                                     ]: `org.couchdb.user:${name}`,
                                     name,
                                     password: name,
-                                    roles: [].concat(
-                                        configuration.database.security[type]
-                                            .roles.includes(`${name}s`) ?
-                                            `${name}s` : []
+                                    roles: ([] as Array<string>).concat(
+                                        type.roles.includes(`${name}s`) ?
+                                            `${name}s` :
+                                            []
                                     ),
                                     type: 'user'
                                 })
@@ -225,7 +226,7 @@ export class Database implements PluginHandler {
                             configuration.database.backend.configuration[
                                 subPath
                             ]
-                        let response:null|Response = null
+                        let response:FetchResponse|undefined
                         try {
                             response = await fetch(url)
                         } catch (error) {
@@ -235,56 +236,62 @@ export class Database implements PluginHandler {
                                 ` be determined: ${Tools.represent(error)}`
                             )
                         }
-                        if (response && response.ok) {
-                            let changeNeeded:boolean = true
-                            if (typeof response.text === 'function')
-                                try {
-                                    changeNeeded = (value === await response[
-                                        typeof value === 'string' ?
-                                            'text' :
-                                            'json'
-                                    ]())
-                                } catch (error) {
-                                    console.warn(
-                                        'Error checking curent value of ' +
-                                        `"${fullPath}" to be "` +
-                                        `${Tools.represent(value)}": ` +
-                                        Tools.represent(error)
+                        if (response)
+                            if (response.ok) {
+                                let changeNeeded:boolean = true
+                                if (typeof response.text === 'function')
+                                    try {
+                                        changeNeeded = (
+                                            value === await response[
+                                                typeof value === 'string' ?
+                                                    'text' :
+                                                    'json'
+                                            ]()
+                                        )
+                                    } catch (error) {
+                                        console.warn(
+                                            'Error checking curent value of ' +
+                                            `"${fullPath}" to be "` +
+                                            `${Tools.represent(value)}": ` +
+                                            Tools.represent(error)
+                                        )
+                                    }
+                                if (changeNeeded)
+                                    try {
+                                        await fetch(
+                                            url,
+                                            {
+                                                body:
+                                                    '"' +
+                                                    configuration.database
+                                                        .backend.configuration[
+                                                            subPath
+                                                        ] +
+                                                    '"',
+                                                method: 'PUT'
+                                            }
+                                        )
+                                    } catch (error) {
+                                        console.error(
+                                            `Configuration "${fullPath}" ` +
+                                            `couldn't be applied to "` +
+                                            `${Tools.represent(value)}": ` +
+                                            Tools.represent(error)
+                                        )
+                                    }
+                                else
+                                    console.info(
+                                        `Configuration "${fullPath}" is ` +
+                                        'already set to desired value "' +
+                                        `${Tools.represent(value)}".`
                                     )
-                                }
-                            if (changeNeeded)
-                                try {
-                                    await fetch(
-                                        url,
-                                        {
-                                            body:
-                                                '"' +
-                                                configuration.database.backend
-                                                    .configuration[subPath] +
-                                                '"',
-                                            method: 'PUT'
-                                        }
-                                    )
-                                } catch (error) {
-                                    console.error(
-                                        `Configuration "${fullPath}" ` +
-                                        `couldn't be applied to "` +
-                                        `${Tools.represent(value)}": ` +
-                                        Tools.represent(error)
-                                    )
-                                }
-                            else
+                            } else
                                 console.info(
-                                    `Configuration "${fullPath}" is already ` +
-                                    'set to desired value "' +
-                                    `${Tools.represent(value)}".`
+                                    `Configuration "${fullPath}" does not ` +
+                                    `exist (desired value "` +
+                                    `${Tools.represent(value)}"). Response ` +
+                                    `code is ${response.status}.`
                                 )
-                        } else
-                            console.info(
-                                `Configuration "${fullPath}" does not exist ` +
-                                `(desired value "${Tools.represent(value)}")` +
-                                `. Response code is ${response.status}.`
-                            )
                     }
         // endregion
         await Helper.initializeConnection(services, configuration)
@@ -352,7 +359,7 @@ export class Database implements PluginHandler {
                             )
                         ) +
                         `, '${idName}', '${typeName}', '` +
-                        configuration.database.model.property.name
+                        configuration.database.model.property.name.special
                             .designDocumentNamePrefix +
                         `'`
                 }

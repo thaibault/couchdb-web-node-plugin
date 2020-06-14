@@ -13,7 +13,7 @@
     endregion
 */
 // region imports
-import {Mapping, ProcedureFunction} from 'clientnode/type'
+import {Mapping, PlainObject, ProcedureFunction} from 'clientnode/type'
 
 import {
     AllowedModelRolesMapping,
@@ -22,6 +22,7 @@ import {
     CheckedDocumentResult,
     Constraint,
     Document,
+    DocumentContent,
     EvaluationResult,
     FullAttachment,
     Model,
@@ -894,7 +895,8 @@ export class DatabaseHelper {
                 if (propertySpecification.emptyEqualsToNull && (
                     newDocument[name] === '' ||
                     Array.isArray(newDocument[name]) &&
-                    (newDocument[name] as Array<object>).length === 0 ||
+                    (newDocument[name] as Array<DocumentContent>).length ===
+                        0 ||
                     typeof newDocument[name] === 'object' &&
                     newDocument[name] !== null &&
                     Object.keys(newDocument).length === 0
@@ -1367,14 +1369,16 @@ export class DatabaseHelper {
                             oldDocument &&
                             oldDocument.hasOwnProperty(name)
                         )
-                            if (serialize(newDocument[name]) === serialize(
-                                oldDocument[name]
-                            )) {
+                            if (
+                                serialize(newDocument[name]) ===
+                                    serialize(oldDocument[name])
+                            ) {
                                 if (
                                     updateStrategy === 'incremental' &&
                                     !modelConfiguration.property.name.reserved
                                         .concat(
-                                            specialNames.deleted, idName,
+                                            specialNames.deleted,
+                                            idName,
                                             revisionName
                                         ).includes(name)
                                 )
@@ -1397,7 +1401,8 @@ export class DatabaseHelper {
                                     oldDocument.hasOwnProperty(name)
                                 )
                                     changedPath = parentNames.concat(
-                                        name, 'delete property')
+                                        name, 'delete property'
+                                    )
                                 return true
                             } else
                                 throwError(
@@ -1408,10 +1413,10 @@ export class DatabaseHelper {
                         return false
                     }
                     if (specialNames.attachment === name) {
-                        for (
-                            const fileName in newDocument[name] as Attachments
-                        )
-                            if (newDocument[name].hasOwnProperty(fileName))
+                        const attachments:Attachments =
+                            newDocument[name] as Attachments
+                        for (const fileName in attachments)
+                            if (attachments.hasOwnProperty(fileName))
                                 for (const type in model[name])
                                     if (
                                         model[name].hasOwnProperty(type) &&
@@ -1440,26 +1445,28 @@ export class DatabaseHelper {
                         propertySpecification.type.length &&
                         Array.isArray(propertySpecification.type[0])
                     ) {
+                        const newProperty:Array<DocumentContent> =
+                            newDocument[name] as Array<DocumentContent>
                         // region check arrays
-                        if (!Array.isArray(newDocument[name]))
+                        if (!Array.isArray(newProperty))
                             throwError(
                                 `PropertyType: Property "${name}" isn't of ` +
                                 `type "array -> ` +
                                 `${propertySpecification.type}" (given "` +
-                                `${serialize(newDocument[name])}")` +
+                                `${serialize(newProperty)}")` +
                                 `${pathDescription}.`
                             )
                         else if (
                             ![null, undefined].includes(
                                 propertySpecification.minimumNumber as null
                             ) &&
-                            newDocument[name].length <
+                            (newProperty).length <
                                 (propertySpecification.minimumNumber as number)
                         )
                             throwError(
                                 `MinimumArrayLength: Property "${name}" (` +
-                                `array of length ${newDocument[name].length}` +
-                                `) doesn't fullfill minimum array length of ` +
+                                `array of length ${newProperty.length}) ` +
+                                `doesn't fullfill minimum array length of ` +
                                 propertySpecification.minimumNumber +
                                 `${pathDescription}.`
                             )
@@ -1468,17 +1475,17 @@ export class DatabaseHelper {
                                 propertySpecification.maximumNumber as null
                             ) &&
                             (propertySpecification.maximumNumber as number) <
-                                newDocument[name].length
+                                newProperty.length
                         )
                             throwError(
                                 `MaximumArrayLength: Property "${name}" (` +
-                                `array of length ${newDocument[name].length}` +
-                                `) doesn't fullfill maximum array length of ` +
+                                `array of length ${newProperty.length}) ` +
+                                `doesn't fullfill maximum array length of ` +
                                 propertySpecification.maximumNumber +
                                 `${pathDescription}.`
                             )
                         checkPropertyConstraints(
-                            newDocument[name],
+                            newProperty,
                             name,
                             propertySpecification,
                             oldDocument &&
@@ -1532,26 +1539,28 @@ export class DatabaseHelper {
                                 propertySpecificationCopy.type[0]
                             )
                         )
-                            for (const value of newDocument[name].slice())
+                            for (const value of newProperty.slice())
                                 if (
                                     typeof value === 'object' &&
                                     Object.getPrototypeOf(value) ===
                                         Object.prototype &&
-                                    !value.hasOwnProperty(typeName)
+                                    !(value as PlainObject).hasOwnProperty(
+                                        typeName
+                                    )
                                 )
-                                    value[typeName] =
+                                    (value as PlainObject)[typeName] =
                                         propertySpecificationCopy.type[0]
                         // // endregion
                         // // region check each array item
                         let index:number = 0
-                        for (const value of newDocument[name].slice()) {
-                            newDocument[name][index] = checkPropertyContent(
+                        for (const value of newProperty.slice()) {
+                            newProperty[index] = checkPropertyContent(
                                 value,
                                 `${index + 1}. value in ${name}`,
                                 propertySpecificationCopy
                             ).newValue
                             if (value === null)
-                                newDocument[name].splice(index, 1)
+                                newProperty.splice(index, 1)
                             index += 1
                         }
                         // // endregion
@@ -1559,10 +1568,11 @@ export class DatabaseHelper {
                             oldDocument &&
                             oldDocument.hasOwnProperty(name) &&
                             Array.isArray(oldDocument[name]) &&
-                            oldDocument[name].length ===
-                                newDocument[name].length &&
+                            (
+                                oldDocument[name] as Array<DocumentContent>
+                            ).length === newProperty.length &&
                             serialize(oldDocument[name]) ===
-                                serialize(newDocument[name])
+                                serialize(newProperty)
                         ))
                             changedPath = parentNames.concat(
                                 name, 'array updated'
@@ -1666,7 +1676,7 @@ export class DatabaseHelper {
             // / region attachment
             if (newDocument.hasOwnProperty(specialNames.attachment)) {
                 const newAttachments:Attachments =
-                    newDocument[specialNames.attachment]
+                    newDocument[specialNames.attachment] as Attachments
                 if (
                     typeof newAttachments !== 'object' ||
                     Object.getPrototypeOf(newAttachments) !== Object.prototype
@@ -2020,7 +2030,9 @@ export class DatabaseHelper {
             if (
                 oldDocument &&
                 oldDocument.hasOwnProperty(specialNames.attachment) &&
-                Object.keys(oldDocument[specialNames.attachment]).length === 0
+                Object.keys(
+                    oldDocument[specialNames.attachment] as Attachments
+                ).length === 0
             )
                 delete oldDocument[specialNames.attachment]
             if (
