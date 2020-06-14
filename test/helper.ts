@@ -42,13 +42,16 @@ describe('helper', ():void => {
                 a: 2,
             ...`.replace(/ {16}/g, '')
         ]
-    ])('mayStripRepresentation()', ():void => {
-        for (const test:Array<any> of )
-            assert.strictEqual(
-                Helper.mayStripRepresentation(test[0], test[1], test[2]),
-                test[3]
-            )
-    })
+    ])('mayStripRepresentation()', (
+        object:any,
+        maximumRepresentationTryLength:number,
+        maximumRepresentationLength:number,
+        expected:string
+    ):void =>
+        expect(Helper.mayStripRepresentation(
+            object, maximumRepresentationTryLength, maximumRepresentationLength
+        )).toStrictEqual(expected)
+    )
     test('ensureValidationDocumentPresence', async ():Promise<void> => {
         for (const test:Array<any> of [
             [{put: ():Promise<void> =>
