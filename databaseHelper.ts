@@ -1105,12 +1105,12 @@ export class DatabaseHelper {
                                         null &&
                                     new RegExp(type).test(fileName)
                                 )
+                            const newAttachments:Attachments =
+                                newDocument[name] as Attachments
                             let oldFileNames:Array<string> = []
                             if (oldDocument) {
                                 const oldAttachments:Attachments =
                                     oldDocument[name] as Attachments
-                                const newAttachments:Attachments =
-                                    newDocument[name] as Attachments
                                 oldFileNames = Object.keys(oldAttachments)
                                     .filter((fileName:string):boolean =>
                                         !(
@@ -1141,7 +1141,7 @@ export class DatabaseHelper {
                             for (const fileName of newFileNames)
                                 runCreatePropertyHook(
                                     propertySpecification,
-                                    newDocument[name],
+                                    newAttachments,
                                     oldDocument && oldDocument[name] ?
                                         oldDocument[name] :
                                         null,
@@ -1150,7 +1150,7 @@ export class DatabaseHelper {
                             for (const fileName of newFileNames)
                                 runUpdatePropertyHook(
                                     propertySpecification,
-                                    newDocument[name],
+                                    newAttachments,
                                     oldDocument && oldDocument[name] ?
                                         oldDocument[name] :
                                         null,
@@ -1175,17 +1175,14 @@ export class DatabaseHelper {
                                     oldFileNames.length > 0
                                 )
                                     for (const fileName of oldFileNames)
-                                        if (
-                                            newDocument[name][fileName] ===
-                                                null
-                                        )
+                                        if (newAttachments[fileName] === null)
                                             changedPath = parentNames.concat(
                                                 name, fileName, 'file removed'
                                             )
                                         else
-                                            newDocument[name][fileName] = (
+                                            newAttachments[fileName] = ((
                                                 oldDocument as Document
-                                            )[name][fileName]
+                                            )[name] as Attachments)[fileName]
                             } else if (newFileNames.length === 0)
                                 if (oldFileNames.length === 0) {
                                     for (
@@ -1196,7 +1193,7 @@ export class DatabaseHelper {
                                             propertySpecification.default
                                                 .hasOwnProperty(fileName)
                                         ) {
-                                            newDocument[name][fileName] =
+                                            newAttachments[fileName] =
                                                 propertySpecification.default[
                                                     fileName
                                                 ]
@@ -1206,9 +1203,9 @@ export class DatabaseHelper {
                                         }
                                 } else if (updateStrategy === 'fillUp')
                                     for (const fileName of oldFileNames)
-                                        newDocument[name][fileName] = (
+                                        newAttachments[fileName] = ((
                                             oldDocument as Document
-                                        )[name][fileName]
+                                        )[name] as Attachments)[fileName]
                         }
                     // endregion
                 } else {
@@ -1411,7 +1408,9 @@ export class DatabaseHelper {
                         return false
                     }
                     if (specialNames.attachment === name) {
-                        for (const fileName in newDocument[name])
+                        for (
+                            const fileName in newDocument[name] as Attachments
+                        )
                             if (newDocument[name].hasOwnProperty(fileName))
                                 for (const type in model[name])
                                     if (
