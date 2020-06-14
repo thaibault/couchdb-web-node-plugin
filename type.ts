@@ -36,10 +36,9 @@ export type ConnectorConfiguration =
 export type DatabaseError = PouchDB.Core.Error
 export type DatabaseResponse = PouchDB.Core.Response
 export type FullAttachment = PouchDB.Core.FullAttachment
-export type IDMeta = PouchDB.Core.IdMeta
-export type RevisionIDMeta = PouchDB.Core.RevisionIdMeta
+export type DocuemntIDMeta = PouchDB.Core.IdMeta
+export type DocumentRevisionIDMeta = PouchDB.Core.RevisionIdMeta
 export type Index = PouchDB.Find.Index
-export type RevisionIdMeta = PouchDB.Core.RevisionIdMeta
 export type StubAttachment = PouchDB.Core.StubAttachment
 // / endregion
 // / region model
@@ -115,7 +114,14 @@ export type Model = Mapping<PropertySpecification> & {
     _onUpdateExpression?:null|string;
 }
 export type Models = Mapping<Model>
-export type Document = IDMeta & PlainObject & RevisionIDMeta
+export type DocumentStrategyMeta = {_updateStrategy?:string}
+export type DocumentTypeMeta = {'-type':string}
+export type Document =
+    DocumentStrategyMeta &
+    DocumentTypeMeta &
+    DocumentIDMeta &
+    PlainObject<Primitive|Attachments> &
+    DocumentRevisionIDMeta
 export type UpdateStrategy = ''|'fillUp'|'incremental'|'migrate'
 export type SpecialPropertyNames = {
     additional:string;

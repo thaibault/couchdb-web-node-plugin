@@ -93,8 +93,7 @@ export class DatabaseHelper {
         if (
             newDocument.hasOwnProperty(idPropertyName) &&
             (newDocument[idPropertyName] as string).startsWith(
-                modelConfiguration.property.name.special
-                    .designDocumentNamePrefix
+                designDocumentNamePrefix
             )
         )
             allowedRoles.read.push('readonlymember')
@@ -110,7 +109,7 @@ export class DatabaseHelper {
                     typePropertyName &&
                     newDocument.hasOwnProperty(typePropertyName) &&
                     allowedModelRolesMapping.hasOwnProperty(
-                        newDocument[typePropertyName]
+                        newDocument[typePropertyName] as string
                     )
                 )
                     for (const type in allowedRoles)
@@ -217,9 +216,11 @@ export class DatabaseHelper {
         let id:string = ''
         let revision:string = ''
         const setDocumentEnvironment:ProcedureFunction = ():void => {
-            id = newDocument.hasOwnProperty(idName) ? newDocument[idName] : ''
+            id = newDocument.hasOwnProperty(idName) ?
+                newDocument[idName] as string :
+                ''
             revision = newDocument.hasOwnProperty(revisionName) ?
-                newDocument[revisionName] :
+                newDocument[revisionName] as string :
                 ''
         }
         setDocumentEnvironment()
@@ -256,14 +257,14 @@ export class DatabaseHelper {
             if (oldDocument && oldDocument.hasOwnProperty(revisionName))
                 revision =
                     newDocument[revisionName] =
-                    oldDocument[revisionName]
+                    oldDocument[revisionName] as string
             else if (revision === 'latest')
                 throwError('Revision: No old document available to update.')
             else
                 delete newDocument[revisionName]
         let updateStrategy:string = modelConfiguration.updateStrategy
         if (newDocument.hasOwnProperty(specialNames.strategy)) {
-            updateStrategy = newDocument[specialNames.strategy]
+            updateStrategy = newDocument[specialNames.strategy] as string
             delete newDocument[specialNames.strategy]
         }
         let serialize:(value:any) => string = (value:any) => `${value}`
@@ -324,8 +325,9 @@ export class DatabaseHelper {
                 )
                 if (name)
                     return (
-                        newDocument[specialNames.attachment][name]
-                            .hasOwnProperty('stub') &&
+                        (
+                            newDocument[specialNames.attachment] as Attachments
+                        )[name].hasOwnProperty('stub') &&
                         newDocument[specialNames.attachment][name].stub ||
                         newDocument[specialNames.attachment][name]
                             .hasOwnProperty('data') &&

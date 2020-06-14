@@ -35,7 +35,7 @@ import {
     ModelConfiguration,
     Models,
     NormalizedAllowedRoles,
-    RevisionIDMeta,
+    DocumentRevisionIDMeta,
     Services,
     SpecialPropertyNames
 } from './type'
@@ -190,7 +190,8 @@ export class Helper {
                                 ) ?
                                     firstParameter[revisionName] :
                                     (await this.get(result.id))[
-                                        revisionName as keyof RevisionIDMeta
+                                        revisionName as
+                                            keyof DocumentRevisionIDMeta
                                     ]
                         } catch (error) {
                             throw error
@@ -387,7 +388,7 @@ export class Helper {
             ) {
                 allowedModelRolesMapping[modelName] =
                     Helper.normalizeAllowedModelRoles(
-                        models[modelName][allowedRoleName]
+                        models[modelName][allowedRoleName] as AllowedRoles
                     )
                 allowedModelRolesMapping[modelName].properties = {}
                 for (const name in models[modelName])
