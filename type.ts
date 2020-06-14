@@ -14,13 +14,16 @@
 */
 // region imports
 import {ChildProcess} from 'child_process'
-import {Mapping, PlainObject, ProcessCloseReason} from 'clientnode/type'
+import {
+    Mapping, PlainObject, Primitive, ProcessCloseReason
+} from 'clientnode/type'
 import PouchDB from 'pouchdb'
 import {
     Configuration as BaseConfiguration,
     Plugin,
     PluginHandler as BasePluginHandler,
     Service as BaseService,
+    ServicePromises as BaseServicePromises,
     Services as BaseServices
 } from 'web-node/type'
 // endregion
@@ -36,7 +39,7 @@ export type ConnectorConfiguration =
 export type DatabaseError = PouchDB.Core.Error
 export type DatabaseResponse = PouchDB.Core.Response
 export type FullAttachment = PouchDB.Core.FullAttachment
-export type DocuemntIDMeta = PouchDB.Core.IdMeta
+export type DocumentIDMeta = PouchDB.Core.IdMeta
 export type DocumentRevisionIDMeta = PouchDB.Core.RevisionIdMeta
 export type Index = PouchDB.Find.Index
 export type StubAttachment = PouchDB.Core.StubAttachment
@@ -49,8 +52,8 @@ export type AllowedRoles = Array<string>|string|{
 // Recursive mapping from operations to their allowed roles.
 export type NormalizedAllowedRoles = {
     properties?:AllowedModelRolesMapping;
-    read?:Array<string>|string;
-    write?:Array<string>|string;
+    read:Array<string>;
+    write:Array<string>;
 }
 /*
     Maps an artefact (usually type or property) to corresponding operations
@@ -252,6 +255,9 @@ export type EvaluationResult<Type = any> = {
 export type Service = BaseService & {
     name:'database';
     promise:null|Promise<ProcessCloseReason>;
+}
+export type ServicePromises = BaseServicePromises & {
+    database:Promise<ProcessCloseReason>;
 }
 export type Services = BaseServices & {
     database:{

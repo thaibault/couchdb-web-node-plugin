@@ -88,12 +88,12 @@ export class Database implements PluginHandler {
                     NOTE: These callbacks can be reassigned during server
                     restart.
                 */
-                services.database.server.esolve = resolve
+                services.database.server.resolve = resolve
                 services.database.server.reject = reject
             })
         }
         if (services.database.hasOwnProperty('connection'))
-            return {promise}
+            return {name: 'database', promise}
         const urlPrefix:string = Tools.stringFormat(
             configuration.database.url,
             `${configuration.database.user.name}:` +
@@ -395,7 +395,7 @@ export class Database implements PluginHandler {
                 )
             }
             // endregion
-            // region c heck if all constraint descriptions compile
+            // region check if all constraint descriptions compile
             for (const modelName in models)
                 if (models.hasOwnProperty(modelName))
                     for (const name in models[modelName])

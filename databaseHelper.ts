@@ -81,10 +81,8 @@ export class DatabaseHelper {
         */
         if (!newDocument.hasOwnProperty(typePropertyName))
             return true
-        const allowedRoles:{
+        const allowedRoles:NormalizedAllowedRoles & {
             properties:AllowedModelRolesMapping;
-            read:Array<string>;
-            write:Array<string>;
         } = {
             properties: {},
             read: ['_admin', 'readonlyadmin'],
@@ -320,19 +318,19 @@ export class DatabaseHelper {
             namePrefix:string
         ):boolean => {
             if (newDocument.hasOwnProperty(specialNames.attachment)) {
+                const attachments:Attachments =
+                    newDocument[specialNames.attachment] as Attachments
                 const name:string = getFilenameByPrefix(
-                    newDocument[specialNames.attachment], namePrefix
+                    attachments, namePrefix
                 )
                 if (name)
                     return (
-                        (
-                            newDocument[specialNames.attachment] as Attachments
-                        )[name].hasOwnProperty('stub') &&
-                        newDocument[specialNames.attachment][name].stub ||
-                        newDocument[specialNames.attachment][name]
-                            .hasOwnProperty('data') &&
-                        ![undefined, null].includes(
-                            newDocument[specialNames.attachment][name].data
+                        attachments[name].hasOwnProperty('stub') &&
+                        (attachments[name] as StubAttachment).stub ||
+                        attachments[name].hasOwnProperty('data') &&
+                        ![null, undefined].includes(
+                            (attachments[name] as FullAttachment).data as
+                                unknown as null
                         )
                     )
             }
@@ -405,7 +403,7 @@ export class DatabaseHelper {
         }
         const checkDocument:Function = (
             newDocument:Document,
-            oldDocument?:Document,
+            oldDocument:Document|null,
             parentNames:Array<string> = []
         ):CheckedDocumentResult => {
             const pathDescription:string =
@@ -430,7 +428,7 @@ export class DatabaseHelper {
                     (new RegExp(
                         modelConfiguration.property.name
                             .typeRegularExpressionPattern.public
-                    )).test(newDocument[typeName])
+                    )).test(newDocument[typeName] as string)
                 ))
                     throwError(
                         'TypeName: You have to specify a model type ' +
@@ -440,10 +438,12 @@ export class DatabaseHelper {
                         `" as public type (given "${newDocument[typeName]}")` +
                         `${pathDescription}.`
                     )
-                if (!models.hasOwnProperty(newDocument[typeName]))
-                    if (oldModelMapping.hasOwnProperty(newDocument[typeName]))
+                if (!models.hasOwnProperty(newDocument[typeName] as string))
+                    if (oldModelMapping.hasOwnProperty(
+                        newDocument[typeName] as string
+                    ))
                         newDocument[typeName] =
-                            oldModelMapping[newDocument[typeName]]
+                            oldModelMapping[newDocument[typeName] as string]
                     else
                         throwError(
                             `Model: Given model "${newDocument[typeName]}" ` +
@@ -452,7 +452,7 @@ export class DatabaseHelper {
                 // endregion
             }
             checkModelType()
-            let modelName:string = newDocument[typeName]
+            let modelName:string = newDocument[typeName] as string
             const model:Model = models[modelName]
             let additionalPropertySpecification:null|PropertySpecification =
                 null
@@ -825,7 +825,7 @@ export class DatabaseHelper {
             const runCreatePropertyHook:Function = (
                 propertySpecification:PropertySpecification,
                 newDocument:Document,
-                oldDocument:Document,
+                oldDocument:Document|null,
                 name:string
             ):void => {
                 if (!oldDocument)
@@ -890,11 +890,11 @@ export class DatabaseHelper {
                     propertySpecification.trim &&
                     typeof newDocument[name] === 'string'
                 )
-                    newDocument[name] = newDocument[name].trim()
+                    newDocument[name] = (newDocument[name] as string).trim()
                 if (propertySpecification.emptyEqualsToNull && (
                     newDocument[name] === '' ||
                     Array.isArray(newDocument[name]) &&
-                    newDocument[name].length === 0 ||
+                    (newDocument[name] as Array<object>).length === 0 ||
                     typeof newDocument[name] === 'object' &&
                     newDocument[name] !== null &&
                     Object.keys(newDocument).length === 0
@@ -1019,7 +1019,7 @@ export class DatabaseHelper {
                         if (![null, undefined].includes(result as null))
                             newDocument = result as Document
                         checkModelType()
-                        modelName = newDocument[typeName]
+                        modelName = newDocument[typeName] as string
                         if (parentNames.length === 0)
                             setDocumentEnvironment()
                     }
@@ -1068,7 +1068,7 @@ export class DatabaseHelper {
                     if (![undefined, null].includes(result as null))
                         newDocument = result as Document
                     checkModelType()
-                    modelName = newDocument[typeName]
+                    modelName = newDocument[typeName] as string
                     if (parentNames.length === 0)
                         setDocumentEnvironment()
                 }
@@ -1096,33 +1096,44 @@ export class DatabaseHelper {
                             )
                                 oldDocument[name] = {}
                             const newFileNames:Array<string> =
-                                Object.keys(newDocument[name]).filter((
-                                    fileName:string
-                                ):boolean =>
-                                    newDocument[name][
-                                        fileName
-                                    ].data !== null &&
+                                Object.keys(
+                                    newDocument[name] as Attachments
+                                ).filter((fileName:string):boolean =>
+                                    ((
+                                        newDocument[name] as Attachments
+                                    )[fileName] as FullAttachment).data !==
+                                        null &&
                                     new RegExp(type).test(fileName)
                                 )
                             let oldFileNames:Array<string> = []
-                            if (oldDocument)
-                                oldFileNames = Object.keys(oldDocument[name])
+                            if (oldDocument) {
+                                const oldAttachments:Attachments =
+                                    oldDocument[name] as Attachments
+                                const newAttachments:Attachments =
+                                    newDocument[name] as Attachments
+                                oldFileNames = Object.keys(oldAttachments)
                                     .filter((fileName:string):boolean =>
                                         !(
-                                            newDocument.hasOwnProperty(name) &&
-                                            newDocument[name]
-                                                .hasOwnProperty(fileName) &&
-                                            newDocument[name][fileName]
+                                            newAttachments.hasOwnProperty(
+                                                fileName
+                                            ) &&
+                                            newAttachments[fileName]
                                                 .hasOwnProperty('data') &&
-                                            newDocument[name][fileName]
-                                                .data === null
+                                            (
+                                                newAttachments[fileName] as
+                                                    FullAttachment
+                                            ).data === null
                                         ) &&
-                                        oldDocument[name][fileName] &&
-                                        oldDocument[name][fileName]
-                                            .data !== null &&
+                                        oldAttachments[fileName] &&
+                                        oldAttachments[fileName]
+                                            .hasOwnProperty('data') &&
+                                        (
+                                            oldAttachments[fileName] as
+                                                FullAttachment
+                                        ).data !== null &&
                                         new RegExp(type).test(fileName)
-                                    )
-
+                                )
+                            }
                             const propertySpecification:PropertySpecification =
                                 model[name][
                                     type as keyof PropertySpecification

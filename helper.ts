@@ -27,6 +27,7 @@ import {Plugin} from 'web-node/type'
 import {
     AllowedModelRolesMapping,
     AllowedRoles,
+    Attachments,
     Configuration,
     Connection,
     DatabaseResponse,
@@ -401,10 +402,13 @@ export class Helper {
                         ) &&
                         models[modelName][name].allowedRoles
                     )
-                        allowedModelRolesMapping[modelName].properties[name] =
-                            Helper.normalizeAllowedModelRoles(
-                                models[modelName][name].allowedRoles
-                            )
+                        (
+                            allowedModelRolesMapping[modelName].properties as
+                                AllowedModelRolesMapping
+                        )[name] = Helper.normalizeAllowedModelRoles(
+                            models[modelName][name].allowedRoles as
+                                AllowedRoles
+                        )
             } else
                 allowedModelRolesMapping[modelName] = {
                     properties: {},
@@ -441,7 +445,7 @@ export class Helper {
                         specialNames.constraint.execution,
                         specialNames.constraint.expression,
                         specialNames.deleted,
-                        specialNames.deleted_conflict,
+                        specialNames.deletedConflict,
                         specialNames.extend,
                         specialNames.id,
                         specialNames.maximumAggregatedSize,
@@ -455,12 +459,14 @@ export class Helper {
                     model[name].type &&
                     (
                         typeof model[name].type === 'string' &&
-                        model[name].type.endsWith('[]') ||
+                        (model[name].type as string).endsWith('[]') ||
                         Array.isArray(model[name].type) &&
-                        model[name].type.length &&
-                        Array.isArray(model[name].type[0]) ||
+                        (model[name].type as Array<string>).length &&
+                        Array.isArray(
+                            (model[name].type as Array<string>)[0]
+                        ) ||
                         modelConfiguration.entities.hasOwnProperty(
-                            model[name].type
+                            model[name].type as string
                         )
                     )
                 )
@@ -481,15 +487,21 @@ export class Helper {
         if (modelName === '_base')
             return models[modelName]
         if (models.hasOwnProperty('_base'))
-            if (models[modelName].hasOwnProperty(extendPropertyName))
-                models[modelName][extendPropertyName] = ['_base'].concat(
-                    models[modelName][extendPropertyName]
-                )
+            if (
+                models[modelName].hasOwnProperty(extendPropertyName) &&
+                models[modelName][extendPropertyName]
+            )
+                (models[modelName][extendPropertyName] as Array<string>) =
+                    ['_base'].concat(
+                        models[modelName][extendPropertyName] as Array<string>
+                    )
             else
-                models[modelName][extendPropertyName] = '_base'
+                (
+                    models[modelName][extendPropertyName] as unknown as string
+                ) = '_base'
         if (models[modelName].hasOwnProperty(extendPropertyName)) {
             for (const modelNameToExtend of ([] as Array<string>).concat(
-                models[modelName][extendPropertyName]
+                models[modelName][extendPropertyName] as Array<string>
             ))
                 models[modelName] = Tools.extend(
                     true,
@@ -547,17 +559,20 @@ export class Helper {
                                     models[modelName][propertyName]
                                         .hasOwnProperty(type)
                                 )
-                                    models[modelName][propertyName][type] =
-                                        Tools.extend(
-                                            true,
-                                            Tools.copy(
-                                                modelConfiguration.property
-                                                    .defaultSpecification
-                                            ),
-                                            models[modelName][propertyName][
-                                                type
-                                            ]
-                                        )
+                                    (
+                                        models[modelName][propertyName] as
+                                            Attachments
+                                    )[type] = Tools.extend(
+                                        true,
+                                        Tools.copy(
+                                            modelConfiguration.property
+                                                .defaultSpecification
+                                        ),
+                                        (
+                                            models[modelName][propertyName] as
+                                                Attachments
+                                        )[type]
+                                    )
                         } else if (![
                             specialNames.allowedRole,
                             specialNames.constraint.execution,
@@ -591,10 +606,13 @@ export class Helper {
             const result:NormalizedAllowedRoles = {read: [], write: []}
             for (const type in result)
                 if (roles.hasOwnProperty(type))
-                    if (Array.isArray(roles[type]))
-                        result[type] = roles[type]
+                    if (Array.isArray(roles[type as 'read'|'write']))
+                        result[type as 'read'|'write'] =
+                            roles[type as 'read'|'write'] as Array<string>
                     else
-                        result[type] = [roles[type]]
+                        result[type as 'read'|'write'] = [
+                            roles[type as 'read'|'write'] as string
+                        ]
             return result
         }
         return {read: [roles], write: [roles]}
