@@ -15,7 +15,6 @@
 */
 // region imports
 import Tools from 'clientnode'
-import {configuration} from 'web-node'
 
 import Helper from '../helper'
 import packageConfiguration from '../package.json'
@@ -24,7 +23,7 @@ import {ModelConfiguration, Models, SpecialPropertyNames} from '../type'
 describe('helper', ():void => {
     // region prepare environment
     const configuration:Configuration =
-        packageConfiguration.webNode.database as Configuration
+        packageConfiguration.webNode as Configuration
     const specialNames:SpecialPropertyNames =
         configuration.database.model.property.name.special
     // endregion
@@ -39,7 +38,7 @@ describe('helper', ():void => {
             15,
             `{
                 a: 2,
-            ...`.replace(/ {16}/g, '')
+            ...`.replace(/ {12}/g, '')
         ]
     ])(
         `mayStripRepresentation(%p, %d, %d) === '%s'`,
@@ -73,8 +72,13 @@ describe('helper', ():void => {
             description:string,
             log:boolean
         ):void =>
-            expect(Helper.ensureValidationDocumentPresence(...test))
-                .resolves.toStrictEqual(undefined)
+            expect(Helper.ensureValidationDocumentPresence(
+                databaseConnection,
+                documentName,
+                documentData,
+                description,
+                log
+            )).resolves.not.toBeDefined()
     )
     // / region model
     /* TODO
@@ -130,8 +134,7 @@ describe('helper', ():void => {
             ]]
         ])
             assert.deepEqual(Helper.determineGenericIndexablePropertyNames(
-                Tools.extend(
-                    true, {}, configuration.database.model, test[0]),
+                Tools.extend(true, {}, configuration.database.model, test[0]),
                 test[1]
             ).sort(), test[2])
     })
@@ -173,7 +176,8 @@ describe('helper', ():void => {
     })
     test('extendModels', ():void => {
         const modelConfiguration:ModelConfiguration = Tools.copy(
-            configuration.database.model)
+            configuration.database.model
+        )
         modelConfiguration.entities = {}
         modelConfiguration.property.defaultSpecification = {}
         for (const test:Array<any> of [

@@ -14,26 +14,36 @@
     endregion
 */
 // region imports
+import Tools from 'clientnode'
+import path from 'path'
+
 import Index from '../index'
 import packageConfiguration from '../package.json'
-import {Configuration, Services} from '../type'
+import {Configuration, Runner, Services} from '../type'
 // endregion
 describe('index', ():void => {
     // region prepare environment
     const configuration:Configuration =
-        packageConfiguration.webNode.database as Configuration
+        packageConfiguration.webNode as Configuration
+    configuration.database.url = 'http://dummy-url'
     // endregion
     // region tests
     test('loadService', ():void =>
         expect(Index.loadService(
             {}, {database: {connection: null, server: {}}}, configuration
-        )).resolves.toStrictEqual({promise: null})
+        )).resolves.toStrictEqual({name: 'database', promise: null})
     )
-    test('preLoadService', ():void =>
+    test('preLoadService', ():void => {
+        const runner:Runner = configuration.database.binary.runner[
+            configuration.database.binary.runner.length - 1
+        ]
         expect(Index.preLoadService({}, configuration)).resolves
-            .toHaveProperty('database.server.runner.binaryFilePath', 'TODO')
-    )
-    test('shouldExit', ():void => {
+            .toHaveProperty(
+                'database.server.runner.binaryFilePath',
+                path.resolve(runner.location[0], runner.name)
+            )
+    })
+    test('shouldExit', async ():Promise<void> => {
         let testValue:number = 0
         const services:Services = {database: {
             connection: {close: ():void => {
@@ -43,8 +53,9 @@ describe('index', ():void => {
                 testValue += 1
             }}}
         }}
-        expect(Index.shouldExit(services, configuration))
-            .resolves.toStrictEqual(services)
+
+        expect((await Index.shouldExit(services, configuration)))
+            .toStrictEqual(services)
         expect(services).toStrictEqual({})
         expect(testValue).toStrictEqual(2)
     })

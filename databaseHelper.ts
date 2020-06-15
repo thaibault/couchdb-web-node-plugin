@@ -77,8 +77,8 @@ export class DatabaseHelper {
         read = false
     ):true {
         /*
-            NOTE: Special documents and like changes sequences are going
-            through this function and should be ignored.
+            NOTE: Special documents and change sequences are going through this
+            function and should will not be validated.
         */
         if (!newDocument.hasOwnProperty(typePropertyName))
             return true
@@ -195,7 +195,7 @@ export class DatabaseHelper {
             type:string = 'forbidden',
             additionalErrorData:object = {}
         ):never => {
-            const result = {[type]: message}
+            const result = {[type]: message, message, name: type}
             for (const name in additionalErrorData)
                 if (additionalErrorData.hasOwnProperty(name))
                     result[name] = additionalErrorData[name as keyof object]
