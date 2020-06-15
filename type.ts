@@ -17,6 +17,7 @@ import {ChildProcess} from 'child_process'
 import {
     Mapping, PlainObject, Primitive, ProcessCloseReason
 } from 'clientnode/type'
+import {RequestInit as FetchOptions} from 'node-fetch'
 import PouchDB from 'pouchdb'
 import {
     Configuration as BaseConfiguration,
@@ -34,14 +35,17 @@ export type ChangesStream<Type=any> = PouchDB.Core.Changes<Type>
 export type ChangesStreamOptions = PouchDB.Core.ChangesOptions
 export type Connection = PouchDB.Database
 export type Connector = PouchDB.Static
-export type ConnectorConfiguration =
+export type DatabaseConnectorConfiguration =
     PouchDB.Configuration.RemoteDatabaseConfiguration
 export type DatabaseError = PouchDB.Core.Error
+export type DatabaseFetch = PouchDB.Core.Options['fetch']
 export type DatabaseResponse = PouchDB.Core.Response
+export type DeleteIndexOptions = PouchDB.Find.DeleteIndexOptions
 export type FullAttachment = PouchDB.Core.FullAttachment
 export type DocumentIDMeta = PouchDB.Core.IdMeta
 export type DocumentRevisionIDMeta = PouchDB.Core.RevisionIdMeta
 export type Index = PouchDB.Find.Index
+export type DatabasePlugin = any
 export type StubAttachment = PouchDB.Core.StubAttachment
 // / endregion
 // / region model
@@ -61,7 +65,7 @@ export type NormalizedAllowedRoles = {
 */
 export type AllowedModelRolesMapping = Mapping<NormalizedAllowedRoles>
 export type Constraint = {
-    description?:string;
+    description?:null|string;
     evaluation:string;
 }
 export type Type = string|'any'|'boolean'|'integer'|'number'|'string'|'DateTime'
@@ -210,6 +214,9 @@ export type SecuritySettings = {
     admins:DatabaseUserConfiguration;
     members:DatabaseUserConfiguration;
     _validatedDocuments?:Set<string>;
+}
+export type ConnectorConfiguration = {
+    fetch?:FetchOptions|null;
 }
 export type Configuration = BaseConfiguration & {
     database:{

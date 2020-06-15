@@ -18,8 +18,12 @@ import Tools, {CloseEventNames} from 'clientnode'
 import {
     Mapping, ProcessCloseCallback, ProcessErrorCallback
 } from 'clientnode/type'
+import fetch, {
+    Response as FetchResponse,
+    RequestInit as FetchOptions,
+    RequestInfo as FetchURL
+} from 'node-fetch'
 import {promises as fileSystem} from 'fs'
-import fetch from 'node-fetch'
 import path from 'path'
 import {PluginAPI} from 'web-node'
 import {Plugin} from 'web-node/type'
@@ -30,6 +34,8 @@ import {
     Attachments,
     Configuration,
     Connection,
+    DatabaseConnectorConfiguration,
+    DatabaseFetch,
     DatabaseResponse,
     Document,
     Model,
@@ -46,6 +52,31 @@ import {
  * A dumm plugin interface with all available hooks.
  */
 export class Helper {
+    /**
+     * Converts internal declarative database connector configuration object
+     * into a database compatible one.
+     * @param configuration - Mutable by plugins extended configuration object.
+     * @returns Database compatible configuration object.
+    */
+    static getConnectorOptions(
+        configuration:Configuration
+    ):DatabaseConnectorConfiguration {
+        if (configuration.database.connector.fetch)
+            return {
+                fetch: ((
+                    url:FetchURL, options?:FetchOptions
+                ):Promise<FetchResponse> => fetch(
+                    url,
+                    Tools.extend(
+                        true,
+                        {},
+                        configuration.database.connector.fetch,
+                        options || {}
+                    )
+                )) as unknown as DatabaseFetch
+            }
+        return {fetch: fetch as unknown as DatabaseFetch}
+    }
     /**
      * Determines a representation for given plain object.
      * @param data - Object to represent.
@@ -147,7 +178,7 @@ export class Helper {
             ) +
             `/${configuration.name}`
         services.database.connection = new services.database.connector(
-            url, configuration.database.connector
+            url, Helper.getConnectorOptions(configuration)
         )
         services.database.connection.setMaxListeners(Infinity)
         const idName:string =

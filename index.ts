@@ -18,7 +18,7 @@
 */
 // region imports
 import Tools from 'clientnode'
-import {File, ProcessCloseReason} from 'clientnode/type'
+import {File, PlainObject, ProcessCloseReason} from 'clientnode/type'
 import {promises as fileSystem} from 'fs'
 import fetch, {Response as FetchResponse} from 'node-fetch'
 import path from 'path'
@@ -30,14 +30,19 @@ import {Plugin, PluginHandler} from 'web-node/type'
 import DatabaseHelper from './databaseHelper'
 import Helper from './helper'
 import {
+    ChangesStream,
     Configuration,
     Connection,
     Constraint,
     DatabaseError,
+    DatabasePlugin,
+    DeleteIndexOptions,
     Document,
     Index,
     ModelConfiguration,
     Models,
+    PropertySpecification,
+    Runner,
     Service,
     ServicePromises,
     Services
@@ -58,8 +63,8 @@ import {
  * "skipIDDetermining" configuration).
  */
 export class Database implements PluginHandler {
-    static additionalChangesStreamOptions:Object = {}
-    static changesStream:Object
+    static additionalChangesStreamOptions:object = {}
+    static changesStream:ChangesStream
     static skipIDDetermining:boolean = true
     static toggleIDDetermining = Symbol('toggleIDDetermining')
     /**
@@ -105,7 +110,7 @@ export class Database implements PluginHandler {
                 new services.database.connector(
                     `${Tools.stringFormat(configuration.database.url, '')}/` +
                         `_users`,
-                    configuration.database.connector
+                    Helper.getConnectorOptions(configuration)
                 )
             try {
                 // NOTE: We check if we are in admin party mode.
@@ -132,7 +137,7 @@ export class Database implements PluginHandler {
                     const authenticatedUserDatabaseConnection:Connection =
                         new services.database.connector(
                             `${urlPrefix}/_users`,
-                            configuration.database.connector
+                            Helper.getConnectorOptions(configuration)
                         )
                     try {
                         await authenticatedUserDatabaseConnection.allDocs()
@@ -166,7 +171,7 @@ export class Database implements PluginHandler {
                     const userDatabaseConnection:Connection =
                         new services.database.connector(
                             `${urlPrefix}/_users`,
-                            configuration.database.connector
+                            Helper.getConnectorOptions(configuration)
                         )
                     try {
                         await userDatabaseConnection.get(
@@ -413,9 +418,12 @@ export class Database implements PluginHandler {
                                 modelConfiguration.property.name.special
                                     .constraint.expression
                             ].includes(name)) {
-                                for (
-                                    const constraint of models[modelName][name]
-                                )
+                                for (const constraint of (
+                                    [] as Array<Constraint>
+                                ).concat(
+                                    models[modelName][name] as
+                                        Array<Constraint>
+                                ))
                                     if (
                                         constraint.hasOwnProperty(
                                             'description') &&
@@ -436,7 +444,9 @@ export class Database implements PluginHandler {
                                                 `${Tools.represent(error)}".`
                                             )
                                         }
-                            } else
+                            } else {
+                                const property:PropertySpecification =
+                                    models[modelName][name]
                                 for (const type of [
                                     'conflictingConstraintExpression',
                                     'conflictingConstraintExecution',
@@ -444,33 +454,40 @@ export class Database implements PluginHandler {
                                     'constraintExecution'
                                 ])
                                     if (
-                                        models[modelName][name] !== null &&
-                                        models[modelName][name] === 'object' &&
-                                        models[modelName][name][type] !==
-                                            null &&
-                                        models[modelName][name][type] ===
-                                            'object' &&
-                                        models[modelName][name][type]
-                                            .hasOwnProperty('description')
-                                    )
-                                        try {
-                                            new Function(
-                                                models[modelName][name][
-                                                    type
-                                                ].description
+                                        property !== null &&
+                                        typeof property === 'object'
+                                    ) {
+                                        const constraint:Constraint = property[
+                                            type as keyof PropertySpecification
+                                        ]
+                                        if (
+                                            constraint !== null &&
+                                            typeof constraint === 'object' &&
+                                            constraint.hasOwnProperty(
+                                                'description'
                                             )
-                                        } catch (error) {
-                                            throw new Error(
-                                                `Specified constraint ` +
-                                                `description "` + models[
-                                                    modelName
-                                                ][name][type].description +
-                                                `" for model "${modelName}" ` +
-                                                `in property "${name}" as "` +
-                                                `${type}" doesn't compile: "` +
-                                                `${Tools.represent(error)}".`
-                                            )
-                                        }
+                                        )
+                                            try {
+                                                new Function(
+                                                    constraint.description as
+                                                        string
+                                                )
+                                            } catch (error) {
+                                                throw new Error(
+                                                    'Specified constraint ' +
+                                                    'description "' +
+                                                    constraint.description +
+                                                    '" for model "' +
+                                                    `${modelName}" in ` +
+                                                    `property "${name}" as "` +
+                                                    `${type}" doesn't ` +
+                                                    'compile: "' +
+                                                    Tools.represent(error) +
+                                                    '".'
+                                                )
+                                            }
+                                    }
+                            }
             // endregion
         }
         // region run auto-migration
@@ -546,9 +563,12 @@ export class Database implements PluginHandler {
             ).rows)
                 if (!(
                     typeof retrievedDocument.id === 'string' &&
-                    retrievedDocument.id.startsWith('_design/')
+                    retrievedDocument.id.startsWith(
+                        configuration.database.model.property.name.special
+                            .designDocumentNamePrefix
+                    )
                 )) {
-                    const document:Document = retrievedDocument.doc
+                    const document:Document = retrievedDocument.doc as Document
                     let newDocument:Document = Tools.copy(document)
                     newDocument[
                         configuration.database.model.property.name.special
@@ -739,7 +759,9 @@ export class Database implements PluginHandler {
                             break
                         }
                     if (!exists)
-                        await services.database.connection.deleteIndex(index)
+                        await services.database.connection.deleteIndex(
+                            index as DeleteIndexOptions
+                        )
                 }
         }
         // endregion
@@ -858,18 +880,8 @@ export class Database implements PluginHandler {
     static async preLoadService(
         services:Services, configuration:Configuration
     ):Promise<Services> {
-        if (!services.hasOwnProperty('database')) {
-            services.database = {}
-            try {
-                require('request').Request.timeout =
-                    configuration.database.connector.ajax.timeout
-            } catch (error) {
-                console.warn(
-                    `Couldn't find module "request" to synchronize timeout ` +
-                    `option with pouchdb's one: ${Tools.represent(error)}`
-                )
-            }
-        }
+        if (!services.hasOwnProperty('database'))
+            services.database = {} as Services['database']
         if (!services.database.hasOwnProperty('connector')) {
             const idName:string =
                 configuration.database.model.property.name.special.id
@@ -909,15 +921,15 @@ export class Database implements PluginHandler {
                     if none were provided for a single function call.
                 */
                 if (
-                    configuration.database.connector.ajax &&
-                    configuration.database.connector.ajax.timeout &&
+                    configuration.database.connector.fetch &&
+                    configuration.database.connector.fetch.timeout &&
                     (
                         parameter.length === 0 ||
                         typeof parameter[0] !== 'object'
                     )
                 )
                     parameter.unshift({
-                        timeout: configuration.database.connector.ajax.timeout
+                        timeout: configuration.database.connector.fetch.timeout
                     })
                 const result:Array<PlainObject> = await nativeBulkDocs.call(
                     this, firstParameter, ...parameter
@@ -945,11 +957,10 @@ export class Database implements PluginHandler {
                             'name' in item &&
                             item.name === 'forbidden' &&
                             'message' in item &&
-                            item.message.startsWith('NoChange:')
+                            (item.message as string).startsWith('NoChange:')
                         ) {
                             result[index] = {
-                                id: firstParameter[index][idName],
-                                ok: true
+                                id: firstParameter[index][idName], ok: true
                             }
                             if (!skipIDDetermining)
                                 result[index].rev =
@@ -971,10 +982,11 @@ export class Database implements PluginHandler {
                     const retriedResults:Array<PlainObject> =
                         await this.bulkDocs(firstParameter, ...parameter)
                     for (const retriedResult of retriedResults)
-                        result[conflictingIndexes.shift()] = retriedResult
+                        result[conflictingIndexes.shift() as number] =
+                            retriedResult
                 }
                 return result
-            }})
+            }} as DatabasePlugin)
             // endregion
             if (configuration.database.debug)
                 services.database.connector.debug.enable('*')
@@ -982,14 +994,18 @@ export class Database implements PluginHandler {
                 services.database.connector.plugin(PouchDBFindPlugin)
         }
         if (!services.database.hasOwnProperty('server')) {
-            services.database.server = {}
+            services.database.server = {} as Services['database']['server']
             // region search for binary file to start database server
             const triedPaths:Array<string> = []
-            for (const runner of [].concat(
+            for (const runner of ([] as Array<Runner>).concat(
                 configuration.database.binary.runner
             )) {
-                for (const directoryPath of [].concat(runner.location)) {
-                    for (const name of [].concat(runner.name)) {
+                for (const directoryPath of (
+                    ([] as Array<string>).concat(runner.location)
+                )) {
+                    for (const name of (
+                        ([] as Array<string>).concat(runner.name)
+                    )) {
                         const binaryFilePath:string = path.resolve(
                             directoryPath, name
                         )
