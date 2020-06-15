@@ -13,7 +13,7 @@
     See https://creativecommons.org/licenses/by/3.0/deed.de
     endregion
 */
-// region imports 
+// region imports
 import Tools from 'clientnode'
 
 import DatabaseHelper from '../databaseHelper'
@@ -34,7 +34,7 @@ describe('databaseHelper', ():void => {
     const configuration:Configuration =
         packageConfiguration.webNode.database as Configuration
     const specialNames:SpecialPropertyNames =
-        configuration.database.model.property.name.special
+        configuration.model.property.name.special
     const attachmentName:string = specialNames.attachment
     const idName:string = specialNames.id
     const revisionName:string = specialNames.revision
@@ -105,7 +105,7 @@ describe('databaseHelper', ():void => {
         'validateDocumentUpdate (with update strategy "%s")',
         (updateStrategy:string):void => {
             const defaultModelConfiguration:ModelConfiguration = Tools.extend(
-                true, {}, configuration.database.model, {updateStrategy}
+                true, {}, configuration.model, {updateStrategy}
             )
             for (
                 const propertyName in defaultModelConfiguration.entities._base
@@ -1193,7 +1193,7 @@ describe('databaseHelper', ():void => {
                 }
                 expect(():Document =>
                     DatabaseHelper.validateDocumentUpdate(...parameter)
-                ).toThrow({forbidden: new RegExp(`^${test[2]}: .+`}))
+                ).toThrow({forbidden: new RegExp(`^${test[2]}: .+`)})
             }
             // endregion
             // region allowed writes
@@ -1275,8 +1275,7 @@ describe('databaseHelper', ():void => {
                         null,
                         {},
                         {
-                            [
-                            configuration.database.model.property.name
+                            [configuration.model.property.name
                                 .validatedDocumentsCache
                             ]: new Set(['1-1'])
                         }
@@ -3444,244 +3443,256 @@ describe('databaseHelper', ():void => {
             }
             // endregion
         }
-        // region migration writes
-        const defaultModelConfiguration:ModelConfiguration = Tools.extend(
-            true, {}, configuration.database.model, {updateStrategy: 'migrate'}
-        )
-        for (const propertyName in defaultModelConfiguration.entities._base)
-            if (
-                defaultModelConfiguration.entities._base.hasOwnProperty(
-                    propertyName
-                ) &&
-                propertyName !== typeName
-            )
-                delete defaultModelConfiguration.entities._base[propertyName]
-        for (const test of [
-            // Remove obsolete properties.
-            [
-                [{[typeName]: 'Test', a: 2}],
-                {entities: {Test: {}}},
-                {[typeName]: 'Test'}
-            ],
-            // Create missing properties with default value.
-            [
-                [{[typeName]: 'Test'}],
-                {entities: {Test: {a: {default: '2'}}}},
-                {[typeName]: 'Test', a: '2'}
-            ],
-            // Do not change valid properties.
-            [
-                [{[typeName]: 'Test', a: '2'}],
-                {entities: {Test: {a: {}}}},
-                {[typeName]: 'Test', a: '2'}
-            ],
-            // Ignore wrong specified non required properties in old document.
-            [
-                [{[typeName]: 'Test', b: 'b'}, {[typeName]: 'Test', a: 1}],
-                {entities: {Test: {a: {}, b: {}}}},
-                {[typeName]: 'Test', b: 'b'}
-            ],
-            // Ignore not specified properties in old document.
-            [
-                [{[typeName]: 'Test'}, {[typeName]: 'Test', a: 1}],
-                {entities: {Test: {}}},
-                {[typeName]: 'Test'}
-            ],
-            // Set property to default value if explicitly set to "null".
-            [
-                [{[typeName]: 'Test', a: null}],
-                {entities: {Test: {a: {default: '2'}}}},
-                {[typeName]: 'Test', a: '2'}
-            ],
-            /*
-                Set property to default value if explicitly set to "null" by
-                ignoring maybe existing old documents value.
-            */
-            [
-                [{[typeName]: 'Test', a: null}, {[typeName]: 'Test', a: '1'}],
-                {entities: {Test: {a: {default: '2'}}}},
-                {[typeName]: 'Test', a: '2'}
-            ],
-            /*
-                Set property to default value if property is missing which has
-                a specified default (string) value.
-            */
-            [
-                [{[typeName]: 'Test'}, {[typeName]: 'Test', a: '1'}],
-                {entities: {Test: {a: {default: '2'}}}},
-                {[typeName]: 'Test', a: '2'}
-            ],
-            /*
-                Set property to default value if property is missing which has
-                a specified default value and remove not existing properties.
-            */
-            [
-                [{[typeName]: 'Test', b: '3'}, {[typeName]: 'Test', a: '1'}],
-                {entities: {Test: {a: {default: '2'}}}},
-                {[typeName]: 'Test', a: '2'}
-            ],
-            /*
-                Set property to default value if property is missing which has
-                a specified default (number) value.
-            */
-            [
-                [{[typeName]: 'Test'}],
-                {entities: {Test: {a: {default: 2, type: 'number'}}}},
-                {[typeName]: 'Test', a: 2}
-            ],
-            /*
-                Set property to default value if property is missing which has
-                a specified default (any) value.
-            */
-            [
-                [{[typeName]: 'Test'}],
-                {entities: {Test: {a: {default: 2, type: 'any'}}}},
-                {[typeName]: 'Test', a: 2}
-            ],
-            /*
-                Set property to default value if property is missing which has
-                a specified default value (where on is any).
-            */
-            [
-                [{[typeName]: 'Test'}],
-                {entities: {Test: {a: {default: 2, type: ['any']}}}},
-                {[typeName]: 'Test', a: 2}
-            ],
-            /*
-                Set property to default value if property is missing which has
-                a specified default value (where a selection of types is
-                provided).
-            */
-            [
-                [{[typeName]: 'Test'}],
-                {entities: {
-                    Test: {a: {default: 2, type: ['any', 'boolean']}}
-                }},
-                {[typeName]: 'Test', a: 2}
-            ],
-            [
-                [{[typeName]: 'Test'}],
-                {entities: {Test: {a: {
-                    default: 2,
-                    type: ['number', 'boolean']
-                }}}},
-                {[typeName]: 'Test', a: 2}
-            ],
-            // Ignore not specified attachment properties in old document.
-            [
-                [
-                    {[typeName]: 'Test', b: 'b'},
-                    {[typeName]: 'Test', [attachmentName]: {}}
-                ],
-                {entities: {Test: {b: {}}}},
-                {[typeName]: 'Test', b: 'b'}
-            ],
-            [
-                [
-                    {[typeName]: 'Test', b: 'b'},
-                    {
-                        [typeName]: 'Test',
-                        [attachmentName]: {
-                            /* eslint-disable camelcase */
-                            test: {data: '', content_type: 'text/plain'}
-                            /* eslint-enable camelcase */
-                        }
-                    }
-                ],
-                {entities: {Test: {b: {}}}},
-                {[typeName]: 'Test', b: 'b'}
-            ],
-            /*
-                Set attachment to a default one if it is missing and has a
-                specified default one.
-            */
-            [
-                [{[typeName]: 'Test'}, {[typeName]: 'Test'}],
-                {entities: {Test: {[attachmentName]: {'.*': {default: {test: {
+    )
+    // / region migration writes
+    test.each([
+        // Remove obsolete properties.
+        [
+            {[typeName]: 'Test', a: 2},
+            {entities: {Test: {}}},
+            {[typeName]: 'Test'}
+        ],
+        // Create missing properties with default value.
+        [
+            {[typeName]: 'Test'},
+            {entities: {Test: {a: {default: '2'}}}},
+            {[typeName]: 'Test', a: '2'}
+        ],
+        // Do not change valid properties.
+        [
+            {[typeName]: 'Test', a: '2'},
+            {entities: {Test: {a: {}}}},
+            {[typeName]: 'Test', a: '2'}
+        ],
+        // Ignore wrong specified non required properties in old document.
+        [
+            {[typeName]: 'Test', b: 'b'},
+            {entities: {Test: {a: {}, b: {}}}},
+            {[typeName]: 'Test', b: 'b'},
+            {[typeName]: 'Test', a: 1}
+        ],
+        // Ignore not specified properties in old document.
+        [
+            {[typeName]: 'Test'},
+            {entities: {Test: {}}},
+            {[typeName]: 'Test'},
+            {[typeName]: 'Test', a: 1}
+        ],
+        // Set property to default value if explicitly set to "null".
+        [
+            {[typeName]: 'Test', a: null},
+            {entities: {Test: {a: {default: '2'}}}},
+            {[typeName]: 'Test', a: '2'}
+        ],
+        /*
+            Set property to default value if explicitly set to "null" by
+            ignoring maybe existing old documents value.
+        */
+        [
+            {[typeName]: 'Test', a: null},
+            {entities: {Test: {a: {default: '2'}}}},
+            {[typeName]: 'Test', a: '2'},
+            {[typeName]: 'Test', a: '1'}
+        ],
+        /*
+            Set property to default value if property is missing which has
+            a specified default (string) value.
+        */
+        [
+            {[typeName]: 'Test'},
+            {entities: {Test: {a: {default: '2'}}}},
+            {[typeName]: 'Test', a: '2'},
+            {[typeName]: 'Test', a: '1'}
+        ],
+        /*
+            Set property to default value if property is missing which has
+            a specified default value and remove not existing properties.
+        */
+        [
+            {[typeName]: 'Test', b: '3'},
+            {entities: {Test: {a: {default: '2'}}}},
+            {[typeName]: 'Test', a: '2'},
+            {[typeName]: 'Test', a: '1'}
+        ],
+        /*
+            Set property to default value if property is missing which has
+            a specified default (number) value.
+        */
+        [
+            {[typeName]: 'Test'},
+            {entities: {Test: {a: {default: 2, type: 'number'}}}},
+            {[typeName]: 'Test', a: 2}
+        ],
+        /*
+            Set property to default value if property is missing which has
+            a specified default (any) value.
+        */
+        [
+            {[typeName]: 'Test'},
+            {entities: {Test: {a: {default: 2, type: 'any'}}}},
+            {[typeName]: 'Test', a: 2}
+        ],
+        /*
+            Set property to default value if property is missing which has
+            a specified default value (where on is any).
+        */
+        [
+            {[typeName]: 'Test'},
+            {entities: {Test: {a: {default: 2, type: ['any']}}}},
+            {[typeName]: 'Test', a: 2}
+        ],
+        /*
+            Set property to default value if property is missing which has
+            a specified default value (where a selection of types is
+            provided).
+        */
+        [
+            {[typeName]: 'Test'},
+            {entities: {Test: {a: {default: 2, type: ['any', 'boolean']}}}},
+            {[typeName]: 'Test', a: 2}
+        ],
+        [
+            {[typeName]: 'Test'},
+            {entities: {Test: {a: {default: 2, type: ['number', 'boolean']}}}},
+            {[typeName]: 'Test', a: 2}
+        ],
+        // Ignore not specified attachment properties in old document.
+        [
+            {[typeName]: 'Test', b: 'b'},
+            {entities: {Test: {b: {}}}},
+            {[typeName]: 'Test', b: 'b'},
+            {[typeName]: 'Test', [attachmentName]: {}}
+        ],
+        [
+            {[typeName]: 'Test', b: 'b'},
+            {entities: {Test: {b: {}}}},
+            {[typeName]: 'Test', b: 'b'},
+            {
+                [typeName]: 'Test',
+                [attachmentName]: {
+                    /* eslint-disable camelcase */
+                    test: {data: '', content_type: 'text/plain'}
+                    /* eslint-enable camelcase */
+                }
+            }
+        ],
+        /*
+            Set attachment to a default one if it is missing and has a
+            specified default one.
+        */
+        [
+            {[typeName]: 'Test'},
+            {entities: {Test: {[attachmentName]: {'.*': {default: {test: {
+                /* eslint-disable camelcase */
+                data: '', content_type: 'text/plain'
+                /* eslint-enable camelcase */
+            }}}}}}},
+            {
+                [typeName]: 'Test',
+                [attachmentName]: {test: {
                     /* eslint-disable camelcase */
                     data: '', content_type: 'text/plain'
                     /* eslint-enable camelcase */
-                }}}}}}},
-                {
+                }}
+            },
+            {[typeName]: 'Test'}
+        ],
+        // Migrate model type if old one is provided.
+        [
+            {[typeName]: 'OldTest'},
+            {entities: {Test: {[specialNames.oldType]: 'OldTest'}}},
+            {[typeName]: 'Test'}
+        ],
+        // Migrate nested property model type if old one is provided.
+        [
+            {[typeName]: 'Test', a: {[typeName]: 'OldTest', b: 'b'}},
+            {entities: {Test: {
+                a: {type: 'Test'},
+                [specialNames.oldType]: 'OldTest',
+                b: {}
+            }}},
+            {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'b'}}
+        ],
+        // Migrate nested array model type if old one is provided.
+        [
+            {[typeName]: 'Test', a: [{[typeName]: 'OldTest', b: 'b'}]},
+            {entities: {Test: {
+                a: {type: 'Test[]'},
+                [specialNames.oldType]: 'OldTest',
+                b: {}
+            }}},
+            {[typeName]: 'Test', a: [{[typeName]: 'Test', b: 'b'}]}
+        ],
+        // Migrate nested array property model type if old one is provided.
+        [
+            {
+                [typeName]: 'Test',
+                a: [{
                     [typeName]: 'Test',
-                    [attachmentName]: {test: {
-                        /* eslint-disable camelcase */
-                        data: '', content_type: 'text/plain'
-                        /* eslint-enable camelcase */
-                    }}
-                }
-            ],
-            // Migrate model type if old one is provided.
-            [
-                [{[typeName]: 'OldTest'}],
-                {entities: {Test: {[specialNames.oldType]: 'OldTest'}}},
-                {[typeName]: 'Test'}
-            ],
-            // Migrate nested property model type if old one is provided.
-            [
-                [{[typeName]: 'Test', a: {[typeName]: 'OldTest', b: 'b'}}],
-                {entities: {Test: {
-                    a: {type: 'Test'},
-                    [specialNames.oldType]: 'OldTest',
-                    b: {}
-                }}},
-                {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'b'}}
-            ],
-            // Migrate nested array model type if old one is provided.
-            [
-                [{[typeName]: 'Test', a: [{[typeName]: 'OldTest', b: 'b'}]}],
-                {entities: {Test: {
-                    a: {type: 'Test[]'},
-                    [specialNames.oldType]: 'OldTest',
-                    b: {}
-                }}},
-                {[typeName]: 'Test', a: [{[typeName]: 'Test', b: 'b'}]}
-            ],
-            // Migrate nested array property model type if old one is provided.
-            [
-                [{
+                    a: [{[typeName]: 'OldTest', b: 'b'}]
+                }]
+            },
+            {entities: {Test: {
+                a: {type: 'Test[]'},
+                [specialNames.oldType]: 'OldTest',
+                b: {}
+            }}},
+            {
+                [typeName]: 'Test',
+                a: [{
                     [typeName]: 'Test',
-                    a: [{
-                        [typeName]: 'Test',
-                        a: [{[typeName]: 'OldTest', b: 'b'}]
-                    }]
-                }],
-                {entities: {Test: {
-                    a: {type: 'Test[]'},
-                    [specialNames.oldType]: 'OldTest',
-                    b: {}
-                }}},
-                {
-                    [typeName]: 'Test',
-                    a: [{
-                        [typeName]: 'Test',
-                        a: [{[typeName]: 'Test', b: 'b'}]
-                    }]
-                }
-            ],
-            // Migrate property names if old name is provided.
-            [
-                [{[typeName]: 'Test', a: 'a'}],
-                {entities: {Test: {b: {oldName: 'a'}}}},
-                {[typeName]: 'Test', b: 'a'}
-            ]
-        ]) {
-            const models:Models = Helper.extendModels(
-                Tools.extend(true, {}, defaultModelConfiguration, test[1])
+                    a: [{[typeName]: 'Test', b: 'b'}]
+                }]
+            }
+        ],
+        // Migrate property names if old name is provided.
+        [
+            {[typeName]: 'Test', a: 'a'},
+            {entities: {Test: {b: {oldName: 'a'}}}},
+            {[typeName]: 'Test', b: 'a'}
+        ]
+    ])(
+        'validateDocumentUpdate (with update strategy "migration")',
+        (
+            newDocument:Document,
+            modelConfiguration:ModelConfiguration,
+            expected:Document,
+            oldDocument:Document|null = null
+        ):void => {
+            const defaultModelConfiguration:ModelConfiguration = Tools.extend(
+                true, {}, configuration.model, {updateStrategy: 'migrate'}
             )
-            const modelConfiguration:ModelConfiguration = Tools.extend(
-                true, {}, defaultModelConfiguration, test[1]
+            for (
+                const propertyName in defaultModelConfiguration.entities._base
             )
-            delete modelConfiguration.property.defaultSpecification
-            delete modelConfiguration.entities
+                if (
+                    defaultModelConfiguration.entities._base.hasOwnProperty(
+                        propertyName
+                    ) &&
+                    propertyName !== typeName
+                )
+                    delete defaultModelConfiguration.entities._base[
+                        propertyName
+                    ]
+            const models:Models = Helper.extendModels(Tools.extend(
+                true, {}, defaultModelConfiguration, modelConfiguration
+            ))
+            const testModelConfiguration:ModelConfiguration = Tools.extend(
+                true, {}, defaultModelConfiguration, modelConfiguration
+            )
+            delete testModelConfiguration.property.defaultSpecification
+            delete testModelConfiguration.entities
             expect(DatabaseHelper.validateDocumentUpdate(
-                ...test[0]
-                    .concat([null, {}, {}].slice(test[0].length - 1))
-                    .concat(modelConfiguration, models)
-            )).toStrictEqual(test[2])
+                newDocument,
+                oldDocument,
+                {},
+                {},
+                testModelConfiguration,
+                models
+            )).toStrictEqual(expected)
         }
-        // endregion
-    })
+    )
+    // / endregion
     // endregion
 })
 // region vim modline
