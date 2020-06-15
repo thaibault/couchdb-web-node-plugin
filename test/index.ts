@@ -30,11 +30,8 @@ describe('index', ():void => {
         )).resolves.toStrictEqual({promise: null})
     )
     test('preLoadService', ():void =>
-        expect(
-            Index.preLoadService({}, configuration)
-        ).resolves.toHaveProperty(
-            'database.server.runner.binaryFilePath', 'TODO'
-        )
+        expect(Index.preLoadService({}, configuration)).resolves
+            .toHaveProperty('database.server.runner.binaryFilePath', 'TODO')
     )
     test('shouldExit', ():void => {
         let testValue:number = 0

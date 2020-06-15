@@ -29,7 +29,6 @@ describe('helper', ():void => {
         configuration.database.model.property.name.special
     // endregion
     // region tests
-    // TODO
     test.each([
         [{}, 1, 1, 'DOCUMENT IS TOO BIG TO REPRESENT'],
         [{}, 2, 2, '{}'],
@@ -42,26 +41,41 @@ describe('helper', ():void => {
                 a: 2,
             ...`.replace(/ {16}/g, '')
         ]
-    ])('mayStripRepresentation()', (
-        object:any,
-        maximumRepresentationTryLength:number,
-        maximumRepresentationLength:number,
-        expected:string
-    ):void =>
-        expect(Helper.mayStripRepresentation(
-            object, maximumRepresentationTryLength, maximumRepresentationLength
-        )).toStrictEqual(expected)
+    ])(
+        `mayStripRepresentation(%p, %d, %d) === '%s'`,
+        (
+            object:any,
+            maximumRepresentationTryLength:number,
+            maximumRepresentationLength:number,
+            expected:string
+        ):void =>
+            expect(Helper.mayStripRepresentation(
+                object, maximumRepresentationTryLength, maximumRepresentationLength
+            )).toStrictEqual(expected)
     )
-    test('ensureValidationDocumentPresence', async ():Promise<void> => {
-        for (const test:Array<any> of [
-            [{put: ():Promise<void> =>
+    test.each([
+        [
+            {put: ():Promise<void> =>
                 new Promise((resolve:Function):Promise<boolean> =>
                     Tools.timeout(resolve))
-            }, 'test', {data: 'data'}, 'Description', false]
-        ])
-            assert.strictEqual(await Helper.ensureValidationDocumentPresence(
-                ...test))
-    })
+            },
+            'test',
+            {data: 'data'},
+            'Description',
+            false
+        ]
+    ])(
+        `ensureValidationDocumentPresence(%p, '%s', %p, '%s', %p)`,
+        (
+            databaseConnection:Connection,
+            documentName:string,
+            documentData:Mapping,
+            description:string,
+            log:boolean
+        ):void =>
+            expect(Helper.ensureValidationDocumentPresence(...test))
+                .resolves.toStrictEqual(void)
+    )
     // / region model
     test('determineAllowedModelRolesMapping', ():void => {
         const modelConfiguration:ModelConfiguration = Tools.copy(
