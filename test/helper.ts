@@ -1,4 +1,3 @@
-// @flow
 // #!/usr/bin/env node
 // -*- coding: utf-8 -*-
 'use strict'
@@ -15,54 +14,78 @@
     endregion
 */
 // region imports
-import type {PlainObject} from 'clientnode'
 import Tools from 'clientnode'
-import registerTest from 'clientnode/test'
-import {configuration} from 'web-node'
 
 import Helper from '../helper'
-import type {ModelConfiguration, Models} from '../type'
+import packageConfiguration from '../package.json'
+import {ModelConfiguration, Models, SpecialPropertyNames} from '../type'
 // endregion
-registerTest(async function():Promise<void> {
-    this.module('helper')
+describe('helper', ():void => {
+    // region prepare environment
+    const configuration:Configuration =
+        packageConfiguration.webNode as Configuration
+    const specialNames:SpecialPropertyNames =
+        configuration.database.model.property.name.special
+    // endregion
     // region tests
-    this.test('determineRepresentation', (assert:Object):void => {
-        for (const test:Array<any> of [
-            [{}, 1, 1, 'DOCUMENT IS TOO BIG TO REPRESENT'],
-            [{}, 2, 2, '{}'],
-            [{}, 1000, 100, '{}'],
-            [
-                {a: 2, b: 3},
-                100,
-                15,
-                `{
-                    a: 2,
-                ...`.replace(/ {16}/g, '')
-            ]
-        ])
-            assert.strictEqual(
-                Helper.determineRepresentation(test[0], test[1], test[2]),
-                test[3]
-            )
-    })
-    this.test('ensureValidationDocumentPresence', async (
-        assert:Object
-    ):Promise<void> => {
-        const done:Function = assert.async()
-        for (const test:Array<any> of [
-            [{put: ():Promise<void> =>
+    test.each([
+        [{}, 1, 1, 'DOCUMENT IS TOO BIG TO REPRESENT'],
+        [{}, 2, 2, '{}'],
+        [{}, 1000, 100, '{}'],
+        [
+            {a: 2, b: 3},
+            100,
+            15,
+            `{
+                a: 2,
+            ...`.replace(/ {12}/g, '')
+        ]
+    ])(
+        `mayStripRepresentation(%p, %d, %d) === '%s'`,
+        (
+            object:any,
+            maximumRepresentationTryLength:number,
+            maximumRepresentationLength:number,
+            expected:string
+        ):void =>
+            expect(Helper.mayStripRepresentation(
+                object, maximumRepresentationTryLength, maximumRepresentationLength
+            )).toStrictEqual(expected)
+    )
+    test.each([
+        [
+            {put: ():Promise<void> =>
                 new Promise((resolve:Function):Promise<boolean> =>
                     Tools.timeout(resolve))
-            }, 'test', {data: 'data'}, 'Description', false]
-        ])
-            assert.strictEqual(await Helper.ensureValidationDocumentPresence(
-                ...test))
-        done()
-    })
+            },
+            'test',
+            {data: 'data'},
+            'Description',
+            false
+        ]
+    ])(
+        `ensureValidationDocumentPresence(%p, '%s', %p, '%s', %p)`,
+        (
+            databaseConnection:Connection,
+            documentName:string,
+            documentData:Mapping,
+            description:string,
+            log:boolean
+        ):void =>
+            expect(Helper.ensureValidationDocumentPresence(
+                databaseConnection,
+                documentName,
+                documentData,
+                description,
+                log
+            )).resolves.not.toBeDefined()
+    )
     // / region model
-    this.test('determineAllowedModelRolesMapping', (assert:Object):void => {
+    /* TODO
+    test('determineAllowedModelRolesMapping', ():void => {
         const modelConfiguration:ModelConfiguration = Tools.copy(
-            configuration.database.model)
+            configuration.database.model
+        )
         modelConfiguration.entities = {}
         for (const test:Array<any> of [
             [{}, {}],
@@ -102,11 +125,7 @@ registerTest(async function():Promise<void> {
                 test[1]
             )
     })
-    this.test('determineGenericIndexablePropertyNames', (
-        assert:Object
-    ):void => {
-        const specialNames:PlainObject =
-            configuration.database.model.property.name.special
+    test('determineGenericIndexablePropertyNames', ():void => {
         for (const test of [
             [{}, {}, [specialNames.id, specialNames.revision]],
             [{}, {a: {}}, [specialNames.id, specialNames.revision, 'a']],
@@ -115,14 +134,11 @@ registerTest(async function():Promise<void> {
             ]]
         ])
             assert.deepEqual(Helper.determineGenericIndexablePropertyNames(
-                Tools.extend(
-                    true, {}, configuration.database.model, test[0]),
+                Tools.extend(true, {}, configuration.database.model, test[0]),
                 test[1]
             ).sort(), test[2])
     })
-    this.test('extendModel', (assert:Object):void => {
-        const specialNames:PlainObject =
-            configuration.database.model.property.name.special
+    test('extendModel', ():void => {
         for (const test:Array<any> of [
             ['A', {A: {}}, {}],
             ['Test', {
@@ -158,13 +174,12 @@ registerTest(async function():Promise<void> {
         ])
             assert.deepEqual(Helper.extendModel(test[0], test[1]), test[2])
     })
-    this.test('extendModels', (assert:Object):void => {
+    test('extendModels', ():void => {
         const modelConfiguration:ModelConfiguration = Tools.copy(
-            configuration.database.model)
+            configuration.database.model
+        )
         modelConfiguration.entities = {}
         modelConfiguration.property.defaultSpecification = {}
-        const specialNames:PlainObject = modelConfiguration.property.name
-            .special
         for (const test:Array<any> of [
             [{}, {}],
             [{entities: {}}, {}],
@@ -222,7 +237,7 @@ registerTest(async function():Promise<void> {
             {a: {}}
         )
     })
-    this.test('normalizeAllowedModelRoles', (assert:Object):void => {
+    test('normalizeAllowedModelRoles', ():void => {
         for (const test:Array<any> of [
             ['a', {read: ['a'], write: ['a']}],
             [[], {read: [], write: []}],
@@ -236,9 +251,10 @@ registerTest(async function():Promise<void> {
             assert.deepEqual(
                 Helper.normalizeAllowedModelRoles(test[0]), test[1])
     })
+    */
     // / endregion
     // endregion
-}, 'plain')
+})
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
 // vim: foldmethod=marker foldmarker=region,endregion:

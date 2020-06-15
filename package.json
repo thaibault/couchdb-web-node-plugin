@@ -24,14 +24,14 @@
     "web"
   ],
   "files": [
+    "databaseHelper.ts",
     "databaseHelper.js",
-    "databaseHelper.compiled.js",
+    "helper.ts",
     "helper.js",
-    "helper.compiled.js",
-    "index.js",
-    "type.js"
+    "index.ts",
+    "type.ts"
   ],
-  "main": "index.compiled.js",
+  "main": "index.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/thaibault/databaseWebNodePlugin.git"
@@ -39,45 +39,42 @@
   "scripts": {
     "build": "yarn build:databaseHelper && webOptimizer build",
     "build:databaseHelper": "webOptimizer build '{__reference__: \"target:databaseHelper\"}'",
-    "build:dll": "webOptimizer build:dll",
+    "check:types": "webOptimizer check:types",
     "clear": "webOptimizer clear && rimraf log.txt",
     "document": "webOptimizer document",
-    "lint": "webOptimizer check:type; webOptimizer lint",
+    "lint": "webOptimizer lint",
     "prepare": "yarn build",
     "report:coverage": "nyc report --reporter=text-lcov | coveralls",
     "serve": "yarn build && webNode",
     "start": "yarn serve",
-    "test": "nyc yarn test:plain",
-    "test:plain": "webOptimizer test",
+    "test": "webOptimizer test",
     "update": "yarn version --patch && yarn publish",
     "update:documentation": "documentationWebsite --log-level info",
-    "watch": "webOptimizer build --watch",
-    "watch:dll": "webOptimizer build:dll --watch"
+    "watch": "webOptimizer build --watch"
   },
   "dependencies": {
-    "clientnode": "*",
-    "node-fetch": "*",
     "pouchdb": "*",
     "pouchdb-find": "*",
     "pouchdb-server": "*"
   },
-  "peerDependencies": {
-    "@babel/runtime": "*",
-    "request": "*",
-    "web-node": "*"
-  },
   "devDependencies": {
+    "@types/ejs": "*",
+    "@types/jest": "*",
+    "@types/loader-utils": "*",
+    "@types/node": "*",
+    "@types/node-fetch": "*",
+    "@types/pouchdb": "*",
+    "@typescript-eslint/eslint-plugin": "*",
+    "@typescript-eslint/parser": "*",
     "babel-eslint": "*",
-    "coveralls": "*",
+    "clientnode": "*",
     "documentation-website": "*",
     "eslint": "*",
     "eslint-config-google": "*",
-    "eslint-plugin-flowtype": "*",
     "eslint-plugin-jsdoc": "*",
-    "flow-bin": "*",
+    "jest": "*",
     "jsdoc": "*",
-    "nyc": "*",
-    "qunit": "*",
+    "node-fetch": "*",
     "rimraf": "*",
     "web-node": "*",
     "weboptimizer": "*",
@@ -85,14 +82,18 @@
     "webpack-cli": "*",
     "webpack-dev-server": "*"
   },
+  "peerDependencies": {
+    "@babel/runtime": "*",
+    "clientnode": "*",
+    "node-fetch": "*",
+    "request": "*",
+    "web-node": "*"
+  },
+  "sideEffects": true,
   "webNode": {
     "database": {
       "attachAutoRestarter": true,
       "backend": {
-        "prefixes": [
-          "_node/_local/_config",
-          "_config"
-        ],
         "configuration": {
           "couchdb/database_dir": {
             "__evaluate__": "path.resolve(self.database.path)"
@@ -112,7 +113,11 @@
           "httpd/port": 5984,
           "log/file": "/dev/stdout",
           "log/level": "info"
-        }
+        },
+        "prefixes": [
+          "_node/_local/_config",
+          "_config"
+        ]
       },
       "binary": {
         "memoryInMegaByte": "default",
@@ -172,13 +177,11 @@
         "timeout": false
       },
       "connector": {
-        "ajax": {
+        "fetch": {
           "timeout": {
             "__evaluate__": "5 * 60 * 1000"
           }
-        },
-        "auto_compaction": true,
-        "revs_limit": 100
+        }
       },
       "createGenericFlatIndex": true,
       "debug": false,
@@ -203,7 +206,6 @@
             },
             "_maximumAggregatedSize": 100000000,
             "_minimumAggregatedSize": 0,
-            "_oldType": null,
             "_rev": {
               "mutable": false
             },
@@ -227,12 +229,10 @@
             "_extends": "_stringMapping"
           },
           "_interval": {
-            "_constraintExpressions": [
-              {
-                "description": "`You have to ensure that start time is before or equal to end time for models with an ${modelName.replace(/^_+/, '')} specification${pathDescription}.`",
-                "evaluation": "newDocument.start <= newDocument.end"
-              }
-            ],
+            "_constraintExpressions": {
+              "description": "`You have to ensure that start time is before or equal to end time for models with an ${modelName.replace(/^_+/, '')} specification${pathDescription}.`",
+              "evaluation": "newDocument.start <= newDocument.end"
+            },
             "end": {
               "declaration": "Ende des Intervals",
               "description": "Ende",
@@ -321,35 +321,15 @@
         },
         "property": {
           "defaultSpecification": {
-            "computed": false,
-            "conflictingConstraintExecution": null,
-            "conflictingConstraintExpression": null,
-            "constraintExecution": null,
-            "constraintExpression": null,
-            "contentTypeRegularExpressionPattern": null,
-            "default": null,
             "emptyEqualsToNull": true,
-            "invertedContentTypeRegularExpressionPattern": null,
-            "invertedRegularExpressionPattern": null,
-            "maximum": null,
-            "minimum": null,
             "maximumAggregatedSize": 100000000,
             "minimumAggregatedSize": 0,
-            "maximumLength": null,
             "minimumLength": 0,
-            "maximumNumber": null,
             "minimumNumber": 0,
             "maximumSize": 10000000,
             "minimumSize": 0,
             "mutable": true,
             "nullable": true,
-            "onCreateExecution": null,
-            "onCreateExpression": null,
-            "oldName": null,
-            "onUpdateExecution": null,
-            "onUpdateExpression": null,
-            "regularExpressionPattern": null,
-            "selection": null,
             "trim": true,
             "type": "string",
             "writable": true
@@ -371,6 +351,7 @@
               },
               "deleted": "_deleted",
               "deletedConflict": "_deleted_conflicts",
+              "designDocumentNamePrefix": "_design/",
               "extend": "_extends",
               "id": "_id",
               "localSequence": "_local_seq",

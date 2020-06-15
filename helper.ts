@@ -1,4 +1,3 @@
-// @flow
 // -*- coding: utf-8 -*-
 'use strict'
 /* !
@@ -15,31 +14,69 @@
 */
 // region imports
 import {spawn as spawnChildProcess} from 'child_process'
-import Tools from 'clientnode'
-import type {PlainObject} from 'clientnode'
+import Tools, {CloseEventNames} from 'clientnode'
+import {
+    Mapping, ProcessCloseCallback, ProcessErrorCallback
+} from 'clientnode/type'
+import fetch, {
+    Response as FetchResponse,
+    RequestInit as FetchOptions,
+    RequestInfo as FetchURL
+} from 'node-fetch'
 import {promises as fileSystem} from 'fs'
-// NOTE: Remove when "fetch" is supported by node.
-import fetch from 'node-fetch'
 import path from 'path'
 import {PluginAPI} from 'web-node'
-import type {Configuration, Plugin, Services} from 'web-node/type'
+import {Plugin} from 'web-node/type'
 
-import type {
+import {
     AllowedModelRolesMapping,
     AllowedRoles,
+    Attachments,
+    Configuration,
+    Connection,
+    DatabaseConnectorConfiguration,
+    DatabaseFetch,
+    DatabaseResponse,
+    Document,
     Model,
     ModelConfiguration,
     Models,
-    NormalizedAllowedRoles
+    NormalizedAllowedRoles,
+    DocumentRevisionIDMeta,
+    Services,
+    SpecialPropertyNames
 } from './type'
 // endregion
-// NOTE: Remove when "fetch" is supported by node.
-global.fetch = fetch
-// region methods
+// region classes
 /**
  * A dumm plugin interface with all available hooks.
  */
 export class Helper {
+    /**
+     * Converts internal declarative database connector configuration object
+     * into a database compatible one.
+     * @param configuration - Mutable by plugins extended configuration object.
+     * @returns Database compatible configuration object.
+    */
+    static getConnectorOptions(
+        configuration:Configuration
+    ):DatabaseConnectorConfiguration {
+        if (configuration.database.connector.fetch)
+            return {
+                fetch: ((
+                    url:FetchURL, options?:FetchOptions
+                ):Promise<FetchResponse> => fetch(
+                    url,
+                    Tools.extend(
+                        true,
+                        {},
+                        configuration.database.connector.fetch,
+                        options || {}
+                    )
+                )) as unknown as DatabaseFetch
+            }
+        return {fetch: fetch as unknown as DatabaseFetch}
+    }
     /**
      * Determines a representation for given plain object.
      * @param data - Object to represent.
@@ -49,19 +86,18 @@ export class Helper {
      * representation.
      * @returns Representation string.
      */
-    static determineRepresentation(
-        data:PlainObject,
+    static mayStripRepresentation(
+        object:any,
         maximumRepresentationTryLength:number,
         maximumRepresentationLength:number
     ):string {
-        let representation:string = Tools.represent(data)
+        let representation:string = Tools.represent(object)
         if (representation.length <= maximumRepresentationTryLength) {
             if (representation.length > maximumRepresentationLength)
-                representation =
-                    representation.substring(
-                        0, maximumRepresentationLength - '...'.length
-                    ) +
-                    '...'
+                return representation.substring(
+                    0, maximumRepresentationLength - '...'.length
+                ) +
+                '...'
         } else
             return 'DOCUMENT IS TOO BIG TO REPRESENT'
         return representation
@@ -79,19 +115,25 @@ export class Helper {
      * successfully.
      */
     static async ensureValidationDocumentPresence(
-        databaseConnection:Object,
+        databaseConnection:Connection,
         documentName:string,
-        documentData:PlainObject,
+        documentData:Mapping,
         description:string,
-        log:boolean = true
+        log:boolean = true,
+        idName:string = '_id',
+        designDocumentNamePrefix:string = '_design/'
     ):Promise<void> {
-        const newDocument:{[key:string]:string} = Tools.extend(
-            {_id: `_design/${documentName}`, language: 'javascript'},
+        const newDocument:Document = Tools.extend(
+            {
+                [idName]: `${designDocumentNamePrefix}${documentName}`,
+                language: 'javascript'
+            },
             documentData
         )
         try {
-            const oldDocument:PlainObject = await databaseConnection.get(
-                `_design/${documentName}`)
+            const oldDocument:Document = await databaseConnection.get(
+                `${designDocumentNamePrefix}${documentName}`
+            )
             newDocument._rev = oldDocument._rev
             await databaseConnection.put(newDocument)
             if (log)
@@ -136,7 +178,8 @@ export class Helper {
             ) +
             `/${configuration.name}`
         services.database.connection = new services.database.connector(
-            url, configuration.database.connector)
+            url, Helper.getConnectorOptions(configuration)
+        )
         services.database.connection.setMaxListeners(Infinity)
         const idName:string =
             configuration.database.model.property.name.special.id
@@ -147,11 +190,13 @@ export class Helper {
             NOTE: A "bulkDocs" plugin does not get called for every "put" and
             "post" call so we have to wrap runtime generated methods.
         */
-        for (const pluginName:string of ['post', 'put']) {
-            const nativeMethod:Function =
-                services.database.connection[pluginName].bind(
-                    services.database.connection)
-            services.database.connection[pluginName] = async function(
+        for (const pluginName of ['post', 'put']) {
+            const nativeMethod:Function = services.database.connection[
+                pluginName as 'get'|'post'
+            ].bind(services.database.connection)
+            services.database.connection[
+                pluginName as 'get'|'post'
+            ] = async function(
                 firstParameter:any, ...parameter:Array<any>
             ):Promise<any> {
                 try {
@@ -165,10 +210,10 @@ export class Helper {
                         'message' in error &&
                         error.message.startsWith('NoChange:')
                     ) {
-                        const result:PlainObject = {
+                        const result:DatabaseResponse = {
                             id: firstParameter[idName],
                             ok: true
-                        }
+                        } as DatabaseResponse
                         try {
                             result.rev =
                                 revisionName in firstParameter &&
@@ -176,7 +221,10 @@ export class Helper {
                                     firstParameter[revisionName]
                                 ) ?
                                     firstParameter[revisionName] :
-                                    (await this.get(result.id))[revisionName]
+                                    (await this.get(result.id))[
+                                        revisionName as
+                                            keyof DocumentRevisionIDMeta
+                                    ]
                         } catch (error) {
                             throw error
                         }
@@ -187,7 +235,7 @@ export class Helper {
             }
         }
         // endregion
-        // region ensure database presence
+        // region ensure database pr esence
         try {
             await Tools.checkReachability(url)
         } catch (error) {
@@ -214,7 +262,7 @@ export class Helper {
             try {
                 await fileSystem.mkdir(
                     path.dirname(
-                        services.database.server.runner.configurationFile.path
+                        services.database.server.runner.configurationFile!.path
                     ),
                     {recursive: true}
                 )
@@ -223,8 +271,8 @@ export class Helper {
                     throw error
             }
             await fileSystem.writeFile(
-                services.database.server.runner.configurationFile.path,
-                services.database.server.runner.configurationFile.content,
+                services.database.server.runner.configurationFile!.path,
+                services.database.server.runner.configurationFile!.content,
                 {encoding: configuration.encoding}
             )
         }
@@ -232,7 +280,7 @@ export class Helper {
         services.database.server.process = spawnChildProcess(
             (
                 configuration.database.binary.memoryInMegaByte === 'default' ?
-                    services.database.server.runner.binaryFilePath :
+                    services.database.server.runner.binaryFilePath as string :
                     configuration.database.binary.nodePath
             ),
             (
@@ -241,9 +289,14 @@ export class Helper {
                     [
                         '--max-old-space-size=' +
                             configuration.database.binary.memoryInMegaByte,
-                        services.database.server.runner.binaryFilePath
+                        services.database.server.runner.binaryFilePath as
+                            string
                     ]
-            ).concat(services.database.server.runner.arguments),
+            ).concat(
+                services.database.server.runner.arguments ?
+                    services.database.server.runner.arguments :
+                    []
+            ),
             {
                 cwd: eval('process').cwd(),
                 env: (
@@ -261,15 +314,18 @@ export class Helper {
                 stdio: 'inherit'
             }
         );
-        (new Promise((resolve:Function, reject:Function):void => {
-            for (const closeEventName:string of Tools.closeEventNames)
+        (new Promise((
+            resolve:ProcessCloseCallback, reject:ProcessErrorCallback
+        ):void => {
+            for (const closeEventName of CloseEventNames)
                 services.database.server.process.on(
-                    closeEventName, Tools.getProcessCloseHandler(
+                    closeEventName,
+                    Tools.getProcessCloseHandler(
                         resolve,
                         reject,
                         {
-                            reason: closeEventName,
-                            process: services.database.server.process
+                            process: services.database.server.process,
+                            reason: closeEventName
                         }
                     )
                 )
@@ -289,9 +345,11 @@ export class Helper {
                     services.database.server.resolve
                 )
                     services.database.server.reject.apply(this, parameter)
-            })
+            }
+        )
         await Tools.checkReachability(
-            Tools.stringFormat(configuration.database.url, ''), true)
+            Tools.stringFormat(configuration.database.url, ''), true
+        )
     }
     /**
      * Stops open database connection if exist, stops server process, restarts
@@ -304,13 +362,14 @@ export class Helper {
      */
     static async restartServer(
         services:Services, configuration:Configuration, plugins:Array<Plugin>
-    ):Promise<Services> {
+    ):Promise<void> {
         const resolveServerProcessBackup:Function =
             services.database.server.resolve
         const rejectServerProcessBackup:Function =
             services.database.server.reject
         // Avoid to notify web node about server process stop.
-        services.database.server.resolve = services.database.server.reject =
+        services.database.server.resolve =
+            services.database.server.reject =
             Tools.noop
         await Helper.stopServer(services, configuration)
         // Reattach server process to web nodes process pool.
@@ -319,8 +378,8 @@ export class Helper {
         await Helper.startServer(services, configuration)
         Helper.initializeConnection(services, configuration)
         await PluginAPI.callStack(
-            'restartDatabase', plugins, configuration, services)
-        return services
+            'restartDatabase', plugins, configuration, services
+        )
     }
     /**
      * Stops open database connection if exists and stops server process.
@@ -331,14 +390,14 @@ export class Helper {
      */
     static async stopServer(
         services:Services, configuration:Configuration
-    ):Promise<Services> {
+    ):Promise<void> {
         if (services.database.connection)
             services.database.connection.close()
         if (services.database.server.process)
             services.database.server.process.kill('SIGINT')
         await Tools.checkUnreachability(
-            Tools.stringFormat(configuration.database.url, ''), true)
-        return services
+            Tools.stringFormat(configuration.database.url, ''), true
+        )
     }
     // region model
     /**
@@ -354,17 +413,17 @@ export class Helper {
             modelConfiguration.property.name.special.allowedRole
         const allowedModelRolesMapping:AllowedModelRolesMapping = {}
         const models:Models = Helper.extendModels(modelConfiguration)
-        for (const modelName:string in models)
+        for (const modelName in models)
             if (
                 models.hasOwnProperty(modelName) &&
                 models[modelName].hasOwnProperty(allowedRoleName)
             ) {
                 allowedModelRolesMapping[modelName] =
                     Helper.normalizeAllowedModelRoles(
-                        // IgnoreTypeCheck
-                        models[modelName][allowedRoleName])
+                        models[modelName][allowedRoleName] as AllowedRoles
+                    )
                 allowedModelRolesMapping[modelName].properties = {}
-                for (const name:string in models[modelName])
+                for (const name in models[modelName])
                     if (
                         models[modelName].hasOwnProperty(name) &&
                         models[modelName][name] !== null &&
@@ -374,15 +433,18 @@ export class Helper {
                         ) &&
                         models[modelName][name].allowedRoles
                     )
-                        // IgnoreTypeCheck
-                        allowedModelRolesMapping[modelName].properties[name] =
-                            Helper.normalizeAllowedModelRoles(
-                                models[modelName][name].allowedRoles)
+                        (
+                            allowedModelRolesMapping[modelName].properties as
+                                AllowedModelRolesMapping
+                        )[name] = Helper.normalizeAllowedModelRoles(
+                            models[modelName][name].allowedRoles as
+                                AllowedRoles
+                        )
             } else
                 allowedModelRolesMapping[modelName] = {
+                    properties: {},
                     read: [],
-                    write: [],
-                    properties: {}
+                    write: []
                 }
         return allowedModelRolesMapping
     }
@@ -395,7 +457,7 @@ export class Helper {
     static determineGenericIndexablePropertyNames(
         modelConfiguration:ModelConfiguration, model:Model
     ):Array<string> {
-        const specialNames:PlainObject =
+        const specialNames:SpecialPropertyNames =
             modelConfiguration.property.name.special
         return Object.keys(model).filter((name:string):boolean =>
             model[name] !== null &&
@@ -414,7 +476,7 @@ export class Helper {
                         specialNames.constraint.execution,
                         specialNames.constraint.expression,
                         specialNames.deleted,
-                        specialNames.deleted_conflict,
+                        specialNames.deletedConflict,
                         specialNames.extend,
                         specialNames.id,
                         specialNames.maximumAggregatedSize,
@@ -428,12 +490,15 @@ export class Helper {
                     model[name].type &&
                     (
                         typeof model[name].type === 'string' &&
-                        model[name].type.endsWith('[]') ||
+                        (model[name].type as string).endsWith('[]') ||
                         Array.isArray(model[name].type) &&
-                        model[name].type.length &&
-                        Array.isArray(model[name].type[0]) ||
+                        (model[name].type as Array<string>).length &&
+                        Array.isArray(
+                            (model[name].type as Array<string>)[0]
+                        ) ||
                         modelConfiguration.entities.hasOwnProperty(
-                            model[name].type)
+                            model[name].type as string
+                        )
                     )
                 )
             )
@@ -453,18 +518,22 @@ export class Helper {
         if (modelName === '_base')
             return models[modelName]
         if (models.hasOwnProperty('_base'))
-            if (models[modelName].hasOwnProperty(extendPropertyName))
-                // IgnoreTypeCheck
-                models[modelName][extendPropertyName] = ['_base'].concat(
-                    models[modelName][extendPropertyName])
+            if (
+                models[modelName].hasOwnProperty(extendPropertyName) &&
+                models[modelName][extendPropertyName]
+            )
+                (models[modelName][extendPropertyName] as Array<string>) =
+                    ['_base'].concat(
+                        models[modelName][extendPropertyName] as Array<string>
+                    )
             else
-                // IgnoreTypeCheck
-                models[modelName][extendPropertyName] = '_base'
+                (
+                    models[modelName][extendPropertyName] as unknown as string
+                ) = '_base'
         if (models[modelName].hasOwnProperty(extendPropertyName)) {
-            // IgnoreTypeCheck
-            for (const modelNameToExtend:string of [].concat(models[
-                modelName
-            ][extendPropertyName]))
+            for (const modelNameToExtend of ([] as Array<string>).concat(
+                models[modelName][extendPropertyName] as Array<string>
+            ))
                 models[modelName] = Tools.extend(
                     true,
                     {},
@@ -482,14 +551,12 @@ export class Helper {
      * @param modelConfiguration - Model specification object.
      * @returns Models with extended specific specifications.
      */
-    static extendModels(modelConfiguration:PlainObject):Models {
-        const specialNames:PlainObject =
+    static extendModels(modelConfiguration:ModelConfiguration):Models {
+        const specialNames:SpecialPropertyNames =
             modelConfiguration.property.name.special
         const models:Models = {}
-        for (const modelName:string in modelConfiguration.entities)
-            if (modelConfiguration.entities.hasOwnProperty(
-                modelName
-            )) {
+        for (const modelName in modelConfiguration.entities)
+            if (modelConfiguration.entities.hasOwnProperty(modelName)) {
                 if (!(
                     new RegExp(
                         modelConfiguration.property.name
@@ -504,30 +571,39 @@ export class Helper {
                         'Model names have to match "' +
                         modelConfiguration.property.name
                             .typeRegularExpressionPattern.public +
-                        '" or "' + modelConfiguration.property.name
+                        '" or "' +
+                        modelConfiguration.property.name
                             .typeRegularExpressionPattern.private +
-                        `" for private one (given name: "${modelName}").`)
+                        `" for private one (given name: "${modelName}").`
+                    )
                 models[modelName] = Helper.extendModel(
                     modelName, modelConfiguration.entities, specialNames.extend
                 )
             }
-        for (const modelName:string in models)
+        for (const modelName in models)
             if (models.hasOwnProperty(modelName))
-                for (const propertyName:string in models[modelName])
+                for (const propertyName in models[modelName])
                     if (models[modelName].hasOwnProperty(propertyName))
                         if (propertyName === specialNames.attachment) {
-                            for (const type:string in models[modelName][
-                                propertyName
-                            ])
-                                if (models[modelName][
-                                    propertyName
-                                ].hasOwnProperty(type))
-                                    models[modelName][propertyName][type] =
-                                        Tools.extend(true, Tools.copy(
+                            for (const type in models[modelName][propertyName])
+                                if (
+                                    models[modelName][propertyName]
+                                        .hasOwnProperty(type)
+                                )
+                                    (
+                                        models[modelName][propertyName] as
+                                            Attachments
+                                    )[type] = Tools.extend(
+                                        true,
+                                        Tools.copy(
                                             modelConfiguration.property
                                                 .defaultSpecification
                                         ),
-                                        models[modelName][propertyName][type])
+                                        (
+                                            models[modelName][propertyName] as
+                                                Attachments
+                                        )[type]
+                                    )
                         } else if (![
                             specialNames.allowedRole,
                             specialNames.constraint.execution,
@@ -559,12 +635,15 @@ export class Helper {
             return {read: roles, write: roles}
         if (typeof roles === 'object') {
             const result:NormalizedAllowedRoles = {read: [], write: []}
-            for (const type:string in result)
+            for (const type in result)
                 if (roles.hasOwnProperty(type))
-                    if (Array.isArray(roles[type]))
-                        result[type] = roles[type]
+                    if (Array.isArray(roles[type as 'read'|'write']))
+                        result[type as 'read'|'write'] =
+                            roles[type as 'read'|'write'] as Array<string>
                     else
-                        result[type] = [roles[type]]
+                        result[type as 'read'|'write'] = [
+                            roles[type as 'read'|'write'] as string
+                        ]
             return result
         }
         return {read: [roles], write: [roles]}

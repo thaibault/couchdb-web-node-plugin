@@ -1,4 +1,3 @@
-// @flow
 // #!/usr/bin/env node
 // -*- coding: utf-8 -*-
 'use strict'
@@ -15,70 +14,115 @@
     endregion
 */
 // region imports
-import type {PlainObject} from 'clientnode'
 import Tools from 'clientnode'
-import registerTest from 'clientnode/test'
-import {configuration} from 'web-node'
 
 import DatabaseHelper from '../databaseHelper'
 import Helper from '../helper'
-import type {
-    /* eslint-disable no-unused-vars */
-    DatabaseForbiddenError, ModelConfiguration, Models, UpdateStrategy
-    /* eslint-enable no-unused-vars */
+import packageConfiguration from '../package.json'
+import {
+    Configuration,
+    DatabaseForbiddenError,
+    Document,
+    ModelConfiguration,
+    Models,
+    SpecialPropertyNames,
+    UpdateStrategy
 } from '../type'
 // endregion
-registerTest(async function():Promise<void> {
-    this.module('databaseHelper')
+describe('databaseHelper', ():void => {
+    // region prepare environment
+    const configuration:Configuration =
+        packageConfiguration.webNode as Configuration
+    const specialNames:SpecialPropertyNames =
+        configuration.database.model.property.name.special
+    const attachmentName:string = specialNames.attachment
+    const idName:string = specialNames.id
+    const revisionName:string = specialNames.revision
+    const typeName:string = specialNames.type
+    // endregion
     // region tests
-    this.test('authenticate', (assert:Object):void => {
-        for (const test:Array<any> of [
-            [{type: 'Test'}, {}, {roles: []}, {}, {Test: {
-                properties: {}, read: ['users'], write: []
-            }}, 'id', 'type'],
-            [{type: 'Test'}, {}, {roles: ['users']}, {}, {Test: {
-                properties: {}, read: [], write: []
-            }}, 'id', 'type']
-        ])
-            assert.throws(():?true => DatabaseHelper.authenticate(...test))
-        for (const test:Array<any> of [
-            [{}],
-            [{}, null, {roles: ['_admin']}],
-            [{}, {}, {roles: ['_admin']}, {}, {
-                properties: {}, read: [], write: []
-            }, 'id', 'type'],
-            [{type: 'Test'}, {}, {roles: ['users']}, {}, {Test: {
-                properties: {}, read: [], write: ['users']
-            }}, 'id', 'type'],
-            [{type: 'Test'}, {}, {roles: ['users']}, {}, {Test: {
-                propertues: {}, read: [], write: ['users']
-            }}, 'id', 'type']
-        ])
-            assert.ok(DatabaseHelper.authenticate(...test))
-    })
-    this.test('validateDocumentUpdate', (assert:Object):void => {
-        const specialNames:PlainObject = configuration.database.model.property
-            .name.special
-        const attachmentName:string = specialNames.attachment
-        const idName:string = specialNames.id
-        const revisionName:string = specialNames.revision
-        const typeName:string = specialNames.type
-        for (const updateStrategy:UpdateStrategy of [
-            '', 'fillUp', 'incremental'
-        ]) {
+    test.each([
+        [{type: 'Test'}, {}, {roles: []}, {}, {Test: {read: 'users'}}],
+        [{type: 'Test'}, {}, {roles: ['users']}, {}, {}]
+    ])(
+        'authenticate(%p, %p, %p, %p, %p) => throw {unauthorized: ...}',
+        (
+            newDocument:Document,
+            oldDocument:Document,
+            userContext:UserContext,
+            securitySettings:SecuritySettings,
+            allowedModelRolesMapping:AllowedModelRolesMapping
+        ):void => expect(():true => DatabaseHelper.authenticate(
+            newDocument,
+            oldDocument,
+            userContext,
+            securitySettings,
+            allowedModelRolesMapping,
+            'id',
+            'type'
+        )).toThrow()
+    )
+    test.each([
+        [{}],
+        [{}, null, {roles: ['_admin']}],
+        [
+            {},
+            {},
+            {roles: ['_admin']},
+            {},
+            {}
+        ],
+        [
+            {'-type': 'Test'},
+            {},
+            {roles: ['users']},
+            {},
+            {Test: {write: ['users']}}
+        ],
+        [
+            {'-type': 'Test'},
+            {},
+            {roles: ['users']},
+            {},
+            {Test: {write: ['users']}}
+        ]
+    ])(
+        'authenticate(%p, ...) === true',
+        (
+            newDocument:Document,
+            oldDocument:Document|null = null,
+            userContext?:UserContext,
+            securitySettings?:SecuritySettings,
+            allowedModelRolesMapping?:AllowedModelRolesMapping
+        ):void =>
+            expect(DatabaseHelper.authenticate(
+                newDocument,
+                oldDocument,
+                userContext,
+                securitySettings,
+                allowedModelRolesMapping
+            )).toStrictEqual(true)
+    )
+    test.each(['', 'fillUp', 'incremental'])(
+        'validateDocumentUpdate (with update strategy "%s")',
+        (updateStrategy:string):void => {
             const defaultModelConfiguration:ModelConfiguration = Tools.extend(
-                true, {}, configuration.database.model, {updateStrategy})
-            for (
-                const propertyName:string in
-                defaultModelConfiguration.entities._base
+                true, {}, configuration.database.model, {updateStrategy}
             )
-                if (defaultModelConfiguration.entities._base.hasOwnProperty(
-                    propertyName
-                ) && propertyName !== typeName)
+            for (
+                const propertyName in defaultModelConfiguration.entities._base
+            )
+                if (
+                    defaultModelConfiguration.entities._base.hasOwnProperty(
+                        propertyName
+                    ) &&
+                    propertyName !== typeName
+                )
                     delete defaultModelConfiguration.entities._base[
-                        propertyName]
+                        propertyName
+                    ]
             // region forbidden writes
-            for (const test:Array<any> of [
+            for (const test of [
                 // region general environment
                 /*
                     Get an exception if an expected previous document does not
@@ -377,7 +421,7 @@ registerTest(async function():Promise<void> {
                     'Readonly'
                 ],
                 // endregion
-                // region property existents
+                // region property existence
                 // Not specified properties should result in an exception.
                 [
                     [{[typeName]: 'Test', a: 2}],
@@ -1136,50 +1180,26 @@ registerTest(async function():Promise<void> {
                 if (test.length < 3)
                     test.splice(1, 0, {})
                 const modelConfiguration:ModelConfiguration = Tools.extend(
-                    true, {}, defaultModelConfiguration, test[1])
+                    true, {}, defaultModelConfiguration, test[1]
+                )
                 const models:Models = Helper.extendModels(modelConfiguration)
                 delete modelConfiguration.property.defaultSpecification
                 delete modelConfiguration.entities
-                const parameter:Array<any> = test[0].concat([null, {}, {
-                }].slice(test[0].length - 1)).concat([
-                    models, modelConfiguration])
+                const parameter:Array<any> = test[0]
+                    .concat([null, {}, {}].slice(test[0].length - 1))
+                    .concat(modelConfiguration, models)
                 if (typeof test[2] !== 'string') {
-                    assert.deepEqual(
-                        DatabaseHelper.validateDocumentUpdate(...parameter),
-                        test[2])
+                    expect(DatabaseHelper.validateDocumentUpdate(...parameter))
+                        .toStrictEqual(test[2])
                     continue
                 }
-                assert.throws(
-                    ():Object => DatabaseHelper.validateDocumentUpdate(
-                        ...parameter),
-                    /*
-                        NOTE: "assert.throws" doesn't expect an arrow function
-                        here.
-                    */
-                    function(error:DatabaseForbiddenError):boolean {
-                        if (error.hasOwnProperty('forbidden')) {
-                            const result:boolean = error.forbidden.startsWith(
-                                `${test[2]}:`)
-                            if (!result)
-                                console.error(
-                                    `Error "${error.forbidden}" doesn't ` +
-                                    `start with "${test[2]}:". Given ` +
-                                    `arguments: "` +
-                                    parameter.map((value:any):string =>
-                                        Tools.represent(value)
-                                    ).join('", "') +
-                                    '".'
-                                )
-                            return result
-                        }
-                        // IgnoreTypeCheck
-                        console.error(`Unexpeced error "${error}" was thrown.`)
-                        return false
-                    })
+                expect(():Document =>
+                    DatabaseHelper.validateDocumentUpdate(...parameter)
+                ).toThrow(new RegExp(`^${test[2]}: .+[.!]$`, 's'))
             }
             // endregion
             // region allowed writes
-            for (const test:Array<any> of [
+            for (const test of [
                 // region general environment
                 /*
                     NOTE: Needed if we are able to validate "_users" table:
@@ -1257,8 +1277,7 @@ registerTest(async function():Promise<void> {
                         null,
                         {},
                         {
-                            [
-                            configuration.database.model.property.name
+                            [configuration.database.model.property.name
                                 .validatedDocumentsCache
                             ]: new Set(['1-1'])
                         }
@@ -3418,263 +3437,270 @@ registerTest(async function():Promise<void> {
                 const models:Models = Helper.extendModels(modelConfiguration)
                 delete modelConfiguration.property.defaultSpecification
                 delete modelConfiguration.entities
-                try {
-                    assert.deepEqual(DatabaseHelper.validateDocumentUpdate(
-                        ...test[0].concat([null, {}, {}].slice(
-                            test[0].length - 1
-                        )).concat([models, modelConfiguration])
-                    ), test[2][updateStrategy])
-                } catch (error) {
-                    console.error(error)
-                }
+                expect(DatabaseHelper.validateDocumentUpdate(
+                    ...test[0]
+                        .concat([null, {}, {}].slice(test[0].length - 1))
+                        .concat(modelConfiguration, models)
+                )).toStrictEqual(test[2][updateStrategy])
             }
             // endregion
         }
-        // region migration writes
-        const defaultModelConfiguration:ModelConfiguration = Tools.extend(
-            true, {}, configuration.database.model, {updateStrategy: 'migrate'}
-        )
-        for (
-            const propertyName:string in
-            defaultModelConfiguration.entities._base
-        )
-            if (defaultModelConfiguration.entities._base.hasOwnProperty(
-                propertyName
-            ) && propertyName !== typeName)
-                delete defaultModelConfiguration.entities._base[propertyName]
-        for (const test:Array<any> of [
-            // Remove obsolete properties.
-            [
-                [{[typeName]: 'Test', a: 2}],
-                {entities: {Test: {}}},
-                {[typeName]: 'Test'}
-            ],
-            // Create missing properties with default value.
-            [
-                [{[typeName]: 'Test'}],
-                {entities: {Test: {a: {default: '2'}}}},
-                {[typeName]: 'Test', a: '2'}
-            ],
-            // Do not change valid properties.
-            [
-                [{[typeName]: 'Test', a: '2'}],
-                {entities: {Test: {a: {}}}},
-                {[typeName]: 'Test', a: '2'}
-            ],
-            // Ignore wrong specified non required properties in old document.
-            [
-                [{[typeName]: 'Test', b: 'b'}, {[typeName]: 'Test', a: 1}],
-                {entities: {Test: {a: {}, b: {}}}},
-                {[typeName]: 'Test', b: 'b'}
-            ],
-            // Ignore not specified properties in old document.
-            [
-                [{[typeName]: 'Test'}, {[typeName]: 'Test', a: 1}],
-                {entities: {Test: {}}},
-                {[typeName]: 'Test'}
-            ],
-            // Set property to default value if explicitly set to "null".
-            [
-                [{[typeName]: 'Test', a: null}],
-                {entities: {Test: {a: {default: '2'}}}},
-                {[typeName]: 'Test', a: '2'}
-            ],
-            /*
-                Set property to default value if explicitly set to "null" by
-                ignoring maybe existing old documents value.
-            */
-            [
-                [{[typeName]: 'Test', a: null}, {[typeName]: 'Test', a: '1'}],
-                {entities: {Test: {a: {default: '2'}}}},
-                {[typeName]: 'Test', a: '2'}
-            ],
-            /*
-                Set property to default value if property is missing which has
-                a specified default (string) value.
-            */
-            [
-                [{[typeName]: 'Test'}, {[typeName]: 'Test', a: '1'}],
-                {entities: {Test: {a: {default: '2'}}}},
-                {[typeName]: 'Test', a: '2'}
-            ],
-            /*
-                Set property to default value if property is missing which has
-                a specified default value and remove not existing properties.
-            */
-            [
-                [{[typeName]: 'Test', b: '3'}, {[typeName]: 'Test', a: '1'}],
-                {entities: {Test: {a: {default: '2'}}}},
-                {[typeName]: 'Test', a: '2'}
-            ],
-            /*
-                Set property to default value if property is missing which has
-                a specified default (number) value.
-            */
-            [
-                [{[typeName]: 'Test'}],
-                {entities: {Test: {a: {default: 2, type: 'number'}}}},
-                {[typeName]: 'Test', a: 2}
-            ],
-            /*
-                Set property to default value if property is missing which has
-                a specified default (any) value.
-            */
-            [
-                [{[typeName]: 'Test'}],
-                {entities: {Test: {a: {default: 2, type: 'any'}}}},
-                {[typeName]: 'Test', a: 2}
-            ],
-            /*
-                Set property to default value if property is missing which has
-                a specified default value (where on is any).
-            */
-            [
-                [{[typeName]: 'Test'}],
-                {entities: {Test: {a: {default: 2, type: ['any']}}}},
-                {[typeName]: 'Test', a: 2}
-            ],
-            /*
-                Set property to default value if property is missing which has
-                a specified default value (where a selection of types is
-                provided).
-            */
-            [
-                [{[typeName]: 'Test'}],
-                {entities: {
-                    Test: {a: {default: 2, type: ['any', 'boolean']}}
-                }},
-                {[typeName]: 'Test', a: 2}
-            ],
-            [
-                [{[typeName]: 'Test'}],
-                {entities: {Test: {a: {
-                    default: 2,
-                    type: ['number', 'boolean']
-                }}}},
-                {[typeName]: 'Test', a: 2}
-            ],
-            // Ignore not specified attachment properties in old document.
-            [
-                [
-                    {[typeName]: 'Test', b: 'b'},
-                    {[typeName]: 'Test', [attachmentName]: {}}
-                ],
-                {entities: {Test: {b: {}}}},
-                {[typeName]: 'Test', b: 'b'}
-            ],
-            [
-                [
-                    {[typeName]: 'Test', b: 'b'},
-                    {
-                        [typeName]: 'Test',
-                        [attachmentName]: {
-                            /* eslint-disable camelcase */
-                            test: {data: '', content_type: 'text/plain'}
-                            /* eslint-enable camelcase */
-                        }
-                    }
-                ],
-                {entities: {Test: {b: {}}}},
-                {[typeName]: 'Test', b: 'b'}
-            ],
-            /*
-                Set attachment to a default one if it is missing and has a
-                specified default one.
-            */
-            [
-                [{[typeName]: 'Test'}, {[typeName]: 'Test'}],
-                {entities: {Test: {[attachmentName]: {'.*': {default: {test: {
+    )
+    // / region migration writes
+    test.each([
+        // Remove obsolete properties.
+        [
+            {[typeName]: 'Test', a: 2},
+            {[typeName]: 'Test'},
+            {entities: {Test: {}}}
+        ],
+        // Create missing properties with default value.
+        [
+            {[typeName]: 'Test'},
+            {[typeName]: 'Test', a: '2'},
+            {entities: {Test: {a: {default: '2'}}}}
+        ],
+        // Do not change valid properties.
+        [
+            {[typeName]: 'Test', a: '2'},
+            {[typeName]: 'Test', a: '2'},
+            {entities: {Test: {a: {}}}}
+        ],
+        // Ignore wrong specified non required properties in old document.
+        [
+            {[typeName]: 'Test', b: 'b'},
+            {[typeName]: 'Test', b: 'b'},
+            {entities: {Test: {a: {}, b: {}}}},
+            {[typeName]: 'Test', a: 1}
+        ],
+        // Ignore not specified properties in old document.
+        [
+            {[typeName]: 'Test'},
+            {[typeName]: 'Test'},
+            {entities: {Test: {}}},
+            {[typeName]: 'Test', a: 1}
+        ],
+        // Set property to default value if explicitly set to "null".
+        [
+            {[typeName]: 'Test', a: null},
+            {[typeName]: 'Test', a: '2'},
+            {entities: {Test: {a: {default: '2'}}}}
+        ],
+        /*
+            Set property to default value if explicitly set to "null" by
+            ignoring maybe existing old documents value.
+        */
+        [
+            {[typeName]: 'Test', a: null},
+            {[typeName]: 'Test', a: '2'},
+            {entities: {Test: {a: {default: '2'}}}},
+            {[typeName]: 'Test', a: '1'}
+        ],
+        /*
+            Set property to default value if property is missing which has
+            a specified default (string) value.
+        */
+        [
+            {[typeName]: 'Test'},
+            {[typeName]: 'Test', a: '2'},
+            {entities: {Test: {a: {default: '2'}}}},
+            {[typeName]: 'Test', a: '1'}
+        ],
+        /*
+            Set property to default value if property is missing which has
+            a specified default value and remove not existing properties.
+        */
+        [
+            {[typeName]: 'Test', b: '3'},
+            {[typeName]: 'Test', a: '2'},
+            {entities: {Test: {a: {default: '2'}}}},
+            {[typeName]: 'Test', a: '1'}
+        ],
+        /*
+            Set property to default value if property is missing which has
+            a specified default (number) value.
+        */
+        [
+            {[typeName]: 'Test'},
+            {[typeName]: 'Test', a: 2},
+            {entities: {Test: {a: {default: 2, type: 'number'}}}}
+        ],
+        /*
+            Set property to default value if property is missing which has
+            a specified default (any) value.
+        */
+        [
+            {[typeName]: 'Test'},
+            {[typeName]: 'Test', a: 2},
+            {entities: {Test: {a: {default: 2, type: 'any'}}}}
+        ],
+        /*
+            Set property to default value if property is missing which has
+            a specified default value (where on is any).
+        */
+        [
+            {[typeName]: 'Test'},
+            {[typeName]: 'Test', a: 2},
+            {entities: {Test: {a: {default: 2, type: ['any']}}}},
+        ],
+        /*
+            Set property to default value if property is missing which has
+            a specified default value (where a selection of types is
+            provided).
+        */
+        [
+            {[typeName]: 'Test'},
+            {[typeName]: 'Test', a: 2},
+            {entities: {Test: {a: {default: 2, type: ['any', 'boolean']}}}},
+        ],
+        [
+            {[typeName]: 'Test'},
+            {[typeName]: 'Test', a: 2},
+            {entities: {Test: {a: {default: 2, type: ['number', 'boolean']}}}}
+        ],
+        // Ignore not specified attachment properties in old document.
+        [
+            {[typeName]: 'Test', b: 'b'},
+            {[typeName]: 'Test', b: 'b'},
+            {entities: {Test: {b: {}}}},
+            {[typeName]: 'Test', [attachmentName]: {}}
+        ],
+        [
+            {[typeName]: 'Test', b: 'b'},
+            {[typeName]: 'Test', b: 'b'},
+            {entities: {Test: {b: {}}}},
+            {
+                [typeName]: 'Test',
+                [attachmentName]: {
+                    /* eslint-disable camelcase */
+                    test: {data: '', content_type: 'text/plain'}
+                    /* eslint-enable camelcase */
+                }
+            }
+        ],
+        /*
+            Set attachment to a default one if it is missing and has a
+            specified default one.
+        */
+        [
+            {[typeName]: 'Test'},
+            {[typeName]: 'Test'},
+            {entities: {Test: {[attachmentName]: {'.*': {default: {test: {
+                /* eslint-disable camelcase */
+                data: '', content_type: 'text/plain'
+                /* eslint-enable camelcase */
+            }}}}}}},
+            {
+                [typeName]: 'Test',
+                [attachmentName]: {test: {
                     /* eslint-disable camelcase */
                     data: '', content_type: 'text/plain'
                     /* eslint-enable camelcase */
-                }}}}}}},
-                {
-                    [typeName]: 'Test',
-                    [attachmentName]: {test: {
-                        /* eslint-disable camelcase */
-                        data: '', content_type: 'text/plain'
-                        /* eslint-enable camelcase */
-                    }}
-                }
-            ],
-            // Migrate model type if old one is provided.
-            [
-                [{[typeName]: 'OldTest'}],
-                {entities: {Test: {[specialNames.oldType]: 'OldTest'}}},
-                {[typeName]: 'Test'}
-            ],
-            // Migrate nested property model type if old one is provided.
-            [
-                [{[typeName]: 'Test', a: {[typeName]: 'OldTest', b: 'b'}}],
-                {entities: {Test: {
-                    a: {type: 'Test'},
-                    [specialNames.oldType]: 'OldTest',
-                    b: {}
-                }}},
-                {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'b'}}
-            ],
-            // Migrate nested array model type if old one is provided.
-            [
-                [{[typeName]: 'Test', a: [{[typeName]: 'OldTest', b: 'b'}]}],
-                {entities: {Test: {
-                    a: {type: 'Test[]'},
-                    [specialNames.oldType]: 'OldTest',
-                    b: {}
-                }}},
-                {[typeName]: 'Test', a: [{[typeName]: 'Test', b: 'b'}]}
-            ],
-            // Migrate nested array property model type if old one is provided.
-            [
-                [{
-                    [typeName]: 'Test',
-                    a: [{
-                        [typeName]: 'Test',
-                        a: [{[typeName]: 'OldTest', b: 'b'}]
-                    }]
-                }],
-                {entities: {Test: {
-                    a: {type: 'Test[]'},
-                    [specialNames.oldType]: 'OldTest',
-                    b: {}
-                }}},
-                {
-                    [typeName]: 'Test',
-                    a: [{
-                        [typeName]: 'Test',
-                        a: [{[typeName]: 'Test', b: 'b'}]
-                    }]
-                }
-            ],
-            // Migrate property names if old name is provided.
-            [
-                [{[typeName]: 'Test', a: 'a'}],
-                {entities: {Test: {b: {oldName: 'a'}}}},
-                {[typeName]: 'Test', b: 'a'}
-            ]
-        ]) {
-            const models:Models = Helper.extendModels(Tools.extend(
-                true, {}, defaultModelConfiguration, test[1]))
-            const modelConfiguration:ModelConfiguration = Tools.extend(
-                true, {}, defaultModelConfiguration, test[1])
-            delete modelConfiguration.property.defaultSpecification
-            delete modelConfiguration.entities
-            try {
-                assert.deepEqual(
-                    DatabaseHelper.validateDocumentUpdate(
-                        ...test[0]
-                            .concat([null, {}, {}].slice(test[0].length - 1))
-                            .concat([models, modelConfiguration])
-                    ),
-                    test[2]
-                )
-            } catch (error) {
-                console.error(error)
+                }}
             }
+        ],
+        // Migrate model type if old one is provided.
+        [
+            {[typeName]: 'OldTest'},
+            {[typeName]: 'Test'},
+            {entities: {Test: {[specialNames.oldType]: 'OldTest'}}}
+        ],
+        // Migrate nested property model type if old one is provided.
+        [
+            {[typeName]: 'Test', a: {[typeName]: 'OldTest', b: 'b'}},
+            {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'b'}},
+            {entities: {Test: {
+                a: {type: 'Test'},
+                [specialNames.oldType]: 'OldTest',
+                b: {}
+            }}}
+        ],
+        // Migrate nested array model type if old one is provided.
+        [
+            {[typeName]: 'Test', a: [{[typeName]: 'OldTest', b: 'b'}]},
+            {[typeName]: 'Test', a: [{[typeName]: 'Test', b: 'b'}]},
+            {entities: {Test: {
+                a: {type: 'Test[]'},
+                [specialNames.oldType]: 'OldTest',
+                b: {}
+            }}}
+        ],
+        // Migrate nested array property model type if old one is provided.
+        [
+            {
+                [typeName]: 'Test',
+                a: [{
+                    [typeName]: 'Test',
+                    a: [{[typeName]: 'OldTest', b: 'b'}]
+                }]
+            },
+            {
+                [typeName]: 'Test',
+                a: [{
+                    [typeName]: 'Test',
+                    a: [{[typeName]: 'Test', b: 'b'}]
+                }]
+            },
+            {entities: {Test: {
+                a: {type: 'Test[]'},
+                [specialNames.oldType]: 'OldTest',
+                b: {}
+            }}}
+        ],
+        // Migrate property names if old name is provided.
+        [
+            {[typeName]: 'Test', a: 'a'},
+            {[typeName]: 'Test', b: 'a'},
+            {entities: {Test: {b: {oldName: 'a'}}}}
+        ]
+    ])(
+        'validateDocumentUpdate(%p, ...) === %p (with update strategy "' +
+        'migration")',
+        (
+            newDocument:Document,
+            expected:Document,
+            modelConfiguration:ModelConfiguration,
+            oldDocument:Document|null = null
+        ):void => {
+            const defaultModelConfiguration:ModelConfiguration = Tools.extend(
+                true,
+                {},
+                configuration.database.model,
+                {updateStrategy: 'migrate'}
+            )
+            for (
+                const propertyName in defaultModelConfiguration.entities._base
+            )
+                if (
+                    defaultModelConfiguration.entities._base.hasOwnProperty(
+                        propertyName
+                    ) &&
+                    propertyName !== typeName
+                )
+                    delete defaultModelConfiguration.entities._base[
+                        propertyName
+                    ]
+            const models:Models = Helper.extendModels(Tools.extend(
+                true, {}, defaultModelConfiguration, modelConfiguration
+            ))
+            const testModelConfiguration:ModelConfiguration = Tools.extend(
+                true, {}, defaultModelConfiguration, modelConfiguration
+            )
+            delete testModelConfiguration.property.defaultSpecification
+            delete testModelConfiguration.entities
+            expect(DatabaseHelper.validateDocumentUpdate(
+                newDocument,
+                oldDocument,
+                {},
+                {},
+                testModelConfiguration,
+                models
+            )).toStrictEqual(expected)
         }
-        // endregion
-    })
-// endregion
-}, 'plain')
+    )
+    // / endregion
+    // endregion
+})
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
 // vim: foldmethod=marker foldmarker=region,endregion:

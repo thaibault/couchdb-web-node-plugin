@@ -1,4 +1,3 @@
-// @flow
 // #!/usr/bin/env node
 // -*- coding: utf-8 -*-
 /** @module databaseWebNodePlugin */
@@ -19,24 +18,34 @@
 */
 // region imports
 import Tools from 'clientnode'
-/* eslint-disable no-unused-vars */
-import type {File, PlainObject} from 'clientnode'
-/* eslint-enable no-unused-vars */
+import {File, PlainObject, ProcessCloseReason} from 'clientnode/type'
 import {promises as fileSystem} from 'fs'
+import fetch, {Response as FetchResponse} from 'node-fetch'
 import path from 'path'
 import PouchDB from 'pouchdb'
 import PouchDBFindPlugin from 'pouchdb-find'
 import {PluginAPI} from 'web-node'
-import type {
-    Configuration, Plugin, ServicePromises, Services
-} from 'web-node/type'
+import {Plugin, PluginHandler} from 'web-node/type'
 
 import DatabaseHelper from './databaseHelper'
 import Helper from './helper'
-import type {
-    /* eslint-disable no-unused-vars */
-    Constraint, Document, ModelConfiguration, Models, RetrievedDocument, Runner
-    /* eslint-enable no-unused-vars */
+import {
+    ChangesStream,
+    Configuration,
+    Connection,
+    Constraint,
+    DatabaseError,
+    DatabasePlugin,
+    DeleteIndexOptions,
+    Document,
+    Index,
+    ModelConfiguration,
+    Models,
+    PropertySpecification,
+    Runner,
+    Service,
+    ServicePromises,
+    Services
 } from './type'
 // endregion
 // region plugins/classes
@@ -53,11 +62,11 @@ import type {
  * call to indicate id determination skip or not (depends on the static
  * "skipIDDetermining" configuration).
  */
-export class Database {
-    static additionalChangesStreamOptions:Object = {}
-    static changesStream:Object
+export class Database implements PluginHandler {
+    static additionalChangesStreamOptions:object = {}
+    static changesStream:ChangesStream
     static skipIDDetermining:boolean = true
-    static toggleIDDetermining:any = Symbol('toggleIDDetermining')
+    static toggleIDDetermining = Symbol('toggleIDDetermining')
     /**
      * Start database's child process and return a Promise which observes this
      * service.
@@ -72,8 +81,8 @@ export class Database {
         servicePromises:ServicePromises,
         services:Services,
         configuration:Configuration
-    ):Promise<{promise:?Promise<Object>}> {
-        let promise:?Promise<Object> = null
+    ):Promise<Service> {
+        let promise:null|Promise<ProcessCloseReason> = null
         if (services.database.server.hasOwnProperty('runner')) {
             await Helper.startServer(services, configuration)
             services.database.server.restart = Helper.restartServer
@@ -89,7 +98,7 @@ export class Database {
             })
         }
         if (services.database.hasOwnProperty('connection'))
-            return {promise}
+            return {name: 'database', promise}
         const urlPrefix:string = Tools.stringFormat(
             configuration.database.url,
             `${configuration.database.user.name}:` +
@@ -97,11 +106,11 @@ export class Database {
         )
         // region ensure presence of global admin user
         if (configuration.database.ensureAdminPresence) {
-            const unauthenticatedUserDatabaseConnection:PouchDB =
+            const unauthenticatedUserDatabaseConnection:Connection =
                 new services.database.connector(
                     `${Tools.stringFormat(configuration.database.url, '')}/` +
                         `_users`,
-                    configuration.database.connector
+                    Helper.getConnectorOptions(configuration)
                 )
             try {
                 // NOTE: We check if we are in admin party mode.
@@ -125,10 +134,10 @@ export class Database {
                     error.hasOwnProperty('name') &&
                     error.name === 'unauthorized'
                 ) {
-                    const authenticatedUserDatabaseConnection =
+                    const authenticatedUserDatabaseConnection:Connection =
                         new services.database.connector(
                             `${urlPrefix}/_users`,
-                            configuration.database.connector
+                            Helper.getConnectorOptions(configuration)
                         )
                     try {
                         await authenticatedUserDatabaseConnection.allDocs()
@@ -154,19 +163,20 @@ export class Database {
         // endregion
         // region ensure presence of regular users
         if (configuration.database.ensureUserPresence)
-            for (const type:string of ['admins', 'members'])
-                for (
-                    const name:string of
-                    configuration.database.security[type].names
-                ) {
-                    const userDatabaseConnection:Object =
+            for (const type of [
+                configuration.database.security.admins,
+                configuration.database.security.members
+            ])
+                for (const name of type.names) {
+                    const userDatabaseConnection:Connection =
                         new services.database.connector(
                             `${urlPrefix}/_users`,
-                            configuration.database.connector
+                            Helper.getConnectorOptions(configuration)
                         )
                     try {
                         await userDatabaseConnection.get(
-                            `org.couchdb.user:${name}`)
+                            `org.couchdb.user:${name}`
+                        )
                     } catch (error) {
                         if (
                             error.hasOwnProperty('error') &&
@@ -180,10 +190,10 @@ export class Database {
                                     ]: `org.couchdb.user:${name}`,
                                     name,
                                     password: name,
-                                    roles: [].concat(
-                                        configuration.database.security[type]
-                                            .roles.includes(`${name}s`) ?
-                                            `${name}s` : []
+                                    roles: ([] as Array<string>).concat(
+                                        type.roles.includes(`${name}s`) ?
+                                            `${name}s` :
+                                            []
                                     ),
                                     type: 'user'
                                 })
@@ -205,23 +215,23 @@ export class Database {
         // endregion
         // region apply database/rest api configuration
         if (configuration.database.model.updateConfiguration)
-            for (
-                const prefix:string of configuration.database.backend.prefixes
-            )
+            for (const prefix of configuration.database.backend.prefixes)
                 for (
-                    const subPath:string in
+                    const subPath in
                     configuration.database.backend.configuration
                 )
-                    if (configuration.database.backend.configuration
-                        .hasOwnProperty(subPath)
+                    if (
+                        configuration.database.backend.configuration
+                            .hasOwnProperty(subPath)
                     ) {
                         const fullPath:string =
                             `/${prefix}${prefix.trim() ? '/' : ''}${subPath}`
                         const url:string = `${urlPrefix}${fullPath}`
                         const value:any =
                             configuration.database.backend.configuration[
-                                subPath]
-                        let response:Object = null
+                                subPath
+                            ]
+                        let response:FetchResponse|undefined
                         try {
                             response = await fetch(url)
                         } catch (error) {
@@ -231,56 +241,62 @@ export class Database {
                                 ` be determined: ${Tools.represent(error)}`
                             )
                         }
-                        if (response && response.ok) {
-                            let changeNeeded:boolean = true
-                            if (typeof response.text === 'function')
-                                try {
-                                    changeNeeded = (value === await response[
-                                        typeof value === 'string' ?
-                                            'text' :
-                                            'json'
-                                    ]())
-                                } catch (error) {
-                                    console.warn(
-                                        'Error checking curent value of ' +
-                                        `"${fullPath}" to be "` +
-                                        `${Tools.represent(value)}": ` +
-                                        Tools.represent(error)
+                        if (response)
+                            if (response.ok) {
+                                let changeNeeded:boolean = true
+                                if (typeof response.text === 'function')
+                                    try {
+                                        changeNeeded = (
+                                            value === await response[
+                                                typeof value === 'string' ?
+                                                    'text' :
+                                                    'json'
+                                            ]()
+                                        )
+                                    } catch (error) {
+                                        console.warn(
+                                            'Error checking curent value of ' +
+                                            `"${fullPath}" to be "` +
+                                            `${Tools.represent(value)}": ` +
+                                            Tools.represent(error)
+                                        )
+                                    }
+                                if (changeNeeded)
+                                    try {
+                                        await fetch(
+                                            url,
+                                            {
+                                                body:
+                                                    '"' +
+                                                    configuration.database
+                                                        .backend.configuration[
+                                                            subPath
+                                                        ] +
+                                                    '"',
+                                                method: 'PUT'
+                                            }
+                                        )
+                                    } catch (error) {
+                                        console.error(
+                                            `Configuration "${fullPath}" ` +
+                                            `couldn't be applied to "` +
+                                            `${Tools.represent(value)}": ` +
+                                            Tools.represent(error)
+                                        )
+                                    }
+                                else
+                                    console.info(
+                                        `Configuration "${fullPath}" is ` +
+                                        'already set to desired value "' +
+                                        `${Tools.represent(value)}".`
                                     )
-                                }
-                            if (changeNeeded)
-                                try {
-                                    await fetch(
-                                        url,
-                                        {
-                                            body:
-                                                '"' +
-                                                configuration.database.backend
-                                                    .configuration[subPath] +
-                                                '"',
-                                            method: 'PUT'
-                                        }
-                                    )
-                                } catch (error) {
-                                    console.error(
-                                        `Configuration "${fullPath}" ` +
-                                        `couldn't be applied to "` +
-                                        `${Tools.represent(value)}": ` +
-                                        Tools.represent(error)
-                                    )
-                                }
-                            else
+                            } else
                                 console.info(
-                                    `Configuration "${fullPath}" is already ` +
-                                    'set to desired value "' +
-                                    `${Tools.represent(value)}".`
+                                    `Configuration "${fullPath}" does not ` +
+                                    `exist (desired value "` +
+                                    `${Tools.represent(value)}"). Response ` +
+                                    `code is ${response.status}.`
                                 )
-                        } else
-                            console.info(
-                                `Configuration "${fullPath}" does not exist ` +
-                                `(desired value "${Tools.represent(value)}")` +
-                                `. Response code is ${response.status}.`
-                            )
                     }
         // endregion
         await Helper.initializeConnection(services, configuration)
@@ -314,13 +330,13 @@ export class Database {
             }
         // endregion
         const modelConfiguration:ModelConfiguration = Tools.copy(
-            configuration.database.model)
+            configuration.database.model
+        )
         delete modelConfiguration.property.defaultSpecification
         delete modelConfiguration.entities
         const models:Models = Helper.extendModels(configuration.database.model)
         if (configuration.database.model.updateValidation) {
             const databaseHelperCode:string =
-                // IgnoreTypeCheck
                 await fileSystem.readFile(
                     /* eslint-disable no-eval */
                     eval('require.resolve')('./databaseHelper.compiled'),
@@ -328,14 +344,14 @@ export class Database {
                     {encoding: configuration.encoding, flag: 'r'}
                 )
             // region generate/update authentication/validation code
-            for (const type:PlainObject of [
+            for (const type of [
                 {
                     description: 'Model specification',
                     methodName: 'validateDocumentUpdate',
                     name: 'validation',
                     serializedParameter:
-                        `${JSON.stringify(models)}, ` +
-                        JSON.stringify(modelConfiguration)
+                        `${JSON.stringify(modelConfiguration)}, ` +
+                        JSON.stringify(models)
                 },
                 {
                     description: 'Authorisation',
@@ -347,7 +363,10 @@ export class Database {
                                 configuration.database.model
                             )
                         ) +
-                        `, '${idName}', '${typeName}'`
+                        `, '${idName}', '${typeName}', '` +
+                        configuration.database.model.property.name.special
+                            .designDocumentNamePrefix +
+                        `'`
                 }
             ]) {
                 /*
@@ -369,7 +388,8 @@ export class Database {
                 }
                 if (configuration.debug)
                     console.debug(
-                        `${type.name} code: \n\n"${code}" intgrated.`)
+                        `${type.name} code: \n\n"${code}" intgrated.`
+                    )
                 await Helper.ensureValidationDocumentPresence(
                     services.database.connection,
                     type.name,
@@ -379,14 +399,18 @@ export class Database {
                         validate_doc_update: code
                         /* eslint-enable camelcase */
                     },
-                    type.description
+                    type.description,
+                    true,
+                    idName,
+                    modelConfiguration.property.name.special
+                        .designDocumentNamePrefix
                 )
             }
             // endregion
             // region check if all constraint descriptions compile
-            for (const modelName:string in models)
+            for (const modelName in models)
                 if (models.hasOwnProperty(modelName))
-                    for (const name:string in models[modelName])
+                    for (const name in models[modelName])
                         if (models[modelName].hasOwnProperty(name))
                             if ([
                                 modelConfiguration.property.name.special
@@ -394,16 +418,22 @@ export class Database {
                                 modelConfiguration.property.name.special
                                     .constraint.expression
                             ].includes(name)) {
-                                // IgnoreTypeCheck
-                                for (const constraint:Constraint of models[
-                                    modelName
-                                ][name])
-                                    if (constraint.hasOwnProperty(
-                                        'description'
-                                    ) && constraint.description)
+                                for (const constraint of (
+                                    [] as Array<Constraint>
+                                ).concat(
+                                    models[modelName][name] as
+                                        Array<Constraint>
+                                ))
+                                    if (
+                                        constraint.hasOwnProperty(
+                                            'description') &&
+                                        constraint.description
+                                    )
                                         try {
-                                            new Function('return ' +
-                                                constraint.description)
+                                            new Function(
+                                                'return ' +
+                                                constraint.description
+                                            )
                                         } catch (error) {
                                             throw new Error(
                                                 `Specified constraint ` +
@@ -414,42 +444,50 @@ export class Database {
                                                 `${Tools.represent(error)}".`
                                             )
                                         }
-                            } else
-                                for (const type:string of [
+                            } else {
+                                const property:PropertySpecification =
+                                    models[modelName][name]
+                                for (const type of [
                                     'conflictingConstraintExpression',
                                     'conflictingConstraintExecution',
                                     'constraintExpression',
                                     'constraintExecution'
                                 ])
                                     if (
-                                        models[modelName][name] !== null &&
-                                        models[modelName][name] === 'object' &&
-                                        // IgnoreTypeCheck
-                                        models[modelName][name][type] !==
-                                            null &&
-                                        models[modelName][name][type] ===
-                                            'object' &&
-                                        models[modelName][name][type]
-                                            .hasOwnProperty('description')
-                                    )
-                                        try {
-                                            new Function(models[modelName][
-                                                name
-                                            // IgnoreTypeCheck
-                                            ][type].description)
-                                        } catch (error) {
-                                            throw new Error(
-                                                `Specified constraint ` +
-                                                `description "` + models[
-                                                    modelName
-                                                // IgnoreTypeCheck
-                                                ][name][type].description +
-                                                `" for model "${modelName}" ` +
-                                                `in property "${name}" as "` +
-                                                `${type}" doesn't compile: "` +
-                                                `${Tools.represent(error)}".`
+                                        property !== null &&
+                                        typeof property === 'object'
+                                    ) {
+                                        const constraint:Constraint = property[
+                                            type as keyof PropertySpecification
+                                        ]
+                                        if (
+                                            constraint !== null &&
+                                            typeof constraint === 'object' &&
+                                            constraint.hasOwnProperty(
+                                                'description'
                                             )
-                                        }
+                                        )
+                                            try {
+                                                new Function(
+                                                    constraint.description as
+                                                        string
+                                                )
+                                            } catch (error) {
+                                                throw new Error(
+                                                    'Specified constraint ' +
+                                                    'description "' +
+                                                    constraint.description +
+                                                    '" for model "' +
+                                                    `${modelName}" in ` +
+                                                    `property "${name}" as "` +
+                                                    `${type}" doesn't ` +
+                                                    'compile: "' +
+                                                    Tools.represent(error) +
+                                                    '".'
+                                                )
+                                            }
+                                    }
+                            }
             // endregion
         }
         // region run auto-migration
@@ -458,7 +496,7 @@ export class Database {
             if (await Tools.isDirectory(path.resolve(
                 configuration.database.model.autoMigrationPath
             )))
-                for (const file:File of await Tools.walkDirectoryRecursively(
+                for (const file of await Tools.walkDirectoryRecursively(
                     path.resolve(
                         configuration.database.model.autoMigrationPath),
                     configuration.database.debug ?
@@ -466,20 +504,14 @@ export class Database {
                         ((file:File):boolean => file.name !== 'debug')
                 )) {
                     const extension:string = path.extname(file.name)
-                    const basename = path.basename(file.name, extension)
+                    const basename:string = path.basename(file.name, extension)
                     if (extension === '.json') {
                         let document:Document
                         try {
-                            document = JSON.parse(
-                                // IgnoreTypeCheck
-                                await fileSystem.readFile(
-                                    file.path,
-                                    {
-                                        encoding: configuration.encoding,
-                                        flag: 'r'
-                                    }
-                                )
-                            )
+                            document = JSON.parse(await fileSystem.readFile(
+                                file.path,
+                                {encoding: configuration.encoding, flag: 'r'}
+                            ))
                         } catch (error) {
                             throw new Error(
                                 `Parsing document "${file.path}" to include ` +
@@ -522,7 +554,7 @@ export class Database {
                         // endregion
                 }
             // region ensure all constraints to have a consistent initial state
-            for (const retrievedDocument:RetrievedDocument of (
+            for (const retrievedDocument of (
                 await services.database.connection.allDocs({
                     /* eslint-disable camelcase */
                     include_docs: true
@@ -531,16 +563,19 @@ export class Database {
             ).rows)
                 if (!(
                     typeof retrievedDocument.id === 'string' &&
-                    retrievedDocument.id.startsWith('_design/')
+                    retrievedDocument.id.startsWith(
+                        configuration.database.model.property.name.special
+                            .designDocumentNamePrefix
+                    )
                 )) {
-                    const document:Document = retrievedDocument.doc
-                    let newDocument:PlainObject = Tools.copy(document)
+                    const document:Document = retrievedDocument.doc as Document
+                    let newDocument:Document = Tools.copy(document)
                     newDocument[
                         configuration.database.model.property.name.special
                             .strategy
                     ] = 'migrate'
-                    for (const name:string of Object.keys(migrater).sort()) {
-                        let result:PlainObject|null
+                    for (const name of Object.keys(migrater).sort()) {
+                        let result:Document|null = null
                         try {
                             result = migrater[name](newDocument, {
                                 configuration,
@@ -557,7 +592,7 @@ export class Database {
                         } catch (error) {
                             throw new Error(
                                 `Running migrater "${name}" in document ` +
-                                Helper.determineRepresentation(
+                                Helper.mayStripRepresentation(
                                     document,
                                     configuration.database
                                         .maximumRepresentationTryLength,
@@ -614,13 +649,15 @@ export class Database {
                                 document caches.
                             */
                             Tools.copy(configuration.database.security),
-                            models, modelConfiguration)
+                            modelConfiguration,
+                            models
+                        )
                     } catch (error) {
                         if ('forbidden' in error) {
                             if (!error.forbidden.startsWith('NoChange:'))
                                 console.warn(
                                     `Document "` +
-                                    Helper.determineRepresentation(
+                                    Helper.mayStripRepresentation(
                                         document,
                                         configuration.database
                                             .maximumRepresentationTryLength,
@@ -646,7 +683,8 @@ export class Database {
                     }
                     console.info(
                         `Auto migrating document "${newDocument[idName]}" ` +
-                        'was successful.')
+                        'was successful.'
+                    )
                 }
             // endregion
         }
@@ -656,10 +694,10 @@ export class Database {
             configuration.database.createGenericFlatIndex &&
             configuration.database.model.autoMigrationPath
         ) {
-            const indexes:Array<PlainObject> = (
+            const indexes:Array<Index> = (
                 await services.database.connection.getIndexes()
             ).indexes
-            for (const modelName:string in models)
+            for (const modelName in models)
                 if (
                     models.hasOwnProperty(modelName) &&
                     (new RegExp(
@@ -673,15 +711,16 @@ export class Database {
                         name: `${modelName}-GenericIndex`
                     }})
                     for (
-                        const propertyName:string of
+                        const propertyName of
                         Helper.determineGenericIndexablePropertyNames(
-                            configuration.database.model, models[modelName])
+                            configuration.database.model, models[modelName]
+                        )
                     ) {
                         const name:string =
                             `${modelName}-${propertyName}-GenericIndex`
                         let foundPosition:number = -1
                         let position:number = 0
-                        for (const index:PlainObject of indexes) {
+                        for (const index of indexes) {
                             if (index.name === name) {
                                 foundPosition = position
                                 break
@@ -700,16 +739,17 @@ export class Database {
                             indexes.slice(position, 1)
                     }
                 }
-            for (const index:PlainObject of indexes)
+            for (const index of indexes)
                 if (index.name.endsWith('-GenericIndex')) {
                     let exists:boolean = false
-                    for (const modelName:string in models)
+                    for (const modelName in models)
                         if (index.name.startsWith(`${modelName}-`)) {
                             for (
-                                const name:string of
+                                const name of
                                 Helper.determineGenericIndexablePropertyNames(
                                     configuration.database.model,
-                                    models[modelName])
+                                    models[modelName]
+                                )
                             )
                                 if ([
                                     `${modelName}-${name}-GenericIndex`,
@@ -719,7 +759,9 @@ export class Database {
                             break
                         }
                     if (!exists)
-                        await services.database.connection.deleteIndex(index)
+                        await services.database.connection.deleteIndex(
+                            index as DeleteIndexOptions
+                        )
                 }
         }
         // endregion
@@ -782,7 +824,6 @@ export class Database {
         const initialize:Function = Tools.debounce(async ():Promise<void> => {
             if (Database.changesStream)
                 Database.changesStream.cancel()
-            /* eslint-disable camelcase */
             Database.changesStream = services.database.connection.changes(
                 Tools.extend(
                     true,
@@ -791,31 +832,31 @@ export class Database {
                     Database.additionalChangesStreamOptions
                 )
             )
-            /* eslint-enable camelcase */
-            Database.changesStream.on('error', async (
-                error:Error
-            ):Promise<void> => {
-                numberOfErrorsThrough += 1
-                if (numberOfErrorsThrough > 3) {
-                    console.warn(
-                        'Observing changes feed throws an error for ' +
-                        `${numberOfErrorsThrough} times through: ` +
-                        `${Tools.represent(error)}. Restarting database ` +
-                        'server and reinitialize changes stream...'
-                    )
-                    numberOfErrorsThrough = 0
-                    Database.changesStream.cancel()
-                    await services.database.server.restart(
-                        services, configuration, plugins)
-                } else
-                    console.warn(
-                        'Observing changes feed throws an error for ' +
-                        `${numberOfErrorsThrough} times through: ` +
-                        `${Tools.represent(error)}. Reinitializing changes ` +
-                        'stream...'
-                    )
-                initialize()
-            })
+            Database.changesStream.on(
+                'error',
+                async (error:DatabaseError):Promise<void> => {
+                    numberOfErrorsThrough += 1
+                    if (numberOfErrorsThrough > 3) {
+                        console.warn(
+                            'Observing changes feed throws an error for ' +
+                            `${numberOfErrorsThrough} times through: ` +
+                            `${Tools.represent(error)}. Restarting database ` +
+                            'server and reinitialize changes stream...'
+                        )
+                        numberOfErrorsThrough = 0
+                        Database.changesStream.cancel()
+                        await services.database.server.restart(
+                            services, configuration, plugins)
+                    } else
+                        console.warn(
+                            'Observing changes feed throws an error for ' +
+                            `${numberOfErrorsThrough} times through: ` +
+                            `${Tools.represent(error)}. Reinitializing ` +
+                            'changes stream...'
+                        )
+                    initialize()
+                }
+            )
             await PluginAPI.callStack(
                 'databaseInitializeChangesStream',
                 plugins,
@@ -839,18 +880,8 @@ export class Database {
     static async preLoadService(
         services:Services, configuration:Configuration
     ):Promise<Services> {
-        if (!services.hasOwnProperty('database')) {
-            services.database = {}
-            try {
-                require('request').Request.timeout =
-                    configuration.database.connector.ajax.timeout
-            } catch (error) {
-                console.warn(
-                    `Couldn't find module "request" to synchronize timeout ` +
-                    `option with pouchdb's one: ${Tools.represent(error)}`
-                )
-            }
-        }
+        if (!services.hasOwnProperty('database'))
+            services.database = {} as Services['database']
         if (!services.database.hasOwnProperty('connector')) {
             const idName:string =
                 configuration.database.model.property.name.special.id
@@ -865,11 +896,12 @@ export class Database {
             ):Promise<Array<PlainObject>> {
                 const toggleIDDetermining:boolean = (
                     parameter.length > 0 &&
-                    parameter[
-                        parameter.length - 1
-                    ] === Database.toggleIDDetermining)
+                    parameter[parameter.length - 1] ===
+                        Database.toggleIDDetermining
+                )
                 const skipIDDetermining:boolean = toggleIDDetermining ?
-                    !Database.skipIDDetermining : Database.skipIDDetermining
+                    !Database.skipIDDetermining :
+                    Database.skipIDDetermining
                 if (toggleIDDetermining)
                     parameter.pop()
                 /*
@@ -889,19 +921,23 @@ export class Database {
                     if none were provided for a single function call.
                 */
                 if (
-                    configuration.database.connector.ajax &&
-                    configuration.database.connector.ajax.timeout && (
+                    configuration.database.connector.fetch &&
+                    configuration.database.connector.fetch.timeout &&
+                    (
                         parameter.length === 0 ||
-                        typeof parameter[0] !== 'object')
+                        typeof parameter[0] !== 'object'
+                    )
                 )
-                    parameter.unshift({timeout:
-                        configuration.database.connector.ajax.timeout})
+                    parameter.unshift({
+                        timeout: configuration.database.connector.fetch.timeout
+                    })
                 const result:Array<PlainObject> = await nativeBulkDocs.call(
-                    this, firstParameter, ...parameter)
+                    this, firstParameter, ...parameter
+                )
                 const conflictingIndexes:Array<number> = []
                 const conflicts:Array<PlainObject> = []
                 let index:number = 0
-                for (const item:PlainObject of result) {
+                for (const item of result) {
                     if (
                         typeof firstParameter[index] === 'object' &&
                         firstParameter !== null
@@ -910,7 +946,8 @@ export class Database {
                             revisionName in firstParameter[index] &&
                             item.name === 'conflict' &&
                             ['latest', 'upsert'].includes(
-                                firstParameter[index][revisionName])
+                                firstParameter[index][revisionName]
+                            )
                         ) {
                             conflicts.push(item)
                             conflictingIndexes.push(index)
@@ -920,21 +957,21 @@ export class Database {
                             'name' in item &&
                             item.name === 'forbidden' &&
                             'message' in item &&
-                            item.message.startsWith('NoChange:')
+                            (item.message as string).startsWith('NoChange:')
                         ) {
                             result[index] = {
-                                id: firstParameter[index][idName],
-                                ok: true
+                                id: firstParameter[index][idName], ok: true
                             }
                             if (!skipIDDetermining)
                                 result[index].rev =
                                     revisionName in firstParameter[index] &&
                                     !['latest', 'upsert'].includes(
                                         firstParameter[index][revisionName]
-                                    ) ? firstParameter[index][
-                                        revisionName
-                                    ] : (await this.get(result[index].id))[
-                                        revisionName]
+                                    ) ?
+                                        firstParameter[index][revisionName] :
+                                        (await this.get(result[index].id))[
+                                            revisionName
+                                        ]
                         }
                     index += 1
                 }
@@ -944,30 +981,34 @@ export class Database {
                         parameter.push(Database.toggleIDDetermining)
                     const retriedResults:Array<PlainObject> =
                         await this.bulkDocs(firstParameter, ...parameter)
-                    for (const retriedResult:PlainObject of retriedResults)
-                        result[conflictingIndexes.shift()] = retriedResult
+                    for (const retriedResult of retriedResults)
+                        result[conflictingIndexes.shift() as number] =
+                            retriedResult
                 }
                 return result
-            }})
+            }} as DatabasePlugin)
             // endregion
             if (configuration.database.debug)
                 services.database.connector.debug.enable('*')
-            services.database.connector = services.database.connector.plugin(
-                PouchDBFindPlugin)
+            services.database.connector =
+                services.database.connector.plugin(PouchDBFindPlugin)
         }
         if (!services.database.hasOwnProperty('server')) {
-            services.database.server = {}
+            services.database.server = {} as Services['database']['server']
             // region search for binary file to start database server
             const triedPaths:Array<string> = []
-            for (const runner:Runner of [].concat(
+            for (const runner of ([] as Array<Runner>).concat(
                 configuration.database.binary.runner
             )) {
-                for (const directoryPath:string of [].concat(
-                    runner.location
+                for (const directoryPath of (
+                    ([] as Array<string>).concat(runner.location)
                 )) {
-                    for (const name:string of [].concat(runner.name)) {
+                    for (const name of (
+                        ([] as Array<string>).concat(runner.name)
+                    )) {
                         const binaryFilePath:string = path.resolve(
-                            directoryPath, name)
+                            directoryPath, name
+                        )
                         triedPaths.push(binaryFilePath)
                         if (await Tools.isFile(binaryFilePath)) {
                             runner.binaryFilePath = binaryFilePath
