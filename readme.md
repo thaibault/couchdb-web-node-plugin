@@ -12,14 +12,14 @@ endregion -->
 Project status
 --------------
 
-[![npm version](https://badge.fury.io/js/databasewebnodeplugin.svg)](https://www.npmjs.com/package/databasewebnodeplugin)
-[![downloads](https://img.shields.io/npm/dy/databasewebnodeplugin.svg)](https://www.npmjs.com/package/databasewebnodeplugin)
-[![build status](https://travis-ci.org/thaibault/databaseWebNodePlugin.svg?branch=master)](https://travis-ci.org/thaibault/databaseWebNodePlugin)
-[![code coverage](https://coveralls.io/repos/github/thaibault/databaseWebNodePlugin/badge.svg)](https://coveralls.io/github/thaibault/databaseWebNodePlugin)
-[![dependencies](https://img.shields.io/david/thaibault/databasewebnodeplugin.svg)](https://david-dm.org/thaibault/databasewebnodeplugin)
-[![development dependencies](https://img.shields.io/david/dev/thaibault/databasewebnodeplugin.svg)](https://david-dm.org/thaibault/databasewebnodeplugin?type=dev)
-[![peer dependencies](https://img.shields.io/david/peer/thaibault/databasewebnodeplugin.svg)](https://david-dm.org/thaibault/databasewebnodeplugin?type=peer)
-[![documentation website](https://img.shields.io/website-up-down-green-red/https/torben.website/databaseWebNodePlugin.svg?label=documentation-website)](https://torben.website/databaseWebNodePlugin)
+[![npm version](https://badge.fury.io/js/couchdb-web-node-plugin.svg)](https://www.npmjs.com/package/couchdb-web-node-plugin)
+[![downloads](https://img.shields.io/npm/dy/couchdb-web-node-plugin.svg)](https://www.npmjs.com/package/couchdb-web-node-plugin)
+[![build status](https://travis-ci.org/thaibault/couchdb-web-node-plugin.svg?branch=master)](https://travis-ci.org/thaibault/couchdb-web-node-plugin)
+[![code coverage](https://coveralls.io/repos/github/thaibault/couchdb-web-node-plugin/badge.svg)](https://coveralls.io/github/thaibault/couchdb-web-node-plugin)
+[![dependencies](https://img.shields.io/david/thaibault/couchdb-web-node-plugin.svg)](https://david-dm.org/thaibault/couchdb-web-node-plugin)
+[![development dependencies](https://img.shields.io/david/dev/thaibault/couchdb-web-node-plugin.svg)](https://david-dm.org/thaibault/couchdb-web-node-plugin?type=dev)
+[![peer dependencies](https://img.shields.io/david/peer/thaibault/couchdb-web-node-plugin.svg)](https://david-dm.org/thaibault/couchdb-web-node-plugin?type=peer)
+[![documentation website](https://img.shields.io/website-up-down-green-red/https/torben.website/couchdb-web-node-plugin.svg?label=documentation-website)](https://torben.website/couchdb-web-node-plugin)
 
 Use case
 --------

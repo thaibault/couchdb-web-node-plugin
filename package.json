@@ -1,11 +1,11 @@
 {
-  "name": "databasewebnodeplugin",
+  "name": "couchdb-web-node-plugin",
   "version": "1.0.436",
   "license": "CC-BY-3.0",
-  "description": "A database server, model instance conflict handler, rest api, authentication, session management, schema validator and model relation guarantee for webNode.",
-  "homepage": "https://torben.website/databaseWebNodePlugin",
+  "description": "A couchdb server, model instance conflict handler, rest api, authentication, session management, schema validator and model relation guarantee for webNode.",
+  "homepage": "https://torben.website/couchdb-web-node-plugin",
   "documentationWebsite": {
-    "name": "databaseWebNodePlugin",
+    "name": "couchdb-web-node-plugin",
     "trackingCode": "UA-40192634-21"
   },
   "keywords": [
@@ -34,23 +34,23 @@
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/thaibault/databaseWebNodePlugin.git"
+    "url": "https://github.com/thaibault/couchdb-web-node-plugin.git"
   },
   "scripts": {
-    "build": "yarn build:databaseHelper && webOptimizer build",
-    "build:databaseHelper": "webOptimizer build '{__reference__: \"target:databaseHelper\"}'",
-    "check:types": "webOptimizer check:types",
-    "clear": "webOptimizer clear && rimraf log.txt",
-    "document": "webOptimizer document",
-    "lint": "webOptimizer lint",
+    "build": "yarn build:databaseHelper && weboptimizer build",
+    "build:databaseHelper": "weboptimizer build '{__reference__: \"target:databaseHelper\"}'",
+    "check:types": "weboptimizer check:types",
+    "clear": "weboptimizer clear && rimraf log.txt",
+    "document": "weboptimizer document",
+    "lint": "weboptimizer lint",
     "prepare": "yarn build",
     "report:coverage": "nyc report --reporter=text-lcov | coveralls",
-    "serve": "yarn build && webNode",
+    "serve": "yarn build && web-node",
     "start": "yarn serve",
-    "test": "webOptimizer test",
+    "test": "weboptimizer test",
     "update": "yarn version --patch && yarn publish",
     "update:documentation": "documentationWebsite --log-level info",
-    "watch": "webOptimizer build --watch"
+    "watch": "weboptimizer build --watch"
   },
   "dependencies": {
     "pouchdb": "*",
@@ -91,22 +91,22 @@
   },
   "sideEffects": false,
   "webNode": {
-    "database": {
+    "couchdb": {
       "attachAutoRestarter": true,
       "backend": {
         "configuration": {
           "couchdb/database_dir": {
-            "__evaluate__": "path.resolve(self.database.path)"
+            "__evaluate__": "path.resolve(self.couchdb.path)"
           },
           "couchdb/max_attachment_chunk_size": "4294967296",
           "couchdb/os_process_timeout": "25000",
           "couchdb/view_index_dir": {
-            "__evaluate__": "path.resolve(self.database.path)"
+            "__evaluate__": "path.resolve(self.couchdb.path)"
           },
           "couch_httpd_auth/timeout": 7200,
           "httpd/allow_jsonp": true,
           "httpd/bind_address": {
-            "__evaluate__": "self.database.backend.configuration['httpd/host']"
+            "__evaluate__": "self.couchdb.backend.configuration['httpd/host']"
           },
           "httpd/enable_cors": true,
           "httpd/host": "0.0.0.0",
@@ -127,15 +127,15 @@
             "adminUserConfigurationPath": "_node/couchdb@127.0.0.1/_config/admins",
             "configurationFile": {
               "content": {
-                "__evaluate__": "`[couchdb]\\ndatabase_dir = ${path.resolve(self.database.path)}\\nview_index_dir = ${path.resolve(self.database.path)}`"
+                "__evaluate__": "`[couchdb]\\ndatabase_dir = ${path.resolve(self.couchdb.path)}\\nview_index_dir = ${path.resolve(self.couchdb.path)}`"
               },
               "path": {
-                "__evaluate__": "path.resolve(self.database.path, 'local.ini')"
+                "__evaluate__": "path.resolve(self.couchdb.path, 'local.ini')"
               }
             },
             "environment": {
               "ERL_FLAGS": {
-                "__evaluate__": "`-couch_ini /usr/lib/couchdb/etc/default.ini /usr/lib/couchdb/etc/datadirs.ini /etc/couchdb/local.ini ${path.resolve(self.database.path, 'local.ini')}`"
+                "__evaluate__": "`-couch_ini /usr/lib/couchdb/etc/default.ini /usr/lib/couchdb/etc/datadirs.ini /etc/couchdb/local.ini ${path.resolve(self.couchdb.path, 'local.ini')}`"
               }
             },
             "location": "/usr/lib/couchdb/bin/",
@@ -146,20 +146,20 @@
             "arguments": [
               "--config",
               {
-                "__evaluate__": "`./${self.database.path}/database.json`"
+                "__evaluate__": "`./${self.couchdb.path}/database.json`"
               },
               "--dir",
               {
-                "__evaluate__": "self.database.backend.configuration['couchdb/database_dir']"
+                "__evaluate__": "self.couchdb.backend.configuration['couchdb/database_dir']"
               },
               "#: NOTE: This redundancy seems to be needed to forward ports in docker containers.",
               "--host",
               {
-                "__evaluate__": "self.database.backend.configuration['httpd/host']"
+                "__evaluate__": "self.couchdb.backend.configuration['httpd/host']"
               },
               "--port",
               {
-                "__evaluate__": "`${self.database.backend.configuration['httpd/port']}`"
+                "__evaluate__": "`${self.couchdb.backend.configuration['httpd/port']}`"
               }
             ],
             "location": [
@@ -215,7 +215,7 @@
               "nullable": false,
               "mutable": false,
               "regularExpressionPattern": {
-                "__evaluate__": "`(?:${self.database.model.property.name.typeRegularExpressionPattern.public}|${self.database.model.property.name.typeRegularExpressionPattern.private})`"
+                "__evaluate__": "`(?:${self.couchdb.model.property.name.typeRegularExpressionPattern.public}|${self.couchdb.model.property.name.typeRegularExpressionPattern.private})`"
               }
             }
           },
@@ -314,7 +314,7 @@
             "lastUser": {
               "nullable": false,
               "onUpdateExpression": {
-                "__evaluate__": "`userContext.name || '${self.database.user.name}'`"
+                "__evaluate__": "`userContext.name || '${self.couchdb.user.name}'`"
               }
             }
           }
@@ -401,7 +401,7 @@
         }
       },
       "url": {
-        "__evaluate__": "`http://{1}${self.database.backend.configuration['httpd/host']}:${self.database.backend.configuration['httpd/port']}`"
+        "__evaluate__": "`http://{1}${self.couchdb.backend.configuration['httpd/host']}:${self.couchdb.backend.configuration['httpd/port']}`"
       },
       "user": {
         "name": "admin",

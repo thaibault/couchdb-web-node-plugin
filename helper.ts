@@ -61,7 +61,7 @@ export class Helper {
     static getConnectorOptions(
         configuration:Configuration
     ):DatabaseConnectorConfiguration {
-        if (configuration.database.connector.fetch)
+        if (configuration.couchdb.connector.fetch)
             return {
                 fetch: ((
                     url:FetchURL, options?:FetchOptions
@@ -70,7 +70,7 @@ export class Helper {
                     Tools.extend(
                         true,
                         {},
-                        configuration.database.connector.fetch,
+                        configuration.couchdb.connector.fetch,
                         options || {}
                     )
                 )) as unknown as DatabaseFetch
@@ -172,29 +172,29 @@ export class Helper {
     ):Promise<Services> {
         const url:string =
             Tools.stringFormat(
-                configuration.database.url,
-                `${configuration.database.user.name}:` +
-                `${configuration.database.user.password}@`
+                configuration.couchdb.url,
+                `${configuration.couchdb.user.name}:` +
+                `${configuration.couchdb.user.password}@`
             ) +
             `/${configuration.name}`
-        services.database.connection = new services.database.connector(
+        services.couchdb.connection = new services.couchdb.connector(
             url, Helper.getConnectorOptions(configuration)
         )
-        services.database.connection.setMaxListeners(Infinity)
+        services.couchdb.connection.setMaxListeners(Infinity)
         const idName:string =
-            configuration.database.model.property.name.special.id
+            configuration.couchdb.model.property.name.special.id
         const revisionName:string =
-            configuration.database.model.property.name.special.revision
+            configuration.couchdb.model.property.name.special.revision
         // region apply "latest/upsert" and ignore "NoChange" error feature
         /*
             NOTE: A "bulkDocs" plugin does not get called for every "put" and
             "post" call so we have to wrap runtime generated methods.
         */
         for (const pluginName of ['post', 'put']) {
-            const nativeMethod:Function = services.database.connection[
+            const nativeMethod:Function = services.couchdb.connection[
                 pluginName as 'get'|'post'
-            ].bind(services.database.connection)
-            services.database.connection[
+            ].bind(services.couchdb.connection)
+            services.couchdb.connection[
                 pluginName as 'get'|'post'
             ] = async function(
                 firstParameter:any, ...parameter:Array<any>
@@ -204,7 +204,7 @@ export class Helper {
                 } catch (error) {
                     if (
                         idName in firstParameter &&
-                        configuration.database.ignoreNoChangeError &&
+                        configuration.couchdb.ignoreNoChangeError &&
                         'name' in error &&
                         error.name === 'forbidden' &&
                         'message' in error &&
@@ -235,7 +235,7 @@ export class Helper {
             }
         }
         // endregion
-        // region ensure database pr esence
+        // region ensure database presence
         try {
             await Tools.checkReachability(url)
         } catch (error) {
@@ -256,13 +256,13 @@ export class Helper {
         services:Services, configuration:Configuration
     ):Promise<void> {
         // region create configuration file if needed
-        if (services.database.server.runner.hasOwnProperty(
+        if (services.couchdb.server.runner.hasOwnProperty(
             'configurationFile'
         )) {
             try {
                 await fileSystem.mkdir(
                     path.dirname(
-                        services.database.server.runner.configurationFile!.path
+                        services.couchdb.server.runner.configurationFile!.path
                     ),
                     {recursive: true}
                 )
@@ -271,42 +271,42 @@ export class Helper {
                     throw error
             }
             await fileSystem.writeFile(
-                services.database.server.runner.configurationFile!.path,
-                services.database.server.runner.configurationFile!.content,
+                services.couchdb.server.runner.configurationFile!.path,
+                services.couchdb.server.runner.configurationFile!.content,
                 {encoding: configuration.encoding}
             )
         }
         // endregion
-        services.database.server.process = spawnChildProcess(
+        services.couchdb.server.process = spawnChildProcess(
             (
-                configuration.database.binary.memoryInMegaByte === 'default' ?
-                    services.database.server.runner.binaryFilePath as string :
-                    configuration.database.binary.nodePath
+                configuration.couchdb.binary.memoryInMegaByte === 'default' ?
+                    services.couchdb.server.runner.binaryFilePath as string :
+                    configuration.couchdb.binary.nodePath
             ),
             (
-                configuration.database.binary.memoryInMegaByte === 'default' ?
+                configuration.couchdb.binary.memoryInMegaByte === 'default' ?
                     [] :
                     [
                         '--max-old-space-size=' +
-                            configuration.database.binary.memoryInMegaByte,
-                        services.database.server.runner.binaryFilePath as
+                            configuration.couchdb.binary.memoryInMegaByte,
+                        services.couchdb.server.runner.binaryFilePath as
                             string
                     ]
             ).concat(
-                services.database.server.runner.arguments ?
-                    services.database.server.runner.arguments :
+                services.couchdb.server.runner.arguments ?
+                    services.couchdb.server.runner.arguments :
                     []
             ),
             {
                 cwd: eval('process').cwd(),
                 env: (
-                    services.database.server.runner.hasOwnProperty(
+                    services.couchdb.server.runner.hasOwnProperty(
                         'environment'
                     ) ?
                         Tools.extend(
                             {},
                             eval('process').env,
-                            services.database.server.runner.environment
+                            services.couchdb.server.runner.environment
                         ) :
                         eval('process').env
                 ),
@@ -318,13 +318,13 @@ export class Helper {
             resolve:ProcessCloseCallback, reject:ProcessErrorCallback
         ):void => {
             for (const closeEventName of CloseEventNames)
-                services.database.server.process.on(
+                services.couchdb.server.process.on(
                     closeEventName,
                     Tools.getProcessCloseHandler(
                         resolve,
                         reject,
                         {
-                            process: services.database.server.process,
+                            process: services.couchdb.server.process,
                             reason: closeEventName
                         }
                     )
@@ -332,23 +332,23 @@ export class Helper {
         })).then(
             (...parameter:Array<any>):void => {
                 if (
-                    services.database &&
-                    services.database.server &&
-                    services.database.server.resolve
+                    services.couchdb &&
+                    services.couchdb.server &&
+                    services.couchdb.server.resolve
                 )
-                    services.database.server.resolve.apply(this, parameter)
+                    services.couchdb.server.resolve.apply(this, parameter)
             },
             (...parameter:Array<any>):void => {
                 if (
-                    services.database &&
-                    services.database.server &&
-                    services.database.server.resolve
+                    services.couchdb &&
+                    services.couchdb.server &&
+                    services.couchdb.server.resolve
                 )
-                    services.database.server.reject.apply(this, parameter)
+                    services.couchdb.server.reject.apply(this, parameter)
             }
         )
         await Tools.checkReachability(
-            Tools.stringFormat(configuration.database.url, ''), true
+            Tools.stringFormat(configuration.couchdb.url, ''), true
         )
     }
     /**
@@ -364,21 +364,21 @@ export class Helper {
         services:Services, configuration:Configuration, plugins:Array<Plugin>
     ):Promise<void> {
         const resolveServerProcessBackup:Function =
-            services.database.server.resolve
+            services.couchdb.server.resolve
         const rejectServerProcessBackup:Function =
-            services.database.server.reject
+            services.couchdb.server.reject
         // Avoid to notify web node about server process stop.
-        services.database.server.resolve =
-            services.database.server.reject =
+        services.couchdb.server.resolve =
+            services.couchdb.server.reject =
             Tools.noop
         await Helper.stopServer(services, configuration)
         // Reattach server process to web nodes process pool.
-        services.database.server.resolve = resolveServerProcessBackup
-        services.database.server.reject = rejectServerProcessBackup
+        services.couchdb.server.resolve = resolveServerProcessBackup
+        services.couchdb.server.reject = rejectServerProcessBackup
         await Helper.startServer(services, configuration)
         Helper.initializeConnection(services, configuration)
         await PluginAPI.callStack(
-            'restartDatabase', plugins, configuration, services
+            'restartCouchdb', plugins, configuration, services
         )
     }
     /**
@@ -391,12 +391,12 @@ export class Helper {
     static async stopServer(
         services:Services, configuration:Configuration
     ):Promise<void> {
-        if (services.database.connection)
-            services.database.connection.close()
-        if (services.database.server.process)
-            services.database.server.process.kill('SIGINT')
+        if (services.couchdb.connection)
+            services.couchdb.connection.close()
+        if (services.couchdb.server.process)
+            services.couchdb.server.process.kill('SIGINT')
         await Tools.checkUnreachability(
-            Tools.stringFormat(configuration.database.url, ''), true
+            Tools.stringFormat(configuration.couchdb.url, ''), true
         )
     }
     // region model

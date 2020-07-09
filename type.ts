@@ -219,7 +219,7 @@ export type ConnectorConfiguration = {
     fetch?:FetchOptions|null;
 }
 export type Configuration = BaseConfiguration & {
-    database:{
+    couchdb:{
         attachAutoRestarter:boolean;
         backend:{
             configuration:PlainObject;
@@ -262,14 +262,14 @@ export type EvaluationResult<Type = any> = {
     scope:object;
 }
 export type Service = BaseService & {
-    name:'database';
+    name:'couchdb';
     promise:null|Promise<ProcessCloseReason>;
 }
 export type ServicePromises = BaseServicePromises & {
-    database:Promise<ProcessCloseReason>;
+    couchdb:Promise<ProcessCloseReason>;
 }
 export type Services = BaseServices & {
-    database:{
+    couchdb:{
         connection:Connection;
         connector:Connector;
         server:{
@@ -299,7 +299,7 @@ export interface PluginHandler extends BasePluginHandler {
      * @param plugins - Topological sorted list of plugins.
      * @returns Given entry files.
      */
-    databaseInitializeChangesStream?(
+    couchdbInitializeChangesStream?(
         changesStream:ChangesStream,
         services:Services,
         configuration:Configuration,
