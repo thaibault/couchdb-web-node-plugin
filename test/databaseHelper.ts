@@ -34,7 +34,7 @@ describe('databaseHelper', ():void => {
     const configuration:Configuration =
         packageConfiguration.webNode as Configuration
     const specialNames:SpecialPropertyNames =
-        configuration.database.model.property.name.special
+        configuration.couchdb.model.property.name.special
     const attachmentName:string = specialNames.attachment
     const idName:string = specialNames.id
     const revisionName:string = specialNames.revision
@@ -107,7 +107,7 @@ describe('databaseHelper', ():void => {
         'validateDocumentUpdate (with update strategy "%s")',
         (updateStrategy:string):void => {
             const defaultModelConfiguration:ModelConfiguration = Tools.extend(
-                true, {}, configuration.database.model, {updateStrategy}
+                true, {}, configuration.couchdb.model, {updateStrategy}
             )
             for (
                 const propertyName in defaultModelConfiguration.entities._base
@@ -1277,7 +1277,7 @@ describe('databaseHelper', ():void => {
                         null,
                         {},
                         {
-                            [configuration.database.model.property.name
+                            [configuration.couchdb.model.property.name
                                 .validatedDocumentsCache
                             ]: new Set(['1-1'])
                         }
@@ -3665,7 +3665,7 @@ describe('databaseHelper', ():void => {
             const defaultModelConfiguration:ModelConfiguration = Tools.extend(
                 true,
                 {},
-                configuration.database.model,
+                configuration.couchdb.model,
                 {updateStrategy: 'migrate'}
             )
             for (

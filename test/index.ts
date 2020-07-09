@@ -25,27 +25,27 @@ describe('index', ():void => {
     // region prepare environment
     const configuration:Configuration =
         packageConfiguration.webNode as Configuration
-    configuration.database.url = 'http://dummy-url'
+    configuration.couchdb.url = 'http://dummy-url'
     // endregion
     // region tests
     test('loadService', ():void =>
         expect(Index.loadService(
-            {}, {database: {connection: null, server: {}}}, configuration
-        )).resolves.toStrictEqual({name: 'database', promise: null})
+            {}, {couchdb: {connection: null, server: {}}}, configuration
+        )).resolves.toStrictEqual({name: 'couchdb', promise: null})
     )
     test('preLoadService', ():void => {
-        const runner:Runner = configuration.database.binary.runner[
-            configuration.database.binary.runner.length - 1
+        const runner:Runner = configuration.couchdb.binary.runner[
+            configuration.couchdb.binary.runner.length - 1
         ]
         expect(Index.preLoadService({}, configuration)).resolves
             .toHaveProperty(
-                'database.server.runner.binaryFilePath',
+                'couchdb.server.runner.binaryFilePath',
                 path.resolve(runner.location[0], runner.name)
             )
     })
     test('shouldExit', async ():Promise<void> => {
         let testValue:number = 0
-        const services:Services = {database: {
+        const services:Services = {couchdb: {
             connection: {close: ():void => {
                 testValue += 1
             }},

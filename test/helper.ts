@@ -25,7 +25,7 @@ describe('helper', ():void => {
     const configuration:Configuration =
         packageConfiguration.webNode as Configuration
     const specialNames:SpecialPropertyNames =
-        configuration.database.model.property.name.special
+        configuration.couchdb.model.property.name.special
     // endregion
     // region tests
     test.each([
@@ -84,7 +84,7 @@ describe('helper', ():void => {
     /* TODO
     test('determineAllowedModelRolesMapping', ():void => {
         const modelConfiguration:ModelConfiguration = Tools.copy(
-            configuration.database.model
+            configuration.couchdb.model
         )
         modelConfiguration.entities = {}
         for (const test:Array<any> of [
@@ -134,7 +134,7 @@ describe('helper', ():void => {
             ]]
         ])
             assert.deepEqual(Helper.determineGenericIndexablePropertyNames(
-                Tools.extend(true, {}, configuration.database.model, test[0]),
+                Tools.extend(true, {}, configuration.couchdb.model, test[0]),
                 test[1]
             ).sort(), test[2])
     })
@@ -176,7 +176,7 @@ describe('helper', ():void => {
     })
     test('extendModels', ():void => {
         const modelConfiguration:ModelConfiguration = Tools.copy(
-            configuration.database.model
+            configuration.couchdb.model
         )
         modelConfiguration.entities = {}
         modelConfiguration.property.defaultSpecification = {}
