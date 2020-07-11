@@ -25,7 +25,7 @@ Use case
 --------
 
 PouchDB with model specification/checking, user authentication and right
-management as webNode plugin.
+management as web-node plugin.
 
 <!-- region vim modline
 vim: set tabstop=4 shiftwidth=4 expandtab:
