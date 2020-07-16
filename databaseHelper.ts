@@ -1,4 +1,5 @@
 // -*- coding: utf-8 -*-
+/** @module databaseHelper */
 'use strict'
 /* !
     region header

@@ -1,4 +1,5 @@
 // -*- coding: utf-8 -*-
+/** @module type */
 'use strict'
 /* !
     region header
