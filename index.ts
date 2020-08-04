@@ -130,10 +130,7 @@ export class Database implements PluginHandler {
                     }
                 )
             } catch (error) {
-                if (
-                    error.hasOwnProperty('name') &&
-                    error.name === 'unauthorized'
-                ) {
+                if (error.name === 'unauthorized') {
                     const authenticatedUserDatabaseConnection:Connection =
                         new services.couchdb.connector(
                             `${urlPrefix}/_users`,
@@ -178,10 +175,7 @@ export class Database implements PluginHandler {
                             `org.couchdb.user:${name}`
                         )
                     } catch (error) {
-                        if (
-                            error.hasOwnProperty('error') &&
-                            error.error === 'not_found'
-                        )
+                        if (error.error === 'not_found')
                             try {
                                 await userDatabaseConnection.put({
                                     [
@@ -424,11 +418,7 @@ export class Database implements PluginHandler {
                                     models[modelName][name] as
                                         Array<Constraint>
                                 ))
-                                    if (
-                                        constraint.hasOwnProperty(
-                                            'description') &&
-                                        constraint.description
-                                    )
+                                    if (constraint.description)
                                         try {
                                             new Function(
                                                 'return ' +
@@ -527,10 +517,7 @@ export class Database implements PluginHandler {
                         try {
                             await services.couchdb.connection.put(document)
                         } catch (error) {
-                            if (
-                                'forbidden' in error &&
-                                error.forbidden.startsWith('NoChange:')
-                            )
+                            if (error.forbidden?.startsWith('NoChange:'))
                                 console.info(
                                     `Including document "${document[idName]}` +
                                     `" of type "${document[typeName]}" ` +
@@ -911,8 +898,8 @@ export class Database implements PluginHandler {
                 */
                 if (
                     !Array.isArray(firstParameter) &&
-                    typeof firstParameter === 'object' &&
                     firstParameter !== null &&
+                    typeof firstParameter === 'object' &&
                     idName in firstParameter
                 )
                     firstParameter = [firstParameter]
@@ -921,8 +908,7 @@ export class Database implements PluginHandler {
                     if none were provided for a single function call.
                 */
                 if (
-                    configuration.couchdb.connector.fetch &&
-                    configuration.couchdb.connector.fetch.timeout &&
+                    configuration.couchdb.connector.fetch?.timeout &&
                     (
                         parameter.length === 0 ||
                         typeof parameter[0] !== 'object'

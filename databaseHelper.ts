@@ -254,7 +254,7 @@ export class DatabaseHelper {
             return newDocument
         }
         if (['latest', 'upsert'].includes(revision))
-            if (oldDocument && oldDocument.hasOwnProperty(revisionName))
+            if (oldDocument?.hasOwnProperty(revisionName))
                 revision =
                     newDocument[revisionName] =
                     oldDocument[revisionName] as string
@@ -270,7 +270,7 @@ export class DatabaseHelper {
         let serialize:(value:any) => string = (value:any) => `${value}`
         if (toJSON)
             serialize = toJSON
-        else if (JSON && JSON.hasOwnProperty('stringify'))
+        else if (JSON?.hasOwnProperty('stringify'))
             serialize = (object:any):string => JSON.stringify(object, null, 4)
         else
             throwError('Needed "serialize" function is not available.')
@@ -415,8 +415,7 @@ export class DatabaseHelper {
                 // region check for model type (optionally migrate them)
                 if (!newDocument.hasOwnProperty(typeName))
                     if (
-                        oldDocument &&
-                        oldDocument.hasOwnProperty(typeName) &&
+                        oldDocument?.hasOwnProperty(typeName) &&
                         ['fillUp', 'migrate'].includes(updateStrategy)
                     )
                         newDocument[typeName] = oldDocument[typeName]
@@ -893,15 +892,19 @@ export class DatabaseHelper {
                     typeof newDocument[name] === 'string'
                 )
                     newDocument[name] = (newDocument[name] as string).trim()
-                if (propertySpecification.emptyEqualsToNull && (
-                    newDocument[name] === '' ||
-                    Array.isArray(newDocument[name]) &&
-                    (newDocument[name] as Array<DocumentContent>).length ===
-                        0 ||
-                    typeof newDocument[name] === 'object' &&
-                    newDocument[name] !== null &&
-                    Object.keys(newDocument).length === 0
-                ))
+                if (
+                    propertySpecification.emptyEqualsToNull &&
+                    (
+                        newDocument[name] === '' ||
+                        Array.isArray(newDocument[name]) &&
+                        (
+                            newDocument[name] as Array<DocumentContent>
+                        ).length === 0 ||
+                        newDocument[name] !== null &&
+                        typeof newDocument[name] === 'object' &&
+                        Object.keys(newDocument).length === 0
+                    )
+                )
                     newDocument[name] = null
                 for (const type of ['onUpdateExecution', 'onUpdateExpression'])
                     if (propertySpecification.hasOwnProperty(type))
@@ -1226,22 +1229,21 @@ export class DatabaseHelper {
                     if ([null, undefined].includes(
                         propertySpecification.default
                     )) {
-                        if (
-                            !(propertySpecification.nullable || (
+                        if (!(
+                            propertySpecification.nullable ||
+                            (
                                 newDocument.hasOwnProperty(name) ||
-                                oldDocument &&
-                                oldDocument.hasOwnProperty(name) &&
+                                oldDocument?.hasOwnProperty(name) &&
                                 updateStrategy
-                            ))
-                        )
+                            )
+                        ))
                             throwError(
                                 `MissingProperty: Missing property "${name}"` +
                                 `${pathDescription}.`
                             )
                         if (
                             !newDocument.hasOwnProperty(name) &&
-                            oldDocument &&
-                            oldDocument.hasOwnProperty(name)
+                            oldDocument?.hasOwnProperty(name)
                         )
                             if (updateStrategy === 'fillUp')
                                 newDocument[name] = oldDocument[name]
@@ -1252,7 +1254,7 @@ export class DatabaseHelper {
                         !newDocument.hasOwnProperty(name) ||
                         newDocument[name] === null
                     )
-                        if (oldDocument && oldDocument.hasOwnProperty(name)) {
+                        if (oldDocument?.hasOwnProperty(name)) {
                             if (updateStrategy === 'fillUp')
                                 newDocument[name] = oldDocument[name]
                             else if (updateStrategy === 'migrate') {
@@ -1367,8 +1369,7 @@ export class DatabaseHelper {
                         // region mutable
                         if (
                             !propertySpecification.mutable &&
-                            oldDocument &&
-                            oldDocument.hasOwnProperty(name)
+                            oldDocument?.hasOwnProperty(name)
                         )
                             if (
                                 serialize(newDocument[name]) ===
@@ -1397,10 +1398,7 @@ export class DatabaseHelper {
                         if (newDocument[name] === null)
                             if (propertySpecification.nullable) {
                                 delete newDocument[name]
-                                if (
-                                    oldDocument &&
-                                    oldDocument.hasOwnProperty(name)
-                                )
+                                if (oldDocument?.hasOwnProperty(name))
                                     changedPath = parentNames.concat(
                                         name, 'delete property'
                                     )
@@ -1489,8 +1487,7 @@ export class DatabaseHelper {
                             newProperty,
                             name,
                             propertySpecification,
-                            oldDocument &&
-                            oldDocument.hasOwnProperty(name) &&
+                            oldDocument?.hasOwnProperty(name) &&
                             oldDocument[name] ||
                             undefined,
                             [
@@ -1534,8 +1531,7 @@ export class DatabaseHelper {
                             definition will receive one.
                         */
                         if (
-                            propertySpecificationCopy.type &&
-                            propertySpecificationCopy.type.length === 1 &&
+                            propertySpecificationCopy.type?.length === 1 &&
                             models.hasOwnProperty(
                                 propertySpecificationCopy.type[0]
                             )
@@ -1566,8 +1562,7 @@ export class DatabaseHelper {
                         }
                         // // endregion
                         if (!(
-                            oldDocument &&
-                            oldDocument.hasOwnProperty(name) &&
+                            oldDocument?.hasOwnProperty(name) &&
                             Array.isArray(oldDocument[name]) &&
                             (
                                 oldDocument[name] as Array<DocumentContent>
@@ -1582,8 +1577,7 @@ export class DatabaseHelper {
                         // endregion
                     } else {
                         const oldValue:any =
-                            oldDocument &&
-                            oldDocument.hasOwnProperty(name) ?
+                            oldDocument?.hasOwnProperty(name) ?
                                 oldDocument[name] :
                                 null
                         const result:{
@@ -1688,10 +1682,7 @@ export class DatabaseHelper {
                     )
                 // region migrate old attachments
                 let oldAttachments:any = null
-                if (
-                    oldDocument &&
-                    oldDocument.hasOwnProperty(specialNames.attachment)
-                ) {
+                if (oldDocument?.hasOwnProperty(specialNames.attachment)) {
                     oldAttachments = oldDocument[specialNames.attachment]
                     if (
                         oldAttachments !== null &&
@@ -1757,8 +1748,7 @@ export class DatabaseHelper {
                         )
                             delete newAttachments[fileName]
                         else if (!(
-                            oldAttachments &&
-                            oldAttachments.hasOwnProperty(fileName) &&
+                            oldAttachments?.hasOwnProperty(fileName) &&
                             newAttachments[fileName].content_type ===
                                 oldAttachments[fileName].content_type &&
                             (
@@ -1876,9 +1866,6 @@ export class DatabaseHelper {
                                     .contentTypeRegularExpressionPattern as
                                         null
                             ) ||
-                            newAttachments[fileName].hasOwnProperty(
-                                'content_type'
-                            ) &&
                             newAttachments[fileName].content_type &&
                             new RegExp(
                                 specification
@@ -1901,9 +1888,6 @@ export class DatabaseHelper {
                             .invertedContentTypeRegularExpressionPattern
                         if (!(
                             [null, undefined].includes(pattern as null) ||
-                            newAttachments[fileName].hasOwnProperty(
-                                'content_type'
-                            ) &&
                             newAttachments[fileName].content_type &&
                             !(new RegExp(pattern as string))
                                 .test(newAttachments[fileName].content_type)
@@ -2010,7 +1994,6 @@ export class DatabaseHelper {
                         ` byte ${pathDescription}.`
                     )
                 else if (
-                    model.hasOwnProperty(specialNames.maximumAggregatedSize) &&
                     ![null, undefined].includes(
                         model[specialNames.maximumAggregatedSize] as
                             unknown as null
@@ -2029,8 +2012,7 @@ export class DatabaseHelper {
             // / endregion
             // endregion
             if (
-                oldDocument &&
-                oldDocument.hasOwnProperty(specialNames.attachment) &&
+                oldDocument?.hasOwnProperty(specialNames.attachment) &&
                 Object.keys(
                     oldDocument[specialNames.attachment] as Attachments
                 ).length === 0
@@ -2059,8 +2041,7 @@ export class DatabaseHelper {
             !oldDocument ||
             !(
                 result.newDocument._deleted &&
-                oldDocument &&
-                result.newDocument._deleted !== oldDocument._deleted ||
+                result.newDocument._deleted !== oldDocument?._deleted ||
                 result.changedPath.length
             )
         )

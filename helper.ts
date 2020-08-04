@@ -206,10 +206,8 @@ export class Helper {
                     if (
                         idName in firstParameter &&
                         configuration.couchdb.ignoreNoChangeError &&
-                        'name' in error &&
                         error.name === 'forbidden' &&
-                        'message' in error &&
-                        error.message.startsWith('NoChange:')
+                        error.message?.startsWith('NoChange:')
                     ) {
                         const result:DatabaseResponse = {
                             id: firstParameter[idName],
@@ -332,19 +330,11 @@ export class Helper {
                 )
         })).then(
             (...parameter:Array<any>):void => {
-                if (
-                    services.couchdb &&
-                    services.couchdb.server &&
-                    services.couchdb.server.resolve
-                )
+                if (services.couchdb?.server?.resolve)
                     services.couchdb.server.resolve.apply(this, parameter)
             },
             (...parameter:Array<any>):void => {
-                if (
-                    services.couchdb &&
-                    services.couchdb.server &&
-                    services.couchdb.server.resolve
-                )
+                if (services.couchdb?.server?.resolve)
                     services.couchdb.server.reject.apply(this, parameter)
             }
         )
