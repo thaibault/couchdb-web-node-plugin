@@ -84,7 +84,7 @@ export class DatabaseHelper {
         if (!newDocument.hasOwnProperty(typePropertyName))
             return true
         const allowedRoles:NormalizedAllowedRoles & {
-            properties:AllowedModelRolesMapping;
+            properties:AllowedModelRolesMapping
         } = {
             properties: {},
             read: ['_admin', 'readonlyadmin'],
@@ -545,7 +545,10 @@ export class DatabaseHelper {
                 name:string,
                 propertySpecification:PropertySpecification,
                 oldValue:any = null
-            ):{changedPath:Array<string>;newValue:any} => {
+            ):{
+                changedPath:Array<string>
+                newValue:any
+            } => {
                 let changedPath:Array<string> = []
                 // region type
                 const types:Array<Type> = ([] as Array<Type>).concat(
@@ -1581,7 +1584,8 @@ export class DatabaseHelper {
                                 oldDocument[name] :
                                 null
                         const result:{
-                            changedPath:Array<string>;newValue:any;
+                            changedPath:Array<string>
+                            newValue:any
                         } = checkPropertyContent(
                             newDocument[name],
                             name,

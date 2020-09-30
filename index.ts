@@ -326,8 +326,10 @@ export class Database implements PluginHandler {
         const modelConfiguration:ModelConfiguration = Tools.copy(
             configuration.couchdb.model
         )
-        delete modelConfiguration.property.defaultSpecification
-        delete modelConfiguration.entities
+        delete (modelConfiguration.property as {
+            defaultSpecification?:PlainObject
+        }).defaultSpecification
+        delete (modelConfiguration as {entities?:PlainObject}).entities
         const models:Models = Helper.extendModels(configuration.couchdb.model)
         if (configuration.couchdb.model.updateValidation) {
             const databaseHelperCode:string =
@@ -1031,7 +1033,7 @@ export class Database implements PluginHandler {
         if (await Tools.isFile(logFilePath))
             await fileSystem.unlink(logFilePath)
         await Helper.stopServer(services, configuration)
-        delete services.couchdb
+        delete (services as {couchdb?:Services['couchdb']}).couchdb
         return services
     }
 }
