@@ -222,8 +222,8 @@
           "_expressionMapping": {
             "_additional": {
               "constraintExecution": {
-                "description": "`Given value \"${newValue}\" should be able to be compiled as template string: ${(() => {try { new Function(newValue) } catch (error) { return error }})()}`",
-                "evaluation": "try { new Function(`return \\`${newValue}\\``) } catch (error) { return false }; return true"
+                "description": "`Given value \"${newValue}\" should be able to be compiled as template string: ${Tools.stringCompile(newValue)[1]}`",
+                "evaluation": "typeof Tools.stringCompile(newValue)[1] === 'string'"
               }
             },
             "_extends": "_stringMapping"
