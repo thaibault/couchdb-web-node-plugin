@@ -434,7 +434,10 @@
         "__evaluate__": "/(?:(?:bindings\\/bindings)|(?:colors\\/lib\\/(?:colors)|(?:extendStringPrototype))|(?:encoding\\/lib\\/iconv-loader)|(?:global)|(?:module))\\.js(?:\\?.+|$)/"
       }
     },
-    "targetTechnology": "node",
+    "targetTechnology": {
+      "boilerplate": "node",
+      "payload": "node"
+    },
     "target:databaseHelper": {
       "injection": {
         "entry": {
