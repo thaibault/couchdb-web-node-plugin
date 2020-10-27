@@ -9550,9 +9550,9 @@ watchpack@^2.0.0:
     graceful-fs "^4.1.2"
 
 web-node@*:
-  version "1.0.352"
-  resolved "https://registry.yarnpkg.com/web-node/-/web-node-1.0.352.tgz#9a8e25b451a303a0672100e2ba04980799f0bbf0"
-  integrity sha512-gLeZHV3k7qxyE6CBJEdZRRU8bZZbyk0ubZ21B9epnIYVsJb840nQJFfrzq09rISB7IxhDTJE8yBqxw2kxS5yKg==
+  version "1.0.353"
+  resolved "https://registry.yarnpkg.com/web-node/-/web-node-1.0.353.tgz#50e6375d77701ca2652f1a2e99ebca242693fd9b"
+  integrity sha512-bgP/lug2Q0Or4FLu9Mt3+6Ah/DPAD4hlQkpxKBqXpdYpaPEjkLcggMx3R2rn1dNuTZiaaLkSGq3Sw810+U+6Aw==
 
 webidl-conversions@^5.0.0:
   version "5.0.0"
