@@ -64,6 +64,7 @@
     "@types/node": "*",
     "@types/node-fetch": "*",
     "@types/pouchdb": "*",
+    "@types/workbox-webpack-plugin": "*",
     "@typescript-eslint/eslint-plugin": "*",
     "@typescript-eslint/parser": "*",
     "babel-eslint": "*",
