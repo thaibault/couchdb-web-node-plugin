@@ -15,6 +15,10 @@
 */
 // region imports
 import Tools from 'clientnode'
+import {
+    testEachAgainstSameExpectation, ThrowSymbol
+} from 'clientnode/testHelper'
+import {FirstParameter, SecondParameter} from 'clientnode/type'
 
 import DatabaseHelper from '../databaseHelper'
 import Helper from '../helper'
@@ -41,28 +45,27 @@ describe('databaseHelper', ():void => {
     const typeName:string = specialNames.type
     // endregion
     // region tests
-    test.each([
-        [{type: 'Test'}, {}, {roles: []}, {}, {Test: {read: 'users'}}],
-        [{type: 'Test'}, {}, {roles: ['users']}, {}, {}]
-    ])(
-        'authenticate(%p, %p, %p, %p, %p) => throw {unauthorized: ...}',
-        (
-            newDocument:Document,
-            oldDocument:Document,
-            userContext:UserContext,
-            securitySettings:SecuritySettings,
-            allowedModelRolesMapping:AllowedModelRolesMapping
-        ):void => expect(():true => DatabaseHelper.authenticate(
-            newDocument,
-            oldDocument,
-            userContext,
-            securitySettings,
-            allowedModelRolesMapping,
+    testEachAgainstSameExpectation<typeof DatabaseHelper.authenticate>(
+        'authenticate',
+        DatabaseHelper.authenticate,
+        ThrowSymbol,
+
+        [
+            {type: 'Test'},
+            {},
+            {roles: []},
+            {},
+            {Test: {read: 'users'}},
             'id',
             'type'
-        )).toThrow()
+        ],
+        [{type: 'Test'}, {}, {roles: ['users']}, {}, {}, 'id', 'type']
     )
-    test.each([
+    testEachAgainstSameExpectation<typeof DatabaseHelper.authenticate>(
+        'authenticate',
+        DatabaseHelper.authenticate,
+        true,
+
         [{}],
         [{}, null, {roles: ['_admin']}],
         [
@@ -86,24 +89,8 @@ describe('databaseHelper', ():void => {
             {},
             {Test: {write: ['users']}}
         ]
-    ])(
-        'authenticate(%p, ...) === true',
-        (
-            newDocument:Document,
-            oldDocument:Document|null = null,
-            userContext?:UserContext,
-            securitySettings?:SecuritySettings,
-            allowedModelRolesMapping?:AllowedModelRolesMapping
-        ):void =>
-            expect(DatabaseHelper.authenticate(
-                newDocument,
-                oldDocument,
-                userContext,
-                securitySettings,
-                allowedModelRolesMapping
-            )).toStrictEqual(true)
     )
-    test.each(['', 'fillUp', 'incremental'])(
+    test.each<string>(['', 'fillUp', 'incremental'])(
         'validateDocumentUpdate (with update strategy "%s")',
         (updateStrategy:string):void => {
             const defaultModelConfiguration:ModelConfiguration = Tools.extend(
@@ -3447,7 +3434,12 @@ describe('databaseHelper', ():void => {
         }
     )
     // / region migration writes
-    test.each([
+    test.each<[
+        FirstParameter<typeof DatabaseHelper.validateDocumentUpdate>,
+        ReturnType<typeof DatabaseHelper.validateDocumentUpdate>,
+        ModelConfiguration,
+        SecondParameter<typeof DatabaseHelper.validateDocumentUpdate>
+    ]>([
         // Remove obsolete properties.
         [
             {[typeName]: 'Test', a: 2},
@@ -3657,10 +3649,10 @@ describe('databaseHelper', ():void => {
         'validateDocumentUpdate(%p, ...) === %p (with update strategy "' +
         'migration")',
         (
-            newDocument:Document,
-            expected:Document,
+            newDocument:FirstParameter<typeof DatabaseHelper.validateDocumentUpdate>,
+            expected:ReturnType<typeof DatabaseHelper.validateDocumentUpdate>,
             modelConfiguration:ModelConfiguration,
-            oldDocument:Document|null = null
+            oldDocument:SecondParameter<typeof DatabaseHelper.validateDocumentUpdate> = null
         ):void => {
             const defaultModelConfiguration:ModelConfiguration = Tools.extend(
                 true,
