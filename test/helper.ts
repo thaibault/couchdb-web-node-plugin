@@ -15,6 +15,9 @@
 */
 // region imports
 import Tools from 'clientnode'
+import {
+    testEach, testEachPromiseAgainstSameExpectation, UndefinedSymbol
+} from 'clientnode/testHelper'
 
 import Helper from '../helper'
 import packageConfiguration from '../package.json'
@@ -28,31 +31,29 @@ describe('helper', ():void => {
         configuration.couchdb.model.property.name.special
     // endregion
     // region tests
-    test.each([
-        [{}, 1, 1, 'DOCUMENT IS TOO BIG TO REPRESENT'],
-        [{}, 2, 2, '{}'],
-        [{}, 1000, 100, '{}'],
+    testEach<typeof Helper.mayStripRepresentation>(
+        'mayStripRepresentation',
+        Helper.mayStripRepresentation,
+
+        ['DOCUMENT IS TOO BIG TO REPRESENT', {}, 1, 1],
+        ['{}', {}, 2, 2],
+        ['{}', {}, 1000, 100],
         [
-            {a: 2, b: 3},
-            100,
-            15,
             `{
                 a: 2,
-            ...`.replace(/ {12}/g, '')
+            ...`.replace(/ {12}/g, ''),
+            {a: 2, b: 3},
+            100,
+            15
         ]
-    ])(
-        `mayStripRepresentation(%p, %d, %d) === '%s'`,
-        (
-            object:any,
-            maximumRepresentationTryLength:number,
-            maximumRepresentationLength:number,
-            expected:string
-        ):void =>
-            expect(Helper.mayStripRepresentation(
-                object, maximumRepresentationTryLength, maximumRepresentationLength
-            )).toStrictEqual(expected)
     )
-    test.each([
+    testEachPromiseAgainstSameExpectation<
+        typeof Helper.ensureValidationDocumentPresence
+    >(
+        'ensureValidationDocumentPresence',
+        Helper.ensureValidationDocumentPresence,
+        UndefinedSymbol,
+
         [
             {put: ():Promise<void> =>
                 new Promise((resolve:Function):Promise<boolean> =>
@@ -63,22 +64,6 @@ describe('helper', ():void => {
             'Description',
             false
         ]
-    ])(
-        `ensureValidationDocumentPresence(%p, '%s', %p, '%s', %p)`,
-        (
-            databaseConnection:Connection,
-            documentName:string,
-            documentData:Mapping,
-            description:string,
-            log:boolean
-        ):void =>
-            expect(Helper.ensureValidationDocumentPresence(
-                databaseConnection,
-                documentName,
-                documentData,
-                description,
-                log
-            )).resolves.not.toBeDefined()
     )
     // / region model
     /* TODO
