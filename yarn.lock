@@ -3201,9 +3201,9 @@ cli-table3@^0.5.0:
     colors "^1.1.2"
 
 clientnode@*:
-  version "3.0.639"
-  resolved "https://registry.yarnpkg.com/clientnode/-/clientnode-3.0.639.tgz#d4bb9b3692afa8a852605a791f6b341aa105fe72"
-  integrity sha512-SD6bHQ0/rL4ATL+1XrXZkRwTpPBzyUKUMfiSISftLwODRn1vNYGSNiM+oNMS5/dpYceAByCHt+TS2i8vGR05Gw==
+  version "3.0.641"
+  resolved "https://registry.yarnpkg.com/clientnode/-/clientnode-3.0.641.tgz#7bd5c5edd2eb43a2c2be0b23f9b77f54ec4f01de"
+  integrity sha512-NnK5dQj2wXrRy/E742j3bsvMEfXdr253nKCsBkTrAp6+Yl0gNsHbkPqeH/08avUBI+QEBStXF2FQhcvCqTrARw==
 
 cliui@^4.0.0:
   version "4.1.0"
@@ -9316,9 +9316,9 @@ watchpack@^2.0.0:
     graceful-fs "^4.1.2"
 
 web-node@*:
-  version "1.0.361"
-  resolved "https://registry.yarnpkg.com/web-node/-/web-node-1.0.361.tgz#0da44703603d9c57424052d221c738fc2a6c785b"
-  integrity sha512-cF5bG+Og20Y2fq5ZwAYC3D4NGvf04tO1B+Az+iYrqzPEMQYD6SFas8pGFYJXzCyZEyiweCakXruO2sBAf7u6fA==
+  version "1.0.362"
+  resolved "https://registry.yarnpkg.com/web-node/-/web-node-1.0.362.tgz#1f5d8fc006339b6b3f4fa10560d35371855e3747"
+  integrity sha512-vK8cN8UmsQVGOx/qeEJ5z8gDubwxNCM3dUfQ7oKNMqScRHr4XBf3DMuVJo41fxOrWfEWhM+E9j+LyX3760YiqA==
 
 webidl-conversions@^5.0.0:
   version "5.0.0"
@@ -9331,9 +9331,9 @@ webidl-conversions@^6.1.0:
   integrity sha512-qBIvFLGiBpLjfwmYAaHPXsn+ho5xZnGvyGvsarywGNc8VyQJUMHJ8OBKGGrPER0okBeMDaan4mNBlgBROxuI8w==
 
 weboptimizer@*:
-  version "2.0.869"
-  resolved "https://registry.yarnpkg.com/weboptimizer/-/weboptimizer-2.0.869.tgz#86cffdb209af7860c04a1548ae9499d840398946"
-  integrity sha512-ClmuKrv2R4uHsf1aQmmPh0ggZRZ7DLJH9+BndGSP82Nle9Jm4bxKwnt5eRPfg2PkO0nvkBfIQ0csfTR7UTDU2w==
+  version "2.0.871"
+  resolved "https://registry.yarnpkg.com/weboptimizer/-/weboptimizer-2.0.871.tgz#a04017fc4dd814a7d4b7f863f784b20e373d99d7"
+  integrity sha512-3GU9Gp2/u5ZaLZMOEaTZbI7eKaR/xNsTHom6+fNQAkEfmUGJMwijOotfNsvaQqGhJS3zXYT1/JFguJ0/CBguKw==
   dependencies:
     "@babel/core" "*"
     "@babel/plugin-proposal-class-properties" "*"
@@ -9430,9 +9430,9 @@ webpack@*:
     webpack-sources "^2.1.1"
 
 website-utilities@*:
-  version "1.0.224"
-  resolved "https://registry.yarnpkg.com/website-utilities/-/website-utilities-1.0.224.tgz#94fab60f536b5d0e05e361eaf95981e58e6ffd7e"
-  integrity sha512-PwjLuxxETwsKrG98UsVspSYsDvYavhaj/zHG3q22d3rFGtjpKYCkekJW+ZQplS5imnACyV7eF/tQ086jf/vLqw==
+  version "1.0.225"
+  resolved "https://registry.yarnpkg.com/website-utilities/-/website-utilities-1.0.225.tgz#ed5f73820c8887c323a45010bab627e32981902e"
+  integrity sha512-NAkzZJxxFvdZqkRRGLVKVj5n3Fp5eVHUkyCH9pGymGix3gYD6phDT4CJycZeRqSr7sFoWyUzGUn3QtYQDD7ZQQ==
 
 websql@1.0.0:
   version "1.0.0"
