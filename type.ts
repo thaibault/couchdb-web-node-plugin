@@ -191,7 +191,8 @@ export type ModelConfiguration = BaseModelConfiguration & {
     updateValidation:boolean
 }
 // / endregion
-// / region configuration
+// / region web-node api
+// // region configuration
 export type UserContext = {
     db:string
     name?:string
@@ -254,16 +255,7 @@ export type Configuration = BaseConfiguration & {
         }
     }
 }
-// / endregion
-export type CheckedDocumentResult = {
-    changedPath:Array<string>
-    newDocument:Document
-}
-export type EvaluationResult<Type = any> = {
-    code:string
-    result:Type
-    scope:object
-}
+// // endregion
 export type Service = BaseService & {
     name:'couchdb'
     promise:null|Promise<ProcessCloseReason>
@@ -319,6 +311,20 @@ export interface PluginHandler extends BasePluginHandler {
     restartDatabase?(
         services:Services, configuration:Configuration, plugins:Array<Plugin>
     ):Services
+}
+// / endregion
+export type CheckedDocumentResult = {
+    changedPath:Array<string>
+    newDocument:Document
+}
+export type EvaluationResult<Type = any> = {
+    code:string
+    result:Type
+    scope:object
+}
+export type User = {
+    password:string
+    roles:Array<string>
 }
 // endregion
 // region vim modline
