@@ -32,7 +32,9 @@ import {
 // region exports
 // / region database implementation
 export type Attachments = PouchDB.Core.Attachments
-export type ChangesStream<Type=any> = PouchDB.Core.Changes<Type>
+export type ChangesResponseChange<Type = any> =
+    PouchDB.Core.ChangesResponseChange<Type>
+export type ChangesStream<Type = any> = PouchDB.Core.Changes<Type>
 export type ChangesStreamOptions = PouchDB.Core.ChangesOptions
 export type Connection = PouchDB.Database
 export type Connector = PouchDB.Static
