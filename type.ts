@@ -326,6 +326,15 @@ export type User = {
     password:string
     roles:Array<string>
 }
+export type Interval = {
+    end:number
+    start:number
+}
+export type Location = {
+    latitude:number
+    longitude:number
+}
+export type Scope = Mapping & {parameter:any}
 // endregion
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
