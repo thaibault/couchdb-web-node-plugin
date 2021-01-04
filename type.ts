@@ -221,7 +221,7 @@ export type SecuritySettings = {
     members:DatabaseUserConfiguration
     _validatedDocuments?:Set<string>
 }
-export type ConnectorConfiguration = {
+export type ConnectorConfiguration = DatabaseConnectorConfiguration & {
     fetch?:FetchOptions|null
 }
 export type Configuration = BaseConfiguration & {
