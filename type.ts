@@ -325,6 +325,7 @@ export type EvaluationResult<Type = any> = {
     scope:object
 }
 export type User = {
+    name:string
     password:string
     roles:Array<string>
 }
