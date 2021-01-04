@@ -324,16 +324,15 @@ export type EvaluationResult<Type = any> = {
     result:Type
     scope:object
 }
-export type User = {
-    name:string
+export type User = BaseDocument & {
     password:string
     roles:Array<string>
 }
-export type Interval = Document & {
+export type Interval = {
     end:number
     start:number
 }
-export type Location = Document & {
+export type Location = {
     latitude:number
     longitude:number
 }
