@@ -45,6 +45,7 @@ export type DatabaseFetch = PouchDB.Core.Options['fetch']
 export type DatabaseResponse = PouchDB.Core.Response
 export type DeleteIndexOptions = PouchDB.Find.DeleteIndexOptions
 export type FullAttachment = PouchDB.Core.FullAttachment
+export type DocumentGetMeta = PouchDB.Core.GetMeta
 export type DocumentIDMeta = PouchDB.Core.IdMeta
 export type DocumentRevisionIDMeta = PouchDB.Core.RevisionIdMeta
 export type Index = PouchDB.Find.Index
@@ -128,18 +129,19 @@ export type DocumentContent =
     Array<DocumentContent>|PlainObject<Primitive>|Primitive
 export type DocumentStrategyMeta = {_updateStrategy?:string}
 export type DocumentTypeMeta = {'-type':string}
-export type Document =
-    DocumentStrategyMeta &
-    DocumentTypeMeta &
+export type BaseDocument =
+    DocumentGetMeta &
     DocumentIDMeta &
-    PlainObject<Primitive|Attachments> &
-    DocumentRevisionIDMeta
+    DocumentRevisionIDMeta &
+    DocumentStrategyMeta &
+    DocumentTypeMeta
+export type Document = BaseDocument & PlainObject
 export type UpdateStrategy = ''|'fillUp'|'incremental'|'migrate'
 export type SpecialPropertyNames = {
     additional:string
     allowedRole:string
-    attachment:string
-    conflict:string
+    attachment:'_attachments'
+    conflict:'_conflicts'
     constraint:{
         execution:string
         expression:string
@@ -148,18 +150,18 @@ export type SpecialPropertyNames = {
         execution:string
         expression:string
     }
-    deleted:string
-    deletedConflict:string
+    deleted:'_deleted'
+    deletedConflict:'_deleted_conflict'
     designDocumentNamePrefix:string
     extend:string
-    id:string
+    id:'_id'
     localSequence:string
     maximumAggregatedSize:string
     minimumAggregatedSize:string
     oldType:string
-    revision:string
-    revisions:string
-    revisionsInformation:string
+    revision:'_rev'
+    revisions:'_revisions'
+    revisionsInformation:'_revs_info'
     strategy:UpdateStrategy
     type:string
     update:{
@@ -326,11 +328,11 @@ export type User = {
     password:string
     roles:Array<string>
 }
-export type Interval = {
+export type Interval = Document & {
     end:number
     start:number
 }
-export type Location = {
+export type Location = Document & {
     latitude:number
     longitude:number
 }
