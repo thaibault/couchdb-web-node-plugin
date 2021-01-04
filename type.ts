@@ -32,6 +32,7 @@ import {
 // region exports
 // / region database implementation
 export type Attachments = PouchDB.Core.Attachments
+export type ChangesMeta = PouchDB.Core.ChangesMeta
 export type ChangesResponseChange<Type = any> =
     PouchDB.Core.ChangesResponseChange<Type>
 export type ChangesStream<Type = any> = PouchDB.Core.Changes<Type>
@@ -130,6 +131,7 @@ export type DocumentContent =
 export type DocumentStrategyMeta = {_updateStrategy?:string}
 export type DocumentTypeMeta = {'-type':string}
 export type BaseDocument =
+    ChangesMeta &
     DocumentGetMeta &
     DocumentIDMeta &
     DocumentRevisionIDMeta &
