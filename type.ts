@@ -165,7 +165,7 @@ export type SpecialPropertyNames = {
     revisions:'_revisions'
     revisionsInformation:'_revs_info'
     strategy:UpdateStrategy
-    type:string
+    type:keyof DocumentTypeMeta
     update:{
         execution:string
         expression:string
