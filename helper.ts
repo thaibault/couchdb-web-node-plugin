@@ -123,7 +123,7 @@ export class Helper {
         idName:string = '_id',
         designDocumentNamePrefix:string = '_design/'
     ):Promise<void> {
-        const newDocument:Document = {
+        const newDocument:Partial<Document> = {
             [idName]: `${designDocumentNamePrefix}${documentName}`,
             language: 'javascript',
             ...documentData
