@@ -93,9 +93,9 @@ describe('databaseHelper', ():void => {
     test.each<string>(['', 'fillUp', 'incremental'])(
         'validateDocumentUpdate (with update strategy "%s")',
         (updateStrategy:string):void => {
-            const defaultModelConfiguration:ModelConfiguration = Tools.extend(
-                true, {}, configuration.couchdb.model, {updateStrategy}
-            )
+            const defaultModelConfiguration:ModelConfiguration = {
+                ...Tools.copy(configuration.couchdb.model), updateStrategy
+            }
             for (
                 const propertyName in defaultModelConfiguration.entities._base
             )
@@ -1167,7 +1167,7 @@ describe('databaseHelper', ():void => {
                 if (test.length < 3)
                     test.splice(1, 0, {})
                 const modelConfiguration:ModelConfiguration = Tools.extend(
-                    true, {}, defaultModelConfiguration, test[1]
+                    true, Tools.copy(defaultModelConfiguration), test[1]
                 )
                 const models:Models = Helper.extendModels(modelConfiguration)
                 delete modelConfiguration.property.defaultSpecification
@@ -3419,8 +3419,9 @@ describe('databaseHelper', ():void => {
                 ]
                 // endregion
             ]) {
-                const modelConfiguration:ModelConfiguration =
-                    Tools.extend(true, {}, defaultModelConfiguration, test[1])
+                const modelConfiguration:ModelConfiguration = Tools.extend(
+                    true, Tools.copy(defaultModelConfiguration), test[1]
+                )
                 const models:Models = Helper.extendModels(modelConfiguration)
                 delete modelConfiguration.property.defaultSpecification
                 delete modelConfiguration.entities
@@ -3654,12 +3655,10 @@ describe('databaseHelper', ():void => {
             modelConfiguration:ModelConfiguration,
             oldDocument:SecondParameter<typeof DatabaseHelper.validateDocumentUpdate> = null
         ):void => {
-            const defaultModelConfiguration:ModelConfiguration = Tools.extend(
-                true,
-                {},
-                configuration.couchdb.model,
-                {updateStrategy: 'migrate'}
-            )
+            const defaultModelConfiguration:ModelConfiguration = {
+                ...Tools.copy(configuration.couchdb.model),
+                updateStrategy: 'migrate'
+            }
             for (
                 const propertyName in defaultModelConfiguration.entities._base
             )
@@ -3673,10 +3672,10 @@ describe('databaseHelper', ():void => {
                         propertyName
                     ]
             const models:Models = Helper.extendModels(Tools.extend(
-                true, {}, defaultModelConfiguration, modelConfiguration
+                true, Tools.copy(defaultModelConfiguration), modelConfiguration
             ))
             const testModelConfiguration:ModelConfiguration = Tools.extend(
-                true, {}, defaultModelConfiguration, modelConfiguration
+                true, Tools.copy(defaultModelConfiguration), modelConfiguration
             )
             delete testModelConfiguration.property.defaultSpecification
             delete testModelConfiguration.entities

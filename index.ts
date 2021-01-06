@@ -816,8 +816,7 @@ export class Database implements PluginHandler {
             Database.changesStream = services.couchdb.connection.changes(
                 Tools.extend(
                     true,
-                    {},
-                    configuration.couchdb.changesStream,
+                    Tools.copy(configuration.couchdb.changesStream),
                     Database.additionalChangesStreamOptions
                 )
             )

@@ -70,8 +70,7 @@ export class Helper {
                     url,
                     Tools.extend(
                         true,
-                        {},
-                        configuration.couchdb.connector.fetch,
+                        Tools.copy(configuration.couchdb.connector.fetch),
                         options || {}
                     )
                 )) as unknown as DatabaseFetch
@@ -124,13 +123,11 @@ export class Helper {
         idName:string = '_id',
         designDocumentNamePrefix:string = '_design/'
     ):Promise<void> {
-        const newDocument:Document = Tools.extend(
-            {
-                [idName]: `${designDocumentNamePrefix}${documentName}`,
-                language: 'javascript'
-            },
-            documentData
-        )
+        const newDocument:Document = {
+            [idName]: `${designDocumentNamePrefix}${documentName}`,
+            language: 'javascript',
+            ...documentData
+        }
         try {
             const oldDocument:Document = await databaseConnection.get(
                 `${designDocumentNamePrefix}${documentName}`
@@ -302,11 +299,10 @@ export class Helper {
                     services.couchdb.server.runner.hasOwnProperty(
                         'environment'
                     ) ?
-                        Tools.extend(
-                            {},
-                            eval('process').env,
-                            services.couchdb.server.runner.environment
-                        ) :
+                        {
+                            ...eval('process').env,
+                            ...services.couchdb.server.runner.environment
+                        } :
                         eval('process').env
                 ),
                 shell: true,
@@ -527,10 +523,9 @@ export class Helper {
             ))
                 models[modelName] = Tools.extend(
                     true,
-                    {},
-                    Helper.extendModel(
+                    Tools.copy(Helper.extendModel(
                         modelNameToExtend, models, extendPropertyName
-                    ),
+                    )),
                     models[modelName]
                 )
             delete models[modelName][extendPropertyName]

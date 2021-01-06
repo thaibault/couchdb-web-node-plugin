@@ -105,7 +105,7 @@ describe('helper', ():void => {
         ])
             assert.deepEqual(
                 Helper.determineAllowedModelRolesMapping(
-                    Tools.extend(true, {}, modelConfiguration, test[0])
+                    Tools.extend(true, Tools.copy(modelConfiguration), test[0])
                 ),
                 test[1]
             )
@@ -119,7 +119,9 @@ describe('helper', ():void => {
             ]]
         ])
             assert.deepEqual(Helper.determineGenericIndexablePropertyNames(
-                Tools.extend(true, {}, configuration.couchdb.model, test[0]),
+                Tools.extend(
+                    true, Tools.copy(configuration.couchdb.model), test[0]
+                ),
                 test[1]
             ).sort(), test[2])
     })
@@ -202,16 +204,17 @@ describe('helper', ():void => {
         ])
             assert.deepEqual(
                 Helper.extendModels(
-                    Tools.extend(true, {}, modelConfiguration, test[0])),
+                    Tools.extend(true, Tools.copy(modelConfiguration), test[0])
+                ),
                 test[1]
             )
         assert.throws(():Models => Helper.extendModels(Tools.extend(
-            true, {}, modelConfiguration, {entities: {a: {}}})))
+            true, Tools.copy(modelConfiguration), {entities: {a: {}}}
+        )))
         assert.deepEqual(
             Helper.extendModels(Tools.extend(
                 true,
-                {},
-                modelConfiguration,
+                Tools.copy(modelConfiguration),
                 {
                     property: {name: {typeRegularExpressionPattern: {
                         public: 'a'
