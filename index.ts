@@ -18,7 +18,7 @@
 */
 // region imports
 import Tools from 'clientnode'
-import {File, PlainObject, ProcessCloseReason} from 'clientnode/type'
+import {File, Mapping, PlainObject, ProcessCloseReason} from 'clientnode/type'
 import {promises as fileSystem} from 'fs'
 import fetch, {Response as FetchResponse} from 'node-fetch'
 import path from 'path'
@@ -484,7 +484,7 @@ export class Database implements PluginHandler {
         }
         // region run auto-migration
         if (configuration.couchdb.model.autoMigrationPath) {
-            const migrater:{[key:string]:Function} = {}
+            const migrater:Mapping<Function> = {}
             if (await Tools.isDirectory(path.resolve(
                 configuration.couchdb.model.autoMigrationPath
             )))
