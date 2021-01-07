@@ -312,7 +312,7 @@ export interface PluginHandler extends BasePluginHandler {
      * @param plugins - Topological sorted list of plugins.
      * @returns Given entry files.
      */
-    restartDatabase?(
+    restartCouchdb?(
         services:Services, configuration:Configuration, plugins:Array<Plugin>
     ):Services
 }
