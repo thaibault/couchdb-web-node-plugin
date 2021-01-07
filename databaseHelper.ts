@@ -1769,7 +1769,7 @@ export class DatabaseHelper {
                 // endregion
                 if (Object.keys(newAttachments).length === 0)
                     delete newDocument[specialNames.attachment]
-                const attachmentToTypeMapping:{[key:string]:Array<string>} = {}
+                const attachmentToTypeMapping:Mapping<Array<string>> = {}
                 for (const type in model[specialNames.attachment])
                     if (model[specialNames.attachment].hasOwnProperty(type))
                         attachmentToTypeMapping[type] = []
