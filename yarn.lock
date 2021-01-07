@@ -1233,9 +1233,9 @@
     "@types/istanbul-lib-report" "*"
 
 "@types/jest@*":
-  version "26.0.19"
-  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-26.0.19.tgz#e6fa1e3def5842ec85045bd5210e9bb8289de790"
-  integrity sha512-jqHoirTG61fee6v6rwbnEuKhpSKih0tuhqeFbCmMmErhtu3BYlOZaXWjffgOstMM4S/3iQD31lI5bGLTrs97yQ==
+  version "26.0.20"
+  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-26.0.20.tgz#cd2f2702ecf69e86b586e1f5223a60e454056307"
+  integrity sha512-9zi2Y+5USJRxd0FsahERhBwlcvFh6D2GLQnY2FH2BzK8J9s9omvNHIbvABwIluXa0fD8XVKMLTO0aOEuUfACAA==
   dependencies:
     jest-diff "^26.0.0"
     pretty-format "^26.0.0"
@@ -3201,9 +3201,9 @@ cli-table3@^0.5.0:
     colors "^1.1.2"
 
 clientnode@*:
-  version "3.0.642"
-  resolved "https://registry.yarnpkg.com/clientnode/-/clientnode-3.0.642.tgz#06697deece38306cf3dcea6ecb94e9fe51a6aa52"
-  integrity sha512-yPsuCSfzGGtzoSXI7rdkaAYfmP6eHXM9KWLP6JDvDXJ1rJ+o3xI4nWxnijZJrCEvywhTNFnATqVI7YZdI2JTiQ==
+  version "3.0.644"
+  resolved "https://registry.yarnpkg.com/clientnode/-/clientnode-3.0.644.tgz#b6e03950a7ae75bbd7c83b4e9d4c506b73593613"
+  integrity sha512-1jfisCWYz5Gk6panA1VOMmbps8bu9aVJY2ncvtUQjsZV+STzXh2oS6cd+mzTOuIjl9rqlCZ2wAzjiVt59cgbkw==
 
 cliui@^4.0.0:
   version "4.1.0"
@@ -6202,9 +6202,9 @@ linkify-it@^2.0.0:
     uc.micro "^1.0.1"
 
 loader-runner@^4.1.0:
-  version "4.1.0"
-  resolved "https://registry.yarnpkg.com/loader-runner/-/loader-runner-4.1.0.tgz#f70bc0c29edbabdf2043e7ee73ccc3fe1c96b42d"
-  integrity sha512-oR4lB4WvwFoC70ocraKhn5nkKSs23t57h9udUgw8o0iH8hMXeEoRuUgfcvgUwAJ1ZpRqBvcou4N2SMvM1DwMrA==
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/loader-runner/-/loader-runner-4.2.0.tgz#d7022380d66d14c5fb1d496b89864ebcfd478384"
+  integrity sha512-92+huvxMvYlMzMt0iIOukcwYBFpkYJdpl2xsZ7LrlayO7E8SOv+JJUEK17B/dJIHAOLMfh2dZZ/Y18WgmGtYNw==
 
 loader-utils@*, loader-utils@^2.0.0:
   version "2.0.0"
@@ -9015,9 +9015,9 @@ tslib@^2.0.3:
   integrity sha512-hcVC3wYEziELGGmEEXue7D75zbwIIVUMWAVbHItGPx0ziyXxrOMQx4rQEVEV45Ut/1IotuEvwqPopzIOkDMf0A==
 
 tsutils@^3.17.1:
-  version "3.18.0"
-  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-3.18.0.tgz#38add50a28ec97e988cb43c5b32e55d1ff4a222a"
-  integrity sha512-D9Tu8nE3E7D1Bsf/V29oMHceMf+gnVO+pDguk/A5YRo1cLpkiQ48ZnbbS57pvvHeY+OIeNQx1vf4ASPlEtRpcA==
+  version "3.19.0"
+  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-3.19.0.tgz#9387cb5fcb71579aa0909c509604f8a7fbe1cff1"
+  integrity sha512-A7BaLUPvcQ1cxVu72YfD+UMI3SQPTDv/w4ol6TOwLyI0hwfG9EC+cYlhdflJTmtYTgZ3KqdPSe/otxU4K3kArg==
   dependencies:
     tslib "^1.8.1"
 
@@ -9311,9 +9311,9 @@ watchpack@^2.0.0:
     graceful-fs "^4.1.2"
 
 web-node@*:
-  version "1.0.363"
-  resolved "https://registry.yarnpkg.com/web-node/-/web-node-1.0.363.tgz#99eaf684672ca7e9f8fb615f60662c936f3a4214"
-  integrity sha512-dfBRgiq/V44Io20Vj1ws223wboZ337ODBKwknt7mMtbdK4Rql8lT86DMkiTUffZ4TUygGFiRv0EthQhCHbnp9A==
+  version "1.0.365"
+  resolved "https://registry.yarnpkg.com/web-node/-/web-node-1.0.365.tgz#90f291884efb4defe3e4e7a7032cec3c670f1003"
+  integrity sha512-tJRDcUBAf20bmokuBT+xRXJ3liMujiMY8K+Ju3O8YrOKjRcIBZsScmBsE1jlzIA9rcTg8+Scwja/grAqk/XHXg==
 
 webidl-conversions@^5.0.0:
   version "5.0.0"
@@ -9326,9 +9326,9 @@ webidl-conversions@^6.1.0:
   integrity sha512-qBIvFLGiBpLjfwmYAaHPXsn+ho5xZnGvyGvsarywGNc8VyQJUMHJ8OBKGGrPER0okBeMDaan4mNBlgBROxuI8w==
 
 weboptimizer@*:
-  version "2.0.872"
-  resolved "https://registry.yarnpkg.com/weboptimizer/-/weboptimizer-2.0.872.tgz#7289cdbea4f23f49e9e53d2834a5541d62cba54b"
-  integrity sha512-E0H92zMMaelP1HnoWudFL34Dl+EPINBOl2qcZlNzJ+MBU4mt2pV2/3AvPwloY2R6aLfg3yIbUizvxVn1ms7VlQ==
+  version "2.0.873"
+  resolved "https://registry.yarnpkg.com/weboptimizer/-/weboptimizer-2.0.873.tgz#1c967932e4ff817ebbe33de3b98de216addf4c4a"
+  integrity sha512-Z3L7eNkOOOiNdNgjpqDNHEuRcyCszGgRcw5qWzUBxEbFQRGzQofiFu2dKo830/9JRDEjeToF8uLFjEANUKrKLQ==
   dependencies:
     "@babel/core" "*"
     "@babel/plugin-proposal-class-properties" "*"
