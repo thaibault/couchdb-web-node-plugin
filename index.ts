@@ -834,7 +834,8 @@ export class Database implements PluginHandler {
                         numberOfErrorsThrough = 0
                         Database.changesStream.cancel()
                         await services.couchdb.server.restart(
-                            services, configuration, plugins)
+                            services, configuration, plugins
+                        )
                     } else
                         console.warn(
                             'Observing changes feed throws an error for ' +
