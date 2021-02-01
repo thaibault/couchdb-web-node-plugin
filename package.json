@@ -220,7 +220,7 @@
           "_expressionMapping": {
             "_additional": {
               "constraintExecution": {
-                "description": "`Given value \"${newValue}\" should be able to be compiled as template string: ${() => { try { new Function(`return ${newValue}`) } catch (error) { return `${error}` } }}`",
+                "description": "`Given value \"${newValue}\" should be able to be compiled as template string: ${(() => { try { new Function(`return ${newValue}`) } catch (error) { return `${error}` } })()}`",
                 "evaluation": "try { new Function(`return ${newValue}`) } catch (error) { return false }; return true"
               }
             },
