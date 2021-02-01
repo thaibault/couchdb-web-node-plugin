@@ -267,13 +267,16 @@ export class DatabaseHelper {
             updateStrategy = newDocument[specialNames.strategy] as string
             delete newDocument[specialNames.strategy]
         }
-        let serialize:(value:any) => string = (value:any) => `${value}`
+        let serializeData:(value:any) => string
         if (toJSON)
-            serialize = toJSON
+            serializeData = toJSON
         else if (JSON?.hasOwnProperty('stringify'))
-            serialize = (object:any):string => JSON.stringify(object, null, 4)
+            serializeData =
+                (object:any):string => JSON.stringify(object, null, 4)
         else
-            throwError('Needed "serialize" function is not available.')
+            throwError('Needed "serializer" is not available.')
+        const serialize = (value:any):string =>
+            value instanceof Error ? `${value}` : serializeData(value)
         // / region collect old model types to migrate.
         const oldModelMapping:Mapping = {}
         if (updateStrategy === 'migrate')
@@ -348,7 +351,7 @@ export class DatabaseHelper {
                 const code:string =
                     (isEvaluation ? 'return ' : '') + expression
                 // region determine scope
-                const scope:object = {
+                const scope:Mapping<unknown> = {
                     attachmentWithPrefixExists,
                     checkDocument,
                     code,
@@ -369,11 +372,12 @@ export class DatabaseHelper {
                     if (givenScope.hasOwnProperty(name))
                         scope[name as keyof object] =
                             givenScope[name as keyof object]
+                const scopeNames:Array<string> = Object.keys(scope)
                 // endregion
                 // region compile
                 let callable:Function|undefined
                 try {
-                    callable = new Function(...Object.keys(scope), code)
+                    callable = new Function(...scopeNames, code)
                 } catch (error) {
                     const message:string = serialize(error)
                     throwError(
@@ -388,12 +392,13 @@ export class DatabaseHelper {
                     scope
                 }
                 try {
-                    result.result =
-                        (callable as Function)(...Object.values(scope))
+                    result.result = (callable as Function)(
+                        ...scopeNames.map((name:string):any => scope[name as keyof typeof scope])
+                    )
                 } catch (error) {
                     const message:string = serialize(error)
                     throwError(
-                        serialize(error),
+                        message,
                         'runtime',
                         {code, error, message, scope}
                     )
