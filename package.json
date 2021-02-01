@@ -221,7 +221,7 @@
             "_additional": {
               "constraintExecution": {
                 "description": "`Given value \"${newValue}\" should be able to be compiled as template string: ${Tools.stringCompile(newValue).error}`",
-                "evaluation": "Boolean(Tools.stringCompile(newValue).error)"
+                "evaluation": "!Tools.stringCompile(newValue).error"
               }
             },
             "_extends": "_stringMapping"
