@@ -504,16 +504,15 @@ export class DatabaseHelper {
                         } catch (error) {
                             if (error.hasOwnProperty('compilation'))
                                 throwError(
-                                    `Compilation: Hook "${type}" of "${name}` +
-                                    `" has invalid code "${error.code}": "` +
+                                    `Compilation: Hook "${type}" has invalid` +
+                                    ` code "${error.code}": "` +
                                     `${error.message}"${pathDescription}.`
                                 )
                             if (error.hasOwnProperty('runtime'))
                                 throwError(
-                                    `Runtime: Hook "${type}" of "${name}" ` +
-                                    `has throw an error with code "` +
-                                    `${error.code}": "${error.message}"` +
-                                    `${pathDescription}.`
+                                    `Runtime: Hook "${type}" has throw an ` +
+                                    `error with code "${error.code}": "` +
+                                    `${error.message}"${pathDescription}.`
                                 )
                             if (!error.hasOwnProperty('empty'))
                                 throw error
