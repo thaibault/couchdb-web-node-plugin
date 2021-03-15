@@ -364,7 +364,7 @@ export class Database implements PluginHandler {
                             .designDocumentNamePrefix +
                         `'`
                 }
-            ]) {
+            ] as const) {
                 /*
                     NOTE: This code should be widely supported since not
                     transpiler interacts here.
@@ -444,25 +444,18 @@ export class Database implements PluginHandler {
                                     'conflictingConstraintExecution',
                                     'constraintExpression',
                                     'constraintExecution'
-                                ])
+                                ] as const)
                                     if (
                                         property !== null &&
                                         typeof property === 'object'
                                     ) {
-                                        const constraint:Constraint = property[
-                                            type as keyof PropertySpecification
-                                        ]
-                                        if (
-                                            constraint !== null &&
-                                            typeof constraint === 'object' &&
-                                            constraint.hasOwnProperty(
-                                                'description'
-                                            )
-                                        )
+                                        const constraint:Constraint|null|undefined =
+                                            property[type]
+
+                                        if (constraint?.description)
                                             try {
                                                 new Function(
-                                                    constraint.description as
-                                                        string
+                                                    constraint.description
                                                 )
                                             } catch (error) {
                                                 throw new Error(

@@ -188,13 +188,11 @@ export class Helper {
             NOTE: A "bulkDocs" plugin does not get called for every "put" and
             "post" call so we have to wrap runtime generated methods.
         */
-        for (const pluginName of ['post', 'put']) {
-            const nativeMethod:Function = services.couchdb.connection[
-                pluginName as 'get'|'post'
-            ].bind(services.couchdb.connection)
-            services.couchdb.connection[
-                pluginName as 'get'|'post'
-            ] = async function(
+        for (const pluginName of ['post', 'put'] as const) {
+            const nativeMethod:Function =
+                services.couchdb.connection[pluginName]
+                    .bind(services.couchdb.connection)
+            services.couchdb.connection[pluginName] = async function(
                 firstParameter:any, ...parameter:Array<any>
             ):Promise<any> {
                 try {
@@ -211,19 +209,21 @@ export class Helper {
                             ok: true
                         } as DatabaseResponse
                         try {
-                            result.rev =
+                            result.rev = (
                                 revisionName in firstParameter &&
                                 !['latest', 'upsert'].includes(
                                     firstParameter[revisionName]
-                                ) ?
-                                    firstParameter[revisionName] :
-                                    (await this.get(result.id))[
-                                        revisionName as
-                                            keyof DocumentRevisionIDMeta
-                                    ]
+                                )
+                            ) ?
+                                firstParameter[revisionName] :
+                                (await this.get(result.id))[
+                                    revisionName as
+                                        keyof DocumentRevisionIDMeta
+                                ]
                         } catch (error) {
                             throw error
                         }
+
                         return result
                     }
                     throw error

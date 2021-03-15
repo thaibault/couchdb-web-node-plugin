@@ -840,20 +840,16 @@ export class DatabaseHelper {
                 if (!oldDocument)
                     for (const type of [
                         'onCreateExecution', 'onCreateExpression'
-                    ])
+                    ] as const)
                         if (propertySpecification.hasOwnProperty(type)) {
                             let result:EvaluationResult
                             try {
                                 result = evaluate(
-                                    propertySpecification[
-                                        type as keyof PropertySpecification
-                                    ],
+                                    propertySpecification[type],
                                     type.endsWith('Expression'),
                                     {
                                         checkPropertyContent,
-                                        code: propertySpecification[
-                                            type as keyof PropertySpecification
-                                        ],
+                                        code: propertySpecification[type],
                                         model,
                                         modelName,
                                         name,
@@ -914,19 +910,17 @@ export class DatabaseHelper {
                     )
                 )
                     newDocument[name] = null
-                for (const type of ['onUpdateExecution', 'onUpdateExpression'])
+                for (const type of [
+                    'onUpdateExecution', 'onUpdateExpression'
+                ] as const)
                     if (propertySpecification.hasOwnProperty(type))
                         try {
                             newDocument[name] = evaluate(
-                                propertySpecification[
-                                    type as keyof PropertySpecification
-                                ],
+                                propertySpecification[type],
                                 type.endsWith('Expression'),
                                 {
                                     checkPropertyContent,
-                                    code: propertySpecification[
-                                        type as keyof PropertySpecification
-                                    ],
+                                    code: propertySpecification[type],
                                     modelName,
                                     name,
                                     newDocument,
@@ -945,6 +939,7 @@ export class DatabaseHelper {
                                     `${name}": ${error.message}` +
                                     `${pathDescription}.`
                                 )
+
                             if (error.hasOwnProperty('runtime'))
                                 throwError(
                                     `Runtime: Hook "${type}" has throw an ` +
@@ -952,6 +947,7 @@ export class DatabaseHelper {
                                     `property "${name}": ${error.message}` +
                                     `${pathDescription}.`
                                 )
+
                             if (!error.hasOwnProperty('empty'))
                                 throw error
                         }

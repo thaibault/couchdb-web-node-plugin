@@ -74,35 +74,56 @@ describe('helper', ():void => {
         modelConfiguration.entities = {}
         for (const test:Array<any> of [
             [{}, {}],
-            [{
-                property: {name: {special: {allowedRole: 'roles'}}},
-                entities: {Test: {}}
-            }, {Test: {properties: {}, read: [], write: []}}],
-            [{
-                property: {name: {special: {allowedRole: 'roles'}}},
-                entities: {Test: {roles: []}}
-            }, {Test: {properties: {}, read: [], write: []}}],
-            [{
-                property: {name: {special: {allowedRole: 'roles'}}},
-                entities: {Test: {roles: ['a']}}
-            }, {Test: {properties: {}, read: ['a'], write: ['a']}}],
-            [{
-                property: {name: {special: {allowedRole: 'roles'}}},
-                entities: {Test: {roles: 'a'}}
-            }, {Test: {properties: {}, read: ['a'], write: ['a']}}],
-            [{
-                property: {name: {special: {allowedRole: 'roles'}}},
-                entities: {Test: {roles: {read: ['a']}}}
-            }, {Test: {properties: {}, read: ['a'], write: []}}],
-            [{
-                property: {name: {special: {allowedRole: 'roles'}}},
-                entities: {Test: {roles: {read: 'a'}}}
-            }, {Test: {properties: {}, read: ['a'], write: []}}],
-            [{
-                property: {name: {special: {allowedRole: 'roles'}}},
-                entities: {Test: {roles: {read: 'a', write: ['b']}}}
-            }, {Test: {properties: {}, read: ['a'], write: ['b']}}]
-        ])
+            [
+                {
+                    property: {name: {special: {allowedRole: 'roles'}}},
+                    entities: {Test: {}}
+                },
+                {Test: {properties: {}, read: [], write: []}}
+            ],
+            [
+                {
+                    property: {name: {special: {allowedRole: 'roles'}}},
+                    entities: {Test: {roles: []}}
+                },
+                {Test: {properties: {}, read: [], write: []}}
+            ],
+            [
+                {
+                    property: {name: {special: {allowedRole: 'roles'}}},
+                    entities: {Test: {roles: ['a']}}
+                },
+                {Test: {properties: {}, read: ['a'], write: ['a']}}
+            ],
+            [
+                {
+                    property: {name: {special: {allowedRole: 'roles'}}},
+                    entities: {Test: {roles: 'a'}}
+                },
+                {Test: {properties: {}, read: ['a'], write: ['a']}}
+            ],
+            [
+                {
+                    property: {name: {special: {allowedRole: 'roles'}}},
+                    entities: {Test: {roles: {read: ['a']}}}
+                },
+                {Test: {properties: {}, read: ['a'], write: []}}
+            ],
+            [
+                {
+                    property: {name: {special: {allowedRole: 'roles'}}},
+                    entities: {Test: {roles: {read: 'a'}}}
+                },
+                {Test: {properties: {}, read: ['a'], write: []}}
+            ],
+            [
+                {
+                    property: {name: {special: {allowedRole: 'roles'}}},
+                    entities: {Test: {roles: {read: 'a', write: ['b']}}}
+                },
+                {Test: {properties: {}, read: ['a'], write: ['b']}}
+            ]
+        ] as const)
             assert.deepEqual(
                 Helper.determineAllowedModelRolesMapping(
                     Tools.extend(true, Tools.copy(modelConfiguration), test[0])
@@ -114,10 +135,12 @@ describe('helper', ():void => {
         for (const test of [
             [{}, {}, [specialNames.id, specialNames.revision]],
             [{}, {a: {}}, [specialNames.id, specialNames.revision, 'a']],
-            [{}, {a: {}, b: {}}, [
-                specialNames.id, specialNames.revision, 'a', 'b'
-            ]]
-        ])
+            [
+                {},
+                {a: {}, b: {}},
+                [specialNames.id, specialNames.revision, 'a', 'b']
+            ]
+        ] as const)
             assert.deepEqual(Helper.determineGenericIndexablePropertyNames(
                 Tools.extend(
                     true, Tools.copy(configuration.couchdb.model), test[0]
@@ -128,17 +151,31 @@ describe('helper', ():void => {
     test('extendModel', ():void => {
         for (const test:Array<any> of [
             ['A', {A: {}}, {}],
-            ['Test', {
-                _baseTest: {b: {}},
-                Test: {a: {}, [specialNames.extend]: '_baseTest'}
-            }, {a: {}, b: {}}],
-            ['Test', {
-                baseTest: {b: {}},
-                Test: {a: {}, [specialNames.extend]: 'baseTest'}
-            }, {a: {}, b: {}}],
-            ['C', {A: {a: {}}, B: {b: {}}, C: {c: {}, [specialNames.extend]: [
-                'A', 'B'
-            ]}}, {a: {}, b: {}, c: {}}],
+            [
+                'Test',
+                {
+                    _baseTest: {b: {}},
+                    Test: {a: {}, [specialNames.extend]: '_baseTest'}
+                },
+                {a: {}, b: {}}
+            ],
+            [
+                'Test',
+                {
+                    baseTest: {b: {}},
+                    Test: {a: {}, [specialNames.extend]: 'baseTest'}
+                },
+                {a: {}, b: {}}
+            ],
+            [
+                'C',
+                {
+                    A: {a: {}},
+                    B: {b: {}},
+                    C: {c: {}, [specialNames.extend]: ['A', 'B']}
+                },
+                {a: {}, b: {}, c: {}}
+            ],
             [
                 'C',
                 {
@@ -158,7 +195,7 @@ describe('helper', ():void => {
                 },
                 {a: {}, b: {}, c: {}, d: {type: 'number'}}
             ]
-        ])
+        ] as const)
             assert.deepEqual(Helper.extendModel(test[0], test[1]), test[2])
     })
     test('extendModels', ():void => {
@@ -201,7 +238,7 @@ describe('helper', ():void => {
                 },
                 {Test: {[specialNames.attachment]: {a: {minimum: 1}}}}
             ]
-        ])
+        ] as const)
             assert.deepEqual(
                 Helper.extendModels(
                     Tools.extend(true, Tools.copy(modelConfiguration), test[0])
@@ -235,7 +272,7 @@ describe('helper', ():void => {
             [{read: 'a'}, {read: ['a'], write: []}],
             [{read: 'a', write: []}, {read: ['a'], write: []}],
             [{read: 'a', write: ['b']}, {read: ['a'], write: ['b']}]
-        ])
+        ] as const)
             assert.deepEqual(
                 Helper.normalizeAllowedModelRoles(test[0]), test[1])
     })
