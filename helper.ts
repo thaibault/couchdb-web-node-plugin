@@ -446,50 +446,54 @@ export class Helper {
     ):Array<string> {
         const specialNames:SpecialPropertyNames =
             modelConfiguration.property.name.special
-        return Object.keys(model).filter((name:string):boolean =>
-            model[name] !== null &&
-            typeof model[name] === 'object' &&
-            (
-                model[name].hasOwnProperty('index') &&
-                model[name].index ||
-                !(
+
+        return Object.keys(model)
+            .filter((name:string):boolean =>
+                model[name] !== null &&
+                typeof model[name] === 'object' &&
+                (
                     model[name].hasOwnProperty('index') &&
-                    !model[name].index ||
-                    modelConfiguration.property.name.reserved.concat(
-                        specialNames.additional,
-                        specialNames.allowedRole,
-                        specialNames.attachment,
-                        specialNames.conflict,
-                        specialNames.constraint.execution,
-                        specialNames.constraint.expression,
-                        specialNames.deleted,
-                        specialNames.deletedConflict,
-                        specialNames.extend,
-                        specialNames.id,
-                        specialNames.maximumAggregatedSize,
-                        specialNames.minimumAggregatedSize,
-                        specialNames.oldType,
-                        specialNames.revision,
-                        specialNames.revisions,
-                        specialNames.revisionsInformation,
-                        specialNames.type
-                    ).includes(name) ||
-                    model[name].type &&
-                    (
-                        typeof model[name].type === 'string' &&
-                        (model[name].type as string).endsWith('[]') ||
-                        Array.isArray(model[name].type) &&
-                        (model[name].type as Array<string>).length &&
-                        Array.isArray(
-                            (model[name].type as Array<string>)[0]
-                        ) ||
-                        modelConfiguration.entities.hasOwnProperty(
-                            model[name].type as string
+                    model[name].index ||
+                    !(
+                        model[name].hasOwnProperty('index') &&
+                        !model[name].index ||
+                        modelConfiguration.property.name.reserved.concat(
+                            specialNames.additional,
+                            specialNames.allowedRole,
+                            specialNames.attachment,
+                            specialNames.conflict,
+                            specialNames.constraint.execution,
+                            specialNames.constraint.expression,
+                            specialNames.deleted,
+                            specialNames.deletedConflict,
+                            specialNames.extend,
+                            specialNames.id,
+                            specialNames.maximumAggregatedSize,
+                            specialNames.minimumAggregatedSize,
+                            specialNames.oldType,
+                            specialNames.revision,
+                            specialNames.revisions,
+                            specialNames.revisionsInformation,
+                            specialNames.type
+                        ).includes(name) ||
+                        model[name].type &&
+                        (
+                            typeof model[name].type === 'string' &&
+                            (model[name].type as string).endsWith('[]') ||
+                            Array.isArray(model[name].type) &&
+                            (model[name].type as Array<string>).length &&
+                            Array.isArray(
+                                (model[name].type as Array<string>)[0]
+                            ) ||
+                            modelConfiguration.entities.hasOwnProperty(
+                                model[name].type as string
+                            )
                         )
                     )
                 )
             )
-        ).concat(specialNames.id, specialNames.revision)
+            .concat(specialNames.id, specialNames.revision)
+            .sort()
     }
     /**
      * Extend given model with all specified one.
