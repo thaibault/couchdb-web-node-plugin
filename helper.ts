@@ -188,13 +188,11 @@ export class Helper {
             NOTE: A "bulkDocs" plugin does not get called for every "put" and
             "post" call so we have to wrap runtime generated methods.
         */
-        for (const pluginName of ['post', 'put']) {
-            const nativeMethod:Function = services.couchdb.connection[
-                pluginName as 'get'|'post'
-            ].bind(services.couchdb.connection)
-            services.couchdb.connection[
-                pluginName as 'get'|'post'
-            ] = async function(
+        for (const pluginName of ['post', 'put'] as const) {
+            const nativeMethod:Function =
+                services.couchdb.connection[pluginName]
+                    .bind(services.couchdb.connection)
+            services.couchdb.connection[pluginName] = async function(
                 firstParameter:any, ...parameter:Array<any>
             ):Promise<any> {
                 try {
@@ -211,19 +209,21 @@ export class Helper {
                             ok: true
                         } as DatabaseResponse
                         try {
-                            result.rev =
+                            result.rev = (
                                 revisionName in firstParameter &&
                                 !['latest', 'upsert'].includes(
                                     firstParameter[revisionName]
-                                ) ?
-                                    firstParameter[revisionName] :
-                                    (await this.get(result.id))[
-                                        revisionName as
-                                            keyof DocumentRevisionIDMeta
-                                    ]
+                                )
+                            ) ?
+                                firstParameter[revisionName] :
+                                (await this.get(result.id))[
+                                    revisionName as
+                                        keyof DocumentRevisionIDMeta
+                                ]
                         } catch (error) {
                             throw error
                         }
+
                         return result
                     }
                     throw error
@@ -446,50 +446,54 @@ export class Helper {
     ):Array<string> {
         const specialNames:SpecialPropertyNames =
             modelConfiguration.property.name.special
-        return Object.keys(model).filter((name:string):boolean =>
-            model[name] !== null &&
-            typeof model[name] === 'object' &&
-            (
-                model[name].hasOwnProperty('index') &&
-                model[name].index ||
-                !(
+
+        return Object.keys(model)
+            .filter((name:string):boolean =>
+                model[name] !== null &&
+                typeof model[name] === 'object' &&
+                (
                     model[name].hasOwnProperty('index') &&
-                    !model[name].index ||
-                    modelConfiguration.property.name.reserved.concat(
-                        specialNames.additional,
-                        specialNames.allowedRole,
-                        specialNames.attachment,
-                        specialNames.conflict,
-                        specialNames.constraint.execution,
-                        specialNames.constraint.expression,
-                        specialNames.deleted,
-                        specialNames.deletedConflict,
-                        specialNames.extend,
-                        specialNames.id,
-                        specialNames.maximumAggregatedSize,
-                        specialNames.minimumAggregatedSize,
-                        specialNames.oldType,
-                        specialNames.revision,
-                        specialNames.revisions,
-                        specialNames.revisionsInformation,
-                        specialNames.type
-                    ).includes(name) ||
-                    model[name].type &&
-                    (
-                        typeof model[name].type === 'string' &&
-                        (model[name].type as string).endsWith('[]') ||
-                        Array.isArray(model[name].type) &&
-                        (model[name].type as Array<string>).length &&
-                        Array.isArray(
-                            (model[name].type as Array<string>)[0]
-                        ) ||
-                        modelConfiguration.entities.hasOwnProperty(
-                            model[name].type as string
+                    model[name].index ||
+                    !(
+                        model[name].hasOwnProperty('index') &&
+                        !model[name].index ||
+                        modelConfiguration.property.name.reserved.concat(
+                            specialNames.additional,
+                            specialNames.allowedRole,
+                            specialNames.attachment,
+                            specialNames.conflict,
+                            specialNames.constraint.execution,
+                            specialNames.constraint.expression,
+                            specialNames.deleted,
+                            specialNames.deletedConflict,
+                            specialNames.extend,
+                            specialNames.id,
+                            specialNames.maximumAggregatedSize,
+                            specialNames.minimumAggregatedSize,
+                            specialNames.oldType,
+                            specialNames.revision,
+                            specialNames.revisions,
+                            specialNames.revisionsInformation,
+                            specialNames.type
+                        ).includes(name) ||
+                        model[name].type &&
+                        (
+                            typeof model[name].type === 'string' &&
+                            (model[name].type as string).endsWith('[]') ||
+                            Array.isArray(model[name].type) &&
+                            (model[name].type as Array<string>).length &&
+                            Array.isArray(
+                                (model[name].type as Array<string>)[0]
+                            ) ||
+                            modelConfiguration.entities.hasOwnProperty(
+                                model[name].type as string
+                            )
                         )
                     )
                 )
             )
-        ).concat(specialNames.id, specialNames.revision)
+            .concat(specialNames.id, specialNames.revision)
+            .sort()
     }
     /**
      * Extend given model with all specified one.
