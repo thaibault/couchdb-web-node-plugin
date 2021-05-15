@@ -325,9 +325,9 @@ export class DatabaseHelper {
             if (newDocument.hasOwnProperty(specialNames.attachment)) {
                 const attachments:Attachments =
                     newDocument[specialNames.attachment] as Attachments
-                const name:string = getFilenameByPrefix(
-                    attachments, namePrefix
-                )
+                const name:string =
+                    getFilenameByPrefix(attachments, namePrefix)
+
                 if (name)
                     return (
                         attachments[name].hasOwnProperty('stub') &&
