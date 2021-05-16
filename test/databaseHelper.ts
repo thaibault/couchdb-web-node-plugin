@@ -96,6 +96,7 @@ describe('databaseHelper', ():void => {
             const defaultModelConfiguration:ModelConfiguration = {
                 ...Tools.copy(configuration.couchdb.model), updateStrategy
             }
+
             for (
                 const propertyName in defaultModelConfiguration.entities._base
             )
@@ -916,7 +917,11 @@ describe('databaseHelper', ():void => {
                 [
                     [{[typeName]: 'Test'}],
                     {entities: {Test: {[attachmentName]: {
-                        '.*': {minimumNumber: 1, nullable: false}
+                        data: {
+                            fileName: {regularExpressionName: '.*'},
+                            minimumNumber: 1,
+                            nullable: false
+                        }
                     }}}},
                     'AttachmentMissing'
                 ],
@@ -924,7 +929,7 @@ describe('databaseHelper', ():void => {
                     [{[typeName]: 'Test', [attachmentName]: {test: {
                         data: null
                     }}}],
-                    {entities: {Test: {[attachmentName]: {'.*': {
+                    {entities: {Test: {[attachmentName]: {data: {
                         nullable: false
                     }}}}},
                     'AttachmentMissing'
@@ -934,7 +939,7 @@ describe('databaseHelper', ():void => {
                         [typeName]: 'Test',
                         [attachmentName]: {test: {data: null}}
                     }],
-                    {entities: {Test: {[attachmentName]: {'.*': {
+                    {entities: {Test: {[attachmentName]: {test: {
                         minimumNumber: 1, nullable: false
                     }}}}},
                     'AttachmentMissing'
@@ -961,7 +966,7 @@ describe('databaseHelper', ():void => {
                 ],
                 [
                     [{[typeName]: 'Test', [attachmentName]: null}],
-                    {entities: {Test: {[attachmentName]: {'.*': {
+                    {entities: {Test: {[attachmentName]: {data: {
                         minimumNumber: 1, nullable: false
                     }}}}},
                     'AttachmentMissing'
@@ -969,7 +974,7 @@ describe('databaseHelper', ():void => {
                 // Attachments have to be attachments types.
                 [
                     [{[typeName]: 'Test', [attachmentName]: new Date()}],
-                    {entities: {Test: {[attachmentName]: {'.*': {}}}}},
+                    {entities: {Test: {[attachmentName]: {data: {}}}}},
                     'AttachmentType'
                 ],
                 // Number of attachments have to be in its specified bounds.
@@ -980,7 +985,8 @@ describe('databaseHelper', ():void => {
                         b: {data: '', content_type: 'text/plain'}
                         /* eslint-enable camelcase */
                     }}],
-                    {entities: {Test: {[attachmentName]: {'.*': {
+                    {entities: {Test: {[attachmentName]: {data: {
+                        fileName: {regularExpressionPattern: '.*'},
                         maximumNumber: 1
                     }}}}},
                     'AttachmentMaximum'
@@ -991,14 +997,14 @@ describe('databaseHelper', ():void => {
                         data: '', content_type: 'text/plain'
                         /* eslint-enable camelcase */
                     }}}],
-                    {entities: {Test: {[attachmentName]: {'.*': {
+                    {entities: {Test: {[attachmentName]: {test: {
                         minimumNumber: 2
                     }}}}},
                     'AttachmentMinimum'
                 ],
                 [
                     [{[typeName]: 'Test', [attachmentName]: {}}],
-                    {entities: {Test: {[attachmentName]: {'.*': {
+                    {entities: {Test: {[attachmentName]: {data: {
                         minimumNumber: 1, nullable: false
                     }}}}},
                     'AttachmentMissing'
@@ -1021,7 +1027,7 @@ describe('databaseHelper', ():void => {
                             }}
                         }
                     ],
-                    {entities: {Test: {[attachmentName]: {'.*': {
+                    {entities: {Test: {[attachmentName]: {test: {
                         nullable: false
                     }}}}},
                     'AttachmentMissing'
@@ -1052,8 +1058,11 @@ describe('databaseHelper', ():void => {
                         data: '', content_type: 'text/plain'
                         /* eslint-enable camelcase */
                     }}}],
-                    {entities: {Test: {[attachmentName]: {'.*': {
-                        regularExpressionPattern: /b/g
+                    {entities: {Test: {[attachmentName]: {data: {
+                        fileName: {
+                            regularExpressionPattern: /b/g,
+                            value: 'a'
+                        }
                     }}}}},
                     'AttachmentName'
                 ],
@@ -1063,8 +1072,8 @@ describe('databaseHelper', ():void => {
                         data: '', content_type: 'text/plain'
                         /* eslint-enable camelcase */
                     }}}],
-                    {entities: {Test: {[attachmentName]: {'.*': {
-                        invertedRegularExpressionPattern: /a/g
+                    {entities: {Test: {[attachmentName]: {a: {
+                        fileName: {invertedRegularExpressionPattern: /a/g}
                     }}}}},
                     'InvertedAttachmentName'
                 ],
@@ -1075,10 +1084,10 @@ describe('databaseHelper', ():void => {
                         b: {data: '', content_type: 'text/plain'}
                         /* eslint-enable camelcase */
                     }}],
-                    {entities: {Test: {[attachmentName]: {'.*': {
-                        regularExpressionPattern: /a/
+                    {entities: {Test: {[attachmentName]: {data: {
+                        fileName: {regularExpressionPattern: /a/}
                     }}}}},
-                    'AttachmentName'
+                    'AttachmentTypeMatch'
                 ],
                 [
                     [{[typeName]: 'Test', [attachmentName]: {
@@ -1087,8 +1096,11 @@ describe('databaseHelper', ():void => {
                         b: {data: '', content_type: 'text/plain'}
                         /* eslint-enable camelcase */
                     }}],
-                    {entities: {Test: {[attachmentName]: {'.*': {
-                        invertedRegularExpressionPattern: /a/
+                    {entities: {Test: {[attachmentName]: {data: {
+                        fileName: {
+                            regularExpressionPattern: /a|b/,
+                            invertedRegularExpressionPattern: /a/
+                        }
                     }}}}},
                     'InvertedAttachmentName'
                 ],
@@ -1100,8 +1112,9 @@ describe('databaseHelper', ():void => {
                         b: {data: '', content_type: 'image/jpg'}
                         /* eslint-enable camelcase */
                     }}],
-                    {entities: {Test: {[attachmentName]: {'.*': {
-                        contentTypeRegularExpressionPattern: /text\/plain/
+                    {entities: {Test: {[attachmentName]: {data: {
+                        contentTypeRegularExpressionPattern: /text\/plain/,
+                        fileName: {regularExpressionPattern: /.*/}
                     }}}}},
                     'AttachmentContentType'
                 ],
@@ -1119,7 +1132,8 @@ describe('databaseHelper', ():void => {
                     [{[typeName]: 'Test', [attachmentName]: {a: {
                         data: 'abcd', length: 3
                     }}}],
-                    {entities: {Test: {[attachmentName]: {a: {maximumSize: 2
+                    {entities: {Test: {[attachmentName]: {a: {
+                        maximumSize: 2
                     }}}}},
                     'AttachmentMaximumSize'
                 ],
@@ -1454,7 +1468,7 @@ describe('databaseHelper', ():void => {
                             /* eslint-enable camelcase */
                         }}
                     }],
-                    {entities: {Test: {[attachmentName]: {'.*': {
+                    {entities: {Test: {[attachmentName]: {test: {
                         onCreateExpression:
                             `(newDocument[name].data += ' footer') && ` +
                             'newDocument[name]'
@@ -1501,7 +1515,7 @@ describe('databaseHelper', ():void => {
                         },
                         {[typeName]: 'Test'}
                     ],
-                    {entities: {Test: {[attachmentName]: {'.*': {
+                    {entities: {Test: {[attachmentName]: {test: {
                         onCreateExpression:
                             `(newDocument[name].data += ' footer') && ` +
                             'newDocument[name]'
@@ -1599,7 +1613,7 @@ describe('databaseHelper', ():void => {
                             /* eslint-enable camelcase */
                         }}
                     }],
-                    {entities: {Test: {[attachmentName]: {'.*': {
+                    {entities: {Test: {[attachmentName]: {test: {
                         onUpdateExpression:
                             `(newDocument[name].data += ' footer') && ` +
                             'newDocument[name]'
@@ -1647,7 +1661,7 @@ describe('databaseHelper', ():void => {
                         },
                         {[typeName]: 'Test'}
                     ],
-                    {entities: {Test: {[attachmentName]: {'.*': {
+                    {entities: {Test: {[attachmentName]: {test: {
                         onUpdateExpression:
                             `(newDocument[name].data += ' footer') && ` +
                             'newDocument[name]'
@@ -1682,7 +1696,7 @@ describe('databaseHelper', ():void => {
                 [
                     [{[typeName]: 'Test', a: ''}, {[typeName]: 'Test'}],
                     {entities: {Test: {
-                        [attachmentName]: {'.*': {
+                        [attachmentName]: {data: {
                             onUpdateExpression:
                                 `(newDocument[name].data += ' footer') && ` +
                                 'newDocument[name]'
@@ -1737,7 +1751,7 @@ describe('databaseHelper', ():void => {
                     }
                 ],
                 // endregion
-                // region property existents
+                // region property existence
                 [
                     [
                         {[typeName]: 'Test', a: null},
@@ -1788,7 +1802,7 @@ describe('databaseHelper', ():void => {
                 ],
                 [
                     [{[typeName]: 'Test'}],
-                    {entities: {Test: {[attachmentName]: {'.*': {
+                    {entities: {Test: {[attachmentName]: {test: {
                         default: {test: {
                             /* eslint-disable camelcase */
                             data: '', content_type: 'text/plain'
@@ -2936,7 +2950,7 @@ describe('databaseHelper', ():void => {
                 // region attachment
                 [
                     [{[typeName]: 'Test'}],
-                    {entities: {Test: {[attachmentName]: {'.*': {
+                    {entities: {Test: {[attachmentName]: {data: {
                         minimumNumber: 1
                     }}}}},
                     {
@@ -2950,28 +2964,34 @@ describe('databaseHelper', ():void => {
                         [typeName]: 'Test',
                         [attachmentName]: {test: {
                             /* eslint-disable camelcase */
-                            content_type: 'text/plain', data: ''
+                            content_type: 'text/plain',
                             /* eslint-enable camelcase */
+                            data: ''
                         }}
                     }],
-                    {entities: {Test: {[attachmentName]: {'.*': {
+                    {entities: {Test: {[attachmentName]: {test: {
                         maximumNumber: 1
                     }}}}},
                     {
                         fillUp: {[typeName]: 'Test', [attachmentName]: {test: {
                             /* eslint-disable camelcase */
-                            content_type: 'text/plain', data: ''
+                            content_type: 'text/plain',
                             /* eslint-enable camelcase */
+                            data: ''
                         }}},
                         incremental: {[typeName]: 'Test', [attachmentName]: {
-                            /* eslint-disable camelcase */
-                            test: {content_type: 'text/plain', data: ''}
-                            /* eslint-enable camelcase */
+                            test: {
+                                /* eslint-disable camelcase */
+                                content_type: 'text/plain',
+                                /* eslint-enable camelcase */
+                                data: ''
+                            }
                         }},
                         '': {[typeName]: 'Test', [attachmentName]: {test: {
                             /* eslint-disable camelcase */
-                            content_type: 'text/plain', data: ''
+                            content_type: 'text/plain',
                             /* eslint-enable camelcase */
+                            data: ''
                         }}}
                     }
                 ],
@@ -2980,73 +3000,82 @@ describe('databaseHelper', ():void => {
                         [typeName]: 'Test',
                         [attachmentName]: {'favicon.png': {
                             /* eslint-disable camelcase */
-                            content_type: 'image/png', data: 'abc'
+                            content_type: 'image/png',
                             /* eslint-enable camelcase */
+                            data: 'abc'
                         }}
                     }],
-                    {entities: {Test: {[attachmentName]: {
-                        '.+\\.(?:jpe?g|png|svg)': {
-                            contentTypeRegularExpressionPattern:
-                                'image/(?:p?jpe?g|png|svg)',
-                            maximumNumber: 1,
-                            nullable: false
-                        }
-                    }}}},
+                    {entities: {Test: {[attachmentName]: {data: {
+                        contentTypeRegularExpressionPattern:
+                            'image/(?:p?jpe?g|png|svg)',
+                        fileName: {
+                            regularExpressionPattern: '.+\\.(?:jpe?g|png|svg)'
+                        },
+                        maximumNumber: 1,
+                        nullable: false
+                    }}}}},
                     {
                         fillUp: {[typeName]: 'Test', [attachmentName]: {
                             'favicon.png': {
                                 /* eslint-disable camelcase */
-                                content_type: 'image/png', data: 'abc'
+                                content_type: 'image/png',
                                 /* eslint-enable camelcase */
+                                data: 'abc'
                             }
                         }},
                         incremental: {[typeName]: 'Test', [attachmentName]: {
                             'favicon.png': {
                                 /* eslint-disable camelcase */
-                                content_type: 'image/png', data: 'abc'
+                                content_type: 'image/png',
                                 /* eslint-enable camelcase */
+                                 data: 'abc'
                             }
                         }},
                         '': {[typeName]: 'Test', [attachmentName]: {
-                            /* eslint-disable camelcase */
                             'favicon.png': {
+                                /* eslint-disable camelcase */
                                 content_type: 'image/png',
+                                /* eslint-enable camelcase */
                                 data: 'abc'
                             }
-                            /* eslint-enable camelcase */
                         }}
                     }
                 ],
+                // TODO state
                 [
                     [{
                         [typeName]: 'Test',
                         [attachmentName]: {test: {
                             /* eslint-disable camelcase */
-                            content_type: 'text/plain', data: ''
+                            content_type: 'text/plain',
                             /* eslint-enable camelcase */
+                            data: ''
                         }}
                     }],
-                    {entities: {Test: {[attachmentName]: {'.*': {
+                    {entities: {Test: {[attachmentName]: {test: {
                         nullable: false
                     }}}}},
                     {
                         fillUp: {[typeName]: 'Test', [attachmentName]: {test: {
                             /* eslint-disable camelcase */
-                            content_type: 'text/plain', data: ''
+                            content_type: 'text/plain',
                             /* eslint-enable camelcase */
+                            data: ''
                         }}},
                         incremental: {
                             [typeName]: 'Test',
                             [attachmentName]: {test: {
                                 /* eslint-disable camelcase */
-                                content_type: 'text/plain', data: ''
+                                content_type: 'text/plain',
                                 /* eslint-enable camelcase */
+                                data: ''
                             }}
                         },
                         '': {[typeName]: 'Test', [attachmentName]: {test: {
                             /* eslint-disable camelcase */
-                            content_type: 'text/plain', data: ''
+                            content_type: 'text/plain',
                             /* eslint-enable camelcase */
+                            data: ''
                         }}}
                     }
                 ],
@@ -3060,77 +3089,83 @@ describe('databaseHelper', ():void => {
                             /* eslint-enable camelcase */
                         }
                     }],
-                    {entities: {Test: {[attachmentName]: {'.*': {
-                        maximumNumber: 2, minimumNumber: 2
-                    }}}}},
-                    {
-                        fillUp: {[typeName]: 'Test', [attachmentName]: {
-                            /* eslint-disable camelcase */
-                            a: {content_type: 'text/plain', data: ''},
-                            b: {content_type: 'text/plain', data: ''}
-                            /* eslint-enable camelcase */
-                        }},
-                        incremental: {[typeName]: 'Test', [attachmentName]: {
-                            /* eslint-disable camelcase */
-                            a: {content_type: 'text/plain', data: ''},
-                            b: {content_type: 'text/plain', data: ''}
-                            /* eslint-enable camelcase */
-                        }},
-                        '': {[typeName]: 'Test', [attachmentName]: {
-                            /* eslint-disable camelcase */
-                            a: {content_type: 'text/plain', data: ''},
-                            b: {content_type: 'text/plain', data: ''}
-                            /* eslint-enable camelcase */
-                        }}
-                    }
-                ],
-                [
-                    [{
-                        [typeName]: 'Test',
-                        [attachmentName]: {
-                            /* eslint-disable camelcase */
-                            a: {content_type: 'text/plain', data: ''},
-                            b: {content_type: 'text/plain', data: ''}
-                            /* eslint-enable camelcase */
-                        }
-                    }],
-                    {entities: {Test: {[attachmentName]: {'.*': {
-                        maximumNumber: 2, regularExpressionPattern: 'a|b'
-                    }}}}},
-                    {
-                        fillUp: {[typeName]: 'Test', [attachmentName]: {
-                            /* eslint-disable camelcase */
-                            a: {content_type: 'text/plain', data: ''},
-                            b: {content_type: 'text/plain', data: ''}
-                            /* eslint-enable camelcase */
-                        }},
-                        incremental: {[typeName]: 'Test', [attachmentName]: {
-                            /* eslint-disable camelcase */
-                            a: {content_type: 'text/plain', data: ''},
-                            b: {content_type: 'text/plain', data: ''}
-                            /* eslint-enable camelcase */
-                        }},
-                        '': {[typeName]: 'Test', [attachmentName]: {
-                            /* eslint-disable camelcase */
-                            a: {content_type: 'text/plain', data: ''},
-                            b: {content_type: 'text/plain', data: ''}
-                            /* eslint-enable camelcase */
-                        }}
-                    }
-                ],
-                [
-                    [{
-                        [typeName]: 'Test',
-                        [attachmentName]: {
-                            /* eslint-disable camelcase */
-                            a: {content_type: 'text/plain', data: ''},
-                            b: {content_type: 'text/plain', data: ''}
-                            /* eslint-enable camelcase */
-                        }
-                    }],
-                    {entities: {Test: {[attachmentName]: {'.*': {
+                    {entities: {Test: {[attachmentName]: {data: {
+                        fileName: {regularExpressionPattern: /a|b/},
                         maximumNumber: 2,
-                        invertedRegularExpressionPattern: 'c|d'
+                        minimumNumber: 2
+                    }}}}},
+                    {
+                        fillUp: {[typeName]: 'Test', [attachmentName]: {
+                            /* eslint-disable camelcase */
+                            a: {content_type: 'text/plain', data: ''},
+                            b: {content_type: 'text/plain', data: ''}
+                            /* eslint-enable camelcase */
+                        }},
+                        incremental: {[typeName]: 'Test', [attachmentName]: {
+                            /* eslint-disable camelcase */
+                            a: {content_type: 'text/plain', data: ''},
+                            b: {content_type: 'text/plain', data: ''}
+                            /* eslint-enable camelcase */
+                        }},
+                        '': {[typeName]: 'Test', [attachmentName]: {
+                            /* eslint-disable camelcase */
+                            a: {content_type: 'text/plain', data: ''},
+                            b: {content_type: 'text/plain', data: ''}
+                            /* eslint-enable camelcase */
+                        }}
+                    }
+                ],
+                [
+                    [{
+                        [typeName]: 'Test',
+                        [attachmentName]: {
+                            /* eslint-disable camelcase */
+                            a: {content_type: 'text/plain', data: ''},
+                            b: {content_type: 'text/plain', data: ''}
+                            /* eslint-enable camelcase */
+                        }
+                    }],
+                    {entities: {Test: {[attachmentName]: {data: {
+                        fileName: {regularExpressionPattern: 'a|b'},
+                        maximumNumber: 2
+                    }}}}},
+                    {
+                        fillUp: {[typeName]: 'Test', [attachmentName]: {
+                            /* eslint-disable camelcase */
+                            a: {content_type: 'text/plain', data: ''},
+                            b: {content_type: 'text/plain', data: ''}
+                            /* eslint-enable camelcase */
+                        }},
+                        incremental: {[typeName]: 'Test', [attachmentName]: {
+                            /* eslint-disable camelcase */
+                            a: {content_type: 'text/plain', data: ''},
+                            b: {content_type: 'text/plain', data: ''}
+                            /* eslint-enable camelcase */
+                        }},
+                        '': {[typeName]: 'Test', [attachmentName]: {
+                            /* eslint-disable camelcase */
+                            a: {content_type: 'text/plain', data: ''},
+                            b: {content_type: 'text/plain', data: ''}
+                            /* eslint-enable camelcase */
+                        }}
+                    }
+                ],
+                [
+                    [{
+                        [typeName]: 'Test',
+                        [attachmentName]: {
+                            /* eslint-disable camelcase */
+                            a: {content_type: 'text/plain', data: ''},
+                            b: {content_type: 'text/plain', data: ''}
+                            /* eslint-enable camelcase */
+                        }
+                    }],
+                    {entities: {Test: {[attachmentName]: {data: {
+                        fileName: {
+                            invertedRegularExpressionPattern: 'c|d',
+                            regularExpressionPattern: /.*/
+                        },
+                        maximumNumber: 2
                     }}}}},
                     {
                         fillUp: {
@@ -3172,9 +3207,9 @@ describe('databaseHelper', ():void => {
                             /* eslint-enable camelcase */
                         }
                     }],
-                    {entities: {Test: {[attachmentName]: {'.*': {
+                    {entities: {Test: {[attachmentName]: {data: {
                         contentTypeRegularExpressionPattern: /image\/.+/,
-                        regularExpressionPattern: 'a|b'
+                        fileName: {regularExpressionPattern: 'a|b'}
                     }}}}},
                     {
                         fillUp: {
@@ -3225,7 +3260,9 @@ describe('databaseHelper', ():void => {
                             }
                         }
                     ],
-                    {entities: {Test: {[attachmentName]: {'.*': {}}}}},
+                    {entities: {Test: {[attachmentName]: {data: {
+                        fileName: {regularExpressionPattern: '.*'}
+                    }}}}},
                     {
                         fillUp: {[typeName]: 'Test', [attachmentName]: {
                             /* eslint-disable camelcase */
@@ -3251,7 +3288,8 @@ describe('databaseHelper', ():void => {
                             [typeName]: 'Test',
                             [attachmentName]: {a: {data: null}},
                             b: 'b'
-                        }, {
+                        },
+                        {
                             [typeName]: 'Test',
                             [attachmentName]: {a: {
                                 /* eslint-disable camelcase */
@@ -3260,7 +3298,7 @@ describe('databaseHelper', ():void => {
                             }}
                         }
                     ],
-                    {entities: {Test: {[attachmentName]: {'.*': {}}, b: {}}}},
+                    {entities: {Test: {[attachmentName]: {a: {}}, b: {}}}},
                     {
                         fillUp: {[typeName]: 'Test', b: 'b'},
                         incremental: {b: 'b'},
@@ -3273,7 +3311,8 @@ describe('databaseHelper', ():void => {
                             [typeName]: 'Test',
                             [attachmentName]: {a: {data: null}},
                             b: 'b'
-                        }, {
+                        },
+                        {
                             [typeName]: 'Test',
                             [attachmentName]: {a: {
                                 /* eslint-disable camelcase */
@@ -3282,7 +3321,7 @@ describe('databaseHelper', ():void => {
                             }}
                         }
                     ],
-                    {entities: {Test: {[attachmentName]: {'.*': {}}, b: {}}}},
+                    {entities: {Test: {[attachmentName]: {a: {}}, b: {}}}},
                     {
                         fillUp: {[typeName]: 'Test', b: 'b'},
                         incremental: {b: 'b'},
@@ -3298,7 +3337,7 @@ describe('databaseHelper', ():void => {
                             /* eslint-enable camelcase */
                         }}}
                     ],
-                    {entities: {Test: {[attachmentName]: {'.*': {}}, a: {}}}},
+                    {entities: {Test: {[attachmentName]: {a: {}}, a: {}}}},
                     {
                         fillUp: {
                             [typeName]: 'Test',
@@ -3578,7 +3617,7 @@ describe('databaseHelper', ():void => {
         [
             {[typeName]: 'Test'},
             {[typeName]: 'Test'},
-            {entities: {Test: {[attachmentName]: {'.*': {default: {test: {
+            {entities: {Test: {[attachmentName]: {test: {default: {test: {
                 /* eslint-disable camelcase */
                 data: '', content_type: 'text/plain'
                 /* eslint-enable camelcase */

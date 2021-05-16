@@ -332,13 +332,12 @@ export class Database implements PluginHandler {
         delete (modelConfiguration as {entities?:PlainObject}).entities
         const models:Models = Helper.extendModels(configuration.couchdb.model)
         if (configuration.couchdb.model.updateValidation) {
-            const databaseHelperCode:string =
-                await fileSystem.readFile(
-                    /* eslint-disable no-eval */
-                    eval('require.resolve')('./databaseHelper'),
-                    /* eslint-enable no-eval */
-                    {encoding: configuration.encoding, flag: 'r'}
-                )
+            const databaseHelperCode:string = await fileSystem.readFile(
+                /* eslint-disable no-eval */
+                eval('require.resolve')('./databaseHelper'),
+                /* eslint-enable no-eval */
+                {encoding: configuration.encoding, flag: 'r'}
+            )
             // region generate/update authentication/validation code
             for (const type of [
                 {
@@ -353,7 +352,7 @@ export class Database implements PluginHandler {
                     description: 'Authorisation',
                     methodName: 'authenticate',
                     name: 'authentication',
-                    parameter:
+                    serializedParameter:
                         JSON.stringify(
                             Helper.determineAllowedModelRolesMapping(
                                 configuration.couchdb.model
@@ -559,18 +558,21 @@ export class Database implements PluginHandler {
                     for (const name of Object.keys(migrater).sort()) {
                         let result:Document|null = null
                         try {
-                            result = migrater[name](newDocument, {
-                                configuration,
-                                databaseHelper: DatabaseHelper,
-                                idName,
-                                migrater,
-                                models,
-                                modelConfiguration,
-                                selfFilePath: name,
-                                services,
-                                tools: Tools,
-                                typeName
-                            })
+                            result = migrater[name](
+                                newDocument,
+                                {
+                                    configuration,
+                                    databaseHelper: DatabaseHelper,
+                                    idName,
+                                    migrater,
+                                    models,
+                                    modelConfiguration,
+                                    selfFilePath: name,
+                                    services,
+                                    tools: Tools,
+                                    typeName
+                                }
+                            )
                         } catch (error) {
                             throw new Error(
                                 `Running migrater "${name}" in document ` +
