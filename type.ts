@@ -75,6 +75,10 @@ export type Constraint = {
 }
 export type Type = string|'any'|'boolean'|'integer'|'number'|'string'|'DateTime'
 export type TypeSpecification = Array<Type>|Type
+export type ConstraintKey =
+    'arrayConstraintExecution'|'arrayConstraintExpression'|
+    'conflictingConstraintExecution'|'conflictingConstraintExpression'|
+    'constraintExecution'|'constraintExpression'
 export type PropertySpecification = {
     allowedRoles?:AllowedRoles|null
     arrayConstraintExecution?:Constraint|null
@@ -84,7 +88,7 @@ export type PropertySpecification = {
     constraintExecution?:Constraint|null
     constraintExpression?:Constraint|null
     contentTypeRegularExpressionPattern?:null|string
-    default?:any
+    default?:unknown
     emptyEqualsToNull?:boolean|null
     index?:boolean|null
     invertedContentTypeRegularExpressionPattern?:null|string
@@ -107,13 +111,18 @@ export type PropertySpecification = {
     onUpdateExecution?:null|string
     onUpdateExpression?:null|string
     regularExpressionPattern?:null|string
-    selection?:Array<any>|null
+    selection?:Array<unknown>|null
     trim?:boolean|null
     type?:TypeSpecification|null
+    value?:unknown
     writable?:boolean|null
+}
+export type FileSpecification = PropertySpecification & {
+    fileName:PropertySpecification
 }
 export type Model = Mapping<PropertySpecification> & {
     _allowedRoles?:AllowedRoles|null
+    _attachments?:null|Mapping<FileSpecification>
     _constraintExecutions?:Array<Constraint>|Constraint|null
     _constraintExpressions?:Array<Constraint>|Constraint|null
     _createExecution?:null|string

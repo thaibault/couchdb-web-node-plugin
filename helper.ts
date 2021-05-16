@@ -39,6 +39,7 @@ import {
     DatabaseFetch,
     DatabaseResponse,
     Document,
+    FileSpecification,
     Model,
     ModelConfiguration,
     Models,
@@ -577,12 +578,12 @@ export class Helper {
                         if (propertyName === specialNames.attachment) {
                             for (const type in models[modelName][propertyName])
                                 if (
-                                    models[modelName][propertyName]
+                                    models[modelName][propertyName]!
                                         .hasOwnProperty(type)
                                 )
                                     (
                                         models[modelName][propertyName] as
-                                            Attachments
+                                            Mapping<FileSpecification>
                                     )[type] = Tools.extend(
                                         true,
                                         Tools.copy(
@@ -591,7 +592,7 @@ export class Helper {
                                         ),
                                         (
                                             models[modelName][propertyName] as
-                                                Attachments
+                                                Mapping<FileSpecification>
                                         )[type]
                                     )
                         } else if (![

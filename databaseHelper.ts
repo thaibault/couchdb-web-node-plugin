@@ -14,7 +14,9 @@
     endregion
 */
 // region imports
-import {Mapping, PlainObject, ProcedureFunction} from 'clientnode/type'
+import {
+    Mapping, Primitive, PlainObject, ProcedureFunction
+} from 'clientnode/type'
 
 import {
     AllowedModelRolesMapping,
@@ -22,9 +24,11 @@ import {
     BaseModelConfiguration,
     CheckedDocumentResult,
     Constraint,
+    ConstraintKey,
     Document,
     DocumentContent,
     EvaluationResult,
+    FileSpecification,
     FullAttachment,
     Model,
     Models,
@@ -83,6 +87,7 @@ export class DatabaseHelper {
         */
         if (!newDocument.hasOwnProperty(typePropertyName))
             return true
+
         const allowedRoles:NormalizedAllowedRoles & {
             properties:AllowedModelRolesMapping
         } = {
@@ -90,6 +95,7 @@ export class DatabaseHelper {
             read: ['_admin', 'readonlyadmin'],
             write: ['_admin']
         }
+
         if (
             newDocument.hasOwnProperty(idPropertyName) &&
             (newDocument[idPropertyName] as string).startsWith(
@@ -97,8 +103,10 @@ export class DatabaseHelper {
             )
         )
             allowedRoles.read.push('readonlymember')
+
         let userRolesDescription:string = `Current user doesn't own any role`
         const operationType:'read'|'write' = read ? 'read': 'write'
+
         if (userContext) {
             if (!('name' in userContext))
                 userContext.name = '"unknown"'
@@ -149,6 +157,7 @@ export class DatabaseHelper {
                 for (const userRole of userContext.roles)
                     if (relevantRoles.includes(userRole))
                         return true
+
                 userRolesDescription = `Current user "${userContext.name}" ` +
                     `owns the following roles: "` +
                     `${userContext.roles.join('", "')}".`
@@ -302,9 +311,22 @@ export class DatabaseHelper {
                 return value.trim()
             return ''
         }
-        const getFilenameByPrefix:Function = (
-            attachments:Attachments, prefix?:string
+        const fileNameMatchesModelType:Function = (
+            fileName:string, fileType:FileSpecification
+        ):boolean =>
+            fileType.fileName.value as unknown as boolean &&
+            fileType.fileName.value === fileName ||
+            !fileType.fileName.value &&
+            fileType.fileName.regularExpressionPattern as unknown as boolean &&
+            (new RegExp(fileType.fileName.regularExpressionPattern as string))
+                .test(fileName)
+        const getFileNameByPrefix:Function = (
+            prefix?:string, attachments?:Attachments
         ):null|string => {
+            if (!attachments)
+                attachments =
+                    newDocument[specialNames.attachment] as Attachments
+
             if (prefix) {
                 for (const name in attachments)
                     if (
@@ -317,6 +339,7 @@ export class DatabaseHelper {
                 if (keys.length)
                     return keys[0]
             }
+
             return null
         }
         const attachmentWithPrefixExists:Function = (
@@ -325,8 +348,7 @@ export class DatabaseHelper {
             if (newDocument.hasOwnProperty(specialNames.attachment)) {
                 const attachments:Attachments =
                     newDocument[specialNames.attachment] as Attachments
-                const name:string =
-                    getFilenameByPrefix(attachments, namePrefix)
+                const name:string = getFileNameByPrefix(namePrefix)
 
                 if (name)
                     return (
@@ -339,6 +361,7 @@ export class DatabaseHelper {
                         )
                     )
             }
+
             return false
         }
         const evaluate:Function = (
@@ -355,7 +378,7 @@ export class DatabaseHelper {
                     attachmentWithPrefixExists,
                     checkDocument,
                     code,
-                    getFilenameByPrefix,
+                    getFileNameByPrefix,
                     idName,
                     modelConfiguration,
                     models,
@@ -475,7 +498,7 @@ export class DatabaseHelper {
                 name:string,
                 propertySpecification:PropertySpecification,
                 oldValue?:any,
-                types:Array<string> = [
+                types:Array<ConstraintKey> = [
                     'constraintExecution', 'constraintExpression'
                 ]
             ):void => {
@@ -484,15 +507,12 @@ export class DatabaseHelper {
                         let result:EvaluationResult<boolean>
                         try {
                             result = evaluate(
-                                propertySpecification[
-                                    type as keyof PropertySpecification
-                                ].evaluation,
+                                propertySpecification[type]!.evaluation,
                                 type.endsWith('Expression'),
                                 {
                                     checkPropertyContent,
-                                    code: propertySpecification[
-                                        type as keyof PropertySpecification
-                                    ].evaluation,
+                                    code: propertySpecification[type]!
+                                        .evaluation,
                                     model,
                                     modelName,
                                     name,
@@ -524,9 +544,7 @@ export class DatabaseHelper {
                         }
                         if (!result!.result) {
                             const description:string = determineTrimmedString(
-                                propertySpecification[
-                                    type as keyof PropertySpecification
-                                ].description
+                                propertySpecification[type]!.description
                             )
                             throwError(
                                 type.charAt(0).toUpperCase() +
@@ -1094,7 +1112,7 @@ export class DatabaseHelper {
                 if (specialNames.attachment === name) {
                     // region attachment
                     for (const type in model[name])
-                        if (model[name].hasOwnProperty(type)) {
+                        if (model[name]!.hasOwnProperty(type)) {
                             if (
                                 !newDocument.hasOwnProperty(name) ||
                                 newDocument[name] === null
@@ -1145,7 +1163,7 @@ export class DatabaseHelper {
                                 )
                             }
                             const propertySpecification:PropertySpecification =
-                                model[name][
+                                model[name]![
                                     type as keyof PropertySpecification
                                 ]
                             for (const fileName of newFileNames)
@@ -1167,7 +1185,7 @@ export class DatabaseHelper {
                                     fileName
                                 )
                             if ([null, undefined].includes(
-                                propertySpecification.default
+                                propertySpecification.default as null
                             )) {
                                 if (!(
                                     propertySpecification.nullable ||
@@ -1197,16 +1215,16 @@ export class DatabaseHelper {
                                 if (oldFileNames.length === 0) {
                                     for (
                                         const fileName in
-                                            propertySpecification.default
+                                            propertySpecification.default as
+                                                object
                                     )
-                                        if (
-                                            propertySpecification.default
-                                                .hasOwnProperty(fileName)
-                                        ) {
-                                            newAttachments[fileName] =
-                                                propertySpecification.default[
-                                                    fileName
-                                                ]
+                                        if ((propertySpecification.default as
+                                            object
+                                        ).hasOwnProperty(fileName)) {
+                                            newAttachments[fileName] = (
+                                                propertySpecification
+                                                    .default as Attachments
+                                            )[fileName]
                                             changedPath = parentNames.concat(
                                                 name, type, 'add default file'
                                             )
@@ -1231,7 +1249,7 @@ export class DatabaseHelper {
                         propertySpecification, newDocument, oldDocument, name
                     )
                     if ([null, undefined].includes(
-                        propertySpecification.default
+                        propertySpecification.default as null
                     )) {
                         if (!(
                             propertySpecification.nullable ||
@@ -1263,14 +1281,16 @@ export class DatabaseHelper {
                                 newDocument[name] = oldDocument[name]
                             else if (updateStrategy === 'migrate') {
                                 newDocument[name] =
-                                    propertySpecification.default
+                                    propertySpecification.default as Primitive
                                 changedPath = parentNames.concat(
-                                    name, 'migrate default value')
+                                    name, 'migrate default value'
+                                )
                             }
                         } else {
-                            newDocument[name] = propertySpecification.default
-                            changedPath = changedPath.concat(
-                                name, 'add default value')
+                            newDocument[name] =
+                                propertySpecification.default as Primitive
+                            changedPath =
+                                changedPath.concat(name, 'add default value')
                         }
                 }
                 // endregion
@@ -1418,15 +1438,15 @@ export class DatabaseHelper {
                     if (specialNames.attachment === name) {
                         const attachments:Attachments =
                             newDocument[name] as Attachments
+
                         for (const fileName in attachments)
                             if (attachments.hasOwnProperty(fileName))
                                 for (const type in model[name])
-                                    if (
-                                        model[name].hasOwnProperty(type) &&
-                                        (new RegExp(type)).test(fileName)
-                                    ) {
+                                    if (fileNameMatchesModelType(
+                                        fileName, model[name]![type]
+                                    )) {
                                         checkWriteableMutableNullable(
-                                            model[name][type as
+                                            model[name]![type as
                                                 keyof PropertySpecification
                                             ],
                                             newDocument,
@@ -1523,11 +1543,11 @@ export class DatabaseHelper {
                                                 '[]'.length
                                         )]
                                 else
-                                    propertySpecificationCopy[
+                                    (propertySpecificationCopy[
                                         key as keyof PropertySpecification
-                                    ] = propertySpecification[
+                                    ] as Primitive) = propertySpecification[
                                         key as keyof PropertySpecification
-                                    ]
+                                    ] as Primitive
                         // // region add missing array item types
                         /*
                             Derive nested missing explicit type definition if
@@ -1677,6 +1697,7 @@ export class DatabaseHelper {
             if (newDocument.hasOwnProperty(specialNames.attachment)) {
                 const newAttachments:Attachments =
                     newDocument[specialNames.attachment] as Attachments
+
                 if (
                     typeof newAttachments !== 'object' ||
                     Object.getPrototypeOf(newAttachments) !== Object.prototype
@@ -1685,6 +1706,7 @@ export class DatabaseHelper {
                         'AttachmentType: given attachment has invalid type' +
                         `${pathDescription}.`
                     )
+
                 // region migrate old attachments
                 let oldAttachments:any = null
                 if (oldDocument?.hasOwnProperty(specialNames.attachment)) {
@@ -1770,24 +1792,29 @@ export class DatabaseHelper {
                 // endregion
                 if (Object.keys(newAttachments).length === 0)
                     delete newDocument[specialNames.attachment]
+
                 const attachmentToTypeMapping:Mapping<Array<string>> = {}
                 for (const type in model[specialNames.attachment])
-                    if (model[specialNames.attachment].hasOwnProperty(type))
+                    if (model[specialNames.attachment]!.hasOwnProperty(type))
                         attachmentToTypeMapping[type] = []
+
                 for (const name in newAttachments)
                     if (newAttachments.hasOwnProperty(name)) {
                         let matched:boolean = false
                         for (const type in model[specialNames.attachment])
-                            if ((new RegExp(type)).test(name)) {
+                            if (fileNameMatchesModelType(
+                                name, model[specialNames.attachment]![type]
+                            )(new RegExp(type)).test(name)) {
                                 attachmentToTypeMapping[type].push(name)
                                 matched = true
                                 break
                             }
+
                         if (!matched)
                             throwError(
                                 'AttachmentTypeMatch: None of the specified ' +
                                 'attachment types ("' +
-                                Object.keys(model[specialNames.attachment])
+                                Object.keys(model[specialNames.attachment]!)
                                     .join('", "') +
                                 `") matches given one ("${name}")` +
                                 `${pathDescription}.`
@@ -1795,12 +1822,12 @@ export class DatabaseHelper {
                     }
                 let sumOfAggregatedSizes:number = 0
                 for (const type in attachmentToTypeMapping) {
-                    const specification:PropertySpecification =
-                        model[specialNames.attachment][
-                            type as keyof PropertySpecification
-                        ]
+                    const specification:FileSpecification =
+                        model[specialNames.attachment]![type]
+
                     if (!attachmentToTypeMapping.hasOwnProperty(type))
                         continue
+
                     const numberOfAttachments:number =
                         attachmentToTypeMapping[type].length
                     if (
@@ -1831,15 +1858,13 @@ export class DatabaseHelper {
                         )
                     let aggregatedSize:number = 0
                     for (const fileName of attachmentToTypeMapping[type]) {
-                        if (!(
-                            [null, undefined].includes(
-                                specification.regularExpressionPattern as null
-                            ) ||
-                            new RegExp(
+                        if (
+                            specification.regularExpressionPattern &&
+                            !new RegExp(
                                 specification.regularExpressionPattern as
                                     string
                             ).test(fileName)
-                        ))
+                        )
                             throwError(
                                 'AttachmentName: given attachment name "' +
                                 `${fileName}" doesn't satisfy specified ` +
@@ -1847,20 +1872,17 @@ export class DatabaseHelper {
                                 specification.regularExpressionPattern +
                                 `" from type "${type}"${pathDescription}.`
                             )
-                        else if (!(
-                            [null, undefined].includes(
-                                specification
-                                    .invertedRegularExpressionPattern as null
-                            ) ||
-                            !(new RegExp(
+                        else if (
+                            specification.invertedRegularExpressionPattern &&
+                            new RegExp(
                                 specification
                                     .invertedRegularExpressionPattern as string
-                            )).test(fileName)
-                        ))
+                            ).test(fileName)
+                        )
                             throwError(
                                 'InvertedAttachmentName: given attachment ' +
-                                `name "${fileName}" doesn't satisfy ` +
-                                'specified regular expression pattern "' +
+                                `name "${fileName}" does satisfy specified ` +
+                                'regular expression pattern "' +
                                 specification
                                     .invertedRegularExpressionPattern +
                                 `" from type "${type}"${pathDescription}.`
@@ -1901,9 +1923,9 @@ export class DatabaseHelper {
                                 'InvertedAttachmentContentType: given ' +
                                 'attachment content type "' +
                                 `${newAttachments[fileName].content_type}" ` +
-                                `doesn't satisfy specified regular ` +
-                                `expression pattern "${pattern}" from type "` +
-                                `${type}"${pathDescription}.`
+                                `does satisfy specified regular expression ` +
+                                `pattern "${pattern}" from type "${type}"` +
+                                `${pathDescription}.`
                             )
                         let length:number = 0
                         if ('length' in newAttachments[fileName])
@@ -2041,6 +2063,7 @@ export class DatabaseHelper {
         // endregion
         const result:CheckedDocumentResult =
             checkDocument(newDocument, oldDocument)
+        // region check if changes happend
         if (
             result.newDocument._deleted &&
             !oldDocument ||
@@ -2055,6 +2078,8 @@ export class DatabaseHelper {
                 `${serialize(newDocument)}; old document: ` +
                 `${serialize(oldDocument)}.`
             )
+        // endregion
+        // region add meta data to security object for further processing
         if (securitySettings.hasOwnProperty(
             modelConfiguration.property.name.validatedDocumentsCache
         ))
@@ -2067,6 +2092,7 @@ export class DatabaseHelper {
                 modelConfiguration.property.name.validatedDocumentsCache as
                     keyof SecuritySettings
             ] as Set<string>) = new Set([`${id}-${revision}`])
+        // endregion
         return result.newDocument
     }
 }
