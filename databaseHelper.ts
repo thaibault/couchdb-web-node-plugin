@@ -1137,7 +1137,9 @@ export class DatabaseHelper {
                                         newDocument[name] as Attachments
                                     )[fileName] as FullAttachment).data !==
                                         null &&
-                                    new RegExp(type).test(fileName)
+                                    fileNameMatchesModelType(
+                                        type, fileName, model[name]![type]
+                                    )
                                 )
                             const newAttachments:Attachments =
                                 newDocument[name] as Attachments
@@ -1165,7 +1167,9 @@ export class DatabaseHelper {
                                             oldAttachments[fileName] as
                                                 FullAttachment
                                         ).data !== null &&
-                                        new RegExp(type).test(fileName)
+                                        fileNameMatchesModelType(
+                                            type, fileName, model[name]![type]
+                                        )
                                 )
                             }
                             const propertySpecification:PropertySpecification =

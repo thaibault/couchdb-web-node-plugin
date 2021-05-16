@@ -2964,8 +2964,9 @@ describe('databaseHelper', ():void => {
                         [typeName]: 'Test',
                         [attachmentName]: {test: {
                             /* eslint-disable camelcase */
-                            content_type: 'text/plain', data: ''
+                            content_type: 'text/plain',
                             /* eslint-enable camelcase */
+                            data: ''
                         }}
                     }],
                     {entities: {Test: {[attachmentName]: {test: {
@@ -2974,75 +2975,81 @@ describe('databaseHelper', ():void => {
                     {
                         fillUp: {[typeName]: 'Test', [attachmentName]: {test: {
                             /* eslint-disable camelcase */
-                            content_type: 'text/plain', data: ''
+                            content_type: 'text/plain',
                             /* eslint-enable camelcase */
+                            data: ''
                         }}},
                         incremental: {[typeName]: 'Test', [attachmentName]: {
-                            /* eslint-disable camelcase */
-                            test: {content_type: 'text/plain', data: ''}
-                            /* eslint-enable camelcase */
+                            test: {
+                                /* eslint-disable camelcase */
+                                content_type: 'text/plain',
+                                /* eslint-enable camelcase */
+                                data: ''
+                            }
                         }},
                         '': {[typeName]: 'Test', [attachmentName]: {test: {
                             /* eslint-disable camelcase */
-                            content_type: 'text/plain', data: ''
+                            content_type: 'text/plain',
                             /* eslint-enable camelcase */
+                            data: ''
                         }}}
+                    }
+                ],
+                [
+                    [{
+                        [typeName]: 'Test',
+                        [attachmentName]: {'favicon.png': {
+                            /* eslint-disable camelcase */
+                            content_type: 'image/png',
+                            /* eslint-enable camelcase */
+                            data: 'abc'
+                        }}
+                    }],
+                    {entities: {Test: {[attachmentName]: {data: {
+                        contentTypeRegularExpressionPattern:
+                            'image/(?:p?jpe?g|png|svg)',
+                        fileName: {
+                            regularExpressionPattern: '.+\\.(?:jpe?g|png|svg)'
+                        },
+                        maximumNumber: 1,
+                        nullable: false
+                    }}}}},
+                    {
+                        fillUp: {[typeName]: 'Test', [attachmentName]: {
+                            'favicon.png': {
+                                /* eslint-disable camelcase */
+                                content_type: 'image/png',
+                                /* eslint-enable camelcase */
+                                data: 'abc'
+                            }
+                        }},
+                        incremental: {[typeName]: 'Test', [attachmentName]: {
+                            'favicon.png': {
+                                /* eslint-disable camelcase */
+                                content_type: 'image/png',
+                                /* eslint-enable camelcase */
+                                 data: 'abc'
+                            }
+                        }},
+                        '': {[typeName]: 'Test', [attachmentName]: {
+                            'favicon.png': {
+                                /* eslint-disable camelcase */
+                                content_type: 'image/png',
+                                /* eslint-enable camelcase */
+                                data: 'abc'
+                            }
+                        }}
                     }
                 ],
                 // TODO state
                 [
                     [{
                         [typeName]: 'Test',
-                        [attachmentName]: {'favicon.png': {
-                            /* eslint-disable camelcase */
-                            content_type: 'image/png', data: 'abc'
-                            /* eslint-enable camelcase */
-                        }}
-                    }],
-                    {entities: {Test: {[attachmentName]: {
-                        data: {
-                            contentTypeRegularExpressionPattern:
-                                'image/(?:p?jpe?g|png|svg)',
-                            fileName: {
-                                regularExpressionPattern:
-                                    '.+\\.(?:jpe?g|png|svg)'
-                            },
-                            maximumNumber: 1,
-                            nullable: false
-                        }
-                    }}}},
-                    {
-                        fillUp: {[typeName]: 'Test', [attachmentName]: {
-                            'favicon.png': {
-                                /* eslint-disable camelcase */
-                                content_type: 'image/png', data: 'abc'
-                                /* eslint-enable camelcase */
-                            }
-                        }},
-                        incremental: {[typeName]: 'Test', [attachmentName]: {
-                            'favicon.png': {
-                                /* eslint-disable camelcase */
-                                content_type: 'image/png', data: 'abc'
-                                /* eslint-enable camelcase */
-                            }
-                        }},
-                        '': {[typeName]: 'Test', [attachmentName]: {
-                            /* eslint-disable camelcase */
-                            'favicon.png': {
-                                content_type: 'image/png',
-                                data: 'abc'
-                            }
-                            /* eslint-enable camelcase */
-                        }}
-                    }
-                ],
-                [
-                    [{
-                        [typeName]: 'Test',
                         [attachmentName]: {test: {
                             /* eslint-disable camelcase */
-                            content_type: 'text/plain', data: ''
+                            content_type: 'text/plain',
                             /* eslint-enable camelcase */
+                            data: ''
                         }}
                     }],
                     {entities: {Test: {[attachmentName]: {test: {
@@ -3051,21 +3058,24 @@ describe('databaseHelper', ():void => {
                     {
                         fillUp: {[typeName]: 'Test', [attachmentName]: {test: {
                             /* eslint-disable camelcase */
-                            content_type: 'text/plain', data: ''
+                            content_type: 'text/plain',
                             /* eslint-enable camelcase */
+                            data: ''
                         }}},
                         incremental: {
                             [typeName]: 'Test',
                             [attachmentName]: {test: {
                                 /* eslint-disable camelcase */
-                                content_type: 'text/plain', data: ''
+                                content_type: 'text/plain',
                                 /* eslint-enable camelcase */
+                                data: ''
                             }}
                         },
                         '': {[typeName]: 'Test', [attachmentName]: {test: {
                             /* eslint-disable camelcase */
-                            content_type: 'text/plain', data: ''
+                            content_type: 'text/plain',
                             /* eslint-enable camelcase */
+                            data: ''
                         }}}
                     }
                 ],
