@@ -1515,7 +1515,7 @@ describe('databaseHelper', ():void => {
                         },
                         {[typeName]: 'Test'}
                     ],
-                    {entities: {Test: {[attachmentName]: {'.*': {
+                    {entities: {Test: {[attachmentName]: {test: {
                         onCreateExpression:
                             `(newDocument[name].data += ' footer') && ` +
                             'newDocument[name]'
