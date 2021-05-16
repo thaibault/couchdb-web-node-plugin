@@ -1802,7 +1802,7 @@ describe('databaseHelper', ():void => {
                 ],
                 [
                     [{[typeName]: 'Test'}],
-                    {entities: {Test: {[attachmentName]: {'.*': {
+                    {entities: {Test: {[attachmentName]: {test: {
                         default: {test: {
                             /* eslint-disable camelcase */
                             data: '', content_type: 'text/plain'
@@ -2989,6 +2989,7 @@ describe('databaseHelper', ():void => {
                         }}}
                     }
                 ],
+                // TODO state
                 [
                     [{
                         [typeName]: 'Test',
