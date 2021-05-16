@@ -1199,8 +1199,6 @@ describe('databaseHelper', ():void => {
                 ).toThrow(new RegExp(`^${test[2]}: .+[.!]$`, 's'))
             }
             // endregion
-            // TODO
-            return
             // region allowed writes
             for (const test of [
                 // region general environment
@@ -1753,7 +1751,7 @@ describe('databaseHelper', ():void => {
                     }
                 ],
                 // endregion
-                // region property existents
+                // region property existence
                 [
                     [
                         {[typeName]: 'Test', a: null},
@@ -3608,7 +3606,7 @@ describe('databaseHelper', ():void => {
         [
             {[typeName]: 'Test'},
             {[typeName]: 'Test'},
-            {entities: {Test: {[attachmentName]: {data: {default: {test: {
+            {entities: {Test: {[attachmentName]: {test: {default: {test: {
                 /* eslint-disable camelcase */
                 data: '', content_type: 'text/plain'
                 /* eslint-enable camelcase */
