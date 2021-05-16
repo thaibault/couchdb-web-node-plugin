@@ -312,14 +312,20 @@ export class DatabaseHelper {
             return ''
         }
         const fileNameMatchesModelType:Function = (
-            fileName:string, fileType:FileSpecification
-        ):boolean =>
-            fileType.fileName.value as unknown as boolean &&
-            fileType.fileName.value === fileName ||
-            !fileType.fileName.value &&
-            fileType.fileName.regularExpressionPattern as unknown as boolean &&
-            (new RegExp(fileType.fileName.regularExpressionPattern as string))
-                .test(fileName)
+            typeName:string, fileName:string, fileType:FileSpecification
+        ):boolean => {
+            if (fileType.fileName) {
+                if (fileType.fileName.value)
+                    return fileType.fileName.value === fileName
+
+                if (fileType.fileName.regularExpressionPattern)
+                    return (new RegExp(
+                        fileType.fileName.regularExpressionPattern as string
+                    )).test(fileName)
+            }
+
+            return typeName === fileName
+        }
         const getFileNameByPrefix:Function = (
             prefix?:string, attachments?:Attachments
         ):null|string => {
@@ -1443,7 +1449,7 @@ export class DatabaseHelper {
                             if (attachments.hasOwnProperty(fileName))
                                 for (const type in model[name])
                                     if (fileNameMatchesModelType(
-                                        fileName, model[name]![type]
+                                        type, fileName, model[name]![type]
                                     )) {
                                         checkWriteableMutableNullable(
                                             model[name]![type as
@@ -1803,8 +1809,10 @@ export class DatabaseHelper {
                         let matched:boolean = false
                         for (const type in model[specialNames.attachment])
                             if (fileNameMatchesModelType(
-                                name, model[specialNames.attachment]![type]
-                            )(new RegExp(type)).test(name)) {
+                                type,
+                                name,
+                                model[specialNames.attachment]![type]
+                            )) {
                                 attachmentToTypeMapping[type].push(name)
                                 matched = true
                                 break
@@ -1859,23 +1867,25 @@ export class DatabaseHelper {
                     let aggregatedSize:number = 0
                     for (const fileName of attachmentToTypeMapping[type]) {
                         if (
-                            specification.regularExpressionPattern &&
+                            specification.fileName?.regularExpressionPattern &&
                             !new RegExp(
-                                specification.regularExpressionPattern as
-                                    string
+                                specification.fileName
+                                    .regularExpressionPattern as string
                             ).test(fileName)
                         )
                             throwError(
                                 'AttachmentName: given attachment name "' +
                                 `${fileName}" doesn't satisfy specified ` +
                                 'regular expression pattern "' +
-                                specification.regularExpressionPattern +
+                                specification.fileName
+                                    .regularExpressionPattern +
                                 `" from type "${type}"${pathDescription}.`
                             )
                         else if (
-                            specification.invertedRegularExpressionPattern &&
+                            specification
+                                .fileName?.invertedRegularExpressionPattern &&
                             new RegExp(
-                                specification
+                                specification.fileName
                                     .invertedRegularExpressionPattern as string
                             ).test(fileName)
                         )
@@ -1883,7 +1893,7 @@ export class DatabaseHelper {
                                 'InvertedAttachmentName: given attachment ' +
                                 `name "${fileName}" does satisfy specified ` +
                                 'regular expression pattern "' +
-                                specification
+                                specification.fileName
                                     .invertedRegularExpressionPattern +
                                 `" from type "${type}"${pathDescription}.`
                             )

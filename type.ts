@@ -118,7 +118,7 @@ export type PropertySpecification = {
     writable?:boolean|null
 }
 export type FileSpecification = PropertySpecification & {
-    fileName:PropertySpecification
+    fileName?:PropertySpecification
 }
 export type Model = Mapping<PropertySpecification> & {
     _allowedRoles?:AllowedRoles|null
