@@ -59,7 +59,7 @@ export type AllowedRoles = Array<string>|string|{
     write:Array<string>|string
 }
 // Recursive mapping from operations to their allowed roles.
-export type NormalizedAllowedRoles = {
+export type OperationToAllowedRolesMapping = {
     properties?:AllowedModelRolesMapping
     read:Array<string>
     write:Array<string>
@@ -68,7 +68,7 @@ export type NormalizedAllowedRoles = {
     Maps an artefact (usually type or property) to corresponding operations
     mapped to their allowed roles.
 */
-export type AllowedModelRolesMapping = Mapping<NormalizedAllowedRoles>
+export type AllowedModelRolesMapping = Mapping<OperationToAllowedRolesMapping>
 export type Constraint = {
     description?:null|string
     evaluation:string

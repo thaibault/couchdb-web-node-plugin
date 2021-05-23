@@ -39,12 +39,12 @@ import {
     DatabaseFetch,
     DatabaseResponse,
     Document,
+    DocumentRevisionIDMeta,
     FileSpecification,
     Model,
     ModelConfiguration,
     Models,
-    NormalizedAllowedRoles,
-    DocumentRevisionIDMeta,
+    OperationToAllowedRolesMapping,
     Services,
     SpecialPropertyNames
 } from './type'
@@ -621,22 +621,25 @@ export class Helper {
      */
     static normalizeAllowedModelRoles(
         roles:AllowedRoles
-    ):NormalizedAllowedRoles {
+    ):OperationToAllowedRolesMapping {
         if (Array.isArray(roles))
             return {read: roles, write: roles}
+
         if (typeof roles === 'object') {
-            const result:NormalizedAllowedRoles = {read: [], write: []}
+            const result:OperationToAllowedRolesMapping = {read: [], write: []}
+
             for (const type in result)
                 if (roles.hasOwnProperty(type))
                     if (Array.isArray(roles[type as 'read'|'write']))
                         result[type as 'read'|'write'] =
                             roles[type as 'read'|'write'] as Array<string>
                     else
-                        result[type as 'read'|'write'] = [
-                            roles[type as 'read'|'write'] as string
-                        ]
+                        result[type as 'read'|'write'] =
+                            [roles[type as 'read'|'write'] as string]
+
             return result
         }
+
         return {read: [roles], write: [roles]}
     }
     // endregion
