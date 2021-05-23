@@ -32,7 +32,7 @@ import {
     FullAttachment,
     Model,
     Models,
-    NormalizedAllowedRoles,
+    OperationToAllowedRolesMapping,
     PropertySpecification,
     SecuritySettings,
     SpecialPropertyNames,
@@ -49,18 +49,23 @@ export class DatabaseHelper {
     /**
      * Authenticates given document update against given mapping of allowed
      * roles for writing into corresponding model instances.
+     *
      * @param newDocument - Updated document.
      * @param oldDocument - If an existing document should be updated its given
      * here.
+     *
      * @param userContext - Contains meta information about currently acting
      * user.
      * @param securitySettings - Database security settings.
      * @param allowedModelRolesMapping - Allowed roles for given models.
+     *
      * @param idPropertyName - Property name indicating the id field name.
      * @param typePropertyName - Property name indicating to which model a
      * document belongs to.
+     *
      * @param read - Indicates whether a read or write of given document should
      * be authorized or not.
+     *
      * @returns Throws an exception if authorisation is not accepted and "true"
      * otherwise.
      */
@@ -82,13 +87,16 @@ export class DatabaseHelper {
         read = false
     ):true {
         /*
-            NOTE: Special documents and change sequences are going through this
-            function and should will not be validated.
+            NOTE: Special documents and change sequences are not checked
+            further since their is not specified model.
         */
         if (!newDocument.hasOwnProperty(typePropertyName))
             return true
 
-        const allowedRoles:NormalizedAllowedRoles & {
+        const operationType:'read'|'write' = read ? 'read': 'write'
+
+        // Define roles who are allowed to read and write everything.
+        const allowedRoles:OperationToAllowedRolesMapping & {
             properties:AllowedModelRolesMapping
         } = {
             properties: {},
@@ -96,6 +104,7 @@ export class DatabaseHelper {
             write: ['_admin']
         }
 
+        // A "readonlymember" is allowed to read all none design documents.
         if (
             newDocument.hasOwnProperty(idPropertyName) &&
             (newDocument[idPropertyName] as string).startsWith(
@@ -105,52 +114,38 @@ export class DatabaseHelper {
             allowedRoles.read.push('readonlymember')
 
         let userRolesDescription:string = `Current user doesn't own any role`
-        const operationType:'read'|'write' = read ? 'read': 'write'
 
         if (userContext) {
+
             if (!('name' in userContext))
                 userContext.name = '"unknown"'
+
             if (userContext.roles.length) {
                 // region determine model specific allowed roles
                 if (
                     allowedModelRolesMapping &&
-                    typePropertyName &&
-                    newDocument.hasOwnProperty(typePropertyName) &&
+                    typeof newDocument[typePropertyName] === 'string' &&
                     allowedModelRolesMapping.hasOwnProperty(
                         newDocument[typePropertyName] as string
                     )
-                )
-                    for (const type in allowedRoles)
-                        if (
-                            allowedRoles.hasOwnProperty(type) &&
-                            newDocument.hasOwnProperty(typePropertyName)
-                        )
-                            if (['read', 'write'].includes(type))
-                                (
-                                    allowedRoles[
-                                        type as keyof NormalizedAllowedRoles
-                                    ] as Array<string>
-                                ) = (
-                                    allowedRoles[
-                                        type as keyof NormalizedAllowedRoles
-                                    ] as Array<string>
-                                ).concat(
-                                    allowedModelRolesMapping[
-                                        newDocument[typePropertyName] as
-                                            keyof AllowedModelRolesMapping
-                                    ][type as keyof NormalizedAllowedRoles] as
-                                        Array<string> ||
-                                    []
-                                )
-                            else if (allowedModelRolesMapping[
-                                newDocument[typePropertyName] as
-                                    keyof AllowedModelRolesMapping
-                            ].hasOwnProperty(type))
-                                allowedRoles.properties =
-                                    allowedModelRolesMapping[
-                                        newDocument[typePropertyName] as
-                                            keyof AllowedModelRolesMapping
-                                    ].properties as AllowedModelRolesMapping
+                ) {
+                    const allowedModelRoles = allowedModelRolesMapping[
+                        newDocument[typePropertyName] as string
+                    ]
+
+                    for (const operation of ['read', 'write'] as const)
+                        allowedRoles[operation] =
+                            allowedRoles[operation].concat(
+                                allowedModelRoles[operation] as
+                                    Array<string> ||
+                                []
+                            )
+
+                    if (allowedModelRoles.properties)
+                        allowedRoles.properties =
+                            allowedModelRoles.properties as
+                                AllowedModelRolesMapping
+                }
                 // endregion
                 // TODO check for each property recursively
                 const relevantRoles:Array<string> = allowedRoles[operationType]
@@ -160,7 +155,7 @@ export class DatabaseHelper {
 
                 userRolesDescription = `Current user "${userContext.name}" ` +
                     `owns the following roles: "` +
-                    `${userContext.roles.join('", "')}".`
+                    `${userContext.roles.join('", "')}"`
                 //
             } else
                 userRolesDescription =

@@ -365,8 +365,8 @@ export class Database implements PluginHandler {
                 }
             ] as const) {
                 /*
-                    NOTE: This code should be widely supported since not
-                    transpiler interacts here.
+                    NOTE: This code should be widely supported since no
+                    transpiler can interacts here easily.
                 */
                 const code:string = 'function(...parameter) {\n' +
                     `    return require('helper').default.${type.methodName}` +
