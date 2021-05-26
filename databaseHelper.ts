@@ -1165,7 +1165,7 @@ export class DatabaseHelper {
                                         fileNameMatchesModelType(
                                             type, fileName, model[name]![type]
                                         )
-                                )
+                                    )
                             }
                             const propertySpecification:PropertySpecification =
                                 model[name]![
