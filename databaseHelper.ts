@@ -1156,12 +1156,19 @@ export class DatabaseHelper {
                                             ).data === null
                                         ) &&
                                         oldAttachments[fileName] &&
-                                        oldAttachments[fileName]
-                                            .hasOwnProperty('data') &&
                                         (
-                                            oldAttachments[fileName] as
+                                            oldAttachments[fileName]
+                                                .hasOwnProperty('data') &&
+                                            (oldAttachments[fileName] as
                                                 FullAttachment
-                                        ).data !== null &&
+                                            ).data !== null ||
+                                            (oldAttachments[fileName] as
+                                                StubAttachment
+                                            ).stub &&
+                                            (oldAttachments[fileName] as
+                                                StubAttachment
+                                            ).digest
+                                        ) &&
                                         fileNameMatchesModelType(
                                             type, fileName, model[name]![type]
                                         )
@@ -1732,11 +1739,18 @@ export class DatabaseHelper {
                                             .content_type ===
                                                 oldAttachments[fileName]
                                                     .content_type &&
-                                        (newAttachments[fileName] as
-                                            FullAttachment
-                                        ).data === (oldAttachments[fileName] as
-                                            FullAttachment
-                                        ).data
+                                        (
+                                            (newAttachments[fileName] as
+                                                FullAttachment
+                                            ).data === (oldAttachments[fileName] as
+                                                FullAttachment
+                                            ).data ||
+                                            (newAttachments[fileName] as
+                                                StubAttachment
+                                            ).digest === (oldAttachments[fileName] as
+                                                StubAttachment
+                                            ).digest
+                                        )
                                     ) {
                                         if (
                                             newAttachments[fileName] ===
@@ -1784,10 +1798,17 @@ export class DatabaseHelper {
                             newAttachments[fileName].content_type ===
                                 oldAttachments[fileName].content_type &&
                             (
-                                newAttachments[fileName] as FullAttachment
-                            ).data === (
-                                oldAttachments[fileName] as FullAttachment
-                            ).data
+                                (
+                                    newAttachments[fileName] as FullAttachment
+                                ).data === (
+                                    oldAttachments[fileName] as FullAttachment
+                                ).data ||
+                                (
+                                    newAttachments[fileName] as StubAttachment
+                                ).digest === (
+                                    oldAttachments[fileName] as StubAttachment
+                                ).digest
+                            )
                         ))
                             changedPath = parentNames.concat(
                                 specialNames.attachment,
