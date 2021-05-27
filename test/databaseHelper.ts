@@ -3041,7 +3041,6 @@ describe('databaseHelper', ():void => {
                         }}
                     }
                 ],
-                // TODO state
                 [
                     [{
                         [typeName]: 'Test',
@@ -3293,8 +3292,9 @@ describe('databaseHelper', ():void => {
                             [typeName]: 'Test',
                             [attachmentName]: {a: {
                                 /* eslint-disable camelcase */
-                                content_type: 'image/jpeg', data: ''
+                                content_type: 'image/jpeg',
                                 /* eslint-enable camelcase */
+                                data: ''
                             }}
                         }
                     ],
@@ -3316,8 +3316,9 @@ describe('databaseHelper', ():void => {
                             [typeName]: 'Test',
                             [attachmentName]: {a: {
                                 /* eslint-disable camelcase */
-                                content_type: 'image/jpeg', data: ''
+                                content_type: 'image/jpeg',
                                 /* eslint-enable camelcase */
+                                data: ''
                             }}
                         }
                     ],
@@ -3333,8 +3334,9 @@ describe('databaseHelper', ():void => {
                         {[typeName]: 'Test', a: 'a'},
                         {[typeName]: 'Test', [attachmentName]: {a: {
                             /* eslint-disable camelcase */
-                            content_type: 'image/jpeg', data: ''
+                            content_type: 'image/jpeg',
                             /* eslint-enable camelcase */
+                            data: ''
                         }}}
                     ],
                     {entities: {Test: {[attachmentName]: {a: {}}, a: {}}}},
@@ -3343,8 +3345,9 @@ describe('databaseHelper', ():void => {
                             [typeName]: 'Test',
                             [attachmentName]: {a: {
                                 /* eslint-disable camelcase */
-                                content_type: 'image/jpeg', data: ''
+                                content_type: 'image/jpeg',
                                 /* eslint-enable camelcase */
+                                data: ''
                             }},
                             a: 'a'
                         },
@@ -3359,8 +3362,9 @@ describe('databaseHelper', ():void => {
                             [typeName]: 'Test',
                             [attachmentName]: {a: {
                                 /* eslint-disable camelcase */
-                                content_type: 'image/jpeg', data: ''
+                                content_type: 'image/jpeg',
                                 /* eslint-enable camelcase */
+                                data: ''
                             }}
                         }
                     ],
@@ -3369,8 +3373,9 @@ describe('databaseHelper', ():void => {
                         fillUp: {
                             [typeName]: 'Test', [attachmentName]: {a: {
                                 /* eslint-disable camelcase */
-                                content_type: 'image/jpeg', data: ''
+                                content_type: 'image/jpeg',
                                 /* eslint-enable camelcase */
+                                data: ''
                             }},
                             a: 'a'
                         },
@@ -3385,8 +3390,9 @@ describe('databaseHelper', ():void => {
                             [typeName]: 'Test',
                             [attachmentName]: {a: {
                                 /* eslint-disable camelcase */
-                                content_type: 'image/jpeg', data: ''
+                                content_type: 'image/jpeg',
                                 /* eslint-enable camelcase */
+                                data: ''
                             }}
                         }
                     ],
@@ -3401,8 +3407,9 @@ describe('databaseHelper', ():void => {
                             [typeName]: 'Test',
                             [attachmentName]: {a: {
                                 /* eslint-disable camelcase */
-                                content_type: 'image/jpeg', data: ''
+                                content_type: 'image/jpeg',
                                 /* eslint-enable camelcase */
+                                data: ''
                             }},
                             a: 'a'
                         },
@@ -3698,6 +3705,7 @@ describe('databaseHelper', ():void => {
                 ...Tools.copy(configuration.couchdb.model),
                 updateStrategy: 'migrate'
             }
+
             for (
                 const propertyName in defaultModelConfiguration.entities._base
             )
@@ -3710,14 +3718,17 @@ describe('databaseHelper', ():void => {
                     delete defaultModelConfiguration.entities._base[
                         propertyName
                     ]
+
             const models:Models = Helper.extendModels(Tools.extend(
                 true, Tools.copy(defaultModelConfiguration), modelConfiguration
             ))
             const testModelConfiguration:ModelConfiguration = Tools.extend(
                 true, Tools.copy(defaultModelConfiguration), modelConfiguration
             )
+
             delete testModelConfiguration.property.defaultSpecification
             delete testModelConfiguration.entities
+
             expect(DatabaseHelper.validateDocumentUpdate(
                 newDocument,
                 oldDocument,
