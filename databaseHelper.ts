@@ -104,7 +104,7 @@ export class DatabaseHelper {
             write: ['_admin']
         }
 
-        // A "readonlymember" is allowed to read all none design documents.
+        // A "readonlymember" is allowed to read all but design documents.
         if (
             newDocument.hasOwnProperty(idPropertyName) &&
             (newDocument[idPropertyName] as string).startsWith(

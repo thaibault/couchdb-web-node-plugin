@@ -3292,8 +3292,9 @@ describe('databaseHelper', ():void => {
                             [typeName]: 'Test',
                             [attachmentName]: {a: {
                                 /* eslint-disable camelcase */
-                                content_type: 'image/jpeg', data: ''
+                                content_type: 'image/jpeg',
                                 /* eslint-enable camelcase */
+                                data: ''
                             }}
                         }
                     ],
@@ -3315,8 +3316,9 @@ describe('databaseHelper', ():void => {
                             [typeName]: 'Test',
                             [attachmentName]: {a: {
                                 /* eslint-disable camelcase */
-                                content_type: 'image/jpeg', data: ''
+                                content_type: 'image/jpeg',
                                 /* eslint-enable camelcase */
+                                data: ''
                             }}
                         }
                     ],
@@ -3332,8 +3334,9 @@ describe('databaseHelper', ():void => {
                         {[typeName]: 'Test', a: 'a'},
                         {[typeName]: 'Test', [attachmentName]: {a: {
                             /* eslint-disable camelcase */
-                            content_type: 'image/jpeg', data: ''
+                            content_type: 'image/jpeg',
                             /* eslint-enable camelcase */
+                            data: ''
                         }}}
                     ],
                     {entities: {Test: {[attachmentName]: {a: {}}, a: {}}}},
@@ -3342,8 +3345,9 @@ describe('databaseHelper', ():void => {
                             [typeName]: 'Test',
                             [attachmentName]: {a: {
                                 /* eslint-disable camelcase */
-                                content_type: 'image/jpeg', data: ''
+                                content_type: 'image/jpeg',
                                 /* eslint-enable camelcase */
+                                data: ''
                             }},
                             a: 'a'
                         },
@@ -3358,8 +3362,9 @@ describe('databaseHelper', ():void => {
                             [typeName]: 'Test',
                             [attachmentName]: {a: {
                                 /* eslint-disable camelcase */
-                                content_type: 'image/jpeg', data: ''
+                                content_type: 'image/jpeg',
                                 /* eslint-enable camelcase */
+                                data: ''
                             }}
                         }
                     ],
@@ -3368,8 +3373,9 @@ describe('databaseHelper', ():void => {
                         fillUp: {
                             [typeName]: 'Test', [attachmentName]: {a: {
                                 /* eslint-disable camelcase */
-                                content_type: 'image/jpeg', data: ''
+                                content_type: 'image/jpeg',
                                 /* eslint-enable camelcase */
+                                data: ''
                             }},
                             a: 'a'
                         },
@@ -3384,8 +3390,9 @@ describe('databaseHelper', ():void => {
                             [typeName]: 'Test',
                             [attachmentName]: {a: {
                                 /* eslint-disable camelcase */
-                                content_type: 'image/jpeg', data: ''
+                                content_type: 'image/jpeg',
                                 /* eslint-enable camelcase */
+                                data: ''
                             }}
                         }
                     ],
@@ -3400,8 +3407,9 @@ describe('databaseHelper', ():void => {
                             [typeName]: 'Test',
                             [attachmentName]: {a: {
                                 /* eslint-disable camelcase */
-                                content_type: 'image/jpeg', data: ''
+                                content_type: 'image/jpeg',
                                 /* eslint-enable camelcase */
+                                data: ''
                             }},
                             a: 'a'
                         },
