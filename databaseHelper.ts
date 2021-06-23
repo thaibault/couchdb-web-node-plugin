@@ -192,7 +192,7 @@ export class DatabaseHelper {
         securitySettings:SecuritySettings,
         modelConfiguration:BaseModelConfiguration,
         models:Models = {},
-        toJSON?:(value:any) => string
+        toJSON?:(value:unknown) => string
     ):Document {
         // region ensure needed environment
         const throwError:Function = (
@@ -206,17 +206,23 @@ export class DatabaseHelper {
                     result[name] = additionalErrorData[name as keyof object]
             throw result
         }
+
         const now:Date = new Date()
         const nowUTCTimestamp:number = Date.UTC(
             now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
             now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds(),
             now.getUTCMilliseconds()
         ) / 1000
+
         const specialNames:SpecialPropertyNames =
             modelConfiguration.property.name.special
         const idName:string = specialNames.id
         const revisionName:string = specialNames.revision
         const typeName:string = specialNames.type
+
+        if (oldDocument && oldDocument[typeName] && !newDocument[typeName])
+            newDocument[typeName] = oldDocument[typeName]
+
         let id:string = ''
         let revision:string = ''
         const setDocumentEnvironment:ProcedureFunction = ():void => {
@@ -228,6 +234,7 @@ export class DatabaseHelper {
                 ''
         }
         setDocumentEnvironment()
+
         /*
             NOTE: Needed if we are able to validate users table.
 
@@ -257,6 +264,7 @@ export class DatabaseHelper {
             ).delete(`${id}-${revision}`)
             return newDocument
         }
+
         if (['latest', 'upsert'].includes(revision))
             if (oldDocument?.hasOwnProperty(revisionName))
                 revision =
@@ -266,11 +274,13 @@ export class DatabaseHelper {
                 throwError('Revision: No old document available to update.')
             else
                 delete newDocument[revisionName]
+
         let updateStrategy:string = modelConfiguration.updateStrategy
         if (newDocument.hasOwnProperty(specialNames.strategy)) {
             updateStrategy = newDocument[specialNames.strategy] as string
             delete newDocument[specialNames.strategy]
         }
+
         let serializeData:(value:any) => string
         if (toJSON)
             serializeData = toJSON
@@ -279,6 +289,7 @@ export class DatabaseHelper {
                 (object:any):string => JSON.stringify(object, null, 4)
         else
             throwError('Needed "serializer" is not available.')
+
         const serialize = (value:any):string =>
             value instanceof Error ? `${value}` : serializeData(value)
         // / region collect old model types to migrate.
@@ -306,6 +317,7 @@ export class DatabaseHelper {
                 return value.trim()
             return ''
         }
+
         const fileNameMatchesModelType:Function = (
             typeName:string, fileName:string, fileType:FileSpecification
         ):boolean => {
@@ -321,6 +333,7 @@ export class DatabaseHelper {
 
             return typeName === fileName
         }
+
         const getFileNameByPrefix:Function = (
             prefix?:string, attachments?:Attachments
         ):null|string => {
@@ -343,6 +356,7 @@ export class DatabaseHelper {
 
             return null
         }
+
         const attachmentWithPrefixExists:Function = (
             namePrefix:string
         ):boolean => {
@@ -365,6 +379,7 @@ export class DatabaseHelper {
 
             return false
         }
+
         const evaluate:Function = (
             givenExpression?:null|string,
             isEvaluation:boolean = false,
@@ -432,6 +447,7 @@ export class DatabaseHelper {
             }
             throwError('No expression to evaluate provided.', 'empty')
         }
+
         const checkDocument:Function = (
             newDocument:Document,
             oldDocument:Document|null,
