@@ -86,11 +86,16 @@ export class DatabaseHelper {
         designDocumentNamePrefix:string = '_design/',
         read = false
     ):true {
+        const type:string|undefined =
+            newDocument[typePropertyName] as string ??
+                (oldDocument && oldDocument[typePropertyName]) as string
         /*
             NOTE: Special documents and change sequences are not checked
             further since their is not specified model.
+            If non special document given but missing type property further
+            validation will complain.
         */
-        if (!newDocument.hasOwnProperty(typePropertyName))
+        if (!type)
             return true
 
         const operationType:'read'|'write' = read ? 'read': 'write'
@@ -124,14 +129,10 @@ export class DatabaseHelper {
                 // region determine model specific allowed roles
                 if (
                     allowedModelRolesMapping &&
-                    typeof newDocument[typePropertyName] === 'string' &&
-                    allowedModelRolesMapping.hasOwnProperty(
-                        newDocument[typePropertyName] as string
-                    )
+                    type &&
+                    allowedModelRolesMapping.hasOwnProperty(type)
                 ) {
-                    const allowedModelRoles = allowedModelRolesMapping[
-                        newDocument[typePropertyName] as string
-                    ]
+                    const allowedModelRoles = allowedModelRolesMapping[type]
 
                     for (const operation of ['read', 'write'] as const)
                         allowedRoles[operation] =
