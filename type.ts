@@ -79,6 +79,10 @@ export type ConstraintKey =
     'arrayConstraintExecution'|'arrayConstraintExpression'|
     'conflictingConstraintExecution'|'conflictingConstraintExpression'|
     'constraintExecution'|'constraintExpression'
+export type SelectionMapping = {
+    label:string
+    value:unknown
+}
 export type PropertySpecification = {
     allowedRoles?:AllowedRoles|null
     arrayConstraintExecution?:Constraint|null
@@ -111,7 +115,7 @@ export type PropertySpecification = {
     onUpdateExecution?:null|string
     onUpdateExpression?:null|string
     regularExpressionPattern?:null|string
-    selection?:Array<unknown>|null
+    selection?:Array<unknown>|Array<SelectionMapping>|Mapping<unknown>|null
     trim?:boolean|null
     type?:TypeSpecification|null
     value?:unknown

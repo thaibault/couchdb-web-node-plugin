@@ -779,19 +779,36 @@ describe('databaseHelper', ():void => {
                 // Values have to be in their specified limits.
                 [
                     [{[typeName]: 'Test', a: 2}],
-                    {entities: {Test: {a: {type: 'number', selection: []}}}},
+                    {entities: {Test: {a: {selection: [], type: 'number'}}}},
                     'Selection'
                 ],
                 [
                     [{[typeName]: 'Test', a: 2}],
-                    {entities: {Test: {a: {type: 'number', selection: [1]}}}},
+                    {entities: {Test: {a: {selection: [1], type: 'number'}}}},
                     'Selection'
                 ],
                 [
                     [{[typeName]: 'Test', a: 2}],
-                    {entities: {Test: {a: {type: 'integer', selection: [
-                        1, 3
-                    ]}}}},
+                    {entities: {Test: {a: {
+                        selection: [1, 3], type: 'integer'
+                    }}}},
+                    'Selection'
+                ],
+                [
+                    [{[typeName]: 'Test', a: '2'}],
+                    {entities: {Test: {a: {
+                        selection: {'1': 'a', '3': 'c'}, type: 'string'
+                    }}}},
+                    'Selection'
+                ],
+                [
+                    [{[typeName]: 'Test', a: 2}],
+                    {entities: {Test: {a: {
+                        selection: [
+                            {label: 'a', value: 1}, {label: 'c', value: 3}
+                        ],
+                        type: 'number'
+                    }}}},
                     'Selection'
                 ],
                 // endregion
@@ -2811,7 +2828,7 @@ describe('databaseHelper', ():void => {
                 // region selection
                 [
                     [{[typeName]: 'Test', a: 2}],
-                    {entities: {Test: {a: {type: 'number', selection: [2]}}}},
+                    {entities: {Test: {a: {selection: [2], type: 'number'}}}},
                     {
                         fillUp: {[typeName]: 'Test', a: 2},
                         incremental: {[typeName]: 'Test', a: 2},
@@ -2821,7 +2838,32 @@ describe('databaseHelper', ():void => {
                 [
                     [{[typeName]: 'Test', a: 2}],
                     {entities: {Test: {a: {
-                        type: 'number', selection: [1, 2]
+                        selection: [1, 2], type: 'number'
+                    }}}},
+                    {
+                        fillUp: {[typeName]: 'Test', a: 2},
+                        incremental: {[typeName]: 'Test', a: 2},
+                        '': {[typeName]: 'Test', a: 2}
+                    }
+                ],
+                [
+                    [{[typeName]: 'Test', a: '2'}],
+                    {entities: {Test: {a: {
+                        selection: {'1': 'a', '2': 'b'}, type: 'string'
+                    }}}},
+                    {
+                        fillUp: {[typeName]: 'Test', a: '2'},
+                        incremental: {[typeName]: 'Test', a: '2'},
+                        '': {[typeName]: 'Test', a: '2'}
+                    }
+                ],
+                [
+                    [{[typeName]: 'Test', a: 2}],
+                    {entities: {Test: {a: {
+                        selection: [
+                            {label: 'a', value: 1}, {label: 'b', value: 2}
+                        ],
+                        type: 'number'
                     }}}},
                     {
                         fillUp: {[typeName]: 'Test', a: 2},
