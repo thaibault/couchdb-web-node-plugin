@@ -35,6 +35,7 @@ import {
     OperationToAllowedRolesMapping,
     PropertySpecification,
     SecuritySettings,
+    SelectionMapping,
     SpecialPropertyNames,
     StubAttachment,
     Type,
@@ -814,8 +815,15 @@ export class DatabaseHelper {
                     const selection = Array.isArray(
                         propertySpecification.selection
                     ) ?
-                        propertySpecification.selection :
-                        Object.values(propertySpecification.selection)
+                        propertySpecification.selection.map(
+                            (value:SelectionMapping|unknown):unknown =>
+                                (value as SelectionMapping)?.value ===
+                                    undefined ?
+                                        value :
+                                        (value as SelectionMapping).value
+                        ) :
+                        Object.keys(propertySpecification.selection)
+
                     if (!selection.includes(newValue))
                         throwError(
                             `Selection: Property "${name}" (type ` +
