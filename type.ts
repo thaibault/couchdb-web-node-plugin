@@ -139,6 +139,13 @@ export type Model = Mapping<PropertySpecification> & {
     _onUpdateExpression?:null|string
 }
 export type Models = Mapping<Model>
+export const PrimitiveTypes = [
+    'boolean',
+    'DateTime',
+    'integer',
+    'number',
+    'string'
+] as const
 export type DocumentContent =
     Array<DocumentContent>|PlainObject<Primitive>|Primitive
 export type DocumentStrategyMeta = {_updateStrategy?:string}
@@ -178,7 +185,7 @@ export type SpecialPropertyNames = {
     revisions:'_revisions'
     revisionsInformation:'_revs_info'
     strategy:UpdateStrategy
-    type:keyof DocumentTypeMeta
+    type:keyof DocumentTypeMeta|typeof PrimitiveTypes[number]
     update:{
         execution:string
         expression:string
