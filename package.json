@@ -29,6 +29,7 @@
     "helper.ts",
     "helper.js",
     "index.ts",
+    "type.js",
     "type.ts"
   ],
   "main": "index.js",
@@ -425,7 +426,7 @@
     },
     "injection": {
       "entry": {
-        "__evaluate__": "2 < self.givenCommandLineArguments.length && self.givenCommandLineArguments[2] === 'test' ? 'test' : {helper: './helper', index: './index'}"
+        "__evaluate__": "2 < self.givenCommandLineArguments.length && self.givenCommandLineArguments[2] === 'test' ? 'test' : {helper: './helper', index: './index', type: './type'}"
       }
     },
     "module": {
