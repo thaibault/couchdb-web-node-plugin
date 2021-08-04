@@ -60,6 +60,7 @@
     "pouchdb-server": "*"
   },
   "devDependencies": {
+    "@babel/eslint-parser": "*",
     "@types/ejs": "*",
     "@types/jest": "*",
     "@types/loader-utils": "*",
@@ -69,7 +70,6 @@
     "@types/workbox-webpack-plugin": "*",
     "@typescript-eslint/eslint-plugin": "*",
     "@typescript-eslint/parser": "*",
-    "babel-eslint": "*",
     "clientnode": "*",
     "documentation-website": "*",
     "eslint": "*",
