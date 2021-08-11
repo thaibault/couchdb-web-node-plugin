@@ -24,15 +24,15 @@
     "web"
   ],
   "files": [
-    "databaseHelper.ts",
+    "databaseHelper.d.ts",
     "databaseHelper.js",
-    "helper.ts",
+    "helper.d.ts",
+    "index.d.ts",
+    "index.js",
     "helper.js",
-    "index.ts",
-    "type.js",
-    "type.ts"
+    "type.d.ts",
+    "type.js"
   ],
-  "main": "index.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/thaibault/couchdb-web-node-plugin.git"
