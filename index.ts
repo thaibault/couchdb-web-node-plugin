@@ -368,10 +368,10 @@ export class Database implements PluginHandler {
                     NOTE: This code should be widely supported since no
                     transpiler can interacts here easily.
                 */
-                const code:string = 'function(...parameter) {\n' +
+                const code:string = 'function(...parameters) {\n' +
                     `    return require('helper').default.${type.methodName}` +
-                        `(...parameter.concat([${type.serializedParameter}])` +
-                        ')\n' +
+                        `(...parameters.concat([${type.serializedParameter}]` +
+                        '))\n' +
                     '}'
                 try {
                     new Function(`return ${code}`)
@@ -876,18 +876,18 @@ export class Database implements PluginHandler {
             const nativeBulkDocs:Function =
                 services.couchdb.connector.prototype.bulkDocs
             services.couchdb.connector.plugin({bulkDocs: async function(
-                firstParameter:any, ...parameter:Array<any>
+                firstParameter:any, ...parameters:Array<any>
             ):Promise<Array<PlainObject>> {
                 const toggleIDDetermining:boolean = (
-                    parameter.length > 0 &&
-                    parameter[parameter.length - 1] ===
+                    parameters.length > 0 &&
+                    parameters[parameters.length - 1] ===
                         Database.toggleIDDetermining
                 )
                 const skipIDDetermining:boolean = toggleIDDetermining ?
                     !Database.skipIDDetermining :
                     Database.skipIDDetermining
                 if (toggleIDDetermining)
-                    parameter.pop()
+                    parameters.pop()
                 /*
                     Implements a generic retry mechanism for "upsert" and
                     "latest" updates and optionally supports to ignore
@@ -907,15 +907,15 @@ export class Database implements PluginHandler {
                 if (
                     configuration.couchdb.connector.fetch?.timeout &&
                     (
-                        parameter.length === 0 ||
-                        typeof parameter[0] !== 'object'
+                        parameters.length === 0 ||
+                        typeof parameters[0] !== 'object'
                     )
                 )
-                    parameter.unshift({
+                    parameters.unshift({
                         timeout: configuration.couchdb.connector.fetch.timeout
                     })
                 const result:Array<PlainObject> = await nativeBulkDocs.call(
-                    this, firstParameter, ...parameter
+                    this, firstParameter, ...parameters
                 )
                 const conflictingIndexes:Array<number> = []
                 const conflicts:Array<PlainObject> = []
@@ -961,9 +961,9 @@ export class Database implements PluginHandler {
                 if (conflicts.length) {
                     firstParameter = conflicts
                     if (toggleIDDetermining)
-                        parameter.push(Database.toggleIDDetermining)
+                        parameters.push(Database.toggleIDDetermining)
                     const retriedResults:Array<PlainObject> =
-                        await this.bulkDocs(firstParameter, ...parameter)
+                        await this.bulkDocs(firstParameter, ...parameters)
                     for (const retriedResult of retriedResults)
                         result[conflictingIndexes.shift() as number] =
                             retriedResult
