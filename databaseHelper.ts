@@ -176,6 +176,7 @@ export class DatabaseHelper {
     /**
      * Represents a design document validation function for given model
      * specification.
+     *
      * @param newDocument - Updated document.
      * @param oldDocument - If an existing document should be updated its given
      * here.
@@ -185,6 +186,7 @@ export class DatabaseHelper {
      * @param models - Models specification object.
      * @param modelConfiguration - Model configuration object.
      * @param toJSON - JSON stringifier.
+     *
      * @returns Modified given new document.
      */
     static validateDocumentUpdate(
@@ -552,12 +554,14 @@ export class DatabaseHelper {
                                     ` code "${error.code}": "` +
                                     `${error.message}"${pathDescription}.`
                                 )
+
                             if (error.hasOwnProperty('runtime'))
                                 throwError(
                                     `Runtime: Hook "${type}" has throw an ` +
                                     `error with code "${error.code}": "` +
                                     `${error.message}"${pathDescription}.`
                                 )
+
                             if (!error.hasOwnProperty('empty'))
                                 throw error
                         }

@@ -217,16 +217,16 @@ export type ModelConfiguration = BaseModelConfiguration & {
 // / endregion
 // / region web-node api
 // // region configuration
-export type UserContext = {
+export interface UserContext {
     db:string
     name?:string
     roles:Array<string>
 }
-export type DatabaseUserConfiguration = {
+export interface DatabaseUserConfiguration {
     names:Array<string>
     roles:Array<string>
 }
-export type Runner = {
+export interface Runner {
     adminUserConfigurationPath:string
     arguments?:Array<string>|null|string
     binaryFilePath?:null|string
@@ -238,7 +238,7 @@ export type Runner = {
     location:Array<string>|string
     name:Array<string>|string
 }
-export type SecuritySettings = {
+export interface SecuritySettings {
     admins:DatabaseUserConfiguration
     members:DatabaseUserConfiguration
     _validatedDocuments?:Set<string>
@@ -246,76 +246,83 @@ export type SecuritySettings = {
 export type ConnectorConfiguration = DatabaseConnectorConfiguration & {
     fetch?:FetchOptions|null
 }
-export type Configuration = BaseConfiguration & {
-    couchdb:{
-        attachAutoRestarter:boolean
-        backend:{
-            configuration:PlainObject
-            prefixes:Array<string>
+export type Configuration<ConfigurationType = {}> =
+    BaseConfiguration<{
+        couchdb:{
+            attachAutoRestarter:boolean
+            backend:{
+                configuration:PlainObject
+                prefixes:Array<string>
+            }
+            binary:{
+                memoryInMegaByte:string
+                nodePath:string
+                runner:Array<Runner>
+            }
+            changesStream:ChangesStreamOptions
+            connector:ConnectorConfiguration
+            createGenericFlatIndex:boolean
+            debug:boolean
+            ensureAdminPresence:boolean
+            ensureSecuritySettingsPresence:boolean
+            ensureUserPresence:boolean
+            ignoreNoChangeError:boolean
+            local:boolean
+            maximumRepresentationLength:number
+            maximumRepresentationTryLength:number
+            model:ModelConfiguration
+            path:string
+            security:SecuritySettings
+            url:string
+            user:{
+                name:string
+                password:string
+            }
         }
-        binary:{
-            memoryInMegaByte:string
-            nodePath:string
-            runner:Array<Runner>
-        }
-        changesStream:ChangesStreamOptions
-        connector:ConnectorConfiguration
-        createGenericFlatIndex:boolean
-        debug:boolean
-        ensureAdminPresence:boolean
-        ensureSecuritySettingsPresence:boolean
-        ensureUserPresence:boolean
-        ignoreNoChangeError:boolean
-        local:boolean
-        maximumRepresentationLength:number
-        maximumRepresentationTryLength:number
-        model:ModelConfiguration
-        path:string
-        security:SecuritySettings
-        url:string
-        user:{
-            name:string
-            password:string
-        }
-    }
-}
+    }> &
+    ConfigurationType
 // // endregion
-export type Service = BaseService & {
+export interface Service extends BaseService {
     name:'couchdb'
     promise:null|Promise<ProcessCloseReason>
 }
-export type ServicePromises = BaseServicePromises & {
-    couchdb:Promise<ProcessCloseReason>
-}
-export type Services = BaseServices & {
-    couchdb:{
-        connection:Connection
-        connector:Connector
-        server:{
-            process:ChildProcess
-            reject:Function
-            resolve:Function
-            restart:(
-                services:Services,
-                configuration:Configuration,
-                plugins:Array<Plugin>
-            ) => Promise<void>
-            runner:Runner
-            start:(services:Services, configuration:Configuration) =>
-                Promise<void>
-            stop:(services:Services, configuration:Configuration) =>
-                Promise<void>
+export type ServicePromises<ServicePromiseType = {}> =
+    BaseServicePromises<{couchdb:Promise<ProcessCloseReason>}> &
+    ServicePromiseType
+export type Services<ServiceType = {}> =
+    BaseServices<{
+        couchdb:{
+            connection:Connection
+            connector:Connector
+            server:{
+                process:ChildProcess
+                reject:Function
+                resolve:Function
+                restart:(
+                    services:Services,
+                    configuration:Configuration,
+                    plugins:Array<Plugin>
+                ) => Promise<void>
+                runner:Runner
+                start:(services:Services, configuration:Configuration) =>
+                    Promise<void>
+                stop:(services:Services, configuration:Configuration) =>
+                    Promise<void>
+            }
         }
-    }
-}
+    }> &
+    ServiceType
+
 export interface PluginHandler extends BasePluginHandler {
     /**
      * Hook after each data change.
+     *
      * @param changesStream - Stream of database changes.
      * @param services - List of other web-node plugin services.
      * @param configuration - Configuration object extended by each plugin
      * specific configuration.
      * @param plugins - Topological sorted list of plugins.
+     *
      * @returns Given entry files.
      */
     couchdbInitializeChangesStream?(
@@ -326,10 +333,12 @@ export interface PluginHandler extends BasePluginHandler {
     ):ChangesStream
     /**
      * Hook after each data base restart.
+     *
      * @param services - List of other web-node plugin services.
      * @param configuration - Configuration object extended by each plugin
      * specific configuration.
      * @param plugins - Topological sorted list of plugins.
+     *
      * @returns Given entry files.
      */
     restartCouchdb?(
@@ -337,11 +346,11 @@ export interface PluginHandler extends BasePluginHandler {
     ):Services
 }
 // / endregion
-export type CheckedDocumentResult = {
+export interface CheckedDocumentResult {
     changedPath:Array<string>
     newDocument:Document
 }
-export type EvaluationResult<Type = any> = {
+export interface EvaluationResult<Type = any> {
     code:string
     result:Type
     scope:object
@@ -350,11 +359,11 @@ export type User = BaseDocument & {
     password:string
     roles:Array<string>
 }
-export type Interval = {
+export interface Interval {
     end:number
     start:number
 }
-export type Location = {
+export interface Location {
     latitude:number
     longitude:number
 }
