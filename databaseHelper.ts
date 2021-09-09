@@ -15,7 +15,7 @@
 */
 // region imports
 import {
-    Mapping, Primitive, PlainObject, ProcedureFunction
+    Mapping, Primitive, PlainObject, ProcedureFunction, ValueOf
 } from 'clientnode/type'
 
 import {
@@ -23,17 +23,23 @@ import {
     Attachments,
     BaseModelConfiguration,
     CheckedDocumentResult,
+    CompilationExceptionData,
     Constraint,
     ConstraintKey,
     Document,
     DocumentContent,
+    EmptyEvaluationException,
+    EmptyEvaluationExceptionData,
+    EvaluationException,
     EvaluationResult,
+    Exception,
     FileSpecification,
     FullAttachment,
     Model,
     Models,
     OperationToAllowedRolesMapping,
     PropertySpecification,
+    RuntimeExceptionData,
     SecuritySettings,
     SelectionMapping,
     SpecialPropertyNames,
@@ -199,15 +205,20 @@ export class DatabaseHelper {
         toJSON?:(value:unknown) => string
     ):Document {
         // region ensure needed environment
-        const throwError:Function = (
+        const throwError = <DataType = {}>(
             message:string,
             type:string = 'forbidden',
-            additionalErrorData:object = {}
+            additionalErrorData:Partial<DataType> = {}
         ):never => {
-            const result = {[type]: message, message, name: type}
+            const result:Exception<DataType> =
+                {[type]: message, message, name: type} as Exception<DataType>
             for (const name in additionalErrorData)
-                if (additionalErrorData.hasOwnProperty(name))
-                    result[name] = additionalErrorData[name as keyof object]
+                if (Object.prototype.hasOwnProperty.call(
+                    additionalErrorData, name
+                ))
+                    result[name] = additionalErrorData[name] as
+                        Exception<DataType>[Extract<keyof DataType, string>]
+
             throw result
         }
 
@@ -319,6 +330,7 @@ export class DatabaseHelper {
         ):string => {
             if (typeof value === 'string')
                 return value.trim()
+
             return ''
         }
 
@@ -387,7 +399,7 @@ export class DatabaseHelper {
         const evaluate:Function = (
             givenExpression?:null|string,
             isEvaluation:boolean = false,
-            givenScope:object = {}
+            givenScope:Mapping<unknown> = {}
         ):EvaluationResult|void => {
             const expression:string = determineTrimmedString(givenExpression)
             if (expression) {
@@ -419,37 +431,43 @@ export class DatabaseHelper {
                 // endregion
                 // region compile
                 let callable:Function|undefined
+
                 try {
                     callable = new Function(...scopeNames, code)
                 } catch (error) {
-                    const message:string = serialize(error)
-                    throwError(
-                        message, 'compilation', {code, error, message, scope}
+                    throwError<CompilationExceptionData>(
+                        serialize(error),
+                        'compilation',
+                        {code, error: error as Error, scope}
                     )
                 }
                 // endregion
                 // region run
                 const result:EvaluationResult = {
-                    code,
-                    result: undefined,
-                    scope
+                    code, result: undefined, scope
                 }
+
                 try {
                     result.result = (callable as Function)(
-                        ...scopeNames.map((name:string):any => scope[name as keyof typeof scope])
+                        ...scopeNames.map((name:string):any =>
+                            scope[name as keyof typeof scope]
+                        )
                     )
                 } catch (error) {
-                    const message:string = serialize(error)
-                    throwError(
-                        message,
+                    throwError<RuntimeExceptionData>(
+                        serialize(error),
                         'runtime',
-                        {code, error, message, scope}
+                        {code, error: error as Error, scope}
                     )
                 }
+
                 return result
                 // endregion
             }
-            throwError('No expression to evaluate provided.', 'empty')
+
+            throwError<EmptyEvaluationExceptionData>(
+                'No expression to evaluate provided.', 'empty'
+            )
         }
 
         const checkDocument:Function = (
@@ -460,6 +478,7 @@ export class DatabaseHelper {
             const pathDescription:string =
                 parentNames.length ? ` in ${parentNames.join(' -> ')}` : ''
             let changedPath:Array<string> = []
+
             const checkModelType:Function = ():void => {
                 // region check for model type (optionally migrate them)
                 if (!newDocument.hasOwnProperty(typeName))
@@ -502,6 +521,7 @@ export class DatabaseHelper {
                 // endregion
             }
             checkModelType()
+
             let modelName:string = newDocument[typeName] as string
             const model:Model = models[modelName]
             let additionalPropertySpecification:null|PropertySpecification =
@@ -548,27 +568,42 @@ export class DatabaseHelper {
                                 }
                             )
                         } catch (error) {
-                            if (error.hasOwnProperty('compilation'))
+                            if (((
+                                error:unknown
+                            ):error is EvaluationException =>
+                                Object.prototype.hasOwnProperty.call(
+                                    error, 'compilation'
+                                )
+                            )(error))
                                 throwError(
                                     `Compilation: Hook "${type}" has invalid` +
                                     ` code "${error.code}": "` +
                                     `${error.message}"${pathDescription}.`
                                 )
 
-                            if (error.hasOwnProperty('runtime'))
+                            if (((
+                                error:unknown
+                            ):error is EvaluationException =>
+                                Object.prototype.hasOwnProperty.call(
+                                    error, 'runtime'
+                                )
+                            )(error))
                                 throwError(
                                     `Runtime: Hook "${type}" has throw an ` +
                                     `error with code "${error.code}": "` +
                                     `${error.message}"${pathDescription}.`
                                 )
 
-                            if (!error.hasOwnProperty('empty'))
+                            if (!Object.prototype.hasOwnProperty.call(
+                                error, 'empty'
+                            ))
                                 throw error
                         }
                         if (!result!.result) {
                             const description:string = determineTrimmedString(
                                 propertySpecification[type]!.description
                             )
+
                             throwError(
                                 type.charAt(0).toUpperCase() +
                                 `${type.substring(1)}: ` +
@@ -908,23 +943,40 @@ export class DatabaseHelper {
                                     }
                                 )
                             } catch (error) {
-                                if (error.hasOwnProperty('compilation'))
+                                if (((
+                                    error:unknown
+                                ):error is EvaluationException =>
+                                    Object.prototype.hasOwnProperty.call(
+                                        error, 'compilation'
+                                    )
+                                )(error))
                                     throwError(
                                         `Compilation: Hook "${type}" has ` +
                                         `invalid code "${error.code}" for ` +
                                         `property "${name}": ` +
                                         `${error.message}${pathDescription}.`
                                     )
-                                if (error.hasOwnProperty('runtime'))
+
+                                if (((
+                                    error:unknown
+                                ):error is EvaluationException =>
+                                    Object.prototype.hasOwnProperty.call(
+                                        error, 'runtime'
+                                    )
+                                )(error))
                                     throwError(
                                         `Runtime: Hook "${type}" has throw ` +
                                         `an error with code "${error.code}" ` +
                                         `for property "${name}": ` +
                                         `${error.message}${pathDescription}.`
                                     )
-                                if (!error.hasOwnProperty('empty'))
+
+                                if (!Object.prototype.hasOwnProperty.call(
+                                    error, 'empty'
+                                ))
                                     throw error
                             }
+
                             if (![null, undefined].includes(result!.result))
                                 newDocument[name] = result!.result
                         }
@@ -980,7 +1032,13 @@ export class DatabaseHelper {
                                 }
                             ).result
                         } catch (error) {
-                            if (error.hasOwnProperty('compilation'))
+                            if (((
+                                error:unknown
+                            ):error is EvaluationException =>
+                                Object.prototype.hasOwnProperty.call(
+                                    error, 'compilation'
+                                )
+                            )(error))
                                 throwError(
                                     `Compilation: Hook "${type}" has invalid` +
                                     ` code "${error.code}" for property "` +
@@ -988,7 +1046,13 @@ export class DatabaseHelper {
                                     `${pathDescription}.`
                                 )
 
-                            if (error.hasOwnProperty('runtime'))
+                            if (((
+                                error:unknown
+                            ):error is EvaluationException =>
+                                Object.prototype.hasOwnProperty.call(
+                                    error, 'runtime'
+                                )
+                            )(error))
                                 throwError(
                                     `Runtime: Hook "${type}" has throw an ` +
                                     `error with code "${error.code}" for ` +
@@ -996,7 +1060,9 @@ export class DatabaseHelper {
                                     `${pathDescription}.`
                                 )
 
-                            if (!error.hasOwnProperty('empty'))
+                            if (!Object.prototype.hasOwnProperty.call(
+                                error, 'empty'
+                            ))
                                 throw error
                         }
             }
@@ -1057,27 +1123,46 @@ export class DatabaseHelper {
                                 }
                             ).result
                         } catch (error) {
-                            if (error.hasOwnProperty('compilation'))
+                            if (((
+                                error:unknown
+                            ):error is EvaluationException =>
+                                Object.prototype.hasOwnProperty.call(
+                                    error, 'compilation'
+                                )
+                            )(error))
                                 throwError(
                                     `Compilation: Hook "${type}" has invalid` +
                                     ` code "${error.code}" for document "` +
                                     `${modelName}": ${error.message}` +
                                     `${pathDescription}.`
                                 )
-                            if (error.hasOwnProperty('runtime'))
+
+                            if (((
+                                error:unknown
+                            ):error is EvaluationException =>
+                                Object.prototype.hasOwnProperty.call(
+                                    error, 'runtime'
+                                )
+                            )(error))
                                 throwError(
                                     `Runtime: Hook "${type}" has throw an ` +
                                     `error with code "${error.code}" for ` +
                                     `document "${modelName}": ` +
                                     `${error.message}${pathDescription}.`
                                 )
-                            if (!error.hasOwnProperty('empty'))
+
+                            if (!Object.prototype.hasOwnProperty.call(
+                                error, 'empty'
+                            ))
                                 throw error
                         }
+
                         if (![null, undefined].includes(result as null))
                             newDocument = result as Document
+
                         checkModelType()
                         modelName = newDocument[typeName] as string
+
                         if (parentNames.length === 0)
                             setDocumentEnvironment()
                     }
@@ -1106,27 +1191,42 @@ export class DatabaseHelper {
                             }
                         ).result
                     } catch (error) {
-                        if (error.hasOwnProperty('compilation'))
+                        if (((error:unknown):error is EvaluationException =>
+                            Object.prototype.hasOwnProperty.call(
+                                error, 'compilation'
+                            )
+                        )(error))
                             throwError(
                                 `Compilation: Hook "${type}" has invalid ` +
                                 `code "${error.code}" for document "` +
                                 `${modelName}": ${error.message}` +
                                 `${pathDescription}.`
                             )
-                        if (error.hasOwnProperty('runtime'))
+
+                        if (((error:unknown):error is EvaluationException =>
+                            Object.prototype.hasOwnProperty.call(
+                                error, 'runtime'
+                            )
+                        )(error))
                             throwError(
                                 `Runtime: Hook "${type}" has throw an error ` +
                                 `with code "${error.code}" for document "` +
                                 `${modelName}": ${error.message}` +
                                 `${pathDescription}.`
                             )
-                        if (!error.hasOwnProperty('empty'))
+
+                        if (!Object.prototype.hasOwnProperty.call(
+                            error, 'empty'
+                        ))
                             throw error
                     }
+
                     if (![undefined, null].includes(result as null))
                         newDocument = result as Document
+
                     checkModelType()
                     modelName = newDocument[typeName] as string
+
                     if (parentNames.length === 0)
                         setDocumentEnvironment()
                 }
@@ -1148,11 +1248,13 @@ export class DatabaseHelper {
                                 newDocument[name] === null
                             )
                                 newDocument[name] = {}
+
                             if (
                                 oldDocument &&
                                 !oldDocument.hasOwnProperty(name)
                             )
                                 oldDocument[name] = {}
+
                             const newFileNames:Array<string> =
                                 Object.keys(
                                     newDocument[name] as Attachments
@@ -1165,8 +1267,10 @@ export class DatabaseHelper {
                                         type, fileName, model[name]![type]
                                     )
                                 )
+
                             const newAttachments:Attachments =
                                 newDocument[name] as Attachments
+
                             let oldFileNames:Array<string> = []
                             if (oldDocument) {
                                 const oldAttachments:Attachments =
@@ -1203,10 +1307,12 @@ export class DatabaseHelper {
                                         )
                                     )
                             }
+
                             const propertySpecification:PropertySpecification =
                                 model[name]![
                                     type as keyof PropertySpecification
                                 ]
+
                             for (const fileName of newFileNames)
                                 runCreatePropertyHook(
                                     propertySpecification,
@@ -1216,6 +1322,7 @@ export class DatabaseHelper {
                                         null,
                                     fileName
                                 )
+
                             for (const fileName of newFileNames)
                                 runUpdatePropertyHook(
                                     propertySpecification,
@@ -1225,6 +1332,7 @@ export class DatabaseHelper {
                                         null,
                                     fileName
                                 )
+
                             if ([null, undefined].includes(
                                 propertySpecification.default as null
                             )) {
@@ -1238,6 +1346,7 @@ export class DatabaseHelper {
                                         `attachment for type "${type}"` +
                                         `${pathDescription}.`
                                     )
+
                                 if (
                                     updateStrategy === 'fillUp' &&
                                     newFileNames.length === 0 &&
@@ -1262,7 +1371,7 @@ export class DatabaseHelper {
                                         if ((propertySpecification.default as
                                             object
                                         ).hasOwnProperty(fileName)) {
-                                            newAttachments[fileName] = (
+                                             newAttachments[fileName] = (
                                                 propertySpecification
                                                     .default as Attachments
                                             )[fileName]
@@ -1283,12 +1392,14 @@ export class DatabaseHelper {
                             model[name] :
                             additionalPropertySpecification as
                                 PropertySpecification
+
                     runCreatePropertyHook(
                         propertySpecification, newDocument, oldDocument, name
                     )
                     runUpdatePropertyHook(
                         propertySpecification, newDocument, oldDocument, name
                     )
+
                     if ([null, undefined].includes(
                         propertySpecification.default as null
                     )) {
@@ -1304,6 +1415,7 @@ export class DatabaseHelper {
                                 `MissingProperty: Missing property "${name}"` +
                                 `${pathDescription}.`
                             )
+
                         if (
                             !newDocument.hasOwnProperty(name) &&
                             oldDocument?.hasOwnProperty(name)
@@ -1360,6 +1472,7 @@ export class DatabaseHelper {
                         )
                     ) {
                         delete newDocument[name]
+
                         continue
                     }
             // / endregion
@@ -1384,9 +1497,11 @@ export class DatabaseHelper {
                         propertySpecification = additionalPropertySpecification
                     else if (updateStrategy === 'migrate') {
                         delete newDocument[name]
+
                         changedPath = parentNames.concat(
                             name, 'migrate removed property'
                         )
+
                         continue
                     } else
                         throwError(
@@ -1394,9 +1509,11 @@ export class DatabaseHelper {
                             `specified in model "${modelName}"` +
                             `${pathDescription}.`
                         )
+
                     // NOTE: Only needed to avoid type check errors.
                     if (!propertySpecification)
                         continue
+
                     // region writable/mutable/nullable
                     const checkWriteableMutableNullable:Function = (
                         propertySpecification:PropertySpecification,
@@ -1417,6 +1534,7 @@ export class DatabaseHelper {
                                         updateStrategy === 'incremental'
                                     )
                                         delete newDocument[name]
+
                                     return true
                                 } else
                                     throwError(
@@ -1450,6 +1568,7 @@ export class DatabaseHelper {
                                         ).includes(name)
                                 )
                                     delete newDocument[name]
+
                                 return true
                             } else if (updateStrategy !== 'migrate')
                                 throwError(
@@ -1467,6 +1586,7 @@ export class DatabaseHelper {
                                     changedPath = parentNames.concat(
                                         name, 'delete property'
                                     )
+
                                 return true
                             } else
                                 throwError(
@@ -1494,8 +1614,10 @@ export class DatabaseHelper {
                                             oldDocument,
                                             fileName
                                         )
+
                                         break
                                     }
+
                         continue
                     } else if (checkWriteableMutableNullable(
                         propertySpecification, newDocument, oldDocument, name
@@ -1548,6 +1670,7 @@ export class DatabaseHelper {
                                 propertySpecification.maximumNumber +
                                 `${pathDescription}.`
                             )
+
                         checkPropertyConstraints(
                             newProperty,
                             name,
@@ -1623,6 +1746,7 @@ export class DatabaseHelper {
                             ).newValue
                             if (value === null)
                                 newProperty.splice(index, 1)
+
                             index += 1
                         }
                         // // endregion
@@ -1645,6 +1769,7 @@ export class DatabaseHelper {
                             oldDocument?.hasOwnProperty(name) ?
                                 oldDocument[name] :
                                 null
+
                         const result:{
                             changedPath:Array<string>
                             newValue:any
@@ -1654,14 +1779,18 @@ export class DatabaseHelper {
                             propertySpecification,
                             oldValue
                         )
+
                         newDocument[name] = result.newValue
+
                         if (result.changedPath.length)
                             changedPath = result.changedPath
+
                         if (newDocument[name] === null) {
                             if (oldValue !== null)
                                 changedPath = parentNames.concat(
                                     name, 'property removed'
                                 )
+
                             delete newDocument[name]
                         }
                     }
@@ -1696,25 +1825,43 @@ export class DatabaseHelper {
                                 }
                             )
                         } catch (error) {
-                            if (error.hasOwnProperty('compilation'))
+                            if (((
+                                error:unknown
+                            ):error is EvaluationException =>
+                                Object.prototype.hasOwnProperty.call(
+                                    error, 'compilation'
+                                )
+                            )(error))
                                 throwError(
                                     `Compilation: Hook "${type}" has invalid` +
                                     ` code "${error.code}": "` +
                                     `${error.message}"${pathDescription}.`
                                 )
-                            if (error.hasOwnProperty('runtime'))
+
+                            if (((
+                                error:unknown
+                            ):error is EvaluationException =>
+                                Object.prototype.hasOwnProperty.call(
+                                    error, 'runtime'
+                                )
+                            )(error))
                                 throwError(
                                     `Runtime: Hook "${type}" has thrown an ` +
                                     `error with code "${error.code}": ` +
                                     `${error.message}${pathDescription}.`
                                 )
-                            if (!error.hasOwnProperty('empty'))
+
+                            if (!Object.prototype.hasOwnProperty.call(
+                                error, 'empty'
+                            ))
                                 throw error
                         }
+
                         if (!result!.result) {
                             const errorName:string = type.replace(
                                 /^[^a-zA-Z]+/, ''
                             )
+
                             throwError(
                                 errorName.charAt(0).toUpperCase() +
                                 `${errorName.substring(1)}: ` +
@@ -1726,8 +1873,8 @@ export class DatabaseHelper {
                                             constraint.description.trim()
                                         )(...Object.values(result!.scope)) :
                                         `Model "${modelName}" should satisfy` +
-                                        ` constraint "${result!.code}" (given` +
-                                        ` "${serialize(newDocument)}")` +
+                                        ` constraint "${result!.code}" (` +
+                                        `given "${serialize(newDocument)}")` +
                                         `${pathDescription}.`
                                 )
                             )
@@ -1793,6 +1940,7 @@ export class DatabaseHelper {
                                                 fileName,
                                                 'attachment removed'
                                             )
+
                                         if (updateStrategy === 'incremental')
                                             delete newAttachments[fileName]
                                     } else
@@ -1811,6 +1959,7 @@ export class DatabaseHelper {
                                         'attachment removed'
                                     )
                 }
+
                 for (const fileName in newAttachments)
                     if (newAttachments.hasOwnProperty(fileName))
                         if (
@@ -1863,7 +2012,9 @@ export class DatabaseHelper {
                                 model[specialNames.attachment]![type]
                             )) {
                                 attachmentToTypeMapping[type].push(name)
+
                                 matched = true
+
                                 break
                             }
 
@@ -1877,6 +2028,7 @@ export class DatabaseHelper {
                                 `${pathDescription}.`
                             )
                     }
+
                 let sumOfAggregatedSizes:number = 0
                 for (const type in attachmentToTypeMapping) {
                     const specification:FileSpecification =
@@ -1899,6 +2051,7 @@ export class DatabaseHelper {
                             `${specification.maximumNumber} from type "` +
                             `${type}"${pathDescription}.`
                         )
+
                     if (
                         !(
                             specification.nullable && numberOfAttachments === 0
@@ -1913,6 +2066,7 @@ export class DatabaseHelper {
                             `${specification.minimumNumber} from type "` +
                             `${type}"${pathDescription}.`
                         )
+
                     let aggregatedSize:number = 0
                     for (const fileName of attachmentToTypeMapping[type]) {
                         if (
@@ -1970,8 +2124,10 @@ export class DatabaseHelper {
                                     .contentTypeRegularExpressionPattern +
                                 `" from type "${type}"${pathDescription}.`
                             )
+
                         const pattern:null|string|undefined = specification
                             .invertedContentTypeRegularExpressionPattern
+
                         if (!(
                             [null, undefined].includes(pattern as null) ||
                             newAttachments[fileName].content_type &&
@@ -1986,6 +2142,7 @@ export class DatabaseHelper {
                                 `pattern "${pattern}" from type "${type}"` +
                                 `${pathDescription}.`
                             )
+
                         let length:number = 0
                         if ('length' in newAttachments[fileName])
                             length = (
@@ -2003,6 +2160,7 @@ export class DatabaseHelper {
                                 length = ((
                                     newAttachments[fileName] as FullAttachment
                                 ).data as Buffer).length
+
                         if (
                             ![null, undefined].includes(
                                 specification.minimumSize as null
@@ -2029,8 +2187,10 @@ export class DatabaseHelper {
                                 `${specification.maximumSize} byte ` +
                                 `${pathDescription}.`
                             )
+
                         aggregatedSize += length
                     }
+
                     if (
                         ![null, undefined].includes(
                             specification.minimumAggregatedSize as null
@@ -2061,8 +2221,10 @@ export class DatabaseHelper {
                             `${specification.maximumAggregatedSize} byte ` +
                             `${pathDescription}.`
                         )
+
                     sumOfAggregatedSizes += aggregatedSize
                 }
+
                 if (
                     model.hasOwnProperty(specialNames.minimumAggregatedSize) &&
                     ![null, undefined].includes(
@@ -2104,6 +2266,7 @@ export class DatabaseHelper {
                 ).length === 0
             )
                 delete oldDocument[specialNames.attachment]
+
             if (
                 changedPath.length === 0 &&
                 oldDocument &&
@@ -2117,6 +2280,7 @@ export class DatabaseHelper {
                         changedPath = parentNames.concat(
                             name, 'migrate removed property'
                         )
+
             return {changedPath, newDocument}
         }
         // endregion

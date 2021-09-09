@@ -346,6 +346,26 @@ export interface PluginHandler extends BasePluginHandler {
     ):Services
 }
 // / endregion
+export type Exception<DataType = {}> =
+    {
+        message:string
+        name:string
+    } &
+    DataType
+
+export type EmptyEvaluationExceptionData = {empty:string}
+export type EmptyEvaluationException = Exception<EmptyEvaluationExceptionData>
+
+export type EvaluationExceptionData = {
+    code:string, error:Error, scope:Mapping<unknown>
+}
+export type CompilationExceptionData =
+    EvaluationExceptionData & {compilation:string}
+export type RuntimeExceptionData =
+    EvaluationExceptionData & {runtime:string}
+
+export type EvaluationException = Exception<EvaluationExceptionData>
+
 export interface CheckedDocumentResult {
     changedPath:Array<string>
     newDocument:Document
