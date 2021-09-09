@@ -38,6 +38,7 @@ import {
     DatabasePlugin,
     DeleteIndexOptions,
     Document,
+    Exception,
     Index,
     ModelConfiguration,
     Models,
@@ -52,6 +53,7 @@ import {
 /**
  * Launches an application server und triggers all some pluginable hooks on
  * an event.
+ *
  * @property static:additionalChangesStreamOptions - Can provide additional
  * (non static) changes stream options.
  * @property static:changesStream - Stream which triggers database events.
@@ -70,10 +72,12 @@ export class Database implements PluginHandler {
     /**
      * Start database's child process and return a Promise which observes this
      * service.
+     *
      * @param servicePromises - An object with stored service promise
      * instances.
      * @param services - An object with stored service instances.
      * @param configuration - Mutable by plugins extended configuration object.
+     *
      * @returns A promise which correspond to the plugin specific continues
      * service.
      */
@@ -83,11 +87,14 @@ export class Database implements PluginHandler {
         configuration:Configuration
     ):Promise<Service> {
         let promise:null|Promise<ProcessCloseReason> = null
+
         if (services.couchdb.server.hasOwnProperty('runner')) {
             await Helper.startServer(services, configuration)
+
             services.couchdb.server.restart = Helper.restartServer
             services.couchdb.server.start = Helper.startServer
             services.couchdb.server.stop = Helper.stopServer
+
             promise = new Promise((resolve:Function, reject:Function):void => {
                 /*
                     NOTE: These callbacks can be reassigned during server
@@ -97,8 +104,10 @@ export class Database implements PluginHandler {
                 services.couchdb.server.reject = reject
             })
         }
+
         if (services.couchdb.hasOwnProperty('connection'))
             return {name: 'couchdb', promise}
+
         const urlPrefix:string = Tools.stringFormat(
             configuration.couchdb.url,
             `${configuration.couchdb.user.name}:` +
@@ -112,13 +121,16 @@ export class Database implements PluginHandler {
                         `_users`,
                     Helper.getConnectorOptions(configuration)
                 )
+
             try {
                 // NOTE: We check if we are in admin party mode.
                 await unauthenticatedUserDatabaseConnection.allDocs()
+
                 console.info(
                     'No admin user available. Automatically creating admin ' +
                     `user "${configuration.couchdb.user.name}".`
                 )
+
                 await fetch(
                     `${Tools.stringFormat(configuration.couchdb.url, '')}/` +
                     services.couchdb.server.runner
@@ -130,12 +142,13 @@ export class Database implements PluginHandler {
                     }
                 )
             } catch (error) {
-                if (error.name === 'unauthorized') {
+                if ((error as Exception).name === 'unauthorized') {
                     const authenticatedUserDatabaseConnection:Connection =
                         new services.couchdb.connector(
                             `${urlPrefix}/_users`,
                             Helper.getConnectorOptions(configuration)
                         )
+
                     try {
                         await authenticatedUserDatabaseConnection.allDocs()
                     } catch (error) {
@@ -170,12 +183,13 @@ export class Database implements PluginHandler {
                             `${urlPrefix}/_users`,
                             Helper.getConnectorOptions(configuration)
                         )
+
                     try {
                         await userDatabaseConnection.get(
                             `org.couchdb.user:${name}`
                         )
                     } catch (error) {
-                        if (error.error === 'not_found')
+                        if ((error as {error:string}).error === 'not_found')
                             try {
                                 await userDatabaseConnection.put({
                                     [
@@ -221,10 +235,12 @@ export class Database implements PluginHandler {
                         const fullPath:string =
                             `/${prefix}${prefix.trim() ? '/' : ''}${subPath}`
                         const url:string = `${urlPrefix}${fullPath}`
+
                         const value:any =
                             configuration.couchdb.backend.configuration[
                                 subPath
                             ]
+
                         let response:FetchResponse|undefined
                         try {
                             response = await fetch(url)
@@ -235,6 +251,7 @@ export class Database implements PluginHandler {
                                 ` be determined: ${Tools.represent(error)}`
                             )
                         }
+
                         if (response)
                             if (response.ok) {
                                 let changeNeeded:boolean = true
@@ -255,6 +272,7 @@ export class Database implements PluginHandler {
                                             Tools.represent(error)
                                         )
                                     }
+
                                 if (changeNeeded)
                                     try {
                                         await fetch(
@@ -294,10 +312,12 @@ export class Database implements PluginHandler {
                     }
         // endregion
         await Helper.initializeConnection(services, configuration)
+
         const idName:string =
             configuration.couchdb.model.property.name.special.id
         const typeName:string =
             configuration.couchdb.model.property.name.special.type
+
         // region ensure presence of database security settings
         if (configuration.couchdb.ensureSecuritySettingsPresence)
             try {
@@ -326,10 +346,12 @@ export class Database implements PluginHandler {
         const modelConfiguration:ModelConfiguration = Tools.copy(
             configuration.couchdb.model
         )
+
         delete (modelConfiguration.property as {
             defaultSpecification?:PlainObject
         }).defaultSpecification
         delete (modelConfiguration as {entities?:PlainObject}).entities
+
         const models:Models = Helper.extendModels(configuration.couchdb.model)
         if (configuration.couchdb.model.updateValidation) {
             const databaseHelperCode:string = await fileSystem.readFile(
@@ -373,6 +395,7 @@ export class Database implements PluginHandler {
                         `(...parameters.concat([${type.serializedParameter}]` +
                         '))\n' +
                     '}'
+
                 try {
                     new Function(`return ${code}`)
                 } catch (error) {
@@ -381,10 +404,12 @@ export class Database implements PluginHandler {
                         `compile: ${Tools.represent(error)}`
                     )
                 }
+
                 if (configuration.debug)
                     console.debug(
                         `${type.name} code: \n\n"${code}" intgrated.`
                     )
+
                 await Helper.ensureValidationDocumentPresence(
                     services.couchdb.connection,
                     type.name,
@@ -438,6 +463,7 @@ export class Database implements PluginHandler {
                             } else {
                                 const property:PropertySpecification =
                                     models[modelName][name]
+
                                 for (const type of [
                                     'conflictingConstraintExpression',
                                     'conflictingConstraintExecution',
@@ -489,6 +515,7 @@ export class Database implements PluginHandler {
                 )) {
                     const extension:string = path.extname(file.name)
                     const basename:string = path.basename(file.name, extension)
+
                     if (extension === '.json') {
                         let document:Document
                         try {
@@ -503,15 +530,19 @@ export class Database implements PluginHandler {
                                 Tools.represent(error)
                             )
                         }
+
                         document[idName] = basename
                         document[
                             configuration.couchdb.model.property.name.special
                                 .revision
                         ] = 'upsert'
+
                         try {
                             await services.couchdb.connection.put(document)
                         } catch (error) {
-                            if (error.forbidden?.startsWith('NoChange:'))
+                            if ((
+                                error as {forbidden:string}
+                            ).forbidden?.startsWith('NoChange:'))
                                 console.info(
                                     `Including document "${document[idName]}` +
                                     `" of type "${document[typeName]}" ` +
@@ -523,6 +554,7 @@ export class Database implements PluginHandler {
                                 Tools.represent(error)
                             )
                         }
+
                         console.info(
                             `Including document "${document[idName]}" of ` +
                             `type "${document[typeName]}" was successful.`
@@ -555,6 +587,7 @@ export class Database implements PluginHandler {
                         configuration.couchdb.model.property.name.special
                             .strategy
                     ] = 'migrate'
+
                     for (const name of Object.keys(migrater).sort()) {
                         let result:Document|null = null
                         try {
@@ -586,8 +619,10 @@ export class Database implements PluginHandler {
                                 `" failed: ${Tools.represent(error)}`
                             )
                         }
+
                         if (result) {
                             newDocument = result
+
                             console.info(
                                 `Running migrater "${name}" for document "` +
                                 `${newDocument[idName]}" (of type "` +
@@ -637,8 +672,12 @@ export class Database implements PluginHandler {
                             models
                         )
                     } catch (error) {
-                        if ('forbidden' in error) {
-                            if (!error.forbidden.startsWith('NoChange:'))
+                        if (Object.prototype.hasOwnProperty.call(
+                            error, 'forbidden'
+                        )) {
+                            if (!(
+                                error as {forbidden:string}
+                            ).forbidden.startsWith('NoChange:'))
                                 console.warn(
                                     `Document "` +
                                     Helper.mayStripRepresentation(
@@ -652,10 +691,12 @@ export class Database implements PluginHandler {
                                     'not be migrated automatically): ' +
                                     Tools.represent(error)
                                 )
+
                             continue
                         } else
                             throw error
                     }
+
                     try {
                         await services.couchdb.connection.put(newDocument)
                     } catch (error) {
@@ -665,6 +706,7 @@ export class Database implements PluginHandler {
                             Tools.represent(error)
                         )
                     }
+
                     console.info(
                         `Auto migrating document "${newDocument[idName]}" ` +
                         'was successful.'
@@ -681,6 +723,7 @@ export class Database implements PluginHandler {
             const indexes:Array<Index> = (
                 await services.couchdb.connection.getIndexes()
             ).indexes
+
             for (const modelName in models)
                 if (
                     models.hasOwnProperty(modelName) &&
@@ -694,6 +737,7 @@ export class Database implements PluginHandler {
                         fields: [typeName],
                         name: `${modelName}-GenericIndex`
                     }})
+
                     for (
                         const propertyName of
                         Helper.determineGenericIndexablePropertyNames(
@@ -704,13 +748,17 @@ export class Database implements PluginHandler {
                             `${modelName}-${propertyName}-GenericIndex`
                         let foundPosition:number = -1
                         let position:number = 0
+
                         for (const index of indexes) {
                             if (index.name === name) {
                                 foundPosition = position
+
                                 break
                             }
+
                             position += 1
                         }
+
                         if (foundPosition === -1)
                             await services.couchdb.connection.createIndex({
                                 index: {
@@ -723,6 +771,7 @@ export class Database implements PluginHandler {
                             indexes.slice(position, 1)
                     }
                 }
+
             for (const index of indexes)
                 if (index.name.endsWith('-GenericIndex')) {
                     let exists:boolean = false
@@ -740,8 +789,10 @@ export class Database implements PluginHandler {
                                     `${modelName}-GenericIndex`
                                 ].includes(index.name))
                                     exists = true
+
                             break
                         }
+
                     if (!exists)
                         await services.couchdb.connection.deleteIndex(
                             index as DeleteIndexOptions
@@ -767,11 +818,13 @@ export class Database implements PluginHandler {
     /**
      * Add database event listener to auto restart database server on
      * unexpected server issues.
+     *
      * @param servicePromises - An object with stored service promise
      * instances.
      * @param services - An object with stored service instances.
      * @param configuration - Mutable by plugins extended configuration object.
      * @param plugins - Topological sorted list of loaded plugins.
+     *
      * @returns A promise which wraps plugin promises to represent plugin
      * continues services.
      */
@@ -784,18 +837,22 @@ export class Database implements PluginHandler {
         // region register database changes stream
         let numberOfErrorsThrough:number = 0
         const periodToClearNumberOfErrorsInSeconds:number = 30
-        setInterval(():void => {
-            if (numberOfErrorsThrough > 0) {
-                console.info(
-                    'No additional errors (initially got ' +
-                    `${numberOfErrorsThrough} errors through) occurred ` +
-                    'during observing changes stream for ' +
-                    `${periodToClearNumberOfErrorsInSeconds} seconds. ` +
-                    'Clearing saved number of errors through.'
-                )
-                numberOfErrorsThrough = 0
-            }
-        }, periodToClearNumberOfErrorsInSeconds * 1000)
+
+        setInterval(
+            ():void => {
+                if (numberOfErrorsThrough > 0) {
+                    console.info(
+                        'No additional errors (initially got ' +
+                        `${numberOfErrorsThrough} errors through) occurred ` +
+                        'during observing changes stream for ' +
+                        `${periodToClearNumberOfErrorsInSeconds} seconds. ` +
+                        'Clearing saved number of errors through.'
+                    )
+                    numberOfErrorsThrough = 0
+                }
+            },
+            periodToClearNumberOfErrorsInSeconds * 1000
+        )
         /*
             NOTE: Use this code to test changes stream reinitialisation and
             database server restarts. Play with length of interval to trigger
@@ -808,6 +865,7 @@ export class Database implements PluginHandler {
         const initialize:Function = Tools.debounce(async ():Promise<void> => {
             if (Database.changesStream)
                 Database.changesStream.cancel()
+
             Database.changesStream = services.couchdb.connection.changes(
                 Tools.extend(
                     true,
@@ -815,6 +873,7 @@ export class Database implements PluginHandler {
                     Database.additionalChangesStreamOptions
                 )
             )
+
             Database.changesStream.on(
                 'error',
                 async (error:DatabaseError):Promise<void> => {
@@ -826,8 +885,10 @@ export class Database implements PluginHandler {
                             `${Tools.represent(error)}. Restarting database ` +
                             'server and reinitialize changes stream...'
                         )
+
                         numberOfErrorsThrough = 0
                         Database.changesStream.cancel()
+
                         await services.couchdb.server.restart(
                             services, configuration, plugins
                         )
@@ -838,9 +899,11 @@ export class Database implements PluginHandler {
                             `${Tools.represent(error)}. Reinitializing ` +
                             'changes stream...'
                         )
+
                     initialize()
                 }
             )
+
             await PluginAPI.callStack(
                 'couchdbInitializeChangesStream',
                 plugins,
@@ -849,6 +912,7 @@ export class Database implements PluginHandler {
                 services
             )
         })
+
         if (configuration.couchdb.attachAutoRestarter)
             initialize()
         // endregion
@@ -856,8 +920,10 @@ export class Database implements PluginHandler {
     }
     /**
      * Appends an application server to the web node services.
+     *
      * @param services - An object with stored service instances.
      * @param configuration - Mutable by plugins extended configuration object.
+     *
      * @returns Given and extended object of services wrapped in a promise
      * resolving after pre-loading has finished.
      */
@@ -866,11 +932,13 @@ export class Database implements PluginHandler {
     ):Promise<Services> {
         if (!services.hasOwnProperty('couchdb'))
             services.couchdb = {} as Services['couchdb']
+
         if (!services.couchdb.hasOwnProperty('connector')) {
             const idName:string =
                 configuration.couchdb.model.property.name.special.id
             const revisionName:string =
                 configuration.couchdb.model.property.name.special.revision
+
             services.couchdb.connector = PouchDB
             // region apply "latest/upsert" and ignore "NoChange" error plugin
             const nativeBulkDocs:Function =
@@ -973,9 +1041,11 @@ export class Database implements PluginHandler {
             // endregion
             if (configuration.couchdb.debug)
                 services.couchdb.connector.debug.enable('*')
+
             services.couchdb.connector =
                 services.couchdb.connector.plugin(PouchDBFindPlugin)
         }
+
         if (!services.couchdb.hasOwnProperty('server')) {
             services.couchdb.server = {} as Services['couchdb']['server']
             // region search for binary file to start database server
@@ -993,18 +1063,23 @@ export class Database implements PluginHandler {
                             directoryPath, name
                         )
                         triedPaths.push(binaryFilePath)
+
                         if (await Tools.isFile(binaryFilePath)) {
                             runner.binaryFilePath = binaryFilePath
                             services.couchdb.server.runner = runner
+
                             break
                         }
                     }
+
                     if (services.couchdb.server.hasOwnProperty('runner'))
                         break
                 }
+
                 if (services.couchdb.server.hasOwnProperty('runner'))
                     break
             }
+
             if (!services.couchdb.server.hasOwnProperty('runner'))
                 throw new Error(
                     'No binary file in one of the following locations found:' +
@@ -1012,12 +1087,15 @@ export class Database implements PluginHandler {
                 )
             // endregion
         }
+
         return services
     }
     /**
      * Triggered when application will be closed soon.
+     *
      * @param services - An object with stored service instances.
      * @param configuration - Mutable by plugins extended configuration object.
+     *
      * @returns Given object of services wrapped in a promise resolving after
      * finish.
      */
@@ -1027,8 +1105,11 @@ export class Database implements PluginHandler {
         const logFilePath:string = 'log.txt'
         if (await Tools.isFile(logFilePath))
             await fileSystem.unlink(logFilePath)
+
         await Helper.stopServer(services, configuration)
+
         delete (services as {couchdb?:Services['couchdb']}).couchdb
+
         return services
     }
 }

@@ -40,6 +40,7 @@ import {
     DatabaseResponse,
     Document,
     DocumentRevisionIDMeta,
+    Exception,
     FileSpecification,
     Model,
     ModelConfiguration,
@@ -150,7 +151,7 @@ export class Helper {
                 console.info(`${description} updated.`)
         } catch (error) {
             if (log)
-                if (error.error === 'not_found')
+                if ((error as {error:string}).error === 'not_found')
                     console.info(
                         `${description} not available: create new one.`
                     )
@@ -219,8 +220,8 @@ export class Helper {
                     if (
                         idName in firstParameter &&
                         configuration.couchdb.ignoreNoChangeError &&
-                        error.name === 'forbidden' &&
-                        error.message?.startsWith('NoChange:')
+                        (error as Exception).name === 'forbidden' &&
+                        (error as Exception).message?.startsWith('NoChange:')
                     ) {
                         const result:DatabaseResponse = {
                             id: firstParameter[idName],
@@ -286,7 +287,7 @@ export class Helper {
                     {recursive: true}
                 )
             } catch (error) {
-                if (error.code !== 'EEXIST')
+                if ((error as NodeJS.ErrnoException).code !== 'EEXIST')
                     throw error
             }
 
