@@ -435,7 +435,7 @@
     "module": {
       "aliases": {
         "#": "Standard import is \"node-fetch/lib/index.mjs\" which has import declarations which aren't allowed for javascript module files.",
-        "node-fetch$": "node-fetch/lib/index.js"
+        "node-fetch$": "pouchdb/node_modules/node-fetch/lib/index.js"
       },
       "skipParseRegularExpressions": {
         "__evaluate__": "/(?:(?:bindings\\/bindings)|(?:colors\\/lib\\/(?:colors)|(?:extendStringPrototype))|(?:encoding\\/lib\\/iconv-loader)|(?:global)|(?:module))\\.js(?:\\?.+|$)/"

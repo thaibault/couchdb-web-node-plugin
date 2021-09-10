@@ -244,7 +244,8 @@ export interface SecuritySettings {
     _validatedDocuments?:Set<string>
 }
 export type ConnectorConfiguration = DatabaseConnectorConfiguration & {
-    fetch?:FetchOptions|null
+    // NOTE: "pouchdbs" version supports timeout parameter.
+    fetch?:(FetchOptions & {timeout:number})|null
 }
 export type Configuration<ConfigurationType = {}> =
     BaseConfiguration<{
