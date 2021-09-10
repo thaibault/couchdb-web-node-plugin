@@ -24,15 +24,15 @@
     "web"
   ],
   "files": [
-    "databaseHelper.ts",
+    "databaseHelper.d.ts",
     "databaseHelper.js",
-    "helper.ts",
+    "helper.d.ts",
+    "index.d.ts",
+    "index.js",
     "helper.js",
-    "index.ts",
-    "type.js",
-    "type.ts"
+    "type.d.ts",
+    "type.js"
   ],
-  "main": "index.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/thaibault/couchdb-web-node-plugin.git"
@@ -54,22 +54,20 @@
     "watch": "weboptimizer build --watch"
   },
   "dependencies": {
-    "@types/webpack": "https://registry.yarnpkg.com/@favware/skip-dependency/-/skip-dependency-1.1.0.tgz",
+    "@types/webpack": "https://registry.yarnpkg.com/@favware/skip-dependency/-/skip-dependency-1.1.1.tgz",
     "pouchdb": "*",
     "pouchdb-find": "*",
     "pouchdb-server": "*"
   },
   "devDependencies": {
+    "@babel/eslint-parser": "*",
     "@types/ejs": "*",
     "@types/jest": "*",
-    "@types/loader-utils": "*",
     "@types/node": "*",
-    "@types/node-fetch": "*",
     "@types/pouchdb": "*",
     "@types/workbox-webpack-plugin": "*",
     "@typescript-eslint/eslint-plugin": "*",
     "@typescript-eslint/parser": "*",
-    "babel-eslint": "*",
     "clientnode": "*",
     "documentation-website": "*",
     "eslint": "*",
@@ -89,8 +87,13 @@
     "request": "*",
     "web-node": "*"
   },
+  "peerDependenciesMeta": {
+    "@babel/runtime": {
+      "optional": true
+    }
+  },
   "resolutions": {
-    "@types/webpack": "https://registry.yarnpkg.com/@favware/skip-dependency/-/skip-dependency-1.1.0.tgz"
+    "@types/webpack": "https://registry.yarnpkg.com/@favware/skip-dependency/-/skip-dependency-1.1.1.tgz"
   },
   "sideEffects": false,
   "webNode": {
@@ -432,7 +435,7 @@
     "module": {
       "aliases": {
         "#": "Standard import is \"node-fetch/lib/index.mjs\" which has import declarations which aren't allowed for javascript module files.",
-        "node-fetch$": "node-fetch/lib/index.js"
+        "node-fetch$": "pouchdb/node_modules/node-fetch/lib/index.js"
       },
       "skipParseRegularExpressions": {
         "__evaluate__": "/(?:(?:bindings\\/bindings)|(?:colors\\/lib\\/(?:colors)|(?:extendStringPrototype))|(?:encoding\\/lib\\/iconv-loader)|(?:global)|(?:module))\\.js(?:\\?.+|$)/"

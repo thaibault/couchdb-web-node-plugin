@@ -40,6 +40,7 @@ import {
     DatabaseResponse,
     Document,
     DocumentRevisionIDMeta,
+    Exception,
     FileSpecification,
     Model,
     ModelConfiguration,
@@ -57,7 +58,9 @@ export class Helper {
     /**
      * Converts internal declarative database connector configuration object
      * into a database compatible one.
+     *
      * @param configuration - Mutable by plugins extended configuration object.
+     *
      * @returns Database compatible configuration object.
     */
     static getConnectorOptions(
@@ -76,15 +79,18 @@ export class Helper {
                     )
                 )) as unknown as DatabaseFetch
             }
+
         return {fetch: fetch as unknown as DatabaseFetch}
     }
     /**
      * Determines a representation for given plain object.
+     *
      * @param data - Object to represent.
      * @param maximumRepresentationTryLength - Maximum representation string to
      * process.
      * @param maximumRepresentationLength - Maximum length of returned
      * representation.
+     *
      * @returns Representation string.
      */
     static mayStripRepresentation(
@@ -101,17 +107,20 @@ export class Helper {
                 '...'
         } else
             return 'DOCUMENT IS TOO BIG TO REPRESENT'
+
         return representation
     }
     /**
      * Updates/creates a design document in database with a validation function
      * set to given code.
+     *
      * @param databaseConnection - Database connection to use for document
      * updates.
      * @param documentName - Design document name.
      * @param documentData - Design document data.
      * @param description - Used to produce semantic logging messages.
      * @param log - Enables logging.
+     *
      * @returns Promise which will be resolved after given document has updated
      * successfully.
      */
@@ -129,17 +138,20 @@ export class Helper {
             language: 'javascript',
             ...documentData
         }
+
         try {
             const oldDocument:Document = await databaseConnection.get(
                 `${designDocumentNamePrefix}${documentName}`
             )
             newDocument._rev = oldDocument._rev
+
             await databaseConnection.put(newDocument)
+
             if (log)
                 console.info(`${description} updated.`)
         } catch (error) {
             if (log)
-                if (error.error === 'not_found')
+                if ((error as {error:string}).error === 'not_found')
                     console.info(
                         `${description} not available: create new one.`
                     )
@@ -150,6 +162,7 @@ export class Helper {
                     )
             try {
                 await databaseConnection.put(newDocument)
+
                 if (log)
                     console.info(`${description} installed/updated.`)
             } catch (error) {
@@ -162,8 +175,10 @@ export class Helper {
     }
     /**
      * Initializes a database connection instance.
+     *
      * @param services - An object with stored service instances.
      * @param configuration - Mutable by plugins extended configuration object.
+     *
      * @returns Given and extended object of services.
      */
     static async initializeConnection(
@@ -176,10 +191,12 @@ export class Helper {
                 `${configuration.couchdb.user.password}@`
             ) +
             `/${configuration.name}`
+
         services.couchdb.connection = new services.couchdb.connector(
             url, Helper.getConnectorOptions(configuration)
         )
         services.couchdb.connection.setMaxListeners(Infinity)
+
         const idName:string =
             configuration.couchdb.model.property.name.special.id
         const revisionName:string =
@@ -193,6 +210,7 @@ export class Helper {
             const nativeMethod:Function =
                 services.couchdb.connection[pluginName]
                     .bind(services.couchdb.connection)
+
             services.couchdb.connection[pluginName] = async function(
                 firstParameter:any, ...parameter:Array<any>
             ):Promise<any> {
@@ -202,13 +220,14 @@ export class Helper {
                     if (
                         idName in firstParameter &&
                         configuration.couchdb.ignoreNoChangeError &&
-                        error.name === 'forbidden' &&
-                        error.message?.startsWith('NoChange:')
+                        (error as Exception).name === 'forbidden' &&
+                        (error as Exception).message?.startsWith('NoChange:')
                     ) {
                         const result:DatabaseResponse = {
                             id: firstParameter[idName],
                             ok: true
                         } as DatabaseResponse
+
                         try {
                             result.rev = (
                                 revisionName in firstParameter &&
@@ -227,6 +246,7 @@ export class Helper {
 
                         return result
                     }
+
                     throw error
                 }
             }
@@ -237,6 +257,7 @@ export class Helper {
             await Tools.checkReachability(url)
         } catch (error) {
             console.info('Database could not be retrieved yet: Creating it.')
+
             await fetch(url, {method: 'PUT'})
         }
         // endregion
@@ -244,15 +265,17 @@ export class Helper {
     }
     /**
      * Starts server process.
+     *
      * @param services - An object with stored service instances.
      * @param configuration - Mutable by plugins extended configuration object.
+     *
      * @returns A promise representing the server process wrapped in a promise
      * which resolves after server is reachable.
      */
     static async startServer(
         services:Services, configuration:Configuration
     ):Promise<void> {
-        // region create configuration file if needed
+        // region  create configuration file if needed
         if (services.couchdb.server.runner.hasOwnProperty(
             'configurationFile'
         )) {
@@ -264,9 +287,10 @@ export class Helper {
                     {recursive: true}
                 )
             } catch (error) {
-                if (error.code !== 'EEXIST')
+                if ((error as NodeJS.ErrnoException).code !== 'EEXIST')
                     throw error
             }
+
             await fileSystem.writeFile(
                 services.couchdb.server.runner.configurationFile!.path,
                 services.couchdb.server.runner.configurationFile!.content,
@@ -309,8 +333,9 @@ export class Helper {
                 shell: true,
                 stdio: 'inherit'
             }
-        );
-        (new Promise((
+        )
+
+        ;(new Promise((
             resolve:ProcessCloseCallback, reject:ProcessErrorCallback
         ):void => {
             for (const closeEventName of CloseEventNames)
@@ -325,16 +350,18 @@ export class Helper {
                         }
                     )
                 )
-        })).then(
-            (...parameter:Array<any>):void => {
-                if (services.couchdb?.server?.resolve)
-                    services.couchdb.server.resolve.apply(this, parameter)
-            },
-            (...parameter:Array<any>):void => {
-                if (services.couchdb?.server?.resolve)
-                    services.couchdb.server.reject.apply(this, parameter)
-            }
-        )
+        }))
+            .then(
+                (...parameter:Array<any>):void => {
+                    if (services.couchdb?.server?.resolve)
+                        services.couchdb.server.resolve.apply(this, parameter)
+                },
+                (...parameter:Array<any>):void => {
+                    if (services.couchdb?.server?.resolve)
+                        services.couchdb.server.reject.apply(this, parameter)
+                }
+            )
+
         await Tools.checkReachability(
             Tools.stringFormat(configuration.couchdb.url, ''), true
         )
@@ -342,9 +369,11 @@ export class Helper {
     /**
      * Stops open database connection if exist, stops server process, restarts
      * server process and re-initializes server connection.
+     *
      * @param services - An object with stored service instances.
      * @param configuration - Mutable by plugins extended configuration object.
      * @param plugins - Topological sorted list of plugins.
+     *
      * @returns Given object of services wrapped in a promise resolving after
      * after finish.
      */
@@ -355,24 +384,32 @@ export class Helper {
             services.couchdb.server.resolve
         const rejectServerProcessBackup:Function =
             services.couchdb.server.reject
+
         // Avoid to notify web node about server process stop.
         services.couchdb.server.resolve =
             services.couchdb.server.reject =
             Tools.noop
+
         await Helper.stopServer(services, configuration)
+
         // Reattach server process to web nodes process pool.
         services.couchdb.server.resolve = resolveServerProcessBackup
         services.couchdb.server.reject = rejectServerProcessBackup
+
         await Helper.startServer(services, configuration)
+
         Helper.initializeConnection(services, configuration)
+
         await PluginAPI.callStack(
             'restartCouchdb', plugins, configuration, services
         )
     }
     /**
      * Stops open database connection if exists and stops server process.
+     *
      * @param services - An object with stored service instances.
      * @param configuration - Mutable by plugins extended configuration object.
+     *
      * @returns Given object of services wrapped in a promise resolving after
      * after finish.
      */
@@ -381,8 +418,10 @@ export class Helper {
     ):Promise<void> {
         if (services.couchdb.connection)
             services.couchdb.connection.close()
+
         if (services.couchdb.server.process)
             services.couchdb.server.process.kill('SIGINT')
+
         await Tools.checkUnreachability(
             Tools.stringFormat(configuration.couchdb.url, ''), true
         )
@@ -391,7 +430,9 @@ export class Helper {
     /**
      * Determines a mapping of all models to roles who are allowed to edit
      * corresponding model instances.
+     *
      * @param modelConfiguration - Model specification object.
+     *
      * @returns The mapping object.
      */
     static determineAllowedModelRolesMapping(
@@ -401,6 +442,7 @@ export class Helper {
             modelConfiguration.property.name.special.allowedRole
         const allowedModelRolesMapping:AllowedModelRolesMapping = {}
         const models:Models = Helper.extendModels(modelConfiguration)
+
         for (const modelName in models)
             if (
                 models.hasOwnProperty(modelName) &&
@@ -411,6 +453,7 @@ export class Helper {
                         models[modelName][allowedRoleName] as AllowedRoles
                     )
                 allowedModelRolesMapping[modelName].properties = {}
+
                 for (const name in models[modelName])
                     if (
                         models[modelName].hasOwnProperty(name) &&
@@ -434,12 +477,15 @@ export class Helper {
                     read: [],
                     write: []
                 }
+
         return allowedModelRolesMapping
     }
     /**
      * Determines all property names which are indexable in a generic manner.
+     *
      * @param modelConfiguration - Model specification object.
      * @param model - Model to determine property names from.
+     *
      * @returns The mapping object.
      */
     static determineGenericIndexablePropertyNames(
@@ -498,10 +544,12 @@ export class Helper {
     }
     /**
      * Extend given model with all specified one.
+     *
      * @param modelName - Name of model to extend.
      * @param models - Pool of models to extend from.
      * @param extendPropertyName - Property name which indicates model
      * inheritance.
+     *
      * @returns Given model in extended version.
      */
     static extendModel(
@@ -509,6 +557,7 @@ export class Helper {
     ):Model {
         if (modelName === '_base')
             return models[modelName]
+
         if (models.hasOwnProperty('_base'))
             if (
                 models[modelName].hasOwnProperty(extendPropertyName) &&
@@ -522,6 +571,7 @@ export class Helper {
                 (
                     models[modelName][extendPropertyName] as unknown as string
                 ) = '_base'
+
         if (models[modelName].hasOwnProperty(extendPropertyName)) {
             for (const modelNameToExtend of ([] as Array<string>).concat(
                 models[modelName][extendPropertyName] as Array<string>
@@ -533,19 +583,24 @@ export class Helper {
                     )),
                     models[modelName]
                 )
+
             delete models[modelName][extendPropertyName]
         }
+
         return models[modelName]
     }
     /**
      * Extend default specification with specific one.
+     *
      * @param modelConfiguration - Model specification object.
+     *
      * @returns Models with extended specific specifications.
      */
     static extendModels(modelConfiguration:ModelConfiguration):Models {
         const specialNames:SpecialPropertyNames =
             modelConfiguration.property.name.special
         const models:Models = {}
+
         for (const modelName in modelConfiguration.entities)
             if (modelConfiguration.entities.hasOwnProperty(modelName)) {
                 if (!(
@@ -567,10 +622,12 @@ export class Helper {
                             .typeRegularExpressionPattern.private +
                         `" for private one (given name: "${modelName}").`
                     )
+
                 models[modelName] = Helper.extendModel(
                     modelName, modelConfiguration.entities, specialNames.extend
                 )
             }
+
         for (const modelName in models)
             if (models.hasOwnProperty(modelName))
                 for (const propertyName in models[modelName])
@@ -612,11 +669,14 @@ export class Helper {
                                 ),
                                 models[modelName][propertyName]
                             )
+
         return models
     }
     /**
      * Convert given roles to its normalized representation.
+     *
      * @param roles - Unstructured roles description.
+     *
      * @returns Normalized roles representation.
      */
     static normalizeAllowedModelRoles(
