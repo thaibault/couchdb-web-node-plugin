@@ -1102,13 +1102,13 @@ export class Database implements PluginHandler {
     static async shouldExit(
         services:Services, configuration:Configuration
     ):Promise<Services> {
-        const logFilePath:string = 'log.txt'
-        if (await Tools.isFile(logFilePath))
-            await fileSystem.unlink(logFilePath)
-
         await Helper.stopServer(services, configuration)
 
         delete (services as {couchdb?:Services['couchdb']}).couchdb
+
+        const logFilePath:string = 'log.txt'
+        if (await Tools.isFile(logFilePath))
+            await fileSystem.unlink(logFilePath)
 
         return services
     }
