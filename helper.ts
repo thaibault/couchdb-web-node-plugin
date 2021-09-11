@@ -363,7 +363,7 @@ export class Helper {
             )
 
         await Tools.checkReachability(
-            Tools.stringFormat(configuration.couchdb.url, ''), true
+            Tools.stringFormat(configuration.couchdb.url, ''), {wait: true}
         )
     }
     /**
@@ -423,7 +423,7 @@ export class Helper {
             services.couchdb.server.process.kill('SIGINT')
 
         await Tools.checkUnreachability(
-            Tools.stringFormat(configuration.couchdb.url, ''), true
+            Tools.stringFormat(configuration.couchdb.url, ''), {wait: true}
         )
     }
     // region model
