@@ -467,6 +467,30 @@
           }
         }
       }
+    },
+    "test": {
+      "injection": {
+        "external": {
+          "implicit": {
+            "pattern": {
+              "exclude": {
+                "#": "NOTE: Theses files are ECMAscript file so have to be processed to work with test-runner.",
+                "__append__": [
+                  {
+                    "__evaluate__": "/^(.+\\/)?data-uri-to-buffer(\\/.+)?$/"
+                  },
+                  {
+                    "__evaluate__": "/^(.+\\/)?fetch-blob(\\/.+)?$/"
+                  },
+                  {
+                    "__evaluate__": "/^(.+\\/)?node-fetch(\\/.+)?$/"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
     }
   }
 }
