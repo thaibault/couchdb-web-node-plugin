@@ -15,15 +15,11 @@
 */
 // region imports
 import {spawn as spawnChildProcess} from 'child_process'
-import Tools, {CloseEventNames} from 'clientnode'
+import Tools, {CloseEventNames, globalContext} from 'clientnode'
 import {
     Mapping, ProcessCloseCallback, ProcessErrorCallback
 } from 'clientnode/type'
-import fetch, {
-    Response as FetchResponse,
-    RequestInit as FetchOptions,
-    RequestInfo as FetchURL
-} from 'node-fetch'
+import nodeFetch from 'node-fetch'
 import {promises as fileSystem} from 'fs'
 import path from 'path'
 import {PluginAPI} from 'web-node'
@@ -50,6 +46,7 @@ import {
     SpecialPropertyNames
 } from './type'
 // endregion
+globalContext.fetch = nodeFetch as unknown as typeof fetch
 // region classes
 /**
  * A dumm plugin interface with all available hooks.
@@ -69,8 +66,8 @@ export class Helper {
         if (configuration.couchdb.connector.fetch)
             return {
                 fetch: ((
-                    url:FetchURL, options?:FetchOptions
-                ):Promise<FetchResponse> => fetch(
+                    url:RequestInfo, options?:RequestInit
+                ):Promise<Response> => globalContext.fetch(
                     url,
                     Tools.extend(
                         true,
@@ -80,7 +77,7 @@ export class Helper {
                 )) as unknown as DatabaseFetch
             }
 
-        return {fetch: fetch as unknown as DatabaseFetch}
+        return {fetch: globalContext.fetch as unknown as DatabaseFetch}
     }
     /**
      * Determines a representation for given plain object.
@@ -258,7 +255,7 @@ export class Helper {
         } catch (error) {
             console.info('Database could not be retrieved yet: Creating it.')
 
-            await fetch(url, {method: 'PUT'})
+            await globalContext.fetch(url, {method: 'PUT'})
         }
         // endregion
         return services
