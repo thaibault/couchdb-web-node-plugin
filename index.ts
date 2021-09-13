@@ -17,10 +17,10 @@
     endregion
 */
 // region imports
-import Tools from 'clientnode'
+import Tools, {globalContext} from 'clientnode'
 import {File, Mapping, PlainObject, ProcessCloseReason} from 'clientnode/type'
 import {promises as fileSystem} from 'fs'
-import fetch, {Response as FetchResponse} from 'node-fetch'
+import nodeFetch, {Response as FetchResponse} from 'node-fetch'
 import path from 'path'
 import PouchDB from 'pouchdb'
 import PouchDBFindPlugin from 'pouchdb-find'
@@ -49,6 +49,7 @@ import {
     Services
 } from './type'
 // endregion
+globalContext.fetch = nodeFetch as unknown as typeof fetch
 // region plugins/classes
 /**
  * Launches an application server und triggers all some pluginable hooks on
@@ -131,7 +132,7 @@ export class Database implements PluginHandler {
                     `user "${configuration.couchdb.user.name}".`
                 )
 
-                await fetch(
+                await globalContext.fetch(
                     `${Tools.stringFormat(configuration.couchdb.url, '')}/` +
                     services.couchdb.server.runner
                         .adminUserConfigurationPath +
@@ -243,7 +244,7 @@ export class Database implements PluginHandler {
 
                         let response:FetchResponse|undefined
                         try {
-                            response = await fetch(url)
+                            response = await globalContext.fetch(url)
                         } catch (error) {
                             console.warn(
                                 `Configuration "${fullPath}" (with desired ` +
@@ -275,7 +276,7 @@ export class Database implements PluginHandler {
 
                                 if (changeNeeded)
                                     try {
-                                        await fetch(
+                                        await globalContext.fetch(
                                             url,
                                             {
                                                 body:
@@ -329,7 +330,7 @@ export class Database implements PluginHandler {
                             .validatedDocumentsCache
                     ]".
                 */
-                await fetch(
+                await globalContext.fetch(
                     `${urlPrefix}/${configuration.name}/_security`,
                     {
                         body: JSON.stringify(configuration.couchdb.security),

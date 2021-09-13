@@ -59,7 +59,7 @@ describe('index', ():void => {
         expect(services).toStrictEqual({})
         expect(testValue).toStrictEqual(2)
     })
-// endregion
+    // endregion
 })
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
