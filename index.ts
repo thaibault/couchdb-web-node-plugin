@@ -20,7 +20,6 @@
 import Tools, {globalContext} from 'clientnode'
 import {File, Mapping, PlainObject, ProcessCloseReason} from 'clientnode/type'
 import {promises as fileSystem} from 'fs'
-import nodeFetch, {Response as FetchResponse} from 'node-fetch'
 import path from 'path'
 import PouchDB from 'pouchdb'
 import PouchDBFindPlugin from 'pouchdb-find'
@@ -49,7 +48,6 @@ import {
     Services
 } from './type'
 // endregion
-globalContext.fetch = nodeFetch as unknown as typeof fetch
 // region plugins/classes
 /**
  * Launches an application server und triggers all some pluginable hooks on
@@ -242,7 +240,7 @@ export class Database implements PluginHandler {
                                 subPath
                             ]
 
-                        let response:FetchResponse|undefined
+                        let response:Response|undefined
                         try {
                             response = await globalContext.fetch(url)
                         } catch (error) {

@@ -18,7 +18,6 @@ import {ChildProcess} from 'child_process'
 import {
     Mapping, PlainObject, Primitive, ProcessCloseReason
 } from 'clientnode/type'
-import {RequestInit as FetchOptions} from 'node-fetch'
 import PouchDB from 'pouchdb'
 import {
     Configuration as BaseConfiguration,
@@ -245,7 +244,7 @@ export interface SecuritySettings {
 }
 export type ConnectorConfiguration = DatabaseConnectorConfiguration & {
     // NOTE: "pouchdbs" version supports timeout parameter.
-    fetch?:(FetchOptions & {timeout:number})|null
+    fetch?:(RequestInit & {timeout:number})|null
 }
 export type Configuration<ConfigurationType = {}> =
     BaseConfiguration<{
