@@ -434,7 +434,7 @@
     },
     "module": {
       "aliases": {
-        "#": "Standard import is \"node-fetch/lib/index.mjs\" which has import declarations which aren't allowed for javascript module files.",
+        "#": "Share same library version.",
         "node-fetch$": "pouchdb/node_modules/node-fetch/lib/index.js"
       },
       "skipParseRegularExpressions": {
