@@ -52,7 +52,6 @@ import {
 /**
  * Launches an application server und triggers all some pluginable hooks on
  * an event.
- *
  * @property static:additionalChangesStreamOptions - Can provide additional
  * (non static) changes stream options.
  * @property static:changesStream - Stream which triggers database events.
@@ -66,7 +65,7 @@ import {
 export class Database implements PluginHandler {
     static additionalChangesStreamOptions:object = {}
     static changesStream:ChangesStream
-    static skipIDDetermining:boolean = true
+    static skipIDDetermining = true
     static toggleIDDetermining = Symbol('toggleIDDetermining')
     /**
      * Start database's child process and return a Promise which observes this

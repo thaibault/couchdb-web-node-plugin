@@ -28,7 +28,6 @@ import {Plugin} from 'web-node/type'
 import {
     AllowedModelRolesMapping,
     AllowedRoles,
-    Attachments,
     Configuration,
     Connection,
     DatabaseConnectorConfiguration,
@@ -55,13 +54,13 @@ export class Helper {
     /**
      * Converts internal declarative database connector configuration object
      * into a database compatible one.
-     *
+     * @param this - Indicates an unbound method.
      * @param configuration - Mutable by plugins extended configuration object.
      *
      * @returns Database compatible configuration object.
     */
     static getConnectorOptions(
-        configuration:Configuration
+        this:void, configuration:Configuration
     ):DatabaseConnectorConfiguration {
         if (configuration.couchdb.connector.fetch)
             return {
@@ -81,8 +80,8 @@ export class Helper {
     }
     /**
      * Determines a representation for given plain object.
-     *
-     * @param data - Object to represent.
+     * @param this - Indicates an unbound method.
+     * @param object - Object to represent.
      * @param maximumRepresentationTryLength - Maximum representation string to
      * process.
      * @param maximumRepresentationLength - Maximum length of returned
@@ -91,17 +90,20 @@ export class Helper {
      * @returns Representation string.
      */
     static mayStripRepresentation(
+        this:void,
         object:any,
         maximumRepresentationTryLength:number,
         maximumRepresentationLength:number
     ):string {
-        let representation:string = Tools.represent(object)
+        const representation:string = Tools.represent(object)
         if (representation.length <= maximumRepresentationTryLength) {
             if (representation.length > maximumRepresentationLength)
-                return representation.substring(
-                    0, maximumRepresentationLength - '...'.length
-                ) +
-                '...'
+                return (
+                    representation.substring(
+                        0, maximumRepresentationLength - '...'.length
+                    ) +
+                    '...'
+                )
         } else
             return 'DOCUMENT IS TOO BIG TO REPRESENT'
 
@@ -110,25 +112,29 @@ export class Helper {
     /**
      * Updates/creates a design document in database with a validation function
      * set to given code.
-     *
+     * @param this -yy Indicates an unbound method.
      * @param databaseConnection - Database connection to use for document
      * updates.
      * @param documentName - Design document name.
      * @param documentData - Design document data.
      * @param description - Used to produce semantic logging messages.
      * @param log - Enables logging.
+     * @param idName - Property name for ids.
+     * @param designDocumentNamePrefix - Document name prefix indicating deign
+     * documents.
      *
      * @returns Promise which will be resolved after given document has updated
      * successfully.
      */
     static async ensureValidationDocumentPresence(
+        this:void,
         databaseConnection:Connection,
         documentName:string,
         documentData:Mapping,
         description:string,
-        log:boolean = true,
-        idName:string = '_id',
-        designDocumentNamePrefix:string = '_design/'
+        log = true,
+        idName = '_id',
+        designDocumentNamePrefix = '_design/'
     ):Promise<void> {
         const newDocument:Partial<Document> = {
             [idName]: `${designDocumentNamePrefix}${documentName}`,
@@ -172,14 +178,14 @@ export class Helper {
     }
     /**
      * Initializes a database connection instance.
-     *
+     * @param this - Indicates an unbound method.
      * @param services - An object with stored service instances.
      * @param configuration - Mutable by plugins extended configuration object.
      *
      * @returns Given and extended object of services.
      */
     static async initializeConnection(
-        services:Services, configuration:Configuration
+        this:void, services:Services, configuration:Configuration
     ):Promise<Services> {
         const url:string =
             Tools.stringFormat(
@@ -225,21 +231,16 @@ export class Helper {
                             ok: true
                         } as DatabaseResponse
 
-                        try {
-                            result.rev = (
-                                revisionName in firstParameter &&
-                                !['latest', 'upsert'].includes(
-                                    firstParameter[revisionName]
-                                )
-                            ) ?
-                                firstParameter[revisionName] :
-                                (await this.get(result.id))[
-                                    revisionName as
-                                        keyof DocumentRevisionIDMeta
-                                ]
-                        } catch (error) {
-                            throw error
-                        }
+                        result.rev = (
+                            revisionName in firstParameter &&
+                            !['latest', 'upsert'].includes(
+                                firstParameter[revisionName]
+                            )
+                        ) ?
+                            firstParameter[revisionName] :
+                            (await this.get(result.id))[
+                                revisionName as keyof DocumentRevisionIDMeta
+                            ]
 
                         return result
                     }
@@ -262,7 +263,7 @@ export class Helper {
     }
     /**
      * Starts server process.
-     *
+     * @param this - Indicates an unbound method.
      * @param services - An object with stored service instances.
      * @param configuration - Mutable by plugins extended configuration object.
      *
@@ -270,11 +271,11 @@ export class Helper {
      * which resolves after server is reachable.
      */
     static async startServer(
-        services:Services, configuration:Configuration
+        this:void, services:Services, configuration:Configuration
     ):Promise<void> {
         // region  create configuration file if needed
-        if (services.couchdb.server.runner.hasOwnProperty(
-            'configurationFile'
+        if (Object.prototype.hasOwnProperty.call(
+            services.couchdb.server.runner, 'configurationFile'
         )) {
             try {
                 await fileSystem.mkdir(
@@ -318,8 +319,8 @@ export class Helper {
             {
                 cwd: eval('process').cwd(),
                 env: (
-                    services.couchdb.server.runner.hasOwnProperty(
-                        'environment'
+                    Object.prototype.hasOwnProperty.call(
+                        services.couchdb.server.runner, 'environment'
                     ) ?
                         {
                             ...eval('process').env,
@@ -366,7 +367,7 @@ export class Helper {
     /**
      * Stops open database connection if exist, stops server process, restarts
      * server process and re-initializes server connection.
-     *
+     * @param this - Indicates an unbound method.
      * @param services - An object with stored service instances.
      * @param configuration - Mutable by plugins extended configuration object.
      * @param plugins - Topological sorted list of plugins.
@@ -375,7 +376,10 @@ export class Helper {
      * after finish.
      */
     static async restartServer(
-        services:Services, configuration:Configuration, plugins:Array<Plugin>
+        this:void,
+        services:Services,
+        configuration:Configuration,
+        plugins:Array<Plugin>
     ):Promise<void> {
         const resolveServerProcessBackup:Function =
             services.couchdb.server.resolve
@@ -395,7 +399,7 @@ export class Helper {
 
         await Helper.startServer(services, configuration)
 
-        Helper.initializeConnection(services, configuration)
+        void Helper.initializeConnection(services, configuration)
 
         await PluginAPI.callStack(
             'restartCouchdb', plugins, configuration, services
@@ -403,7 +407,7 @@ export class Helper {
     }
     /**
      * Stops open database connection if exists and stops server process.
-     *
+     * @param this - Indicates an unbound method.
      * @param services - An object with stored service instances.
      * @param configuration - Mutable by plugins extended configuration object.
      *
@@ -411,10 +415,10 @@ export class Helper {
      * after finish.
      */
     static async stopServer(
-        services:Services, configuration:Configuration
+        this:void, services:Services, configuration:Configuration
     ):Promise<void> {
         if (services.couchdb.connection)
-            services.couchdb.connection.close()
+            void services.couchdb.connection.close()
 
         if (services.couchdb.server.process)
             services.couchdb.server.process.kill('SIGINT')
@@ -427,13 +431,13 @@ export class Helper {
     /**
      * Determines a mapping of all models to roles who are allowed to edit
      * corresponding model instances.
-     *
+     * @param this - Indicates an unbound method.
      * @param modelConfiguration - Model specification object.
      *
      * @returns The mapping object.
      */
     static determineAllowedModelRolesMapping(
-        modelConfiguration:ModelConfiguration
+        this:void, modelConfiguration:ModelConfiguration
     ):AllowedModelRolesMapping {
         const allowedRoleName:string =
             modelConfiguration.property.name.special.allowedRole
@@ -442,8 +446,10 @@ export class Helper {
 
         for (const modelName in models)
             if (
-                models.hasOwnProperty(modelName) &&
-                models[modelName].hasOwnProperty(allowedRoleName)
+                Object.prototype.hasOwnProperty.call(models, modelName) &&
+                Object.prototype.hasOwnProperty.call(
+                    models[modelName], allowedRoleName
+                )
             ) {
                 allowedModelRolesMapping[modelName] =
                     Helper.normalizeAllowedModelRoles(
@@ -453,11 +459,13 @@ export class Helper {
 
                 for (const name in models[modelName])
                     if (
-                        models[modelName].hasOwnProperty(name) &&
+                        Object.prototype.hasOwnProperty.call(
+                            models[modelName], name
+                        ) &&
                         models[modelName][name] !== null &&
                         typeof models[modelName][name] === 'object' &&
-                        models[modelName][name].hasOwnProperty(
-                            'allowedRoles'
+                        Object.prototype.hasOwnProperty.call(
+                            models[modelName][name], 'allowedRoles'
                         ) &&
                         models[modelName][name].allowedRoles
                     )
@@ -479,14 +487,14 @@ export class Helper {
     }
     /**
      * Determines all property names which are indexable in a generic manner.
-     *
+     * @param this - Indicates an unbound method.
      * @param modelConfiguration - Model specification object.
      * @param model - Model to determine property names from.
      *
      * @returns The mapping object.
      */
     static determineGenericIndexablePropertyNames(
-        modelConfiguration:ModelConfiguration, model:Model
+        this:void, modelConfiguration:ModelConfiguration, model:Model
     ):Array<string> {
         const specialNames:SpecialPropertyNames =
             modelConfiguration.property.name.special
@@ -496,10 +504,14 @@ export class Helper {
                 model[name] !== null &&
                 typeof model[name] === 'object' &&
                 (
-                    model[name].hasOwnProperty('index') &&
+                    Object.prototype.hasOwnProperty.call(
+                        model[name], 'index'
+                    ) &&
                     model[name].index ||
                     !(
-                        model[name].hasOwnProperty('index') &&
+                        Object.prototype.hasOwnProperty.call(
+                            model[name], 'index'
+                        ) &&
                         !model[name].index ||
                         modelConfiguration.property.name.reserved.concat(
                             specialNames.additional,
@@ -529,7 +541,8 @@ export class Helper {
                             Array.isArray(
                                 (model[name].type as Array<string>)[0]
                             ) ||
-                            modelConfiguration.entities.hasOwnProperty(
+                            Object.prototype.hasOwnProperty.call(
+                                modelConfiguration.entities,
                                 model[name].type as string
                             )
                         )
@@ -541,7 +554,7 @@ export class Helper {
     }
     /**
      * Extend given model with all specified one.
-     *
+     * @param this - Indicates an unbound method.
      * @param modelName - Name of model to extend.
      * @param models - Pool of models to extend from.
      * @param extendPropertyName - Property name which indicates model
@@ -550,14 +563,19 @@ export class Helper {
      * @returns Given model in extended version.
      */
     static extendModel(
-        modelName:string, models:Models, extendPropertyName:string = '_extends'
+        this:void,
+        modelName:string,
+        models:Models,
+        extendPropertyName = '_extends'
     ):Model {
         if (modelName === '_base')
             return models[modelName]
 
-        if (models.hasOwnProperty('_base'))
+        if (Object.prototype.hasOwnProperty.call(models, '_base'))
             if (
-                models[modelName].hasOwnProperty(extendPropertyName) &&
+                Object.prototype.hasOwnProperty.call(
+                    models[modelName], extendPropertyName
+                ) &&
                 models[modelName][extendPropertyName]
             )
                 (models[modelName][extendPropertyName] as Array<string>) =
@@ -569,7 +587,9 @@ export class Helper {
                     models[modelName][extendPropertyName] as unknown as string
                 ) = '_base'
 
-        if (models[modelName].hasOwnProperty(extendPropertyName)) {
+        if (Object.prototype.hasOwnProperty.call(
+            models[modelName], extendPropertyName
+        )) {
             for (const modelNameToExtend of ([] as Array<string>).concat(
                 models[modelName][extendPropertyName] as Array<string>
             ))
@@ -588,18 +608,22 @@ export class Helper {
     }
     /**
      * Extend default specification with specific one.
-     *
+     * @param this - Indicates an unbound method.
      * @param modelConfiguration - Model specification object.
      *
      * @returns Models with extended specific specifications.
      */
-    static extendModels(modelConfiguration:ModelConfiguration):Models {
+    static extendModels(
+        this:void, modelConfiguration:ModelConfiguration
+    ):Models {
         const specialNames:SpecialPropertyNames =
             modelConfiguration.property.name.special
         const models:Models = {}
 
         for (const modelName in modelConfiguration.entities)
-            if (modelConfiguration.entities.hasOwnProperty(modelName)) {
+            if (Object.prototype.hasOwnProperty.call(
+                modelConfiguration.entities, modelName
+            )) {
                 if (!(
                     new RegExp(
                         modelConfiguration.property.name
@@ -626,14 +650,18 @@ export class Helper {
             }
 
         for (const modelName in models)
-            if (models.hasOwnProperty(modelName))
+            if (Object.prototype.hasOwnProperty.call(models, modelName))
                 for (const propertyName in models[modelName])
-                    if (models[modelName].hasOwnProperty(propertyName))
+                    if (Object.prototype.hasOwnProperty.call(
+                        models[modelName], propertyName
+                    ))
                         if (propertyName === specialNames.attachment) {
                             for (const type in models[modelName][propertyName])
                                 if (
-                                    models[modelName][propertyName]!
-                                        .hasOwnProperty(type)
+                                    Object.prototype.hasOwnProperty.call(
+                                        models[modelName][propertyName]!,
+                                        type
+                                    )
                                 )
                                     (
                                         models[modelName][propertyName] as
@@ -662,7 +690,7 @@ export class Helper {
                                 true,
                                 Tools.copy(
                                     modelConfiguration.property
-                                        .defaultSpecification,
+                                        .defaultSpecification
                                 ),
                                 models[modelName][propertyName]
                             )
@@ -671,13 +699,13 @@ export class Helper {
     }
     /**
      * Convert given roles to its normalized representation.
-     *
+     * @param this - Indicates an unbound method.
      * @param roles - Unstructured roles description.
      *
      * @returns Normalized roles representation.
      */
     static normalizeAllowedModelRoles(
-        roles:AllowedRoles
+        this:void, roles:AllowedRoles
     ):OperationToAllowedRolesMapping {
         if (Array.isArray(roles))
             return {read: roles, write: roles}
@@ -686,7 +714,7 @@ export class Helper {
             const result:OperationToAllowedRolesMapping = {read: [], write: []}
 
             for (const type in result)
-                if (roles.hasOwnProperty(type))
+                if (Object.prototype.hasOwnProperty.call(roles, type))
                     if (Array.isArray(roles[type as 'read'|'write']))
                         result[type as 'read'|'write'] =
                             roles[type as 'read'|'write'] as Array<string>
