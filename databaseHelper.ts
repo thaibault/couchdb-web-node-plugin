@@ -15,7 +15,7 @@
 */
 // region imports
 import {
-    Mapping, Primitive, PlainObject, ProcedureFunction, ValueOf
+    Mapping, Primitive, PlainObject, ProcedureFunction
 } from 'clientnode/type'
 
 import {
@@ -28,7 +28,6 @@ import {
     ConstraintKey,
     Document,
     DocumentContent,
-    EmptyEvaluationException,
     EmptyEvaluationExceptionData,
     EvaluationException,
     EvaluationResult,
@@ -45,7 +44,6 @@ import {
     SpecialPropertyNames,
     StubAttachment,
     Type,
-    TypeSpecification,
     UserContext
 } from './type'
 // endregion
@@ -69,6 +67,8 @@ export class DatabaseHelper {
      * @param idPropertyName - Property name indicating the id field name.
      * @param typePropertyName - Property name indicating to which model a
      * document belongs to.
+     * @param designDocumentNamePrefix - Document name prefix indicating a
+     * design document.
      *
      * @param read - Indicates whether a read or write of given document should
      * be authorized or not.
@@ -88,9 +88,9 @@ export class DatabaseHelper {
             admins: {names: [], roles: []}, members: {names: [], roles: []}
         },
         allowedModelRolesMapping?:AllowedModelRolesMapping,
-        idPropertyName:string = '_id',
-        typePropertyName:string = '-type',
-        designDocumentNamePrefix:string = '_design/',
+        idPropertyName = '_id',
+        typePropertyName = '-type',
+        designDocumentNamePrefix = '_design/',
         read = false
     ):true {
         const type:string|undefined =
