@@ -76,7 +76,13 @@ export class Helper {
                 )) as unknown as DatabaseFetch
             }
 
-        return {fetch: globalContext.fetch as unknown as DatabaseFetch}
+        return {
+            fetch: ((
+                url:RequestInfo, options?:RequestInit
+            ):Promise<Response> => globalContext.fetch(url, options)) as
+                unknown as
+                DatabaseFetch
+        }
     }
     /**
      * Determines a representation for given plain object.

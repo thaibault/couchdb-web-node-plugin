@@ -70,7 +70,6 @@ export class Database implements PluginHandler {
     /**
      * Start database's child process and return a Promise which observes this
      * service.
-     *
      * @param servicePromises - An object with stored service promise
      * instances.
      * @param services - An object with stored service instances.
@@ -86,7 +85,9 @@ export class Database implements PluginHandler {
     ):Promise<Service> {
         let promise:null|Promise<ProcessCloseReason> = null
 
-        if (services.couchdb.server.hasOwnProperty('runner')) {
+        if (Object.prototype.hasOwnProperty.call(
+            services.couchdb.server, 'runner'
+        )) {
             await Helper.startServer(services, configuration)
 
             services.couchdb.server.restart = Helper.restartServer
@@ -103,7 +104,9 @@ export class Database implements PluginHandler {
             })
         }
 
-        if (services.couchdb.hasOwnProperty('connection'))
+        if (Object.prototype.hasOwnProperty.call(
+            services.couchdb, 'connection'
+        ))
             return {name: 'couchdb', promise}
 
         const urlPrefix:string = Tools.stringFormat(
@@ -156,7 +159,7 @@ export class Database implements PluginHandler {
                             `${Tools.represent(error)}".`
                         )
                     } finally {
-                        authenticatedUserDatabaseConnection.close()
+                        void authenticatedUserDatabaseConnection.close()
                     }
                 } else
                     console.error(
@@ -165,7 +168,7 @@ export class Database implements PluginHandler {
                         `${Tools.represent(error)}".`
                     )
             } finally {
-                unauthenticatedUserDatabaseConnection.close()
+                void unauthenticatedUserDatabaseConnection.close()
             }
         }
         // endregion
@@ -215,7 +218,7 @@ export class Database implements PluginHandler {
                                 `${name}": ${Tools.represent(error)}`
                             )
                     } finally {
-                        userDatabaseConnection.close()
+                        void userDatabaseConnection.close()
                     }
                 }
         // endregion
@@ -226,15 +229,14 @@ export class Database implements PluginHandler {
                     const subPath in
                     configuration.couchdb.backend.configuration
                 )
-                    if (
-                        configuration.couchdb.backend.configuration
-                            .hasOwnProperty(subPath)
-                    ) {
-                        const fullPath:string =
+                    if (Object.prototype.hasOwnProperty.call(
+                        configuration.couchdb.backend.configuration, subPath
+                    )) {
+                        const fullPath =
                             `/${prefix}${prefix.trim() ? '/' : ''}${subPath}`
-                        const url:string = `${urlPrefix}${fullPath}`
+                        const url = `${urlPrefix}${fullPath}`
 
-                        const value:any =
+                        const value:unknown =
                             configuration.couchdb.backend.configuration[
                                 subPath
                             ]
@@ -252,7 +254,7 @@ export class Database implements PluginHandler {
 
                         if (response)
                             if (response.ok) {
-                                let changeNeeded:boolean = true
+                                let changeNeeded = true
                                 if (typeof response.text === 'function')
                                     try {
                                         changeNeeded = (
@@ -278,10 +280,11 @@ export class Database implements PluginHandler {
                                             {
                                                 body:
                                                     '"' +
-                                                    configuration.couchdb
+                                                    (configuration.couchdb
                                                         .backend.configuration[
                                                             subPath
-                                                        ] +
+                                                        ] as string
+                                                    ) +
                                                     '"',
                                                 method: 'PUT'
                                             }
@@ -427,9 +430,11 @@ export class Database implements PluginHandler {
             // endregion
             // region check if all constraint descriptions compile
             for (const modelName in models)
-                if (models.hasOwnProperty(modelName))
+                if (Object.prototype.hasOwnProperty.call(models, modelName))
                     for (const name in models[modelName])
-                        if (models[modelName].hasOwnProperty(name))
+                        if (Object.prototype.hasOwnProperty.call(
+                            models[modelName], name
+                        ))
                             if ([
                                 modelConfiguration.property.name.special
                                     .constraint.execution,
@@ -472,8 +477,9 @@ export class Database implements PluginHandler {
                                         property !== null &&
                                         typeof property === 'object'
                                     ) {
-                                        const constraint:Constraint|null|undefined =
-                                            property[type]
+                                        const constraint:(
+                                            Constraint|null|undefined
+                                        ) = property[type]
 
                                         if (constraint?.description)
                                             try {
@@ -542,20 +548,23 @@ export class Database implements PluginHandler {
                                 error as {forbidden:string}
                             ).forbidden?.startsWith('NoChange:'))
                                 console.info(
-                                    `Including document "${document[idName]}` +
-                                    `" of type "${document[typeName]}" ` +
+                                    'Including document "' +
+                                    `${document[idName] as string}" of type ` +
+                                    `"${document[typeName] as string}" ` +
                                     `hasn't changed existing document.`
                                 )
                             throw new Error(
-                                `Migrating document "${document[idName]}" of` +
-                                ` type "${document[typeName]}" has failed: ` +
-                                Tools.represent(error)
+                                `Migrating document "` +
+                                `${document[idName] as string}" of type "` +
+                                `${document[typeName] as string}" has failed` +
+                                `: ${Tools.represent(error)}`
                             )
                         }
 
                         console.info(
-                            `Including document "${document[idName]}" of ` +
-                            `type "${document[typeName]}" was successful.`
+                            'Including document "' +
+                            `${document[idName] as string}" of type "` +
+                            `${document[typeName] as string}" was successful.`
                         )
                     } else if (path.extname(file.name) === '.js')
                         // region collect migrater
@@ -623,8 +632,10 @@ export class Database implements PluginHandler {
 
                             console.info(
                                 `Running migrater "${name}" for document "` +
-                                `${newDocument[idName]}" (of type "` +
-                                `${newDocument[typeName]}") was successful.`)
+                                `${newDocument[idName] as string}" (of type ` +
+                                `"${newDocument[typeName] as string}") was ` +
+                                'successful.'
+                            )
                         }
                     }
                     /*
@@ -700,14 +711,14 @@ export class Database implements PluginHandler {
                     } catch (error) {
                         throw new Error(
                             `Replaceing auto migrated document "` +
-                            `${newDocument[idName]}" has failed: ` +
+                            `${newDocument[idName] as string}" has failed: ` +
                             Tools.represent(error)
                         )
                     }
 
                     console.info(
-                        `Auto migrating document "${newDocument[idName]}" ` +
-                        'was successful.'
+                        'Auto migrating document "' +
+                        `${newDocument[idName] as string}" was successful.`
                     )
                 }
             // endregion
@@ -724,7 +735,7 @@ export class Database implements PluginHandler {
 
             for (const modelName in models)
                 if (
-                    models.hasOwnProperty(modelName) &&
+                    Object.prototype.hasOwnProperty.call(models, modelName) &&
                     (new RegExp(
                         configuration.couchdb.model.property.name
                             .typeRegularExpressionPattern.public
@@ -742,10 +753,10 @@ export class Database implements PluginHandler {
                             configuration.couchdb.model, models[modelName]
                         )
                     ) {
-                        const name:string =
+                        const name =
                             `${modelName}-${propertyName}-GenericIndex`
-                        let foundPosition:number = -1
-                        let position:number = 0
+                        let foundPosition = -1
+                        let position = 0
 
                         for (const index of indexes) {
                             if (index.name === name) {
@@ -772,7 +783,7 @@ export class Database implements PluginHandler {
 
             for (const index of indexes)
                 if (index.name.endsWith('-GenericIndex')) {
-                    let exists:boolean = false
+                    let exists = false
                     for (const modelName in models)
                         if (index.name.startsWith(`${modelName}-`)) {
                             for (
@@ -816,7 +827,6 @@ export class Database implements PluginHandler {
     /**
      * Add database event listener to auto restart database server on
      * unexpected server issues.
-     *
      * @param servicePromises - An object with stored service promise
      * instances.
      * @param services - An object with stored service instances.
@@ -833,8 +843,8 @@ export class Database implements PluginHandler {
         plugins:Array<Plugin>
     ):ServicePromises {
         // region register database changes stream
-        let numberOfErrorsThrough:number = 0
-        const periodToClearNumberOfErrorsInSeconds:number = 30
+        let numberOfErrorsThrough = 0
+        const periodToClearNumberOfErrorsInSeconds = 30
 
         setInterval(
             ():void => {
@@ -860,7 +870,7 @@ export class Database implements PluginHandler {
         setInterval(():void =>
             Database.changesStream.emit('error', {test: 2}), 6 * 1000)
         */
-        const initialize:Function = Tools.debounce(async ():Promise<void> => {
+        const initialize = Tools.debounce(async ():Promise<void> => {
             if (Database.changesStream)
                 Database.changesStream.cancel()
 
@@ -872,7 +882,7 @@ export class Database implements PluginHandler {
                 )
             )
 
-            Database.changesStream.on(
+            void Database.changesStream.on(
                 'error',
                 async (error:DatabaseError):Promise<void> => {
                     numberOfErrorsThrough += 1
@@ -898,7 +908,7 @@ export class Database implements PluginHandler {
                             'changes stream...'
                         )
 
-                    initialize()
+                    void initialize()
                 }
             )
 
@@ -912,13 +922,12 @@ export class Database implements PluginHandler {
         })
 
         if (configuration.couchdb.attachAutoRestarter)
-            initialize()
+            void initialize()
         // endregion
         return servicePromises
     }
     /**
      * Appends an application server to the web node services.
-     *
      * @param services - An object with stored service instances.
      * @param configuration - Mutable by plugins extended configuration object.
      *
@@ -928,10 +937,12 @@ export class Database implements PluginHandler {
     static async preLoadService(
         services:Services, configuration:Configuration
     ):Promise<Services> {
-        if (!services.hasOwnProperty('couchdb'))
+        if (!Object.prototype.hasOwnProperty.call(services, 'couchdb'))
             services.couchdb = {} as Services['couchdb']
 
-        if (!services.couchdb.hasOwnProperty('connector')) {
+        if (!Object.prototype.hasOwnProperty.call(
+            services.couchdb, 'connector'
+        )) {
             const idName:string =
                 configuration.couchdb.model.property.name.special.id
             const revisionName:string =
@@ -985,7 +996,7 @@ export class Database implements PluginHandler {
                 )
                 const conflictingIndexes:Array<number> = []
                 const conflicts:Array<PlainObject> = []
-                let index:number = 0
+                let index = 0
                 for (const item of result) {
                     if (
                         typeof firstParameter[index] === 'object' &&
@@ -1044,7 +1055,9 @@ export class Database implements PluginHandler {
                 services.couchdb.connector.plugin(PouchDBFindPlugin)
         }
 
-        if (!services.couchdb.hasOwnProperty('server')) {
+        if (!Object.prototype.hasOwnProperty.call(
+            services.couchdb, 'server'
+        )) {
             services.couchdb.server = {} as Services['couchdb']['server']
             // region search for binary file to start database server
             const triedPaths:Array<string> = []
@@ -1070,15 +1083,21 @@ export class Database implements PluginHandler {
                         }
                     }
 
-                    if (services.couchdb.server.hasOwnProperty('runner'))
+                    if (Object.prototype.hasOwnProperty.call(
+                        services.couchdb.server, 'runner'
+                    ))
                         break
                 }
 
-                if (services.couchdb.server.hasOwnProperty('runner'))
+                if (Object.prototype.hasOwnProperty.call(
+                    services.couchdb.server, 'runner'
+                ))
                     break
             }
 
-            if (!services.couchdb.server.hasOwnProperty('runner'))
+            if (!Object.prototype.hasOwnProperty.call(
+                services.couchdb.server, 'runner'
+            ))
                 throw new Error(
                     'No binary file in one of the following locations found:' +
                     ` "${triedPaths.join('", "')}".`
@@ -1090,7 +1109,6 @@ export class Database implements PluginHandler {
     }
     /**
      * Triggered when application will be closed soon.
-     *
      * @param services - An object with stored service instances.
      * @param configuration - Mutable by plugins extended configuration object.
      *
@@ -1104,7 +1122,7 @@ export class Database implements PluginHandler {
 
         delete (services as {couchdb?:Services['couchdb']}).couchdb
 
-        const logFilePath:string = 'log.txt'
+        const logFilePath = 'log.txt'
         if (await Tools.isFile(logFilePath))
             await fileSystem.unlink(logFilePath)
 

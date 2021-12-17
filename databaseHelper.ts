@@ -2459,8 +2459,12 @@ export class DatabaseHelper {
                         'AggregatedMaximumSize: given aggregated size ' +
                         `${sumOfAggregatedSizes} byte doesn't satisfy ` +
                         'specified maximum of ' +
-                        `${model[specialNames.maximumAggregatedSize]} byte ` +
-                        `${pathDescription}.`
+                        (
+                            model[specialNames.maximumAggregatedSize] as
+                                unknown as
+                                string
+                        ) +
+                        ` byte ${pathDescription}.`
                     )
             }
             // / endregion
