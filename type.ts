@@ -299,14 +299,14 @@ export type Services<ServiceType = {}> =
                 reject:Function
                 resolve:Function
                 restart:(
-                    services:Services,
-                    configuration:Configuration,
-                    plugins:Array<Plugin>
+                    _services:Services,
+                    _configuration:Configuration,
+                    _plugins:Array<Plugin>
                 ) => Promise<void>
                 runner:Runner
-                start:(services:Services, configuration:Configuration) =>
+                start:(_services:Services, _configuration:Configuration) =>
                     Promise<void>
-                stop:(services:Services, configuration:Configuration) =>
+                stop:(_services:Services, _configuration:Configuration) =>
                     Promise<void>
             }
         }
@@ -316,7 +316,6 @@ export type Services<ServiceType = {}> =
 export interface PluginHandler extends BasePluginHandler {
     /**
      * Hook after each data change.
-     *
      * @param changesStream - Stream of database changes.
      * @param services - List of other web-node plugin services.
      * @param configuration - Configuration object extended by each plugin
@@ -326,14 +325,13 @@ export interface PluginHandler extends BasePluginHandler {
      * @returns Given entry files.
      */
     couchdbInitializeChangesStream?(
-        changesStream:ChangesStream,
-        services:Services,
-        configuration:Configuration,
-        plugins:Array<Plugin>
+        _changesStream:ChangesStream,
+        _services:Services,
+        _configuration:Configuration,
+        _plugins:Array<Plugin>
     ):ChangesStream
     /**
      * Hook after each data base restart.
-     *
      * @param services - List of other web-node plugin services.
      * @param configuration - Configuration object extended by each plugin
      * specific configuration.
@@ -342,7 +340,9 @@ export interface PluginHandler extends BasePluginHandler {
      * @returns Given entry files.
      */
     restartCouchdb?(
-        services:Services, configuration:Configuration, plugins:Array<Plugin>
+        _services:Services,
+        _configuration:Configuration,
+        _plugins:Array<Plugin>
     ):Services
 }
 // / endregion
