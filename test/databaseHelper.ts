@@ -94,7 +94,10 @@ describe('databaseHelper', ():void => {
         'validateDocumentUpdate (with update strategy "%s")',
         (updateStrategy:string):void => {
             const defaultModelConfiguration:ModelConfiguration = {
-                ...Tools.copy(configuration.couchdb.model), updateStrategy
+                // Numbers are date cross implementation save.
+                ...Tools.copy(configuration.couchdb.model),
+                dateTimeFormat: 'number',
+                updateStrategy
             }
 
             for (
@@ -743,9 +746,11 @@ describe('databaseHelper', ():void => {
                         Test2: {[idName]: {type: 'string'}}
                     }}, 'PropertyType'
                 ],
-                [[{[typeName]: 'Test', a: 1}], {entities: {Test: {a: {
-                    type: 2
-                }}}}, 'PropertyType'],
+                [
+                    [{[typeName]: 'Test', a: 1}],
+                    {entities: {Test: {a: {type: 2}}}},
+                    'PropertyType'
+                ],
                 // endregion
                 // region property range
                 // Values have to be in their specified range.
@@ -1197,20 +1202,26 @@ describe('databaseHelper', ():void => {
             ]) {
                 if (test.length < 3)
                     test.splice(1, 0, {})
+
                 const modelConfiguration:ModelConfiguration = Tools.extend(
                     true, Tools.copy(defaultModelConfiguration), test[1]
                 )
                 const models:Models = Helper.extendModels(modelConfiguration)
+
                 delete modelConfiguration.property.defaultSpecification
                 delete modelConfiguration.entities
+
                 const parameter:Array<any> = test[0]
                     .concat([null, {}, {}].slice(test[0].length - 1))
                     .concat(modelConfiguration, models)
+
                 if (typeof test[2] !== 'string') {
                     expect(DatabaseHelper.validateDocumentUpdate(...parameter))
                         .toStrictEqual(test[2])
+
                     continue
                 }
+
                 expect(():Document =>
                     DatabaseHelper.validateDocumentUpdate(...parameter)
                 ).toThrow(new RegExp(`^${test[2]}: .+[.!]$`, 's'))
@@ -1917,7 +1928,8 @@ describe('databaseHelper', ():void => {
                         {[typeName]: 'Test', a: 1, b: ''},
                         {[typeName]: 'Test', a: 1}
                     ],
-                    {entities: {Test: {
+                    {
+                        entities: {Test: {
                         a: {type: 'DateTime'}, b: {emptyEqualsToNull: false}
                     }}},
                     {
@@ -1942,9 +1954,9 @@ describe('databaseHelper', ():void => {
                             )).getTimezoneOffset())
                         }
                     ],
-                    {entities: {Test: {a: {type: 'DateTime'}, b: {
-                        emptyEqualsToNull: false
-                    }}}},
+                    {entities: {Test: {
+                        a: {type: 'DateTime'}, b: {emptyEqualsToNull: false}
+                    }}},
                     {
                         fillUp: {[typeName]: 'Test', a: 0, b: ''},
                         incremental: {b: ''},
@@ -1968,8 +1980,7 @@ describe('databaseHelper', ():void => {
                         }
                     ],
                     {entities: {Test: {
-                        a: {type: 'DateTime'},
-                        b: {emptyEqualsToNull: false}
+                        a: {type: 'DateTime'}, b: {emptyEqualsToNull: false}
                     }}},
                     {
                         fillUp: {[typeName]: 'Test', a: 0, b: ''},
@@ -3511,8 +3522,10 @@ describe('databaseHelper', ():void => {
                     true, Tools.copy(defaultModelConfiguration), test[1]
                 )
                 const models:Models = Helper.extendModels(modelConfiguration)
+
                 delete modelConfiguration.property.defaultSpecification
                 delete modelConfiguration.entities
+
                 expect(DatabaseHelper.validateDocumentUpdate(
                     ...test[0]
                         .concat([null, {}, {}].slice(test[0].length - 1))
