@@ -1699,9 +1699,13 @@ export class DatabaseHelper {
                         if (newDocument[name] === null)
                             if (propertySpecification.nullable) {
                                 delete newDocument[name]
-                                if (Object.prototype.hasOwnProperty.call(
-                                    oldDocument, name
-                                ))
+
+                                if (
+                                    oldDocument &&
+                                    Object.prototype.hasOwnProperty.call(
+                                        oldDocument, name
+                                    )
+                                )
                                     changedPath = parentNames.concat(
                                         name, 'delete property'
                                     )
