@@ -200,6 +200,7 @@ export type PropertyNameConfiguration = {
     validatedDocumentsCache:string
 }
 export type BaseModelConfiguration = {
+    dateTimeFormat:'iso'|'iso8601'|'number'
     property:{
         defaultSpecification:PropertySpecification
         name:PropertyNameConfiguration

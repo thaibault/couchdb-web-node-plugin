@@ -200,6 +200,7 @@
       "maximumRepresentationTryLength": 1000000,
       "model": {
         "autoMigrationPath": "migration",
+        "dateTimeFormat": "iso",
         "entities": {
           "_base": {
             "_allowedRoles": "users",

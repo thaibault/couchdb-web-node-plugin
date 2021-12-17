@@ -221,10 +221,16 @@ export class DatabaseHelper {
 
         const now:Date = new Date()
         const nowUTCTimestamp:number = Date.UTC(
-            now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
-            now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds(),
+            now.getUTCFullYear(),
+            now.getUTCMonth(),
+            now.getUTCDate(),
+            now.getUTCHours(),
+            now.getUTCMinutes(),
+            now.getUTCSeconds(),
             now.getUTCMilliseconds()
         ) / 1000
+        const saveDateTimeAsNumber =
+            !modelConfiguration.dateTimeFormat.startsWith('iso')
 
         const specialNames:SpecialPropertyNames =
             modelConfiguration.property.name.special
@@ -733,29 +739,55 @@ export class DatabaseHelper {
                                 `${typeof newValue})${pathDescription}.`
                             )
                     } else if (type === 'DateTime') {
-                        const initialNewValue:any = newValue
-                        if (
-                            newValue !== null && typeof newValue !== 'number'
-                        ) {
+                        const initialNewValue:unknown = newValue
+
+                        if (saveDateTimeAsNumber) {
+                            if (
+                                saveDateTimeAsNumber &&
+                                newValue !== null &&
+                                typeof newValue !== 'number'
+                            ) {
+                                newValue = new Date(newValue)
+                                newValue =
+                                    Date.UTC(
+                                        newValue.getUTCFullYear(),
+                                        newValue.getUTCMonth(),
+                                        newValue.getUTCDate(),
+                                        newValue.getUTCHours(),
+                                        newValue.getUTCMinutes(),
+                                        newValue.getUTCSeconds(),
+                                        newValue.getUTCMilliseconds()
+                                    ) /
+                                    1000
+                            }
+                        } else {
                             newValue = new Date(newValue)
-                            newValue = Date.UTC(
-                                newValue.getUTCFullYear(),
-                                newValue.getUTCMonth(),
-                                newValue.getUTCDate(),
-                                newValue.getUTCHours(),
-                                newValue.getUTCMinutes(),
-                                newValue.getUTCSeconds(),
-                                newValue.getUTCMilliseconds()
-                            ) / 1000
+                            try {
+                                // Use ISO 8601 format to save date as string.
+                                newValue = newValue.toISOString()
+                            } catch (error) {
+                                // Ignore exception.
+                            }
                         }
-                        if (typeof newValue !== 'number' || isNaN(newValue)) {
+
+                        if (
+                            saveDateTimeAsNumber &&
+                            (
+                                typeof newValue !== 'number' ||
+                                isNaN(newValue)
+                            ) ||
+                            !saveDateTimeAsNumber &&
+                            typeof newValue !== 'string'
+                        ) {
                             if (types.length === 1)
                                 throwError(
                                     `PropertyType: Property "${name}" isn't ` +
                                     'of (valid) type "DateTime" (given "' +
-                                    serialize(initialNewValue).replace(
-                                        /^"/, ''
-                                    ).replace(/"$/, '') +
+                                    (
+                                        serialize(initialNewValue)
+                                            .replace(/^"/, '')
+                                            .replace(/"$/, '')
+                                    ) +
                                     `" of type "${typeof initialNewValue}")` +
                                     `${pathDescription}.`
                                 )
