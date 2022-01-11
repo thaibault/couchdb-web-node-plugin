@@ -46,8 +46,8 @@
     "lint": "weboptimizer lint",
     "prepare": "yarn build",
     "report:coverage": "nyc report --reporter=text-lcov | coveralls",
-    "serve": "yarn build && web-node",
-    "start": "yarn serve",
+    "serve": "yarn build && yarn start",
+    "start": "web-node",
     "test": "weboptimizer test",
     "update": "yarn version --patch && yarn publish",
     "update:documentation": "documentationWebsite --log-level info",
@@ -93,7 +93,8 @@
     }
   },
   "resolutions": {
-    "@types/webpack": "https://registry.yarnpkg.com/@favware/skip-dependency/-/skip-dependency-1.1.1.tgz"
+    "@types/webpack": "https://registry.yarnpkg.com/@favware/skip-dependency/-/skip-dependency-1.1.1.tgz",
+    "colors": "1.4.0"
   },
   "sideEffects": false,
   "webNode": {
