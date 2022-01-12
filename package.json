@@ -47,7 +47,7 @@
     "prepare": "yarn build",
     "report:coverage": "nyc report --reporter=text-lcov | coveralls",
     "serve": "yarn build && yarn start",
-    "start": "web-node",
+    "start": "web-node '{plugin: {hotReloading: true}}'",
     "test": "weboptimizer test",
     "update": "yarn version --patch && yarn publish",
     "update:documentation": "documentationWebsite --log-level info",
