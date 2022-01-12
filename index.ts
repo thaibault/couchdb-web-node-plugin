@@ -832,6 +832,7 @@ export class Database implements PluginHandler {
      * @param services - An object with stored service instances.
      * @param configuration - Mutable by plugins extended configuration object.
      * @param plugins - Topological sorted list of loaded plugins.
+     * @param pluginAPI - Plugin api reference.
      *
      * @returns A promise which wraps plugin promises to represent plugin
      * continues services.
@@ -840,7 +841,8 @@ export class Database implements PluginHandler {
         servicePromises:ServicePromises,
         services:Services,
         configuration:Configuration,
-        plugins:Array<Plugin>
+        plugins:Array<Plugin>,
+        pluginAPI:typeof PluginAPI
     ):ServicePromises {
         // region register database changes stream
         let numberOfErrorsThrough = 0
@@ -912,7 +914,7 @@ export class Database implements PluginHandler {
                 }
             )
 
-            await PluginAPI.callStack(
+            await pluginAPI.callStack(
                 'couchdbInitializeChangesStream',
                 plugins,
                 configuration,
