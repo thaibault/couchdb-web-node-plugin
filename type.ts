@@ -19,6 +19,7 @@ import {
     Mapping, PlainObject, Primitive, ProcessCloseReason
 } from 'clientnode/type'
 import PouchDB from 'pouchdb'
+import {PluginAPI} from 'web-node'
 import {
     Configuration as BaseConfiguration,
     Plugin,
@@ -317,11 +318,12 @@ export type Services<ServiceType = {}> =
 export interface PluginHandler extends BasePluginHandler {
     /**
      * Hook after each data change.
-     * @param changesStream - Stream of database changes.
-     * @param services - List of other web-node plugin services.
-     * @param configuration - Configuration object extended by each plugin
+     * @param _changesStream - Stream of database changes.
+     * @param _services - List of other web-node plugin services.
+     * @param _configuration - Configuration object extended by each plugin
      * specific configuration.
-     * @param plugins - Topological sorted list of plugins.
+     * @param _plugins - Topological sorted list of plugins.
+     * @param _pluginAPI - Plugin api reference.
      *
      * @returns Given entry files.
      */
@@ -329,21 +331,24 @@ export interface PluginHandler extends BasePluginHandler {
         _changesStream:ChangesStream,
         _services:Services,
         _configuration:Configuration,
-        _plugins:Array<Plugin>
+        _plugins:Array<Plugin>,
+        _pluginAPI:typeof PluginAPI
     ):ChangesStream
     /**
      * Hook after each data base restart.
-     * @param services - List of other web-node plugin services.
-     * @param configuration - Configuration object extended by each plugin
+     * @param _services - List of other web-node plugin services.
+     * @param _configuration - Configuration object extended by each plugin
      * specific configuration.
-     * @param plugins - Topological sorted list of plugins.
+     * @param _plugins - Topological sorted list of plugins.
+     * @param _pluginAPI - Plugin api reference.
      *
      * @returns Given entry files.
      */
     restartCouchdb?(
         _services:Services,
         _configuration:Configuration,
-        _plugins:Array<Plugin>
+        _plugins:Array<Plugin>,
+        _pluginAPI:typeof PluginAPI
     ):Services
 }
 // / endregion
