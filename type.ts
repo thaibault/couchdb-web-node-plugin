@@ -303,7 +303,8 @@ export type Services<ServiceType = {}> =
                 restart:(
                     _services:Services,
                     _configuration:Configuration,
-                    _plugins:Array<Plugin>
+                    _plugins:Array<Plugin>,
+                    _pluginAPI:typeof PluginAPI
                 ) => Promise<void>
                 runner:Runner
                 start:(_services:Services, _configuration:Configuration) =>
