@@ -900,7 +900,7 @@ export class Database implements PluginHandler {
                         Database.changesStream.cancel()
 
                         await services.couchdb.server.restart(
-                            services, configuration, plugins
+                            services, configuration, plugins, pluginAPI
                         )
                     } else
                         console.warn(

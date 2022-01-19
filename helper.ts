@@ -377,6 +377,7 @@ export class Helper {
      * @param services - An object with stored service instances.
      * @param configuration - Mutable by plugins extended configuration object.
      * @param plugins - Topological sorted list of plugins.
+     * @param pluginAPI - Plugin api reference.
      *
      * @returns Given object of services wrapped in a promise resolving after
      * after finish.
@@ -385,7 +386,8 @@ export class Helper {
         this:void,
         services:Services,
         configuration:Configuration,
-        plugins:Array<Plugin>
+        plugins:Array<Plugin>,
+        pluginAPI:typeof PluginAPI
     ):Promise<void> {
         const resolveServerProcessBackup:Function =
             services.couchdb.server.resolve
@@ -407,7 +409,7 @@ export class Helper {
 
         void Helper.initializeConnection(services, configuration)
 
-        await PluginAPI.callStack(
+        await pluginAPI.callStack(
             'restartCouchdb', plugins, configuration, services
         )
     }
