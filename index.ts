@@ -359,7 +359,7 @@ export class Database implements PluginHandler {
                 /* eslint-disable no-eval */
                 eval('require.resolve')('./databaseHelper'),
                 /* eslint-enable no-eval */
-                {encoding: configuration.encoding, flag: 'r'}
+                {encoding: configuration.core.encoding, flag: 'r'}
             )
             // region generate/update authentication/validation code
             for (const type of [
@@ -406,7 +406,7 @@ export class Database implements PluginHandler {
                     )
                 }
 
-                if (configuration.debug)
+                if (configuration.core.debug)
                     console.debug(
                         `${type.name} code: \n\n"${code}" intgrated.`
                     )
@@ -525,7 +525,10 @@ export class Database implements PluginHandler {
                         try {
                             document = JSON.parse(await fileSystem.readFile(
                                 file.path,
-                                {encoding: configuration.encoding, flag: 'r'}
+                                {
+                                    encoding: configuration.core.encoding,
+                                    flag: 'r'
+                                }
                             ))
                         } catch (error) {
                             throw new Error(

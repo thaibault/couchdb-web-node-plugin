@@ -298,7 +298,7 @@ export class Helper {
             await fileSystem.writeFile(
                 services.couchdb.server.runner.configurationFile!.path,
                 services.couchdb.server.runner.configurationFile!.content,
-                {encoding: configuration.encoding}
+                {encoding: configuration.core.encoding}
             )
         }
         // endregion
