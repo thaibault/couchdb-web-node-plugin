@@ -8112,9 +8112,9 @@ watchpack@^2.3.1:
     graceful-fs "^4.1.2"
 
 web-node@*:
-  version "1.0.419"
-  resolved "https://registry.yarnpkg.com/web-node/-/web-node-1.0.419.tgz#10b7d244df466610667ac6ba8e795c6378f69c70"
-  integrity sha512-uWuSiOghD3xeHh9n12kfCjSNGPeI+Ejhheke6KxhpVlOBCBKF98pV+fWWNJ1ONyQ5I0aDjsKgxyn4vwVBJSZAw==
+  version "1.0.420"
+  resolved "https://registry.yarnpkg.com/web-node/-/web-node-1.0.420.tgz#f8c382a462782f422a25a268aa9a62eb8cf6a7db"
+  integrity sha512-kTUiCGF5cs2Y7EOx4wZ7+g5GwVv+FyguEJigB9S7wgxVezLDI2tl9I8EtJPDwgKeSljS+iO0xCowPiXoRd24Ig==
   dependencies:
     "@types/webpack" "https://registry.yarnpkg.com/@favware/skip-dependency/-/skip-dependency-1.1.1.tgz"
 
