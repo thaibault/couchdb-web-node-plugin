@@ -264,6 +264,7 @@ export type Configuration<ConfigurationType = {}> =
             changesStream:ChangesStreamOptions
             connector:ConnectorConfiguration
             createGenericFlatIndex:boolean
+            databaseName:string
             debug:boolean
             ensureAdminPresence:boolean
             ensureSecuritySettingsPresence:boolean
