@@ -191,6 +191,7 @@
         }
       },
       "createGenericFlatIndex": true,
+      "databaseName": "main",
       "debug": false,
       "ensureAdminPresence": true,
       "ensureSecuritySettingsPresence": true,

@@ -331,7 +331,8 @@ export class Database implements PluginHandler {
                     ]".
                 */
                 await globalContext.fetch(
-                    `${urlPrefix}/${configuration.name}/_security`,
+                    `${urlPrefix}/${configuration.couchdb.databaseName}/` +
+                    '_security',
                     {
                         body: JSON.stringify(configuration.couchdb.security),
                         method: 'PUT'
@@ -671,7 +672,7 @@ export class Database implements PluginHandler {
                                 context.
                             */
                             Tools.copy(document), {
-                                db: configuration.name,
+                                db: configuration.couchdb.databaseName,
                                 name: configuration.couchdb.user.name,
                                 roles: ['_admin']
                             },

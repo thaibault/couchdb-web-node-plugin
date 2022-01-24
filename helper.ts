@@ -199,7 +199,7 @@ export class Helper {
                 `${configuration.couchdb.user.name}:` +
                 `${configuration.couchdb.user.password}@`
             ) +
-            `/${configuration.name}`
+            `/${configuration.couchdb.databaseName}`
 
         services.couchdb.connection = new services.couchdb.connector(
             url, Helper.getConnectorOptions(configuration)
