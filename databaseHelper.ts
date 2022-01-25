@@ -343,16 +343,49 @@ export class DatabaseHelper {
         // / endregion
         // endregion
         // region functions
-        const determineTrimmedString:Function = (
-            value?:null|string
-        ):string => {
+        const determineTrimmedString = (value?:null|string):string => {
             if (typeof value === 'string')
                 return value.trim()
 
             return ''
         }
 
-        const fileNameMatchesModelType:Function = (
+        const normalizeDateTime = (
+            value:Date|null|number|string
+        ):typeof NaN|null|number|string => {
+            if (saveDateTimeAsNumber) {
+                if (value !== null && typeof value !== 'number') {
+                    value = new Date(value as Date|string)
+                    value =
+                        Date.UTC(
+                            value.getUTCFullYear(),
+                            value.getUTCMonth(),
+                            value.getUTCDate(),
+                            value.getUTCHours(),
+                            value.getUTCMinutes(),
+                            value.getUTCSeconds(),
+                            value.getUTCMilliseconds()
+                        ) /
+                        1000
+                }
+            } else if (value !== null) {
+                value = new Date(
+                    typeof value === 'number' && !isNaN(value) ?
+                        value * 1000 :
+                        value as Date|string
+                )
+                try {
+                    // Use ISO 8601 format to save date as string.
+                    value = value.toISOString()
+                } catch (error) {
+                    // Ignore exception.
+                }
+            }
+
+            return value as typeof NaN|null|number|string
+        }
+
+        const fileNameMatchesModelType = (
             typeName:string, fileName:string, fileType:FileSpecification
         ):boolean => {
             if (fileType.fileName) {
@@ -368,7 +401,7 @@ export class DatabaseHelper {
             return typeName === fileName
         }
 
-        const getFileNameByPrefix:Function = (
+        const getFileNameByPrefix = (
             prefix?:string, attachments?:Attachments
         ):null|string => {
             if (!attachments)
@@ -393,15 +426,13 @@ export class DatabaseHelper {
             return null
         }
 
-        const attachmentWithPrefixExists:Function = (
-            namePrefix:string
-        ):boolean => {
+        const attachmentWithPrefixExists = (namePrefix:string):boolean => {
             if (Object.prototype.hasOwnProperty.call(
                 newDocument, specialNames.attachment
             )) {
                 const attachments:Attachments =
                     newDocument[specialNames.attachment] as Attachments
-                const name:string = getFileNameByPrefix(namePrefix)
+                const name:null|string = getFileNameByPrefix(namePrefix)
 
                 if (name)
                     return (
@@ -423,11 +454,11 @@ export class DatabaseHelper {
             return false
         }
 
-        const evaluate:Function = (
+        const evaluate = <T = any>(
             givenExpression?:null|string,
             isEvaluation = false,
             givenScope:Mapping<unknown> = {}
-        ):EvaluationResult|void => {
+        ):EvaluationResult<T>|void => {
             const expression:string = determineTrimmedString(givenExpression)
             if (expression) {
                 const code:string =
@@ -497,7 +528,7 @@ export class DatabaseHelper {
             )
         }
 
-        const checkDocument:Function = (
+        const checkDocument = (
             newDocument:Document,
             oldDocument:Document|null,
             parentNames:Array<string> = []
@@ -585,9 +616,9 @@ export class DatabaseHelper {
                     if (Object.prototype.hasOwnProperty.call(
                         propertySpecification, type
                     )) {
-                        let result:EvaluationResult<boolean>
+                        let result:EvaluationResult<boolean>|void
                         try {
-                            result = evaluate(
+                            result = evaluate<boolean>(
                                 propertySpecification[type]!.evaluation,
                                 type.endsWith('Expression'),
                                 {
@@ -639,7 +670,8 @@ export class DatabaseHelper {
                             ))
                                 throw error
                         }
-                        if (!result!.result) {
+
+                        if (!result?.result) {
                             const description:string = determineTrimmedString(
                                 propertySpecification[type]!.description
                             )
@@ -741,34 +773,7 @@ export class DatabaseHelper {
                     } else if (type === 'DateTime') {
                         const initialNewValue:unknown = newValue
 
-                        if (saveDateTimeAsNumber) {
-                            if (
-                                saveDateTimeAsNumber &&
-                                newValue !== null &&
-                                typeof newValue !== 'number'
-                            ) {
-                                newValue = new Date(newValue)
-                                newValue =
-                                    Date.UTC(
-                                        newValue.getUTCFullYear(),
-                                        newValue.getUTCMonth(),
-                                        newValue.getUTCDate(),
-                                        newValue.getUTCHours(),
-                                        newValue.getUTCMinutes(),
-                                        newValue.getUTCSeconds(),
-                                        newValue.getUTCMilliseconds()
-                                    ) /
-                                    1000
-                            }
-                        } else {
-                            newValue = new Date(newValue)
-                            try {
-                                // Use ISO 8601 format to save date as string.
-                                newValue = newValue.toISOString()
-                            } catch (error) {
-                                // Ignore exception.
-                            }
-                        }
+                        newValue = normalizeDateTime(newValue)
 
                         if (
                             saveDateTimeAsNumber &&
@@ -943,17 +948,21 @@ export class DatabaseHelper {
                 // endregion
                 // region selection
                 if (propertySpecification.selection) {
-                    const selection = Array.isArray(
-                        propertySpecification.selection
-                    ) ?
-                        propertySpecification.selection.map(
-                            (value:SelectionMapping|unknown):unknown =>
-                                (value as SelectionMapping)?.value ===
-                                    undefined ?
-                                    value :
-                                    (value as SelectionMapping).value
-                        ) :
-                        Object.keys(propertySpecification.selection)
+                    let selection =
+                        Array.isArray(propertySpecification.selection) ?
+                            propertySpecification.selection.map(
+                                (value:SelectionMapping|unknown):unknown =>
+                                    (value as SelectionMapping)?.value ===
+                                        undefined ?
+                                        value :
+                                        (value as SelectionMapping).value
+                            ) :
+                            Object.keys(propertySpecification.selection)
+
+                    if (propertySpecification.type === 'DateTime')
+                        selection =
+                            (selection as Array<Date|null|number|string>)
+                                .map(normalizeDateTime)
 
                     if (!selection.includes(newValue))
                         throwError(
@@ -1007,8 +1016,10 @@ export class DatabaseHelper {
                 checkPropertyConstraints(
                     newValue, name, propertySpecification, oldValue
                 )
+
                 if (serialize(newValue) !== serialize(oldValue))
                     changedPath = parentNames.concat(name, 'value updated')
+
                 return {newValue, changedPath}
             }
             // / region create hook
@@ -1025,7 +1036,7 @@ export class DatabaseHelper {
                         if (Object.prototype.hasOwnProperty.call(
                             propertySpecification, type
                         )) {
-                            let result:EvaluationResult
+                            let result:EvaluationResult|void
                             try {
                                 result = evaluate(
                                     propertySpecification[type],
@@ -1077,7 +1088,10 @@ export class DatabaseHelper {
                                     throw error
                             }
 
-                            if (![null, undefined].includes(result!.result))
+                            if (
+                                result &&
+                                ![null, undefined].includes(result.result)
+                            )
                                 newDocument[name] = result!.result
                         }
             }
@@ -1132,7 +1146,7 @@ export class DatabaseHelper {
                                     propertySpecification,
                                     type
                                 }
-                            ).result
+                            )!.result
                         } catch (error) {
                             if (((
                                 error:unknown
@@ -1211,7 +1225,7 @@ export class DatabaseHelper {
                         let result:Document|null|undefined
                         try {
                             result = evaluate(
-                                model[type],
+                                model[type as '_createExpression'],
                                 type.endsWith('Expression'),
                                 {
                                     checkPropertyContent,
@@ -1225,7 +1239,7 @@ export class DatabaseHelper {
                                     pathDescription,
                                     type
                                 }
-                            ).result
+                            )!.result
                         } catch (error) {
                             if (((
                                 error:unknown
@@ -1279,7 +1293,7 @@ export class DatabaseHelper {
                     let result:Document|null|undefined
                     try {
                         result = evaluate(
-                            model[type],
+                            model[type as '_createExpression'],
                             type.endsWith('Expression'),
                             {
                                 checkPropertyContent,
@@ -1293,7 +1307,7 @@ export class DatabaseHelper {
                                 pathDescription,
                                 type
                             }
-                        ).result
+                        )!.result
                     } catch (error) {
                         if (((error:unknown):error is EvaluationException =>
                             Object.prototype.hasOwnProperty.call(
@@ -1403,7 +1417,7 @@ export class DatabaseHelper {
                                                     FullAttachment
                                             ).data === null
                                         ) &&
-                                        oldAttachments[fileName] &&
+                                        Boolean(oldAttachments[fileName]) &&
                                         (
                                             Object.prototype.hasOwnProperty
                                                 .call(
@@ -1416,13 +1430,13 @@ export class DatabaseHelper {
                                             (oldAttachments[fileName] as
                                                 StubAttachment
                                             ).stub &&
-                                            (oldAttachments[fileName] as
+                                            Boolean((oldAttachments[fileName] as
                                                 StubAttachment
-                                            ).digest
+                                            ).digest)
                                         ) &&
-                                        fileNameMatchesModelType(
+                                        Boolean(fileNameMatchesModelType(
                                             type, fileName, model[name]![type]
-                                        )
+                                        ))
                                     )
                             }
 
@@ -1987,7 +2001,7 @@ export class DatabaseHelper {
                     for (const constraint of ([] as Array<Constraint>).concat(
                         model[type as keyof Model] as Array<Constraint>
                     )) {
-                        let result:EvaluationResult<boolean>
+                        let result:EvaluationResult<boolean>|void
                         try {
                             result = evaluate(
                                 constraint.evaluation,
@@ -2037,7 +2051,7 @@ export class DatabaseHelper {
                                 throw error
                         }
 
-                        if (!result!.result) {
+                        if (!result?.result) {
                             const errorName:string = type.replace(
                                 /^[^a-zA-Z]+/, ''
                             )
