@@ -65,7 +65,6 @@
     "@types/jest": "*",
     "@types/node": "*",
     "@types/pouchdb": "*",
-    "@types/workbox-webpack-plugin": "*",
     "@typescript-eslint/eslint-plugin": "*",
     "@typescript-eslint/parser": "*",
     "clientnode": "*",
