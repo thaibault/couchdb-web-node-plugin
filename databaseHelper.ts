@@ -323,7 +323,7 @@ export class DatabaseHelper {
             value instanceof Error ?
                 `${value as unknown as string}` :
                 serializeData(value)
-        // / region collect old model types to migrate.
+        /// region collect old model types to migrate.
         const oldModelMapping:Mapping = {}
         if (updateStrategy === 'migrate')
             for (const name in models)
@@ -340,7 +340,7 @@ export class DatabaseHelper {
                         models[name][specialNames.oldType] as Array<string>
                     ))
                         oldModelMapping[oldName] = name
-        // / endregion
+        /// endregion
         // endregion
         // region functions
         const determineTrimmedString = (value?:null|string):string => {
@@ -1022,7 +1022,7 @@ export class DatabaseHelper {
 
                 return {newValue, changedPath}
             }
-            // / region create hook
+            /// region create hook
             const runCreatePropertyHook:Function = (
                 propertySpecification:PropertySpecification,
                 newDocument:Document,
@@ -1095,8 +1095,8 @@ export class DatabaseHelper {
                                 newDocument[name] = result!.result
                         }
             }
-            // / endregion
-            // / region update hook
+            /// endregion
+            /// region update hook
             const runUpdatePropertyHook:Function = (
                 propertySpecification:PropertySpecification,
                 newDocument:Document,
@@ -1182,7 +1182,7 @@ export class DatabaseHelper {
                                 throw error
                         }
             }
-            // / endregion
+            /// endregion
             // endregion
             const specifiedPropertyNames:Array<string> = Object.keys(model)
                 .filter((name:string):boolean => ![
@@ -1602,7 +1602,7 @@ export class DatabaseHelper {
                 }
                 // endregion
             // region check given data
-            // / region remove new data which already exists
+            /// region remove new data which already exists
             if (oldDocument && updateStrategy === 'incremental')
                 for (const name in newDocument)
                     if (
@@ -1633,7 +1633,7 @@ export class DatabaseHelper {
 
                         continue
                     }
-            // / endregion
+            /// endregion
             for (const name in newDocument)
                 if (
                     Object.prototype.hasOwnProperty.call(newDocument, name) &&
@@ -1865,7 +1865,7 @@ export class DatabaseHelper {
                                 'arrayConstraintExpression'
                             ]
                         )
-                        // / region check/migrate array content
+                        /// region check/migrate array content
                         const propertySpecificationCopy:PropertySpecification =
                             {}
                         for (const key in propertySpecification)
@@ -1896,7 +1896,7 @@ export class DatabaseHelper {
                                     ] as Primitive) = propertySpecification[
                                         key as keyof PropertySpecification
                                     ] as Primitive
-                        // // region add missing array item types
+                        //// region add missing array item types
                         /*
                             Derive nested missing explicit type definition if
                             possible. Objects in arrays without explicit type
@@ -1920,8 +1920,8 @@ export class DatabaseHelper {
                                 )
                                     (value as PlainObject)[typeName] =
                                         propertySpecificationCopy.type[0]
-                        // // endregion
-                        // // region check each array item
+                        //// endregion
+                        //// region check each array item
                         let index = 0
                         for (const value of newProperty.slice()) {
                             newProperty[index] = checkPropertyContent(
@@ -1934,7 +1934,7 @@ export class DatabaseHelper {
 
                             index += 1
                         }
-                        // // endregion
+                        //// endregion
                         if (!(
                             oldDocument &&
                             Object.prototype.hasOwnProperty.call(
@@ -1949,7 +1949,7 @@ export class DatabaseHelper {
                         ))
                             changedPath =
                                 parentNames.concat(name, 'array updated')
-                        // / endregion
+                        /// endregion
                         // endregion
                     } else {
                         const oldValue:any =
@@ -1987,7 +1987,7 @@ export class DatabaseHelper {
                         }
                     }
                 }
-            // / region constraint
+            /// region constraint
             for (let type in specialNames.constraint)
                 if (
                     Object.prototype.hasOwnProperty.call(
@@ -2075,8 +2075,8 @@ export class DatabaseHelper {
                             )
                         }
                     }
-            // / endregion
-            // / region attachment
+            /// endregion
+            /// region attachment
             if (Object.prototype.hasOwnProperty.call(
                 newDocument, specialNames.attachment
             )) {
@@ -2513,7 +2513,7 @@ export class DatabaseHelper {
                         ` byte ${pathDescription}.`
                     )
             }
-            // / endregion
+            /// endregion
             // endregion
             if (
                 oldDocument &&

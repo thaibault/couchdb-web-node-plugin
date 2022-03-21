@@ -30,7 +30,7 @@ import {
 } from 'web-node/type'
 // endregion
 // region exports
-// / region database implementation
+/// region database implementation
 export type Attachments = PouchDB.Core.Attachments
 export type ChangesMeta = PouchDB.Core.ChangesMeta
 export type ChangesResponseChange<Type = any> =
@@ -52,8 +52,8 @@ export type DocumentRevisionIDMeta = PouchDB.Core.RevisionIdMeta
 export type Index = PouchDB.Find.Index
 export type DatabasePlugin = any
 export type StubAttachment = PouchDB.Core.StubAttachment
-// / endregion
-// / region model
+/// endregion
+/// region model
 export type AllowedRoles = Array<string>|string|{
     read:Array<string>|string
     write:Array<string>|string
@@ -215,9 +215,9 @@ export type ModelConfiguration = BaseModelConfiguration & {
     updateConfiguration:boolean
     updateValidation:boolean
 }
-// / endregion
-// / region web-node api
-// // region configuration
+/// endregion
+/// region web-node api
+//// region configuration
 export interface UserContext {
     db:string
     name?:string
@@ -284,7 +284,7 @@ export type Configuration<ConfigurationType = {}> =
         }
     }> &
     ConfigurationType
-// // endregion
+//// endregion
 export interface Service extends BaseService {
     name:'couchdb'
     promise:null|Promise<ProcessCloseReason>
@@ -353,7 +353,7 @@ export interface PluginHandler extends BasePluginHandler {
         _pluginAPI:typeof PluginAPI
     ):Services
 }
-// / endregion
+/// endregion
 export type Exception<DataType = {}> =
     {
         message:string

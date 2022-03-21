@@ -65,7 +65,7 @@ describe('helper', ():void => {
             false
         ]
     )
-    // / region model
+    /// region model
     const mockModelConfiguration:ModelConfiguration =
         Tools.copy(configuration.couchdb.model)
     mockModelConfiguration.entities = {}
@@ -286,7 +286,7 @@ describe('helper', ():void => {
         [{read: ['a'], write: []}, {read: 'a', write: []}],
         [{read: ['a'], write: ['b']}, {read: 'a', write: ['b']}]
     )
-    // / endregion
+    /// endregion
     // endregion
 })
 // region vim modline
