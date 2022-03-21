@@ -328,7 +328,7 @@ describe('databaseHelper', ():void => {
                 ],
                 // endregion
                 // region hooks
-                // / region on create
+                /// region on create
                 /*
                     Syntactically invalid create expressions should lead to an
                     exception.
@@ -361,8 +361,8 @@ describe('databaseHelper', ():void => {
                     }}}},
                     'Runtime'
                 ],
-                // / endregion
-                // / region on update
+                /// endregion
+                /// region on update
                 /*
                     Syntactically invalid update expressions should lead to an
                     exception.
@@ -395,7 +395,7 @@ describe('databaseHelper', ():void => {
                     }}}},
                     'Runtime'
                 ],
-                // / endregion
+                /// endregion
                 // endregion
                 // region property writable/mutable
                 [
@@ -498,8 +498,8 @@ describe('databaseHelper', ():void => {
                     }}}},
                     'PropertyType'
                 ],
-                // / region array
-                // // region type
+                /// region array
+                //// region type
                 [
                     [{[typeName]: 'Test', a: 2}],
                     {entities: {Test: {a: {type: 'string[]'}}}},
@@ -537,7 +537,7 @@ describe('databaseHelper', ():void => {
                     }]}],
                     {entities: {Test: {a: {type: 'Custom[]'}}}}, 'PropertyType'
                 ],
-                // // endregion
+                //// endregion
                 [
                     [{[typeName]: 'Test', a: [{[typeName]: 'Test', b: 2}]}],
                     {entities: {Test: {a: {type: 'Test[]'}}}}, 'Property'
@@ -605,9 +605,9 @@ describe('databaseHelper', ():void => {
                         }}
                     }}}, 'ArrayConstraintExpression'
                 ],
-                // / endregion
-                // / region nested property
-                // // region property type
+                /// endregion
+                /// region nested property
+                //// region property type
                 [
                     [{[typeName]: 'Test', a: 1}],
                     {entities: {Test: {a: {type: 'Test'}}}}, 'NestedType'
@@ -630,8 +630,8 @@ describe('databaseHelper', ():void => {
                     {entities: {Test: {a: {type: 'Test'}, b: {}}}},
                     'PropertyType'
                 ],
-                // // endregion
-                // // region property existence
+                //// endregion
+                //// region property existence
                 [
                     [{[typeName]: 'Test', a: {[typeName]: 'Test', b: 2}}],
                     {entities: {Test: {a: {type: 'Test'}}}}, 'Property'
@@ -649,8 +649,8 @@ describe('databaseHelper', ():void => {
                         nullable: false
                     }}}}, 'MissingProperty'
                 ],
-                // // endregion
-                // // region property readonly
+                //// endregion
+                //// region property readonly
                 [
                     [
                         {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'a'}},
@@ -684,8 +684,8 @@ describe('databaseHelper', ():void => {
                     {entities: {Test: {a: {type: 'Test', writable: false}, b: {
                     }}}}, 'Readonly'
                 ],
-                // // endregion
-                // // region property range
+                //// endregion
+                //// region property range
                 [[{
                     [typeName]: 'Test',
                     a: 4,
@@ -702,8 +702,8 @@ describe('databaseHelper', ():void => {
                     a: {maximumLength: 1},
                     b: {type: 'Test'}
                 }}}, 'MaximalLength'],
-                // // endregion
-                // // region property pattern
+                //// endregion
+                //// region property pattern
                 [
                     [{[typeName]: 'Test', b: {[typeName]: 'Test', a: 'b'}}],
                     {entities: {Test: {
@@ -718,8 +718,8 @@ describe('databaseHelper', ():void => {
                         b: {type: 'Test'}
                     }}}, 'InvertedPatternMatch'
                 ],
-                // // endregion
-                // // region property constraint
+                //// endregion
+                //// region property constraint
                 [[{
                     [typeName]: 'Test',
                     a: 'b',
@@ -738,8 +738,8 @@ describe('databaseHelper', ():void => {
                     }},
                     b: {type: 'Test'}
                 }}}, 'ConstraintExpression'],
-                // // endregion
-                // / endregion
+                //// endregion
+                /// endregion
                 [
                     [{[typeName]: 'Test1', a: 1}], {entities: {
                         Test1: {a: {type: 'foreignKey:Test2'}},
@@ -1477,7 +1477,7 @@ describe('databaseHelper', ():void => {
                 ],
                 // endregion
                 // region hooks
-                // / region on create
+                /// region on create
                 [
                     [{[typeName]: 'Test', a: ''}],
                     {entities: {Test: {a: {onCreateExpression: `'2'`}}}},
@@ -1596,8 +1596,8 @@ describe('databaseHelper', ():void => {
                         '': {[typeName]: 'Test', a: '3', b: 'b'}
                     }
                 ],
-                // / endregion
-                // / region on update
+                /// endregion
+                /// region on update
                 [
                     [{[typeName]: 'Test', a: ''}],
                     {entities: {Test: {a: {onUpdateExpression: `'2'`}}}},
@@ -1737,7 +1737,7 @@ describe('databaseHelper', ():void => {
                         '': {[typeName]: 'Test', a: ''}
                     }
                 ],
-                // / endregion
+                /// endregion
                 // endregion
                 // region property writable/mutable
                 [
@@ -2122,7 +2122,7 @@ describe('databaseHelper', ():void => {
                         '': {[typeName]: 'Test', a: '2', b: ''}
                     }
                 ],
-                // / region array
+                /// region array
                 [
                     [
                         {[typeName]: 'Test', a: ['2'], b: ''},
@@ -2345,9 +2345,9 @@ describe('databaseHelper', ():void => {
                         }
                     }
                 ],
-                // / endregion
-                // / region nested property
-                // // region property type
+                /// endregion
+                /// region nested property
+                //// region property type
                 [
                     [
                         {[typeName]: 'Test', a: {[typeName]: 'Test'}, b: 'b'},
@@ -2487,8 +2487,8 @@ describe('databaseHelper', ():void => {
                         }
                     }
                 ],
-                // // endregion
-                // // region property existents
+                //// endregion
+                //// region property existents
                 [
                     [
                         {[typeName]: 'Test', a: {[typeName]: 'Test'}, b: 'b'},
@@ -2563,8 +2563,8 @@ describe('databaseHelper', ():void => {
                         }
                     }
                 ],
-                // // endregion
-                // // region property readonly
+                //// endregion
+                //// region property readonly
                 [
                     [
                         {
@@ -2619,8 +2619,8 @@ describe('databaseHelper', ():void => {
                         }
                     }
                 ],
-                // // endregion
-                // // region property range
+                //// endregion
+                //// region property range
                 [
                     [
                         {
@@ -2675,8 +2675,8 @@ describe('databaseHelper', ():void => {
                         }
                     }
                 ],
-                // // endregion
-                // // region property pattern
+                //// endregion
+                //// region property pattern
                 [
                     [{[typeName]: 'Test', b: {[typeName]: 'Test', a: 'a'}}],
                     {entities: {Test: {
@@ -2715,8 +2715,8 @@ describe('databaseHelper', ():void => {
                         }
                     }
                 ],
-                // // endregion
-                // // region property constraint
+                //// endregion
+                //// region property constraint
                 [
                     [{
                         [typeName]: 'Test',
@@ -2747,8 +2747,8 @@ describe('databaseHelper', ():void => {
                         }
                     }
                 ],
-                // // endregion
-                // / endregion
+                //// endregion
+                /// endregion
                 [
                     [{[typeName]: 'Test1', a: 2}],
                     {entities: {
@@ -3535,7 +3535,7 @@ describe('databaseHelper', ():void => {
             // endregion
         }
     )
-    // / region migration writes
+    /// region migration writes
     test.each<[
         FirstParameter<typeof DatabaseHelper.validateDocumentUpdate>,
         ReturnType<typeof DatabaseHelper.validateDocumentUpdate>,
@@ -3794,7 +3794,7 @@ describe('databaseHelper', ():void => {
             )).toStrictEqual(expected)
         }
     )
-    // / endregion
+    /// endregion
     // endregion
 })
 // region vim modline
