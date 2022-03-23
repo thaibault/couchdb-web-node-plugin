@@ -1,13 +1,7 @@
 {
   "name": "couchdb-web-node-plugin",
   "version": "1.0.518",
-  "license": "CC-BY-3.0",
   "description": "A couchdb server, model instance conflict handler, rest api, authentication, session management, schema validator and model relation guarantee for webNode.",
-  "homepage": "https://torben.website/couchdb-web-node-plugin",
-  "documentationWebsite": {
-    "name": "couchdb-web-node-plugin",
-    "trackingCode": "UA-40192634-21"
-  },
   "keywords": [
     "api",
     "authentication",
@@ -23,6 +17,17 @@
     "validation",
     "web"
   ],
+  "homepage": "https://torben.website/couchdb-web-node-plugin",
+  "bugs": {
+    "email": "info@torben.website",
+    "url": "https://github.com/thaibault/couchdb-web-node-plugin/issues"
+  },
+  "license": "CC-BY-3.0",
+  "author": {
+    "name": "Torben Sickert",
+    "email": "info@torben.website",
+    "url": "https://torben.website"
+  },
   "files": [
     "databaseHelper.d.ts",
     "databaseHelper.js",
@@ -49,6 +54,8 @@
     "serve": "yarn build && yarn start",
     "start": "web-node '{plugin: {hotReloading: true}}'",
     "test": "weboptimizer test",
+    "test:coverage": "weboptimizer test:coverage",
+    "test:coverage:report": "weboptimizer test:coverage:report",
     "update": "yarn version --patch && yarn publish",
     "update:documentation": "documentationWebsite --log-level info",
     "watch": "weboptimizer build --watch"
@@ -91,11 +98,19 @@
       "optional": true
     }
   },
+  "engines": {
+    "node": ">=17",
+    "npm": ">=7"
+  },
   "resolutions": {
     "@types/webpack": "https://registry.yarnpkg.com/@favware/skip-dependency/-/skip-dependency-1.1.1.tgz",
     "colors": "1.4.0"
   },
   "sideEffects": false,
+  "documentationWebsite": {
+    "name": "couchdb-web-node-plugin",
+    "trackingCode": "UA-40192634-21"
+  },
   "webNode": {
     "couchdb": {
       "attachAutoRestarter": true,

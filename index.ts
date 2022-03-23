@@ -17,7 +17,7 @@
     endregion
 */
 // region imports
-import Tools, {globalContext} from 'clientnode'
+import Tools, {currentRequire, globalContext} from 'clientnode'
 import {File, Mapping, PlainObject, ProcessCloseReason} from 'clientnode/type'
 import {promises as fileSystem} from 'fs'
 import path from 'path'
@@ -357,9 +357,7 @@ export class Database implements PluginHandler {
         const models:Models = Helper.extendModels(configuration.couchdb.model)
         if (configuration.couchdb.model.updateValidation) {
             const databaseHelperCode:string = await fileSystem.readFile(
-                /* eslint-disable no-eval */
-                eval('require.resolve')('./databaseHelper'),
-                /* eslint-enable no-eval */
+                currentRequire!.resolve('./databaseHelper'),
                 {encoding: configuration.core.encoding, flag: 'r'}
             )
             // region generate/update authentication/validation code
@@ -572,9 +570,8 @@ export class Database implements PluginHandler {
                         )
                     } else if (path.extname(file.name) === '.js')
                         // region collect migrater
-                        migrater[file.path] = eval('require')(
-                            file.path
-                        ).default
+                        migrater[file.path] =
+                            currentRequire!(file.path).default
                         // endregion
                 }
             // region ensure all constraints to have a consistent initial state
