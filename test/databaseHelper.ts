@@ -40,11 +40,12 @@ describe('databaseHelper', ():void => {
     const specialNames:SpecialPropertyNames =
         configuration.couchdb.model.property.name.special
 
-    const attachmentName:'_attachments' =
-        specialNames.attachment as '_attachments'
-    const idName:'_id' = specialNames.id as '_id'
-    const revisionName:'_rev' = specialNames.revision as '_rev'
-    const typeName:'-type' = specialNames.type as '-type'
+    const {
+        attachment: attachmentName,
+        id: idName,
+        revision: revisionName,
+        type: typeName
+    } = specialNames
 
     const baseDocument:Document =
         {[idName]: '', [revisionName]: '', [typeName]: 'base'}

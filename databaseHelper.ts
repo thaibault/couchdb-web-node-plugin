@@ -34,6 +34,7 @@ import {
     Exception,
     FileSpecification,
     FullAttachment,
+    FullDocument,
     Model,
     Models,
     OperationToAllowedRolesMapping,
@@ -44,6 +45,7 @@ import {
     SpecialPropertyNames,
     StubAttachment,
     Type,
+    UpdateStrategy,
     UserContext
 } from './type'
 // endregion
@@ -198,14 +200,14 @@ export class DatabaseHelper {
      * @returns Modified given new document.
      */
     static validateDocumentUpdate(
-        newDocument:Document,
-        oldDocument:Document|null,
+        newDocument:FullDocument,
+        oldDocument:FullDocument|null,
         userContext:UserContext,
         securitySettings:SecuritySettings,
         modelConfiguration:BaseModelConfiguration,
         models:Models = {},
         toJSON?:(_value:unknown) => string
-    ):Document {
+    ):FullDocument {
         // region ensure needed environment
         const throwError = <DataType = {}>(
             message:string,
@@ -239,9 +241,8 @@ export class DatabaseHelper {
 
         const specialNames:SpecialPropertyNames =
             modelConfiguration.property.name.special
-        const idName:string = specialNames.id
-        const revisionName:string = specialNames.revision
-        const typeName:string = specialNames.type
+        const {id: idName, revision: revisionName, type: typeName} =
+            specialNames
 
         if (oldDocument && oldDocument[typeName] && !newDocument[typeName])
             newDocument[typeName] = oldDocument[typeName]
@@ -299,17 +300,17 @@ export class DatabaseHelper {
             )
                 revision =
                     newDocument[revisionName] =
-                    oldDocument[revisionName] as string
+                    oldDocument[revisionName]
             else if (revision === 'latest')
                 throwError('Revision: No old document available to update.')
             else
-                delete newDocument[revisionName]
+                delete (newDocument as Partial<Document>)[revisionName]
 
-        let updateStrategy:string = modelConfiguration.updateStrategy
+        let updateStrategy:UpdateStrategy = modelConfiguration.updateStrategy
         if (Object.prototype.hasOwnProperty.call(
             newDocument, specialNames.strategy
         )) {
-            updateStrategy = newDocument[specialNames.strategy] as string
+            updateStrategy = newDocument[specialNames.strategy]!
             delete newDocument[specialNames.strategy]
         }
 
@@ -410,8 +411,7 @@ export class DatabaseHelper {
             prefix?:string, attachments?:Attachments
         ):null|string => {
             if (!attachments)
-                attachments =
-                    newDocument[specialNames.attachment] as Attachments
+                attachments = newDocument[specialNames.attachment]
 
             if (prefix) {
                 for (const name in attachments)
@@ -423,7 +423,7 @@ export class DatabaseHelper {
                     )
                         return name
             } else {
-                const keys:Array<string> = Object.keys(attachments)
+                const keys:Array<string> = Object.keys(attachments!)
                 if (keys.length)
                     return keys[0]
             }
@@ -534,8 +534,8 @@ export class DatabaseHelper {
         }
 
         const checkDocument = (
-            newDocument:Document,
-            oldDocument:Document|null,
+            newDocument:FullDocument,
+            oldDocument:FullDocument|null,
             parentNames:Array<string> = []
         ):CheckedDocumentResult => {
             const pathDescription:string =
@@ -1030,8 +1030,8 @@ export class DatabaseHelper {
             /// region create hook
             const runCreatePropertyHook:Function = (
                 propertySpecification:PropertySpecification,
-                newDocument:Document,
-                oldDocument:Document|null,
+                newDocument:FullDocument,
+                oldDocument:FullDocument|null,
                 name:string
             ):void => {
                 if (!oldDocument)
@@ -1104,8 +1104,8 @@ export class DatabaseHelper {
             /// region update hook
             const runUpdatePropertyHook:Function = (
                 propertySpecification:PropertySpecification,
-                newDocument:Document,
-                oldDocument:Document,
+                newDocument:FullDocument,
+                oldDocument:FullDocument,
                 name:string
             ):void => {
                 if (!Object.prototype.hasOwnProperty.call(newDocument, name))
@@ -1227,7 +1227,7 @@ export class DatabaseHelper {
                     specialNames.create.expression
                 ])
                     if (Object.prototype.hasOwnProperty.call(model, type)) {
-                        let result:Document|null|undefined
+                        let result:FullDocument|null|undefined
                         try {
                             result = evaluate(
                                 model[type as '_createExpression'],
@@ -1281,10 +1281,10 @@ export class DatabaseHelper {
                         }
 
                         if (![null, undefined].includes(result as null))
-                            newDocument = result as Document
+                            newDocument = result!
 
                         checkModelType()
-                        modelName = newDocument[typeName] as string
+                        modelName = newDocument[typeName]
 
                         if (parentNames.length === 0)
                             setDocumentEnvironment()
@@ -1295,7 +1295,7 @@ export class DatabaseHelper {
                 specialNames.update.execution, specialNames.update.expression
             ])
                 if (Object.prototype.hasOwnProperty.call(model, type)) {
-                    let result:Document|null|undefined
+                    let result:FullDocument|null|undefined
                     try {
                         result = evaluate(
                             model[type as '_createExpression'],
@@ -1345,10 +1345,10 @@ export class DatabaseHelper {
                     }
 
                     if (![undefined, null].includes(result as null))
-                        newDocument = result as Document
+                        newDocument = result!
 
                     checkModelType()
-                    modelName = newDocument[typeName] as string
+                    modelName = newDocument[typeName]
 
                     if (parentNames.length === 0)
                         setDocumentEnvironment()
@@ -1496,7 +1496,7 @@ export class DatabaseHelper {
                                             )
                                         else
                                             newAttachments[fileName] = ((
-                                                oldDocument as Document
+                                                oldDocument as FullDocument
                                             )[name] as Attachments)[fileName]
                             } else if (newFileNames.length === 0)
                                 if (oldFileNames.length === 0) {
@@ -1524,7 +1524,7 @@ export class DatabaseHelper {
                                 } else if (updateStrategy === 'fillUp')
                                     for (const fileName of oldFileNames)
                                         newAttachments[fileName] = ((
-                                            oldDocument as Document
+                                            oldDocument as FullDocument
                                         )[name] as Attachments)[fileName]
                         }
                     // endregion
@@ -1680,8 +1680,8 @@ export class DatabaseHelper {
                     // region writable/mutable/nullable
                     const checkWriteableMutableNullable:Function = (
                         propertySpecification:PropertySpecification,
-                        newDocument:Document,
-                        oldDocument:Document|null,
+                        newDocument:FullDocument,
+                        oldDocument:FullDocument|null,
                         name:string
                     ):boolean => {
                         // region writable
@@ -1919,8 +1919,7 @@ export class DatabaseHelper {
                                     Object.getPrototypeOf(value) ===
                                         Object.prototype &&
                                     !Object.prototype.hasOwnProperty.call(
-                                        value as PlainObject,
-                                        typeName
+                                        value as PlainObject, typeName
                                     )
                                 )
                                     (value as PlainObject)[typeName] =

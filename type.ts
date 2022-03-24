@@ -88,6 +88,7 @@ export type Constraint = {
 }
 export type Type = string|'any'|'boolean'|'integer'|'number'|'string'|'DateTime'
 export type TypeSpecification = Array<Type>|Type
+
 export type ConstraintKey =
     'arrayConstraintExecution'|'arrayConstraintExpression'|
     'conflictingConstraintExecution'|'conflictingConstraintExpression'|
@@ -152,6 +153,7 @@ export type Model = Mapping<PropertySpecification> & {
     _onUpdateExpression?:null|string
 }
 export type Models = Mapping<Model>
+
 export const PrimitiveTypes = [
     'boolean',
     'DateTime',
@@ -159,9 +161,12 @@ export const PrimitiveTypes = [
     'number',
     'string'
 ] as const
+
+export type UpdateStrategy = ''|'fillUp'|'incremental'|'migrate'
+
 export type DocumentContent =
     Array<DocumentContent>|PlainObject<Primitive>|Primitive
-export type DocumentStrategyMeta = {_updateStrategy?:string}
+export type DocumentStrategyMeta = {_updateStrategy?:UpdateStrategy}
 export type DocumentTypeMeta = {'-type':string}
 export type BaseDocument =
     ChangesMeta &
@@ -171,12 +176,23 @@ export type BaseDocument =
     DocumentStrategyMeta &
     DocumentTypeMeta
 export type FullDocument = BaseDocument & PlainObject
-export type UpdateStrategy = ''|'fillUp'|'incremental'|'migrate'
+
 export type SpecialPropertyNames = {
     additional:string
+
     allowedRole:string
+
     attachment:'_attachments'
     conflict:'_conflicts'
+    deleted:'_deleted'
+    deletedConflict:'_deleted_conflict'
+    id:'_id'
+    revision:'_rev'
+    revisions:'_revisions'
+    revisionsInformation:'_revs_info'
+    strategy:'_updateStrategy'
+    type:keyof DocumentTypeMeta
+
     constraint:{
         execution:string
         expression:string
@@ -185,20 +201,18 @@ export type SpecialPropertyNames = {
         execution:string
         expression:string
     }
-    deleted:'_deleted'
-    deletedConflict:'_deleted_conflict'
+
     designDocumentNamePrefix:string
+
     extend:string
-    id:'_id'
+
     localSequence:string
+
     maximumAggregatedSize:string
     minimumAggregatedSize:string
+
     oldType:string
-    revision:'_rev'
-    revisions:'_revisions'
-    revisionsInformation:'_revs_info'
-    strategy:UpdateStrategy
-    type:keyof DocumentTypeMeta|typeof PrimitiveTypes[number]
+
     update:{
         execution:string
         expression:string
@@ -389,7 +403,7 @@ export type EvaluationException = Exception<EvaluationExceptionData>
 
 export interface CheckedDocumentResult {
     changedPath:Array<string>
-    newDocument:Document
+    newDocument:FullDocument
 }
 export interface EvaluationResult<Type = any> {
     code:string
