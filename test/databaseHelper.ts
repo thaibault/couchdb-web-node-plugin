@@ -25,7 +25,6 @@ import Helper from '../helper'
 import packageConfiguration from '../package.json'
 import {
     Configuration,
-    DatabaseForbiddenError,
     Document,
     ModelConfiguration,
     Models,
@@ -36,13 +35,19 @@ import {
 describe('databaseHelper', ():void => {
     // region prepare environment
     const configuration:Configuration =
-        packageConfiguration.webNode as Configuration
+        packageConfiguration.webNode as unknown as Configuration
+
     const specialNames:SpecialPropertyNames =
         configuration.couchdb.model.property.name.special
-    const attachmentName:string = specialNames.attachment
-    const idName:string = specialNames.id
-    const revisionName:string = specialNames.revision
-    const typeName:string = specialNames.type
+
+    const attachmentName:'_attachments' =
+        specialNames.attachment as '_attachments'
+    const idName:'_id' = specialNames.id as '_id'
+    const revisionName:'_rev' = specialNames.revision as '_rev'
+    const typeName:'-type' = specialNames.type as '-type'
+
+    const baseDocument:Document =
+        {[idName]: '', [revisionName]: '', [typeName]: 'base'}
     // endregion
     // region tests
     testEachAgainstSameExpectation<typeof DatabaseHelper.authenticate>(
@@ -51,7 +56,7 @@ describe('databaseHelper', ():void => {
         ThrowSymbol,
 
         [
-            {type: 'Test'},
+            {...baseDocument, type: 'Test'},
             {},
             {roles: []},
             {},
@@ -59,7 +64,15 @@ describe('databaseHelper', ():void => {
             'id',
             'type'
         ],
-        [{type: 'Test'}, {}, {roles: ['users']}, {}, {}, 'id', 'type']
+        [
+            {...baseDocument, type: 'Test'},
+            {},
+            {roles: ['users']},
+            {},
+            {},
+            'id',
+            'type'
+        ]
     )
     testEachAgainstSameExpectation<typeof DatabaseHelper.authenticate>(
         'authenticate',

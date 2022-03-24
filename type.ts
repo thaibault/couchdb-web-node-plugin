@@ -32,37 +32,50 @@ import {
 // region exports
 /// region database implementation
 export type Attachments = PouchDB.Core.Attachments
+export type FullAttachment = PouchDB.Core.FullAttachment
+export type StubAttachment = PouchDB.Core.StubAttachment
+
 export type ChangesMeta = PouchDB.Core.ChangesMeta
 export type ChangesResponseChange<Type = any> =
     PouchDB.Core.ChangesResponseChange<Type>
 export type ChangesStream<Type = any> = PouchDB.Core.Changes<Type>
 export type ChangesStreamOptions = PouchDB.Core.ChangesOptions
+
 export type Connection = PouchDB.Database
 export type Connector = PouchDB.Static
 export type DatabaseConnectorConfiguration =
     PouchDB.Configuration.RemoteDatabaseConfiguration
+
 export type DatabaseError = PouchDB.Core.Error
 export type DatabaseFetch = PouchDB.Core.Options['fetch']
 export type DatabaseResponse = PouchDB.Core.Response
+
 export type DeleteIndexOptions = PouchDB.Find.DeleteIndexOptions
-export type FullAttachment = PouchDB.Core.FullAttachment
+
+export type Document<Type = PlainObject> = PouchDB.Core.Document<Type>
 export type DocumentGetMeta = PouchDB.Core.GetMeta
 export type DocumentIDMeta = PouchDB.Core.IdMeta
 export type DocumentRevisionIDMeta = PouchDB.Core.RevisionIdMeta
+
 export type Index = PouchDB.Find.Index
+
 export type DatabasePlugin = any
-export type StubAttachment = PouchDB.Core.StubAttachment
 /// endregion
 /// region model
-export type AllowedRoles = Array<string>|string|{
-    read:Array<string>|string
-    write:Array<string>|string
-}
+export type AllowedRoles = (
+    Array<string> |
+    string |
+    {
+        read:Array<string>|string
+        write:Array<string>|string
+    }
+)
 // Recursive mapping from operations to their allowed roles.
 export type OperationToAllowedRolesMapping = {
-    properties?:AllowedModelRolesMapping
-    read:Array<string>
-    write:Array<string>
+    properties:AllowedModelRolesMapping
+
+    read:Array<string>|string
+    write:Array<string>|string
 }
 /*
     Maps an artefact (usually type or property) to corresponding operations
@@ -157,7 +170,7 @@ export type BaseDocument =
     DocumentRevisionIDMeta &
     DocumentStrategyMeta &
     DocumentTypeMeta
-export type Document = BaseDocument & PlainObject
+export type FullDocument = BaseDocument & PlainObject
 export type UpdateStrategy = ''|'fillUp'|'incremental'|'migrate'
 export type SpecialPropertyNames = {
     additional:string
@@ -248,7 +261,7 @@ export type ConnectorConfiguration = DatabaseConnectorConfiguration & {
     // NOTE: "pouchdbs" version supports timeout parameter.
     fetch?:(RequestInit & {timeout:number})|null
 }
-export type Configuration<ConfigurationType = {}> =
+export type Configuration<ConfigurationType = Mapping<unknown>> =
     BaseConfiguration<{
         couchdb:{
             attachAutoRestarter:boolean

@@ -78,12 +78,12 @@ export class DatabaseHelper {
     static authenticate(
         newDocument:Document,
         oldDocument:Document|null = null,
-        userContext:UserContext = {
+        userContext:Partial<UserContext> = {
             db: 'dummy',
             name: '"unknown"',
             roles: []
         },
-        _securitySettings:SecuritySettings = {
+        _securitySettings:Partial<SecuritySettings> = {
             admins: {names: [], roles: []}, members: {names: [], roles: []}
         },
         allowedModelRolesMapping?:AllowedModelRolesMapping,
@@ -107,12 +107,10 @@ export class DatabaseHelper {
         const operationType:'read'|'write' = read ? 'read': 'write'
 
         // Define roles who are allowed to read and write everything.
-        const allowedRoles:OperationToAllowedRolesMapping & {
-            properties:AllowedModelRolesMapping
-        } = {
+        const allowedRoles:OperationToAllowedRolesMapping = {
             properties: {},
             read: ['_admin', 'readonlyadmin'],
-            write: ['_admin']
+            write: '_admin'
         }
 
         // A "readonlymember" is allowed to read all but design documents.
@@ -124,7 +122,9 @@ export class DatabaseHelper {
                 designDocumentNamePrefix
             )
         )
-            allowedRoles.read.push('readonlymember')
+            allowedRoles.read = ([] as Array<string>).concat(
+                allowedRoles.read, 'readonlymember'
+            )
 
         let userRolesDescription = `Current user doesn't own any role`
 
@@ -132,7 +132,7 @@ export class DatabaseHelper {
             if (!('name' in userContext))
                 userContext.name = '"unknown"'
 
-            if (userContext.roles.length) {
+            if (userContext.roles?.length) {
                 // region determine model specific allowed roles
                 if (
                     allowedModelRolesMapping &&
@@ -141,20 +141,22 @@ export class DatabaseHelper {
                         allowedModelRolesMapping, type
                     )
                 ) {
-                    const allowedModelRoles = allowedModelRolesMapping[type]
+                    const allowedModelRoles:OperationToAllowedRolesMapping =
+                        allowedModelRolesMapping[type]
 
                     for (const operation of ['read', 'write'] as const)
-                        allowedRoles[operation] =
-                            allowedRoles[operation].concat(
-                                allowedModelRoles[operation] || []
-                            )
+                        allowedRoles[operation] = ([] as Array<string>).concat(
+                            allowedRoles[operation],
+                            allowedModelRoles[operation] || []
+                        )
 
                     if (allowedModelRoles.properties)
                         allowedRoles.properties = allowedModelRoles.properties
                 }
                 // endregion
                 // TODO check for each property recursively
-                const relevantRoles:Array<string> = allowedRoles[operationType]
+                const relevantRoles:Array<string> =
+                    ([] as Array<string>).concat(allowedRoles[operationType])
                 for (const userRole of userContext.roles)
                     if (relevantRoles.includes(userRole))
                         return true
@@ -167,13 +169,16 @@ export class DatabaseHelper {
                 userRolesDescription =
                     `Current user "${userContext.name!}" doesn't own any role`
         }
+
         /* eslint-disable no-throw-literal */
         throw {
             unauthorized:
                 'Only users with a least on of these roles are allowed to ' +
                 `perform requested ${operationType} action: "` +
-                `${allowedRoles[operationType].join('", "')}". ` +
-                `${userRolesDescription}.`
+                ([] as Array<string>)
+                    .concat(allowedRoles[operationType])
+                    .join('", "') +
+                `". ${userRolesDescription}.`
         }
         /* eslint-enable no-throw-literal */
     }
