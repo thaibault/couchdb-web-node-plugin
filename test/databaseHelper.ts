@@ -104,9 +104,9 @@ describe('databaseHelper', ():void => {
             {Test: {properties: {}, read: [], write: ['users']}}
         ]
     )
-    test.each<UpdateStrategy>(['', 'fillUp', 'incremental'])(
+    test.each(['', 'fillUp', 'incremental'] as const)(
         'validateDocumentUpdate (with update strategy "%s")',
-        (updateStrategy:UpdateStrategy):void => {
+        (updateStrategy:''|'fillUp'|'incremental'):void => {
             const defaultModelConfiguration:ModelConfiguration = {
                 // Numbers are date cross implementation save.
                 ...Tools.copy(configuration.couchdb.model),
@@ -1233,9 +1233,12 @@ describe('databaseHelper', ():void => {
 
                 const parameters:Parameters<
                     typeof DatabaseHelper.validateDocumentUpdate
-                > = (test[0] as Array<unknown>)
+                > = (test[0] as unknown as Array<unknown>)
                     .concat([null, {}, {}].slice(test[0].length - 1))
-                    .concat(modelConfiguration, models)
+                    .concat(modelConfiguration, models) as
+                        Parameters<
+                            typeof DatabaseHelper.validateDocumentUpdate
+                        >
 
                 if (typeof test[2] !== 'string') {
                     expect(
@@ -3557,7 +3560,7 @@ describe('databaseHelper', ():void => {
 
                 expect(DatabaseHelper.validateDocumentUpdate(
                     ...(
-                        test[0]
+                        (test[0] as unknown as Array<unknown>)
                             .concat([null, {}, {}].slice(test[0].length - 1))
                             .concat(modelConfiguration, models)
                     ) as
@@ -3572,21 +3575,21 @@ describe('databaseHelper', ():void => {
     )
     /// region migration writes
     test.each<[
-        FirstParameter<typeof DatabaseHelper.validateDocumentUpdate>,
         ReturnType<typeof DatabaseHelper.validateDocumentUpdate>,
-        ModelConfiguration,
-        SecondParameter<typeof DatabaseHelper.validateDocumentUpdate>
+        FirstParameter<typeof DatabaseHelper.validateDocumentUpdate>,
+        Partial<ModelConfiguration>,
+        SecondParameter<typeof DatabaseHelper.validateDocumentUpdate>?
     ]>([
         // Remove obsolete properties.
         [
-            {[typeName]: 'Test', a: 2},
             {[typeName]: 'Test'},
+            {[typeName]: 'Test', a: 2},
             {entities: {Test: {}}}
         ],
         // Create missing properties with default value.
         [
-            {[typeName]: 'Test'},
             {[typeName]: 'Test', a: '2'},
+            {[typeName]: 'Test'},
             {entities: {Test: {a: {default: '2'}}}}
         ],
         // Do not change valid properties.
@@ -3611,8 +3614,8 @@ describe('databaseHelper', ():void => {
         ],
         // Set property to default value if explicitly set to "null".
         [
-            {[typeName]: 'Test', a: null},
             {[typeName]: 'Test', a: '2'},
+            {[typeName]: 'Test', a: null},
             {entities: {Test: {a: {default: '2'}}}}
         ],
         /*
@@ -3620,8 +3623,8 @@ describe('databaseHelper', ():void => {
             ignoring maybe existing old documents value.
         */
         [
-            {[typeName]: 'Test', a: null},
             {[typeName]: 'Test', a: '2'},
+            {[typeName]: 'Test', a: null},
             {entities: {Test: {a: {default: '2'}}}},
             {[typeName]: 'Test', a: '1'}
         ],
@@ -3630,8 +3633,8 @@ describe('databaseHelper', ():void => {
             a specified default (string) value.
         */
         [
-            {[typeName]: 'Test'},
             {[typeName]: 'Test', a: '2'},
+            {[typeName]: 'Test'},
             {entities: {Test: {a: {default: '2'}}}},
             {[typeName]: 'Test', a: '1'}
         ],
@@ -3640,8 +3643,8 @@ describe('databaseHelper', ():void => {
             a specified default value and remove not existing properties.
         */
         [
-            {[typeName]: 'Test', b: '3'},
             {[typeName]: 'Test', a: '2'},
+            {[typeName]: 'Test', b: '3'},
             {entities: {Test: {a: {default: '2'}}}},
             {[typeName]: 'Test', a: '1'}
         ],
@@ -3650,8 +3653,8 @@ describe('databaseHelper', ():void => {
             a specified default (number) value.
         */
         [
-            {[typeName]: 'Test'},
             {[typeName]: 'Test', a: 2},
+            {[typeName]: 'Test'},
             {entities: {Test: {a: {default: 2, type: 'number'}}}}
         ],
         /*
@@ -3659,8 +3662,8 @@ describe('databaseHelper', ():void => {
             a specified default (any) value.
         */
         [
-            {[typeName]: 'Test'},
             {[typeName]: 'Test', a: 2},
+            {[typeName]: 'Test'},
             {entities: {Test: {a: {default: 2, type: 'any'}}}}
         ],
         /*
@@ -3668,8 +3671,8 @@ describe('databaseHelper', ():void => {
             a specified default value (where on is any).
         */
         [
-            {[typeName]: 'Test'},
             {[typeName]: 'Test', a: 2},
+            {[typeName]: 'Test'},
             {entities: {Test: {a: {default: 2, type: ['any']}}}},
         ],
         /*
@@ -3678,13 +3681,13 @@ describe('databaseHelper', ():void => {
             provided).
         */
         [
-            {[typeName]: 'Test'},
             {[typeName]: 'Test', a: 2},
+            {[typeName]: 'Test'},
             {entities: {Test: {a: {default: 2, type: ['any', 'boolean']}}}},
         ],
         [
-            {[typeName]: 'Test'},
             {[typeName]: 'Test', a: 2},
+            {[typeName]: 'Test'},
             {entities: {Test: {a: {default: 2, type: ['number', 'boolean']}}}}
         ],
         // Ignore not specified attachment properties in old document.
@@ -3730,14 +3733,14 @@ describe('databaseHelper', ():void => {
         ],
         // Migrate model type if old one is provided.
         [
-            {[typeName]: 'OldTest'},
             {[typeName]: 'Test'},
+            {[typeName]: 'OldTest'},
             {entities: {Test: {[specialNames.oldType]: 'OldTest'}}}
         ],
         // Migrate nested property model type if old one is provided.
         [
-            {[typeName]: 'Test', a: {[typeName]: 'OldTest', b: 'b'}},
             {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'b'}},
+            {[typeName]: 'Test', a: {[typeName]: 'OldTest', b: 'b'}},
             {entities: {Test: {
                 a: {type: 'Test'},
                 [specialNames.oldType]: 'OldTest',
@@ -3746,8 +3749,8 @@ describe('databaseHelper', ():void => {
         ],
         // Migrate nested array model type if old one is provided.
         [
-            {[typeName]: 'Test', a: [{[typeName]: 'OldTest', b: 'b'}]},
             {[typeName]: 'Test', a: [{[typeName]: 'Test', b: 'b'}]},
+            {[typeName]: 'Test', a: [{[typeName]: 'OldTest', b: 'b'}]},
             {entities: {Test: {
                 a: {type: 'Test[]'},
                 [specialNames.oldType]: 'OldTest',
@@ -3760,14 +3763,14 @@ describe('databaseHelper', ():void => {
                 [typeName]: 'Test',
                 a: [{
                     [typeName]: 'Test',
-                    a: [{[typeName]: 'OldTest', b: 'b'}]
+                    a: [{[typeName]: 'Test', b: 'b'}]
                 }]
             },
             {
                 [typeName]: 'Test',
                 a: [{
                     [typeName]: 'Test',
-                    a: [{[typeName]: 'Test', b: 'b'}]
+                    a: [{[typeName]: 'OldTest', b: 'b'}]
                 }]
             },
             {entities: {Test: {
@@ -3778,18 +3781,22 @@ describe('databaseHelper', ():void => {
         ],
         // Migrate property names if old name is provided.
         [
-            {[typeName]: 'Test', a: 'a'},
             {[typeName]: 'Test', b: 'a'},
+            {[typeName]: 'Test', a: 'a'},
             {entities: {Test: {b: {oldName: 'a'}}}}
         ]
     ])(
         'validateDocumentUpdate(%p, ...) === %p (with update strategy "' +
         'migration")',
         (
-            newDocument:FirstParameter<typeof DatabaseHelper.validateDocumentUpdate>,
             expected:ReturnType<typeof DatabaseHelper.validateDocumentUpdate>,
+            newDocument:FirstParameter<
+                typeof DatabaseHelper.validateDocumentUpdate
+            >,
             modelConfiguration:ModelConfiguration,
-            oldDocument:SecondParameter<typeof DatabaseHelper.validateDocumentUpdate> = null
+            oldDocument:SecondParameter<
+                typeof DatabaseHelper.validateDocumentUpdate
+            > = null
         ):void => {
             const defaultModelConfiguration:ModelConfiguration = {
                 ...Tools.copy(configuration.couchdb.model),
@@ -3810,14 +3817,22 @@ describe('databaseHelper', ():void => {
                     ]
 
             const models:Models = Helper.extendModels(Tools.extend(
-                true, Tools.copy(defaultModelConfiguration), modelConfiguration
+                true,
+                Tools.copy(defaultModelConfiguration),
+                modelConfiguration as Partial<ModelConfiguration>
             ))
             const testModelConfiguration:ModelConfiguration = Tools.extend(
-                true, Tools.copy(defaultModelConfiguration), modelConfiguration
+                true,
+                Tools.copy(defaultModelConfiguration),
+                modelConfiguration as Partial<ModelConfiguration>
             )
 
-            delete testModelConfiguration.property.defaultSpecification
-            delete testModelConfiguration.entities
+            delete (
+                testModelConfiguration.property as
+                    Partial<ModelConfiguration['property']>
+            ).defaultSpecification
+            delete (testModelConfiguration as Partial<ModelConfiguration>)
+                .entities
 
             expect(DatabaseHelper.validateDocumentUpdate(
                 newDocument,

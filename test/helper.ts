@@ -15,18 +15,21 @@
 */
 // region imports
 import Tools from 'clientnode'
+import {FirstParameter, SecondParameter} from 'clientnode/type'
 import {
     testEach, testEachPromiseAgainstSameExpectation, UndefinedSymbol
 } from 'clientnode/testHelper'
 
 import Helper from '../helper'
 import packageConfiguration from '../package.json'
-import {ModelConfiguration, Models, SpecialPropertyNames} from '../type'
+import {
+    Configuration, ModelConfiguration, Models, SpecialPropertyNames
+} from '../type'
 // endregion
 describe('helper', ():void => {
     // region prepare environment
     const configuration:Configuration =
-        packageConfiguration.webNode as Configuration
+        packageConfiguration.webNode as unknown as Configuration
     const specialNames:SpecialPropertyNames =
         configuration.couchdb.model.property.name.special
     // endregion
@@ -55,9 +58,10 @@ describe('helper', ():void => {
         UndefinedSymbol,
 
         [
-            {put: ():Promise<void> =>
-                new Promise((resolve:Function):Promise<boolean> =>
-                    Tools.timeout(resolve))
+            {put: ():Promise<unknown> =>
+                new Promise<unknown>((resolve:(value:unknown) => void):void => {
+                    Tools.timeout(resolve)
+                })
             },
             'test',
             {data: 'data'},
@@ -126,14 +130,14 @@ describe('helper', ():void => {
                 }
             ]
         ].map(([expected, modelConfiguration]):[
-            ReturnType<Helper.determineAllowedModelRolesMapping>,
-            FirstParameter<Helper.determineAllowedModelRolesMapping>
+            ReturnType<typeof Helper.determineAllowedModelRolesMapping>,
+            FirstParameter<typeof Helper.determineAllowedModelRolesMapping>
         ] => [
             expected,
             Tools.extend(
                 true,
                 Tools.copy(mockModelConfiguration),
-                modelConfiguration
+                modelConfiguration as ModelConfiguration
             )
         ])
     )
@@ -150,9 +154,13 @@ describe('helper', ():void => {
                 {a: {}, b: {}}
             ]
         ].map(([expected, modelConfiguration, model]):[
-            ReturnType<Helper.determineGenericIndexablePropertyNames>,
-            FirstParameter<Helper.determineGenericIndexablePropertyNames>,
-            SecondParameter<Helper.determineGenericIndexablePropertyNames>
+            ReturnType<typeof Helper.determineGenericIndexablePropertyNames>,
+            FirstParameter<
+                typeof Helper.determineGenericIndexablePropertyNames
+            >,
+            SecondParameter<
+                typeof Helper.determineGenericIndexablePropertyNames
+            >
         ] => [
             expected,
             Tools.extend(

@@ -195,10 +195,10 @@ export class DatabaseHelper {
      * @returns Modified given new document.
      */
     static validateDocumentUpdate(
-        newDocument:FullDocument,
-        oldDocument:FullDocument|null,
-        userContext:UserContext,
-        securitySettings:SecuritySettings,
+        newDocument:Partial<FullDocument>,
+        oldDocument:Partial<FullDocument>|null,
+        userContext:Partial<UserContext>,
+        securitySettings:Partial<SecuritySettings>,
         modelConfiguration:BaseModelConfiguration,
         models:Models = {},
         toJSON?:(_value:unknown) => string
@@ -285,7 +285,7 @@ export class DatabaseHelper {
                 ] as unknown as Set<string>
             ).delete(`${id}-${revision}`)
 
-            return newDocument
+            return newDocument as FullDocument
         }
 
         if (['latest', 'upsert'].includes(revision))
@@ -295,7 +295,7 @@ export class DatabaseHelper {
             )
                 revision =
                     newDocument[revisionName] =
-                    oldDocument[revisionName]
+                    oldDocument[revisionName]!
             else if (revision === 'latest')
                 throwError('Revision: No old document available to update.')
             else
@@ -2546,8 +2546,9 @@ export class DatabaseHelper {
             return {changedPath, newDocument}
         }
         // endregion
-        const result:CheckedDocumentResult =
-            checkDocument(newDocument, oldDocument)
+        const result:CheckedDocumentResult = checkDocument(
+            newDocument as FullDocument, oldDocument as FullDocument|null
+        )
         // region check if changes happend
         if (
             result.newDocument._deleted &&
