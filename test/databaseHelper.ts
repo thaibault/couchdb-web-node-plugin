@@ -18,7 +18,7 @@ import Tools from 'clientnode'
 import {
     testEachAgainstSameExpectation, ThrowSymbol
 } from 'clientnode/testHelper'
-import {FirstParameter, SecondParameter} from 'clientnode/type'
+import {FirstParameter, PlainObject, SecondParameter} from 'clientnode/type'
 
 import DatabaseHelper from '../databaseHelper'
 import Helper from '../helper'
@@ -28,6 +28,7 @@ import {
     Document,
     ModelConfiguration,
     Models,
+    PartialFullDocument,
     SpecialPropertyNames,
     UpdateStrategy
 } from '../type'
@@ -1248,7 +1249,7 @@ describe('databaseHelper', ():void => {
                     continue
                 }
 
-                expect(():Document =>
+                expect(():PartialFullDocument =>
                     DatabaseHelper.validateDocumentUpdate(...parameters)
                 ).toThrow(new RegExp(`^${test[2]}: .+[.!]$`, 's'))
             }
@@ -3575,10 +3576,10 @@ describe('databaseHelper', ():void => {
     )
     /// region migration writes
     test.each<[
-        ReturnType<typeof DatabaseHelper.validateDocumentUpdate>,
-        FirstParameter<typeof DatabaseHelper.validateDocumentUpdate>,
-        Partial<ModelConfiguration>,
-        SecondParameter<typeof DatabaseHelper.validateDocumentUpdate>?
+        PartialFullDocument,
+        PartialFullDocument,
+        PlainObject,
+        PartialFullDocument?
     ]>([
         // Remove obsolete properties.
         [
@@ -3690,47 +3691,6 @@ describe('databaseHelper', ():void => {
             {[typeName]: 'Test'},
             {entities: {Test: {a: {default: 2, type: ['number', 'boolean']}}}}
         ],
-        // Ignore not specified attachment properties in old document.
-        [
-            {[typeName]: 'Test', b: 'b'},
-            {[typeName]: 'Test', b: 'b'},
-            {entities: {Test: {b: {}}}},
-            {[typeName]: 'Test', [attachmentName]: {}}
-        ],
-        [
-            {[typeName]: 'Test', b: 'b'},
-            {[typeName]: 'Test', b: 'b'},
-            {entities: {Test: {b: {}}}},
-            {
-                [typeName]: 'Test',
-                [attachmentName]: {
-                    /* eslint-disable camelcase */
-                    test: {data: '', content_type: 'text/plain'}
-                    /* eslint-enable camelcase */
-                }
-            }
-        ],
-        /*
-            Set attachment to a default one if it is missing and has a
-            specified default one.
-        */
-        [
-            {[typeName]: 'Test'},
-            {[typeName]: 'Test'},
-            {entities: {Test: {[attachmentName]: {test: {default: {test: {
-                /* eslint-disable camelcase */
-                data: '', content_type: 'text/plain'
-                /* eslint-enable camelcase */
-            }}}}}}},
-            {
-                [typeName]: 'Test',
-                [attachmentName]: {test: {
-                    /* eslint-disable camelcase */
-                    data: '', content_type: 'text/plain'
-                    /* eslint-enable camelcase */
-                }}
-            }
-        ],
         // Migrate model type if old one is provided.
         [
             {[typeName]: 'Test'},
@@ -3784,19 +3744,53 @@ describe('databaseHelper', ():void => {
             {[typeName]: 'Test', b: 'a'},
             {[typeName]: 'Test', a: 'a'},
             {entities: {Test: {b: {oldName: 'a'}}}}
+        ],
+        // Ignore not specified attachment properties in old document.
+        [
+            {[typeName]: 'Test', b: 'b'},
+            {[typeName]: 'Test', b: 'b'},
+            {entities: {Test: {b: {}}}},
+            {[typeName]: 'Test', [attachmentName]: {}}
+        ],
+        [
+            {[typeName]: 'Test', b: 'b'},
+            {[typeName]: 'Test', b: 'b'},
+            {entities: {Test: {b: {}}}},
+            {
+                [typeName]: 'Test',
+                [attachmentName]: {
+                    // eslint-disable-next-line camelcase
+                    test: {data: '', content_type: 'text/plain'}
+                }
+            }
+        ],
+        /*
+            Set attachment to a default one if it is missing and has a
+            specified default one.
+        */
+        [
+            {[typeName]: 'Test'},
+            {[typeName]: 'Test'},
+            {entities: {Test: {[attachmentName]: {test: {default: {test: {
+                // eslint-disable-next-line camelcase
+                data: '', content_type: 'text/plain'
+            }}}}}}},
+            {
+                [typeName]: 'Test',
+                [attachmentName]: {test: {
+                    // eslint-disable-next-line camelcase
+                    data: '', content_type: 'text/plain'
+                }}
+            }
         ]
     ])(
         'validateDocumentUpdate(%p, ...) === %p (with update strategy "' +
         'migration")',
         (
-            expected:ReturnType<typeof DatabaseHelper.validateDocumentUpdate>,
-            newDocument:FirstParameter<
-                typeof DatabaseHelper.validateDocumentUpdate
-            >,
-            modelConfiguration:ModelConfiguration,
-            oldDocument:SecondParameter<
-                typeof DatabaseHelper.validateDocumentUpdate
-            > = null
+            expected:PartialFullDocument,
+            newDocument:PartialFullDocument,
+            modelConfiguration:PlainObject,
+            oldDocument:null|PartialFullDocument = null
         ):void => {
             const defaultModelConfiguration:ModelConfiguration = {
                 ...Tools.copy(configuration.couchdb.model),

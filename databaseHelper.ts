@@ -35,11 +35,11 @@ import {
     Exception,
     FileSpecification,
     FullAttachment,
-    FullDocument,
     Model,
     Models,
     NormalizedAllowedModelRoles,
     NormalizedAllowedRoles,
+    PartialFullDocument,
     PropertySpecification,
     RuntimeExceptionData,
     SecuritySettings,
@@ -195,14 +195,14 @@ export class DatabaseHelper {
      * @returns Modified given new document.
      */
     static validateDocumentUpdate(
-        newDocument:Partial<FullDocument>,
-        oldDocument:Partial<FullDocument>|null,
+        newDocument:PartialFullDocument,
+        oldDocument:PartialFullDocument|null,
         userContext:Partial<UserContext>,
         securitySettings:Partial<SecuritySettings>,
         modelConfiguration:BaseModelConfiguration,
         models:Models = {},
         toJSON?:(_value:unknown) => string
-    ):FullDocument {
+    ):PartialFullDocument {
         // region ensure needed environment
         const throwError = <DataType = {}>(
             message:string,
@@ -285,7 +285,7 @@ export class DatabaseHelper {
                 ] as unknown as Set<string>
             ).delete(`${id}-${revision}`)
 
-            return newDocument as FullDocument
+            return newDocument
         }
 
         if (['latest', 'upsert'].includes(revision))
@@ -529,8 +529,8 @@ export class DatabaseHelper {
         }
 
         const checkDocument = (
-            newDocument:FullDocument,
-            oldDocument:FullDocument|null,
+            newDocument:PartialFullDocument,
+            oldDocument:PartialFullDocument|null,
             parentNames:Array<string> = []
         ):CheckedDocumentResult => {
             const pathDescription:string =
@@ -1025,8 +1025,8 @@ export class DatabaseHelper {
             /// region create hook
             const runCreatePropertyHook:Function = (
                 propertySpecification:PropertySpecification,
-                newDocument:FullDocument,
-                oldDocument:FullDocument|null,
+                newDocument:PartialFullDocument,
+                oldDocument:PartialFullDocument|null,
                 name:string
             ):void => {
                 if (!oldDocument)
@@ -1099,8 +1099,8 @@ export class DatabaseHelper {
             /// region update hook
             const runUpdatePropertyHook:Function = (
                 propertySpecification:PropertySpecification,
-                newDocument:FullDocument,
-                oldDocument:FullDocument,
+                newDocument:PartialFullDocument,
+                oldDocument:PartialFullDocument,
                 name:string
             ):void => {
                 if (!Object.prototype.hasOwnProperty.call(newDocument, name))
@@ -1222,7 +1222,7 @@ export class DatabaseHelper {
                     specialNames.create.expression
                 ])
                     if (Object.prototype.hasOwnProperty.call(model, type)) {
-                        let result:FullDocument|null|undefined
+                        let result:PartialFullDocument|null|undefined
                         try {
                             result = evaluate(
                                 model[type as '_createExpression'],
@@ -1279,7 +1279,7 @@ export class DatabaseHelper {
                             newDocument = result!
 
                         checkModelType()
-                        modelName = newDocument[typeName]
+                        modelName = newDocument[typeName]!
 
                         if (parentNames.length === 0)
                             setDocumentEnvironment()
@@ -1290,7 +1290,7 @@ export class DatabaseHelper {
                 specialNames.update.execution, specialNames.update.expression
             ])
                 if (Object.prototype.hasOwnProperty.call(model, type)) {
-                    let result:FullDocument|null|undefined
+                    let result:PartialFullDocument|null|undefined
                     try {
                         result = evaluate(
                             model[type as '_createExpression'],
@@ -1343,7 +1343,7 @@ export class DatabaseHelper {
                         newDocument = result!
 
                     checkModelType()
-                    modelName = newDocument[typeName]
+                    modelName = newDocument[typeName]!
 
                     if (parentNames.length === 0)
                         setDocumentEnvironment()
@@ -1491,8 +1491,8 @@ export class DatabaseHelper {
                                             )
                                         else
                                             newAttachments[fileName] = ((
-                                                oldDocument as FullDocument
-                                            )[name] as Attachments)[fileName]
+                                                oldDocument
+                                            )![name] as Attachments)[fileName]
                             } else if (newFileNames.length === 0)
                                 if (oldFileNames.length === 0) {
                                     for (
@@ -1519,8 +1519,8 @@ export class DatabaseHelper {
                                 } else if (updateStrategy === 'fillUp')
                                     for (const fileName of oldFileNames)
                                         newAttachments[fileName] = ((
-                                            oldDocument as FullDocument
-                                        )[name] as Attachments)[fileName]
+                                            oldDocument
+                                        )![name] as Attachments)[fileName]
                         }
                     // endregion
                 } else {
@@ -1675,8 +1675,8 @@ export class DatabaseHelper {
                     // region writable/mutable/nullable
                     const checkWriteableMutableNullable:Function = (
                         propertySpecification:PropertySpecification,
-                        newDocument:FullDocument,
-                        oldDocument:FullDocument|null,
+                        newDocument:PartialFullDocument,
+                        oldDocument:PartialFullDocument|null,
                         name:string
                     ):boolean => {
                         // region writable
@@ -2546,9 +2546,8 @@ export class DatabaseHelper {
             return {changedPath, newDocument}
         }
         // endregion
-        const result:CheckedDocumentResult = checkDocument(
-            newDocument as FullDocument, oldDocument as FullDocument|null
-        )
+        const result:CheckedDocumentResult =
+            checkDocument(newDocument, oldDocument)
         // region check if changes happend
         if (
             result.newDocument._deleted &&

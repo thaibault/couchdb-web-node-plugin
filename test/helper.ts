@@ -23,7 +23,14 @@ import {
 import Helper from '../helper'
 import packageConfiguration from '../package.json'
 import {
-    Configuration, ModelConfiguration, Models, SpecialPropertyNames
+    AllowedModelRolesMapping,
+    Configuration,
+    Connection,
+    DatabaseResponse,
+    ModelConfiguration,
+    Model,
+    Models,
+    SpecialPropertyNames
 } from '../type'
 // endregion
 describe('helper', ():void => {
@@ -58,11 +65,15 @@ describe('helper', ():void => {
         UndefinedSymbol,
 
         [
-            {put: ():Promise<unknown> =>
-                new Promise<unknown>((resolve:(value:unknown) => void):void => {
-                    Tools.timeout(resolve)
+            {put: ():Promise<DatabaseResponse> =>
+                new Promise<DatabaseResponse>((
+                    resolve:(value:DatabaseResponse) => void
+                ):void => {
+                    Tools.timeout().then(() =>
+                        resolve(null as unknown as DatabaseResponse)
+                    )
                 })
-            },
+            } as unknown as Connection,
             'test',
             {data: 'data'},
             'Description',
@@ -130,15 +141,14 @@ describe('helper', ():void => {
                 }
             ]
         ].map(([expected, modelConfiguration]):[
-            ReturnType<typeof Helper.determineAllowedModelRolesMapping>,
-            FirstParameter<typeof Helper.determineAllowedModelRolesMapping>
+            AllowedModelRolesMapping, ModelConfiguration
         ] => [
-            expected,
+            expected as AllowedModelRolesMapping,
             Tools.extend(
                 true,
                 Tools.copy(mockModelConfiguration),
-                modelConfiguration as ModelConfiguration
-            )
+                modelConfiguration
+            ) as ModelConfiguration
         ])
     )
     testEach<typeof Helper.determineGenericIndexablePropertyNames>(
@@ -154,21 +164,15 @@ describe('helper', ():void => {
                 {a: {}, b: {}}
             ]
         ].map(([expected, modelConfiguration, model]):[
-            ReturnType<typeof Helper.determineGenericIndexablePropertyNames>,
-            FirstParameter<
-                typeof Helper.determineGenericIndexablePropertyNames
-            >,
-            SecondParameter<
-                typeof Helper.determineGenericIndexablePropertyNames
-            >
+            Array<string>, ModelConfiguration, Model
         ] => [
-            expected,
+            expected as Array<string>,
             Tools.extend(
                 true,
                 Tools.copy(configuration.couchdb.model),
-                modelConfiguration
-            ),
-            model
+                modelConfiguration as Partial<ModelConfiguration>
+            ) as ModelConfiguration,
+            model as Model
         ])
     )
     testEach<typeof Helper.extendModel>(
@@ -263,23 +267,33 @@ describe('helper', ():void => {
             ]
         ] as const)
             expect(Helper.extendModels(
-                Tools.extend(true, Tools.copy(modelConfiguration), parameter)
+                Tools.extend(
+                    true,
+                    Tools.copy(modelConfiguration),
+                    parameter as Partial<ModelConfiguration>
+                )
             )).toStrictEqual(expected)
 
-        expect(():Models => Helper.extendModels(Tools.extend(
-            true, Tools.copy(modelConfiguration), {entities: {a: {}}}
-        ))).toThrow()
+        expect(():Models => Helper.extendModels(
+            Tools.extend(
+                true,
+                Tools.copy(modelConfiguration),
+                {entities: {a: {}}} as Partial<ModelConfiguration>
+            )
+        )).toThrow()
 
-        expect(Helper.extendModels(Tools.extend(
-            true,
-            Tools.copy(modelConfiguration),
-            {
-                property: {name: {typeRegularExpressionPattern: {
-                    public: 'a'
-                }}},
-                entities: {a: {}}
-            }
-        ))).toStrictEqual({a: {}})
+        expect(Helper.extendModels(
+            Tools.extend(
+                true,
+                Tools.copy(modelConfiguration),
+                {
+                    property: {name: {typeRegularExpressionPattern: {
+                        public: 'a'
+                    }}},
+                    entities: {a: {}}
+                } as Partial<ModelConfiguration>
+            )
+        )).toStrictEqual({a: {}})
     })
     testEach<typeof Helper.normalizeAllowedRoles>(
         'normalizeAllowedRoles',

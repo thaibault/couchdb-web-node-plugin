@@ -150,7 +150,7 @@ export type Model =
     Mapping<PropertySpecification> &
     {
         _allowedRoles?:AllowedRoles|null
-        _attachments?:null|Mapping<FileSpecification>
+        _attachments?:Mapping<FileSpecification>|null
         _constraintExecutions?:Array<Constraint>|Constraint|null
         _constraintExpressions?:Array<Constraint>|Constraint|null
         _createExecution?:null|string
@@ -186,6 +186,7 @@ export type BaseDocument =
     DocumentStrategyMeta &
     DocumentTypeMeta
 export type FullDocument = BaseDocument & PlainObject
+export type PartialFullDocument = Partial<BaseDocument> & PlainObject
 
 export interface SpecialPropertyNames {
     additional:'_additional'
@@ -194,6 +195,7 @@ export interface SpecialPropertyNames {
     conflict:'_conflicts'
     deleted:'_deleted'
     deletedConflict:'_deleted_conflict'
+    extend:'_extends'
     id:'_id'
     revision:'_rev'
     revisions:'_revisions'
@@ -211,8 +213,6 @@ export interface SpecialPropertyNames {
     }
 
     designDocumentNamePrefix:string
-
-    extend:string
 
     localSequence:string
 
@@ -411,7 +411,7 @@ export type EvaluationException = Exception<EvaluationExceptionData>
 
 export interface CheckedDocumentResult {
     changedPath:Array<string>
-    newDocument:FullDocument
+    newDocument:PartialFullDocument
 }
 
 export interface EvaluationResult<Type = any> {
