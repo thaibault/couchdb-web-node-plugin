@@ -1218,7 +1218,8 @@ describe('databaseHelper', ():void => {
                     (test as unknown as Array<unknown>).splice(1, 0, {})
 
                 const modelConfiguration:ModelConfiguration = Tools.extend(
-                    true, Tools.copy(defaultModelConfiguration),
+                    true,
+                    Tools.copy(defaultModelConfiguration),
                     test[1] as Partial<ModelConfiguration>
                 )
                 const models:Models = Helper.extendModels(modelConfiguration)
@@ -1232,7 +1233,7 @@ describe('databaseHelper', ():void => {
 
                 const parameters:Parameters<
                     typeof DatabaseHelper.validateDocumentUpdate
-                > = test[0]
+                > = (test[0] as Array<unknown>)
                     .concat([null, {}, {}].slice(test[0].length - 1))
                     .concat(modelConfiguration, models)
 
@@ -3541,18 +3542,30 @@ describe('databaseHelper', ():void => {
                 // endregion
             ] as const) {
                 const modelConfiguration:ModelConfiguration = Tools.extend(
-                    true, Tools.copy(defaultModelConfiguration), test[1]
+                    true,
+                    Tools.copy(defaultModelConfiguration),
+                    test[1] as Partial<ModelConfiguration>
                 )
                 const models:Models = Helper.extendModels(modelConfiguration)
 
-                delete modelConfiguration.property.defaultSpecification
-                delete modelConfiguration.entities
+                delete (
+                    modelConfiguration.property as
+                        Partial<ModelConfiguration['property']>
+                ).defaultSpecification
+                delete (modelConfiguration as Partial<ModelConfiguration>)
+                    .entities
 
                 expect(DatabaseHelper.validateDocumentUpdate(
-                    ...test[0]
-                        .concat([null, {}, {}].slice(test[0].length - 1))
-                        .concat(modelConfiguration, models)
-                )).toStrictEqual(test[2][updateStrategy])
+                    ...(
+                        test[0]
+                            .concat([null, {}, {}].slice(test[0].length - 1))
+                            .concat(modelConfiguration, models)
+                    ) as
+                        Parameters<typeof DatabaseHelper.validateDocumentUpdate>
+                )).toStrictEqual(
+                    test[2][updateStrategy] as
+                    ReturnType<typeof DatabaseHelper.validateDocumentUpdate>
+                )
             }
             // endregion
         }
