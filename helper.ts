@@ -40,7 +40,7 @@ import {
     Model,
     ModelConfiguration,
     Models,
-    OperationToAllowedRolesMapping,
+    NormalizedAllowedRoles,
     Services,
     SpecialPropertyNames
 } from './type'
@@ -447,8 +447,8 @@ export class Helper {
     static determineAllowedModelRolesMapping(
         this:void, modelConfiguration:ModelConfiguration
     ):AllowedModelRolesMapping {
-        const allowedRoleName:string =
-            modelConfiguration.property.name.special.allowedRole
+        const {allowedRoles: allowedRolesName} =
+            modelConfiguration.property.name.special
         const allowedModelRolesMapping:AllowedModelRolesMapping = {}
         const models:Models = Helper.extendModels(modelConfiguration)
 
@@ -456,14 +456,16 @@ export class Helper {
             if (
                 Object.prototype.hasOwnProperty.call(models, modelName) &&
                 Object.prototype.hasOwnProperty.call(
-                    models[modelName], allowedRoleName
+                    models[modelName], allowedRolesName
                 )
             ) {
-                allowedModelRolesMapping[modelName] =
-                    Helper.normalizeAllowedModelRoles(
-                        models[modelName][allowedRoleName] as AllowedRoles
+                allowedModelRolesMapping[modelName] = {
+                    properties: {},
+
+                    ...Helper.normalizeAllowedRoles(
+                        models[modelName][allowedRolesName]!
                     )
-                allowedModelRolesMapping[modelName].properties = {}
+                }
 
                 for (const name in models[modelName])
                     if (
@@ -472,18 +474,12 @@ export class Helper {
                         ) &&
                         models[modelName][name] !== null &&
                         typeof models[modelName][name] === 'object' &&
-                        Object.prototype.hasOwnProperty.call(
-                            models[modelName][name], 'allowedRoles'
-                        ) &&
                         models[modelName][name].allowedRoles
                     )
-                        (
-                            allowedModelRolesMapping[modelName].properties as
-                                AllowedModelRolesMapping
-                        )[name] = Helper.normalizeAllowedModelRoles(
-                            models[modelName][name].allowedRoles as
-                                AllowedRoles
-                        )
+                        allowedModelRolesMapping[modelName].properties[name] =
+                            Helper.normalizeAllowedRoles(
+                                models[modelName][name].allowedRoles!
+                            )
             } else
                 allowedModelRolesMapping[modelName] = {
                     properties: {},
@@ -523,7 +519,7 @@ export class Helper {
                         !model[name].index ||
                         modelConfiguration.property.name.reserved.concat(
                             specialNames.additional,
-                            specialNames.allowedRole,
+                            specialNames.allowedRoles,
                             specialNames.attachment,
                             specialNames.conflict,
                             specialNames.constraint.execution,
@@ -686,7 +682,7 @@ export class Helper {
                                         )[type]
                                     )
                         } else if (![
-                            specialNames.allowedRole,
+                            specialNames.allowedRoles,
                             specialNames.constraint.execution,
                             specialNames.constraint.expression,
                             specialNames.extend,
@@ -712,14 +708,14 @@ export class Helper {
      *
      * @returns Normalized roles representation.
      */
-    static normalizeAllowedModelRoles(
+    static normalizeAllowedRoles(
         this:void, roles:AllowedRoles
-    ):OperationToAllowedRolesMapping {
+    ):NormalizedAllowedRoles {
         if (Array.isArray(roles))
             return {read: roles, write: roles}
 
         if (typeof roles === 'object') {
-            const result:OperationToAllowedRolesMapping = {read: [], write: []}
+            const result:NormalizedAllowedRoles = {read: [], write: []}
 
             for (const type in result)
                 if (Object.prototype.hasOwnProperty.call(roles, type))

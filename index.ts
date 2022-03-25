@@ -37,7 +37,9 @@ import {
     DatabasePlugin,
     DeleteIndexOptions,
     Document,
+    ExistingDocument,
     Exception,
+    FullDocument,
     Index,
     ModelConfiguration,
     Models,
@@ -349,10 +351,10 @@ export class Database implements PluginHandler {
             configuration.couchdb.model
         )
 
-        delete (modelConfiguration.property as {
-            defaultSpecification?:PlainObject
-        }).defaultSpecification
-        delete (modelConfiguration as {entities?:PlainObject}).entities
+        delete (modelConfiguration.property as
+            {defaultSpecification?:PropertySpecification}
+        ).defaultSpecification
+        delete (modelConfiguration as {entities?:Models}).entities
 
         const models:Models = Helper.extendModels(configuration.couchdb.model)
         if (configuration.couchdb.model.updateValidation) {
@@ -576,7 +578,7 @@ export class Database implements PluginHandler {
                 }
             // region ensure all constraints to have a consistent initial state
             for (const retrievedDocument of (
-                await services.couchdb.connection.allDocs({
+                await services.couchdb.connection.allDocs<PlainObject>({
                     /* eslint-disable camelcase */
                     include_docs: true
                     /* eslint-enable camelcase */
@@ -589,7 +591,7 @@ export class Database implements PluginHandler {
                             .designDocumentNamePrefix
                     )
                 )) {
-                    const document:Document = retrievedDocument.doc as Document
+                    const document:ExistingDocument = retrievedDocument.doc!
                     let newDocument:Document = Tools.copy(document)
                     newDocument[
                         configuration.couchdb.model.property.name.special
@@ -661,14 +663,15 @@ export class Database implements PluginHandler {
                                 be removed so final removing would be skipped
                                 if we do not use a copy here.
                             */
-                            Tools.copy(newDocument),
+                            Tools.copy(newDocument) as FullDocument,
                             /*
                                 NOTE: During processing attachments sub object
                                 will be manipulated so copying is needed to
                                 copy to avoid unexpected behavior in this
                                 context.
                             */
-                            Tools.copy(document), {
+                            Tools.copy(document) as FullDocument,
+                            {
                                 db: configuration.couchdb.databaseName,
                                 name: configuration.couchdb.user.name,
                                 roles: ['_admin']

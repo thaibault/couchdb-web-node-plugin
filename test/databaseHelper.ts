@@ -58,16 +58,16 @@ describe('databaseHelper', ():void => {
 
         [
             {...baseDocument, type: 'Test'},
-            {},
+            null,
             {roles: []},
             {},
-            {Test: {read: 'users'}},
+            {Test: {properties: {}, read: ['users'], write: []}},
             'id',
             'type'
         ],
         [
             {...baseDocument, type: 'Test'},
-            {},
+            null,
             {roles: ['users']},
             {},
             {},
@@ -84,29 +84,29 @@ describe('databaseHelper', ():void => {
         [{}, null, {roles: ['_admin']}],
         [
             {},
-            {},
+            null,
             {roles: ['_admin']},
             {},
             {}
         ],
         [
             {'-type': 'Test'},
-            {},
+            null,
             {roles: ['users']},
             {},
-            {Test: {write: ['users']}}
+            {Test: {properties: {}, read: [], write: ['users']}}
         ],
         [
             {'-type': 'Test'},
             {},
             {roles: ['users']},
             {},
-            {Test: {write: ['users']}}
+            {Test: {properties: {}, read: [], write: ['users']}}
         ]
     )
-    test.each<string>(['', 'fillUp', 'incremental'])(
+    test.each<UpdateStrategy>(['', 'fillUp', 'incremental'])(
         'validateDocumentUpdate (with update strategy "%s")',
-        (updateStrategy:string):void => {
+        (updateStrategy:UpdateStrategy):void => {
             const defaultModelConfiguration:ModelConfiguration = {
                 // Numbers are date cross implementation save.
                 ...Tools.copy(configuration.couchdb.model),
@@ -1213,31 +1213,39 @@ describe('databaseHelper', ():void => {
                     'AggregatedMaximumSize'
                 ]
                 // endregion
-            ]) {
+            ] as const) {
                 if (test.length < 3)
-                    test.splice(1, 0, {})
+                    (test as unknown as Array<unknown>).splice(1, 0, {})
 
                 const modelConfiguration:ModelConfiguration = Tools.extend(
-                    true, Tools.copy(defaultModelConfiguration), test[1]
+                    true, Tools.copy(defaultModelConfiguration),
+                    test[1] as Partial<ModelConfiguration>
                 )
                 const models:Models = Helper.extendModels(modelConfiguration)
 
-                delete modelConfiguration.property.defaultSpecification
-                delete modelConfiguration.entities
+                delete (
+                    modelConfiguration.property as
+                        Partial<ModelConfiguration['property']>
+                ).defaultSpecification
+                delete (modelConfiguration as Partial<ModelConfiguration>)
+                    .entities
 
-                const parameter:Array<any> = test[0]
+                const parameters:Parameters<
+                    typeof DatabaseHelper.validateDocumentUpdate
+                > = test[0]
                     .concat([null, {}, {}].slice(test[0].length - 1))
                     .concat(modelConfiguration, models)
 
                 if (typeof test[2] !== 'string') {
-                    expect(DatabaseHelper.validateDocumentUpdate(...parameter))
-                        .toStrictEqual(test[2])
+                    expect(
+                        DatabaseHelper.validateDocumentUpdate(...parameters)
+                    ).toStrictEqual(test[2])
 
                     continue
                 }
 
                 expect(():Document =>
-                    DatabaseHelper.validateDocumentUpdate(...parameter)
+                    DatabaseHelper.validateDocumentUpdate(...parameters)
                 ).toThrow(new RegExp(`^${test[2]}: .+[.!]$`, 's'))
             }
             // endregion
@@ -3531,7 +3539,7 @@ describe('databaseHelper', ():void => {
                     }
                 ]
                 // endregion
-            ]) {
+            ] as const) {
                 const modelConfiguration:ModelConfiguration = Tools.extend(
                     true, Tools.copy(defaultModelConfiguration), test[1]
                 )

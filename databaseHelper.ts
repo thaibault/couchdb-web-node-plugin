@@ -20,6 +20,7 @@ import {
 
 import {
     AllowedModelRolesMapping,
+    AllowedRoles,
     Attachments,
     BaseModelConfiguration,
     CheckedDocumentResult,
@@ -37,7 +38,8 @@ import {
     FullDocument,
     Model,
     Models,
-    OperationToAllowedRolesMapping,
+    NormalizedAllowedModelRoles,
+    NormalizedAllowedRoles,
     PropertySpecification,
     RuntimeExceptionData,
     SecuritySettings,
@@ -78,13 +80,9 @@ export class DatabaseHelper {
      * otherwise.
      */
     static authenticate(
-        newDocument:Document,
-        oldDocument:Document|null = null,
-        userContext:Partial<UserContext> = {
-            db: 'dummy',
-            name: '"unknown"',
-            roles: []
-        },
+        newDocument:Partial<Document>,
+        oldDocument:Partial<Document>|null = null,
+        userContext:Partial<UserContext> = {},
         _securitySettings:Partial<SecuritySettings> = {
             admins: {names: [], roles: []}, members: {names: [], roles: []}
         },
@@ -96,10 +94,10 @@ export class DatabaseHelper {
     ):true {
         const type:string|undefined =
             newDocument[typePropertyName] as string ??
-                (oldDocument && oldDocument[typePropertyName]) as string
+            (oldDocument && oldDocument[typePropertyName]) as string
         /*
             NOTE: Special documents and change sequences are not checked
-            further since their is not specified model.
+            further since their is no specified model.
             If non special document given but missing type property further
             validation will complain.
         */
@@ -109,10 +107,11 @@ export class DatabaseHelper {
         const operationType:'read'|'write' = read ? 'read': 'write'
 
         // Define roles who are allowed to read and write everything.
-        const allowedRoles:OperationToAllowedRolesMapping = {
+        const allowedRoles:NormalizedAllowedModelRoles = {
             properties: {},
+
             read: ['_admin', 'readonlyadmin'],
-            write: '_admin'
+            write: ['_admin']
         }
 
         // A "readonlymember" is allowed to read all but design documents.
@@ -124,9 +123,7 @@ export class DatabaseHelper {
                 designDocumentNamePrefix
             )
         )
-            allowedRoles.read = ([] as Array<string>).concat(
-                allowedRoles.read, 'readonlymember'
-            )
+            allowedRoles.read.push('readonlymember')
 
         let userRolesDescription = `Current user doesn't own any role`
 
@@ -143,22 +140,20 @@ export class DatabaseHelper {
                         allowedModelRolesMapping, type
                     )
                 ) {
-                    const allowedModelRoles:OperationToAllowedRolesMapping =
+                    const allowedModelRoles:NormalizedAllowedModelRoles =
                         allowedModelRolesMapping[type]
 
                     for (const operation of ['read', 'write'] as const)
-                        allowedRoles[operation] = ([] as Array<string>).concat(
-                            allowedRoles[operation],
-                            allowedModelRoles[operation] || []
-                        )
+                        allowedRoles[operation] =
+                            allowedRoles[operation].concat(
+                                allowedModelRoles[operation] || []
+                            )
 
-                    if (allowedModelRoles.properties)
-                        allowedRoles.properties = allowedModelRoles.properties
+                    allowedRoles.properties = allowedModelRoles.properties
                 }
                 // endregion
                 // TODO check for each property recursively
-                const relevantRoles:Array<string> =
-                    ([] as Array<string>).concat(allowedRoles[operationType])
+                const relevantRoles:Array<string> = allowedRoles[operationType]
                 for (const userRole of userContext.roles)
                     if (relevantRoles.includes(userRole))
                         return true
@@ -1192,7 +1187,7 @@ export class DatabaseHelper {
             const specifiedPropertyNames:Array<string> = Object.keys(model)
                 .filter((name:string):boolean => ![
                     specialNames.additional,
-                    specialNames.allowedRole,
+                    specialNames.allowedRoles,
                     specialNames.constraint.execution,
                     specialNames.constraint.expression,
                     specialNames.create.execution,

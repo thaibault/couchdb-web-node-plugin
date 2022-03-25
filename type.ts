@@ -53,6 +53,8 @@ export type DatabaseResponse = PouchDB.Core.Response
 export type DeleteIndexOptions = PouchDB.Find.DeleteIndexOptions
 
 export type Document<Type = PlainObject> = PouchDB.Core.Document<Type>
+export type ExistingDocument<Type = PlainObject> =
+    PouchDB.Core.ExistingDocument<Type>
 export type DocumentGetMeta = PouchDB.Core.GetMeta
 export type DocumentIDMeta = PouchDB.Core.IdMeta
 export type DocumentRevisionIDMeta = PouchDB.Core.RevisionIdMeta
@@ -62,6 +64,7 @@ export type Index = PouchDB.Find.Index
 export type DatabasePlugin = any
 /// endregion
 /// region model
+// Represents a properties read and write roles.
 export type AllowedRoles = (
     Array<string> |
     string |
@@ -70,19 +73,24 @@ export type AllowedRoles = (
         write:Array<string>|string
     }
 )
-// Recursive mapping from operations to their allowed roles.
-export type OperationToAllowedRolesMapping = {
-    properties:AllowedModelRolesMapping
-
-    read:Array<string>|string
-    write:Array<string>|string
+export interface NormalizedAllowedRoles {
+    read:Array<string>
+    write:Array<string>
+}
+/*
+    Recursive mapping from model and properties to their allowed read and write
+    roles.
+*/
+export interface NormalizedAllowedModelRoles extends NormalizedAllowedRoles {
+    properties:Mapping<NormalizedAllowedRoles>
 }
 /*
     Maps an artefact (usually type or property) to corresponding operations
     mapped to their allowed roles.
 */
-export type AllowedModelRolesMapping = Mapping<OperationToAllowedRolesMapping>
-export type Constraint = {
+export type AllowedModelRolesMapping = Mapping<NormalizedAllowedModelRoles>
+
+export interface Constraint {
     description?:null|string
     evaluation:string
 }
@@ -93,11 +101,11 @@ export type ConstraintKey =
     'arrayConstraintExecution'|'arrayConstraintExpression'|
     'conflictingConstraintExecution'|'conflictingConstraintExpression'|
     'constraintExecution'|'constraintExpression'
-export type SelectionMapping = {
+export interface SelectionMapping {
     label:string
     value:unknown
 }
-export type PropertySpecification = {
+export interface PropertySpecification {
     allowedRoles?:AllowedRoles|null
     arrayConstraintExecution?:Constraint|null
     arrayConstraintExpression?:Constraint|null
@@ -135,23 +143,25 @@ export type PropertySpecification = {
     value?:unknown
     writable?:boolean|null
 }
-export type FileSpecification = PropertySpecification & {
+export interface FileSpecification extends PropertySpecification {
     fileName?:PropertySpecification
 }
-export type Model = Mapping<PropertySpecification> & {
-    _allowedRoles?:AllowedRoles|null
-    _attachments?:null|Mapping<FileSpecification>
-    _constraintExecutions?:Array<Constraint>|Constraint|null
-    _constraintExpressions?:Array<Constraint>|Constraint|null
-    _createExecution?:null|string
-    _createExpression?:null|string
-    _extends?:Array<string>|null|string
-    _maximumAggregatedSize?:null|number
-    _minimumAggregatedSize?:null|number
-    _oldType?:Array<string>|null|string
-    _onUpdateExecution?:null|string
-    _onUpdateExpression?:null|string
-}
+export type Model =
+    Mapping<PropertySpecification> &
+    {
+        _allowedRoles?:AllowedRoles|null
+        _attachments?:null|Mapping<FileSpecification>
+        _constraintExecutions?:Array<Constraint>|Constraint|null
+        _constraintExpressions?:Array<Constraint>|Constraint|null
+        _createExecution?:null|string
+        _createExpression?:null|string
+        _extends?:Array<string>|null|string
+        _maximumAggregatedSize?:null|number
+        _minimumAggregatedSize?:null|number
+        _oldType?:Array<string>|null|string
+        _onUpdateExecution?:null|string
+        _onUpdateExpression?:null|string
+    }
 export type Models = Mapping<Model>
 
 export const PrimitiveTypes = [
@@ -177,11 +187,9 @@ export type BaseDocument =
     DocumentTypeMeta
 export type FullDocument = BaseDocument & PlainObject
 
-export type SpecialPropertyNames = {
-    additional:string
-
-    allowedRole:string
-
+export interface SpecialPropertyNames {
+    additional:'_additional'
+    allowedRoles:'_allowedRoles'
     attachment:'_attachments'
     conflict:'_conflicts'
     deleted:'_deleted'
@@ -218,7 +226,7 @@ export type SpecialPropertyNames = {
         expression:string
     }
 }
-export type PropertyNameConfiguration = {
+export interface PropertyNameConfiguration {
     reserved:Array<string>
     special:SpecialPropertyNames
     typeRegularExpressionPattern:{
@@ -227,7 +235,7 @@ export type PropertyNameConfiguration = {
     }
     validatedDocumentsCache:string
 }
-export type BaseModelConfiguration = {
+export interface BaseModelConfiguration {
     dateTimeFormat:'iso'|'iso8601'|'number'
     property:{
         defaultSpecification:PropertySpecification
@@ -235,7 +243,7 @@ export type BaseModelConfiguration = {
     }
     updateStrategy:UpdateStrategy
 }
-export type ModelConfiguration = BaseModelConfiguration & {
+export interface ModelConfiguration extends BaseModelConfiguration {
     autoMigrationPath:string
     entities:Models
     triggerInitialCompaction:boolean
@@ -316,10 +324,10 @@ export interface Service extends BaseService {
     name:'couchdb'
     promise:null|Promise<ProcessCloseReason>
 }
-export type ServicePromises<ServicePromiseType = {}> =
+export type ServicePromises<ServicePromiseType = Mapping<unknown>> =
     BaseServicePromises<{couchdb:Promise<ProcessCloseReason>}> &
     ServicePromiseType
-export type Services<ServiceType = {}> =
+export type Services<ServiceType = Mapping<unknown>> =
     BaseServices<{
         couchdb:{
             connection:Connection
@@ -381,17 +389,17 @@ export interface PluginHandler extends BasePluginHandler {
     ):Services
 }
 /// endregion
-export type Exception<DataType = {}> =
+export type Exception<DataType = Mapping<unknown>> =
     {
         message:string
         name:string
     } &
     DataType
 
-export type EmptyEvaluationExceptionData = {empty:string}
+export interface EmptyEvaluationExceptionData {empty:string}
 export type EmptyEvaluationException = Exception<EmptyEvaluationExceptionData>
 
-export type EvaluationExceptionData = {
+export interface EvaluationExceptionData {
     code:string, error:Error, scope:Mapping<unknown>
 }
 export type CompilationExceptionData =
@@ -405,11 +413,13 @@ export interface CheckedDocumentResult {
     changedPath:Array<string>
     newDocument:FullDocument
 }
+
 export interface EvaluationResult<Type = any> {
     code:string
     result:Type
     scope:object
 }
+
 export type User = BaseDocument & {
     password:string
     roles:Array<string>
@@ -422,7 +432,6 @@ export interface Location {
     latitude:number
     longitude:number
 }
-export type Scope = Mapping & {parameter:any}
 // endregion
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
