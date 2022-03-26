@@ -15,6 +15,7 @@
 */
 // region imports
 import {ChildProcess} from 'child_process'
+import Tools from 'clientnode'
 import {
     Mapping, PlainObject, Primitive, ProcessCloseReason
 } from 'clientnode/type'
@@ -28,6 +29,8 @@ import {
     ServicePromises as BaseServicePromises,
     Services as BaseServices
 } from 'web-node/type'
+
+import DatabaseHelper from './databaseHelper'
 // endregion
 // region exports
 /// region database implementation
@@ -333,8 +336,8 @@ export type Services<ServiceType = Mapping<unknown>> =
             connector:Connector
             server:{
                 process:ChildProcess
-                reject:Function
-                resolve:Function
+                reject:(_value:ProcessCloseReason) => void
+                resolve:(_reason:ProcessCloseReason) => void
                 restart:(
                     _services:Services,
                     _configuration:Configuration,
@@ -412,6 +415,27 @@ export interface CheckedDocumentResult {
     changedPath:Array<string>
     newDocument:PartialFullDocument
 }
+
+export type Migrator = (
+    document:Document,
+    scope:{
+        configuration:Configuration
+
+        databaseHelper: DatabaseHelper
+        tools:typeof Tools
+
+        idName:string
+        typeName:string
+
+        migrater:Mapping<Migrator>
+        models:Models
+        modelConfiguration:ModelConfiguration
+
+        selfFilePath:string
+
+        services:Services
+    }
+) => Document|null
 
 export interface EvaluationResult<Type = any> {
     code:string

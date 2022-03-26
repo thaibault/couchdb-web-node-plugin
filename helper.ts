@@ -17,7 +17,7 @@
 import {spawn as spawnChildProcess} from 'child_process'
 import Tools, {CloseEventNames, globalContext} from 'clientnode'
 import {
-    Mapping, ProcessCloseCallback, ProcessErrorCallback
+    Mapping, ProcessCloseCallback, ProcessCloseReason, ProcessErrorCallback
 } from 'clientnode/type'
 import nodeFetch from 'node-fetch'
 import {promises as fileSystem} from 'fs'
@@ -32,6 +32,7 @@ import {
     Connection,
     DatabaseConnectorConfiguration,
     DatabaseFetch,
+    DatabasePlugin,
     DatabaseResponse,
     Document,
     DocumentRevisionIDMeta,
@@ -216,7 +217,7 @@ export class Helper {
             "post" call so we have to wrap runtime generated methods.
         */
         for (const pluginName of ['post', 'put'] as const) {
-            const nativeMethod:Function =
+            const nativeMethod:DatabasePlugin =
                 services.couchdb.connection[pluginName]
                     .bind(services.couchdb.connection)
 
@@ -356,13 +357,13 @@ export class Helper {
                 )
         }))
             .then(
-                (...parameter:Array<any>):void => {
-                    if (services.couchdb?.server?.resolve)
-                        services.couchdb.server.resolve.apply(this, parameter)
+                (value:ProcessCloseReason):void => {
+                    if (services.couchdb?.server?.resolve as unknown)
+                        services.couchdb.server.resolve.call(this, value)
                 },
-                (...parameter:Array<any>):void => {
-                    if (services.couchdb?.server?.resolve)
-                        services.couchdb.server.reject.apply(this, parameter)
+                (reason:ProcessCloseReason):void => {
+                    if (services.couchdb?.server?.resolve as unknown)
+                        services.couchdb.server.reject.call(this, reason)
                 }
             )
 
@@ -389,9 +390,9 @@ export class Helper {
         plugins:Array<Plugin>,
         pluginAPI:typeof PluginAPI
     ):Promise<void> {
-        const resolveServerProcessBackup:Function =
+        const resolveServerProcessBackup:(_value:ProcessCloseReason) => void =
             services.couchdb.server.resolve
-        const rejectServerProcessBackup:Function =
+        const rejectServerProcessBackup:(_reason:ProcessCloseReason) => void =
             services.couchdb.server.reject
 
         // Avoid to notify web node about server process stop.

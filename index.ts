@@ -35,12 +35,14 @@ import {
     Constraint,
     DatabaseError,
     DatabasePlugin,
+    DatabaseResponse,
     DeleteIndexOptions,
     Document,
     ExistingDocument,
     Exception,
     FullDocument,
     Index,
+    Migrator,
     ModelConfiguration,
     Models,
     PropertySpecification,
@@ -96,7 +98,10 @@ export class Database implements PluginHandler {
             services.couchdb.server.start = Helper.startServer
             services.couchdb.server.stop = Helper.stopServer
 
-            promise = new Promise((resolve:Function, reject:Function):void => {
+            promise = new Promise<ProcessCloseReason>((
+                resolve:(_value:ProcessCloseReason) => void,
+                reject:(_reason:ProcessCloseReason) => void
+            ):void => {
                 /*
                     NOTE: These callbacks can be reassigned during server
                     restart.
@@ -507,7 +512,7 @@ export class Database implements PluginHandler {
         }
         // region run auto-migration
         if (configuration.couchdb.model.autoMigrationPath) {
-            const migrater:Mapping<Function> = {}
+            const migrater:Mapping<Migrator> = {}
             if (await Tools.isDirectory(path.resolve(
                 configuration.couchdb.model.autoMigrationPath
             )))
@@ -956,7 +961,7 @@ export class Database implements PluginHandler {
 
             services.couchdb.connector = PouchDB
             // region apply "latest/upsert" and ignore "NoChange" error plugin
-            const nativeBulkDocs:Function =
+            const nativeBulkDocs:Connection['bulkDocs'] =
                 services.couchdb.connector.prototype.bulkDocs
             services.couchdb.connector.plugin({bulkDocs: async function(
                 firstParameter:any, ...parameters:Array<any>
@@ -997,9 +1002,10 @@ export class Database implements PluginHandler {
                     parameters.unshift({
                         timeout: configuration.couchdb.connector.fetch.timeout
                     })
-                const result:Array<PlainObject> = await nativeBulkDocs.call(
-                    this, firstParameter, ...parameters
-                )
+                const result:Array<DatabaseError|DatabaseResponse> =
+                    await nativeBulkDocs.call(
+                        this, firstParameter, ...parameters
+                    )
                 const conflictingIndexes:Array<number> = []
                 const conflicts:Array<PlainObject> = []
                 let index = 0
