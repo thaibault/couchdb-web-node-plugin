@@ -18,7 +18,7 @@ import Tools from 'clientnode'
 import {
     testEachAgainstSameExpectation, ThrowSymbol
 } from 'clientnode/testHelper'
-import {FirstParameter, PlainObject, SecondParameter} from 'clientnode/type'
+import {PlainObject} from 'clientnode/type'
 
 import DatabaseHelper from '../databaseHelper'
 import Helper from '../helper'
@@ -29,8 +29,7 @@ import {
     ModelConfiguration,
     Models,
     PartialFullDocument,
-    SpecialPropertyNames,
-    UpdateStrategy
+    SpecialPropertyNames
 } from '../type'
 // endregion
 describe('databaseHelper', ():void => {
@@ -119,8 +118,8 @@ describe('databaseHelper', ():void => {
                 const propertyName in defaultModelConfiguration.entities._base
             )
                 if (
-                    defaultModelConfiguration.entities._base.hasOwnProperty(
-                        propertyName
+                    Object.prototype.hasOwnProperty.call(
+                        defaultModelConfiguration.entities._base, propertyName
                     ) &&
                     propertyName !== typeName
                 )
@@ -1957,8 +1956,10 @@ describe('databaseHelper', ():void => {
                     ],
                     {
                         entities: {Test: {
-                        a: {type: 'DateTime'}, b: {emptyEqualsToNull: false}
-                    }}},
+                            a: {type: 'DateTime'},
+                            b: {emptyEqualsToNull: false}
+                        }}
+                    },
                     {
                         fillUp: {[typeName]: 'Test', a: 1, b: ''},
                         incremental: {b: ''},
@@ -3108,7 +3109,7 @@ describe('databaseHelper', ():void => {
                                 /* eslint-disable camelcase */
                                 content_type: 'image/png',
                                 /* eslint-enable camelcase */
-                                 data: 'abc'
+                                data: 'abc'
                             }
                         }},
                         '': {[typeName]: 'Test', [attachmentName]: {
@@ -3674,7 +3675,7 @@ describe('databaseHelper', ():void => {
         [
             {[typeName]: 'Test', a: 2},
             {[typeName]: 'Test'},
-            {entities: {Test: {a: {default: 2, type: ['any']}}}},
+            {entities: {Test: {a: {default: 2, type: ['any']}}}}
         ],
         /*
             Set property to default value if property is missing which has
@@ -3684,7 +3685,7 @@ describe('databaseHelper', ():void => {
         [
             {[typeName]: 'Test', a: 2},
             {[typeName]: 'Test'},
-            {entities: {Test: {a: {default: 2, type: ['any', 'boolean']}}}},
+            {entities: {Test: {a: {default: 2, type: ['any', 'boolean']}}}}
         ],
         [
             {[typeName]: 'Test', a: 2},
@@ -3801,8 +3802,8 @@ describe('databaseHelper', ():void => {
                 const propertyName in defaultModelConfiguration.entities._base
             )
                 if (
-                    defaultModelConfiguration.entities._base.hasOwnProperty(
-                        propertyName
+                    Object.prototype.hasOwnProperty.call(
+                        defaultModelConfiguration.entities._base, propertyName
                     ) &&
                     propertyName !== typeName
                 )

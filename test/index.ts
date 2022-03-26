@@ -14,7 +14,6 @@
     endregion
 */
 // region imports
-import Tools from 'clientnode'
 import path from 'path'
 
 import Index from '../index'
@@ -42,7 +41,8 @@ describe('index', ():void => {
             configuration.couchdb.binary.runner.length - 1
         ]
 
-        expect(Index.preLoadService({} as Services, configuration)).resolves
+        void expect(Index.preLoadService({} as Services, configuration))
+            .resolves
             .toHaveProperty(
                 'couchdb.server.runner.binaryFilePath',
                 path.resolve(runner.location[0], runner.name as string)
@@ -54,7 +54,7 @@ describe('index', ():void => {
             connection: {close: ():Promise<void> => {
                 testValue += 1
 
-                return Promise.resolve()
+                return Promise.resolve(undefined)
             }},
             server: {process: {kill: (_signal?:number):boolean => {
                 testValue += 1

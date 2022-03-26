@@ -38,10 +38,12 @@ import {
     DocumentRevisionIDMeta,
     Exception,
     FileSpecification,
+    FullDocument,
     Model,
     ModelConfiguration,
     Models,
     NormalizedAllowedRoles,
+    PartialFullDocument,
     Services,
     SpecialPropertyNames
 } from './type'
@@ -98,7 +100,7 @@ export class Helper {
      */
     static mayStripRepresentation(
         this:void,
-        object:any,
+        object:unknown,
         maximumRepresentationTryLength:number,
         maximumRepresentationLength:number
     ):string {
@@ -140,7 +142,7 @@ export class Helper {
         documentData:Mapping,
         description:string,
         log = true,
-        idName = '_id',
+        idName:SpecialPropertyNames['id'] = '_id',
         designDocumentNamePrefix = '_design/'
     ):Promise<void> {
         const newDocument:Partial<Document> = {
@@ -207,9 +209,9 @@ export class Helper {
         )
         services.couchdb.connection.setMaxListeners(Infinity)
 
-        const idName:string =
+        const idName:SpecialPropertyNames['id'] =
             configuration.couchdb.model.property.name.special.id
-        const revisionName:string =
+        const revisionName:SpecialPropertyNames['revision'] =
             configuration.couchdb.model.property.name.special.revision
         // region apply "latest/upsert" and ignore "NoChange" error feature
         /*
@@ -222,29 +224,32 @@ export class Helper {
                     .bind(services.couchdb.connection)
 
             services.couchdb.connection[pluginName] = async function(
-                firstParameter:any, ...parameter:Array<any>
-            ):Promise<any> {
+                this:Connection,
+                firstParameter:unknown,
+                ...parameter:Array<unknown>
+            ):Promise<DatabaseResponse> {
                 try {
                     return await nativeMethod(firstParameter, ...parameter)
                 } catch (error) {
                     if (
-                        idName in firstParameter &&
+                        idName in (firstParameter as PartialFullDocument) &&
                         configuration.couchdb.ignoreNoChangeError &&
                         (error as Exception).name === 'forbidden' &&
                         (error as Exception).message?.startsWith('NoChange:')
                     ) {
                         const result:DatabaseResponse = {
-                            id: firstParameter[idName],
+                            id: (firstParameter as FullDocument)[idName],
                             ok: true
                         } as DatabaseResponse
 
                         result.rev = (
-                            revisionName in firstParameter &&
+                            revisionName in
+                                (firstParameter as PartialFullDocument) &&
                             !['latest', 'upsert'].includes(
-                                firstParameter[revisionName]
+                                (firstParameter as FullDocument)[revisionName]
                             )
                         ) ?
-                            firstParameter[revisionName] :
+                            (firstParameter as FullDocument)[revisionName] :
                             (await this.get(result.id))[
                                 revisionName as keyof DocumentRevisionIDMeta
                             ]

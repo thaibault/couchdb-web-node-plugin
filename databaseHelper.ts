@@ -20,13 +20,13 @@ import {
 
 import {
     AllowedModelRolesMapping,
-    AllowedRoles,
     Attachments,
     BaseModelConfiguration,
     CheckedDocumentResult,
     CompilationExceptionData,
     Constraint,
     ConstraintKey,
+    DateRepresentationType,
     Document,
     DocumentContent,
     EmptyEvaluationExceptionData,
@@ -39,7 +39,6 @@ import {
     Model,
     Models,
     NormalizedAllowedModelRoles,
-    NormalizedAllowedRoles,
     PartialFullDocument,
     PropertySpecification,
     RuntimeExceptionData,
@@ -205,7 +204,7 @@ export class DatabaseHelper {
         toJSON?:(_value:unknown) => string
     ):PartialFullDocument {
         // region ensure needed environment
-        const throwError = <DataType = {}>(
+        const throwError = <DataType = Mapping<unknown>>(
             message:string,
             type = 'forbidden',
             additionalErrorData:Partial<DataType> = {}
@@ -317,7 +316,7 @@ export class DatabaseHelper {
             JSON && Object.prototype.hasOwnProperty.call(JSON, 'stringify')
         )
             serializeData =
-                (object:any):string => JSON.stringify(object, null, 4)
+                (object:unknown):string => JSON.stringify(object, null, 4)
         else
             throwError('Needed "serializer" is not available.')
 
@@ -353,11 +352,11 @@ export class DatabaseHelper {
         }
 
         const normalizeDateTime = (
-            value:Date|null|number|string
+            value:DateRepresentationType
         ):typeof NaN|null|number|string => {
             if (saveDateTimeAsNumber) {
                 if (value !== null && typeof value !== 'number') {
-                    value = new Date(value as Date|string)
+                    value = new Date(value)
                     value =
                         Date.UTC(
                             value.getUTCFullYear(),
@@ -492,8 +491,10 @@ export class DatabaseHelper {
                 let evaluate:Evaluate<T|undefined>|undefined
 
                 try {
+                    /* eslint-disable @typescript-eslint/no-implied-eval */
                     evaluate = new Function(...scopeNames, code) as
                         Evaluate<T|undefined>
+                    /* eslint-enable @typescript-eslint/no-implied-eval */
                 } catch (error) {
                     throwError<CompilationExceptionData>(
                         serialize(error),
@@ -606,10 +607,10 @@ export class DatabaseHelper {
                 ]
             // region document specific functions
             const checkPropertyConstraints = (
-                newValue:any,
+                newValue:unknown,
                 name:string,
                 propertySpecification:PropertySpecification,
-                oldValue?:any,
+                oldValue?:unknown,
                 types:Array<ConstraintKey> = [
                     'constraintExecution', 'constraintExpression'
                 ]
@@ -682,6 +683,10 @@ export class DatabaseHelper {
                                 type.charAt(0).toUpperCase() +
                                 `${type.substring(1)}: ` +
                                 (description ?
+                                    /*
+                                        eslint-disable
+                                        @typescript-eslint/no-implied-eval
+                                    */
                                     new Function(
                                         ...Object.keys(result!.scope),
                                         `return ${description}`
@@ -691,19 +696,23 @@ export class DatabaseHelper {
                                     `constraint "${result!.code}" (given "` +
                                     `${serialize(newValue)}")` +
                                     `${pathDescription}.`
+                                    /*
+                                        eslint-enable
+                                        @typescript-eslint/no-implied-eval
+                                    */
                                 )
                             )
                         }
                     }
             }
             const checkPropertyContent = (
-                newValue:any,
+                newValue:unknown,
                 name:string,
                 propertySpecification:PropertySpecification,
-                oldValue:any = null
+                oldValue:unknown = null
             ):{
                 changedPath:Array<string>
-                newValue:any
+                newValue:unknown
             } => {
                 let changedPath:Array<string> = []
                 // region type
@@ -722,7 +731,7 @@ export class DatabaseHelper {
                     types.length === 1 &&
                     Object.prototype.hasOwnProperty.call(models, types[0])
                 )
-                    newValue[typeName] = types[0]
+                    (newValue as PartialFullDocument)[typeName] = types[0]
                 let typeMatched = false
                 for (const type of types)
                     if (Object.prototype.hasOwnProperty.call(models, type)) {
@@ -733,7 +742,8 @@ export class DatabaseHelper {
                             Object.prototype.hasOwnProperty.call(
                                 newValue, typeName
                             ) &&
-                            newValue[typeName] !== type &&
+                            (newValue as PartialFullDocument)[typeName] !==
+                                type &&
                             updateStrategy === 'migrate' &&
                             types.length === 1
                         ) {
@@ -742,7 +752,7 @@ export class DatabaseHelper {
                                 type definition. Nested types have to be
                                 checked than.
                             */
-                            newValue[typeName] = type
+                            (newValue as PartialFullDocument)[typeName] = type
                             changedPath = parentNames.concat(
                                 name, 'migrate nested object type')
                         }
@@ -753,16 +763,20 @@ export class DatabaseHelper {
                             Object.prototype.hasOwnProperty.call(
                                 newValue, typeName
                             ) &&
-                            newValue[typeName] === type
+                            (newValue as PartialFullDocument)[typeName] ===
+                                type
                         ) {
                             const result:CheckedDocumentResult = checkDocument(
-                                newValue, oldValue, parentNames.concat(name)
+                                newValue as PartialFullDocument,
+                                oldValue as null|PartialFullDocument,
+                                parentNames.concat(name)
                             )
                             if (result.changedPath.length)
                                 changedPath = result.changedPath
                             newValue = result.newDocument
                             if (serialize(newValue) === serialize({}))
                                 return {newValue: null, changedPath}
+
                             typeMatched = true
                             break
                         } else if (types.length === 1)
@@ -775,7 +789,9 @@ export class DatabaseHelper {
                     } else if (type === 'DateTime') {
                         const initialNewValue:unknown = newValue
 
-                        newValue = normalizeDateTime(newValue)
+                        newValue = normalizeDateTime(
+                            newValue as DateRepresentationType
+                        )
 
                         if (
                             saveDateTimeAsNumber &&
@@ -812,7 +828,7 @@ export class DatabaseHelper {
                                 type === 'integer' || typeof newValue === type
                             ) ||
                             type === 'integer' &&
-                            parseInt(newValue, 10) !== newValue
+                            parseInt(newValue as string, 10) !== newValue
                         ) {
                             if (types.length === 1)
                                 throwError(
@@ -867,8 +883,8 @@ export class DatabaseHelper {
                         serialize(newValue)
                             .replace(/^"/, '')
                             .replace(/"$/, '') +
-                        `${newValue}" of type "${typeof newValue}")` +
-                        `${pathDescription}.`
+                        `${newValue as string}" of type "${typeof newValue}"` +
+                        `)${pathDescription}.`
                     )
                 // endregion
                 // region range
@@ -971,7 +987,7 @@ export class DatabaseHelper {
                             `Selection: Property "${name}" (type ` +
                             `${propertySpecification.type as string}) ` +
                             `should be one of "${selection.join('", "')}". ` +
-                            `But is "${newValue}"${pathDescription}.`
+                            `But is "${newValue as string}"${pathDescription}.`
                         )
                 }
                 // endregion
@@ -983,7 +999,7 @@ export class DatabaseHelper {
                     new RegExp(
                         propertySpecification.regularExpressionPattern as
                             string
-                    ).test(newValue)
+                    ).test(newValue as string)
                 ))
                     throwError(
                         `PatternMatch: Property "${name}" should match ` +
@@ -992,7 +1008,7 @@ export class DatabaseHelper {
                             propertySpecification.regularExpressionPattern as
                                 string
                         ) +
-                        ` (given "${newValue}")${pathDescription}.`
+                        ` (given "${newValue as string}")${pathDescription}.`
                     )
                 else if (!(
                     [null, undefined].includes(
@@ -1002,7 +1018,7 @@ export class DatabaseHelper {
                     !(new RegExp(
                         propertySpecification
                             .invertedRegularExpressionPattern as string
-                    )).test(newValue)
+                    )).test(newValue as string)
                 ))
                     throwError(
                         `InvertedPatternMatch: Property "${name}" should ` +
@@ -1012,7 +1028,7 @@ export class DatabaseHelper {
                                 .invertedRegularExpressionPattern as
                                 string
                         ) +
-                        ` (given "${newValue}")${pathDescription}.`
+                        ` (given "${newValue as string}")${pathDescription}.`
                     )
                 // endregion
                 checkPropertyConstraints(
@@ -1099,7 +1115,7 @@ export class DatabaseHelper {
                                     result.result as null
                                 )
                             )
-                                newDocument[name] = result!.result
+                                newDocument[name] = result.result
                         }
             }
             /// endregion
@@ -1934,7 +1950,7 @@ export class DatabaseHelper {
                                 value,
                                 `${index + 1}. value in ${name}`,
                                 propertySpecificationCopy
-                            ).newValue
+                            ).newValue as DocumentContent
                             if (value === null)
                                 newProperty.splice(index, 1)
 
@@ -1958,7 +1974,7 @@ export class DatabaseHelper {
                         /// endregion
                         // endregion
                     } else {
-                        const oldValue:any =
+                        const oldValue:unknown =
                             (
                                 oldDocument &&
                                 Object.prototype.hasOwnProperty.call(
@@ -1970,7 +1986,7 @@ export class DatabaseHelper {
 
                         const result:{
                             changedPath:Array<string>
-                            newValue:any
+                            newValue:unknown
                         } = checkPropertyContent(
                             newDocument[name],
                             name,
@@ -1978,7 +1994,7 @@ export class DatabaseHelper {
                             oldValue
                         )
 
-                        newDocument[name] = result.newValue
+                        newDocument[name] = result.newValue as PlainObject
 
                         if (result.changedPath.length)
                             changedPath = result.changedPath
@@ -2067,6 +2083,10 @@ export class DatabaseHelper {
                                 `${errorName.substring(1)}: ` +
                                 (
                                     constraint.description ?
+                                        /*
+                                            eslint-disable
+                                            @typescript-eslint/no-implied-eval
+                                        */
                                         new Function(
                                             ...Object.keys(result!.scope),
                                             'return ' +
@@ -2077,6 +2097,10 @@ export class DatabaseHelper {
                                         ` constraint "${result!.code}" (` +
                                         `given "${serialize(newDocument)}")` +
                                         `${pathDescription}.`
+                                        /*
+                                            eslint-enable
+                                            @typescript-eslint/no-implied-eval
+                                        */
                                 )
                             )
                         }
@@ -2099,14 +2123,14 @@ export class DatabaseHelper {
                     )
 
                 // region migrate old attachments
-                let oldAttachments:any = null
+                let oldAttachments:Attachments|null = null
                 if (
                     oldDocument &&
                     Object.prototype.hasOwnProperty.call(
                         oldDocument, specialNames.attachment
                     )
                 ) {
-                    oldAttachments = oldDocument[specialNames.attachment]
+                    oldAttachments = oldDocument[specialNames.attachment]!
                     if (
                         oldAttachments !== null &&
                         typeof oldAttachments === 'object'

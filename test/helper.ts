@@ -15,7 +15,6 @@
 */
 // region imports
 import Tools from 'clientnode'
-import {FirstParameter, SecondParameter} from 'clientnode/type'
 import {
     testEach, testEachPromiseAgainstSameExpectation, UndefinedSymbol
 } from 'clientnode/testHelper'
@@ -69,7 +68,7 @@ describe('helper', ():void => {
                 new Promise<DatabaseResponse>((
                     resolve:(value:DatabaseResponse) => void
                 ):void => {
-                    Tools.timeout().then(() =>
+                    void Tools.timeout().then(() =>
                         resolve(null as unknown as DatabaseResponse)
                     )
                 })

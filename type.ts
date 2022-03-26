@@ -17,7 +17,7 @@
 import {ChildProcess} from 'child_process'
 import Tools from 'clientnode'
 import {
-    Mapping, PlainObject, Primitive, ProcessCloseReason
+    AnyFunction, Mapping, PlainObject, Primitive, ProcessCloseReason
 } from 'clientnode/type'
 import PouchDB from 'pouchdb'
 import {PluginAPI} from 'web-node'
@@ -39,9 +39,9 @@ export type FullAttachment = PouchDB.Core.FullAttachment
 export type StubAttachment = PouchDB.Core.StubAttachment
 
 export type ChangesMeta = PouchDB.Core.ChangesMeta
-export type ChangesResponseChange<Type = any> =
+export type ChangesResponseChange<Type = unknown> =
     PouchDB.Core.ChangesResponseChange<Type>
-export type ChangesStream<Type = any> = PouchDB.Core.Changes<Type>
+export type ChangesStream<Type = unknown> = PouchDB.Core.Changes<Type>
 export type ChangesStreamOptions = PouchDB.Core.ChangesOptions
 
 export type Connection = PouchDB.Database
@@ -64,7 +64,7 @@ export type DocumentRevisionIDMeta = PouchDB.Core.RevisionIdMeta
 
 export type Index = PouchDB.Find.Index
 
-export type DatabasePlugin = any
+export type DatabasePlugin = AnyFunction
 /// endregion
 /// region model
 // Represents a properties read and write roles.
@@ -163,7 +163,7 @@ export interface BaseModel {
     _onUpdateExecution?:null|string
     _onUpdateExpression?:null|string
 }
-export type Model = BaseModel & Mapping<PropertySpecification> 
+export type Model = BaseModel & Mapping<PropertySpecification>
 export type Models = Mapping<Model>
 
 export const PrimitiveTypes = [
@@ -421,7 +421,7 @@ export type Migrator = (
     scope:{
         configuration:Configuration
 
-        databaseHelper: DatabaseHelper
+        databaseHelper:DatabaseHelper
         tools:typeof Tools
 
         idName:string
@@ -444,6 +444,8 @@ export interface EvaluationResult<Type = unknown> {
 }
 export type Evaluate<R = unknown, P = unknown> =
     (..._parameters:Array<P>) => R
+
+export type DateRepresentationType = Date|null|number|string
 
 export type User = BaseDocument & {
     password:string
