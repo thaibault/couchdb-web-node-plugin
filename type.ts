@@ -437,11 +437,13 @@ export type Migrator = (
     }
 ) => Document|null
 
-export interface EvaluationResult<Type = any> {
+export interface EvaluationResult<Type = unknown> {
     code:string
     result:Type
     scope:object
 }
+export type Evaluate<R = unknown, P = unknown> =
+    (..._parameters:Array<P>) => R
 
 export type User = BaseDocument & {
     password:string

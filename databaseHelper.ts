@@ -30,6 +30,7 @@ import {
     Document,
     DocumentContent,
     EmptyEvaluationExceptionData,
+    Evaluate,
     EvaluationException,
     EvaluationResult,
     Exception,
@@ -454,11 +455,11 @@ export class DatabaseHelper {
             return false
         }
 
-        const evaluate = <T = any>(
+        const evaluate = <T = unknown>(
             givenExpression?:null|string,
             isEvaluation = false,
             givenScope:Mapping<unknown> = {}
-        ):EvaluationResult<T>|void => {
+        ):EvaluationResult<T|undefined>|void => {
             const expression:string = determineTrimmedString(givenExpression)
             if (expression) {
                 const code:string =
@@ -488,10 +489,11 @@ export class DatabaseHelper {
                 const scopeNames:Array<string> = Object.keys(scope)
                 // endregion
                 // region compile
-                let callable:Function|undefined
+                let evaluate:Evaluate<T|undefined>|undefined
 
                 try {
-                    callable = new Function(...scopeNames, code)
+                    evaluate = new Function(...scopeNames, code) as
+                        Evaluate<T|undefined>
                 } catch (error) {
                     throwError<CompilationExceptionData>(
                         serialize(error),
@@ -501,13 +503,13 @@ export class DatabaseHelper {
                 }
                 // endregion
                 // region run
-                const result:EvaluationResult = {
+                const result:EvaluationResult<T|undefined> = {
                     code, result: undefined, scope
                 }
 
                 try {
-                    result.result = (callable as Function)(
-                        ...scopeNames.map((name:string):any =>
+                    result.result = evaluate!(
+                        ...scopeNames.map((name:string):unknown =>
                             scope[name as keyof typeof scope]
                         )
                     )
@@ -537,7 +539,7 @@ export class DatabaseHelper {
                 parentNames.length ? ` in ${parentNames.join(' -> ')}` : ''
             let changedPath:Array<string> = []
 
-            const checkModelType:Function = ():void => {
+            const checkModelType = ():void => {
                 // region check for model type (optionally migrate them)
                 if (!Object.prototype.hasOwnProperty.call(
                     newDocument, typeName
@@ -603,7 +605,7 @@ export class DatabaseHelper {
                     specialNames.additional
                 ]
             // region document specific functions
-            const checkPropertyConstraints:Function = (
+            const checkPropertyConstraints = (
                 newValue:any,
                 name:string,
                 propertySpecification:PropertySpecification,
@@ -616,7 +618,7 @@ export class DatabaseHelper {
                     if (Object.prototype.hasOwnProperty.call(
                         propertySpecification, type
                     )) {
-                        let result:EvaluationResult<boolean>|void
+                        let result:EvaluationResult<boolean|undefined>|void
                         try {
                             result = evaluate<boolean>(
                                 propertySpecification[type]!.evaluation,
@@ -694,7 +696,7 @@ export class DatabaseHelper {
                         }
                     }
             }
-            const checkPropertyContent:Function = (
+            const checkPropertyContent = (
                 newValue:any,
                 name:string,
                 propertySpecification:PropertySpecification,
@@ -1023,10 +1025,10 @@ export class DatabaseHelper {
                 return {newValue, changedPath}
             }
             /// region create hook
-            const runCreatePropertyHook:Function = (
+            const runCreatePropertyHook = (
                 propertySpecification:PropertySpecification,
-                newDocument:PartialFullDocument,
-                oldDocument:PartialFullDocument|null,
+                newDocument:Attachments|PartialFullDocument,
+                oldDocument:Attachments|null|PartialFullDocument,
                 name:string
             ):void => {
                 if (!oldDocument)
@@ -1036,9 +1038,12 @@ export class DatabaseHelper {
                         if (Object.prototype.hasOwnProperty.call(
                             propertySpecification, type
                         )) {
-                            let result:EvaluationResult|void
+                            let result:(
+                                EvaluationResult<null|PlainObject|undefined> |
+                                void
+                            )
                             try {
-                                result = evaluate(
+                                result = evaluate<null|PlainObject>(
                                     propertySpecification[type],
                                     type.endsWith('Expression'),
                                     {
@@ -1090,17 +1095,19 @@ export class DatabaseHelper {
 
                             if (
                                 result &&
-                                ![null, undefined].includes(result.result)
+                                ![null, undefined].includes(
+                                    result.result as null
+                                )
                             )
                                 newDocument[name] = result!.result
                         }
             }
             /// endregion
             /// region update hook
-            const runUpdatePropertyHook:Function = (
+            const runUpdatePropertyHook = (
                 propertySpecification:PropertySpecification,
-                newDocument:PartialFullDocument,
-                oldDocument:PartialFullDocument,
+                newDocument:Attachments|PartialFullDocument,
+                oldDocument:Attachments|null|PartialFullDocument,
                 name:string
             ):void => {
                 if (!Object.prototype.hasOwnProperty.call(newDocument, name))
@@ -1131,7 +1138,7 @@ export class DatabaseHelper {
                         propertySpecification, type
                     ))
                         try {
-                            newDocument[name] = evaluate(
+                            (newDocument as Mapping<unknown>)[name] = evaluate(
                                 propertySpecification[type],
                                 type.endsWith('Expression'),
                                 {
@@ -1224,7 +1231,7 @@ export class DatabaseHelper {
                     if (Object.prototype.hasOwnProperty.call(model, type)) {
                         let result:PartialFullDocument|null|undefined
                         try {
-                            result = evaluate(
+                            result = evaluate<PartialFullDocument|null>(
                                 model[type as '_createExpression'],
                                 type.endsWith('Expression'),
                                 {
@@ -1292,7 +1299,7 @@ export class DatabaseHelper {
                 if (Object.prototype.hasOwnProperty.call(model, type)) {
                     let result:PartialFullDocument|null|undefined
                     try {
-                        result = evaluate(
+                        result = evaluate<PartialFullDocument|null>(
                             model[type as '_createExpression'],
                             type.endsWith('Expression'),
                             {
@@ -1450,7 +1457,7 @@ export class DatabaseHelper {
                                     propertySpecification,
                                     newAttachments,
                                     oldDocument && oldDocument[name] ?
-                                        oldDocument[name] :
+                                        oldDocument[name]! :
                                         null,
                                     fileName
                                 )
@@ -1460,7 +1467,7 @@ export class DatabaseHelper {
                                     propertySpecification,
                                     newAttachments,
                                     oldDocument && oldDocument[name] ?
-                                        oldDocument[name] :
+                                        oldDocument[name]! :
                                         null,
                                     fileName
                                 )
@@ -1673,7 +1680,7 @@ export class DatabaseHelper {
                         continue
 
                     // region writable/mutable/nullable
-                    const checkWriteableMutableNullable:Function = (
+                    const checkWriteableMutableNullable = (
                         propertySpecification:PropertySpecification,
                         newDocument:PartialFullDocument,
                         oldDocument:PartialFullDocument|null,
@@ -2000,9 +2007,9 @@ export class DatabaseHelper {
                     for (const constraint of ([] as Array<Constraint>).concat(
                         model[type as keyof Model] as Array<Constraint>
                     )) {
-                        let result:EvaluationResult<boolean>|void
+                        let result:EvaluationResult<boolean|undefined>|void
                         try {
-                            result = evaluate(
+                            result = evaluate<boolean>(
                                 constraint.evaluation,
                                 type === specialNames.constraint.expression,
                                 {

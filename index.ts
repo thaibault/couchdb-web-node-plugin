@@ -964,8 +964,8 @@ export class Database implements PluginHandler {
             const nativeBulkDocs:Connection['bulkDocs'] =
                 services.couchdb.connector.prototype.bulkDocs
             services.couchdb.connector.plugin({bulkDocs: async function(
-                firstParameter:any, ...parameters:Array<any>
-            ):Promise<Array<PlainObject>> {
+                firstParameter:unknown, ...parameters:Array<unknown>
+            ):Promise<Array<DatabaseError|DatabaseResponse>> {
                 const toggleIDDetermining:boolean = (
                     parameters.length > 0 &&
                     parameters[parameters.length - 1] ===
@@ -1007,7 +1007,7 @@ export class Database implements PluginHandler {
                         this, firstParameter, ...parameters
                     )
                 const conflictingIndexes:Array<number> = []
-                const conflicts:Array<PlainObject> = []
+                const conflicts:Array<DatabaseError> = []
                 let index = 0
                 for (const item of result) {
                     if (
@@ -1016,12 +1016,12 @@ export class Database implements PluginHandler {
                     )
                         if (
                             revisionName in firstParameter[index] &&
-                            item.name === 'conflict' &&
+                            (item as DatabaseError).name === 'conflict' &&
                             ['latest', 'upsert'].includes(
                                 firstParameter[index][revisionName]
                             )
                         ) {
-                            conflicts.push(item)
+                            conflicts.push(item as DatabaseError)
                             conflictingIndexes.push(index)
                         } else if (
                             idName in firstParameter[index] &&
@@ -1047,16 +1047,19 @@ export class Database implements PluginHandler {
                         }
                     index += 1
                 }
+
                 if (conflicts.length) {
                     firstParameter = conflicts
                     if (toggleIDDetermining)
                         parameters.push(Database.toggleIDDetermining)
+
                     const retriedResults:Array<PlainObject> =
                         await this.bulkDocs(firstParameter, ...parameters)
                     for (const retriedResult of retriedResults)
                         result[conflictingIndexes.shift() as number] =
                             retriedResult
                 }
+
                 return result
             }} as DatabasePlugin)
             // endregion
