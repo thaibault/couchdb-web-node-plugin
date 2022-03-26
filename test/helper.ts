@@ -179,51 +179,56 @@ describe('helper', ():void => {
         'extendModel',
         Helper.extendModel,
 
-        [{}, 'A', {A: {}}],
-        [
-            {a: {}, b: {}},
-            'Test',
-            {
-                _baseTest: {b: {}},
-                Test: {a: {}, [specialNames.extend]: '_baseTest'}
-            }
-        ],
-        [
-            {a: {}, b: {}},
-            'Test',
-            {
-                baseTest: {b: {}},
-                Test: {a: {}, [specialNames.extend]: 'baseTest'}
-            }
-        ],
-        [
-            {a: {}, b: {}, c: {}},
-            'C',
-            {
-                A: {a: {}},
-                B: {b: {}},
-                C: {c: {}, [specialNames.extend]: ['A', 'B']}
-            }
-        ],
-        [
-            {a: {}, b: {}, c: {}},
-            'C',
-            {
-                A: {a: {}},
-                B: {b: {}, [specialNames.extend]: 'A'},
-                C: {c: {}, [specialNames.extend]: 'B'}
-            }
-        ],
-        [
-            {a: {}, b: {}, c: {}, d: {type: 'number'}},
-            'C',
-            {
-                _base: {d: {type: 'number'}},
-                A: {a: {}},
-                B: {b: {}, [specialNames.extend]: 'A'},
-                C: {c: {}, [specialNames.extend]: 'B'}
-            }
-        ]
+        ...[
+            [{}, 'A', {A: {}}],
+            [
+                {a: {}, b: {}},
+                'Test',
+                {
+                    _baseTest: {b: {}},
+                    Test: {a: {}, [specialNames.extend]: '_baseTest'}
+                }
+            ],
+            [
+                {a: {}, b: {}},
+                'Test',
+                {
+                    baseTest: {b: {}},
+                    Test: {a: {}, [specialNames.extend]: 'baseTest'}
+                }
+            ],
+            [
+                {a: {}, b: {}, c: {}},
+                'C',
+                {
+                    A: {a: {}},
+                    B: {b: {}},
+                    C: {c: {}, [specialNames.extend]: ['A', 'B']}
+                }
+            ],
+            [
+                {a: {}, b: {}, c: {}},
+                'C',
+                {
+                    A: {a: {}},
+                    B: {b: {}, [specialNames.extend]: 'A'},
+                    C: {c: {}, [specialNames.extend]: 'B'}
+                }
+            ],
+            [
+                {a: {}, b: {}, c: {}, d: {type: 'number'}},
+                'C',
+                {
+                    _base: {d: {type: 'number'}},
+                    A: {a: {}},
+                    B: {b: {}, [specialNames.extend]: 'A'},
+                    C: {c: {}, [specialNames.extend]: 'B'}
+                }
+            ]
+        ] as Array<[
+            ReturnType<typeof Helper.extendModel>,
+            ...Parameters<typeof Helper.extendModel>
+        ]>
     )
     test('extendModels', ():void => {
         const modelConfiguration:ModelConfiguration =
@@ -291,7 +296,7 @@ describe('helper', ():void => {
                         public: 'a'
                     }}},
                     entities: {a: {}}
-                } as Partial<ModelConfiguration>
+                } as unknown as Partial<ModelConfiguration>
             )
         )).toStrictEqual({a: {}})
     })

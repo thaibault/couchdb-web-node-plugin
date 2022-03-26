@@ -69,8 +69,8 @@ export type AllowedRoles = (
     Array<string> |
     string |
     {
-        read:Array<string>|string
-        write:Array<string>|string
+        read?:Array<string>|string
+        write?:Array<string>|string
     }
 )
 export interface NormalizedAllowedRoles {
@@ -146,22 +146,21 @@ export interface PropertySpecification {
 export interface FileSpecification extends PropertySpecification {
     fileName?:PropertySpecification
 }
-export type Model =
-    Mapping<PropertySpecification> &
-    {
-        _allowedRoles?:AllowedRoles|null
-        _attachments?:Mapping<FileSpecification>|null
-        _constraintExecutions?:Array<Constraint>|Constraint|null
-        _constraintExpressions?:Array<Constraint>|Constraint|null
-        _createExecution?:null|string
-        _createExpression?:null|string
-        _extends?:Array<string>|null|string
-        _maximumAggregatedSize?:null|number
-        _minimumAggregatedSize?:null|number
-        _oldType?:Array<string>|null|string
-        _onUpdateExecution?:null|string
-        _onUpdateExpression?:null|string
-    }
+export interface BaseModel {
+    _allowedRoles?:AllowedRoles|null
+    _attachments?:Mapping<FileSpecification>|null
+    _constraintExecutions?:Array<Constraint>|Constraint|null
+    _constraintExpressions?:Array<Constraint>|Constraint|null
+    _createExecution?:null|string
+    _createExpression?:null|string
+    _extends?:Array<string>|null|string
+    _maximumAggregatedSize?:null|number
+    _minimumAggregatedSize?:null|number
+    _oldType?:Array<string>|null|string
+    _onUpdateExecution?:null|string
+    _onUpdateExpression?:null|string
+}
+export type Model = BaseModel & Mapping<PropertySpecification> 
 export type Models = Mapping<Model>
 
 export const PrimitiveTypes = [

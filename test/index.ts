@@ -30,31 +30,38 @@ describe('index', ():void => {
     // region tests
     test('loadService', ():Promise<void> =>
         expect(Index.loadService(
-            {}, {couchdb: {connection: null, server: {}}}, configuration
+            {},
+            {couchdb: {
+                connection: null, server: {}
+            } as unknown as Services['couchdb']},
+            configuration
         )).resolves.toStrictEqual({name: 'couchdb', promise: null})
     )
     test('preLoadService', ():void => {
         const runner:Runner = configuration.couchdb.binary.runner[
             configuration.couchdb.binary.runner.length - 1
         ]
-        expect(Index.preLoadService({}, configuration)).resolves
+
+        expect(Index.preLoadService({} as Services, configuration)).resolves
             .toHaveProperty(
                 'couchdb.server.runner.binaryFilePath',
                 path.resolve(runner.location[0], runner.name as string)
             )
     })
     test('shouldExit', async ():Promise<void> => {
-        let testValue:number = 0
+        let testValue = 0
         const services:Services = {couchdb: {
-            connection: {close: (callback:() => void):void => {
+            connection: {close: ():Promise<void> => {
                 testValue += 1
+
+                return Promise.resolve()
             }},
             server: {process: {kill: (_signal?:number):boolean => {
                 testValue += 1
 
                 return true
             }}}
-        }}
+        } as Services['couchdb']}
 
         expect((await Index.shouldExit(services, configuration)))
             .toStrictEqual(services)

@@ -81,7 +81,7 @@ export class Database implements PluginHandler {
      * service.
      */
     static async loadService(
-        servicePromises:ServicePromises,
+        servicePromises:Omit<ServicePromises, 'couchdb'>,
         services:Services,
         configuration:Configuration
     ):Promise<Service> {
