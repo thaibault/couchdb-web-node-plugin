@@ -23,6 +23,7 @@ import {
     Attachments,
     BaseModelConfiguration,
     CheckedDocumentResult,
+    CheckedPropertyResult,
     CompilationExceptionData,
     Constraint,
     ConstraintKey,
@@ -42,6 +43,7 @@ import {
     PartialFullDocument,
     PropertySpecification,
     RuntimeExceptionData,
+    Scope,
     SecuritySettings,
     SelectionMapping,
     SpecialPropertyNames,
@@ -58,6 +60,8 @@ export class DatabaseHelper {
     /**
      * Authenticates given document update against given mapping of allowed
      * roles for writing into corresponding model instances.
+     * @param this - Indicates an unbound method.
+     *
      * @param newDocument - Updated document.
      * @param oldDocument - If an existing document should be updated its given
      * here.
@@ -80,6 +84,7 @@ export class DatabaseHelper {
      * otherwise.
      */
     static authenticate(
+        this:void,
         newDocument:Partial<Document>,
         oldDocument:Partial<Document>|null = null,
         userContext:Partial<UserContext> = {},
@@ -182,6 +187,8 @@ export class DatabaseHelper {
     /**
      * Represents a design document validation function for given model
      * specification.
+     * @param this - Indicates an unbound method.
+     *
      * @param newDocument - Updated document.
      * @param oldDocument - If an existing document should be updated its given
      * here.
@@ -195,6 +202,7 @@ export class DatabaseHelper {
      * @returns Modified given new document.
      */
     static validateDocumentUpdate(
+        this:void,
         newDocument:PartialFullDocument,
         oldDocument:PartialFullDocument|null,
         userContext:Partial<UserContext>,
@@ -464,7 +472,7 @@ export class DatabaseHelper {
                 const code:string =
                     (isEvaluation ? 'return ' : '') + expression
                 // region determine scope
-                const scope:Mapping<unknown> = {
+                const scope:Scope = {
                     attachmentWithPrefixExists,
                     checkDocument,
                     code,
@@ -710,10 +718,7 @@ export class DatabaseHelper {
                 name:string,
                 propertySpecification:PropertySpecification,
                 oldValue:unknown = null
-            ):{
-                changedPath:Array<string>
-                newValue:unknown
-            } => {
+            ):CheckedPropertyResult => {
                 let changedPath:Array<string> = []
                 // region type
                 const types:Array<Type> = ([] as Array<Type>).concat(

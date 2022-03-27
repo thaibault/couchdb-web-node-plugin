@@ -51,10 +51,8 @@ describe('index', ():void => {
     test('shouldExit', async ():Promise<void> => {
         let testValue = 0
         const services:Services = {couchdb: {
-            connection: {close: ():Promise<void> => {
+            connection: {close: ():void => {
                 testValue += 1
-
-                return Promise.resolve(undefined)
             }},
             server: {process: {kill: (_signal?:number):boolean => {
                 testValue += 1

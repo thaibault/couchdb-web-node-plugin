@@ -391,13 +391,7 @@ export interface PluginHandler extends BasePluginHandler {
     ):Services
 }
 /// endregion
-export type Exception<DataType = Mapping<unknown>> =
-    {
-        message:string
-        name:string
-    } &
-    DataType
-
+/// region evaluation
 export interface EmptyEvaluationExceptionData {empty:string}
 export type EmptyEvaluationException = Exception<EmptyEvaluationExceptionData>
 
@@ -408,13 +402,80 @@ export type CompilationExceptionData =
     EvaluationExceptionData & {compilation:string}
 export type RuntimeExceptionData =
     EvaluationExceptionData & {runtime:string}
-
 export type EvaluationException = Exception<EvaluationExceptionData>
 
-export interface CheckedDocumentResult {
+export interface BasicScope {
+    attachmentWithPrefixExists:(_namePrefix:string) => boolean
+    checkDocument:(
+        _newDocument:PartialFullDocument,
+        _oldDocument:PartialFullDocument|null,
+        _parentNames:Array<string>
+    ) => CheckedDocumentResult
+    getFileNameByPrefix:(_prefix?:string, _attachments?:Attachments) =>
+        null|string
+    serialize:(_value:unknown) => string
+    
+    code:string
+
+    idName:string
+    revisionName:string
+    specialNames:SpecialPropertyNames
+    typeName:string
+
+    modelConfiguration:ModelConfiguration
+    models:Models
+
+    now:Date
+    nowUTCTimestamp:number
+
+    securitySettings:SecuritySettings
+
+    userContext:UserContext
+}
+export interface Scope extends BasicScope {
+    checkPropertyContent:(
+        _newValue:unknown,
+        _name:string,
+        _propertySpecification:PropertySpecification,
+        _oldValue:unknown
+    ) => CheckedPropertyResult
+    model:Model
+    modelName:string
+    name:string
+    newDocument:PartialFullDocument
+    newValue:unknown
+    oldDocument:PartialFullDocument|undefined
+    oldValue:unknown
+    parentNames:Array<string>
+    pathDescription:string
+    propertySpecification:PropertySpecification
+    type:string
+}
+export interface EvaluationResult<Type = unknown> {
+    code:string
+    result:Type
+    scope:Scope
+}
+export type Evaluate<R = unknown, P = unknown> =
+    (..._parameters:Array<P>) => R
+/// endregion
+/// region checker results
+export interface CheckedResult {
     changedPath:Array<string>
+}
+export interface CheckedPropertyResult extends CheckedResult {
+    newValue:unknown
+}
+export interface CheckedDocumentResult extends CheckedResult {
     newDocument:PartialFullDocument
 }
+/// endregion
+export type Exception<DataType = Mapping<unknown>> =
+    {
+        message:string
+        name:string
+    } &
+    DataType
 
 export type Migrator = (
     document:Document,
@@ -437,16 +498,8 @@ export type Migrator = (
     }
 ) => Document|null
 
-export interface EvaluationResult<Type = unknown> {
-    code:string
-    result:Type
-    scope:object
-}
-export type Evaluate<R = unknown, P = unknown> =
-    (..._parameters:Array<P>) => R
-
 export type DateRepresentationType = Date|null|number|string
-
+/// region models
 export type User = BaseDocument & {
     password:string
     roles:Array<string>
@@ -459,6 +512,7 @@ export interface Location {
     latitude:number
     longitude:number
 }
+/// endregion
 // endregion
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:

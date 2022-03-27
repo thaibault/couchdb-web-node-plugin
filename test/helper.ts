@@ -170,7 +170,7 @@ describe('helper', ():void => {
                 true,
                 Tools.copy(configuration.couchdb.model),
                 modelConfiguration as Partial<ModelConfiguration>
-            ) as ModelConfiguration,
+            ),
             model as Model
         ])
     )
