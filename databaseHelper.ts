@@ -22,11 +22,13 @@ import {
     AllowedModelRolesMapping,
     Attachments,
     BaseModelConfiguration,
+    BasicScope,
     CheckedDocumentResult,
     CheckedPropertyResult,
     CompilationExceptionData,
     Constraint,
     ConstraintKey,
+    ConstraintScope,
     DateRepresentationType,
     Document,
     DocumentContent,
@@ -317,21 +319,27 @@ export class DatabaseHelper {
             delete newDocument[specialNames.strategy]
         }
 
-        let serializeData:(_value:unknown) => string
-        if (toJSON)
-            serializeData = toJSON
-        else if (
-            JSON && Object.prototype.hasOwnProperty.call(JSON, 'stringify')
-        )
-            serializeData =
-                (object:unknown):string => JSON.stringify(object, null, 4)
-        else
-            throwError('Needed "serializer" is not available.')
+        const basicScope:BasicScope = {
+            attachmentWithPrefixExists,
+            checkDocument,
+            getFileNameByPrefix,
+            serialize,
 
-        const serialize = (value:unknown):string =>
-            value instanceof Error ?
-                `${value as unknown as string}` :
-                serializeData(value)
+            idName,
+            revisionName,
+            specialNames,
+            typeName,
+
+            modelConfiguration,
+            models,
+
+            now,
+            nowUTCTimestamp,
+
+            securitySettings,
+
+            userContext
+        }
         /// region collect old model types to migrate.
         const oldModelMapping:Mapping = {}
         if (updateStrategy === 'migrate')
@@ -352,6 +360,22 @@ export class DatabaseHelper {
         /// endregion
         // endregion
         // region functions
+        let serializeData:(_value:unknown) => string
+        if (toJSON)
+            serializeData = toJSON
+        else if (
+            JSON && Object.prototype.hasOwnProperty.call(JSON, 'stringify')
+        )
+            serializeData =
+                (object:unknown):string => JSON.stringify(object, null, 4)
+        else
+            throwError('Needed "serializer" is not available.')
+
+        const serialize = (value:unknown):string =>
+            value instanceof Error ?
+                `${value as unknown as string}` :
+                serializeData(value)
+
         const determineTrimmedString = (value?:null|string):string => {
             if (typeof value === 'string')
                 return value.trim()
@@ -462,45 +486,29 @@ export class DatabaseHelper {
             return false
         }
 
-        const evaluate = <T = unknown>(
+        const evaluate = <Type = unknown, Scope = Mapping<unknown>>(
             givenExpression?:null|string,
             isEvaluation = false,
-            givenScope:Mapping<unknown> = {}
-        ):EvaluationResult<T|undefined>|void => {
+            givenScope:Scope = {}
+        ):EvaluationResult<Type|undefined>|void => {
             const expression:string = determineTrimmedString(givenExpression)
             if (expression) {
                 const code:string =
                     (isEvaluation ? 'return ' : '') + expression
                 // region determine scope
-                const scope:Scope = {
-                    attachmentWithPrefixExists,
-                    checkDocument,
+                const scope:BasicScope & {code:string} & Scope = {
+                    ...basicScope,
                     code,
-                    getFileNameByPrefix,
-                    idName,
-                    modelConfiguration,
-                    models,
-                    now,
-                    nowUTCTimestamp,
-                    revisionName,
-                    securitySettings,
-                    serialize,
-                    specialNames,
-                    typeName,
-                    userContext
+                    ...givenScope
                 }
-                for (const name in givenScope)
-                    if (Object.prototype.hasOwnProperty.call(givenScope, name))
-                        scope[name as keyof object] =
-                            givenScope[name as keyof object]
                 const scopeNames:Array<string> = Object.keys(scope)
                 // endregion
                 // region compile
-                let evaluate:Evaluate<T|undefined>|undefined
+                let templateFunction:Evaluate<T|undefined>|undefined
 
                 try {
                     /* eslint-disable @typescript-eslint/no-implied-eval */
-                    evaluate = new Function(...scopeNames, code) as
+                    templateFunction = new Function(...scopeNames, code) as
                         Evaluate<T|undefined>
                     /* eslint-enable @typescript-eslint/no-implied-eval */
                 } catch (error) {
@@ -517,7 +525,7 @@ export class DatabaseHelper {
                 }
 
                 try {
-                    result.result = evaluate!(
+                    result.result = templateFunction!(
                         ...scopeNames.map((name:string):unknown =>
                             scope[name as keyof typeof scope]
                         )
@@ -629,24 +637,26 @@ export class DatabaseHelper {
                     )) {
                         let result:EvaluationResult<boolean|undefined>|void
                         try {
-                            result = evaluate<boolean>(
+                            result = evaluate<boolean, ConstraintScope>(
                                 propertySpecification[type]!.evaluation,
                                 type.endsWith('Expression'),
                                 {
                                     checkPropertyContent,
-                                    code: propertySpecification[type]!
-                                        .evaluation,
+
                                     model,
                                     modelName,
                                     name,
+                                    type,
+
                                     newDocument,
                                     newValue,
                                     oldDocument,
                                     oldValue,
+
                                     parentNames,
                                     pathDescription,
-                                    propertySpecification,
-                                    type
+
+                                    propertySpecification
                                 }
                             )
                         } catch (error) {
@@ -1064,19 +1074,21 @@ export class DatabaseHelper {
                                 void
                             )
                             try {
-                                result = evaluate<null|PlainObject>(
+                                result = evaluate<null|PlainObject, Scope>(
                                     propertySpecification[type],
                                     type.endsWith('Expression'),
                                     {
                                         checkPropertyContent,
-                                        code: propertySpecification[type],
+
                                         model,
                                         modelName,
                                         name,
+                                        type,
+
                                         newDocument,
                                         oldDocument,
-                                        propertySpecification,
-                                        type
+
+                                        propertySpecification
                                     }
                                 )
                             } catch (error) {

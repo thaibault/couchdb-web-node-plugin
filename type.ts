@@ -403,7 +403,7 @@ export type CompilationExceptionData =
 export type RuntimeExceptionData =
     EvaluationExceptionData & {runtime:string}
 export type EvaluationException = Exception<EvaluationExceptionData>
-
+//// region scopes
 export interface BasicScope {
     attachmentWithPrefixExists:(_namePrefix:string) => boolean
     checkDocument:(
@@ -414,23 +414,21 @@ export interface BasicScope {
     getFileNameByPrefix:(_prefix?:string, _attachments?:Attachments) =>
         null|string
     serialize:(_value:unknown) => string
-    
-    code:string
 
     idName:string
     revisionName:string
     specialNames:SpecialPropertyNames
     typeName:string
 
-    modelConfiguration:ModelConfiguration
+    modelConfiguration:BaseModelConfiguration
     models:Models
 
     now:Date
     nowUTCTimestamp:number
 
-    securitySettings:SecuritySettings
+    securitySettings:Partial<SecuritySettings>
 
-    userContext:UserContext
+    userContext:Partial<UserContext>
 }
 export interface Scope extends BasicScope {
     checkPropertyContent:(
@@ -439,18 +437,25 @@ export interface Scope extends BasicScope {
         _propertySpecification:PropertySpecification,
         _oldValue:unknown
     ) => CheckedPropertyResult
+
     model:Model
     modelName:string
     name:string
+    type:string
+
     newDocument:PartialFullDocument
-    newValue:unknown
     oldDocument:PartialFullDocument|undefined
+
+    propertySpecification:PropertySpecification
+}
+export interface ConstraintScope extends Scope {
+    newValue:unknown
     oldValue:unknown
+
     parentNames:Array<string>
     pathDescription:string
-    propertySpecification:PropertySpecification
-    type:string
 }
+//// endregion
 export interface EvaluationResult<Type = unknown> {
     code:string
     result:Type
