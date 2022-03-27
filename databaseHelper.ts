@@ -14,9 +14,7 @@
     endregion
 */
 // region imports
-import {
-    Mapping, Primitive, PlainObject, ProcedureFunction
-} from 'clientnode/type'
+import {Mapping, Primitive, PlainObject} from 'clientnode/type'
 
 import {
     AllowedModelRolesMapping,
@@ -25,10 +23,10 @@ import {
     BasicScope,
     CheckedDocumentResult,
     CheckedPropertyResult,
+    CommonScope,
     CompilationExceptionData,
     Constraint,
     ConstraintKey,
-    ConstraintScope,
     DateRepresentationType,
     Document,
     DocumentContent,
@@ -43,9 +41,9 @@ import {
     Models,
     NormalizedAllowedModelRoles,
     PartialFullDocument,
+    PropertyScope,
     PropertySpecification,
     RuntimeExceptionData,
-    Scope,
     SecuritySettings,
     SelectionMapping,
     SpecialPropertyNames,
@@ -88,7 +86,7 @@ export class DatabaseHelper {
     static authenticate(
         this:void,
         newDocument:Partial<Document>,
-        oldDocument:Partial<Document>|null = null,
+        oldDocument:null|Partial<Document> = null,
         userContext:Partial<UserContext> = {},
         _securitySettings:Partial<SecuritySettings> = {
             admins: {names: [], roles: []}, members: {names: [], roles: []}
@@ -231,7 +229,7 @@ export class DatabaseHelper {
             throw result
         }
 
-        const now:Date = new Date()
+        const now = new Date()
         const nowUTCTimestamp:number = Date.UTC(
             now.getUTCFullYear(),
             now.getUTCMonth(),
@@ -254,7 +252,7 @@ export class DatabaseHelper {
 
         let id = ''
         let revision = ''
-        const setDocumentEnvironment:ProcedureFunction = ():void => {
+        const setDocumentEnvironment = ():void => {
             id = Object.prototype.hasOwnProperty.call(newDocument, idName) ?
                 newDocument[idName] as string :
                 ''
@@ -317,28 +315,6 @@ export class DatabaseHelper {
         )) {
             updateStrategy = newDocument[specialNames.strategy]!
             delete newDocument[specialNames.strategy]
-        }
-
-        const basicScope:BasicScope = {
-            attachmentWithPrefixExists,
-            checkDocument,
-            getFileNameByPrefix,
-            serialize,
-
-            idName,
-            revisionName,
-            specialNames,
-            typeName,
-
-            modelConfiguration,
-            models,
-
-            now,
-            nowUTCTimestamp,
-
-            securitySettings,
-
-            userContext
         }
         /// region collect old model types to migrate.
         const oldModelMapping:Mapping = {}
@@ -489,14 +465,21 @@ export class DatabaseHelper {
         const evaluate = <Type = unknown, Scope = Mapping<unknown>>(
             givenExpression?:null|string,
             isEvaluation = false,
-            givenScope:Scope = {}
-        ):EvaluationResult<Type|undefined>|void => {
+            givenScope:Scope = {} as Scope
+        ):(
+            EvaluationResult<
+                Type|undefined, BasicScope & {code:string} & Scope
+            > |
+            void
+        ) => {
+            type CurrentScope = BasicScope & {code:string} & Scope
+
             const expression:string = determineTrimmedString(givenExpression)
             if (expression) {
                 const code:string =
                     (isEvaluation ? 'return ' : '') + expression
                 // region determine scope
-                const scope:BasicScope & {code:string} & Scope = {
+                const scope:CurrentScope = {
                     ...basicScope,
                     code,
                     ...givenScope
@@ -504,15 +487,15 @@ export class DatabaseHelper {
                 const scopeNames:Array<string> = Object.keys(scope)
                 // endregion
                 // region compile
-                let templateFunction:Evaluate<T|undefined>|undefined
+                let templateFunction:Evaluate<Type|undefined>|undefined
 
                 try {
                     /* eslint-disable @typescript-eslint/no-implied-eval */
                     templateFunction = new Function(...scopeNames, code) as
-                        Evaluate<T|undefined>
+                        Evaluate<Type|undefined>
                     /* eslint-enable @typescript-eslint/no-implied-eval */
                 } catch (error) {
-                    throwError<CompilationExceptionData>(
+                    throwError<CompilationExceptionData<CurrentScope>>(
                         serialize(error),
                         'compilation',
                         {code, error: error as Error, scope}
@@ -520,7 +503,7 @@ export class DatabaseHelper {
                 }
                 // endregion
                 // region run
-                const result:EvaluationResult<T|undefined> = {
+                const result:EvaluationResult<Type|undefined, CurrentScope> = {
                     code, result: undefined, scope
                 }
 
@@ -531,7 +514,7 @@ export class DatabaseHelper {
                         )
                     )
                 } catch (error) {
-                    throwError<RuntimeExceptionData>(
+                    throwError<RuntimeExceptionData<CurrentScope>>(
                         serialize(error),
                         'runtime',
                         {code, error: error as Error, scope}
@@ -549,7 +532,7 @@ export class DatabaseHelper {
 
         const checkDocument = (
             newDocument:PartialFullDocument,
-            oldDocument:PartialFullDocument|null,
+            oldDocument:null|PartialFullDocument,
             parentNames:Array<string> = []
         ):CheckedDocumentResult => {
             const pathDescription:string =
@@ -635,9 +618,14 @@ export class DatabaseHelper {
                     if (Object.prototype.hasOwnProperty.call(
                         propertySpecification, type
                     )) {
-                        let result:EvaluationResult<boolean|undefined>|void
+                        let result:(
+                            EvaluationResult<
+                                boolean|undefined, PropertyScope
+                            > |
+                            void
+                        )
                         try {
-                            result = evaluate<boolean, ConstraintScope>(
+                            result = evaluate<boolean, PropertyScope>(
                                 propertySpecification[type]!.evaluation,
                                 type.endsWith('Expression'),
                                 {
@@ -708,8 +696,9 @@ export class DatabaseHelper {
                                     new Function(
                                         ...Object.keys(result!.scope),
                                         `return ${description}`
-                                    )(...Object.values(result!.scope)) as
-                                        string :
+                                    )(...Object.values(result!.scope) as
+                                        Array<unknown>
+                                    ) as string :
                                     `Property "${name}" should satisfy ` +
                                     `constraint "${result!.code}" (given "` +
                                     `${serialize(newValue)}")` +
@@ -1062,6 +1051,13 @@ export class DatabaseHelper {
                 oldDocument:Attachments|null|PartialFullDocument,
                 name:string
             ):void => {
+                type Type = (
+                    Attachments[number] |
+                    PlainObject<Primitive> |
+                    Primitive |
+                    (Primitive|PlainObject<Primitive>)[]
+                )
+
                 if (!oldDocument)
                     for (const type of [
                         'onCreateExecution', 'onCreateExpression'
@@ -1070,11 +1066,13 @@ export class DatabaseHelper {
                             propertySpecification, type
                         )) {
                             let result:(
-                                EvaluationResult<null|PlainObject|undefined> |
+                                EvaluationResult<
+                                    null|Type|undefined, PropertyScope
+                                > |
                                 void
                             )
                             try {
-                                result = evaluate<null|PlainObject, Scope>(
+                                result = evaluate<null|Type, PropertyScope>(
                                     propertySpecification[type],
                                     type.endsWith('Expression'),
                                     {
@@ -1087,6 +1085,12 @@ export class DatabaseHelper {
 
                                         newDocument,
                                         oldDocument,
+
+                                        newValue: undefined,
+                                        oldValue: undefined,
+
+                                        parentNames,
+                                        pathDescription,
 
                                         propertySpecification
                                     }
@@ -1143,8 +1147,16 @@ export class DatabaseHelper {
                 oldDocument:Attachments|null|PartialFullDocument,
                 name:string
             ):void => {
+                type Type = (
+                    Attachments[number] |
+                    PlainObject<Primitive> |
+                    Primitive |
+                    (Primitive|PlainObject<Primitive>)[]
+                )
+
                 if (!Object.prototype.hasOwnProperty.call(newDocument, name))
                     return
+
                 if (
                     propertySpecification.trim &&
                     typeof newDocument[name] === 'string'
@@ -1171,20 +1183,27 @@ export class DatabaseHelper {
                         propertySpecification, type
                     ))
                         try {
-                            (newDocument as Mapping<unknown>)[name] = evaluate(
+                            newDocument[name] = evaluate<Type, PropertyScope>(
                                 propertySpecification[type],
                                 type.endsWith('Expression'),
                                 {
                                     checkPropertyContent,
-                                    code: propertySpecification[type],
+
+                                    model,
                                     modelName,
                                     name,
+                                    type,
+
                                     newDocument,
                                     oldDocument,
+
+                                    newValue: newDocument[name],
+                                    oldValue: oldDocument && oldDocument[name],
+
                                     parentNames,
                                     pathDescription,
-                                    propertySpecification,
-                                    type
+
+                                    propertySpecification
                                 }
                             )!.result
                         } catch (error) {
@@ -1262,22 +1281,25 @@ export class DatabaseHelper {
                     specialNames.create.expression
                 ])
                     if (Object.prototype.hasOwnProperty.call(model, type)) {
-                        let result:PartialFullDocument|null|undefined
+                        let result:null|PartialFullDocument|undefined
                         try {
-                            result = evaluate<PartialFullDocument|null>(
+                            result = evaluate<
+                                null|PartialFullDocument, CommonScope
+                            >(
                                 model[type as '_createExpression'],
                                 type.endsWith('Expression'),
                                 {
                                     checkPropertyContent,
-                                    code: model[type],
-                                    id,
+
                                     model,
                                     modelName,
+                                    type,
+
                                     newDocument,
                                     oldDocument,
+
                                     parentNames,
-                                    pathDescription,
-                                    type
+                                    pathDescription
                                 }
                             )!.result
                         } catch (error) {
@@ -1330,22 +1352,25 @@ export class DatabaseHelper {
                 specialNames.update.execution, specialNames.update.expression
             ])
                 if (Object.prototype.hasOwnProperty.call(model, type)) {
-                    let result:PartialFullDocument|null|undefined
+                    let result:null|PartialFullDocument|undefined
                     try {
-                        result = evaluate<PartialFullDocument|null>(
+                        result = evaluate<
+                            null|PartialFullDocument, CommonScope
+                        >(
                             model[type as '_createExpression'],
                             type.endsWith('Expression'),
                             {
                                 checkPropertyContent,
-                                code: model[type],
-                                id,
+
                                 model,
                                 modelName,
+                                type,
+
                                 newDocument,
                                 oldDocument,
+
                                 parentNames,
-                                pathDescription,
-                                type
+                                pathDescription
                             }
                         )!.result
                     } catch (error) {
@@ -2027,34 +2052,36 @@ export class DatabaseHelper {
                     }
                 }
             /// region constraint
-            for (let type in specialNames.constraint)
+            for (let type of Object.keys(specialNames.constraint))
                 if (
-                    Object.prototype.hasOwnProperty.call(
-                        specialNames.constraint, type
-                    ) &&
                     (type = specialNames.constraint[
-                        type as keyof SpecialPropertyNames['constraint']]
-                    ) &&
+                        type as keyof SpecialPropertyNames['constraint']
+                    ]) &&
                     Object.prototype.hasOwnProperty.call(model, type)
                 )
                     for (const constraint of ([] as Array<Constraint>).concat(
                         model[type as keyof Model] as Array<Constraint>
                     )) {
-                        let result:EvaluationResult<boolean|undefined>|void
+                        let result:(
+                            EvaluationResult<boolean|undefined, CommonScope> |
+                            void
+                        )
                         try {
-                            result = evaluate<boolean>(
+                            result = evaluate<boolean, CommonScope>(
                                 constraint.evaluation,
                                 type === specialNames.constraint.expression,
                                 {
                                     checkPropertyContent,
-                                    code: constraint.evaluation,
+
                                     model,
                                     modelName,
+                                    type,
+
                                     newDocument,
                                     oldDocument,
+
                                     parentNames,
-                                    pathDescription,
-                                    type
+                                    pathDescription
                                 }
                             )
                         } catch (error) {
@@ -2108,8 +2135,9 @@ export class DatabaseHelper {
                                             ...Object.keys(result!.scope),
                                             'return ' +
                                             constraint.description.trim()
-                                        )(...Object.values(result!.scope)) as
-                                            string :
+                                        )(...Object.values(result!.scope) as
+                                            Array<unknown>
+                                        ) as string :
                                         `Model "${modelName}" should satisfy` +
                                         ` constraint "${result!.code}" (` +
                                         `given "${serialize(newDocument)}")` +
@@ -2594,6 +2622,31 @@ export class DatabaseHelper {
             return {changedPath, newDocument}
         }
         // endregion
+        const basicScope:BasicScope = {
+            attachmentWithPrefixExists,
+            checkDocument,
+            getFileNameByPrefix,
+            serialize,
+
+            id,
+            revision,
+
+            idName,
+            revisionName,
+            specialNames,
+            typeName,
+
+            modelConfiguration,
+            models,
+
+            now,
+            nowUTCTimestamp,
+
+            securitySettings,
+
+            userContext
+        }
+
         const result:CheckedDocumentResult =
             checkDocument(newDocument, oldDocument)
         // region check if changes happend

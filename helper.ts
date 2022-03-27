@@ -229,7 +229,9 @@ export class Helper {
                 ...parameter:Array<unknown>
             ):Promise<DatabaseResponse> {
                 try {
-                    return await nativeMethod(firstParameter, ...parameter)
+                    return (
+                        await nativeMethod(firstParameter, ...parameter)
+                    ) as DatabaseResponse
                 } catch (error) {
                     if (
                         idName in (firstParameter as PartialFullDocument) &&
@@ -320,8 +322,7 @@ export class Helper {
                     [
                         '--max-old-space-size=' +
                             configuration.couchdb.binary.memoryInMegaByte,
-                        services.couchdb.server.runner.binaryFilePath as
-                            string
+                        services.couchdb.server.runner.binaryFilePath!
                     ]
             ).concat(
                 services.couchdb.server.runner.arguments ?
@@ -329,16 +330,16 @@ export class Helper {
                     []
             ),
             {
-                cwd: eval('process').cwd(),
+                cwd: (eval('process') as typeof process).cwd(),
                 env: (
                     Object.prototype.hasOwnProperty.call(
                         services.couchdb.server.runner, 'environment'
                     ) ?
                         {
-                            ...eval('process').env,
+                            ...(eval('process') as typeof process).env,
                             ...services.couchdb.server.runner.environment
                         } :
-                        eval('process').env
+                        (eval('process') as typeof process).env
                 ),
                 shell: true,
                 stdio: 'inherit'

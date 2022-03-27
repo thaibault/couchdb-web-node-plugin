@@ -604,8 +604,9 @@ export class Database implements PluginHandler {
                         )
                     } else if (path.extname(file.name) === '.js')
                         // region collect migrater
-                        migrater[file.path] =
-                            currentRequire!(file.path).default
+                        migrater[file.path] = (
+                            currentRequire!(file.path) as {default:Migrator}
+                        ).default
                         // endregion
                 }
             // region ensure all constraints to have a consistent initial state
@@ -989,7 +990,7 @@ export class Database implements PluginHandler {
             services.couchdb.connector = PouchDB
             // region apply "latest/upsert" and ignore "NoChange" error plugin
             const nativeBulkDocs:Connection['bulkDocs'] =
-                services.couchdb.connector.prototype.bulkDocs
+                (services.couchdb.connector.prototype as Connection).bulkDocs
             services.couchdb.connector.plugin({bulkDocs: async function(
                 this:Connection,
                 firstParameter:unknown,

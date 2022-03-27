@@ -272,7 +272,7 @@ export interface Runner {
         content:string
         path:string
     }
-    environment?:null|PlainObject
+    environment?:null|Mapping
     location:Array<string>|string
     name:Array<string>|string
 }
@@ -395,14 +395,21 @@ export interface PluginHandler extends BasePluginHandler {
 export interface EmptyEvaluationExceptionData {empty:string}
 export type EmptyEvaluationException = Exception<EmptyEvaluationExceptionData>
 
-export interface EvaluationExceptionData {
-    code:string, error:Error, scope:Mapping<unknown>
+export interface EvaluationExceptionData<S = Mapping<unknown>> {
+    code:string, error:Error, scope:S
 }
-export type CompilationExceptionData =
-    EvaluationExceptionData & {compilation:string}
-export type RuntimeExceptionData =
-    EvaluationExceptionData & {runtime:string}
-export type EvaluationException = Exception<EvaluationExceptionData>
+export interface CompilationExceptionData<S = Mapping<unknown>> extends
+    EvaluationExceptionData<S>
+{
+    compilation:string
+}
+export interface RuntimeExceptionData<S = Mapping<unknown>> extends
+    EvaluationExceptionData<S>
+{
+    runtime:string
+}
+export type EvaluationException<S = Mapping<unknown>> =
+    Exception<EvaluationExceptionData<S>>
 //// region scopes
 export interface BasicScope {
     attachmentWithPrefixExists:(_namePrefix:string) => boolean
@@ -414,6 +421,9 @@ export interface BasicScope {
     getFileNameByPrefix:(_prefix?:string, _attachments?:Attachments) =>
         null|string
     serialize:(_value:unknown) => string
+
+    id:string
+    revision:string
 
     idName:string
     revisionName:string
@@ -430,7 +440,7 @@ export interface BasicScope {
 
     userContext:Partial<UserContext>
 }
-export interface Scope extends BasicScope {
+export interface CommonScope {
     checkPropertyContent:(
         _newValue:unknown,
         _name:string,
@@ -440,26 +450,27 @@ export interface Scope extends BasicScope {
 
     model:Model
     modelName:string
-    name:string
     type:string
 
-    newDocument:PartialFullDocument
-    oldDocument:PartialFullDocument|undefined
-
-    propertySpecification:PropertySpecification
-}
-export interface ConstraintScope extends Scope {
-    newValue:unknown
-    oldValue:unknown
+    newDocument:Attachments|PartialFullDocument
+    oldDocument:Attachments|null|PartialFullDocument
 
     parentNames:Array<string>
     pathDescription:string
 }
+export interface PropertyScope extends CommonScope {
+    name:string
+
+    newValue:unknown
+    oldValue:unknown
+
+    propertySpecification:PropertySpecification
+}
 //// endregion
-export interface EvaluationResult<Type = unknown> {
+export interface EvaluationResult<T = unknown, S = BasicScope & CommonScope> {
     code:string
-    result:Type
-    scope:Scope
+    result:T
+    scope:S
 }
 export type Evaluate<R = unknown, P = unknown> =
     (..._parameters:Array<P>) => R
