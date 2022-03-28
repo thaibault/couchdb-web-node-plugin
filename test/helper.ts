@@ -21,12 +21,21 @@ import {
 
 import Helper from '../helper'
 import packageConfiguration from '../package.json'
-import {ModelConfiguration, Models, SpecialPropertyNames} from '../type'
+import {
+    AllowedModelRolesMapping,
+    Configuration,
+    Connection,
+    DatabaseResponse,
+    ModelConfiguration,
+    Model,
+    Models,
+    SpecialPropertyNames
+} from '../type'
 // endregion
 describe('helper', ():void => {
     // region prepare environment
     const configuration:Configuration =
-        packageConfiguration.webNode as Configuration
+        packageConfiguration.webNode as unknown as Configuration
     const specialNames:SpecialPropertyNames =
         configuration.couchdb.model.property.name.special
     // endregion
@@ -55,10 +64,15 @@ describe('helper', ():void => {
         UndefinedSymbol,
 
         [
-            {put: ():Promise<void> =>
-                new Promise((resolve:Function):Promise<boolean> =>
-                    Tools.timeout(resolve))
-            },
+            {put: ():Promise<DatabaseResponse> =>
+                new Promise<DatabaseResponse>((
+                    resolve:(value:DatabaseResponse) => void
+                ):void => {
+                    void Tools.timeout().then(() =>
+                        resolve(null as unknown as DatabaseResponse)
+                    )
+                })
+            } as unknown as Connection,
             'test',
             {data: 'data'},
             'Description',
@@ -79,62 +93,61 @@ describe('helper', ():void => {
             [
                 {Test: {properties: {}, read: [], write: []}},
                 {
-                    property: {name: {special: {allowedRole: 'roles'}}},
+                    property: {name: {special: {allowedRoles: 'roles'}}},
                     entities: {Test: {}}
                 }
             ],
             [
                 {Test: {properties: {}, read: [], write: []}},
                 {
-                    property: {name: {special: {allowedRole: 'roles'}}},
+                    property: {name: {special: {allowedRoles: 'roles'}}},
                     entities: {Test: {roles: []}}
                 }
             ],
             [
                 {Test: {properties: {}, read: ['a'], write: ['a']}},
                 {
-                    property: {name: {special: {allowedRole: 'roles'}}},
+                    property: {name: {special: {allowedRoles: 'roles'}}},
                     entities: {Test: {roles: ['a']}}
                 }
             ],
             [
                 {Test: {properties: {}, read: ['a'], write: ['a']}},
                 {
-                    property: {name: {special: {allowedRole: 'roles'}}},
+                    property: {name: {special: {allowedRoles: 'roles'}}},
                     entities: {Test: {roles: 'a'}}
                 }
             ],
             [
                 {Test: {properties: {}, read: ['a'], write: []}},
                 {
-                    property: {name: {special: {allowedRole: 'roles'}}},
+                    property: {name: {special: {allowedRoles: 'roles'}}},
                     entities: {Test: {roles: {read: ['a']}}}
                 }
             ],
             [
                 {Test: {properties: {}, read: ['a'], write: []}},
                 {
-                    property: {name: {special: {allowedRole: 'roles'}}},
+                    property: {name: {special: {allowedRoles: 'roles'}}},
                     entities: {Test: {roles: {read: 'a'}}}
                 }
             ],
             [
                 {Test: {properties: {}, read: ['a'], write: ['b']}},
                 {
-                    property: {name: {special: {allowedRole: 'roles'}}},
+                    property: {name: {special: {allowedRoles: 'roles'}}},
                     entities: {Test: {roles: {read: 'a', write: ['b']}}}
                 }
             ]
         ].map(([expected, modelConfiguration]):[
-            ReturnType<Helper.determineAllowedModelRolesMapping>,
-            FirstParameter<Helper.determineAllowedModelRolesMapping>
+            AllowedModelRolesMapping, ModelConfiguration
         ] => [
-            expected,
+            expected as AllowedModelRolesMapping,
             Tools.extend(
                 true,
                 Tools.copy(mockModelConfiguration),
                 modelConfiguration
-            )
+            ) as ModelConfiguration
         ])
     )
     testEach<typeof Helper.determineGenericIndexablePropertyNames>(
@@ -150,68 +163,71 @@ describe('helper', ():void => {
                 {a: {}, b: {}}
             ]
         ].map(([expected, modelConfiguration, model]):[
-            ReturnType<Helper.determineGenericIndexablePropertyNames>,
-            FirstParameter<Helper.determineGenericIndexablePropertyNames>,
-            SecondParameter<Helper.determineGenericIndexablePropertyNames>
+            Array<string>, ModelConfiguration, Model
         ] => [
-            expected,
+            expected as Array<string>,
             Tools.extend(
                 true,
                 Tools.copy(configuration.couchdb.model),
-                modelConfiguration
+                modelConfiguration as Partial<ModelConfiguration>
             ),
-            model
+            model as Model
         ])
     )
     testEach<typeof Helper.extendModel>(
         'extendModel',
         Helper.extendModel,
 
-        [{}, 'A', {A: {}}],
-        [
-            {a: {}, b: {}},
-            'Test',
-            {
-                _baseTest: {b: {}},
-                Test: {a: {}, [specialNames.extend]: '_baseTest'}
-            }
-        ],
-        [
-            {a: {}, b: {}},
-            'Test',
-            {
-                baseTest: {b: {}},
-                Test: {a: {}, [specialNames.extend]: 'baseTest'}
-            }
-        ],
-        [
-            {a: {}, b: {}, c: {}},
-            'C',
-            {
-                A: {a: {}},
-                B: {b: {}},
-                C: {c: {}, [specialNames.extend]: ['A', 'B']}
-            }
-        ],
-        [
-            {a: {}, b: {}, c: {}},
-            'C',
-            {
-                A: {a: {}},
-                B: {b: {}, [specialNames.extend]: 'A'},
-                C: {c: {}, [specialNames.extend]: 'B'}
-            }
-        ],
-        [
-            {a: {}, b: {}, c: {}, d: {type: 'number'}},
-            'C',
-            {
-                _base: {d: {type: 'number'}},
-                A: {a: {}},
-                B: {b: {}, [specialNames.extend]: 'A'},
-                C: {c: {}, [specialNames.extend]: 'B'}
-            }
-        ]
+        ...[
+            [{}, 'A', {A: {}}],
+            [
+                {a: {}, b: {}},
+                'Test',
+                {
+                    _baseTest: {b: {}},
+                    Test: {a: {}, [specialNames.extend]: '_baseTest'}
+                }
+            ],
+            [
+                {a: {}, b: {}},
+                'Test',
+                {
+                    baseTest: {b: {}},
+                    Test: {a: {}, [specialNames.extend]: 'baseTest'}
+                }
+            ],
+            [
+                {a: {}, b: {}, c: {}},
+                'C',
+                {
+                    A: {a: {}},
+                    B: {b: {}},
+                    C: {c: {}, [specialNames.extend]: ['A', 'B']}
+                }
+            ],
+            [
+                {a: {}, b: {}, c: {}},
+                'C',
+                {
+                    A: {a: {}},
+                    B: {b: {}, [specialNames.extend]: 'A'},
+                    C: {c: {}, [specialNames.extend]: 'B'}
+                }
+            ],
+            [
+                {a: {}, b: {}, c: {}, d: {type: 'number'}},
+                'C',
+                {
+                    _base: {d: {type: 'number'}},
+                    A: {a: {}},
+                    B: {b: {}, [specialNames.extend]: 'A'},
+                    C: {c: {}, [specialNames.extend]: 'B'}
+                }
+            ]
+        ] as Array<[
+            ReturnType<typeof Helper.extendModel>,
+            ...Parameters<typeof Helper.extendModel>
+        ]>
     )
     test('extendModels', ():void => {
         const modelConfiguration:ModelConfiguration =
@@ -255,27 +271,37 @@ describe('helper', ():void => {
             ]
         ] as const)
             expect(Helper.extendModels(
-                Tools.extend(true, Tools.copy(modelConfiguration), parameter)
+                Tools.extend(
+                    true,
+                    Tools.copy(modelConfiguration),
+                    parameter as Partial<ModelConfiguration>
+                )
             )).toStrictEqual(expected)
 
-        expect(():Models => Helper.extendModels(Tools.extend(
-            true, Tools.copy(modelConfiguration), {entities: {a: {}}}
-        ))).toThrow()
+        expect(():Models => Helper.extendModels(
+            Tools.extend(
+                true,
+                Tools.copy(modelConfiguration),
+                {entities: {a: {}}} as Partial<ModelConfiguration>
+            )
+        )).toThrow()
 
-        expect(Helper.extendModels(Tools.extend(
-            true,
-            Tools.copy(modelConfiguration),
-            {
-                property: {name: {typeRegularExpressionPattern: {
-                    public: 'a'
-                }}},
-                entities: {a: {}}
-            }
-        ))).toStrictEqual({a: {}})
+        expect(Helper.extendModels(
+            Tools.extend(
+                true,
+                Tools.copy(modelConfiguration),
+                {
+                    property: {name: {typeRegularExpressionPattern: {
+                        public: 'a'
+                    }}},
+                    entities: {a: {}}
+                } as unknown as Partial<ModelConfiguration>
+            )
+        )).toStrictEqual({a: {}})
     })
-    testEach<typeof Helper.normalizeAllowedModelRoles>(
-        'normalizeAllowedModelRoles',
-        Helper.normalizeAllowedModelRoles,
+    testEach<typeof Helper.normalizeAllowedRoles>(
+        'normalizeAllowedRoles',
+        Helper.normalizeAllowedRoles,
 
         [{read: ['a'], write: ['a']}, 'a'],
         [{read: [], write: []}, []],

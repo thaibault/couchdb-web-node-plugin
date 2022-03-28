@@ -14,7 +14,6 @@
     endregion
 */
 // region imports
-import Tools from 'clientnode'
 import path from 'path'
 
 import Index from '../index'
@@ -24,35 +23,43 @@ import {Configuration, Runner, Services} from '../type'
 describe('index', ():void => {
     // region prepare environment
     const configuration:Configuration =
-        packageConfiguration.webNode as Configuration
+        packageConfiguration.webNode as unknown as Configuration
     configuration.couchdb.url = 'http://dummy-url'
     // endregion
     // region tests
-    test('loadService', ():void =>
+    test('loadService', ():Promise<void> =>
         expect(Index.loadService(
-            {}, {couchdb: {connection: null, server: {}}}, configuration
+            {},
+            {couchdb: {
+                connection: null, server: {}
+            } as unknown as Services['couchdb']},
+            configuration
         )).resolves.toStrictEqual({name: 'couchdb', promise: null})
     )
     test('preLoadService', ():void => {
         const runner:Runner = configuration.couchdb.binary.runner[
             configuration.couchdb.binary.runner.length - 1
         ]
-        expect(Index.preLoadService({}, configuration)).resolves
+
+        void expect(Index.preLoadService({} as Services, configuration))
+            .resolves
             .toHaveProperty(
                 'couchdb.server.runner.binaryFilePath',
-                path.resolve(runner.location[0], runner.name)
+                path.resolve(runner.location[0], runner.name as string)
             )
     })
     test('shouldExit', async ():Promise<void> => {
-        let testValue:number = 0
+        let testValue = 0
         const services:Services = {couchdb: {
             connection: {close: ():void => {
                 testValue += 1
             }},
-            server: {process: {kill: ():void => {
+            server: {process: {kill: (_signal?:number):boolean => {
                 testValue += 1
+
+                return true
             }}}
-        }}
+        } as Services['couchdb']}
 
         expect((await Index.shouldExit(services, configuration)))
             .toStrictEqual(services)

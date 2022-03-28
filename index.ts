@@ -17,8 +17,15 @@
     endregion
 */
 // region imports
-import Tools, {globalContext} from 'clientnode'
-import {File, Mapping, PlainObject, ProcessCloseReason} from 'clientnode/type'
+import Tools, {currentRequire, globalContext} from 'clientnode'
+import {
+    File,
+    FirstParameter,
+    Mapping,
+    PlainObject,
+    ProcessCloseReason,
+    SecondParameter
+} from 'clientnode/type'
 import {promises as fileSystem} from 'fs'
 import path from 'path'
 import PouchDB from 'pouchdb'
@@ -35,17 +42,23 @@ import {
     Constraint,
     DatabaseError,
     DatabasePlugin,
+    DatabaseResponse,
     DeleteIndexOptions,
     Document,
+    ExistingDocument,
     Exception,
+    FullDocument,
     Index,
+    Migrator,
     ModelConfiguration,
     Models,
+    PartialFullDocument,
     PropertySpecification,
     Runner,
     Service,
     ServicePromises,
-    Services
+    Services,
+    SpecialPropertyNames
 } from './type'
 // endregion
 // region plugins/classes
@@ -79,7 +92,7 @@ export class Database implements PluginHandler {
      * service.
      */
     static async loadService(
-        servicePromises:ServicePromises,
+        servicePromises:Omit<ServicePromises, 'couchdb'>,
         services:Services,
         configuration:Configuration
     ):Promise<Service> {
@@ -94,7 +107,10 @@ export class Database implements PluginHandler {
             services.couchdb.server.start = Helper.startServer
             services.couchdb.server.stop = Helper.stopServer
 
-            promise = new Promise((resolve:Function, reject:Function):void => {
+            promise = new Promise<ProcessCloseReason>((
+                resolve:(_value:ProcessCloseReason) => void,
+                reject:(_reason:ProcessCloseReason) => void
+            ):void => {
                 /*
                     NOTE: These callbacks can be reassigned during server
                     restart.
@@ -314,9 +330,9 @@ export class Database implements PluginHandler {
         // endregion
         await Helper.initializeConnection(services, configuration)
 
-        const idName:string =
+        const idName:SpecialPropertyNames['id'] =
             configuration.couchdb.model.property.name.special.id
-        const typeName:string =
+        const typeName:SpecialPropertyNames['type'] =
             configuration.couchdb.model.property.name.special.type
 
         // region ensure presence of database security settings
@@ -349,17 +365,15 @@ export class Database implements PluginHandler {
             configuration.couchdb.model
         )
 
-        delete (modelConfiguration.property as {
-            defaultSpecification?:PlainObject
-        }).defaultSpecification
-        delete (modelConfiguration as {entities?:PlainObject}).entities
+        delete (modelConfiguration.property as
+            {defaultSpecification?:PropertySpecification}
+        ).defaultSpecification
+        delete (modelConfiguration as {entities?:Models}).entities
 
         const models:Models = Helper.extendModels(configuration.couchdb.model)
         if (configuration.couchdb.model.updateValidation) {
             const databaseHelperCode:string = await fileSystem.readFile(
-                /* eslint-disable no-eval */
-                eval('require.resolve')('./databaseHelper'),
-                /* eslint-enable no-eval */
+                currentRequire!.resolve('./databaseHelper'),
                 {encoding: configuration.core.encoding, flag: 'r'}
             )
             // region generate/update authentication/validation code
@@ -399,7 +413,9 @@ export class Database implements PluginHandler {
                     '}'
 
                 try {
+                    /* eslint-disable @typescript-eslint/no-implied-eval */
                     new Function(`return ${code}`)
+                    /* eslint-enable @typescript-eslint/no-implied-eval */
                 } catch (error) {
                     throw new Error(
                         `Generated ${type.name} code "${code}" doesn't ` +
@@ -449,6 +465,10 @@ export class Database implements PluginHandler {
                                         Array<Constraint>
                                 ))
                                     if (constraint.description)
+                                        /*
+                                            eslint-disable
+                                            @typescript-eslint/no-implied-eval
+                                        */
                                         try {
                                             new Function(
                                                 'return ' +
@@ -464,6 +484,10 @@ export class Database implements PluginHandler {
                                                 `${Tools.represent(error)}".`
                                             )
                                         }
+                                        /*
+                                            eslint-enable
+                                            @typescript-eslint/no-implied-eval
+                                        */
                             } else {
                                 const property:PropertySpecification =
                                     models[modelName][name]
@@ -482,6 +506,10 @@ export class Database implements PluginHandler {
                                             Constraint|null|undefined
                                         ) = property[type]
 
+                                        /*
+                                            eslint-disable
+                                            @typescript-eslint/no-implied-eval
+                                        */
                                         if (constraint?.description)
                                             try {
                                                 new Function(
@@ -501,13 +529,17 @@ export class Database implements PluginHandler {
                                                     '".'
                                                 )
                                             }
+                                        /*
+                                            eslint-enable
+                                            @typescript-eslint/no-implied-eval
+                                        */
                                     }
                             }
             // endregion
         }
         // region run auto-migration
         if (configuration.couchdb.model.autoMigrationPath) {
-            const migrater:Mapping<Function> = {}
+            const migrater:Mapping<Migrator> = {}
             if (await Tools.isDirectory(path.resolve(
                 configuration.couchdb.model.autoMigrationPath
             )))
@@ -530,7 +562,7 @@ export class Database implements PluginHandler {
                                     encoding: configuration.core.encoding,
                                     flag: 'r'
                                 }
-                            ))
+                            )) as Document
                         } catch (error) {
                             throw new Error(
                                 `Parsing document "${file.path}" to include ` +
@@ -553,13 +585,13 @@ export class Database implements PluginHandler {
                             ).forbidden?.startsWith('NoChange:'))
                                 console.info(
                                     'Including document "' +
-                                    `${document[idName] as string}" of type ` +
+                                    `${document[idName]}" of type ` +
                                     `"${document[typeName] as string}" ` +
                                     `hasn't changed existing document.`
                                 )
                             throw new Error(
                                 `Migrating document "` +
-                                `${document[idName] as string}" of type "` +
+                                `${document[idName]}" of type "` +
                                 `${document[typeName] as string}" has failed` +
                                 `: ${Tools.represent(error)}`
                             )
@@ -567,19 +599,19 @@ export class Database implements PluginHandler {
 
                         console.info(
                             'Including document "' +
-                            `${document[idName] as string}" of type "` +
+                            `${document[idName]}" of type "` +
                             `${document[typeName] as string}" was successful.`
                         )
                     } else if (path.extname(file.name) === '.js')
                         // region collect migrater
-                        migrater[file.path] = eval('require')(
-                            file.path
+                        migrater[file.path] = (
+                            currentRequire!(file.path) as {default:Migrator}
                         ).default
                         // endregion
                 }
             // region ensure all constraints to have a consistent initial state
             for (const retrievedDocument of (
-                await services.couchdb.connection.allDocs({
+                await services.couchdb.connection.allDocs<PlainObject>({
                     /* eslint-disable camelcase */
                     include_docs: true
                     /* eslint-enable camelcase */
@@ -592,7 +624,7 @@ export class Database implements PluginHandler {
                             .designDocumentNamePrefix
                     )
                 )) {
-                    const document:Document = retrievedDocument.doc as Document
+                    const document:ExistingDocument = retrievedDocument.doc!
                     let newDocument:Document = Tools.copy(document)
                     newDocument[
                         configuration.couchdb.model.property.name.special
@@ -636,7 +668,7 @@ export class Database implements PluginHandler {
 
                             console.info(
                                 `Running migrater "${name}" for document "` +
-                                `${newDocument[idName] as string}" (of type ` +
+                                `${newDocument[idName]}" (of type ` +
                                 `"${newDocument[typeName] as string}") was ` +
                                 'successful.'
                             )
@@ -664,14 +696,15 @@ export class Database implements PluginHandler {
                                 be removed so final removing would be skipped
                                 if we do not use a copy here.
                             */
-                            Tools.copy(newDocument),
+                            Tools.copy(newDocument) as FullDocument,
                             /*
                                 NOTE: During processing attachments sub object
                                 will be manipulated so copying is needed to
                                 copy to avoid unexpected behavior in this
                                 context.
                             */
-                            Tools.copy(document), {
+                            Tools.copy(document) as FullDocument,
+                            {
                                 db: configuration.couchdb.databaseName,
                                 name: configuration.couchdb.user.name,
                                 roles: ['_admin']
@@ -715,14 +748,14 @@ export class Database implements PluginHandler {
                     } catch (error) {
                         throw new Error(
                             `Replaceing auto migrated document "` +
-                            `${newDocument[idName] as string}" has failed: ` +
+                            `${newDocument[idName]}" has failed: ` +
                             Tools.represent(error)
                         )
                     }
 
                     console.info(
-                        'Auto migrating document "' +
-                        `${newDocument[idName] as string}" was successful.`
+                        `Auto migrating document "${newDocument[idName]}" ` +
+                        'was successful.'
                     )
                 }
             // endregion
@@ -877,7 +910,7 @@ export class Database implements PluginHandler {
             Database.changesStream.emit('error', {test: 2}), 6 * 1000)
         */
         const initialize = Tools.debounce(async ():Promise<void> => {
-            if (Database.changesStream)
+            if (Database.changesStream as unknown)
                 Database.changesStream.cancel()
 
             Database.changesStream = services.couchdb.connection.changes(
@@ -949,18 +982,22 @@ export class Database implements PluginHandler {
         if (!Object.prototype.hasOwnProperty.call(
             services.couchdb, 'connector'
         )) {
-            const idName:string =
+            const idName:SpecialPropertyNames['id'] =
                 configuration.couchdb.model.property.name.special.id
-            const revisionName:string =
+            const revisionName:SpecialPropertyNames['revision'] =
                 configuration.couchdb.model.property.name.special.revision
 
             services.couchdb.connector = PouchDB
             // region apply "latest/upsert" and ignore "NoChange" error plugin
-            const nativeBulkDocs:Function =
-                services.couchdb.connector.prototype.bulkDocs
+            const nativeBulkDocs:Connection['bulkDocs'] =
+                (services.couchdb.connector.prototype as Connection)
+                    .bulkDocs.bind(services.couchdb.connection) as
+                    DatabasePlugin
             services.couchdb.connector.plugin({bulkDocs: async function(
-                firstParameter:any, ...parameters:Array<any>
-            ):Promise<Array<PlainObject>> {
+                this:Connection,
+                firstParameter:unknown,
+                ...parameters:Array<unknown>
+            ):Promise<Array<DatabaseError|DatabaseResponse>> {
                 const toggleIDDetermining:boolean = (
                     parameters.length > 0 &&
                     parameters[parameters.length - 1] ===
@@ -976,13 +1013,14 @@ export class Database implements PluginHandler {
                     "latest" updates and optionally supports to ignore
                     "NoChange" errors.
                 */
-                if (
+                let data:Array<PartialFullDocument> = (
                     !Array.isArray(firstParameter) &&
                     firstParameter !== null &&
                     typeof firstParameter === 'object' &&
                     idName in firstParameter
-                )
-                    firstParameter = [firstParameter]
+                ) ?
+                    [firstParameter as PartialFullDocument] :
+                    firstParameter as Array<PartialFullDocument>
                 /*
                     NOTE: "bulkDocs()" does not get constructor given options
                     if none were provided for a single function call.
@@ -997,28 +1035,31 @@ export class Database implements PluginHandler {
                     parameters.unshift({
                         timeout: configuration.couchdb.connector.fetch.timeout
                     })
-                const result:Array<PlainObject> = await nativeBulkDocs.call(
-                    this, firstParameter, ...parameters
-                )
+
+                const result:Array<DatabaseError|DatabaseResponse> =
+                    await nativeBulkDocs.call(
+                        this,
+                        data as FirstParameter<Connection['bulkDocs']>,
+                        ...parameters as
+                            [SecondParameter<Connection['bulkDocs']>]
+                    )
+
                 const conflictingIndexes:Array<number> = []
-                const conflicts:Array<PlainObject> = []
+                const conflicts:Array<PartialFullDocument> = []
                 let index = 0
                 for (const item of result) {
-                    if (
-                        typeof firstParameter[index] === 'object' &&
-                        firstParameter !== null
-                    )
+                    if (typeof data[index] === 'object')
                         if (
-                            revisionName in firstParameter[index] &&
-                            item.name === 'conflict' &&
+                            revisionName in data[index] &&
+                            (item as DatabaseError).name === 'conflict' &&
                             ['latest', 'upsert'].includes(
-                                firstParameter[index][revisionName]
+                                data[index][revisionName]!
                             )
                         ) {
-                            conflicts.push(item)
+                            conflicts.push(data[index])
                             conflictingIndexes.push(index)
                         } else if (
-                            idName in firstParameter[index] &&
+                            idName in data[index] &&
                             configuration.couchdb.ignoreNoChangeError &&
                             'name' in item &&
                             item.name === 'forbidden' &&
@@ -1026,33 +1067,45 @@ export class Database implements PluginHandler {
                             (item.message as string).startsWith('NoChange:')
                         ) {
                             result[index] = {
-                                id: firstParameter[index][idName], ok: true
+                                id: data[index][idName], ok: true
                             }
                             if (!skipIDDetermining)
                                 result[index].rev =
-                                    revisionName in firstParameter[index] &&
+                                    revisionName in data[index] &&
                                     !['latest', 'upsert'].includes(
-                                        firstParameter[index][revisionName]
+                                        data[index][revisionName]!
                                     ) ?
-                                        firstParameter[index][revisionName] :
-                                        (await this.get(result[index].id))[
-                                            revisionName
-                                        ]
+                                        data[index][revisionName] :
+                                        ((await this.get(result[index].id!)) as
+                                            unknown as
+                                            FullDocument
+                                        )[revisionName]
                         }
+
                     index += 1
                 }
+
                 if (conflicts.length) {
-                    firstParameter = conflicts
+                    data = conflicts
                     if (toggleIDDetermining)
                         parameters.push(Database.toggleIDDetermining)
-                    const retriedResults:Array<PlainObject> =
-                        await this.bulkDocs(firstParameter, ...parameters)
+
+                    const retriedResults:Array<
+                        DatabaseError|DatabaseResponse
+                    > = (await this.bulkDocs(
+                        data,
+                        ...parameters as
+                            [SecondParameter<Connection['bulkDocs']>]
+                    )) as
+                        unknown as
+                        Array<DatabaseError|DatabaseResponse>
                     for (const retriedResult of retriedResults)
                         result[conflictingIndexes.shift() as number] =
                             retriedResult
                 }
+
                 return result
-            }} as DatabasePlugin)
+            } as unknown as DatabasePlugin})
             // endregion
             if (configuration.couchdb.debug)
                 services.couchdb.connector.debug.enable('*')

@@ -17,7 +17,7 @@
 import {spawn as spawnChildProcess} from 'child_process'
 import Tools, {CloseEventNames, globalContext} from 'clientnode'
 import {
-    Mapping, ProcessCloseCallback, ProcessErrorCallback
+    Mapping, ProcessCloseCallback, ProcessCloseReason, ProcessErrorCallback
 } from 'clientnode/type'
 import nodeFetch from 'node-fetch'
 import {promises as fileSystem} from 'fs'
@@ -32,15 +32,18 @@ import {
     Connection,
     DatabaseConnectorConfiguration,
     DatabaseFetch,
+    DatabasePlugin,
     DatabaseResponse,
     Document,
     DocumentRevisionIDMeta,
     Exception,
     FileSpecification,
+    FullDocument,
     Model,
     ModelConfiguration,
     Models,
-    OperationToAllowedRolesMapping,
+    NormalizedAllowedRoles,
+    PartialFullDocument,
     Services,
     SpecialPropertyNames
 } from './type'
@@ -97,7 +100,7 @@ export class Helper {
      */
     static mayStripRepresentation(
         this:void,
-        object:any,
+        object:unknown,
         maximumRepresentationTryLength:number,
         maximumRepresentationLength:number
     ):string {
@@ -139,7 +142,7 @@ export class Helper {
         documentData:Mapping,
         description:string,
         log = true,
-        idName = '_id',
+        idName:SpecialPropertyNames['id'] = '_id',
         designDocumentNamePrefix = '_design/'
     ):Promise<void> {
         const newDocument:Partial<Document> = {
@@ -206,9 +209,9 @@ export class Helper {
         )
         services.couchdb.connection.setMaxListeners(Infinity)
 
-        const idName:string =
+        const idName:SpecialPropertyNames['id'] =
             configuration.couchdb.model.property.name.special.id
-        const revisionName:string =
+        const revisionName:SpecialPropertyNames['revision'] =
             configuration.couchdb.model.property.name.special.revision
         // region apply "latest/upsert" and ignore "NoChange" error feature
         /*
@@ -216,34 +219,39 @@ export class Helper {
             "post" call so we have to wrap runtime generated methods.
         */
         for (const pluginName of ['post', 'put'] as const) {
-            const nativeMethod:Function =
+            const nativeMethod:DatabasePlugin =
                 services.couchdb.connection[pluginName]
                     .bind(services.couchdb.connection)
 
             services.couchdb.connection[pluginName] = async function(
-                firstParameter:any, ...parameter:Array<any>
-            ):Promise<any> {
+                this:Connection,
+                firstParameter:unknown,
+                ...parameter:Array<unknown>
+            ):Promise<DatabaseResponse> {
                 try {
-                    return await nativeMethod(firstParameter, ...parameter)
+                    return (
+                        await nativeMethod(firstParameter, ...parameter)
+                    ) as DatabaseResponse
                 } catch (error) {
                     if (
-                        idName in firstParameter &&
+                        idName in (firstParameter as PartialFullDocument) &&
                         configuration.couchdb.ignoreNoChangeError &&
                         (error as Exception).name === 'forbidden' &&
                         (error as Exception).message?.startsWith('NoChange:')
                     ) {
                         const result:DatabaseResponse = {
-                            id: firstParameter[idName],
+                            id: (firstParameter as FullDocument)[idName],
                             ok: true
                         } as DatabaseResponse
 
                         result.rev = (
-                            revisionName in firstParameter &&
+                            revisionName in
+                                (firstParameter as PartialFullDocument) &&
                             !['latest', 'upsert'].includes(
-                                firstParameter[revisionName]
+                                (firstParameter as FullDocument)[revisionName]
                             )
                         ) ?
-                            firstParameter[revisionName] :
+                            (firstParameter as FullDocument)[revisionName] :
                             (await this.get(result.id))[
                                 revisionName as keyof DocumentRevisionIDMeta
                             ]
@@ -253,7 +261,7 @@ export class Helper {
 
                     throw error
                 }
-            }
+            } as DatabasePlugin
         }
         // endregion
         // region ensure database presence
@@ -314,8 +322,7 @@ export class Helper {
                     [
                         '--max-old-space-size=' +
                             configuration.couchdb.binary.memoryInMegaByte,
-                        services.couchdb.server.runner.binaryFilePath as
-                            string
+                        services.couchdb.server.runner.binaryFilePath!
                     ]
             ).concat(
                 services.couchdb.server.runner.arguments ?
@@ -323,16 +330,16 @@ export class Helper {
                     []
             ),
             {
-                cwd: eval('process').cwd(),
+                cwd: (eval('process') as typeof process).cwd(),
                 env: (
                     Object.prototype.hasOwnProperty.call(
                         services.couchdb.server.runner, 'environment'
                     ) ?
                         {
-                            ...eval('process').env,
+                            ...(eval('process') as typeof process).env,
                             ...services.couchdb.server.runner.environment
                         } :
-                        eval('process').env
+                        (eval('process') as typeof process).env
                 ),
                 shell: true,
                 stdio: 'inherit'
@@ -356,13 +363,13 @@ export class Helper {
                 )
         }))
             .then(
-                (...parameter:Array<any>):void => {
-                    if (services.couchdb?.server?.resolve)
-                        services.couchdb.server.resolve.apply(this, parameter)
+                (value:ProcessCloseReason):void => {
+                    if (services.couchdb?.server?.resolve as unknown)
+                        services.couchdb.server.resolve.call(this, value)
                 },
-                (...parameter:Array<any>):void => {
-                    if (services.couchdb?.server?.resolve)
-                        services.couchdb.server.reject.apply(this, parameter)
+                (reason:ProcessCloseReason):void => {
+                    if (services.couchdb?.server?.resolve as unknown)
+                        services.couchdb.server.reject.call(this, reason)
                 }
             )
 
@@ -389,9 +396,9 @@ export class Helper {
         plugins:Array<Plugin>,
         pluginAPI:typeof PluginAPI
     ):Promise<void> {
-        const resolveServerProcessBackup:Function =
+        const resolveServerProcessBackup:(_value:ProcessCloseReason) => void =
             services.couchdb.server.resolve
-        const rejectServerProcessBackup:Function =
+        const rejectServerProcessBackup:(_reason:ProcessCloseReason) => void =
             services.couchdb.server.reject
 
         // Avoid to notify web node about server process stop.
@@ -447,8 +454,8 @@ export class Helper {
     static determineAllowedModelRolesMapping(
         this:void, modelConfiguration:ModelConfiguration
     ):AllowedModelRolesMapping {
-        const allowedRoleName:string =
-            modelConfiguration.property.name.special.allowedRole
+        const {allowedRoles: allowedRolesName} =
+            modelConfiguration.property.name.special
         const allowedModelRolesMapping:AllowedModelRolesMapping = {}
         const models:Models = Helper.extendModels(modelConfiguration)
 
@@ -456,14 +463,16 @@ export class Helper {
             if (
                 Object.prototype.hasOwnProperty.call(models, modelName) &&
                 Object.prototype.hasOwnProperty.call(
-                    models[modelName], allowedRoleName
+                    models[modelName], allowedRolesName
                 )
             ) {
-                allowedModelRolesMapping[modelName] =
-                    Helper.normalizeAllowedModelRoles(
-                        models[modelName][allowedRoleName] as AllowedRoles
+                allowedModelRolesMapping[modelName] = {
+                    properties: {},
+
+                    ...Helper.normalizeAllowedRoles(
+                        models[modelName][allowedRolesName]!
                     )
-                allowedModelRolesMapping[modelName].properties = {}
+                }
 
                 for (const name in models[modelName])
                     if (
@@ -472,18 +481,12 @@ export class Helper {
                         ) &&
                         models[modelName][name] !== null &&
                         typeof models[modelName][name] === 'object' &&
-                        Object.prototype.hasOwnProperty.call(
-                            models[modelName][name], 'allowedRoles'
-                        ) &&
                         models[modelName][name].allowedRoles
                     )
-                        (
-                            allowedModelRolesMapping[modelName].properties as
-                                AllowedModelRolesMapping
-                        )[name] = Helper.normalizeAllowedModelRoles(
-                            models[modelName][name].allowedRoles as
-                                AllowedRoles
-                        )
+                        allowedModelRolesMapping[modelName].properties[name] =
+                            Helper.normalizeAllowedRoles(
+                                models[modelName][name].allowedRoles!
+                            )
             } else
                 allowedModelRolesMapping[modelName] = {
                     properties: {},
@@ -523,7 +526,7 @@ export class Helper {
                         !model[name].index ||
                         modelConfiguration.property.name.reserved.concat(
                             specialNames.additional,
-                            specialNames.allowedRole,
+                            specialNames.allowedRoles,
                             specialNames.attachment,
                             specialNames.conflict,
                             specialNames.constraint.execution,
@@ -686,7 +689,7 @@ export class Helper {
                                         )[type]
                                     )
                         } else if (![
-                            specialNames.allowedRole,
+                            specialNames.allowedRoles,
                             specialNames.constraint.execution,
                             specialNames.constraint.expression,
                             specialNames.extend,
@@ -712,14 +715,14 @@ export class Helper {
      *
      * @returns Normalized roles representation.
      */
-    static normalizeAllowedModelRoles(
+    static normalizeAllowedRoles(
         this:void, roles:AllowedRoles
-    ):OperationToAllowedRolesMapping {
+    ):NormalizedAllowedRoles {
         if (Array.isArray(roles))
             return {read: roles, write: roles}
 
         if (typeof roles === 'object') {
-            const result:OperationToAllowedRolesMapping = {read: [], write: []}
+            const result:NormalizedAllowedRoles = {read: [], write: []}
 
             for (const type in result)
                 if (Object.prototype.hasOwnProperty.call(roles, type))

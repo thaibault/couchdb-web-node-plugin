@@ -15,8 +15,9 @@
 */
 // region imports
 import {ChildProcess} from 'child_process'
+import Tools from 'clientnode'
 import {
-    Mapping, PlainObject, Primitive, ProcessCloseReason
+    AnyFunction, Mapping, PlainObject, Primitive, ProcessCloseReason
 } from 'clientnode/type'
 import PouchDB from 'pouchdb'
 import {PluginAPI} from 'web-node'
@@ -28,62 +29,86 @@ import {
     ServicePromises as BaseServicePromises,
     Services as BaseServices
 } from 'web-node/type'
+
+import DatabaseHelper from './databaseHelper'
 // endregion
 // region exports
 /// region database implementation
 export type Attachments = PouchDB.Core.Attachments
+export type FullAttachment = PouchDB.Core.FullAttachment
+export type StubAttachment = PouchDB.Core.StubAttachment
+
 export type ChangesMeta = PouchDB.Core.ChangesMeta
-export type ChangesResponseChange<Type = any> =
+export type ChangesResponseChange<Type = unknown> =
     PouchDB.Core.ChangesResponseChange<Type>
-export type ChangesStream<Type = any> = PouchDB.Core.Changes<Type>
+export type ChangesStream<Type = unknown> = PouchDB.Core.Changes<Type>
 export type ChangesStreamOptions = PouchDB.Core.ChangesOptions
+
 export type Connection = PouchDB.Database
 export type Connector = PouchDB.Static
 export type DatabaseConnectorConfiguration =
     PouchDB.Configuration.RemoteDatabaseConfiguration
+
 export type DatabaseError = PouchDB.Core.Error
 export type DatabaseFetch = PouchDB.Core.Options['fetch']
 export type DatabaseResponse = PouchDB.Core.Response
+
 export type DeleteIndexOptions = PouchDB.Find.DeleteIndexOptions
-export type FullAttachment = PouchDB.Core.FullAttachment
+
+export type Document<Type = PlainObject> = PouchDB.Core.Document<Type>
+export type ExistingDocument<Type = PlainObject> =
+    PouchDB.Core.ExistingDocument<Type>
 export type DocumentGetMeta = PouchDB.Core.GetMeta
 export type DocumentIDMeta = PouchDB.Core.IdMeta
 export type DocumentRevisionIDMeta = PouchDB.Core.RevisionIdMeta
+
 export type Index = PouchDB.Find.Index
-export type DatabasePlugin = any
-export type StubAttachment = PouchDB.Core.StubAttachment
+
+export type DatabasePlugin = AnyFunction
 /// endregion
 /// region model
-export type AllowedRoles = Array<string>|string|{
-    read:Array<string>|string
-    write:Array<string>|string
-}
-// Recursive mapping from operations to their allowed roles.
-export type OperationToAllowedRolesMapping = {
-    properties?:AllowedModelRolesMapping
+// Represents a properties read and write roles.
+export type AllowedRoles = (
+    Array<string> |
+    string |
+    {
+        read?:Array<string>|string
+        write?:Array<string>|string
+    }
+)
+export interface NormalizedAllowedRoles {
     read:Array<string>
     write:Array<string>
+}
+/*
+    Recursive mapping from model and properties to their allowed read and write
+    roles.
+*/
+export interface NormalizedAllowedModelRoles extends NormalizedAllowedRoles {
+    properties:Mapping<NormalizedAllowedRoles>
 }
 /*
     Maps an artefact (usually type or property) to corresponding operations
     mapped to their allowed roles.
 */
-export type AllowedModelRolesMapping = Mapping<OperationToAllowedRolesMapping>
-export type Constraint = {
+export type AllowedModelRolesMapping = Mapping<NormalizedAllowedModelRoles>
+
+export interface Constraint {
     description?:null|string
     evaluation:string
 }
 export type Type = string|'any'|'boolean'|'integer'|'number'|'string'|'DateTime'
 export type TypeSpecification = Array<Type>|Type
+
 export type ConstraintKey =
     'arrayConstraintExecution'|'arrayConstraintExpression'|
     'conflictingConstraintExecution'|'conflictingConstraintExpression'|
     'constraintExecution'|'constraintExpression'
-export type SelectionMapping = {
+export interface SelectionMapping {
     label:string
     value:unknown
 }
-export type PropertySpecification = {
+export interface PropertySpecification {
     allowedRoles?:AllowedRoles|null
     arrayConstraintExecution?:Constraint|null
     arrayConstraintExpression?:Constraint|null
@@ -121,12 +146,12 @@ export type PropertySpecification = {
     value?:unknown
     writable?:boolean|null
 }
-export type FileSpecification = PropertySpecification & {
+export interface FileSpecification extends PropertySpecification {
     fileName?:PropertySpecification
 }
-export type Model = Mapping<PropertySpecification> & {
+export interface BaseModel {
     _allowedRoles?:AllowedRoles|null
-    _attachments?:null|Mapping<FileSpecification>
+    _attachments?:Mapping<FileSpecification>|null
     _constraintExecutions?:Array<Constraint>|Constraint|null
     _constraintExpressions?:Array<Constraint>|Constraint|null
     _createExecution?:null|string
@@ -138,7 +163,9 @@ export type Model = Mapping<PropertySpecification> & {
     _onUpdateExecution?:null|string
     _onUpdateExpression?:null|string
 }
+export type Model = BaseModel & Mapping<PropertySpecification>
 export type Models = Mapping<Model>
+
 export const PrimitiveTypes = [
     'boolean',
     'DateTime',
@@ -146,9 +173,12 @@ export const PrimitiveTypes = [
     'number',
     'string'
 ] as const
+
+export type UpdateStrategy = ''|'fillUp'|'incremental'|'migrate'
+
 export type DocumentContent =
     Array<DocumentContent>|PlainObject<Primitive>|Primitive
-export type DocumentStrategyMeta = {_updateStrategy?:string}
+export type DocumentStrategyMeta = {_updateStrategy?:UpdateStrategy}
 export type DocumentTypeMeta = {'-type':string}
 export type BaseDocument =
     ChangesMeta &
@@ -157,13 +187,24 @@ export type BaseDocument =
     DocumentRevisionIDMeta &
     DocumentStrategyMeta &
     DocumentTypeMeta
-export type Document = BaseDocument & PlainObject
-export type UpdateStrategy = ''|'fillUp'|'incremental'|'migrate'
-export type SpecialPropertyNames = {
-    additional:string
-    allowedRole:string
+export type FullDocument = BaseDocument & PlainObject
+export type PartialFullDocument = Partial<BaseDocument> & PlainObject
+
+export interface SpecialPropertyNames {
+    additional:'_additional'
+    allowedRoles:'_allowedRoles'
     attachment:'_attachments'
     conflict:'_conflicts'
+    deleted:'_deleted'
+    deletedConflict:'_deleted_conflict'
+    extend:'_extends'
+    id:'_id'
+    revision:'_rev'
+    revisions:'_revisions'
+    revisionsInformation:'_revs_info'
+    strategy:'_updateStrategy'
+    type:keyof DocumentTypeMeta
+
     constraint:{
         execution:string
         expression:string
@@ -172,26 +213,22 @@ export type SpecialPropertyNames = {
         execution:string
         expression:string
     }
-    deleted:'_deleted'
-    deletedConflict:'_deleted_conflict'
+
     designDocumentNamePrefix:string
-    extend:string
-    id:'_id'
+
     localSequence:string
+
     maximumAggregatedSize:string
     minimumAggregatedSize:string
+
     oldType:string
-    revision:'_rev'
-    revisions:'_revisions'
-    revisionsInformation:'_revs_info'
-    strategy:UpdateStrategy
-    type:keyof DocumentTypeMeta|typeof PrimitiveTypes[number]
+
     update:{
         execution:string
         expression:string
     }
 }
-export type PropertyNameConfiguration = {
+export interface PropertyNameConfiguration {
     reserved:Array<string>
     special:SpecialPropertyNames
     typeRegularExpressionPattern:{
@@ -200,7 +237,7 @@ export type PropertyNameConfiguration = {
     }
     validatedDocumentsCache:string
 }
-export type BaseModelConfiguration = {
+export interface BaseModelConfiguration {
     dateTimeFormat:'iso'|'iso8601'|'number'
     property:{
         defaultSpecification:PropertySpecification
@@ -208,7 +245,7 @@ export type BaseModelConfiguration = {
     }
     updateStrategy:UpdateStrategy
 }
-export type ModelConfiguration = BaseModelConfiguration & {
+export interface ModelConfiguration extends BaseModelConfiguration {
     autoMigrationPath:string
     entities:Models
     triggerInitialCompaction:boolean
@@ -235,7 +272,7 @@ export interface Runner {
         content:string
         path:string
     }
-    environment?:null|PlainObject
+    environment?:null|Mapping
     location:Array<string>|string
     name:Array<string>|string
 }
@@ -248,7 +285,7 @@ export type ConnectorConfiguration = DatabaseConnectorConfiguration & {
     // NOTE: "pouchdbs" version supports timeout parameter.
     fetch?:(RequestInit & {timeout:number})|null
 }
-export type Configuration<ConfigurationType = {}> =
+export type Configuration<ConfigurationType = Mapping<unknown>> =
     BaseConfiguration<{
         couchdb:{
             attachAutoRestarter:boolean
@@ -289,18 +326,18 @@ export interface Service extends BaseService {
     name:'couchdb'
     promise:null|Promise<ProcessCloseReason>
 }
-export type ServicePromises<ServicePromiseType = {}> =
+export type ServicePromises<ServicePromiseType = Mapping<unknown>> =
     BaseServicePromises<{couchdb:Promise<ProcessCloseReason>}> &
     ServicePromiseType
-export type Services<ServiceType = {}> =
+export type Services<ServiceType = Mapping<unknown>> =
     BaseServices<{
         couchdb:{
             connection:Connection
             connector:Connector
             server:{
                 process:ChildProcess
-                reject:Function
-                resolve:Function
+                reject:(_value:ProcessCloseReason) => void
+                resolve:(_reason:ProcessCloseReason) => void
                 restart:(
                     _services:Services,
                     _configuration:Configuration,
@@ -354,35 +391,131 @@ export interface PluginHandler extends BasePluginHandler {
     ):Services
 }
 /// endregion
-export type Exception<DataType = {}> =
+/// region evaluation
+export interface EmptyEvaluationExceptionData {empty:string}
+export type EmptyEvaluationException = Exception<EmptyEvaluationExceptionData>
+
+export interface EvaluationExceptionData<S = Mapping<unknown>> {
+    code:string, error:Error, scope:S
+}
+export interface CompilationExceptionData<S = Mapping<unknown>> extends
+    EvaluationExceptionData<S>
+{
+    compilation:string
+}
+export interface RuntimeExceptionData<S = Mapping<unknown>> extends
+    EvaluationExceptionData<S>
+{
+    runtime:string
+}
+export type EvaluationException<S = Mapping<unknown>> =
+    Exception<EvaluationExceptionData<S>>
+//// region scopes
+export interface BasicScope {
+    attachmentWithPrefixExists:(_namePrefix:string) => boolean
+    checkDocument:(
+        _newDocument:PartialFullDocument,
+        _oldDocument:PartialFullDocument|null,
+        _parentNames:Array<string>
+    ) => CheckedDocumentResult
+    getFileNameByPrefix:(_prefix?:string, _attachments?:Attachments) =>
+        null|string
+    serialize:(_value:unknown) => string
+
+    id:string
+    revision:string
+
+    idName:string
+    revisionName:string
+    specialNames:SpecialPropertyNames
+    typeName:string
+
+    modelConfiguration:BaseModelConfiguration
+    models:Models
+
+    now:Date
+    nowUTCTimestamp:number
+
+    securitySettings:Partial<SecuritySettings>
+
+    userContext:Partial<UserContext>
+}
+export interface CommonScope {
+    checkPropertyContent:(
+        _newValue:unknown,
+        _name:string,
+        _propertySpecification:PropertySpecification,
+        _oldValue:unknown
+    ) => CheckedPropertyResult
+
+    model:Model
+    modelName:string
+    type:string
+
+    newDocument:Attachments|PartialFullDocument
+    oldDocument:Attachments|null|PartialFullDocument
+
+    parentNames:Array<string>
+    pathDescription:string
+}
+export interface PropertyScope extends CommonScope {
+    name:string
+
+    newValue:unknown
+    oldValue:unknown
+
+    propertySpecification:PropertySpecification
+}
+//// endregion
+export interface EvaluationResult<T = unknown, S = BasicScope & CommonScope> {
+    code:string
+    result:T
+    scope:S
+}
+export type Evaluate<R = unknown, P = unknown> =
+    (..._parameters:Array<P>) => R
+/// endregion
+/// region checker results
+export interface CheckedResult {
+    changedPath:Array<string>
+}
+export interface CheckedPropertyResult extends CheckedResult {
+    newValue:unknown
+}
+export interface CheckedDocumentResult extends CheckedResult {
+    newDocument:PartialFullDocument
+}
+/// endregion
+export type Exception<DataType = Mapping<unknown>> =
     {
         message:string
         name:string
     } &
     DataType
 
-export type EmptyEvaluationExceptionData = {empty:string}
-export type EmptyEvaluationException = Exception<EmptyEvaluationExceptionData>
+export type Migrator = (
+    document:Document,
+    scope:{
+        configuration:Configuration
 
-export type EvaluationExceptionData = {
-    code:string, error:Error, scope:Mapping<unknown>
-}
-export type CompilationExceptionData =
-    EvaluationExceptionData & {compilation:string}
-export type RuntimeExceptionData =
-    EvaluationExceptionData & {runtime:string}
+        databaseHelper:DatabaseHelper
+        tools:typeof Tools
 
-export type EvaluationException = Exception<EvaluationExceptionData>
+        idName:string
+        typeName:string
 
-export interface CheckedDocumentResult {
-    changedPath:Array<string>
-    newDocument:Document
-}
-export interface EvaluationResult<Type = any> {
-    code:string
-    result:Type
-    scope:object
-}
+        migrater:Mapping<Migrator>
+        models:Models
+        modelConfiguration:ModelConfiguration
+
+        selfFilePath:string
+
+        services:Services
+    }
+) => Document|null
+
+export type DateRepresentationType = Date|null|number|string
+/// region models
 export type User = BaseDocument & {
     password:string
     roles:Array<string>
@@ -395,7 +528,7 @@ export interface Location {
     latitude:number
     longitude:number
 }
-export type Scope = Mapping & {parameter:any}
+/// endregion
 // endregion
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
