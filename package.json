@@ -436,7 +436,7 @@
     "assetPattern": {
       "javaScript": {
         "excludeFilePathRegularExpression": {
-          "__evaluate__": "2 < self.givenCommandLineArguments.length && self.givenCommandLineArguments[2] === 'test' ? '^$' : '.+'"
+          "__evaluate__": "2 < self.givenCommandLineArguments.length && self.givenCommandLineArguments[2].startsWith('test') ? '^$' : '.+'"
         }
       }
     },
@@ -446,7 +446,7 @@
     },
     "injection": {
       "entry": {
-        "__evaluate__": "2 < self.givenCommandLineArguments.length && self.givenCommandLineArguments[2] === 'test' ? {testBundle: 'test'} : {helper: './helper', index: './index', type: './type'}"
+        "__evaluate__": "2 < self.givenCommandLineArguments.length && self.givenCommandLineArguments[2].startsWith('test') ? {testBundle: 'test'} : {helper: './helper', index: './index', type: './type'}"
       }
     },
     "module": {
