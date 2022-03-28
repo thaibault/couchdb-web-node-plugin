@@ -261,7 +261,7 @@ export class Helper {
 
                     throw error
                 }
-            }
+            } as DatabasePlugin
         }
         // endregion
         // region ensure database presence

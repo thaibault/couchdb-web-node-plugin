@@ -910,7 +910,7 @@ export class Database implements PluginHandler {
             Database.changesStream.emit('error', {test: 2}), 6 * 1000)
         */
         const initialize = Tools.debounce(async ():Promise<void> => {
-            if (Database.changesStream)
+            if (Database.changesStream as unknown)
                 Database.changesStream.cancel()
 
             Database.changesStream = services.couchdb.connection.changes(
@@ -990,7 +990,9 @@ export class Database implements PluginHandler {
             services.couchdb.connector = PouchDB
             // region apply "latest/upsert" and ignore "NoChange" error plugin
             const nativeBulkDocs:Connection['bulkDocs'] =
-                (services.couchdb.connector.prototype as Connection).bulkDocs
+                (services.couchdb.connector.prototype as Connection)
+                    .bulkDocs.bind(services.couchdb.connection) as
+                    DatabasePlugin
             services.couchdb.connector.plugin({bulkDocs: async function(
                 this:Connection,
                 firstParameter:unknown,
@@ -1103,7 +1105,7 @@ export class Database implements PluginHandler {
                 }
 
                 return result
-            }} as unknown as DatabasePlugin)
+            } as unknown as DatabasePlugin})
             // endregion
             if (configuration.couchdb.debug)
                 services.couchdb.connector.debug.enable('*')
