@@ -446,95 +446,78 @@ export class Database implements PluginHandler {
             }
             // endregion
             // region check if all constraint descriptions compile
-            for (const modelName in models)
-                if (Object.prototype.hasOwnProperty.call(models, modelName))
-                    for (const name in models[modelName])
-                        if (Object.prototype.hasOwnProperty.call(
-                            models[modelName], name
-                        ))
-                            if ([
-                                modelConfiguration.property.name.special
-                                    .constraint.execution,
-                                modelConfiguration.property.name.special
-                                    .constraint.expression
-                            ].includes(name)) {
-                                for (const constraint of (
-                                    [] as Array<Constraint>
-                                ).concat(
-                                    models[modelName][name] as
-                                        Array<Constraint>
-                                ))
-                                    if (constraint.description)
-                                        /*
-                                            eslint-disable
-                                            @typescript-eslint/no-implied-eval
-                                        */
-                                        try {
-                                            new Function(
-                                                'return ' +
-                                                constraint.description
-                                            )
-                                        } catch (error) {
-                                            throw new Error(
-                                                `Specified constraint ` +
-                                                `description "` +
-                                                `${constraint.description}" ` +
-                                                `for model "${modelName}" ` +
-                                                `doesn't compile: "` +
-                                                `${Tools.represent(error)}".`
-                                            )
-                                        }
-                                        /*
-                                            eslint-enable
-                                            @typescript-eslint/no-implied-eval
-                                        */
-                            } else {
-                                const property:PropertySpecification =
-                                    models[modelName][name]
+            for (const [modelName, model] of Object.entries(models))
+                for (const [name, specification] of Object.entries(model))
+                    if ([
+                        modelConfiguration.property.name.special.constraint
+                            .execution,
+                        modelConfiguration.property.name.special.constraint
+                            .expression
+                    ].includes(name)) {
+                        for (const constraint of (
+                            [] as Array<Constraint>
+                        ).concat(specification as Array<Constraint>))
+                            if (constraint.description)
+                                /*
+                                    eslint-disable
+                                    @typescript-eslint/no-implied-eval
+                                */
+                                try {
+                                    new Function(
+                                        `return ${constraint.description}`
+                                    )
+                                } catch (error) {
+                                    throw new Error(
+                                        `Specified constraint description "` +
+                                        `${constraint.description}" for ` +
+                                        `model "${modelName}" doesn't ` +
+                                        `compile: "${Tools.represent(error)}".`
+                                    )
+                                }
+                                /*
+                                    eslint-enable
+                                    @typescript-eslint/no-implied-eval
+                                */
+                    } else {
+                        const property:PropertySpecification = specification
 
-                                for (const type of [
-                                    'conflictingConstraintExpression',
-                                    'conflictingConstraintExecution',
-                                    'constraintExpression',
-                                    'constraintExecution'
-                                ] as const)
-                                    if (
-                                        property !== null &&
-                                        typeof property === 'object'
-                                    ) {
-                                        const constraint:(
-                                            Constraint|null|undefined
-                                        ) = property[type]
+                        for (const type of [
+                            'conflictingConstraintExpression',
+                            'conflictingConstraintExecution',
+                            'constraintExpression',
+                            'constraintExecution'
+                        ] as const)
+                            if (
+                                property !== null &&
+                                typeof property === 'object'
+                            ) {
+                                const constraint:(Constraint|null|undefined) =
+                                    property[type]
 
-                                        /*
-                                            eslint-disable
-                                            @typescript-eslint/no-implied-eval
-                                        */
-                                        if (constraint?.description)
-                                            try {
-                                                new Function(
-                                                    constraint.description
-                                                )
-                                            } catch (error) {
-                                                throw new Error(
-                                                    'Specified constraint ' +
-                                                    'description "' +
-                                                    constraint.description +
-                                                    '" for model "' +
-                                                    `${modelName}" in ` +
-                                                    `property "${name}" as "` +
-                                                    `${type}" doesn't ` +
-                                                    'compile: "' +
-                                                    Tools.represent(error) +
-                                                    '".'
-                                                )
-                                            }
-                                        /*
-                                            eslint-enable
-                                            @typescript-eslint/no-implied-eval
-                                        */
+                                /*
+                                    eslint-disable
+                                    @typescript-eslint/no-implied-eval
+                                */
+                                if (constraint?.description)
+                                    try {
+                                        new Function(constraint.description)
+                                    } catch (error) {
+                                        throw new Error(
+                                            'Specified constraint ' +
+                                            'description "' +
+                                            constraint.description +
+                                            `" for model "${modelName}" in ` +
+                                            `property "${name}" as "${type}"` +
+                                            ' doesn\'t compile: "' +
+                                            `${Tools.represent(error)}".`
+                                        )
                                     }
+                                /*
+                                    eslint-enable
+                                    @typescript-eslint/no-implied-eval
+                                */
                             }
+                    }
             // endregion
         }
         // region run auto-migration
@@ -770,14 +753,11 @@ export class Database implements PluginHandler {
                 await services.couchdb.connection.getIndexes()
             ).indexes
 
-            for (const modelName in models)
-                if (
-                    Object.prototype.hasOwnProperty.call(models, modelName) &&
-                    (new RegExp(
-                        configuration.couchdb.model.property.name
-                            .typeRegularExpressionPattern.public
-                    )).test(modelName)
-                ) {
+            for (const [modelName, model] of Object.entries(models))
+                if ((new RegExp(
+                    configuration.couchdb.model.property.name
+                        .typeRegularExpressionPattern.public
+                )).test(modelName)) {
                     await services.couchdb.connection.createIndex({index: {
                         ddoc: `${modelName}-GenericIndex`,
                         fields: [typeName],
@@ -787,7 +767,7 @@ export class Database implements PluginHandler {
                     for (
                         const propertyName of
                         Helper.determineGenericIndexablePropertyNames(
-                            configuration.couchdb.model, models[modelName]
+                            configuration.couchdb.model, model
                         )
                     ) {
                         const name =
@@ -821,13 +801,12 @@ export class Database implements PluginHandler {
             for (const index of indexes)
                 if (index.name.endsWith('-GenericIndex')) {
                     let exists = false
-                    for (const modelName in models)
+                    for (const [modelName, model] of Object.entries(models))
                         if (index.name.startsWith(`${modelName}-`)) {
                             for (
                                 const name of
                                 Helper.determineGenericIndexablePropertyNames(
-                                    configuration.couchdb.model,
-                                    models[modelName]
+                                    configuration.couchdb.model, model
                                 )
                             )
                                 if ([
