@@ -219,12 +219,8 @@ export class DatabaseHelper {
         ):never => {
             const result:Exception<DataType> =
                 {[type]: message, message, name: type} as Exception<DataType>
-            for (const name in additionalErrorData)
-                if (Object.prototype.hasOwnProperty.call(
-                    additionalErrorData, name
-                ))
-                    result[name] = additionalErrorData[name] as
-                        Exception<DataType>[Extract<keyof DataType, string>]
+            for (const [name, data] of Object.entries(additionalErrorData))
+                (result as Mapping<unknown>)[name] = data
 
             throw result
         }
@@ -319,18 +315,17 @@ export class DatabaseHelper {
         /// region collect old model types to migrate.
         const oldModelMapping:Mapping = {}
         if (updateStrategy === 'migrate')
-            for (const name in models)
+            for (const [name, model] of Object.entries(models))
                 if (
-                    Object.prototype.hasOwnProperty.call(models, name) &&
                     Object.prototype.hasOwnProperty.call(
-                        models[name], specialNames.oldType
+                        model, specialNames.oldType
                     ) &&
                     ![null, undefined].includes(
-                        models[name][specialNames.oldType] as unknown as null
+                        model[specialNames.oldType] as unknown as null
                     )
                 )
                     for (const oldName of ([] as Array<string>).concat(
-                        models[name][specialNames.oldType] as Array<string>
+                        model[specialNames.oldType] as Array<string>
                     ))
                         oldModelMapping[oldName] = name
         /// endregion
@@ -417,13 +412,8 @@ export class DatabaseHelper {
                 attachments = newDocument[specialNames.attachment]
 
             if (prefix) {
-                for (const name in attachments)
-                    if (
-                        Object.prototype.hasOwnProperty.call(
-                            attachments, name
-                        ) &&
-                        name.startsWith(prefix)
-                    )
+                for (const name of Object.keys(attachments!))
+                    if (name.startsWith(prefix))
                         return name
             } else {
                 const keys:Array<string> = Object.keys(attachments!)
@@ -1422,173 +1412,159 @@ export class DatabaseHelper {
                     []
             ))
                 // region run hooks and check for presence of needed data
-                if (specialNames.attachment === name) {
+                if (specialNames.attachment === name)
                     // region attachment
-                    for (const type in model[name])
-                        if (Object.prototype.hasOwnProperty.call(
-                            model[name]!, type
-                        )) {
-                            if (
-                                !Object.prototype.hasOwnProperty.call(
-                                    newDocument, name
-                                ) ||
-                                newDocument[name] === null
-                            )
-                                newDocument[name] = {}
+                    for (const [type, property] of Object.entries(
+                        model[name]!
+                    )) {
+                        if (
+                            !Object.prototype.hasOwnProperty.call(
+                                newDocument, name
+                            ) ||
+                            newDocument[name] === null
+                        )
+                            newDocument[name] = {}
 
-                            if (
-                                oldDocument &&
-                                !Object.prototype.hasOwnProperty.call(
-                                    oldDocument, name
-                                )
+                        if (
+                            oldDocument &&
+                            !Object.prototype.hasOwnProperty.call(
+                                oldDocument, name
                             )
-                                oldDocument[name] = {}
+                        )
+                            oldDocument[name] = {}
 
-                            const newFileNames:Array<string> =
-                                Object.keys(
-                                    newDocument[name] as Attachments
-                                ).filter((fileName:string):boolean =>
+                        const newFileNames:Array<string> =
+                            Object.keys(newDocument[name] as Attachments)
+                                .filter((fileName:string):boolean =>
                                     ((
                                         newDocument[name] as Attachments
                                     )[fileName] as FullAttachment).data !==
                                         null &&
                                     fileNameMatchesModelType(
-                                        type, fileName, model[name]![type]
+                                        type, fileName, property
                                     )
                                 )
 
-                            const newAttachments:Attachments =
-                                newDocument[name] as Attachments
+                        const newAttachments:Attachments =
+                            newDocument[name] as Attachments
 
-                            let oldFileNames:Array<string> = []
-                            if (oldDocument) {
-                                const oldAttachments:Attachments =
-                                    oldDocument[name] as Attachments
-                                oldFileNames = Object.keys(oldAttachments)
-                                    .filter((fileName:string):boolean =>
-                                        !(
-                                            Object.prototype.hasOwnProperty
-                                                .call(
-                                                    newAttachments,
-                                                    fileName
-                                                ) &&
-                                            Object.prototype.hasOwnProperty
-                                                .call(
-                                                    newAttachments[fileName],
-                                                    'data'
-                                                ) &&
-                                            (
-                                                newAttachments[fileName] as
-                                                    FullAttachment
-                                            ).data === null
+                        let oldFileNames:Array<string> = []
+                        if (oldDocument) {
+                            const oldAttachments:Attachments =
+                                oldDocument[name] as Attachments
+                            oldFileNames = Object.keys(oldAttachments)
+                                .filter((fileName:string):boolean =>
+                                    !(
+                                        Object.prototype.hasOwnProperty.call(
+                                            newAttachments, fileName
                                         ) &&
-                                        Boolean(oldAttachments[fileName]) &&
+                                        Object.prototype.hasOwnProperty.call(
+                                            newAttachments[fileName], 'data'
+                                        ) &&
                                         (
-                                            Object.prototype.hasOwnProperty
-                                                .call(
-                                                    oldAttachments[fileName],
-                                                    'data'
-                                                ) &&
-                                            (oldAttachments[fileName] as
+                                            newAttachments[fileName] as
                                                 FullAttachment
-                                            ).data !== null ||
-                                            (oldAttachments[fileName] as
-                                                StubAttachment
-                                            ).stub &&
-                                            Boolean((oldAttachments[fileName] as
-                                                StubAttachment
-                                            ).digest)
+                                        ).data === null
+                                    ) &&
+                                    Boolean(oldAttachments[fileName]) &&
+                                    (
+                                        Object.prototype.hasOwnProperty.call(
+                                            oldAttachments[fileName], 'data'
                                         ) &&
-                                        Boolean(fileNameMatchesModelType(
-                                            type, fileName, model[name]![type]
-                                        ))
-                                    )
-                            }
+                                        (oldAttachments[fileName] as
+                                            FullAttachment
+                                        ).data !== null ||
+                                        (oldAttachments[fileName] as
+                                            StubAttachment
+                                        ).stub &&
+                                        Boolean((oldAttachments[fileName] as
+                                            StubAttachment
+                                        ).digest)
+                                    ) &&
+                                    Boolean(fileNameMatchesModelType(
+                                        type, fileName, property
+                                    ))
+                                )
+                        }
 
-                            const propertySpecification:PropertySpecification =
-                                model[name]![
-                                    type as keyof PropertySpecification
-                                ]
+                        const propertySpecification:PropertySpecification =
+                            property
 
-                            for (const fileName of newFileNames)
-                                runCreatePropertyHook(
-                                    propertySpecification,
-                                    newAttachments,
-                                    oldDocument && oldDocument[name] ?
-                                        oldDocument[name]! :
-                                        null,
-                                    fileName
+                        for (const fileName of newFileNames)
+                            runCreatePropertyHook(
+                                propertySpecification,
+                                newAttachments,
+                                oldDocument && oldDocument[name] ?
+                                    oldDocument[name]! :
+                                    null,
+                                fileName
+                            )
+
+                        for (const fileName of newFileNames)
+                            runUpdatePropertyHook(
+                                propertySpecification,
+                                newAttachments,
+                                oldDocument && oldDocument[name] ?
+                                    oldDocument[name]! :
+                                    null,
+                                fileName
+                            )
+
+                        if ([null, undefined].includes(
+                            propertySpecification.default as null
+                        )) {
+                            if (!(
+                                propertySpecification.nullable ||
+                                newFileNames.length > 0 ||
+                                oldFileNames.length > 0
+                            ))
+                                throwError(
+                                    'AttachmentMissing: Missing attachment ' +
+                                    `for type "${type}"${pathDescription}.`
                                 )
 
-                            for (const fileName of newFileNames)
-                                runUpdatePropertyHook(
-                                    propertySpecification,
-                                    newAttachments,
-                                    oldDocument && oldDocument[name] ?
-                                        oldDocument[name]! :
-                                        null,
-                                    fileName
-                                )
-
-                            if ([null, undefined].includes(
-                                propertySpecification.default as null
-                            )) {
-                                if (!(
-                                    propertySpecification.nullable ||
-                                    newFileNames.length > 0 ||
-                                    oldFileNames.length > 0
-                                ))
-                                    throwError(
-                                        'AttachmentMissing: Missing ' +
-                                        `attachment for type "${type}"` +
-                                        `${pathDescription}.`
-                                    )
-
-                                if (
-                                    updateStrategy === 'fillUp' &&
-                                    newFileNames.length === 0 &&
-                                    oldFileNames.length > 0
-                                )
-                                    for (const fileName of oldFileNames)
-                                        if (newAttachments[fileName] === null)
-                                            changedPath = parentNames.concat(
-                                                name, fileName, 'file removed'
-                                            )
-                                        else
-                                            newAttachments[fileName] = ((
-                                                oldDocument
-                                            )![name] as Attachments)[fileName]
-                            } else if (newFileNames.length === 0)
-                                if (oldFileNames.length === 0) {
-                                    for (
-                                        const fileName in
-                                            propertySpecification.default as
-                                                object
-                                    )
-                                        if (Object.prototype.hasOwnProperty
-                                            .call(
-                                                propertySpecification
-                                                    .default as
-                                                        object,
-                                                fileName
-                                            )
-                                        ) {
-                                            newAttachments[fileName] = (
-                                                propertySpecification
-                                                    .default as Attachments
-                                            )[fileName]
-                                            changedPath = parentNames.concat(
-                                                name, type, 'add default file'
-                                            )
-                                        }
-                                } else if (updateStrategy === 'fillUp')
-                                    for (const fileName of oldFileNames)
+                            if (
+                                updateStrategy === 'fillUp' &&
+                                newFileNames.length === 0 &&
+                                oldFileNames.length > 0
+                            )
+                                for (const fileName of oldFileNames)
+                                    if (newAttachments[fileName] === null)
+                                        changedPath = parentNames.concat(
+                                            name, fileName, 'file removed'
+                                        )
+                                    else
                                         newAttachments[fileName] = ((
                                             oldDocument
                                         )![name] as Attachments)[fileName]
-                        }
+                        } else if (newFileNames.length === 0)
+                            if (oldFileNames.length === 0) {
+                                for (
+                                    const fileName in
+                                        propertySpecification.default as
+                                            object
+                                )
+                                    if (Object.prototype.hasOwnProperty.call(
+                                        propertySpecification.default as
+                                            object,
+                                        fileName
+                                    )) {
+                                        newAttachments[fileName] = (
+                                            propertySpecification.default as
+                                                Attachments
+                                        )[fileName]
+                                        changedPath = parentNames.concat(
+                                            name, type, 'add default file'
+                                        )
+                                    }
+                            } else if (updateStrategy === 'fillUp')
+                                for (const fileName of oldFileNames)
+                                    newAttachments[fileName] = ((
+                                        oldDocument
+                                    )![name] as Attachments)[fileName]
+                    }
                     // endregion
-                } else {
+                else {
                     const propertySpecification:PropertySpecification =
                         specifiedPropertyNames.includes(name) ?
                             model[name] :
@@ -1669,11 +1645,8 @@ export class DatabaseHelper {
             // region check given data
             /// region remove new data which already exists
             if (oldDocument && updateStrategy === 'incremental')
-                for (const name in newDocument)
+                for (const [name, value] of Object.entries(newDocument))
                     if (
-                        Object.prototype.hasOwnProperty.call(
-                            newDocument, name
-                        ) &&
                         Object.prototype.hasOwnProperty.call(
                             oldDocument, name
                         ) &&
@@ -1689,9 +1662,8 @@ export class DatabaseHelper {
                             typeName
                         ).includes(name) &&
                         (
-                            oldDocument[name] === newDocument[name] ||
-                            serialize(oldDocument[name]) ===
-                                serialize(newDocument[name])
+                            oldDocument[name] === value ||
+                            serialize(oldDocument[name]) === serialize(value)
                         )
                     ) {
                         delete newDocument[name]
@@ -1699,6 +1671,7 @@ export class DatabaseHelper {
                         continue
                     }
             /// endregion
+            // TODO stand
             for (const name in newDocument)
                 if (
                     Object.prototype.hasOwnProperty.call(newDocument, name) &&
@@ -1738,6 +1711,7 @@ export class DatabaseHelper {
                         continue
 
                     // region writable/mutable/nullable
+                    // TODO avoid re-defining on every iteration
                     const checkWriteableMutableNullable = (
                         propertySpecification:PropertySpecification,
                         newDocument:PartialFullDocument,
