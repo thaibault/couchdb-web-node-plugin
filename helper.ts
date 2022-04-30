@@ -459,34 +459,24 @@ export class Helper {
         const allowedModelRolesMapping:AllowedModelRolesMapping = {}
         const models:Models = Helper.extendModels(modelConfiguration)
 
-        for (const modelName in models)
-            if (
-                Object.prototype.hasOwnProperty.call(models, modelName) &&
-                Object.prototype.hasOwnProperty.call(
-                    models[modelName], allowedRolesName
-                )
-            ) {
+        for (const [modelName, model] of Object.entries(models))
+            if (Object.prototype.hasOwnProperty.call(
+                model, allowedRolesName
+            )) {
                 allowedModelRolesMapping[modelName] = {
                     properties: {},
 
-                    ...Helper.normalizeAllowedRoles(
-                        models[modelName][allowedRolesName]!
-                    )
+                    ...Helper.normalizeAllowedRoles(model[allowedRolesName]!)
                 }
 
-                for (const name in models[modelName])
+                for (const [name, property] of Object.entries(model))
                     if (
-                        Object.prototype.hasOwnProperty.call(
-                            models[modelName], name
-                        ) &&
-                        models[modelName][name] !== null &&
-                        typeof models[modelName][name] === 'object' &&
-                        models[modelName][name].allowedRoles
+                        property !== null &&
+                        typeof property === 'object' &&
+                        property.allowedRoles
                     )
                         allowedModelRolesMapping[modelName].properties[name] =
-                            Helper.normalizeAllowedRoles(
-                                models[modelName][name].allowedRoles!
-                            )
+                            Helper.normalizeAllowedRoles(property.allowedRoles)
             } else
                 allowedModelRolesMapping[modelName] = {
                     properties: {},
@@ -631,80 +621,61 @@ export class Helper {
             modelConfiguration.property.name.special
         const models:Models = {}
 
-        for (const modelName in modelConfiguration.entities)
-            if (Object.prototype.hasOwnProperty.call(
-                modelConfiguration.entities, modelName
-            )) {
-                if (!(
-                    new RegExp(
-                        modelConfiguration.property.name
-                            .typeRegularExpressionPattern.public
-                    ).test(modelName) ||
-                    (new RegExp(
-                        modelConfiguration.property.name
-                            .typeRegularExpressionPattern.private
-                    )).test(modelName)
-                ))
-                    throw new Error(
-                        'Model names have to match "' +
-                        modelConfiguration.property.name
-                            .typeRegularExpressionPattern.public +
-                        '" or "' +
-                        modelConfiguration.property.name
-                            .typeRegularExpressionPattern.private +
-                        `" for private one (given name: "${modelName}").`
-                    )
-
-                models[modelName] = Helper.extendModel(
-                    modelName, modelConfiguration.entities, specialNames.extend
+        for (const modelName of Object.keys(modelConfiguration.entities)) {
+            if (!(
+                new RegExp(
+                    modelConfiguration.property.name
+                        .typeRegularExpressionPattern.public
+                ).test(modelName) ||
+                (new RegExp(
+                    modelConfiguration.property.name
+                        .typeRegularExpressionPattern.private
+                )).test(modelName)
+            ))
+                throw new Error(
+                    'Model names have to match "' +
+                    modelConfiguration.property.name
+                        .typeRegularExpressionPattern.public +
+                    '" or "' +
+                    modelConfiguration.property.name
+                        .typeRegularExpressionPattern.private +
+                    `" for private one (given name: "${modelName}").`
                 )
-            }
 
-        for (const modelName in models)
-            if (Object.prototype.hasOwnProperty.call(models, modelName))
-                for (const propertyName in models[modelName])
-                    if (Object.prototype.hasOwnProperty.call(
-                        models[modelName], propertyName
-                    ))
-                        if (propertyName === specialNames.attachment) {
-                            for (const type in models[modelName][propertyName])
-                                if (
-                                    Object.prototype.hasOwnProperty.call(
-                                        models[modelName][propertyName]!,
-                                        type
-                                    )
-                                )
-                                    (
-                                        models[modelName][propertyName] as
-                                            Mapping<FileSpecification>
-                                    )[type] = Tools.extend(
-                                        true,
-                                        Tools.copy(
-                                            modelConfiguration.property
-                                                .defaultSpecification
-                                        ),
-                                        (
-                                            models[modelName][propertyName] as
-                                                Mapping<FileSpecification>
-                                        )[type]
-                                    )
-                        } else if (![
-                            specialNames.allowedRoles,
-                            specialNames.constraint.execution,
-                            specialNames.constraint.expression,
-                            specialNames.extend,
-                            specialNames.maximumAggregatedSize,
-                            specialNames.minimumAggregatedSize,
-                            specialNames.oldType
-                        ].includes(propertyName))
-                            models[modelName][propertyName] = Tools.extend(
+            models[modelName] = Helper.extendModel(
+                modelName, modelConfiguration.entities, specialNames.extend
+            )
+        }
+
+        for (const model of Object.values(models))
+            for (const [propertyName, property] of Object.entries(model))
+                if (propertyName === specialNames.attachment)
+                    for (const [type, value] of Object.entries(property))
+                        (property as Mapping<FileSpecification>)[type] =
+                            Tools.extend(
                                 true,
                                 Tools.copy(
                                     modelConfiguration.property
                                         .defaultSpecification
                                 ),
-                                models[modelName][propertyName]
+                                value as FileSpecification
                             )
+                else if (![
+                    specialNames.allowedRoles,
+                    specialNames.constraint.execution,
+                    specialNames.constraint.expression,
+                    specialNames.extend,
+                    specialNames.maximumAggregatedSize,
+                    specialNames.minimumAggregatedSize,
+                    specialNames.oldType
+                ].includes(propertyName))
+                    model[propertyName] = Tools.extend(
+                        true,
+                        Tools.copy(
+                            modelConfiguration.property.defaultSpecification
+                        ),
+                        property
+                    )
 
         return models
     }
@@ -724,7 +695,7 @@ export class Helper {
         if (typeof roles === 'object') {
             const result:NormalizedAllowedRoles = {read: [], write: []}
 
-            for (const type in result)
+            for (const type of Object.keys(result))
                 if (Object.prototype.hasOwnProperty.call(roles, type))
                     if (Array.isArray(roles[type as 'read'|'write']))
                         result[type as 'read'|'write'] =
