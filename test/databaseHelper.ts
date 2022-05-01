@@ -114,15 +114,10 @@ describe('databaseHelper', ():void => {
                 updateStrategy
             }
 
-            for (
-                const propertyName in defaultModelConfiguration.entities._base
-            )
-                if (
-                    Object.prototype.hasOwnProperty.call(
-                        defaultModelConfiguration.entities._base, propertyName
-                    ) &&
-                    propertyName !== typeName
-                )
+            for (const propertyName of Object.keys(
+                defaultModelConfiguration.entities._base
+            ))
+                if (propertyName !== typeName)
                     delete defaultModelConfiguration.entities._base[
                         propertyName
                     ]
@@ -3798,15 +3793,10 @@ describe('databaseHelper', ():void => {
                 updateStrategy: 'migrate'
             }
 
-            for (
-                const propertyName in defaultModelConfiguration.entities._base
-            )
-                if (
-                    Object.prototype.hasOwnProperty.call(
-                        defaultModelConfiguration.entities._base, propertyName
-                    ) &&
-                    propertyName !== typeName
-                )
+            for (const propertyName of Object.keys(
+                defaultModelConfiguration.entities._base
+            ))
+                if (propertyName !== typeName)
                     delete defaultModelConfiguration.entities._base[
                         propertyName
                     ]
