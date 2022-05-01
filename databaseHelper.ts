@@ -1035,6 +1035,90 @@ export class DatabaseHelper {
 
                 return {newValue, changedPath}
             }
+            const checkPropertyWriteableMutableNullable = (
+                propertySpecification:PropertySpecification,
+                newDocument:PartialFullDocument,
+                oldDocument:PartialFullDocument|null,
+                name:string,
+                pathDescription:string
+            ):boolean => {
+                const value:unknown = newDocument[name]
+                // region writable
+                if (!propertySpecification.writable)
+                    if (oldDocument)
+                        if (
+                            Object.prototype.hasOwnProperty.call(
+                                oldDocument, name
+                            ) &&
+                            serialize(value) === serialize(oldDocument[name])
+                        ) {
+                            if (
+                                name !== idName &&
+                                updateStrategy === 'incremental'
+                            )
+                                delete newDocument[name]
+
+                            return true
+                        } else
+                            throwError(
+                                `Readonly: Property "${name}" is not ` +
+                                `writable (old document "` +
+                                `${serialize(oldDocument)}")` +
+                                `${pathDescription}.`
+                            )
+                    else
+                        throwError(
+                            `Readonly: Property "${name}" is not writable` +
+                            `${pathDescription}.`
+                        )
+                // endregion
+                // region mutable
+                if (
+                    !propertySpecification.mutable &&
+                    oldDocument &&
+                    Object.prototype.hasOwnProperty.call(oldDocument, name)
+                )
+                    if (serialize(value) === serialize(oldDocument[name])) {
+                        if (
+                            updateStrategy === 'incremental' &&
+                            !modelConfiguration.property.name.reserved.concat(
+                                specialNames.deleted, idName, revisionName
+                            ).includes(name)
+                        )
+                            delete newDocument[name]
+
+                        return true
+                    } else if (updateStrategy !== 'migrate')
+                        throwError(
+                            `Immutable: Property "${name}" is not writable (` +
+                            `old document "${serialize(oldDocument)}")` +
+                            `${pathDescription}.`
+                        )
+                // endregion
+                // region nullable
+                if (value === null)
+                    if (propertySpecification.nullable) {
+                        delete newDocument[name]
+
+                        if (
+                            oldDocument &&
+                            Object.prototype.hasOwnProperty.call(
+                                oldDocument, name
+                            )
+                        )
+                            changedPath = parentNames.concat(
+                                name, 'delete property'
+                            )
+
+                        return true
+                    } else
+                        throwError(
+                            `NotNull: Property "${name}" should not be "null` +
+                            `"${pathDescription}.`
+                        )
+                // endregion
+                return false
+            }
             /// region create hook
             const runCreatePropertyHook = (
                 propertySpecification:PropertySpecification,
@@ -1672,10 +1756,8 @@ export class DatabaseHelper {
                         continue
                     }
             /// endregion
-            // TODO stand
-            for (const name in newDocument)
+            for (const [name, newValue] of Object.entries(newDocument))
                 if (
-                    Object.prototype.hasOwnProperty.call(newDocument, name) &&
                     !modelConfiguration.property.name.reserved.concat(
                         revisionName,
                         specialNames.conflict,
@@ -1711,103 +1793,9 @@ export class DatabaseHelper {
                     if (!propertySpecification)
                         continue
 
-                    // region writable/mutable/nullable
-                    // TODO avoid re-defining on every iteration
-                    const checkWriteableMutableNullable = (
-                        propertySpecification:PropertySpecification,
-                        newDocument:PartialFullDocument,
-                        oldDocument:PartialFullDocument|null,
-                        name:string
-                    ):boolean => {
-                        // region writable
-                        if (!propertySpecification.writable)
-                            if (oldDocument)
-                                if (
-                                    Object.prototype.hasOwnProperty.call(
-                                        oldDocument, name
-                                    ) &&
-                                    serialize(newDocument[name]) ===
-                                        serialize(oldDocument[name])
-                                ) {
-                                    if (
-                                        name !== idName &&
-                                        updateStrategy === 'incremental'
-                                    )
-                                        delete newDocument[name]
-
-                                    return true
-                                } else
-                                    throwError(
-                                        `Readonly: Property "${name}" is not` +
-                                        ` writable (old document "` +
-                                        `${serialize(oldDocument)}")` +
-                                        `${pathDescription}.`
-                                    )
-                            else
-                                throwError(
-                                    `Readonly: Property "${name}" is not ` +
-                                    `writable${pathDescription}.`
-                                )
-                        // endregion
-                        // region mutable
-                        if (
-                            !propertySpecification.mutable &&
-                            oldDocument &&
-                            Object.prototype.hasOwnProperty.call(
-                                oldDocument, name
-                            )
-                        )
-                            if (
-                                serialize(newDocument[name]) ===
-                                    serialize(oldDocument[name])
-                            ) {
-                                if (
-                                    updateStrategy === 'incremental' &&
-                                    !modelConfiguration.property.name.reserved
-                                        .concat(
-                                            specialNames.deleted,
-                                            idName,
-                                            revisionName
-                                        ).includes(name)
-                                )
-                                    delete newDocument[name]
-
-                                return true
-                            } else if (updateStrategy !== 'migrate')
-                                throwError(
-                                    `Immutable: Property "${name}" is not ` +
-                                    'writable (old document "' +
-                                    `${serialize(oldDocument)}")` +
-                                    `${pathDescription}.`
-                                )
-                        // endregion
-                        // region nullable
-                        if (newDocument[name] === null)
-                            if (propertySpecification.nullable) {
-                                delete newDocument[name]
-
-                                if (
-                                    oldDocument &&
-                                    Object.prototype.hasOwnProperty.call(
-                                        oldDocument, name
-                                    )
-                                )
-                                    changedPath = parentNames.concat(
-                                        name, 'delete property'
-                                    )
-
-                                return true
-                            } else
-                                throwError(
-                                    `NotNull: Property "${name}" should not ` +
-                                    `by "null"${pathDescription}.`
-                                )
-                        // endregion
-                        return false
-                    }
+                    // region check writable/mutable/nullable
                     if (specialNames.attachment === name) {
-                        const attachments:Attachments =
-                            newDocument[name] as Attachments
+                        const attachments:Attachments = newValue as Attachments
 
                         for (const fileName in attachments)
                             if (Object.prototype.hasOwnProperty.call(
@@ -1817,21 +1805,26 @@ export class DatabaseHelper {
                                     if (fileNameMatchesModelType(
                                         type, fileName, model[name]![type]
                                     )) {
-                                        checkWriteableMutableNullable(
+                                        checkPropertyWriteableMutableNullable(
                                             model[name]![type as
                                                 keyof PropertySpecification
                                             ],
                                             newDocument,
                                             oldDocument,
-                                            fileName
+                                            fileName,
+                                            pathDescription
                                         )
 
                                         break
                                     }
 
                         continue
-                    } else if (checkWriteableMutableNullable(
-                        propertySpecification, newDocument, oldDocument, name
+                    } else if (checkPropertyWriteableMutableNullable(
+                        propertySpecification,
+                        newDocument,
+                        oldDocument,
+                        name,
+                        pathDescription
                     ))
                         continue
                     // endregion
@@ -1843,7 +1836,7 @@ export class DatabaseHelper {
                         Array.isArray(propertySpecification.type[0])
                     ) {
                         const newProperty:Array<DocumentContent> =
-                            newDocument[name] as Array<DocumentContent>
+                            newValue as Array<DocumentContent>
                         // region check arrays
                         if (!Array.isArray(newProperty))
                             throwError(
@@ -2005,10 +1998,7 @@ export class DatabaseHelper {
                             changedPath:Array<string>
                             newValue:unknown
                         } = checkPropertyContent(
-                            newDocument[name],
-                            name,
-                            propertySpecification,
-                            oldValue
+                            newValue, name, propertySpecification, oldValue
                         )
 
                         newDocument[name] = result.newValue as PlainObject
@@ -2016,6 +2006,10 @@ export class DatabaseHelper {
                         if (result.changedPath.length)
                             changedPath = result.changedPath
 
+                        /*
+                            NOTE: Do not use "newValue" here since it was
+                            overwritten recently.
+                        */
                         if (newDocument[name] === null) {
                             if (oldValue !== null)
                                 changedPath = parentNames.concat(
@@ -2155,146 +2149,130 @@ export class DatabaseHelper {
                         oldAttachments !== null &&
                         typeof oldAttachments === 'object'
                     )
-                        for (const fileName in oldAttachments)
+                        for (const [fileName, oldAttachment] of Object.entries(
+                            oldAttachments
+                        ))
                             if (Object.prototype.hasOwnProperty.call(
-                                oldAttachments, fileName
-                            ))
-                                if (Object.prototype.hasOwnProperty.call(
-                                    newAttachments, fileName
-                                ))
-                                    if (
-                                        newAttachments[fileName] === null ||
-                                        (newAttachments[fileName] as
-                                            FullAttachment
-                                        ).data === null ||
-                                        newAttachments[fileName]
-                                            .content_type ===
-                                                oldAttachments[fileName]
-                                                    .content_type &&
-                                        (
-                                            (newAttachments[fileName] as
-                                                FullAttachment
-                                            ).data === (
-                                                oldAttachments[fileName] as
-                                                    FullAttachment
-                                            ).data ||
-                                            (newAttachments[fileName] as
-                                                StubAttachment
-                                            ).digest === (
-                                                oldAttachments[fileName] as
-                                                    StubAttachment
-                                            ).digest
-                                        )
-                                    ) {
-                                        if (
-                                            newAttachments[fileName] ===
-                                                null ||
-                                            (newAttachments[fileName] as
-                                                FullAttachment
-                                            ).data === null
-                                        )
-                                            changedPath = parentNames.concat(
-                                                specialNames.attachment,
-                                                fileName,
-                                                'attachment removed'
-                                            )
+                                newAttachments, fileName
+                            )) {
+                                const newAttachment = newAttachments[fileName]
 
-                                        if (updateStrategy === 'incremental')
-                                            delete newAttachments[fileName]
-                                    } else
+                                if (
+                                    newAttachment === null ||
+                                    (newAttachment as FullAttachment).data ===
+                                        null ||
+                                    newAttachment.content_type ===
+                                        oldAttachment.content_type &&
+                                    (
+                                        (
+                                            newAttachment as FullAttachment
+                                        ).data === (
+                                            oldAttachment as FullAttachment
+                                        ).data ||
+                                        (
+                                            newAttachment as StubAttachment
+                                        ).digest === (
+                                            oldAttachment as StubAttachment
+                                        ).digest
+                                    )
+                                ) {
+                                    if (
+                                        newAttachment === null ||
+                                        (
+                                            newAttachment as FullAttachment
+                                        ).data === null
+                                    )
                                         changedPath = parentNames.concat(
                                             specialNames.attachment,
                                             fileName,
-                                            'attachment updated'
+                                            'attachment removed'
                                         )
-                                else if (updateStrategy === 'fillUp')
-                                    newAttachments[fileName] =
-                                        oldAttachments[fileName]
-                                else if (!updateStrategy)
+
+                                    if (updateStrategy === 'incremental')
+                                        delete newAttachments[fileName]
+                                } else
                                     changedPath = parentNames.concat(
                                         specialNames.attachment,
                                         fileName,
-                                        'attachment removed'
+                                        'attachment updated'
                                     )
+                            } else if (updateStrategy === 'fillUp')
+                                newAttachments[fileName] = oldAttachment
+                            else if (!updateStrategy)
+                                changedPath = parentNames.concat(
+                                    specialNames.attachment,
+                                    fileName,
+                                    'attachment removed'
+                                )
                 }
 
-                for (const fileName in newAttachments)
-                    if (Object.prototype.hasOwnProperty.call(
-                        newAttachments, fileName
-                    ))
-                        if (
-                            [null, undefined].includes(
-                                newAttachments[fileName] as unknown as null
-                            ) ||
-                            (
-                                newAttachments[fileName] as FullAttachment
-                            ).data === null
+                for (const [fileName, newAttachment] of Object.entries(
+                    newAttachments
+                ))
+                    if (
+                        [null, undefined].includes(
+                            newAttachment as unknown as null
+                        ) ||
+                        (newAttachment as FullAttachment).data === null
+                    )
+                        delete newAttachments[fileName]
+                    else if (!(
+                        oldAttachments &&
+                        Object.prototype.hasOwnProperty.call(
+                            oldAttachments, fileName
+                        ) &&
+                        newAttachment.content_type ===
+                            oldAttachments[fileName].content_type &&
+                        (
+                            (newAttachment as FullAttachment).data === (
+                                oldAttachments[fileName] as FullAttachment
+                            ).data ||
+                            (newAttachment as StubAttachment).digest === (
+                                oldAttachments[fileName] as StubAttachment
+                            ).digest
                         )
-                            delete newAttachments[fileName]
-                        else if (!(
-                            oldAttachments &&
-                            Object.prototype.hasOwnProperty.call(
-                                oldAttachments, fileName
-                            ) &&
-                            newAttachments[fileName].content_type ===
-                                oldAttachments[fileName].content_type &&
-                            (
-                                (
-                                    newAttachments[fileName] as FullAttachment
-                                ).data === (
-                                    oldAttachments[fileName] as FullAttachment
-                                ).data ||
-                                (
-                                    newAttachments[fileName] as StubAttachment
-                                ).digest === (
-                                    oldAttachments[fileName] as StubAttachment
-                                ).digest
-                            )
-                        ))
-                            changedPath = parentNames.concat(
-                                specialNames.attachment,
-                                fileName,
-                                'attachment updated'
-                            )
+                    ))
+                        changedPath = parentNames.concat(
+                            specialNames.attachment,
+                            fileName,
+                            'attachment updated'
+                        )
                 // endregion
                 if (Object.keys(newAttachments).length === 0)
                     delete newDocument[specialNames.attachment]
 
                 const attachmentToTypeMapping:Mapping<Array<string>> = {}
-                for (const type in model[specialNames.attachment])
-                    if (Object.prototype.hasOwnProperty.call(
-                        model[specialNames.attachment]!, type
+                for (const type of Object.keys(
+                    model[specialNames.attachment]!
+                ))
+                    attachmentToTypeMapping[type] = []
+
+                for (const name of Object.keys(newAttachments)) {
+                    let matched = false
+
+                    for (const [type, specification] of Object.entries(
+                        model[specialNames.attachment]!
                     ))
-                        attachmentToTypeMapping[type] = []
+                        if (fileNameMatchesModelType(
+                            type, name, specification
+                        )) {
+                            attachmentToTypeMapping[type].push(name)
 
-                for (const name in newAttachments)
-                    if (Object.prototype.hasOwnProperty.call(
-                        newAttachments, name
-                    )) {
-                        let matched = false
-                        for (const type in model[specialNames.attachment])
-                            if (fileNameMatchesModelType(
-                                type,
-                                name,
-                                model[specialNames.attachment]![type]
-                            )) {
-                                attachmentToTypeMapping[type].push(name)
+                            matched = true
 
-                                matched = true
+                            break
+                        }
 
-                                break
-                            }
-
-                        if (!matched)
-                            throwError(
-                                'AttachmentTypeMatch: None of the specified ' +
-                                'attachment types ("' +
-                                Object.keys(model[specialNames.attachment]!)
-                                    .join('", "') +
-                                `") matches given one ("${name}")` +
-                                `${pathDescription}.`
-                            )
-                    }
+                    if (!matched)
+                        throwError(
+                            'AttachmentTypeMatch: None of the specified ' +
+                            'attachment types ("' +
+                            Object.keys(model[specialNames.attachment]!)
+                                .join('", "') +
+                            `") matches given one ("${name}")` +
+                            `${pathDescription}.`
+                        )
+                }
 
                 let sumOfAggregatedSizes = 0
                 for (const type of Object.keys(attachmentToTypeMapping)) {
@@ -2581,15 +2559,10 @@ export class DatabaseHelper {
                 oldDocument &&
                 updateStrategy === 'migrate'
             )
-                for (const name in oldDocument)
-                    if (
-                        Object.prototype.hasOwnProperty.call(
-                            oldDocument, name
-                        ) &&
-                        !Object.prototype.hasOwnProperty.call(
-                            newDocument, name
-                        )
-                    )
+                for (const name of Object.keys(oldDocument))
+                    if (!Object.prototype.hasOwnProperty.call(
+                        newDocument, name
+                    ))
                         changedPath = parentNames.concat(
                             name, 'migrate removed property'
                         )
