@@ -330,7 +330,6 @@ export class DatabaseHelper {
                         oldModelMapping[oldName] = name
         /// endregion
         // endregion
-        // region functions
         let serializeData:(_value:unknown) => string
         if (toJSON)
             serializeData = toJSON
@@ -342,6 +341,8 @@ export class DatabaseHelper {
         else
             throwError('Needed "serializer" is not available.')
 
+        // region functions
+        /// region generic functions
         const serialize = (value:unknown):string =>
             value instanceof Error ?
                 `${value as unknown as string}` :
@@ -519,7 +520,7 @@ export class DatabaseHelper {
                 'No expression to evaluate provided.', 'empty'
             )
         }
-
+        /// endregion
         const checkDocument = (
             newDocument:PartialFullDocument,
             oldDocument:null|PartialFullDocument,
