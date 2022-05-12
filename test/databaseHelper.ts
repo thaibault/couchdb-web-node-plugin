@@ -14,6 +14,7 @@
     endregion
 */
 // region imports
+import {describe, expect, test} from '@jest/globals'
 import Tools from 'clientnode'
 import {
     testEachAgainstSameExpectation, ThrowSymbol
@@ -3571,12 +3572,7 @@ describe('databaseHelper', ():void => {
         }
     )
     /// region migration writes
-    test.each<[
-        PartialFullDocument,
-        PartialFullDocument,
-        PlainObject,
-        PartialFullDocument?
-    ]>([
+    test.each([
         // Remove obsolete properties.
         [
             {[typeName]: 'Test'},

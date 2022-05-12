@@ -14,6 +14,7 @@
     endregion
 */
 // region imports
+import {describe, expect, test} from '@jest/globals'
 import path from 'path'
 
 import Index from '../index'
