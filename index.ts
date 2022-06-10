@@ -970,8 +970,7 @@ export class Database implements PluginHandler {
             // region apply "latest/upsert" and ignore "NoChange" error plugin
             const nativeBulkDocs:Connection['bulkDocs'] =
                 (services.couchdb.connector.prototype as Connection)
-                    .bulkDocs.bind(services.couchdb.connection) as
-                    DatabasePlugin
+                    .bulkDocs
             services.couchdb.connector.plugin({bulkDocs: async function(
                 this:Connection,
                 firstParameter:unknown,
