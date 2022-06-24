@@ -67,7 +67,6 @@ import {
  * an event.
  * @property static:additionalChangesStreamOptions - Can provide additional
  * (non static) changes stream options.
- * @property static:changesStream - Stream which triggers database events.
  * @property static:skipIDDetermining - Indicates whether id's should be
  * determined if "bulkDocs" had skipped a real change due to ignore a
  * "NoChange" error.
@@ -77,7 +76,6 @@ import {
  */
 export class Database implements PluginHandler {
     static additionalChangesStreamOptions:object = {}
-    static changesStream:ChangesStream
     static skipIDDetermining = true
     static toggleIDDetermining = Symbol('toggleIDDetermining')
     /**
@@ -886,21 +884,22 @@ export class Database implements PluginHandler {
         */
         /*
         setInterval(():void =>
-            Database.changesStream.emit('error', {test: 2}), 6 * 1000)
+            services.couchdb.changesStream.emit('error', {test: 2}), 6 * 1000)
         */
         const initialize = Tools.debounce(async ():Promise<void> => {
-            if (Database.changesStream as unknown)
-                Database.changesStream.cancel()
+            if (services.couchdb.changesStream)
+                services.couchdb.changesStream.cancel()
 
-            Database.changesStream = services.couchdb.connection.changes(
-                Tools.extend(
-                    true,
-                    Tools.copy(configuration.couchdb.changesStream),
-                    Database.additionalChangesStreamOptions
+            services.couchdb.changesStream =
+                services.couchdb.connection.changes(
+                    Tools.extend(
+                        true,
+                        Tools.copy(configuration.couchdb.changesStream),
+                        Database.additionalChangesStreamOptions
+                    )
                 )
-            )
 
-            void Database.changesStream.on(
+            void services.couchdb.changesStream.on(
                 'error',
                 async (error:DatabaseError):Promise<void> => {
                     numberOfErrorsThrough += 1
@@ -913,7 +912,7 @@ export class Database implements PluginHandler {
                         )
 
                         numberOfErrorsThrough = 0
-                        Database.changesStream.cancel()
+                        services.couchdb.changesStream.cancel()
 
                         await services.couchdb.server.restart(
                             services, configuration, plugins, pluginAPI
@@ -930,11 +929,11 @@ export class Database implements PluginHandler {
                 }
             )
 
-            await pluginAPI.callStack(
+            services.couchdb.changesStream = await pluginAPI.callStack(
                 'couchdbInitializeChangesStream',
                 plugins,
                 configuration,
-                Database.changesStream,
+                services.couchdb.changesStream,
                 services
             )
         })

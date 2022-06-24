@@ -332,8 +332,11 @@ export type ServicePromises<ServicePromiseType = Mapping<unknown>> =
 export type Services<ServiceType = Mapping<unknown>> =
     BaseServices<{
         couchdb:{
+            changesStream:ChangesStream
+
             connection:Connection
             connector:Connector
+
             server:{
                 process:ChildProcess
                 reject:(_value:ProcessCloseReason) => void
