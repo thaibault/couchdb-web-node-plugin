@@ -27,7 +27,9 @@ import {
     PluginHandler as BasePluginHandler,
     Service as BaseService,
     ServicePromises as BaseServicePromises,
-    Services as BaseServices
+    Services as BaseServices,
+    ServicePromisesState as BaseServicePromisesState,
+    ServicesState as BaseServicesState
 } from 'web-node/type'
 
 import DatabaseHelper from './databaseHelper'
@@ -322,76 +324,57 @@ export type Configuration<ConfigurationType = Mapping<unknown>> =
     }> &
     ConfigurationType
 //// endregion
-export interface Service extends BaseService {
-    name:'couchdb'
-    promise:null|Promise<ProcessCloseReason>
+export interface CouchDB {
+    changesStream:ChangesStream
+
+    connection:Connection
+    connector:Connector
+
+    server:{
+        process:ChildProcess
+        reject:(value:ProcessCloseReason) => void
+        resolve:(reason:ProcessCloseReason) => void
+        restart:(state:State) => Promise<void>
+        runner:Runner
+        start:(services:Services, configuration:Configuration) =>
+            Promise<void>
+        stop:(services:Services, configuration:Configuration) =>
+            Promise<void>
+    }
 }
-export type ServicePromises<ServicePromiseType = Mapping<unknown>> =
-    BaseServicePromises<{couchdb:Promise<ProcessCloseReason>}> &
-    ServicePromiseType
-export type Services<ServiceType = Mapping<unknown>> =
-    BaseServices<{
-        couchdb:{
-            changesStream:ChangesStream
 
-            connection:Connection
-            connector:Connector
+export type ServicePromises<Type = Mapping<unknown>> =
+    BaseServicePromises<{couchdb:Promise<ProcessCloseReason>}> & Type
+export type Services<Type = Mapping<unknown>> =
+    BaseServices<{couchdb:CouchDB}> & Type
 
-            server:{
-                process:ChildProcess
-                reject:(_value:ProcessCloseReason) => void
-                resolve:(_reason:ProcessCloseReason) => void
-                restart:(
-                    _services:Services,
-                    _configuration:Configuration,
-                    _plugins:Array<Plugin>,
-                    _pluginAPI:typeof PluginAPI
-                ) => Promise<void>
-                runner:Runner
-                start:(_services:Services, _configuration:Configuration) =>
-                    Promise<void>
-                stop:(_services:Services, _configuration:Configuration) =>
-                    Promise<void>
-            }
-        }
-    }> &
-    ServiceType
+export type ServicesState<Type = undefined> = BaseServicesState<
+    Type,
+    Configuration,
+    Services
+>
+export type State<Type = undefined> = BaseServicePromisesState<
+    Type,
+    Configuration,
+    Services,
+    ServicePromises
+>
 
 export interface PluginHandler extends BasePluginHandler {
     /**
      * Hook after each data change.
-     * @param _changesStream - Stream of database changes.
-     * @param _services - List of other web-node plugin services.
-     * @param _configuration - Configuration object extended by each plugin
-     * specific configuration.
-     * @param _plugins - Topological sorted list of plugins.
-     * @param _pluginAPI - Plugin api reference.
+     * @param state - Application state.
      *
-     * @returns Given entry files.
+     * @returns Promise resolving to nothing.
      */
-    couchdbInitializeChangesStream?(
-        _changesStream:ChangesStream,
-        _services:Services,
-        _configuration:Configuration,
-        _plugins:Array<Plugin>,
-        _pluginAPI:typeof PluginAPI
-    ):ChangesStream
+    couchdbInitializeChangesStream?(state:State<ChangesStream>):Promise<void>
     /**
      * Hook after each data base restart.
-     * @param _services - List of other web-node plugin services.
-     * @param _configuration - Configuration object extended by each plugin
-     * specific configuration.
-     * @param _plugins - Topological sorted list of plugins.
-     * @param _pluginAPI - Plugin api reference.
+     * @param state - Application state.
      *
-     * @returns Given entry files.
+     * @returns Promise resolving to nothing.
      */
-    restartCouchdb?(
-        _services:Services,
-        _configuration:Configuration,
-        _plugins:Array<Plugin>,
-        _pluginAPI:typeof PluginAPI
-    ):Services
+    restartCouchdb?(state:State):Promise<void>
 }
 /// endregion
 /// region evaluation
@@ -415,15 +398,15 @@ export type EvaluationException<S = Mapping<unknown>> =
     Exception<EvaluationExceptionData<S>>
 //// region scopes
 export interface BasicScope {
-    attachmentWithPrefixExists:(_namePrefix:string) => boolean
+    attachmentWithPrefixExists:(namePrefix:string) => boolean
     checkDocument:(
-        _newDocument:PartialFullDocument,
-        _oldDocument:PartialFullDocument|null,
-        _parentNames:Array<string>
+        newDocument:PartialFullDocument,
+        oldDocument:PartialFullDocument|null,
+        parentNames:Array<string>
     ) => CheckedDocumentResult
-    getFileNameByPrefix:(_prefix?:string, _attachments?:Attachments) =>
+    getFileNameByPrefix:(prefix?:string, attachments?:Attachments) =>
         null|string
-    serialize:(_value:unknown) => string
+    serialize:(value:unknown) => string
 
     id:string
     revision:string
@@ -445,10 +428,10 @@ export interface BasicScope {
 }
 export interface CommonScope {
     checkPropertyContent:(
-        _newValue:unknown,
-        _name:string,
-        _propertySpecification:PropertySpecification,
-        _oldValue:unknown
+        newValue:unknown,
+        name:string,
+        propertySpecification:PropertySpecification,
+        oldValue:unknown
     ) => CheckedPropertyResult
 
     model:Model
@@ -475,8 +458,7 @@ export interface EvaluationResult<T = unknown, S = BasicScope & CommonScope> {
     result:T
     scope:S
 }
-export type Evaluate<R = unknown, P = unknown> =
-    (..._parameters:Array<P>) => R
+export type Evaluate<R = unknown, P = unknown> = (...parameters:Array<P>) => R
 /// endregion
 /// region checker results
 export interface CheckedResult {

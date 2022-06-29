@@ -31,7 +31,7 @@ import path from 'path'
 import PouchDB from 'pouchdb'
 import PouchDBFindPlugin from 'pouchdb-find'
 import {PluginAPI} from 'web-node'
-import {Plugin, PluginHandler} from 'web-node/type'
+import {Plugin, PluginHandler, PluginPromises} from 'web-node/type'
 
 import DatabaseHelper from './databaseHelper'
 import Helper from './helper'
@@ -58,13 +58,16 @@ import {
     Service,
     ServicePromises,
     Services,
-    SpecialPropertyNames
+    ServicesState,
+    SpecialPropertyNames,
+    State
 } from './type'
 // endregion
 // region plugins/classes
 /**
  * Launches an application server und triggers all some pluginable hooks on
  * an event.
+ * TODO move to configuration.
  * @property static:additionalChangesStreamOptions - Can provide additional
  * (non static) changes stream options.
  * @property static:skipIDDetermining - Indicates whether id's should be
@@ -79,49 +82,234 @@ export class Database implements PluginHandler {
     static skipIDDetermining = true
     static toggleIDDetermining = Symbol('toggleIDDetermining')
     /**
+     * Appends an application server to the web node services.
+     * @param state - Application state.
+     * @param stat.configuration - Applications configuration.
+     * @param stat.configuration.couchdb - Plugins configuration.
+     *
+     * @returns Promise resolving to nothing.
+     */
+    static async preLoadService({
+        services, configuration: {couchdb: configuration}
+    }:ServicesState):Promise<void> {
+        if (!Object.prototype.hasOwnProperty.call(services, 'couchdb'))
+            services.couchdb = {} as Services['couchdb']
+        const {couchdb} = services
+
+        if (!Object.prototype.hasOwnProperty.call(couchdb, 'connector')) {
+            const idName:SpecialPropertyNames['id'] =
+                configuration.model.property.name.special.id
+            const revisionName:SpecialPropertyNames['revision'] =
+                configuration.model.property.name.special.revision
+
+            couchdb.connector = PouchDB
+            // region apply "latest/upsert" and ignore "NoChange" error plugin
+            const nativeBulkDocs:Connection['bulkDocs'] =
+                (couchdb.connector.prototype as Connection).bulkDocs
+            couchdb.connector.plugin({bulkDocs: async function(
+                this:Connection,
+                firstParameter:unknown,
+                ...parameters:Array<unknown>
+            ):Promise<Array<DatabaseError|DatabaseResponse>> {
+                const toggleIDDetermining:boolean = (
+                    parameters.length > 0 &&
+                    parameters[parameters.length - 1] ===
+                        Database.toggleIDDetermining
+                )
+                const skipIDDetermining:boolean = toggleIDDetermining ?
+                    !Database.skipIDDetermining :
+                    Database.skipIDDetermining
+                if (toggleIDDetermining)
+                    parameters.pop()
+                /*
+                    Implements a generic retry mechanism for "upsert" and
+                    "latest" updates and optionally supports to ignore
+                    "NoChange" errors.
+                */
+                let data:Array<PartialFullDocument> = (
+                    !Array.isArray(firstParameter) &&
+                    firstParameter !== null &&
+                    typeof firstParameter === 'object' &&
+                    idName in firstParameter
+                ) ?
+                    [firstParameter as PartialFullDocument] :
+                    firstParameter as Array<PartialFullDocument>
+                /*
+                    NOTE: "bulkDocs()" does not get constructor given options
+                    if none were provided for a single function call.
+                */
+                if (
+                    configuration.connector.fetch?.timeout &&
+                    (
+                        parameters.length === 0 ||
+                        typeof parameters[0] !== 'object'
+                    )
+                )
+                    parameters.unshift({
+                        timeout: configuration.connector.fetch.timeout
+                    })
+
+                const result:Array<DatabaseError|DatabaseResponse> =
+                    await nativeBulkDocs.call(
+                        this,
+                        data as FirstParameter<Connection['bulkDocs']>,
+                        ...parameters as
+                            [SecondParameter<Connection['bulkDocs']>]
+                    )
+
+                const conflictingIndexes:Array<number> = []
+                const conflicts:Array<PartialFullDocument> = []
+                let index = 0
+                for (const item of result) {
+                    if (typeof data[index] === 'object')
+                        if (
+                            revisionName in data[index] &&
+                            (item as DatabaseError).name === 'conflict' &&
+                            ['latest', 'upsert'].includes(
+                                data[index][revisionName]!
+                            )
+                        ) {
+                            conflicts.push(data[index])
+                            conflictingIndexes.push(index)
+                        } else if (
+                            idName in data[index] &&
+                            configuration.ignoreNoChangeError &&
+                            'name' in item &&
+                            item.name === 'forbidden' &&
+                            'message' in item &&
+                            (item.message as string).startsWith('NoChange:')
+                        ) {
+                            result[index] = {
+                                id: data[index][idName], ok: true
+                            }
+                            if (!skipIDDetermining)
+                                result[index].rev =
+                                    revisionName in data[index] &&
+                                    !['latest', 'upsert'].includes(
+                                        data[index][revisionName]!
+                                    ) ?
+                                        data[index][revisionName] :
+                                        ((await this.get(result[index].id!)) as
+                                            unknown as
+                                            FullDocument
+                                        )[revisionName]
+                        }
+
+                    index += 1
+                }
+
+                if (conflicts.length) {
+                    data = conflicts
+                    if (toggleIDDetermining)
+                        parameters.push(Database.toggleIDDetermining)
+
+                    const retriedResults:Array<
+                        DatabaseError|DatabaseResponse
+                    > = (await this.bulkDocs(
+                        data,
+                        ...parameters as
+                            [SecondParameter<Connection['bulkDocs']>]
+                    )) as
+                        unknown as
+                        Array<DatabaseError|DatabaseResponse>
+                    for (const retriedResult of retriedResults)
+                        result[conflictingIndexes.shift() as number] =
+                            retriedResult
+                }
+
+                return result
+            } as unknown as DatabasePlugin})
+            // endregion
+            if (configuration.debug)
+                couchdb.connector.debug.enable('*')
+
+            couchdb.connector = couchdb.connector.plugin(PouchDBFindPlugin)
+        }
+
+        if (!Object.prototype.hasOwnProperty.call(couchdb, 'server')) {
+            couchdb.server = {} as Services['couchdb']['server']
+            // region search for binary file to start database server
+            const triedPaths:Array<string> = []
+            for (const runner of ([] as Array<Runner>).concat(
+                configuration.binary.runner
+            )) {
+                for (const directoryPath of (
+                    ([] as Array<string>).concat(runner.location)
+                )) {
+                    for (const name of (
+                        ([] as Array<string>).concat(runner.name)
+                    )) {
+                        const binaryFilePath:string = path.resolve(
+                            directoryPath, name
+                        )
+                        triedPaths.push(binaryFilePath)
+
+                        if (await Tools.isFile(binaryFilePath)) {
+                            runner.binaryFilePath = binaryFilePath
+                            couchdb.server.runner = runner
+
+                            break
+                        }
+                    }
+
+                    if (Object.prototype.hasOwnProperty.call(
+                        couchdb.server, 'runner'
+                    ))
+                        break
+                }
+
+                if (Object.prototype.hasOwnProperty.call(
+                    couchdb.server, 'runner'
+                ))
+                    break
+            }
+
+            if (!Object.prototype.hasOwnProperty.call(
+                couchdb.server, 'runner'
+            ))
+                throw new Error(
+                    'No binary file in one of the following locations found:' +
+                    ` "${triedPaths.join('", "')}".`
+                )
+            // endregion
+        }
+    }
+    /**
      * Start database's child process and return a Promise which observes this
      * service.
-     * @param servicePromises - An object with stored service promise
-     * instances.
-     * @param services - An object with stored service instances.
-     * @param configuration - Mutable by plugins extended configuration object.
+     * @param state - Application state.
      *
      * @returns A promise which correspond to the plugin specific continues
      * service.
      */
     static async loadService(
-        servicePromises:Omit<ServicePromises, 'couchdb'>,
-        services:Services,
-        configuration:Configuration
-    ):Promise<Service> {
+        {configuration, services}:State
+    ):Promise<PluginPromises> {
         let promise:null|Promise<ProcessCloseReason> = null
+        const {couchdb} = services
 
-        if (Object.prototype.hasOwnProperty.call(
-            services.couchdb.server, 'runner'
-        )) {
+        if (Object.prototype.hasOwnProperty.call(couchdb.server, 'runner')) {
             await Helper.startServer(services, configuration)
 
-            services.couchdb.server.restart = Helper.restartServer
-            services.couchdb.server.start = Helper.startServer
-            services.couchdb.server.stop = Helper.stopServer
+            couchdb.server.restart = Helper.restartServer.bind(Helper)
+            couchdb.server.start = Helper.startServer.bind(Helper)
+            couchdb.server.stop = Helper.stopServer.bind(Helper)
 
             promise = new Promise<ProcessCloseReason>((
-                resolve:(_value:ProcessCloseReason) => void,
-                reject:(_reason:ProcessCloseReason) => void
+                resolve:(value:ProcessCloseReason) => void,
+                reject:(reason:ProcessCloseReason) => void
             ):void => {
                 /*
                     NOTE: These callbacks can be reassigned during server
                     restart.
                 */
-                services.couchdb.server.resolve = resolve
-                services.couchdb.server.reject = reject
+                couchdb.server.resolve = resolve
+                couchdb.server.reject = reject
             })
         }
 
-        if (Object.prototype.hasOwnProperty.call(
-            services.couchdb, 'connection'
-        ))
-            return {name: 'couchdb', promise}
+        if (Object.prototype.hasOwnProperty.call(couchdb, 'connection'))
+            return {couchdb: promise}
 
         const urlPrefix:string = Tools.stringFormat(
             configuration.couchdb.url,
@@ -131,7 +319,7 @@ export class Database implements PluginHandler {
         // region ensure presence of global admin user
         if (configuration.couchdb.ensureAdminPresence) {
             const unauthenticatedUserDatabaseConnection:Connection =
-                new services.couchdb.connector(
+                new couchdb.connector(
                     `${Tools.stringFormat(configuration.couchdb.url, '')}/` +
                         `_users`,
                     Helper.getConnectorOptions(configuration)
@@ -148,8 +336,7 @@ export class Database implements PluginHandler {
 
                 await globalContext.fetch(
                     `${Tools.stringFormat(configuration.couchdb.url, '')}/` +
-                    services.couchdb.server.runner
-                        .adminUserConfigurationPath +
+                    couchdb.server.runner.adminUserConfigurationPath +
                     `/${configuration.couchdb.user.name}`,
                     {
                         body: `"${configuration.couchdb.user.password}"`,
@@ -159,7 +346,7 @@ export class Database implements PluginHandler {
             } catch (error) {
                 if ((error as Exception).name === 'unauthorized') {
                     const authenticatedUserDatabaseConnection:Connection =
-                        new services.couchdb.connector(
+                        new couchdb.connector(
                             `${urlPrefix}/_users`,
                             Helper.getConnectorOptions(configuration)
                         )
@@ -194,7 +381,7 @@ export class Database implements PluginHandler {
             ])
                 for (const name of type.names) {
                     const userDatabaseConnection:Connection =
-                        new services.couchdb.connector(
+                        new couchdb.connector(
                             `${urlPrefix}/_users`,
                             Helper.getConnectorOptions(configuration)
                         )
@@ -427,7 +614,7 @@ export class Database implements PluginHandler {
                     )
 
                 await Helper.ensureValidationDocumentPresence(
-                    services.couchdb.connection,
+                    couchdb.connection,
                     type.name,
                     {
                         helper: databaseHelperCode,
@@ -559,7 +746,7 @@ export class Database implements PluginHandler {
                         ] = 'upsert'
 
                         try {
-                            await services.couchdb.connection.put(document)
+                            await couchdb.connection.put(document)
                         } catch (error) {
                             if ((
                                 error as {forbidden:string}
@@ -592,7 +779,7 @@ export class Database implements PluginHandler {
                 }
             // region ensure all constraints to have a consistent initial state
             for (const retrievedDocument of (
-                await services.couchdb.connection.allDocs<PlainObject>({
+                await couchdb.connection.allDocs<PlainObject>({
                     /* eslint-disable camelcase */
                     include_docs: true
                     /* eslint-enable camelcase */
@@ -725,7 +912,7 @@ export class Database implements PluginHandler {
                     }
 
                     try {
-                        await services.couchdb.connection.put(newDocument)
+                        await couchdb.connection.put(newDocument)
                     } catch (error) {
                         throw new Error(
                             `Replaceing auto migrated document "` +
@@ -748,7 +935,7 @@ export class Database implements PluginHandler {
             configuration.couchdb.model.autoMigrationPath
         ) {
             const indexes:Array<Index> = (
-                await services.couchdb.connection.getIndexes()
+                await couchdb.connection.getIndexes()
             ).indexes
 
             for (const [modelName, model] of Object.entries(models))
@@ -756,7 +943,7 @@ export class Database implements PluginHandler {
                     configuration.couchdb.model.property.name
                         .typeRegularExpressionPattern.public
                 )).test(modelName)) {
-                    await services.couchdb.connection.createIndex({index: {
+                    await couchdb.connection.createIndex({index: {
                         ddoc: `${modelName}-GenericIndex`,
                         fields: [typeName],
                         name: `${modelName}-GenericIndex`
@@ -784,7 +971,7 @@ export class Database implements PluginHandler {
                         }
 
                         if (foundPosition === -1)
-                            await services.couchdb.connection.createIndex({
+                            await couchdb.connection.createIndex({
                                 index: {
                                     ddoc: name,
                                     fields: [typeName, propertyName],
@@ -817,7 +1004,7 @@ export class Database implements PluginHandler {
                         }
 
                     if (!exists)
-                        await services.couchdb.connection.deleteIndex(
+                        await couchdb.connection.deleteIndex(
                             index as DeleteIndexOptions
                         )
                 }
@@ -828,7 +1015,7 @@ export class Database implements PluginHandler {
         // region initial compaction
         if (configuration.couchdb.model.triggerInitialCompaction)
             try {
-                await services.couchdb.connection.compact()
+                await couchdb.connection.compact()
             } catch (error) {
                 console.warn(
                     'Initial database compaction has failed: ' +
@@ -836,28 +1023,18 @@ export class Database implements PluginHandler {
                 )
             }
         // endregion
-        return {name: 'couchdb', promise}
+        return {couchdb: promise}
     }
     /**
      * Add database event listener to auto restart database server on
      * unexpected server issues.
-     * @param servicePromises - An object with stored service promise
-     * instances.
-     * @param services - An object with stored service instances.
-     * @param configuration - Mutable by plugins extended configuration object.
-     * @param plugins - Topological sorted list of loaded plugins.
-     * @param pluginAPI - Plugin api reference.
+     * @param state - Application state.
      *
-     * @returns A promise which wraps plugin promises to represent plugin
-     * continues services.
+     * @returns Promise resolving to nothing.
      */
-    static postLoadService(
-        servicePromises:ServicePromises,
-        services:Services,
-        configuration:Configuration,
-        plugins:Array<Plugin>,
-        pluginAPI:typeof PluginAPI
-    ):ServicePromises {
+    static postLoadService(state:State):Promise<void> {
+        const {configuration: {couchdb: configuration}, services} = state
+        const {couchdb} = services
         // region register database changes stream
         let numberOfErrorsThrough = 0
         const periodToClearNumberOfErrorsInSeconds = 30
@@ -884,22 +1061,21 @@ export class Database implements PluginHandler {
         */
         /*
         setInterval(():void =>
-            services.couchdb.changesStream.emit('error', {test: 2}), 6 * 1000)
+            couchdb.changesStream.emit('error', {test: 2}), 6 * 1000)
         */
         const initialize = Tools.debounce(async ():Promise<void> => {
-            if (services.couchdb.changesStream)
-                services.couchdb.changesStream.cancel()
+            if (couchdb.changesStream)
+                couchdb.changesStream.cancel()
 
-            services.couchdb.changesStream =
-                services.couchdb.connection.changes(
-                    Tools.extend(
-                        true,
-                        Tools.copy(configuration.couchdb.changesStream),
-                        Database.additionalChangesStreamOptions
-                    )
+            couchdb.changesStream = couchdb.connection.changes(
+                Tools.extend(
+                    true,
+                    Tools.copy(configuration.changesStream),
+                    Database.additionalChangesStreamOptions
                 )
+            )
 
-            void services.couchdb.changesStream.on(
+            void couchdb.changesStream.on(
                 'error',
                 async (error:DatabaseError):Promise<void> => {
                     numberOfErrorsThrough += 1
@@ -912,11 +1088,9 @@ export class Database implements PluginHandler {
                         )
 
                         numberOfErrorsThrough = 0
-                        services.couchdb.changesStream.cancel()
+                        couchdb.changesStream.cancel()
 
-                        await services.couchdb.server.restart(
-                            services, configuration, plugins, pluginAPI
-                        )
+                        await couchdb.server.restart(state)
                     } else
                         console.warn(
                             'Observing changes feed throws an error for ' +
@@ -929,231 +1103,27 @@ export class Database implements PluginHandler {
                 }
             )
 
-            services.couchdb.changesStream = await pluginAPI.callStack(
-                'couchdbInitializeChangesStream',
-                plugins,
-                configuration,
-                services.couchdb.changesStream,
-                services
-            )
+            await pluginAPI.callStack<State<ChangesStream>>({
+                ...state,
+                data: couchdb.changesStream,
+                hook: 'couchdbInitializeChangesStream'
+            })
         })
 
-        if (configuration.couchdb.attachAutoRestarter)
+        if (configuration.attachAutoRestarter)
             void initialize()
         // endregion
-        return servicePromises
-    }
-    /**
-     * Appends an application server to the web node services.
-     * @param services - An object with stored service instances.
-     * @param configuration - Mutable by plugins extended configuration object.
-     *
-     * @returns Given and extended object of services wrapped in a promise
-     * resolving after pre-loading has finished.
-     */
-    static async preLoadService(
-        services:Services, configuration:Configuration
-    ):Promise<Services> {
-        if (!Object.prototype.hasOwnProperty.call(services, 'couchdb'))
-            services.couchdb = {} as Services['couchdb']
-
-        if (!Object.prototype.hasOwnProperty.call(
-            services.couchdb, 'connector'
-        )) {
-            const idName:SpecialPropertyNames['id'] =
-                configuration.couchdb.model.property.name.special.id
-            const revisionName:SpecialPropertyNames['revision'] =
-                configuration.couchdb.model.property.name.special.revision
-
-            services.couchdb.connector = PouchDB
-            // region apply "latest/upsert" and ignore "NoChange" error plugin
-            const nativeBulkDocs:Connection['bulkDocs'] =
-                (services.couchdb.connector.prototype as Connection)
-                    .bulkDocs
-            services.couchdb.connector.plugin({bulkDocs: async function(
-                this:Connection,
-                firstParameter:unknown,
-                ...parameters:Array<unknown>
-            ):Promise<Array<DatabaseError|DatabaseResponse>> {
-                const toggleIDDetermining:boolean = (
-                    parameters.length > 0 &&
-                    parameters[parameters.length - 1] ===
-                        Database.toggleIDDetermining
-                )
-                const skipIDDetermining:boolean = toggleIDDetermining ?
-                    !Database.skipIDDetermining :
-                    Database.skipIDDetermining
-                if (toggleIDDetermining)
-                    parameters.pop()
-                /*
-                    Implements a generic retry mechanism for "upsert" and
-                    "latest" updates and optionally supports to ignore
-                    "NoChange" errors.
-                */
-                let data:Array<PartialFullDocument> = (
-                    !Array.isArray(firstParameter) &&
-                    firstParameter !== null &&
-                    typeof firstParameter === 'object' &&
-                    idName in firstParameter
-                ) ?
-                    [firstParameter as PartialFullDocument] :
-                    firstParameter as Array<PartialFullDocument>
-                /*
-                    NOTE: "bulkDocs()" does not get constructor given options
-                    if none were provided for a single function call.
-                */
-                if (
-                    configuration.couchdb.connector.fetch?.timeout &&
-                    (
-                        parameters.length === 0 ||
-                        typeof parameters[0] !== 'object'
-                    )
-                )
-                    parameters.unshift({
-                        timeout: configuration.couchdb.connector.fetch.timeout
-                    })
-
-                const result:Array<DatabaseError|DatabaseResponse> =
-                    await nativeBulkDocs.call(
-                        this,
-                        data as FirstParameter<Connection['bulkDocs']>,
-                        ...parameters as
-                            [SecondParameter<Connection['bulkDocs']>]
-                    )
-
-                const conflictingIndexes:Array<number> = []
-                const conflicts:Array<PartialFullDocument> = []
-                let index = 0
-                for (const item of result) {
-                    if (typeof data[index] === 'object')
-                        if (
-                            revisionName in data[index] &&
-                            (item as DatabaseError).name === 'conflict' &&
-                            ['latest', 'upsert'].includes(
-                                data[index][revisionName]!
-                            )
-                        ) {
-                            conflicts.push(data[index])
-                            conflictingIndexes.push(index)
-                        } else if (
-                            idName in data[index] &&
-                            configuration.couchdb.ignoreNoChangeError &&
-                            'name' in item &&
-                            item.name === 'forbidden' &&
-                            'message' in item &&
-                            (item.message as string).startsWith('NoChange:')
-                        ) {
-                            result[index] = {
-                                id: data[index][idName], ok: true
-                            }
-                            if (!skipIDDetermining)
-                                result[index].rev =
-                                    revisionName in data[index] &&
-                                    !['latest', 'upsert'].includes(
-                                        data[index][revisionName]!
-                                    ) ?
-                                        data[index][revisionName] :
-                                        ((await this.get(result[index].id!)) as
-                                            unknown as
-                                            FullDocument
-                                        )[revisionName]
-                        }
-
-                    index += 1
-                }
-
-                if (conflicts.length) {
-                    data = conflicts
-                    if (toggleIDDetermining)
-                        parameters.push(Database.toggleIDDetermining)
-
-                    const retriedResults:Array<
-                        DatabaseError|DatabaseResponse
-                    > = (await this.bulkDocs(
-                        data,
-                        ...parameters as
-                            [SecondParameter<Connection['bulkDocs']>]
-                    )) as
-                        unknown as
-                        Array<DatabaseError|DatabaseResponse>
-                    for (const retriedResult of retriedResults)
-                        result[conflictingIndexes.shift() as number] =
-                            retriedResult
-                }
-
-                return result
-            } as unknown as DatabasePlugin})
-            // endregion
-            if (configuration.couchdb.debug)
-                services.couchdb.connector.debug.enable('*')
-
-            services.couchdb.connector =
-                services.couchdb.connector.plugin(PouchDBFindPlugin)
-        }
-
-        if (!Object.prototype.hasOwnProperty.call(
-            services.couchdb, 'server'
-        )) {
-            services.couchdb.server = {} as Services['couchdb']['server']
-            // region search for binary file to start database server
-            const triedPaths:Array<string> = []
-            for (const runner of ([] as Array<Runner>).concat(
-                configuration.couchdb.binary.runner
-            )) {
-                for (const directoryPath of (
-                    ([] as Array<string>).concat(runner.location)
-                )) {
-                    for (const name of (
-                        ([] as Array<string>).concat(runner.name)
-                    )) {
-                        const binaryFilePath:string = path.resolve(
-                            directoryPath, name
-                        )
-                        triedPaths.push(binaryFilePath)
-
-                        if (await Tools.isFile(binaryFilePath)) {
-                            runner.binaryFilePath = binaryFilePath
-                            services.couchdb.server.runner = runner
-
-                            break
-                        }
-                    }
-
-                    if (Object.prototype.hasOwnProperty.call(
-                        services.couchdb.server, 'runner'
-                    ))
-                        break
-                }
-
-                if (Object.prototype.hasOwnProperty.call(
-                    services.couchdb.server, 'runner'
-                ))
-                    break
-            }
-
-            if (!Object.prototype.hasOwnProperty.call(
-                services.couchdb.server, 'runner'
-            ))
-                throw new Error(
-                    'No binary file in one of the following locations found:' +
-                    ` "${triedPaths.join('", "')}".`
-                )
-            // endregion
-        }
-
-        return services
+        return Promise.resolve()
     }
     /**
      * Triggered when application will be closed soon.
-     * @param services - An object with stored service instances.
-     * @param configuration - Mutable by plugins extended configuration object.
+     * @param state - Application state.
+     * @param state.configuration - Applications configuration.
+     * @param state.services - Applications services.
      *
-     * @returns Given object of services wrapped in a promise resolving after
-     * finish.
+     * @returns Promise resolving to nothing.
      */
-    static async shouldExit(
-        services:Services, configuration:Configuration
-    ):Promise<Services> {
+    static async shouldExit({configuration, services}:State):Promise<void> {
         await Helper.stopServer(services, configuration)
 
         delete (services as {couchdb?:Services['couchdb']}).couchdb
@@ -1161,8 +1131,6 @@ export class Database implements PluginHandler {
         const logFilePath = 'log.txt'
         if (await Tools.isFile(logFilePath))
             await fileSystem.unlink(logFilePath)
-
-        return services
     }
 }
 export default Database

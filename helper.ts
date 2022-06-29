@@ -13,7 +13,7 @@
     See https://creativecommons.org/licenses/by/3.0/deed.de
     endregion
 */
-// region imports
+// region imports 
 import {spawn as spawnChildProcess} from 'child_process'
 import Tools, {CloseEventNames, globalContext} from 'clientnode'
 import {
@@ -45,7 +45,8 @@ import {
     NormalizedAllowedRoles,
     PartialFullDocument,
     Services,
-    SpecialPropertyNames
+    SpecialPropertyNames,
+    State
 } from './type'
 // endregion
 globalContext.fetch = nodeFetch as unknown as typeof fetch
@@ -381,21 +382,12 @@ export class Helper {
      * Stops open database connection if exist, stops server process, restarts
      * server process and re-initializes server connection.
      * @param this - Indicates an unbound method.
-     * @param services - An object with stored service instances.
-     * @param configuration - Mutable by plugins extended configuration object.
-     * @param plugins - Topological sorted list of plugins.
-     * @param pluginAPI - Plugin api reference.
+     * @param state - Application state.
      *
      * @returns Given object of services wrapped in a promise resolving after
      * after finish.
      */
-    static async restartServer(
-        this:void,
-        services:Services,
-        configuration:Configuration,
-        plugins:Array<Plugin>,
-        pluginAPI:typeof PluginAPI
-    ):Promise<void> {
+    static async restartServer(this:void, state:State):Promise<void> {
         const resolveServerProcessBackup:(_value:ProcessCloseReason) => void =
             services.couchdb.server.resolve
         const rejectServerProcessBackup:(_reason:ProcessCloseReason) => void =
@@ -416,9 +408,7 @@ export class Helper {
 
         void Helper.initializeConnection(services, configuration)
 
-        await pluginAPI.callStack(
-            'restartCouchdb', plugins, configuration, services
-        )
+        await pluginAPI.callStack<State>({...state, hook: 'restartCouchdb'})
     }
     /**
      * Stops open database connection if exists and stops server process.
