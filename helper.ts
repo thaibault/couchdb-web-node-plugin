@@ -388,21 +388,22 @@ export class Helper {
      * after finish.
      */
     static async restartServer(this:void, state:State):Promise<void> {
-        const resolveServerProcessBackup:(_value:ProcessCloseReason) => void =
-            services.couchdb.server.resolve
-        const rejectServerProcessBackup:(_reason:ProcessCloseReason) => void =
-            services.couchdb.server.reject
+        const {configuration, pluginAPI, services} = state
+        const {couchdb: {server}} = services
+
+        const resolveServerProcessBackup:(value:ProcessCloseReason) => void =
+            server.resolve
+        const rejectServerProcessBackup:(reason:ProcessCloseReason) => void =
+            server.reject
 
         // Avoid to notify web node about server process stop.
-        services.couchdb.server.resolve =
-            services.couchdb.server.reject =
-            Tools.noop
+        server.resolve = server.reject = Tools.noop
 
         await Helper.stopServer(services, configuration)
 
         // Reattach server process to web nodes process pool.
-        services.couchdb.server.resolve = resolveServerProcessBackup
-        services.couchdb.server.reject = rejectServerProcessBackup
+        server.resolve = resolveServerProcessBackup
+        server.reject = rejectServerProcessBackup
 
         await Helper.startServer(services, configuration)
 
@@ -420,16 +421,16 @@ export class Helper {
      * after finish.
      */
     static async stopServer(
-        this:void, services:Services, configuration:Configuration
+        this:void, {couchdb}:Services, {couchdb: configuration}:Configuration
     ):Promise<void> {
-        if (services.couchdb.connection)
-            void services.couchdb.connection.close()
+        if (couchdb.connection)
+            void couchdb.connection.close()
 
-        if (services.couchdb.server.process)
-            services.couchdb.server.process.kill('SIGINT')
+        if (couchdb.server.process)
+            couchdb.server.process.kill('SIGINT')
 
         await Tools.checkUnreachability(
-            Tools.stringFormat(configuration.couchdb.url, ''), {wait: true}
+            Tools.stringFormat(configuration.url, ''), {wait: true}
         )
     }
     // region model

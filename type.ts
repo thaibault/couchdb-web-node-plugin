@@ -25,7 +25,6 @@ import {
     Configuration as BaseConfiguration,
     Plugin,
     PluginHandler as BasePluginHandler,
-    Service as BaseService,
     ServicePromises as BaseServicePromises,
     Services as BaseServices,
     ServicePromisesState as BaseServicePromisesState,
