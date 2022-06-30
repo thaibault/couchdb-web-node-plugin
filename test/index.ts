@@ -16,10 +16,11 @@
 // region imports
 import {describe, expect, test} from '@jest/globals'
 import path from 'path'
+import {PluginAPI} from 'web-node'
 
 import Index from '../index'
 import packageConfiguration from '../package.json'
-import {Configuration, Runner, Services} from '../type'
+import {Configuration, Runner, ServicePromises, Services} from '../type'
 // endregion
 describe('index', ():void => {
     // region prepare environment
@@ -28,27 +29,38 @@ describe('index', ():void => {
     configuration.couchdb.url = 'http://dummy-url'
     // endregion
     // region tests
-    test('loadService', ():Promise<void> =>
-        expect(Index.loadService(
-            {},
-            {couchdb: {
-                connection: null, server: {}
-            } as unknown as Services['couchdb']},
-            configuration
-        )).resolves.toStrictEqual({name: 'couchdb', promise: null})
-    )
-    test('preLoadService', ():void => {
+    test('preLoadService', async ():Promise<void> => {
         const runner:Runner = configuration.couchdb.binary.runner[
             configuration.couchdb.binary.runner.length - 1
         ]
 
-        void expect(Index.preLoadService({} as Services, configuration))
+        const services:Services = {} as Services
+        await expect(Index.preLoadService({
+            configuration,
+            hook: 'preLoadService',
+            pluginAPI: PluginAPI,
+            plugins: [],
+            services
+        }))
             .resolves
-            .toHaveProperty(
-                'couchdb.server.runner.binaryFilePath',
-                path.resolve(runner.location[0], runner.name as string)
-            )
+            .toBeUndefined()
+        expect(services).toHaveProperty(
+            'couchdb.server.runner.binaryFilePath',
+            path.resolve(runner.location[0], runner.name as string)
+        )
     })
+    test('loadService', ():Promise<void> =>
+        expect(Index.loadService({
+            configuration,
+            hook: 'loadService',
+            pluginAPI: PluginAPI,
+            plugins: [],
+            servicePromises: {} as ServicePromises,
+            services: {couchdb: {
+                connection: null, server: {}
+            } as unknown as Services['couchdb']}
+        })).resolves.toStrictEqual({couchdb: null})
+    )
     test('shouldExit', async ():Promise<void> => {
         let testValue = 0
         const services:Services = {couchdb: {
@@ -62,8 +74,14 @@ describe('index', ():void => {
             }}}
         } as Services['couchdb']}
 
-        expect((await Index.shouldExit(services, configuration)))
-            .toStrictEqual(services)
+        await expect((Index.shouldExit({
+            configuration,
+            hook: 'shouldExit',
+            pluginAPI: PluginAPI,
+            plugins: [],
+            servicePromises: {} as ServicePromises,
+            services
+        }))).resolves.toBeUndefined()
         expect(services).toStrictEqual({})
         expect(testValue).toStrictEqual(2)
     })

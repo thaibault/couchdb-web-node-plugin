@@ -22,8 +22,6 @@ import {
 import nodeFetch from 'node-fetch'
 import {promises as fileSystem} from 'fs'
 import path from 'path'
-import {PluginAPI} from 'web-node'
-import {Plugin} from 'web-node/type'
 
 import {
     AllowedModelRolesMapping,
@@ -45,7 +43,8 @@ import {
     NormalizedAllowedRoles,
     PartialFullDocument,
     Services,
-    SpecialPropertyNames
+    SpecialPropertyNames,
+    State
 } from './type'
 // endregion
 globalContext.fetch = nodeFetch as unknown as typeof fetch
@@ -381,65 +380,58 @@ export class Helper {
      * Stops open database connection if exist, stops server process, restarts
      * server process and re-initializes server connection.
      * @param this - Indicates an unbound method.
-     * @param services - An object with stored service instances.
-     * @param configuration - Mutable by plugins extended configuration object.
-     * @param plugins - Topological sorted list of plugins.
-     * @param pluginAPI - Plugin api reference.
+     * @param state - Application state.
      *
      * @returns Given object of services wrapped in a promise resolving after
      * after finish.
      */
-    static async restartServer(
-        this:void,
-        services:Services,
-        configuration:Configuration,
-        plugins:Array<Plugin>,
-        pluginAPI:typeof PluginAPI
-    ):Promise<void> {
-        const resolveServerProcessBackup:(_value:ProcessCloseReason) => void =
-            services.couchdb.server.resolve
-        const rejectServerProcessBackup:(_reason:ProcessCloseReason) => void =
-            services.couchdb.server.reject
+    static async restartServer(this:void, state:State):Promise<void> {
+        const {configuration, pluginAPI, services} = state
+        const {couchdb: {server}} = services
+
+        const resolveServerProcessBackup:(value:ProcessCloseReason) => void =
+            server.resolve
+        const rejectServerProcessBackup:(reason:ProcessCloseReason) => void =
+            server.reject
 
         // Avoid to notify web node about server process stop.
-        services.couchdb.server.resolve =
-            services.couchdb.server.reject =
-            Tools.noop
+        server.resolve = server.reject = Tools.noop
 
         await Helper.stopServer(services, configuration)
 
         // Reattach server process to web nodes process pool.
-        services.couchdb.server.resolve = resolveServerProcessBackup
-        services.couchdb.server.reject = rejectServerProcessBackup
+        server.resolve = resolveServerProcessBackup
+        server.reject = rejectServerProcessBackup
 
         await Helper.startServer(services, configuration)
 
         void Helper.initializeConnection(services, configuration)
 
-        await pluginAPI.callStack(
-            'restartCouchdb', plugins, configuration, services
-        )
+        await pluginAPI.callStack<State>({...state, hook: 'restartCouchdb'})
     }
     /**
      * Stops open database connection if exists and stops server process.
      * @param this - Indicates an unbound method.
      * @param services - An object with stored service instances.
+     * @param services.couchdb - Couchdb service instance.
      * @param configuration - Mutable by plugins extended configuration object.
+     * @param configuration.couchdb - Mutable by plugins extended configuration
+     * object.
      *
      * @returns Given object of services wrapped in a promise resolving after
      * after finish.
      */
     static async stopServer(
-        this:void, services:Services, configuration:Configuration
+        this:void, {couchdb}:Services, {couchdb: configuration}:Configuration
     ):Promise<void> {
-        if (services.couchdb.connection)
-            void services.couchdb.connection.close()
+        if (couchdb.connection)
+            void couchdb.connection.close()
 
-        if (services.couchdb.server.process)
-            services.couchdb.server.process.kill('SIGINT')
+        if (couchdb.server.process)
+            couchdb.server.process.kill('SIGINT')
 
         await Tools.checkUnreachability(
-            Tools.stringFormat(configuration.couchdb.url, ''), {wait: true}
+            Tools.stringFormat(configuration.url, ''), {wait: true}
         )
     }
     // region model
