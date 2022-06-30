@@ -30,14 +30,12 @@ import {promises as fileSystem} from 'fs'
 import path from 'path'
 import PouchDB from 'pouchdb'
 import PouchDBFindPlugin from 'pouchdb-find'
-import {PluginAPI} from 'web-node'
-import {Plugin, PluginHandler, PluginPromises} from 'web-node/type'
+import {PluginHandler, PluginPromises} from 'web-node/type'
 
 import DatabaseHelper from './databaseHelper'
 import Helper from './helper'
 import {
     ChangesStream,
-    Configuration,
     Connection,
     Constraint,
     DatabaseError,
@@ -55,8 +53,6 @@ import {
     PartialFullDocument,
     PropertySpecification,
     Runner,
-    Service,
-    ServicePromises,
     Services,
     ServicesState,
     SpecialPropertyNames,
@@ -84,13 +80,14 @@ export class Database implements PluginHandler {
     /**
      * Appends an application server to the web node services.
      * @param state - Application state.
-     * @param stat.configuration - Applications configuration.
-     * @param stat.configuration.couchdb - Plugins configuration.
+     * @param state.configuration - Applications configuration.
+     * @param state.configuration.couchdb - Plugins configuration.
+     * @param state.services - Applications services.
      *
      * @returns Promise resolving to nothing.
      */
     static async preLoadService({
-        services, configuration: {couchdb: configuration}
+        configuration: {couchdb: configuration}, services
     }:ServicesState):Promise<void> {
         if (!Object.prototype.hasOwnProperty.call(services, 'couchdb'))
             services.couchdb = {} as Services['couchdb']
@@ -105,6 +102,7 @@ export class Database implements PluginHandler {
             couchdb.connector = PouchDB
             // region apply "latest/upsert" and ignore "NoChange" error plugin
             const nativeBulkDocs:Connection['bulkDocs'] =
+                // eslint-disable-next-line @typescript-eslint/unbound-method
                 (couchdb.connector.prototype as Connection).bulkDocs
             couchdb.connector.plugin({bulkDocs: async function(
                 this:Connection,
@@ -278,6 +276,8 @@ export class Database implements PluginHandler {
      * Start database's child process and return a Promise which observes this
      * service.
      * @param state - Application state.
+     * @param state.configuration - Applications configuration.
+     * @param state.services - Applications services.
      *
      * @returns A promise which correspond to the plugin specific continues
      * service.
@@ -291,9 +291,9 @@ export class Database implements PluginHandler {
         if (Object.prototype.hasOwnProperty.call(couchdb.server, 'runner')) {
             await Helper.startServer(services, configuration)
 
-            couchdb.server.restart = Helper.restartServer.bind(Helper)
-            couchdb.server.start = Helper.startServer.bind(Helper)
-            couchdb.server.stop = Helper.stopServer.bind(Helper)
+            couchdb.server.restart = Helper.restartServer
+            couchdb.server.start = Helper.startServer
+            couchdb.server.stop = Helper.stopServer
 
             promise = new Promise<ProcessCloseReason>((
                 resolve:(value:ProcessCloseReason) => void,
@@ -1033,7 +1033,8 @@ export class Database implements PluginHandler {
      * @returns Promise resolving to nothing.
      */
     static postLoadService(state:State):Promise<void> {
-        const {configuration: {couchdb: configuration}, services} = state
+        const {configuration: {couchdb: configuration}, pluginAPI, services} =
+            state
         const {couchdb} = services
         // region register database changes stream
         let numberOfErrorsThrough = 0
@@ -1064,7 +1065,7 @@ export class Database implements PluginHandler {
             couchdb.changesStream.emit('error', {test: 2}), 6 * 1000)
         */
         const initialize = Tools.debounce(async ():Promise<void> => {
-            if (couchdb.changesStream)
+            if (couchdb.changesStream as unknown as boolean)
                 couchdb.changesStream.cancel()
 
             couchdb.changesStream = couchdb.connection.changes(

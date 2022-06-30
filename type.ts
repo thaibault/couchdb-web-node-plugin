@@ -20,10 +20,8 @@ import {
     AnyFunction, Mapping, PlainObject, Primitive, ProcessCloseReason
 } from 'clientnode/type'
 import PouchDB from 'pouchdb'
-import {PluginAPI} from 'web-node'
 import {
     Configuration as BaseConfiguration,
-    Plugin,
     PluginHandler as BasePluginHandler,
     ServicePromises as BaseServicePromises,
     Services as BaseServices,

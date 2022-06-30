@@ -13,7 +13,7 @@
     See https://creativecommons.org/licenses/by/3.0/deed.de
     endregion
 */
-// region imports 
+// region imports
 import {spawn as spawnChildProcess} from 'child_process'
 import Tools, {CloseEventNames, globalContext} from 'clientnode'
 import {
@@ -22,8 +22,6 @@ import {
 import nodeFetch from 'node-fetch'
 import {promises as fileSystem} from 'fs'
 import path from 'path'
-import {PluginAPI} from 'web-node'
-import {Plugin} from 'web-node/type'
 
 import {
     AllowedModelRolesMapping,
@@ -415,7 +413,10 @@ export class Helper {
      * Stops open database connection if exists and stops server process.
      * @param this - Indicates an unbound method.
      * @param services - An object with stored service instances.
+     * @param services.couchdb - Couchdb service instance.
      * @param configuration - Mutable by plugins extended configuration object.
+     * @param configuration.couchdb - Mutable by plugins extended configuration
+     * object.
      *
      * @returns Given object of services wrapped in a promise resolving after
      * after finish.
