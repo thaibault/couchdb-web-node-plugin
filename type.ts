@@ -312,6 +312,7 @@ export type Configuration<ConfigurationType = Mapping<unknown>> =
             model:ModelConfiguration
             path:string
             security:SecuritySettings
+            skipIDDetermining:boolean
             url:string
             user:{
                 name:string

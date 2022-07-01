@@ -63,19 +63,11 @@ import {
 /**
  * Launches an application server und triggers all some pluginable hooks on
  * an event.
- * TODO move to configuration.
- * @property static:additionalChangesStreamOptions - Can provide additional
- * (non static) changes stream options.
- * @property static:skipIDDetermining - Indicates whether id's should be
- * determined if "bulkDocs" had skipped a real change due to ignore a
- * "NoChange" error.
- * @property static:toggleIDDetermining - Token to give a "bulkDocs" method
- * call to indicate id determination skip or not (depends on the static
+ * @property static:toggleIDDetermining - Token to provide to "bulkDocs" method
+ * call to indicate id determination skip or not (depends on
  * "skipIDDetermining" configuration).
  */
 export class Database implements PluginHandler {
-    static additionalChangesStreamOptions:object = {}
-    static skipIDDetermining = true
     static toggleIDDetermining = Symbol('toggleIDDetermining')
     /**
      * Appends an application server to the web node services.
@@ -115,8 +107,8 @@ export class Database implements PluginHandler {
                         Database.toggleIDDetermining
                 )
                 const skipIDDetermining:boolean = toggleIDDetermining ?
-                    !Database.skipIDDetermining :
-                    Database.skipIDDetermining
+                    !configuration.skipIDDetermining :
+                    configuration.skipIDDetermining
                 if (toggleIDDetermining)
                     parameters.pop()
                 /*
@@ -1068,13 +1060,8 @@ export class Database implements PluginHandler {
             if (couchdb.changesStream as unknown as boolean)
                 couchdb.changesStream.cancel()
 
-            couchdb.changesStream = couchdb.connection.changes(
-                Tools.extend(
-                    true,
-                    Tools.copy(configuration.changesStream),
-                    Database.additionalChangesStreamOptions
-                )
-            )
+            couchdb.changesStream =
+                couchdb.connection.changes(configuration.changesStream)
 
             void couchdb.changesStream.on(
                 'error',
