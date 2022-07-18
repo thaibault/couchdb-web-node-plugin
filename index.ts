@@ -271,8 +271,8 @@ export class Database implements PluginHandler {
      * @param state.configuration - Applications configuration.
      * @param state.services - Applications services.
      *
-     * @returns A promise which correspond to the plugin specific continues
-     * service.
+     * @returns A mapping to promises which correspond to the plugin specific
+     * continues services.
      */
     static async loadService(
         {configuration, services}:State
