@@ -123,7 +123,9 @@
           "couchdb/view_index_dir": {
             "__evaluate__": "path.resolve(self.couchdb.path)"
           },
-          "couch_httpd_auth/timeout": 7200,
+          "couch_httpd_auth/timeout": {
+            "__evaluate__": "60**2 × 24 × 14"
+          },
           "httpd/allow_jsonp": true,
           "httpd/bind_address": {
             "__evaluate__": "self.couchdb.backend.configuration['httpd/host']"
