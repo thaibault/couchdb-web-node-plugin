@@ -124,7 +124,7 @@
             "__evaluate__": "path.resolve(self.couchdb.path)"
           },
           "couch_httpd_auth/timeout": {
-            "__evaluate__": "60**2 × 24 × 14"
+            "__evaluate__": "60 ** 2 * 24 * 14"
           },
           "httpd/allow_jsonp": true,
           "httpd/bind_address": {
