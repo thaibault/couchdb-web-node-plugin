@@ -341,6 +341,20 @@ export class DatabaseHelper {
         else
             throwError('Needed "serializer" is not available.')
 
+        const specialPropertyNames:Array<string> = [
+            specialNames.additional,
+            specialNames.allowedRole,
+            specialNames.constraint.execution,
+            specialNames.constraint.expression,
+            specialNames.create.execution,
+            specialNames.create.expression,
+            specialNames.extend,
+            specialNames.maximumAggregatedSize,
+            specialNames.minimumAggregatedSize,
+            specialNames.oldType,
+            specialNames.update.execution,
+            specialNames.update.expression
+        ]
         // region functions
         /// region generic functions
         const serialize = (value:unknown):string =>
@@ -1319,20 +1333,9 @@ export class DatabaseHelper {
             /// endregion
             // endregion
             const specifiedPropertyNames:Array<string> = Object.keys(model)
-                .filter((name:string):boolean => ![
-                    specialNames.additional,
-                    specialNames.allowedRoles,
-                    specialNames.constraint.execution,
-                    specialNames.constraint.expression,
-                    specialNames.create.execution,
-                    specialNames.create.expression,
-                    specialNames.extend,
-                    specialNames.maximumAggregatedSize,
-                    specialNames.minimumAggregatedSize,
-                    specialNames.oldType,
-                    specialNames.update.execution,
-                    specialNames.update.expression
-                ].includes(name))
+                .filter((name:string):boolean =>
+                    !specialPropertyNames.includes(name)
+                )
             // region migrate old model specific property names
             if (updateStrategy === 'migrate')
                 for (const name of specifiedPropertyNames)

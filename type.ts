@@ -191,7 +191,7 @@ export type PartialFullDocument = Partial<BaseDocument> & PlainObject
 
 export interface SpecialPropertyNames {
     additional:'_additional'
-    allowedRoles:'_allowedRoles'
+    allowedRole:'_allowedRoles'
     attachment:'_attachments'
     conflict:'_conflicts'
     deleted:'_deleted'

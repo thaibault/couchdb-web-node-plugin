@@ -446,19 +446,19 @@ export class Helper {
     static determineAllowedModelRolesMapping(
         this:void, modelConfiguration:ModelConfiguration
     ):AllowedModelRolesMapping {
-        const {allowedRoles: allowedRolesName} =
+        const {allowedRole: allowedRoleName} =
             modelConfiguration.property.name.special
         const allowedModelRolesMapping:AllowedModelRolesMapping = {}
         const models:Models = Helper.extendModels(modelConfiguration)
 
         for (const [modelName, model] of Object.entries(models))
             if (Object.prototype.hasOwnProperty.call(
-                model, allowedRolesName
+                model, allowedRoleName
             )) {
                 allowedModelRolesMapping[modelName] = {
                     properties: {},
 
-                    ...Helper.normalizeAllowedRoles(model[allowedRolesName]!)
+                    ...Helper.normalizeAllowedRoles(model[allowedRoleName]!)
                 }
 
                 for (const [name, property] of Object.entries(model))
@@ -508,7 +508,7 @@ export class Helper {
                         !model[name].index ||
                         modelConfiguration.property.name.reserved.concat(
                             specialNames.additional,
-                            specialNames.allowedRoles,
+                            specialNames.allowedRole,
                             specialNames.attachment,
                             specialNames.conflict,
                             specialNames.constraint.execution,
@@ -653,7 +653,7 @@ export class Helper {
                                 value as FileSpecification
                             )
                 else if (![
-                    specialNames.allowedRoles,
+                    specialNames.allowedRole,
                     specialNames.constraint.execution,
                     specialNames.constraint.expression,
                     specialNames.extend,
