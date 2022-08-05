@@ -94,49 +94,49 @@ describe('helper', ():void => {
             [
                 {Test: {properties: {}, read: [], write: []}},
                 {
-                    property: {name: {special: {allowedRoles: 'roles'}}},
+                    property: {name: {special: {allowedRole: 'roles'}}},
                     entities: {Test: {}}
                 }
             ],
             [
                 {Test: {properties: {}, read: [], write: []}},
                 {
-                    property: {name: {special: {allowedRoles: 'roles'}}},
+                    property: {name: {special: {allowedRole: 'roles'}}},
                     entities: {Test: {roles: []}}
                 }
             ],
             [
                 {Test: {properties: {}, read: ['a'], write: ['a']}},
                 {
-                    property: {name: {special: {allowedRoles: 'roles'}}},
+                    property: {name: {special: {allowedRole: 'roles'}}},
                     entities: {Test: {roles: ['a']}}
                 }
             ],
             [
                 {Test: {properties: {}, read: ['a'], write: ['a']}},
                 {
-                    property: {name: {special: {allowedRoles: 'roles'}}},
+                    property: {name: {special: {allowedRole: 'roles'}}},
                     entities: {Test: {roles: 'a'}}
                 }
             ],
             [
                 {Test: {properties: {}, read: ['a'], write: []}},
                 {
-                    property: {name: {special: {allowedRoles: 'roles'}}},
+                    property: {name: {special: {allowedRole: 'roles'}}},
                     entities: {Test: {roles: {read: ['a']}}}
                 }
             ],
             [
                 {Test: {properties: {}, read: ['a'], write: []}},
                 {
-                    property: {name: {special: {allowedRoles: 'roles'}}},
+                    property: {name: {special: {allowedRole: 'roles'}}},
                     entities: {Test: {roles: {read: 'a'}}}
                 }
             ],
             [
                 {Test: {properties: {}, read: ['a'], write: ['b']}},
                 {
-                    property: {name: {special: {allowedRoles: 'roles'}}},
+                    property: {name: {special: {allowedRole: 'roles'}}},
                     entities: {Test: {roles: {read: 'a', write: ['b']}}}
                 }
             ]
