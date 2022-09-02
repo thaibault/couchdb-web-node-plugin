@@ -38,9 +38,11 @@ export type FullAttachment = PouchDB.Core.FullAttachment
 export type StubAttachment = PouchDB.Core.StubAttachment
 
 export type ChangesMeta = PouchDB.Core.ChangesMeta
-export type ChangesResponseChange<Type = unknown> =
-    PouchDB.Core.ChangesResponseChange<Type>
-export type ChangesStream<Type = unknown> = PouchDB.Core.Changes<Type>
+export type ChangesResponseChange<
+    Type extends Mapping<unknown> = Mapping<unknown>
+> = PouchDB.Core.ChangesResponseChange<Type>
+export type ChangesStream<Type extends Mapping<unknown> = Mapping<unknown>> =
+    PouchDB.Core.Changes<Type>
 export type ChangesStreamOptions = PouchDB.Core.ChangesOptions
 
 export type Connection = PouchDB.Database
@@ -54,8 +56,9 @@ export type DatabaseResponse = PouchDB.Core.Response
 
 export type DeleteIndexOptions = PouchDB.Find.DeleteIndexOptions
 
-export type Document<Type = PlainObject> = PouchDB.Core.Document<Type>
-export type ExistingDocument<Type = PlainObject> =
+export type Document<Type extends Mapping<unknown> = PlainObject> =
+    PouchDB.Core.Document<Type>
+export type ExistingDocument<Type extends Mapping<unknown> = PlainObject> =
     PouchDB.Core.ExistingDocument<Type>
 export type DocumentGetMeta = PouchDB.Core.GetMeta
 export type DocumentIDMeta = PouchDB.Core.IdMeta
