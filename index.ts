@@ -762,7 +762,9 @@ export class Database implements PluginHandler {
                             `${document[idName]}" of type "` +
                             `${document[typeName] as string}" was successful.`
                         )
-                    } else if (path.extname(file.name) === '.js')
+                    } else if (['.js', '.mjs'].includes(
+                        path.extname(file.name)
+                    ))
                         // region collect migrater
                         migrater[file.path] = (
                             eval(`require('${file.path}')`) as
