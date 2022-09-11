@@ -762,12 +762,17 @@ export class Database implements PluginHandler {
                             `${document[idName]}" of type "` +
                             `${document[typeName] as string}" was successful.`
                         )
-                    } else if (['.js', '.mjs'].includes(
-                        path.extname(file.name)
-                    ))
-                        // region collect migrater
+                    } else if (['.js'].includes(path.extname(file.name)))
+                        // region collect script migrater
                         migrater[file.path] = (
                             eval(`require('${file.path}')`) as
+                                {default:Migrator}
+                        ).default
+                        // endregion
+                    else if (['.mjs'].includes(path.extname(file.name)))
+                        // region collect module migrater
+                        migrater[file.path] = (
+                            (await eval(`import('${file.path}')`)) as
                                 {default:Migrator}
                         ).default
                         // endregion
