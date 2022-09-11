@@ -705,7 +705,8 @@ export class Database implements PluginHandler {
             )))
                 for (const file of await Tools.walkDirectoryRecursively(
                     path.resolve(
-                        configuration.couchdb.model.autoMigrationPath),
+                        configuration.couchdb.model.autoMigrationPath
+                    ),
                     configuration.couchdb.debug ?
                         Tools.noop :
                         ((file:File):boolean => file.name !== 'debug')
