@@ -49,6 +49,7 @@
     "clear": "weboptimizer clear && rimraf log.txt",
     "document": "weboptimizer document",
     "lint": "weboptimizer lint",
+    "postversion": "git push --tags && yarn publish . --tag $npm_package_version && git push",
     "prepare": "yarn build",
     "report:coverage": "nyc report --reporter=text-lcov | coveralls",
     "serve": "yarn build && yarn start",
@@ -56,7 +57,7 @@
     "test": "weboptimizer test",
     "test:coverage": "weboptimizer test:coverage",
     "test:coverage:report": "weboptimizer test:coverage:report",
-    "update": "yarn version --patch && yarn publish",
+    "update": "yarn version --patch",
     "update:documentation": "documentation-website",
     "watch": "weboptimizer build --watch"
   },
