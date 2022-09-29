@@ -49,7 +49,7 @@
     "clear": "weboptimizer clear && rimraf log.txt",
     "document": "weboptimizer document",
     "lint": "weboptimizer lint",
-    "postversion": "yarn publish --non-interactive && git push --tags && git push",
+    "postversion": "yarn publish --non-interactive; git push --tags && git push",
     "prepare": "yarn build",
     "report:coverage": "nyc report --reporter=text-lcov | coveralls",
     "serve": "yarn build && yarn start",
