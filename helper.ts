@@ -56,7 +56,6 @@ export class Helper {
     /**
      * Converts internal declarative database connector configuration object
      * into a database compatible one.
-     * @param this - Indicates an unbound method.
      * @param configuration - Mutable by plugins extended configuration object.
      *
      * @returns Database compatible configuration object.
@@ -88,7 +87,6 @@ export class Helper {
     }
     /**
      * Determines a representation for given plain object.
-     * @param this - Indicates an unbound method.
      * @param object - Object to represent.
      * @param maximumRepresentationTryLength - Maximum representation string to
      * process.
@@ -120,7 +118,6 @@ export class Helper {
     /**
      * Updates/creates a design document in database with a validation function
      * set to given code.
-     * @param this -yy Indicates an unbound method.
      * @param databaseConnection - Database connection to use for document
      * updates.
      * @param documentName - Design document name.
@@ -186,7 +183,6 @@ export class Helper {
     }
     /**
      * Initializes a database connection instance.
-     * @param this - Indicates an unbound method.
      * @param services - An object with stored service instances.
      * @param configuration - Mutable by plugins extended configuration object.
      *
@@ -276,7 +272,6 @@ export class Helper {
     }
     /**
      * Starts server process.
-     * @param this - Indicates an unbound method.
      * @param services - An object with stored service instances.
      * @param configuration - Mutable by plugins extended configuration object.
      *
@@ -379,7 +374,6 @@ export class Helper {
     /**
      * Stops open database connection if exist, stops server process, restarts
      * server process and re-initializes server connection.
-     * @param this - Indicates an unbound method.
      * @param state - Application state.
      *
      * @returns Given object of services wrapped in a promise resolving after
@@ -411,7 +405,6 @@ export class Helper {
     }
     /**
      * Stops open database connection if exists and stops server process.
-     * @param this - Indicates an unbound method.
      * @param services - An object with stored service instances.
      * @param services.couchdb - Couchdb service instance.
      * @param configuration - Mutable by plugins extended configuration object.
@@ -438,7 +431,6 @@ export class Helper {
     /**
      * Determines a mapping of all models to roles who are allowed to edit
      * corresponding model instances.
-     * @param this - Indicates an unbound method.
      * @param modelConfiguration - Model specification object.
      *
      * @returns The mapping object.
@@ -480,7 +472,6 @@ export class Helper {
     }
     /**
      * Determines all property names which are indexable in a generic manner.
-     * @param this - Indicates an unbound method.
      * @param modelConfiguration - Model specification object.
      * @param model - Model to determine property names from.
      *
@@ -547,7 +538,6 @@ export class Helper {
     }
     /**
      * Extend given model with all specified one.
-     * @param this - Indicates an unbound method.
      * @param modelName - Name of model to extend.
      * @param models - Pool of models to extend from.
      * @param extendPropertyName - Property name which indicates model
@@ -601,7 +591,6 @@ export class Helper {
     }
     /**
      * Extend default specification with specific one.
-     * @param this - Indicates an unbound method.
      * @param modelConfiguration - Model specification object.
      *
      * @returns Models with extended specific specifications.
@@ -673,7 +662,6 @@ export class Helper {
     }
     /**
      * Convert given roles to its normalized representation.
-     * @param this - Indicates an unbound method.
      * @param roles - Unstructured roles description.
      *
      * @returns Normalized roles representation.
