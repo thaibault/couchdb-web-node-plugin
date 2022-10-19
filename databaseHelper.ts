@@ -60,8 +60,6 @@ export class DatabaseHelper {
     /**
      * Authenticates given document update against given mapping of allowed
      * roles for writing into corresponding model instances.
-     * @param this - Indicates an unbound method.
-     *
      * @param newDocument - Updated document.
      * @param oldDocument - If an existing document should be updated its given
      * here.
@@ -187,8 +185,6 @@ export class DatabaseHelper {
     /**
      * Represents a design document validation function for given model
      * specification.
-     * @param this - Indicates an unbound method.
-     *
      * @param newDocument - Updated document.
      * @param oldDocument - If an existing document should be updated its given
      * here.
