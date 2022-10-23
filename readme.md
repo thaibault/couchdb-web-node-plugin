@@ -18,17 +18,12 @@ Project status
 
 [![<LABEL>](https://github.com/thaibault/couchdb-web-node-plugin/actions/workflows/build.yaml/badge.svg)](https://github.com/thaibault/couchdb-web-node-plugin/actions/workflows/build.yaml)
 [![<LABEL>](https://github.com/thaibault/couchdb-web-node-plugin/actions/workflows/test.yaml/badge.svg)](https://github.com/thaibault/couchdb-web-node-plugin/actions/workflows/test.yaml)
-[![<LABEL>](https://github.com/thaibault/couchdb-web-node-plugin/actions/workflows/test:coverage:report.yaml/badge.svg)](https://github.com/thaibault/couchdb-web-node-plugin/actions/workflows/test:coverage:report.yaml)
-[![<LABEL>](https://github.com/thaibault/couchdb-web-node-plugin/actions/workflows/check:types.yaml/badge.svg)](https://github.com/thaibault/couchdb-web-node-plugin/actions/workflows/check:types.yaml)
+[![<LABEL>](https://github.com/thaibault/couchdb-web-node-plugin/actions/workflows/test-coverage-report.yaml/badge.svg)](https://github.com/thaibault/couchdb-web-node-plugin/actions/workflows/test-coverage-report.yaml)
+[![<LABEL>](https://github.com/thaibault/couchdb-web-node-plugin/actions/workflows/check-types.yaml/badge.svg)](https://github.com/thaibault/couchdb-web-node-plugin/actions/workflows/check-types.yaml)
 [![<LABEL>](https://github.com/thaibault/couchdb-web-node-plugin/actions/workflows/lint.yaml/badge.svg)](https://github.com/thaibault/couchdb-web-node-plugin/actions/workflows/lint.yaml)
 
 [![code coverage](https://coveralls.io/repos/github/thaibault/couchdb-web-node-plugin/badge.svg)](https://coveralls.io/github/thaibault/couchdb-web-node-plugin)
 
-<!-- Too unstable yet
-[![dependencies](https://img.shields.io/david/thaibault/couchdb-web-node-plugin.svg)](https://david-dm.org/thaibault/couchdb-web-node-plugin)
-[![development dependencies](https://img.shields.io/david/dev/thaibault/couchdb-web-node-plugin.svg)](https://david-dm.org/thaibault/couchdb-web-node-plugin?type=dev)
-[![peer dependencies](https://img.shields.io/david/peer/thaibault/couchdb-web-node-plugin.svg)](https://david-dm.org/thaibault/couchdb-web-node-plugin?type=peer)
--->
 [![documentation website](https://img.shields.io/website-up-down-green-red/https/torben.website/couchdb-web-node-plugin.svg?label=documentation-website)](https://torben.website/couchdb-web-node-plugin)
 
 Use case
