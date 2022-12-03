@@ -99,8 +99,16 @@ export interface Constraint {
     description?:null|string
     evaluation:string
 }
-export type Type = string|'any'|'boolean'|'integer'|'number'|'string'|'DateTime'
+export type PrimitiveType = 'boolean'|'integer'|'number'|'string'|'DateTime'
+export type Type = 'any'|PrimitiveType|string
 export type TypeSpecification = Array<Type>|Type
+export const PrimitiveTypes = [
+    'boolean',
+    'DateTime',
+    'integer',
+    'number',
+    'string'
+] as const
 
 export type ConstraintKey =
     'arrayConstraintExecution'|'arrayConstraintExpression'|
@@ -194,14 +202,6 @@ export interface BaseModel {
 }
 export type Model = BaseModel & Mapping<PropertySpecification>
 export type Models = Mapping<Model>
-
-export const PrimitiveTypes = [
-    'boolean',
-    'DateTime',
-    'integer',
-    'number',
-    'string'
-] as const
 
 export type UpdateStrategy = ''|'fillUp'|'incremental'|'migrate'
 
