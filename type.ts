@@ -112,41 +112,68 @@ export interface SelectionMapping {
 }
 export interface PropertySpecification {
     allowedRoles?:AllowedRoles|null
+    // region expression
     arrayConstraintExecution?:Constraint|null
     arrayConstraintExpression?:Constraint|null
+
     conflictingConstraintExecution?:Constraint|null
     conflictingConstraintExpression?:Constraint|null
+
     constraintExecution?:Constraint|null
     constraintExpression?:Constraint|null
-    contentTypeRegularExpressionPattern?:null|string
-    default?:unknown
-    emptyEqualsToNull?:boolean|null
-    index?:boolean|null
-    invertedContentTypeRegularExpressionPattern?:null|string
-    invertedRegularExpressionPattern?:null|string
-    maximum?:null|number
-    maximumAggregatedSize?:null|number
-    maximumLength?:null|number
-    maximumNumber?:null|number
-    maximumSize?:null|number
-    minimum?:null|number
-    minimumAggregatedSize?:null|number
-    minimumLength?:null|number
-    minimumNumber?:null|number
-    minimumSize?:null|number
-    mutable?:boolean|null
-    nullable?:boolean|null
+
     onCreateExecution?:null|string
     onCreateExpression?:null|string
-    oldName?:Array<string>|null|string
     onUpdateExecution?:null|string
     onUpdateExpression?:null|string
+    // endregion
+    // region validation
     regularExpressionPattern?:null|string
-    selection?:Array<unknown>|Array<SelectionMapping>|Mapping<unknown>|null
-    trim?:boolean|null
-    type?:TypeSpecification|null
-    value?:unknown
+    invertedRegularExpressionPattern?:null|string
+
+    contentTypeRegularExpressionPattern?:null|string
+    invertedContentTypeRegularExpressionPattern?:null|string
+
+    maximum?:null|number
+    minimum?:null|number
+
+    maximumAggregatedSize?:null|number
+    minimumAggregatedSize?:null|number
+
+    maximumLength?:null|number
+    minimumLength?:null|number
+
+    maximumNumber?:null|number
+    minimumNumber?:null|number
+
+    maximumSize?:null|number
+    minimumSize?:null|number
+
+    mutable?:boolean|null
+    nullable?:boolean|null
     writable?:boolean|null
+
+    selection?:Array<unknown>|Array<SelectionMapping>|Mapping<unknown>|null
+
+    type?:TypeSpecification|null
+    // endregion
+    // region simple transformation
+    default?:unknown
+    emptyEqualsToNull?:boolean|null
+    trim?:boolean|null
+    // endregion
+    // region representation
+    // NOTE: Can als be defined via key in parent data structure.
+    name?:string
+    declaration?:string
+    description?:string
+    // endregion
+    index?:boolean|null
+
+    // NOTE: Actual name is usually specified via key parent data structure.
+    oldName?:Array<string>|null|string
+
+    value?:unknown
 }
 export interface FileSpecification extends PropertySpecification {
     fileName?:PropertySpecification
