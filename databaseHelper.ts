@@ -2028,7 +2028,7 @@ export class DatabaseHelper {
                     Object.prototype.hasOwnProperty.call(model, type)
                 )
                     for (const constraint of ([] as Array<Constraint>).concat(
-                        model[type as keyof Model] as Array<Constraint>
+                        model[type] as Array<Constraint>
                     )) {
                         let result:(
                             EvaluationResult<boolean|undefined, CommonScope> |
