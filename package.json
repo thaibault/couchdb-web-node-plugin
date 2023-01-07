@@ -293,22 +293,10 @@
               ]
             }
           },
-          "_scope": {
-            "_additional": {
-              "declaration": "Templatedata",
-              "description": "Values for template and language specific placeholder.",
-              "type": "_expressionMapping"
-            },
-            "parameter": {
-              "declaration": "Templateparameter",
-              "description": "Template specific option values.",
-              "type": "any"
-            }
-          },
           "_stringMapping": {
             "_additional": {
               "declaration": "Templatedata",
-              "description": "Values for template specific placeholder.",
+              "description": "String mapped values.",
               "emptyEqualsToNull": false,
               "type": "string"
             }
