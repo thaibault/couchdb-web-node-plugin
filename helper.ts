@@ -499,21 +499,31 @@ export class Helper {
                         !model[name].index ||
                         modelConfiguration.property.name.reserved.concat(
                             specialNames.additional,
+
                             specialNames.allowedRole,
+
                             specialNames.attachment,
+
                             specialNames.conflict,
+
                             specialNames.constraint.execution,
                             specialNames.constraint.expression,
+
                             specialNames.deleted,
                             specialNames.deletedConflict,
+
                             specialNames.extend,
-                            specialNames.id,
+
                             specialNames.maximumAggregatedSize,
                             specialNames.minimumAggregatedSize,
+
                             specialNames.oldType,
+
+                            specialNames.id,
                             specialNames.revision,
                             specialNames.revisions,
                             specialNames.revisionsInformation,
+
                             specialNames.type
                         ).includes(name) ||
                         model[name].type &&
