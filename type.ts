@@ -519,7 +519,7 @@ export type Migrator = (
         configuration:Configuration
 
         databaseHelper:DatabaseHelper
-        tools:typeof Tools
+        Tools:typeof Tools
 
         idName:string
         typeName:string
