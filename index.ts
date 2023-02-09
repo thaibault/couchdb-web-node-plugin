@@ -807,15 +807,20 @@ export class Database implements PluginHandler {
                                 newDocument,
                                 {
                                     configuration,
+
                                     databaseHelper: DatabaseHelper,
+                                    Tools,
+
                                     idName,
+                                    typeName,
+
                                     migrater,
                                     models,
                                     modelConfiguration,
+
                                     selfFilePath: name,
-                                    services,
-                                    tools: Tools,
-                                    typeName
+
+                                    services
                                 }
                             )
                         } catch (error) {
