@@ -709,7 +709,7 @@ export class Database implements PluginHandler {
                         ((file:File):boolean => file.name !== 'debug')
                 )) {
                     const extension:string = extname(file.name)
-                    const basename:string = basename(file.name, extension)
+                    const name:string = basename(file.name, extension)
 
                     if (extension === '.json') {
                         let document:Document
@@ -729,7 +729,7 @@ export class Database implements PluginHandler {
                             )
                         }
 
-                        document[idName] = basename
+                        document[idName] = name
                         document[
                             configuration.couchdb.model.property.name.special
                                 .revision
