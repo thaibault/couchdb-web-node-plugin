@@ -27,7 +27,7 @@ import {
     SecondParameter
 } from 'clientnode/type'
 import {promises as fileSystem} from 'fs'
-import path from 'path'
+import {basename, extname, resolve} from 'path'
 import PouchDB from 'pouchdb'
 import PouchDBFindPlugin from 'pouchdb-find'
 import {PluginHandler, PluginPromises} from 'web-node/type'
@@ -229,9 +229,8 @@ export class Database implements PluginHandler {
                     for (const name of (
                         ([] as Array<string>).concat(runner.name)
                     )) {
-                        const binaryFilePath:string = path.resolve(
-                            directoryPath, name
-                        )
+                        const binaryFilePath:string =
+                            resolve(directoryPath, name)
                         triedPaths.push(binaryFilePath)
 
                         if (await Tools.isFile(binaryFilePath)) {
@@ -700,19 +699,17 @@ export class Database implements PluginHandler {
         // region run auto-migration
         if (configuration.couchdb.model.autoMigrationPath) {
             const migrater:Mapping<Migrator> = {}
-            if (await Tools.isDirectory(path.resolve(
+            if (await Tools.isDirectory(resolve(
                 configuration.couchdb.model.autoMigrationPath
             )))
                 for (const file of await Tools.walkDirectoryRecursively(
-                    path.resolve(
-                        configuration.couchdb.model.autoMigrationPath
-                    ),
+                    resolve(configuration.couchdb.model.autoMigrationPath),
                     configuration.couchdb.debug ?
                         Tools.noop :
                         ((file:File):boolean => file.name !== 'debug')
                 )) {
-                    const extension:string = path.extname(file.name)
-                    const basename:string = path.basename(file.name, extension)
+                    const extension:string = extname(file.name)
+                    const basename:string = basename(file.name, extension)
 
                     if (extension === '.json') {
                         let document:Document
@@ -763,14 +760,14 @@ export class Database implements PluginHandler {
                             `${document[idName]}" of type "` +
                             `${document[typeName] as string}" was successful.`
                         )
-                    } else if (['.js'].includes(path.extname(file.name)))
+                    } else if (['.js'].includes(extname(file.name)))
                         // region collect script migrater
                         migrater[file.path] = (
                             eval(`require('${file.path}')`) as
                                 {default:Migrator}
                         ).default
                         // endregion
-                    else if (['.mjs'].includes(path.extname(file.name)))
+                    else if (['.mjs'].includes(extname(file.name)))
                         // region collect module migrater
                         migrater[file.path] = (
                             (await eval(`import('${file.path}')`)) as
