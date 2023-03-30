@@ -62,15 +62,15 @@
     "watch": "weboptimizer build --watch"
   },
   "dependencies": {
-    "pouchdb": "*",
     "pouchdb-find": "*",
+    "pouchdb-node": "*",
     "pouchdb-server": "*"
   },
   "devDependencies": {
     "@babel/eslint-parser": "*",
     "@types/ejs": "*",
     "@types/node": "*",
-    "@types/pouchdb": "*",
+    "@types/pouchdb-node": "*",
     "@typescript-eslint/eslint-plugin": "*",
     "@typescript-eslint/parser": "*",
     "clientnode": "*",

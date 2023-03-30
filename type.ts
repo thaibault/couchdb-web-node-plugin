@@ -19,7 +19,7 @@ import Tools from 'clientnode'
 import {
     AnyFunction, Mapping, PlainObject, Primitive, ProcessCloseReason
 } from 'clientnode/type'
-import PouchDB from 'pouchdb'
+import PouchDB from 'pouchdb-node'
 import {
     Configuration as BaseConfiguration,
     PluginHandler as BasePluginHandler,
