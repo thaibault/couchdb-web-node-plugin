@@ -441,7 +441,7 @@
     "module": {
       "aliases": {
         "#": "Share same library version.",
-        "node-fetch$": "pouchdb/node_modules/node-fetch/lib/index.js"
+        "node-fetch$": "pouchdb-node/node_modules/node-fetch/lib/index.js"
       },
       "skipParseRegularExpressions": {
         "__evaluate__": "/(?:(?:bindings\\/bindings)|(?:colors\\/lib\\/(?:colors)|(?:extendStringPrototype))|(?:encoding\\/lib\\/iconv-loader)|(?:global)|(?:module))\\.js(?:\\?.+|$)/"
