@@ -28,7 +28,7 @@ import {
 } from 'clientnode/type'
 import {promises as fileSystem} from 'fs'
 import {basename, extname, resolve} from 'path'
-import PouchDB from 'pouchdb'
+import PouchDB from 'pouchdb-node'
 import PouchDBFindPlugin from 'pouchdb-find'
 import {PluginHandler, PluginPromises} from 'web-node/type'
 
