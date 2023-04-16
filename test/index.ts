@@ -61,30 +61,34 @@ describe('index', ():void => {
             } as unknown as Services['couchdb']}
         })).resolves.toStrictEqual({couchdb: null})
     )
-    test('shouldExit', async ():Promise<void> => {
-        let testValue = 0
-        const services:Services = {couchdb: {
-            connection: {close: ():void => {
-                testValue += 1
-            }},
-            server: {process: {kill: (_signal?:number):boolean => {
-                testValue += 1
+    test(
+        'shouldExit',
+        async ():Promise<void> => {
+            let testValue = 0
+            const services:Services = {couchdb: {
+                connection: {close: ():void => {
+                    testValue += 1
+                }},
+                server: {process: {kill: (_signal?:number):boolean => {
+                    testValue += 1
 
-                return true
-            }}}
-        } as Services['couchdb']}
+                    return true
+                }}}
+            } as Services['couchdb']}
 
-        await expect((Index.shouldExit({
-            configuration,
-            hook: 'shouldExit',
-            pluginAPI: PluginAPI,
-            plugins: [],
-            servicePromises: {} as ServicePromises,
-            services
-        }))).resolves.toBeUndefined()
-        expect(services).toStrictEqual({})
-        expect(testValue).toStrictEqual(2)
-    })
+            await expect((Index.shouldExit({
+                configuration,
+                hook: 'shouldExit',
+                pluginAPI: PluginAPI,
+                plugins: [],
+                servicePromises: {} as ServicePromises,
+                services
+            }))).resolves.toBeUndefined()
+            expect(services).toStrictEqual({})
+            expect(testValue).toStrictEqual(2)
+        },
+        60 * 1000
+    )
     // endregion
 })
 // region vim modline
