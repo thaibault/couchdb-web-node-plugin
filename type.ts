@@ -239,7 +239,7 @@ export interface SpecialPropertyNames {
     revisions:'_revisions'
     revisionsInformation:'_revs_info'
     strategy:'_updateStrategy'
-    type:keyof DocumentTypeMeta
+    type:'-type'
 
     constraint:{
         execution:string
