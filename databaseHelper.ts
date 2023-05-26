@@ -469,11 +469,11 @@ export class DatabaseHelper {
             givenScope:Scope = {} as Scope
         ):(
             EvaluationResult<
-                Type|undefined, BasicScope & {code:string} & Scope
+                Type|undefined, BasicScope<Type> & {code:string} & Scope
             > |
             void
         ) => {
-            type CurrentScope = BasicScope & {code:string} & Scope
+            type CurrentScope = BasicScope<Type> & {code:string} & Scope
 
             const expression:string = determineTrimmedString(givenExpression)
             if (expression) {
@@ -484,7 +484,7 @@ export class DatabaseHelper {
                     ...basicScope,
                     code,
                     ...givenScope
-                }
+                } as CurrentScope
                 const scopeNames:Array<string> = Object.keys(scope)
                 // endregion
                 // region compile
@@ -1358,14 +1358,16 @@ export class DatabaseHelper {
                         let result:null|PartialFullDocument|undefined
                         try {
                             result = evaluate<
-                                null|PartialFullDocument, CommonScope
+                                null|PartialFullDocument,
+                                CommonScope<null|PartialFullDocument>
                             >(
                                 model[type as '_createExpression'],
                                 type.endsWith('Expression'),
                                 {
                                     checkPropertyContent,
 
-                                    model,
+                                    model: model as
+                                        Model<null|PartialFullDocument>,
                                     modelName,
                                     type,
 
@@ -1429,14 +1431,16 @@ export class DatabaseHelper {
                     let result:null|PartialFullDocument|undefined
                     try {
                         result = evaluate<
-                            null|PartialFullDocument, CommonScope
+                            null|PartialFullDocument,
+                            CommonScope<null|PartialFullDocument>
                         >(
                             model[type as '_createExpression'],
                             type.endsWith('Expression'),
                             {
                                 checkPropertyContent,
 
-                                model,
+                                model:
+                                    model as Model<null|PartialFullDocument>,
                                 modelName,
                                 type,
 
@@ -1749,11 +1753,8 @@ export class DatabaseHelper {
                             oldDocument[name] === value ||
                             serialize(oldDocument[name]) === serialize(value)
                         )
-                    ) {
+                    )
                         delete newDocument[name]
-
-                        continue
-                    }
             /// endregion
             for (const [name, newValue] of Object.entries(newDocument))
                 if (
@@ -2031,17 +2032,19 @@ export class DatabaseHelper {
                         model[type] as Array<Constraint>
                     )) {
                         let result:(
-                            EvaluationResult<boolean|undefined, CommonScope> |
+                            EvaluationResult<
+                                boolean|undefined, CommonScope<boolean>
+                            > |
                             void
                         )
                         try {
-                            result = evaluate<boolean, CommonScope>(
+                            result = evaluate<boolean, CommonScope<boolean>>(
                                 constraint.evaluation,
                                 type === specialNames.constraint.expression,
                                 {
                                     checkPropertyContent,
 
-                                    model,
+                                    model: model as Model<boolean>,
                                     modelName,
                                     type,
 
@@ -2596,7 +2599,7 @@ export class DatabaseHelper {
 
         const result:CheckedDocumentResult =
             checkDocument(newDocument, oldDocument)
-        // region check if changes happend
+        // region check if changes happened
         if (
             result.newDocument._deleted &&
             !oldDocument ||
