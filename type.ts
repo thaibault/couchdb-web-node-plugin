@@ -33,6 +33,7 @@ import DatabaseHelper from './databaseHelper'
 // endregion
 // region exports
 /// region database implementation
+export type Attachment = PouchDB.Core.Attachment
 export type Attachments = PouchDB.Core.Attachments
 export type FullAttachment = PouchDB.Core.FullAttachment
 export type StubAttachment = PouchDB.Core.StubAttachment
@@ -118,7 +119,7 @@ export interface SelectionMapping {
     label:string
     value:unknown
 }
-export interface PropertySpecification {
+export interface PropertySpecification<Type = unknown> {
     allowedRoles?:AllowedRoles|null
     // region expression
     arrayConstraintExecution?:Constraint|null
@@ -181,10 +182,10 @@ export interface PropertySpecification {
     // NOTE: Actual name is usually specified via key parent data structure.
     oldName?:Array<string>|null|string
 
-    value?:unknown
+    value?:Type
 }
-export interface FileSpecification extends PropertySpecification {
-    fileName?:PropertySpecification
+export interface FileSpecification extends PropertySpecification<Attachment> {
+    fileName?:PropertySpecification<string>
 }
 export interface BaseModel {
     _allowedRoles?:AllowedRoles|null
@@ -207,13 +208,14 @@ export interface BaseModel {
     _onUpdateExecution?:null|string
     _onUpdateExpression?:null|string
 }
-export type Model = BaseModel & Mapping<PropertySpecification>
+export type Model<Type = unknown> =
+    BaseModel & Mapping<PropertySpecification<Type>>
 export type Models = Mapping<Model>
 
 export type UpdateStrategy = ''|'fillUp'|'incremental'|'migrate'
 
 export type DocumentContent =
-    Array<DocumentContent>|PlainObject<Primitive>|Primitive
+    Array<DocumentContent>|PlainObject|Primitive
 export type DocumentStrategyMeta = {_updateStrategy?:UpdateStrategy}
 export type DocumentTypeMeta = {'-type':string}
 export type BaseDocument =
@@ -273,15 +275,17 @@ export interface PropertyNameConfiguration {
     }
     validatedDocumentsCache:string
 }
-export interface BaseModelConfiguration {
+export interface BaseModelConfiguration<Type = unknown> {
     dateTimeFormat:'iso'|'iso8601'|'number'
     property:{
-        defaultSpecification:PropertySpecification
+        defaultSpecification:PropertySpecification<Type>
         name:PropertyNameConfiguration
     }
     updateStrategy:UpdateStrategy
 }
-export interface ModelConfiguration extends BaseModelConfiguration {
+export interface ModelConfiguration<Type = unknown> extends
+    BaseModelConfiguration<Type>
+{
     autoMigrationPath:string
     entities:Models
     triggerInitialCompaction:boolean
@@ -318,7 +322,7 @@ export interface SecuritySettings {
     _validatedDocuments?:Set<string>
 }
 export type ConnectorConfiguration = DatabaseConnectorConfiguration & {
-    // NOTE: "pouchdbs" version supports timeout parameter.
+    // NOTE: "pouchdb`s" version supports timeout parameter.
     fetch?:(RequestInit & {timeout:number})|null
 }
 export type Configuration<ConfigurationType = Mapping<unknown>> =
@@ -432,7 +436,7 @@ export interface RuntimeExceptionData<S = Mapping<unknown>> extends
 export type EvaluationException<S = Mapping<unknown>> =
     Exception<EvaluationExceptionData<S>>
 //// region scopes
-export interface BasicScope {
+export interface BasicScope<Type = unknown> {
     attachmentWithPrefixExists:(namePrefix:string) => boolean
     checkDocument:(
         newDocument:PartialFullDocument,
@@ -451,7 +455,7 @@ export interface BasicScope {
     specialNames:SpecialPropertyNames
     typeName:string
 
-    modelConfiguration:BaseModelConfiguration
+    modelConfiguration:BaseModelConfiguration<Type>
     models:Models
 
     now:Date
@@ -461,15 +465,15 @@ export interface BasicScope {
 
     userContext:Partial<UserContext>
 }
-export interface CommonScope {
+export interface CommonScope<Type> {
     checkPropertyContent:(
         newValue:unknown,
         name:string,
-        propertySpecification:PropertySpecification,
+        propertySpecification:PropertySpecification<Type>,
         oldValue:unknown
     ) => CheckedPropertyResult
 
-    model:Model
+    model:Model<Type>
     modelName:string
     type:Array<string>|string
 
@@ -479,16 +483,18 @@ export interface CommonScope {
     parentNames:Array<string>
     pathDescription:string
 }
-export interface PropertyScope extends CommonScope {
+export interface PropertyScope<Type = unknown> extends CommonScope<Type> {
     name:string
 
-    newValue:unknown
-    oldValue:unknown
+    newValue:Type
+    oldValue:Type
 
-    propertySpecification:PropertySpecification
+    propertySpecification:PropertySpecification<Type>
 }
 //// endregion
-export interface EvaluationResult<T = unknown, S = BasicScope & CommonScope> {
+export interface EvaluationResult<
+    T = unknown, S = BasicScope<T> & CommonScope<T>
+> {
     code:string
     result:T
     scope:S
@@ -513,7 +519,7 @@ export type Exception<DataType = Mapping<unknown>> =
     } &
     DataType
 
-export type Migrator = (
+export type Migrator<Type = unknown> = (
     document:Document,
     scope:{
         configuration:Configuration
@@ -524,9 +530,9 @@ export type Migrator = (
         idName:string
         typeName:string
 
-        migrater:Mapping<Migrator>
+        migrater:Mapping<Migrator<Type>>
         models:Models
-        modelConfiguration:ModelConfiguration
+        modelConfiguration:ModelConfiguration<Type>
 
         selfFilePath:string
 

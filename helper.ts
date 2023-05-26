@@ -643,12 +643,12 @@ export class Helper {
                 if (propertyName === specialNames.attachment)
                     for (const [type, value] of Object.entries(property))
                         (property as Mapping<FileSpecification>)[type] =
-                            Tools.extend(
+                            Tools.extend<FileSpecification>(
                                 true,
                                 Tools.copy(
                                     modelConfiguration.property
                                         .defaultSpecification
-                                ),
+                                ) as FileSpecification,
                                 value as FileSpecification
                             )
                 else if (![
