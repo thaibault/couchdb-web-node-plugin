@@ -471,7 +471,7 @@ export interface CommonScope {
 
     model:Model
     modelName:string
-    type:string
+    type:Array<string>|string
 
     newDocument:Attachments|PartialFullDocument
     oldDocument:Attachments|null|PartialFullDocument
