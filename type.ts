@@ -184,7 +184,9 @@ export interface PropertySpecification<Type = unknown> {
 
     value?:null|Type
 }
-export interface FileSpecification extends PropertySpecification<Attachment> {
+export interface FileSpecification<Type = Attachment> extends
+    PropertySpecification<Type>
+{
     fileName?:PropertySpecification<string>
 }
 export interface BaseModel {
