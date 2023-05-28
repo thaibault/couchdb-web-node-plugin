@@ -182,7 +182,7 @@ export interface PropertySpecification<Type = unknown> {
     // NOTE: Actual name is usually specified via key parent data structure.
     oldName?:Array<string>|null|string
 
-    value?:Type
+    value?:null|Type
 }
 export interface FileSpecification extends PropertySpecification<Attachment> {
     fileName?:PropertySpecification<string>
