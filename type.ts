@@ -121,6 +121,7 @@ export interface SelectionMapping {
 }
 export interface PropertySpecification<Type = unknown> {
     allowedRoles?:AllowedRoles|null
+    computed?:boolean
     // region expression
     arrayConstraintExecution?:Constraint|null
     arrayConstraintExpression?:Constraint|null
