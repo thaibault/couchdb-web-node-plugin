@@ -681,7 +681,7 @@ export class DatabaseHelper {
                                 throw error
                         }
 
-                        if (!result?.result) {
+                        if (result && !result.result) {
                             const description:string = determineTrimmedString(
                                 propertySpecification[type]!.description
                             )
@@ -695,13 +695,13 @@ export class DatabaseHelper {
                                         @typescript-eslint/no-implied-eval
                                     */
                                     new Function(
-                                        ...Object.keys(result!.scope),
+                                        ...Object.keys(result.scope),
                                         `return ${description}`
-                                    )(...Object.values(result!.scope) as
+                                    )(...Object.values(result.scope) as
                                         Array<unknown>
                                     ) as string :
                                     `Property "${name}" should satisfy ` +
-                                    `constraint "${result!.code}" (given "` +
+                                    `constraint "${result.code}" (given "` +
                                     `${serialize(newValue)}")` +
                                     `${pathDescription}.`
                                     /*
@@ -2088,7 +2088,7 @@ export class DatabaseHelper {
                                 throw error
                         }
 
-                        if (!result?.result) {
+                        if (result && !result.result) {
                             const errorName:string = type.replace(
                                 /^[^a-zA-Z]+/, ''
                             )
@@ -2103,14 +2103,14 @@ export class DatabaseHelper {
                                             @typescript-eslint/no-implied-eval
                                         */
                                         new Function(
-                                            ...Object.keys(result!.scope),
+                                            ...Object.keys(result.scope),
                                             'return ' +
                                             constraint.description.trim()
-                                        )(...Object.values(result!.scope) as
+                                        )(...Object.values(result.scope) as
                                             Array<unknown>
                                         ) as string :
                                         `Model "${modelName}" should satisfy` +
-                                        ` constraint "${result!.code}" (` +
+                                        ` constraint "${result.code}" (` +
                                         `given "${serialize(newDocument)}")` +
                                         `${pathDescription}.`
                                         /*
