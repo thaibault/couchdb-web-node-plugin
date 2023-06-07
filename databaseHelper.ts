@@ -624,7 +624,7 @@ export class DatabaseHelper {
                                 boolean|undefined, PropertyScope
                             > |
                             void
-                        )
+                        ) = undefined
                         try {
                             result = evaluate<boolean, PropertyScope>(
                                 propertySpecification[type]!.evaluation,
@@ -1155,7 +1155,7 @@ export class DatabaseHelper {
                                     null|Type|undefined, PropertyScope
                                 > |
                                 void
-                            )
+                            ) = undefined
                             try {
                                 result = evaluate<null|Type, PropertyScope>(
                                     propertySpecification[type],
@@ -2036,7 +2036,7 @@ export class DatabaseHelper {
                                 boolean|undefined, CommonScope<boolean>
                             > |
                             void
-                        )
+                        ) = undefined
                         try {
                             result = evaluate<boolean, CommonScope<boolean>>(
                                 constraint.evaluation,
