@@ -65,6 +65,8 @@ export type DocumentGetMeta = PouchDB.Core.GetMeta
 export type DocumentIDMeta = PouchDB.Core.IdMeta
 export type DocumentRevisionIDMeta = PouchDB.Core.RevisionIdMeta
 
+export type FindRequest<Type extends Mapping<unknown>> =
+    PouchDB.Find.FindRequest<Type>
 export type Index = PouchDB.Find.Index
 
 export type DatabasePlugin = AnyFunction
