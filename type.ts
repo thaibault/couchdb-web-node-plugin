@@ -232,8 +232,11 @@ export type BaseDocument =
     DocumentRevisionIDMeta &
     DocumentStrategyMeta &
     DocumentTypeMeta
-export type FullDocument = BaseDocument & PlainObject
-export type PartialFullDocument = Partial<BaseDocument> & PlainObject
+export type FullDocument<Type extends Mapping<unknown> = Mapping<unknown>> =
+    BaseDocument & Document<Type>
+export type PartialFullDocument<
+    Type extends Mapping<unknown> = Mapping<unknown>
+> = Partial<BaseDocument> & Partial<Document<Type>>
 
 export interface SpecialPropertyNames {
     additional:'_additional'
