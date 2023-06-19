@@ -46,7 +46,8 @@ export type ChangesStream<Type extends Mapping<unknown> = Mapping<unknown>> =
     PouchDB.Core.Changes<Type>
 export type ChangesStreamOptions = PouchDB.Core.ChangesOptions
 
-export type Connection = PouchDB.Database
+export type Connection<Type extends Mapping<unknown> = Mapping<unknown>> =
+    PouchDB.Database<Type>
 export type Connector = PouchDB.Static
 export type DatabaseConnectorConfiguration =
     PouchDB.Configuration.RemoteDatabaseConfiguration
@@ -373,22 +374,25 @@ export type Configuration<ConfigurationType = Mapping<unknown>> =
     }> &
     ConfigurationType
 //// endregion
-export interface CouchDB {
+export interface CouchDB<Type extends Mapping<unknown> = Mapping<unknown>> {
     changesStream:ChangesStream
 
-    connection:Connection
+    connection:Connection<Type>
     connector:Connector
 
     server:{
         process:ChildProcess
+
         reject:(value:ProcessCloseReason) => void
         resolve:(reason:ProcessCloseReason) => void
+
         restart:(state:State) => Promise<void>
-        runner:Runner
         start:(services:Services, configuration:Configuration) =>
             Promise<void>
         stop:(services:Services, configuration:Configuration) =>
             Promise<void>
+
+        runner:Runner
     }
 }
 
