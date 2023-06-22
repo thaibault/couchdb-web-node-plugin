@@ -332,9 +332,10 @@ export interface SecuritySettings {
     members:DatabaseUserConfiguration
     _validatedDocuments?:Set<string>
 }
+export type AdvancedFetchOptions = RequestInit & {timeout:number}
 export type ConnectorConfiguration = DatabaseConnectorConfiguration & {
     // NOTE: "pouchdb`s" version supports timeout parameter.
-    fetch?:(RequestInit & {timeout:number})|null
+    fetch?:AdvancedFetchOptions|null
 }
 export interface CoreConfiguration {
     attachAutoRestarter:boolean
