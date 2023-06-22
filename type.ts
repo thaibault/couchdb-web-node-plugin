@@ -336,42 +336,41 @@ export type ConnectorConfiguration = DatabaseConnectorConfiguration & {
     // NOTE: "pouchdb`s" version supports timeout parameter.
     fetch?:(RequestInit & {timeout:number})|null
 }
+export interface CoreConfiguration {
+    attachAutoRestarter:boolean
+    backend:{
+        configuration:PlainObject
+        prefixes:Array<string>
+    }
+    binary:{
+        memoryInMegaByte:string
+        nodePath:string
+        runner:Array<Runner>
+    }
+    changesStream:ChangesStreamOptions
+    connector:ConnectorConfiguration
+    createGenericFlatIndex:boolean
+    databaseName:string
+    debug:boolean
+    ensureAdminPresence:boolean
+    ensureSecuritySettingsPresence:boolean
+    ensureUserPresence:boolean
+    ignoreNoChangeError:boolean
+    local:boolean
+    maximumRepresentationLength:number
+    maximumRepresentationTryLength:number
+    model:ModelConfiguration
+    path:string
+    security:SecuritySettings
+    skipIDDetermining:boolean
+    url:string
+    user:{
+        name:string
+        password:string
+    }
+}
 export type Configuration<ConfigurationType = Mapping<unknown>> =
-    BaseConfiguration<{
-        couchdb:{
-            attachAutoRestarter:boolean
-            backend:{
-                configuration:PlainObject
-                prefixes:Array<string>
-            }
-            binary:{
-                memoryInMegaByte:string
-                nodePath:string
-                runner:Array<Runner>
-            }
-            changesStream:ChangesStreamOptions
-            connector:ConnectorConfiguration
-            createGenericFlatIndex:boolean
-            databaseName:string
-            debug:boolean
-            ensureAdminPresence:boolean
-            ensureSecuritySettingsPresence:boolean
-            ensureUserPresence:boolean
-            ignoreNoChangeError:boolean
-            local:boolean
-            maximumRepresentationLength:number
-            maximumRepresentationTryLength:number
-            model:ModelConfiguration
-            path:string
-            security:SecuritySettings
-            skipIDDetermining:boolean
-            url:string
-            user:{
-                name:string
-                password:string
-            }
-        }
-    }> &
+    BaseConfiguration<{couchdb:CoreConfiguration}> &
     ConfigurationType
 //// endregion
 export interface CouchDB<Type extends Mapping<unknown> = Mapping<unknown>> {
