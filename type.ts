@@ -434,24 +434,25 @@ export interface PluginHandler extends BasePluginHandler {
 }
 /// endregion
 /// region evaluation
-export interface EmptyEvaluationExceptionData {empty:string}
-export type EmptyEvaluationException = Exception<EmptyEvaluationExceptionData>
-
-export interface EvaluationExceptionData<S = Mapping<unknown>> {
-    code:string, error:Error, scope:S
+export interface EmptyEvaluationErrorData {
+    empty:string
 }
-export interface CompilationExceptionData<S = Mapping<unknown>> extends
-    EvaluationExceptionData<S>
-{
+export interface EvaluationErrorData<S = Mapping<unknown>> {
+    code:string
+    error:unknown
+    scope:S
+}
+export type EvaluationError = DatabaseError & EvaluationErrorData
+export interface CompilationErrorData<
+    S = Mapping<unknown>
+> extends EvaluationErrorData<S> {
     compilation:string
 }
-export interface RuntimeExceptionData<S = Mapping<unknown>> extends
-    EvaluationExceptionData<S>
-{
+export interface RuntimeErrorData<
+    S = Mapping<unknown>
+> extends EvaluationErrorData<S> {
     runtime:string
 }
-export type EvaluationException<S = Mapping<unknown>> =
-    Exception<EvaluationExceptionData<S>>
 //// region scopes
 export interface BasicScope<Type = unknown> {
     attachmentWithPrefixExists:(namePrefix:string) => boolean
@@ -529,13 +530,6 @@ export interface CheckedDocumentResult extends CheckedResult {
     newDocument:PartialFullDocument
 }
 /// endregion
-export type Exception<DataType = Mapping<unknown>> =
-    {
-        message:string
-        name:string
-    } &
-    DataType
-
 export type Migrator<Type = unknown> = (
     document:Document,
     scope:{

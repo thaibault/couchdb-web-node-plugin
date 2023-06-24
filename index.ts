@@ -33,7 +33,18 @@ import PouchDBFindPlugin from 'pouchdb-find'
 import {PluginHandler, PluginPromises} from 'web-node/type'
 
 import DatabaseHelper from './databaseHelper'
-import Helper from './helper'
+import {
+    determineAllowedModelRolesMapping,
+    determineGenericIndexablePropertyNames,
+    ensureValidationDocumentPresence,
+    extendModels,
+    getConnectorOptions,
+    initializeConnection,
+    mayStripRepresentation,
+    restartServer,
+    startServer,
+    stopServer
+} from './helper'
 import {
     ChangesStream,
     Connection,
@@ -44,7 +55,6 @@ import {
     DeleteIndexOptions,
     Document,
     ExistingDocument,
-    Exception,
     FullDocument,
     Index,
     Migrator,
@@ -280,11 +290,11 @@ export class Database implements PluginHandler {
         const {couchdb} = services
 
         if (Object.prototype.hasOwnProperty.call(couchdb.server, 'runner')) {
-            await Helper.startServer(services, configuration)
+            await startServer(services, configuration)
 
-            couchdb.server.restart = Helper.restartServer
-            couchdb.server.start = Helper.startServer
-            couchdb.server.stop = Helper.stopServer
+            couchdb.server.restart = restartServer
+            couchdb.server.start = startServer
+            couchdb.server.stop = stopServer
 
             promise = new Promise<ProcessCloseReason>((
                 resolve:(value:ProcessCloseReason) => void,
@@ -313,7 +323,7 @@ export class Database implements PluginHandler {
                 new couchdb.connector(
                     `${Tools.stringFormat(configuration.couchdb.url, '')}/` +
                         `_users`,
-                    Helper.getConnectorOptions(configuration)
+                    getConnectorOptions(configuration)
                 )
 
             try {
@@ -335,11 +345,11 @@ export class Database implements PluginHandler {
                     }
                 )
             } catch (error) {
-                if ((error as Exception).name === 'unauthorized') {
+                if ((error as DatabaseError).name === 'unauthorized') {
                     const authenticatedUserDatabaseConnection:Connection =
                         new couchdb.connector(
                             `${urlPrefix}/_users`,
-                            Helper.getConnectorOptions(configuration)
+                            getConnectorOptions(configuration)
                         )
 
                     try {
@@ -374,7 +384,7 @@ export class Database implements PluginHandler {
                     const userDatabaseConnection:Connection =
                         new couchdb.connector(
                             `${urlPrefix}/_users`,
-                            Helper.getConnectorOptions(configuration)
+                            getConnectorOptions(configuration)
                         )
 
                     try {
@@ -504,7 +514,7 @@ export class Database implements PluginHandler {
                                 )
                     }
         // endregion
-        await Helper.initializeConnection(services, configuration)
+        await initializeConnection(services, configuration)
 
         const idName:SpecialPropertyNames['id'] =
             configuration.couchdb.model.property.name.special.id
@@ -546,7 +556,7 @@ export class Database implements PluginHandler {
         ).defaultSpecification
         delete (modelConfiguration as {entities?:Models}).entities
 
-        const models:Models = Helper.extendModels(configuration.couchdb.model)
+        const models = extendModels(configuration.couchdb.model)
         if (configuration.couchdb.model.updateValidation) {
             const databaseHelperCode:string = await fileSystem.readFile(
                 eval(`require.resolve('./databaseHelper')`) as string,
@@ -567,11 +577,9 @@ export class Database implements PluginHandler {
                     methodName: 'authenticate',
                     name: 'authentication',
                     serializedParameter:
-                        JSON.stringify(
-                            Helper.determineAllowedModelRolesMapping(
-                                configuration.couchdb.model
-                            )
-                        ) +
+                        JSON.stringify(determineAllowedModelRolesMapping(
+                            configuration.couchdb.model
+                        )) +
                         `, '${idName}', '${typeName}', '` +
                         configuration.couchdb.model.property.name.special
                             .designDocumentNamePrefix +
@@ -604,7 +612,7 @@ export class Database implements PluginHandler {
                         `${type.name} code: \n\n"${code}" intgrated.`
                     )
 
-                await Helper.ensureValidationDocumentPresence(
+                await ensureValidationDocumentPresence(
                     couchdb.connection,
                     type.name,
                     {
@@ -823,7 +831,7 @@ export class Database implements PluginHandler {
                         } catch (error) {
                             throw new Error(
                                 `Running migrater "${name}" in document ` +
-                                Helper.mayStripRepresentation(
+                                mayStripRepresentation(
                                     document,
                                     configuration.couchdb
                                         .maximumRepresentationTryLength,
@@ -897,7 +905,7 @@ export class Database implements PluginHandler {
                             ).forbidden.startsWith('NoChange:'))
                                 console.warn(
                                     `Document "` +
-                                    Helper.mayStripRepresentation(
+                                    mayStripRepresentation(
                                         document,
                                         configuration.couchdb
                                             .maximumRepresentationTryLength,
@@ -918,7 +926,7 @@ export class Database implements PluginHandler {
                         await couchdb.connection.put(newDocument)
                     } catch (error) {
                         throw new Error(
-                            `Replaceing auto migrated document "` +
+                            `Replacing auto migrated document "` +
                             `${newDocument[idName]}" has failed: ` +
                             Tools.represent(error)
                         )
@@ -954,7 +962,7 @@ export class Database implements PluginHandler {
 
                     for (
                         const propertyName of
-                        Helper.determineGenericIndexablePropertyNames(
+                        determineGenericIndexablePropertyNames(
                             configuration.couchdb.model, model
                         )
                     ) {
@@ -993,7 +1001,7 @@ export class Database implements PluginHandler {
                         if (index.name.startsWith(`${modelName}-`)) {
                             for (
                                 const name of
-                                Helper.determineGenericIndexablePropertyNames(
+                                determineGenericIndexablePropertyNames(
                                     configuration.couchdb.model, model
                                 )
                             )
@@ -1123,7 +1131,7 @@ export class Database implements PluginHandler {
      * @returns Promise resolving to nothing.
      */
     static async shouldExit({configuration, services}:State):Promise<void> {
-        await Helper.stopServer(services, configuration)
+        await stopServer(services, configuration)
 
         delete (services as {couchdb?:Services['couchdb']}).couchdb
 

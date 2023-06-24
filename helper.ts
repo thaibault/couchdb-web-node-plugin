@@ -29,679 +29,652 @@ import {
     Configuration,
     Connection,
     DatabaseConnectorConfiguration,
+    DatabaseError,
     DatabaseFetch,
-    DatabasePlugin,
     DatabaseResponse,
     Document,
-    DocumentRevisionIDMeta,
-    Exception,
     FileSpecification,
-    FullDocument,
     Model,
     ModelConfiguration,
     Models,
     NormalizedAllowedRoles,
-    PartialFullDocument,
+    PutDocument,
+    PutOptions,
     Services,
     SpecialPropertyNames,
     State
 } from './type'
 // endregion
 globalContext.fetch = nodeFetch as unknown as typeof fetch
-// region classes
+// region functions
 /**
- * A dumm plugin interface with all available hooks.
- */
-export class Helper {
-    /**
-     * Converts internal declarative database connector configuration object
-     * into a database compatible one.
-     * @param configuration - Mutable by plugins extended configuration object.
-     *
-     * @returns Database compatible configuration object.
-    */
-    static getConnectorOptions(
-        this:void, configuration:Configuration
-    ):DatabaseConnectorConfiguration {
-        if (configuration.couchdb.connector.fetch)
-            return {
-                fetch: ((
-                    url:RequestInfo, options?:RequestInit
-                ):Promise<Response> => globalContext.fetch(
-                    url,
-                    Tools.extend(
-                        true,
-                        Tools.copy(configuration.couchdb.connector.fetch),
-                        options || {}
-                    )
-                )) as unknown as DatabaseFetch
-            }
-
+ * Converts internal declarative database connector configuration object
+ * into a database compatible one.
+ * @param configuration - Mutable by plugins extended configuration object.
+ *
+ * @returns Database compatible configuration object.
+*/
+export const getConnectorOptions = (
+    configuration:Configuration
+):DatabaseConnectorConfiguration => {
+    if (configuration.couchdb.connector.fetch)
         return {
             fetch: ((
                 url:RequestInfo, options?:RequestInit
-            ):Promise<Response> => globalContext.fetch(url, options)) as
-                unknown as
-                DatabaseFetch
-        }
-    }
-    /**
-     * Determines a representation for given plain object.
-     * @param object - Object to represent.
-     * @param maximumRepresentationTryLength - Maximum representation string to
-     * process.
-     * @param maximumRepresentationLength - Maximum length of returned
-     * representation.
-     *
-     * @returns Representation string.
-     */
-    static mayStripRepresentation(
-        this:void,
-        object:unknown,
-        maximumRepresentationTryLength:number,
-        maximumRepresentationLength:number
-    ):string {
-        const representation:string = Tools.represent(object)
-        if (representation.length <= maximumRepresentationTryLength) {
-            if (representation.length > maximumRepresentationLength)
-                return (
-                    representation.substring(
-                        0, maximumRepresentationLength - '...'.length
-                    ) +
-                    '...'
+            ):Promise<Response> => globalContext.fetch(
+                url,
+                Tools.extend(
+                    true,
+                    Tools.copy(configuration.couchdb.connector.fetch),
+                    options || {}
                 )
-        } else
-            return 'DOCUMENT IS TOO BIG TO REPRESENT'
-
-        return representation
-    }
-    /**
-     * Updates/creates a design document in database with a validation function
-     * set to given code.
-     * @param databaseConnection - Database connection to use for document
-     * updates.
-     * @param documentName - Design document name.
-     * @param documentData - Design document data.
-     * @param description - Used to produce semantic logging messages.
-     * @param log - Enables logging.
-     * @param idName - Property name for ids.
-     * @param designDocumentNamePrefix - Document name prefix indicating deign
-     * documents.
-     *
-     * @returns Promise which will be resolved after given document has updated
-     * successfully.
-     */
-    static async ensureValidationDocumentPresence(
-        this:void,
-        databaseConnection:Connection,
-        documentName:string,
-        documentData:Mapping,
-        description:string,
-        log = true,
-        idName:SpecialPropertyNames['id'] = '_id',
-        designDocumentNamePrefix = '_design/'
-    ):Promise<void> {
-        const newDocument:Partial<Document> = {
-            [idName]: `${designDocumentNamePrefix}${documentName}`,
-            language: 'javascript',
-            ...documentData
+            )) as DatabaseFetch
         }
 
-        try {
-            const oldDocument:Document = await databaseConnection.get(
-                `${designDocumentNamePrefix}${documentName}`
+    return {
+        fetch: ((
+            url:RequestInfo, options?:RequestInit
+        ):Promise<Response> => globalContext.fetch(url, options)) as
+            DatabaseFetch
+    }
+}
+/**
+ * Determines a representation for given plain object.
+ * @param object - Object to represent.
+ * @param maximumRepresentationTryLength - Maximum representation string to
+ * process.
+ * @param maximumRepresentationLength - Maximum length of returned
+ * representation.
+ *
+ * @returns Representation string.
+ */
+export const mayStripRepresentation = (
+    object:unknown,
+    maximumRepresentationTryLength:number,
+    maximumRepresentationLength:number
+):string => {
+    const representation:string = Tools.represent(object)
+    if (representation.length <= maximumRepresentationTryLength) {
+        if (representation.length > maximumRepresentationLength)
+            return (
+                representation.substring(
+                    0, maximumRepresentationLength - '...'.length
+                ) +
+                '...'
             )
-            newDocument._rev = oldDocument._rev
+    } else
+        return 'DOCUMENT IS TOO BIG TO REPRESENT'
 
+    return representation
+}
+/**
+ * Updates/creates a design document in database with a validation function
+ * set to given code.
+ * @param databaseConnection - Database connection to use for document
+ * updates.
+ * @param documentName - Design document name.
+ * @param documentData - Design document data.
+ * @param description - Used to produce semantic logging messages.
+ * @param log - Enables logging.
+ * @param idName - Property name for ids.
+ * @param designDocumentNamePrefix - Document name prefix indicating deign
+ * documents.
+ *
+ * @returns Promise which will be resolved after given document has updated
+ * successfully.
+ */
+export const ensureValidationDocumentPresence = async (
+    databaseConnection:Connection,
+    documentName:string,
+    documentData:Mapping,
+    description:string,
+    log = true,
+    idName:SpecialPropertyNames['id'] = '_id',
+    designDocumentNamePrefix = '_design/'
+):Promise<void> => {
+    const newDocument:Partial<Document> = {
+        [idName]: `${designDocumentNamePrefix}${documentName}`,
+        language: 'javascript',
+        ...documentData
+    }
+
+    try {
+        const oldDocument:Document = await databaseConnection.get(
+            `${designDocumentNamePrefix}${documentName}`
+        )
+        newDocument._rev = oldDocument._rev
+
+        await databaseConnection.put(newDocument)
+
+        if (log)
+            console.info(`${description} updated.`)
+    } catch (error) {
+        if (log)
+            if ((error as {error:string}).error === 'not_found')
+                console.info(
+                    `${description} not available: create new one.`
+                )
+            else
+                console.info(
+                    `${description} couldn't be updated: "` +
+                    `${Tools.represent(error)}" create new one.`
+                )
+        try {
             await databaseConnection.put(newDocument)
 
             if (log)
-                console.info(`${description} updated.`)
+                console.info(`${description} installed/updated.`)
         } catch (error) {
-            if (log)
-                if ((error as {error:string}).error === 'not_found')
-                    console.info(
-                        `${description} not available: create new one.`
-                    )
-                else
-                    console.info(
-                        `${description} couldn't be updated: "` +
-                        `${Tools.represent(error)}" create new one.`
-                    )
-            try {
-                await databaseConnection.put(newDocument)
-
-                if (log)
-                    console.info(`${description} installed/updated.`)
-            } catch (error) {
-                throw new Error(
-                    `${description} couldn't be installed/updated: "` +
-                    `${Tools.represent(error)}".`
-                )
-            }
+            throw new Error(
+                `${description} couldn't be installed/updated: "` +
+                `${Tools.represent(error)}".`
+            )
         }
     }
-    /**
-     * Initializes a database connection instance.
-     * @param services - An object with stored service instances.
-     * @param configuration - Mutable by plugins extended configuration object.
-     *
-     * @returns Given and extended object of services.
-     */
-    static async initializeConnection(
-        this:void, services:Services, configuration:Configuration
-    ):Promise<Services> {
-        const url:string =
-            Tools.stringFormat(
-                configuration.couchdb.url,
-                `${configuration.couchdb.user.name}:` +
-                `${configuration.couchdb.user.password}@`
-            ) +
-            `/${configuration.couchdb.databaseName}`
+}
+/**
+ * Initializes a database connection instance.
+ * @param services - An object with stored service instances.
+ * @param configuration - Mutable by plugins extended configuration object.
+ *
+ * @returns Given and extended object of services.
+ */
+export const initializeConnection = async (
+    services:Services, configuration:Configuration
+):Promise<Services> => {
+    const config = configuration.couchdb
 
-        services.couchdb.connection = new services.couchdb.connector(
-            url, Helper.getConnectorOptions(configuration)
-        )
-        services.couchdb.connection.setMaxListeners(Infinity)
+    const url:string =
+        Tools.stringFormat(
+            config.url,
+            `${config.user.name}:${config.user.password}@`
+        ) +
+        `/${config.databaseName}`
 
-        const idName:SpecialPropertyNames['id'] =
-            configuration.couchdb.model.property.name.special.id
-        const revisionName:SpecialPropertyNames['revision'] =
-            configuration.couchdb.model.property.name.special.revision
-        // region apply "latest/upsert" and ignore "NoChange" error feature
-        /*
-            NOTE: A "bulkDocs" plugin does not get called for every "put" and
-            "post" call so we have to wrap runtime generated methods.
-        */
-        for (const pluginName of ['post', 'put'] as const) {
-            const nativeMethod:DatabasePlugin =
-                services.couchdb.connection[pluginName]
-                    .bind(services.couchdb.connection)
+    services.couchdb.connection =
+        new services.couchdb.connector(url, getConnectorOptions(configuration))
+    const {connection} = services.couchdb
+    connection.setMaxListeners(Infinity)
 
-            services.couchdb.connection[pluginName] = async function(
-                this:Connection,
-                firstParameter:unknown,
-                ...parameter:Array<unknown>
-            ):Promise<DatabaseResponse> {
-                try {
-                    return (
-                        await nativeMethod(firstParameter, ...parameter)
-                    ) as DatabaseResponse
-                } catch (error) {
-                    if (
-                        idName in (firstParameter as PartialFullDocument) &&
-                        configuration.couchdb.ignoreNoChangeError &&
-                        (error as Exception).name === 'forbidden' &&
-                        (error as Exception).message?.startsWith('NoChange:')
-                    ) {
-                        const result:DatabaseResponse = {
-                            id: (firstParameter as FullDocument)[idName],
-                            ok: true
-                        } as DatabaseResponse
+    const idName = config.model.property.name.special.id
+    const revisionName = config.model.property.name.special.revision
+    // region apply "latest/upsert" and ignore "NoChange" error feature
+    /*
+        NOTE: A "bulkDocs" plugin does not get called for every "put" and
+        "post" call so we have to wrap runtime generated methods.
+    */
+    type Put = <Type extends Mapping<unknown>>(
+        document:PutDocument<Type>, options?:PutOptions
+    ) => Promise<DatabaseResponse>
 
-                        result.rev = (
-                            revisionName in
-                                (firstParameter as PartialFullDocument) &&
-                            !['latest', 'upsert'].includes(
-                                (firstParameter as FullDocument)[revisionName]
-                            )
+    for (const pluginName of ['post', 'put'] as const) {
+        const nativeMethod = connection[pluginName].bind(connection) as Put
+
+        ;(connection[pluginName] as Put) = async function<
+            Type extends Mapping<unknown> = Mapping<unknown>
+        >(
+            this:Connection, document:PutDocument<Type>, options?:PutOptions
+        ) {
+            try {
+                return await nativeMethod(document, options)
+            } catch (error) {
+                const id = document[idName]
+
+                if (
+                    id &&
+                    config.ignoreNoChangeError &&
+                    (error as DatabaseError).name === 'forbidden' &&
+                    (error as DatabaseError).message?.startsWith('NoChange:')
+                ) {
+                    const revision = (
+                        typeof options === 'object' && revisionName in options
+                    ) ? options[revisionName] : document[revisionName]!
+
+                    return {
+                        id,
+                        rev: (
+                            revisionName in document &&
+                            !['latest', 'upsert'].includes(revision as string)
                         ) ?
-                            (firstParameter as FullDocument)[revisionName] :
-                            (await this.get(result.id))[
-                                revisionName as keyof DocumentRevisionIDMeta
-                            ]
+                            revision as string :
+                            (await this.get(id))[revisionName],
 
-                        return result
+                        ok: true
                     }
-
-                    throw error
                 }
-            } as DatabasePlugin
+
+                throw error
+            }
         }
-        // endregion
-        // region ensure database presence
+    }
+    // endregion
+    // region ensure database presence
+    try {
+        await Tools.checkReachability(url)
+    } catch (error) {
+        console.info('Database could not be retrieved yet: Creating it.')
+
+        await globalContext.fetch(url, {method: 'PUT'})
+    }
+    // endregion
+    return services
+}
+/**
+ * Starts server process.
+ * @param services - An object with stored service instances.
+ * @param configuration - Mutable by plugins extended configuration object.
+ *
+ * @returns A promise representing the server process wrapped in a promise
+ * which resolves after server is reachable.
+ */
+export const startServer = async (
+    services:Services, configuration:Configuration
+):Promise<void> => {
+    const {server} = services.couchdb
+    const {runner} = server
+    const {binary} = configuration.couchdb
+
+    // region  create configuration file if needed
+    if (Object.prototype.hasOwnProperty.call(runner, 'configurationFile')) {
         try {
-            await Tools.checkReachability(url)
+            await fileSystem.mkdir(
+                path.dirname(runner.configurationFile!.path),
+                {recursive: true}
+            )
         } catch (error) {
-            console.info('Database could not be retrieved yet: Creating it.')
-
-            await globalContext.fetch(url, {method: 'PUT'})
+            if ((error as NodeJS.ErrnoException).code !== 'EEXIST')
+                throw error
         }
-        // endregion
-        return services
+
+        await fileSystem.writeFile(
+            runner.configurationFile!.path,
+            runner.configurationFile!.content,
+            {encoding: configuration.core.encoding}
+        )
     }
-    /**
-     * Starts server process.
-     * @param services - An object with stored service instances.
-     * @param configuration - Mutable by plugins extended configuration object.
-     *
-     * @returns A promise representing the server process wrapped in a promise
-     * which resolves after server is reachable.
-     */
-    static async startServer(
-        this:void, services:Services, configuration:Configuration
-    ):Promise<void> {
-        // region  create configuration file if needed
+    // endregion
+    server.process = spawnChildProcess(
+        (
+            binary.memoryInMegaByte === 'default' ?
+                runner.binaryFilePath as string :
+                binary.nodePath
+        ),
+        (
+            binary.memoryInMegaByte === 'default' ?
+                [] :
+                [
+                    `--max-old-space-size=${binary.memoryInMegaByte}`,
+                    runner.binaryFilePath!
+                ]
+        )
+            .concat(runner.arguments ? runner.arguments : []),
+        {
+            cwd: (eval('process') as typeof process).cwd(),
+            env: (
+                Object.prototype.hasOwnProperty.call(runner, 'environment') ?
+                    {
+                        ...(eval('process') as typeof process).env,
+                        ...runner.environment
+                    } :
+                    (eval('process') as typeof process).env
+            ),
+            shell: true,
+            stdio: 'inherit'
+        }
+    )
+
+    ;(new Promise((
+        resolve:ProcessCloseCallback, reject:ProcessErrorCallback
+    ):void => {
+        for (const closeEventName of CloseEventNames)
+            server.process.on(
+                closeEventName,
+                Tools.getProcessCloseHandler(
+                    resolve,
+                    reject,
+                    {
+                        process: server.process,
+                        reason: closeEventName
+                    }
+                )
+            )
+    }))
+        .then(
+            /*
+                NOTE: Please be aware of newly set server instances when
+                resolving happens here.
+             */
+            (value:ProcessCloseReason):void => {
+                if (services.couchdb?.server?.resolve as unknown)
+                    services.couchdb.server.resolve.call(this, value)
+            },
+            (reason:ProcessCloseReason):void => {
+                if (services.couchdb?.server?.resolve as unknown)
+                    services.couchdb.server.reject.call(this, reason)
+            }
+        )
+
+    await Tools.checkReachability(
+        Tools.stringFormat(configuration.couchdb.url, ''), {wait: true}
+    )
+}
+/**
+ * Stops open database connection if exist, stops server process, restarts
+ * server process and re-initializes server connection.
+ * @param state - Application state.
+ *
+ * @returns Given object of services wrapped in a promise resolving after
+ * after finish.
+ */
+export const restartServer = async (state:State):Promise<void> => {
+    const {configuration, pluginAPI, services} = state
+    const {couchdb: {server}} = services
+
+    const resolveServerProcessBackup:(value:ProcessCloseReason) => void =
+        server.resolve
+    const rejectServerProcessBackup:(reason:ProcessCloseReason) => void =
+        server.reject
+
+    // Avoid to notify web node about server process stop.
+    server.resolve = server.reject = Tools.noop
+
+    await stopServer(services, configuration)
+
+    // Reattach server process to web nodes process pool.
+    server.resolve = resolveServerProcessBackup
+    server.reject = rejectServerProcessBackup
+
+    await startServer(services, configuration)
+
+    void initializeConnection(services, configuration)
+
+    await pluginAPI.callStack<State>({...state, hook: 'restartCouchdb'})
+}
+/**
+ * Stops open database connection if exists and stops server process.
+ * @param services - An object with stored service instances.
+ * @param services.couchdb - Couchdb service instance.
+ * @param configuration - Mutable by plugins extended configuration object.
+ * @param configuration.couchdb - Mutable by plugins extended configuration
+ * object.
+ *
+ * @returns Given object of services wrapped in a promise resolving after
+ * after finish.
+ */
+export const stopServer = async (
+    {couchdb}:Services, {couchdb: configuration}:Configuration
+):Promise<void> => {
+    if (couchdb.connection)
+        void couchdb.connection.close()
+
+    if (couchdb.server.process)
+        couchdb.server.process.kill('SIGINT')
+
+    await Tools.checkUnreachability(
+        Tools.stringFormat(configuration.url, ''), {wait: true}
+    )
+}
+// region model
+/**
+ * Determines a mapping of all models to roles who are allowed to edit
+ * corresponding model instances.
+ * @param modelConfiguration - Model specification object.
+ *
+ * @returns The mapping object.
+ */
+export const determineAllowedModelRolesMapping = (
+    modelConfiguration:ModelConfiguration
+):AllowedModelRolesMapping => {
+    const {allowedRole: allowedRoleName} =
+        modelConfiguration.property.name.special
+    const allowedModelRolesMapping:AllowedModelRolesMapping = {}
+    const models:Models = extendModels(modelConfiguration)
+
+    for (const [modelName, model] of Object.entries(models))
         if (Object.prototype.hasOwnProperty.call(
-            services.couchdb.server.runner, 'configurationFile'
+            model, allowedRoleName
         )) {
-            try {
-                await fileSystem.mkdir(
-                    path.dirname(
-                        services.couchdb.server.runner.configurationFile!.path
-                    ),
-                    {recursive: true}
-                )
-            } catch (error) {
-                if ((error as NodeJS.ErrnoException).code !== 'EEXIST')
-                    throw error
+            allowedModelRolesMapping[modelName] = {
+                properties: {},
+
+                ...normalizeAllowedRoles(model[allowedRoleName]!)
             }
 
-            await fileSystem.writeFile(
-                services.couchdb.server.runner.configurationFile!.path,
-                services.couchdb.server.runner.configurationFile!.content,
-                {encoding: configuration.core.encoding}
-            )
-        }
-        // endregion
-        services.couchdb.server.process = spawnChildProcess(
-            (
-                configuration.couchdb.binary.memoryInMegaByte === 'default' ?
-                    services.couchdb.server.runner.binaryFilePath as string :
-                    configuration.couchdb.binary.nodePath
-            ),
-            (
-                configuration.couchdb.binary.memoryInMegaByte === 'default' ?
-                    [] :
-                    [
-                        '--max-old-space-size=' +
-                            configuration.couchdb.binary.memoryInMegaByte,
-                        services.couchdb.server.runner.binaryFilePath!
-                    ]
-            ).concat(
-                services.couchdb.server.runner.arguments ?
-                    services.couchdb.server.runner.arguments :
-                    []
-            ),
-            {
-                cwd: (eval('process') as typeof process).cwd(),
-                env: (
-                    Object.prototype.hasOwnProperty.call(
-                        services.couchdb.server.runner, 'environment'
-                    ) ?
-                        {
-                            ...(eval('process') as typeof process).env,
-                            ...services.couchdb.server.runner.environment
-                        } :
-                        (eval('process') as typeof process).env
-                ),
-                shell: true,
-                stdio: 'inherit'
-            }
-        )
-
-        ;(new Promise((
-            resolve:ProcessCloseCallback, reject:ProcessErrorCallback
-        ):void => {
-            for (const closeEventName of CloseEventNames)
-                services.couchdb.server.process.on(
-                    closeEventName,
-                    Tools.getProcessCloseHandler(
-                        resolve,
-                        reject,
-                        {
-                            process: services.couchdb.server.process,
-                            reason: closeEventName
-                        }
-                    )
+            for (const [name, property] of Object.entries(model))
+                if (
+                    property !== null &&
+                    typeof property === 'object' &&
+                    property.allowedRoles
                 )
-        }))
-            .then(
-                (value:ProcessCloseReason):void => {
-                    if (services.couchdb?.server?.resolve as unknown)
-                        services.couchdb.server.resolve.call(this, value)
-                },
-                (reason:ProcessCloseReason):void => {
-                    if (services.couchdb?.server?.resolve as unknown)
-                        services.couchdb.server.reject.call(this, reason)
-                }
-            )
+                    allowedModelRolesMapping[modelName].properties[name] =
+                        normalizeAllowedRoles(property.allowedRoles)
+        } else
+            allowedModelRolesMapping[modelName] = {
+                properties: {},
+                read: [],
+                write: []
+            }
 
-        await Tools.checkReachability(
-            Tools.stringFormat(configuration.couchdb.url, ''), {wait: true}
-        )
-    }
-    /**
-     * Stops open database connection if exist, stops server process, restarts
-     * server process and re-initializes server connection.
-     * @param state - Application state.
-     *
-     * @returns Given object of services wrapped in a promise resolving after
-     * after finish.
-     */
-    static async restartServer(this:void, state:State):Promise<void> {
-        const {configuration, pluginAPI, services} = state
-        const {couchdb: {server}} = services
+    return allowedModelRolesMapping
+}
+/**
+ * Determines all property names which are indexable in a generic manner.
+ * @param modelConfiguration - Model specification object.
+ * @param model - Model to determine property names from.
+ *
+ * @returns The mapping object.
+ */
+export const determineGenericIndexablePropertyNames = (
+    modelConfiguration:ModelConfiguration, model:Model
+):Array<string> => {
+    const specialNames:SpecialPropertyNames =
+        modelConfiguration.property.name.special
 
-        const resolveServerProcessBackup:(value:ProcessCloseReason) => void =
-            server.resolve
-        const rejectServerProcessBackup:(reason:ProcessCloseReason) => void =
-            server.reject
-
-        // Avoid to notify web node about server process stop.
-        server.resolve = server.reject = Tools.noop
-
-        await Helper.stopServer(services, configuration)
-
-        // Reattach server process to web nodes process pool.
-        server.resolve = resolveServerProcessBackup
-        server.reject = rejectServerProcessBackup
-
-        await Helper.startServer(services, configuration)
-
-        void Helper.initializeConnection(services, configuration)
-
-        await pluginAPI.callStack<State>({...state, hook: 'restartCouchdb'})
-    }
-    /**
-     * Stops open database connection if exists and stops server process.
-     * @param services - An object with stored service instances.
-     * @param services.couchdb - Couchdb service instance.
-     * @param configuration - Mutable by plugins extended configuration object.
-     * @param configuration.couchdb - Mutable by plugins extended configuration
-     * object.
-     *
-     * @returns Given object of services wrapped in a promise resolving after
-     * after finish.
-     */
-    static async stopServer(
-        this:void, {couchdb}:Services, {couchdb: configuration}:Configuration
-    ):Promise<void> {
-        if (couchdb.connection)
-            void couchdb.connection.close()
-
-        if (couchdb.server.process)
-            couchdb.server.process.kill('SIGINT')
-
-        await Tools.checkUnreachability(
-            Tools.stringFormat(configuration.url, ''), {wait: true}
-        )
-    }
-    // region model
-    /**
-     * Determines a mapping of all models to roles who are allowed to edit
-     * corresponding model instances.
-     * @param modelConfiguration - Model specification object.
-     *
-     * @returns The mapping object.
-     */
-    static determineAllowedModelRolesMapping(
-        this:void, modelConfiguration:ModelConfiguration
-    ):AllowedModelRolesMapping {
-        const {allowedRole: allowedRoleName} =
-            modelConfiguration.property.name.special
-        const allowedModelRolesMapping:AllowedModelRolesMapping = {}
-        const models:Models = Helper.extendModels(modelConfiguration)
-
-        for (const [modelName, model] of Object.entries(models))
-            if (Object.prototype.hasOwnProperty.call(
-                model, allowedRoleName
-            )) {
-                allowedModelRolesMapping[modelName] = {
-                    properties: {},
-
-                    ...Helper.normalizeAllowedRoles(model[allowedRoleName]!)
-                }
-
-                for (const [name, property] of Object.entries(model))
-                    if (
-                        property !== null &&
-                        typeof property === 'object' &&
-                        property.allowedRoles
-                    )
-                        allowedModelRolesMapping[modelName].properties[name] =
-                            Helper.normalizeAllowedRoles(property.allowedRoles)
-            } else
-                allowedModelRolesMapping[modelName] = {
-                    properties: {},
-                    read: [],
-                    write: []
-                }
-
-        return allowedModelRolesMapping
-    }
-    /**
-     * Determines all property names which are indexable in a generic manner.
-     * @param modelConfiguration - Model specification object.
-     * @param model - Model to determine property names from.
-     *
-     * @returns The mapping object.
-     */
-    static determineGenericIndexablePropertyNames(
-        this:void, modelConfiguration:ModelConfiguration, model:Model
-    ):Array<string> {
-        const specialNames:SpecialPropertyNames =
-            modelConfiguration.property.name.special
-
-        return Object.keys(model)
-            .filter((name:string):boolean =>
-                model[name] !== null &&
-                typeof model[name] === 'object' &&
-                (
+    return Object.keys(model)
+        .filter((name:string):boolean =>
+            model[name] !== null &&
+            typeof model[name] === 'object' &&
+            (
+                Object.prototype.hasOwnProperty.call(
+                    model[name], 'index'
+                ) &&
+                model[name].index ||
+                !(
                     Object.prototype.hasOwnProperty.call(
                         model[name], 'index'
                     ) &&
-                    model[name].index ||
-                    !(
+                    !model[name].index ||
+                    modelConfiguration.property.name.reserved.concat(
+                        specialNames.additional,
+
+                        specialNames.allowedRole,
+
+                        specialNames.attachment,
+
+                        specialNames.conflict,
+
+                        specialNames.constraint.execution,
+                        specialNames.constraint.expression,
+
+                        specialNames.deleted,
+                        specialNames.deletedConflict,
+
+                        specialNames.extend,
+
+                        specialNames.maximumAggregatedSize,
+                        specialNames.minimumAggregatedSize,
+
+                        specialNames.oldType,
+
+                        specialNames.id,
+                        specialNames.revision,
+                        specialNames.revisions,
+                        specialNames.revisionsInformation,
+
+                        specialNames.type
+                    ).includes(name) ||
+                    model[name].type &&
+                    (
+                        typeof model[name].type === 'string' &&
+                        (model[name].type as string).endsWith('[]') ||
+                        Array.isArray(model[name].type) &&
+                        (model[name].type as Array<string>).length &&
+                        Array.isArray(
+                            (model[name].type as Array<string>)[0]
+                        ) ||
                         Object.prototype.hasOwnProperty.call(
-                            model[name], 'index'
-                        ) &&
-                        !model[name].index ||
-                        modelConfiguration.property.name.reserved.concat(
-                            specialNames.additional,
-
-                            specialNames.allowedRole,
-
-                            specialNames.attachment,
-
-                            specialNames.conflict,
-
-                            specialNames.constraint.execution,
-                            specialNames.constraint.expression,
-
-                            specialNames.deleted,
-                            specialNames.deletedConflict,
-
-                            specialNames.extend,
-
-                            specialNames.maximumAggregatedSize,
-                            specialNames.minimumAggregatedSize,
-
-                            specialNames.oldType,
-
-                            specialNames.id,
-                            specialNames.revision,
-                            specialNames.revisions,
-                            specialNames.revisionsInformation,
-
-                            specialNames.type
-                        ).includes(name) ||
-                        model[name].type &&
-                        (
-                            typeof model[name].type === 'string' &&
-                            (model[name].type as string).endsWith('[]') ||
-                            Array.isArray(model[name].type) &&
-                            (model[name].type as Array<string>).length &&
-                            Array.isArray(
-                                (model[name].type as Array<string>)[0]
-                            ) ||
-                            Object.prototype.hasOwnProperty.call(
-                                modelConfiguration.entities,
-                                model[name].type as string
-                            )
+                            modelConfiguration.entities,
+                            model[name].type as string
                         )
                     )
                 )
             )
-            .concat(specialNames.id, specialNames.revision)
-            .sort()
-    }
-    /**
-     * Extend given model with all specified one.
-     * @param modelName - Name of model to extend.
-     * @param models - Pool of models to extend from.
-     * @param extendPropertyName - Property name which indicates model
-     * inheritance.
-     *
-     * @returns Given model in extended version.
-     */
-    static extendModel(
-        this:void,
-        modelName:string,
-        models:Models,
-        extendPropertyName = '_extends'
-    ):Model {
-        if (modelName === '_base')
-            return models[modelName]
-
-        if (Object.prototype.hasOwnProperty.call(models, '_base'))
-            if (
-                Object.prototype.hasOwnProperty.call(
-                    models[modelName], extendPropertyName
-                ) &&
-                models[modelName][extendPropertyName]
-            )
-                (models[modelName][extendPropertyName] as Array<string>) =
-                    ['_base'].concat(
-                        models[modelName][extendPropertyName] as Array<string>
-                    )
-            else
-                (
-                    models[modelName][extendPropertyName] as unknown as string
-                ) = '_base'
-
-        if (Object.prototype.hasOwnProperty.call(
-            models[modelName], extendPropertyName
-        )) {
-            for (const modelNameToExtend of ([] as Array<string>).concat(
-                models[modelName][extendPropertyName] as Array<string>
-            ))
-                models[modelName] = Tools.extend(
-                    true,
-                    Tools.copy(Helper.extendModel(
-                        modelNameToExtend, models, extendPropertyName
-                    )),
-                    models[modelName]
-                )
-
-            delete models[modelName][extendPropertyName]
-        }
-
-        return models[modelName]
-    }
-    /**
-     * Extend default specification with specific one.
-     * @param modelConfiguration - Model specification object.
-     *
-     * @returns Models with extended specific specifications.
-     */
-    static extendModels(
-        this:void, modelConfiguration:ModelConfiguration
-    ):Models {
-        const specialNames:SpecialPropertyNames =
-            modelConfiguration.property.name.special
-        const models:Models = {}
-
-        for (const modelName of Object.keys(modelConfiguration.entities)) {
-            if (!(
-                new RegExp(
-                    modelConfiguration.property.name
-                        .typeRegularExpressionPattern.public
-                ).test(modelName) ||
-                (new RegExp(
-                    modelConfiguration.property.name
-                        .typeRegularExpressionPattern.private
-                )).test(modelName)
-            ))
-                throw new Error(
-                    'Model names have to match "' +
-                    modelConfiguration.property.name
-                        .typeRegularExpressionPattern.public +
-                    '" or "' +
-                    modelConfiguration.property.name
-                        .typeRegularExpressionPattern.private +
-                    `" for private one (given name: "${modelName}").`
-                )
-
-            models[modelName] = Helper.extendModel(
-                modelName, modelConfiguration.entities, specialNames.extend
-            )
-        }
-
-        for (const model of Object.values(models))
-            for (const [propertyName, property] of Object.entries(model))
-                if (propertyName === specialNames.attachment)
-                    for (const [type, value] of Object.entries(property))
-                        (property as Mapping<FileSpecification>)[type] =
-                            Tools.extend<FileSpecification>(
-                                true,
-                                Tools.copy(
-                                    modelConfiguration.property
-                                        .defaultSpecification
-                                ) as FileSpecification,
-                                value as FileSpecification
-                            )
-                else if (![
-                    specialNames.allowedRole,
-                    specialNames.constraint.execution,
-                    specialNames.constraint.expression,
-                    specialNames.extend,
-                    specialNames.maximumAggregatedSize,
-                    specialNames.minimumAggregatedSize,
-                    specialNames.oldType
-                ].includes(propertyName))
-                    model[propertyName] = Tools.extend(
-                        true,
-                        Tools.copy(
-                            modelConfiguration.property.defaultSpecification
-                        ),
-                        property
-                    )
-
-        return models
-    }
-    /**
-     * Convert given roles to its normalized representation.
-     * @param roles - Unstructured roles description.
-     *
-     * @returns Normalized roles representation.
-     */
-    static normalizeAllowedRoles(
-        this:void, roles:AllowedRoles
-    ):NormalizedAllowedRoles {
-        if (Array.isArray(roles))
-            return {read: roles, write: roles}
-
-        if (typeof roles === 'object') {
-            const result:NormalizedAllowedRoles = {read: [], write: []}
-
-            for (const type of Object.keys(result))
-                if (Object.prototype.hasOwnProperty.call(roles, type))
-                    if (Array.isArray(roles[type as 'read'|'write']))
-                        result[type as 'read'|'write'] =
-                            roles[type as 'read'|'write'] as Array<string>
-                    else
-                        result[type as 'read'|'write'] =
-                            [roles[type as 'read'|'write'] as string]
-
-            return result
-        }
-
-        return {read: [roles], write: [roles]}
-    }
-    // endregion
+        )
+        .concat(specialNames.id, specialNames.revision)
+        .sort()
 }
-export default Helper
+/**
+ * Extend given model with all specified one.
+ * @param modelName - Name of model to extend.
+ * @param models - Pool of models to extend from.
+ * @param extendPropertyName - Property name which indicates model
+ * inheritance.
+ *
+ * @returns Given model in extended version.
+ */
+export const extendModel = (
+    modelName:string, models:Models, extendPropertyName = '_extends'
+):Model => {
+    if (modelName === '_base')
+        return models[modelName]
+
+    if (Object.prototype.hasOwnProperty.call(models, '_base'))
+        if (
+            Object.prototype.hasOwnProperty.call(
+                models[modelName], extendPropertyName
+            ) &&
+            models[modelName][extendPropertyName]
+        )
+            (models[modelName][extendPropertyName] as Array<string>) =
+                ['_base'].concat(
+                    models[modelName][extendPropertyName] as Array<string>
+                )
+        else
+            (
+                models[modelName][extendPropertyName] as unknown as string
+            ) = '_base'
+
+    if (Object.prototype.hasOwnProperty.call(
+        models[modelName], extendPropertyName
+    )) {
+        for (const modelNameToExtend of ([] as Array<string>).concat(
+            models[modelName][extendPropertyName] as Array<string>
+        ))
+            models[modelName] = Tools.extend(
+                true,
+                Tools.copy(extendModel(
+                    modelNameToExtend, models, extendPropertyName
+                )),
+                models[modelName]
+            )
+
+        delete models[modelName][extendPropertyName]
+    }
+
+    return models[modelName]
+}
+/**
+ * Extend default specification with specific one.
+ * @param modelConfiguration - Model specification object.
+ *
+ * @returns Models with extended specific specifications.
+ */
+export const extendModels = (modelConfiguration:ModelConfiguration):Models => {
+    const specialNames:SpecialPropertyNames =
+        modelConfiguration.property.name.special
+    const models:Models = {}
+
+    const {typeRegularExpressionPattern} = modelConfiguration.property.name
+
+    for (const modelName of Object.keys(modelConfiguration.entities)) {
+        if (!(
+            new RegExp(typeRegularExpressionPattern.public).test(modelName) ||
+            (new RegExp(typeRegularExpressionPattern.private)).test(modelName)
+        ))
+            throw new Error(
+                'Model names have to match "' +
+                typeRegularExpressionPattern.public +
+                '" or "' +
+                typeRegularExpressionPattern.private +
+                `" for private one (given name: "${modelName}").`
+            )
+
+        models[modelName] = extendModel(
+            modelName, modelConfiguration.entities, specialNames.extend
+        )
+    }
+
+    for (const model of Object.values(models))
+        for (const [propertyName, property] of Object.entries(model))
+            if (propertyName === specialNames.attachment)
+                for (const [type, value] of Object.entries(property))
+                    (property as Mapping<FileSpecification>)[type] =
+                        Tools.extend<FileSpecification>(
+                            true,
+                            Tools.copy(
+                                modelConfiguration.property
+                                    .defaultSpecification
+                            ) as FileSpecification,
+                            value as FileSpecification
+                        )
+            else if (![
+                specialNames.allowedRole,
+                specialNames.constraint.execution,
+                specialNames.constraint.expression,
+                specialNames.extend,
+                specialNames.maximumAggregatedSize,
+                specialNames.minimumAggregatedSize,
+                specialNames.oldType
+            ].includes(propertyName))
+                model[propertyName] = Tools.extend(
+                    true,
+                    Tools.copy(
+                        modelConfiguration.property.defaultSpecification
+                    ),
+                    property
+                )
+
+    return models
+}
+/**
+ * Convert given roles to its normalized representation.
+ * @param roles - Unstructured roles description.
+ *
+ * @returns Normalized roles representation.
+ */
+export const normalizeAllowedRoles = (
+    roles:AllowedRoles
+):NormalizedAllowedRoles => {
+    if (Array.isArray(roles))
+        return {read: roles, write: roles}
+
+    if (typeof roles === 'object') {
+        const result:NormalizedAllowedRoles = {read: [], write: []}
+
+        for (const type of Object.keys(result))
+            if (Object.prototype.hasOwnProperty.call(roles, type))
+                if (Array.isArray(roles[type as 'read'|'write']))
+                    result[type as 'read'|'write'] =
+                        roles[type as 'read'|'write'] as Array<string>
+                else
+                    result[type as 'read'|'write'] =
+                        [roles[type as 'read'|'write'] as string]
+
+        return result
+    }
+
+    return {read: [roles], write: [roles]}
+}
 // endregion
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:

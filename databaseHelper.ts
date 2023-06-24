@@ -24,17 +24,18 @@ import {
     CheckedDocumentResult,
     CheckedPropertyResult,
     CommonScope,
-    CompilationExceptionData,
+    CompilationErrorData,
     Constraint,
     ConstraintKey,
+    DatabaseError,
     DateRepresentationType,
     Document,
     DocumentContent,
-    EmptyEvaluationExceptionData,
+    EmptyEvaluationErrorData,
     Evaluate,
-    EvaluationException,
+    EvaluationError,
+    EvaluationErrorData,
     EvaluationResult,
-    Exception,
     FileSpecification,
     FullAttachment,
     Model,
@@ -43,7 +44,7 @@ import {
     PartialFullDocument,
     PropertyScope,
     PropertySpecification,
-    RuntimeExceptionData,
+    RuntimeErrorData,
     SecuritySettings,
     SelectionMapping,
     SpecialPropertyNames,
@@ -54,7 +55,7 @@ import {
 } from './type'
 // endregion
 /**
- * A dumm plugin interface with all available hooks.
+ * WebNode plugin interface with all provided hooks.
  */
 export class DatabaseHelper {
     /**
@@ -205,20 +206,21 @@ export class DatabaseHelper {
         securitySettings:Partial<SecuritySettings>,
         modelConfiguration:BaseModelConfiguration,
         models:Models = {},
-        toJSON?:(_value:unknown) => string
+        toJSON?:(value:unknown) => string
     ):PartialFullDocument {
         // region ensure needed environment
         const throwError = <DataType = Mapping<unknown>>(
             message:string,
             type = 'forbidden',
-            additionalErrorData:Partial<DataType> = {}
+            additionalErrorData:Partial<DataType> = {} as Partial<DataType>
         ):never => {
-            const result:Exception<DataType> =
-                {[type]: message, message, name: type} as Exception<DataType>
-            for (const [name, data] of Object.entries(additionalErrorData))
-                (result as Mapping<unknown>)[name] = data
-
-            throw result
+            // eslint-disable-next-line no-throw-literal
+            throw {
+                [type]: message,
+                message,
+                name: type,
+                ...additionalErrorData
+            }
         }
 
         const now = new Date()
@@ -463,11 +465,13 @@ export class DatabaseHelper {
             return false
         }
 
-        const evaluate = <Type = unknown, Scope = Mapping<unknown>>(
-            givenExpression?:null|string,
-            isEvaluation = false,
-            givenScope:Scope = {} as Scope
-        ):(
+        const evaluate = <
+            Type = unknown, Scope = Mapping<unknown>
+        >(
+                givenExpression?:null|string,
+                isEvaluation = false,
+                givenScope = {} as Scope
+            ):(
             EvaluationResult<
                 Type|undefined, BasicScope<Type> & {code:string} & Scope
             > |
@@ -496,10 +500,10 @@ export class DatabaseHelper {
                         Evaluate<Type|undefined>
                     /* eslint-enable @typescript-eslint/no-implied-eval */
                 } catch (error) {
-                    throwError<CompilationExceptionData<CurrentScope>>(
+                    throwError<CompilationErrorData<CurrentScope>>(
                         serialize(error),
                         'compilation',
-                        {code, error: error as Error, scope}
+                        {code, error, scope}
                     )
                 }
                 // endregion
@@ -515,7 +519,7 @@ export class DatabaseHelper {
                         )
                     )
                 } catch (error) {
-                    throwError<RuntimeExceptionData<CurrentScope>>(
+                    throwError<RuntimeErrorData<CurrentScope>>(
                         serialize(error),
                         'runtime',
                         {code, error: error as Error, scope}
@@ -526,7 +530,7 @@ export class DatabaseHelper {
                 // endregion
             }
 
-            throwError<EmptyEvaluationExceptionData>(
+            throwError<EmptyEvaluationErrorData>(
                 'No expression to evaluate provided.', 'empty'
             )
         }
@@ -651,7 +655,7 @@ export class DatabaseHelper {
                         } catch (error) {
                             if (((
                                 error:unknown
-                            ):error is EvaluationException =>
+                            ):error is DatabaseError & EvaluationErrorData =>
                                 Object.prototype.hasOwnProperty.call(
                                     error, 'compilation'
                                 )
@@ -659,12 +663,12 @@ export class DatabaseHelper {
                                 throwError(
                                     `Compilation: Hook "${type}" has invalid` +
                                     ` code "${error.code}": "` +
-                                    `${error.message}"${pathDescription}.`
+                                    `${error.message!}"${pathDescription}.`
                                 )
 
                             if (((
                                 error:unknown
-                            ):error is EvaluationException =>
+                            ):error is DatabaseError & EvaluationErrorData =>
                                 Object.prototype.hasOwnProperty.call(
                                     error, 'runtime'
                                 )
@@ -672,7 +676,7 @@ export class DatabaseHelper {
                                 throwError(
                                     `Runtime: Hook "${type}" has throw an ` +
                                     `error with code "${error.code}": "` +
-                                    `${error.message}"${pathDescription}.`
+                                    `${error.message!}"${pathDescription}.`
                                 )
 
                             if (!Object.prototype.hasOwnProperty.call(
@@ -1183,7 +1187,7 @@ export class DatabaseHelper {
                             } catch (error) {
                                 if (((
                                     error:unknown
-                                ):error is EvaluationException =>
+                                ):error is EvaluationError =>
                                     Object.prototype.hasOwnProperty.call(
                                         error, 'compilation'
                                     )
@@ -1192,12 +1196,12 @@ export class DatabaseHelper {
                                         `Compilation: Hook "${type}" has ` +
                                         `invalid code "${error.code}" for ` +
                                         `property "${name}": ` +
-                                        `${error.message}${pathDescription}.`
+                                        `${error.message!}${pathDescription}.`
                                     )
 
                                 if (((
                                     error:unknown
-                                ):error is EvaluationException =>
+                                ):error is EvaluationError =>
                                     Object.prototype.hasOwnProperty.call(
                                         error, 'runtime'
                                     )
@@ -1206,7 +1210,7 @@ export class DatabaseHelper {
                                         `Runtime: Hook "${type}" has throw ` +
                                         `an error with code "${error.code}" ` +
                                         `for property "${name}": ` +
-                                        `${error.message}${pathDescription}.`
+                                        `${error.message!}${pathDescription}.`
                                     )
 
                                 if (!Object.prototype.hasOwnProperty.call(
@@ -1294,7 +1298,7 @@ export class DatabaseHelper {
                         } catch (error) {
                             if (((
                                 error:unknown
-                            ):error is EvaluationException =>
+                            ):error is EvaluationError =>
                                 Object.prototype.hasOwnProperty.call(
                                     error, 'compilation'
                                 )
@@ -1302,13 +1306,13 @@ export class DatabaseHelper {
                                 throwError(
                                     `Compilation: Hook "${type}" has invalid` +
                                     ` code "${error.code}" for property "` +
-                                    `${name}": ${error.message}` +
+                                    `${name}": ${error.message!}` +
                                     `${pathDescription}.`
                                 )
 
                             if (((
                                 error:unknown
-                            ):error is EvaluationException =>
+                            ):error is EvaluationError =>
                                 Object.prototype.hasOwnProperty.call(
                                     error, 'runtime'
                                 )
@@ -1316,7 +1320,7 @@ export class DatabaseHelper {
                                 throwError(
                                     `Runtime: Hook "${type}" has throw an ` +
                                     `error with code "${error.code}" for ` +
-                                    `property "${name}": ${error.message}` +
+                                    `property "${name}": ${error.message!}` +
                                     `${pathDescription}.`
                                 )
 
@@ -1379,9 +1383,7 @@ export class DatabaseHelper {
                                 }
                             )!.result
                         } catch (error) {
-                            if (((
-                                error:unknown
-                            ):error is EvaluationException =>
+                            if (((error:unknown):error is EvaluationError =>
                                 Object.prototype.hasOwnProperty.call(
                                     error, 'compilation'
                                 )
@@ -1389,13 +1391,11 @@ export class DatabaseHelper {
                                 throwError(
                                     `Compilation: Hook "${type}" has invalid` +
                                     ` code "${error.code}" for document "` +
-                                    `${modelName}": ${error.message}` +
+                                    `${modelName}": ${error.message!}` +
                                     `${pathDescription}.`
                                 )
 
-                            if (((
-                                error:unknown
-                            ):error is EvaluationException =>
+                            if (((error:unknown):error is EvaluationError =>
                                 Object.prototype.hasOwnProperty.call(
                                     error, 'runtime'
                                 )
@@ -1404,7 +1404,7 @@ export class DatabaseHelper {
                                     `Runtime: Hook "${type}" has throw an ` +
                                     `error with code "${error.code}" for ` +
                                     `document "${modelName}": ` +
-                                    `${error.message}${pathDescription}.`
+                                    `${error.message!}${pathDescription}.`
                                 )
 
                             if (!Object.prototype.hasOwnProperty.call(
@@ -1452,7 +1452,7 @@ export class DatabaseHelper {
                             }
                         )!.result
                     } catch (error) {
-                        if (((error:unknown):error is EvaluationException =>
+                        if (((error:unknown):error is EvaluationError =>
                             Object.prototype.hasOwnProperty.call(
                                 error, 'compilation'
                             )
@@ -1460,11 +1460,11 @@ export class DatabaseHelper {
                             throwError(
                                 `Compilation: Hook "${type}" has invalid ` +
                                 `code "${error.code}" for document "` +
-                                `${modelName}": ${error.message}` +
+                                `${modelName}": ${error.message!}` +
                                 `${pathDescription}.`
                             )
 
-                        if (((error:unknown):error is EvaluationException =>
+                        if (((error:unknown):error is EvaluationError =>
                             Object.prototype.hasOwnProperty.call(
                                 error, 'runtime'
                             )
@@ -1472,7 +1472,7 @@ export class DatabaseHelper {
                             throwError(
                                 `Runtime: Hook "${type}" has throw an error ` +
                                 `with code "${error.code}" for document "` +
-                                `${modelName}": ${error.message}` +
+                                `${modelName}": ${error.message!}` +
                                 `${pathDescription}.`
                             )
 
@@ -2056,9 +2056,7 @@ export class DatabaseHelper {
                                 }
                             )
                         } catch (error) {
-                            if (((
-                                error:unknown
-                            ):error is EvaluationException =>
+                            if (((error:unknown):error is EvaluationError =>
                                 Object.prototype.hasOwnProperty.call(
                                     error, 'compilation'
                                 )
@@ -2066,12 +2064,10 @@ export class DatabaseHelper {
                                 throwError(
                                     `Compilation: Hook "${type}" has invalid` +
                                     ` code "${error.code}": "` +
-                                    `${error.message}"${pathDescription}.`
+                                    `${error.message!}"${pathDescription}.`
                                 )
 
-                            if (((
-                                error:unknown
-                            ):error is EvaluationException =>
+                            if (((error:unknown):error is EvaluationError =>
                                 Object.prototype.hasOwnProperty.call(
                                     error, 'runtime'
                                 )
@@ -2079,7 +2075,7 @@ export class DatabaseHelper {
                                 throwError(
                                     `Runtime: Hook "${type}" has thrown an ` +
                                     `error with code "${error.code}": ` +
-                                    `${error.message}${pathDescription}.`
+                                    `${error.message!}${pathDescription}.`
                                 )
 
                             if (!Object.prototype.hasOwnProperty.call(

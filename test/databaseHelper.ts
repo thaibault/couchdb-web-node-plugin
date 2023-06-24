@@ -22,13 +22,12 @@ import {
 import {PlainObject} from 'clientnode/type'
 
 import DatabaseHelper from '../databaseHelper'
-import Helper from '../helper'
+import {extendModels} from '../helper'
 import packageConfiguration from '../package.json'
 import {
     Configuration,
     Document,
     ModelConfiguration,
-    Models,
     PartialFullDocument,
     SpecialPropertyNames
 } from '../type'
@@ -1130,7 +1129,7 @@ describe('databaseHelper', ():void => {
                     }}],
                     {entities: {Test: {[attachmentName]: {data: {
                         fileName: {
-                            regularExpressionPattern: /a|b/,
+                            regularExpressionPattern: /[ab]/,
                             invertedRegularExpressionPattern: /a/
                         }
                     }}}}},
@@ -1218,7 +1217,7 @@ describe('databaseHelper', ():void => {
                     Tools.copy(defaultModelConfiguration),
                     test[1] as Partial<ModelConfiguration>
                 )
-                const models:Models = Helper.extendModels(modelConfiguration)
+                const models = extendModels(modelConfiguration)
 
                 delete (
                     modelConfiguration.property as
@@ -3166,7 +3165,7 @@ describe('databaseHelper', ():void => {
                         }
                     }],
                     {entities: {Test: {[attachmentName]: {data: {
-                        fileName: {regularExpressionPattern: /a|b/},
+                        fileName: {regularExpressionPattern: /[ab]/},
                         maximumNumber: 2,
                         minimumNumber: 2
                     }}}}},
@@ -3547,7 +3546,7 @@ describe('databaseHelper', ():void => {
                     Tools.copy(defaultModelConfiguration),
                     test[1] as Partial<ModelConfiguration>
                 )
-                const models:Models = Helper.extendModels(modelConfiguration)
+                const models = extendModels(modelConfiguration)
 
                 delete (
                     modelConfiguration.property as
@@ -3797,7 +3796,7 @@ describe('databaseHelper', ():void => {
                         propertyName
                     ]
 
-            const models:Models = Helper.extendModels(Tools.extend(
+            const models = extendModels(Tools.extend(
                 true,
                 Tools.copy(defaultModelConfiguration),
                 modelConfiguration as Partial<ModelConfiguration>

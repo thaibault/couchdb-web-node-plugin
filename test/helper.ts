@@ -20,7 +20,15 @@ import {
     testEach, testEachPromiseAgainstSameExpectation, UndefinedSymbol
 } from 'clientnode/testHelper'
 
-import Helper from '../helper'
+import {
+    determineAllowedModelRolesMapping,
+    determineGenericIndexablePropertyNames,
+    ensureValidationDocumentPresence,
+    extendModel,
+    extendModels,
+    mayStripRepresentation,
+    normalizeAllowedRoles
+} from '../helper'
 import packageConfiguration from '../package.json'
 import {
     AllowedModelRolesMapping,
@@ -41,9 +49,9 @@ describe('helper', ():void => {
         configuration.couchdb.model.property.name.special
     // endregion
     // region tests
-    testEach<typeof Helper.mayStripRepresentation>(
+    testEach<typeof mayStripRepresentation>(
         'mayStripRepresentation',
-        Helper.mayStripRepresentation,
+        mayStripRepresentation,
 
         ['DOCUMENT IS TOO BIG TO REPRESENT', {}, 1, 1],
         ['{}', {}, 2, 2],
@@ -58,10 +66,10 @@ describe('helper', ():void => {
         ]
     )
     testEachPromiseAgainstSameExpectation<
-        typeof Helper.ensureValidationDocumentPresence
+        typeof ensureValidationDocumentPresence
     >(
         'ensureValidationDocumentPresence',
-        Helper.ensureValidationDocumentPresence,
+        ensureValidationDocumentPresence,
         UndefinedSymbol,
 
         [
@@ -85,9 +93,9 @@ describe('helper', ():void => {
         Tools.copy(configuration.couchdb.model)
     mockModelConfiguration.entities = {}
 
-    testEach<typeof Helper.determineAllowedModelRolesMapping>(
+    testEach<typeof determineAllowedModelRolesMapping>(
         'determineAllowedModelRolesMapping',
-        Helper.determineAllowedModelRolesMapping,
+        determineAllowedModelRolesMapping,
 
         ...[
             [{}, {property: {}}],
@@ -151,9 +159,9 @@ describe('helper', ():void => {
             ) as ModelConfiguration
         ])
     )
-    testEach<typeof Helper.determineGenericIndexablePropertyNames>(
+    testEach<typeof determineGenericIndexablePropertyNames>(
         'determineGenericIndexablePropertyNames',
-        Helper.determineGenericIndexablePropertyNames,
+        determineGenericIndexablePropertyNames,
 
         ...[
             [[specialNames.id, specialNames.revision], {}, {}],
@@ -175,9 +183,9 @@ describe('helper', ():void => {
             model as Model
         ])
     )
-    testEach<typeof Helper.extendModel>(
+    testEach<typeof extendModel>(
         'extendModel',
-        Helper.extendModel,
+        extendModel,
 
         ...[
             [{}, 'A', {A: {}}],
@@ -226,8 +234,7 @@ describe('helper', ():void => {
                 }
             ]
         ] as Array<[
-            ReturnType<typeof Helper.extendModel>,
-            ...Parameters<typeof Helper.extendModel>
+            ReturnType<typeof extendModel>, ...Parameters<typeof extendModel>
         ]>
     )
     test('extendModels', ():void => {
@@ -271,7 +278,7 @@ describe('helper', ():void => {
                 }
             ]
         ] as const)
-            expect(Helper.extendModels(
+            expect(extendModels(
                 Tools.extend(
                     true,
                     Tools.copy(modelConfiguration),
@@ -279,7 +286,7 @@ describe('helper', ():void => {
                 )
             )).toStrictEqual(expected)
 
-        expect(():Models => Helper.extendModels(
+        expect(():Models => extendModels(
             Tools.extend(
                 true,
                 Tools.copy(modelConfiguration),
@@ -287,7 +294,7 @@ describe('helper', ():void => {
             )
         )).toThrow()
 
-        expect(Helper.extendModels(
+        expect(extendModels(
             Tools.extend(
                 true,
                 Tools.copy(modelConfiguration),
@@ -300,9 +307,9 @@ describe('helper', ():void => {
             )
         )).toStrictEqual({a: {}})
     })
-    testEach<typeof Helper.normalizeAllowedRoles>(
+    testEach<typeof normalizeAllowedRoles>(
         'normalizeAllowedRoles',
-        Helper.normalizeAllowedRoles,
+        normalizeAllowedRoles,
 
         [{read: ['a'], write: ['a']}, 'a'],
         [{read: [], write: []}, []],
