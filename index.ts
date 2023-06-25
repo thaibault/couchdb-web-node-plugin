@@ -40,11 +40,9 @@ import {
     extendModels,
     getConnectorOptions,
     initializeConnection,
-    mayStripRepresentation,
-    restartServer,
-    startServer,
-    stopServer
+    mayStripRepresentation
 } from './helper'
+import {restart, start, stop} from './server'
 import {
     ChangesStream,
     Connection,
@@ -290,11 +288,11 @@ export class Database implements PluginHandler {
         const {couchdb} = services
 
         if (Object.prototype.hasOwnProperty.call(couchdb.server, 'runner')) {
-            await startServer(services, configuration)
+            await start(services, configuration)
 
-            couchdb.server.restart = restartServer
-            couchdb.server.start = startServer
-            couchdb.server.stop = stopServer
+            couchdb.server.restart = restart
+            couchdb.server.start = start
+            couchdb.server.stop = stop
 
             promise = new Promise<ProcessCloseReason>((
                 resolve:(value:ProcessCloseReason) => void,
@@ -1131,7 +1129,7 @@ export class Database implements PluginHandler {
      * @returns Promise resolving to nothing.
      */
     static async shouldExit({configuration, services}:State):Promise<void> {
-        await stopServer(services, configuration)
+        await stop(services, configuration)
 
         delete (services as {couchdb?:Services['couchdb']}).couchdb
 

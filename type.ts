@@ -56,8 +56,6 @@ export type DatabaseError = PouchDB.Core.Error
 export type DatabaseFetch = PouchDB.Core.Options['fetch']
 export type DatabaseResponse = PouchDB.Core.Response
 
-export type DeleteIndexOptions = PouchDB.Find.DeleteIndexOptions
-
 export type Document<Type extends Mapping<unknown> = PlainObject> =
     PouchDB.Core.Document<Type>
 export type ExistingDocument<Type extends Mapping<unknown> = PlainObject> =
@@ -68,6 +66,7 @@ export type DocumentRevisionIDMeta = PouchDB.Core.RevisionIdMeta
 
 export type FindRequest<Type extends Mapping<unknown>> =
     PouchDB.Find.FindRequest<Type>
+export type DeleteIndexOptions = PouchDB.Find.DeleteIndexOptions
 export type GetOptions = PouchDB.Core.GetOptions
 export type PutOptions = PouchDB.Core.Options;
 export type PutDocument<Type extends Mapping<unknown>> =
