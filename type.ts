@@ -585,7 +585,7 @@ export type Migrator<
 ) => Document|null
 
 export type DateRepresentationType = Date|null|number|string
-/// region models
+/// region pre-defined models
 export type User = BaseDocument & {
     password:string
     roles:Array<string>
