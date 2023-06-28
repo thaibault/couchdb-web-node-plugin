@@ -228,7 +228,10 @@ export type Model<
     Type = unknown,
     AdditionalSpecifications extends Mapping<unknown> = Mapping<unknown>
 > = BaseModel & Mapping<PropertySpecification<Type, AdditionalSpecifications>>
-export type Models = Mapping<Model>
+export type Models<
+    Type = unknown,
+    AdditionalSpecifications extends Mapping<unknown> = Mapping<unknown>
+> = Mapping<Model<Type, AdditionalSpecifications>>
 
 export type UpdateStrategy = ''|'fillUp'|'incremental'|'migrate'
 
@@ -309,11 +312,12 @@ export interface BaseModelConfiguration<
     }
     updateStrategy:UpdateStrategy
 }
-export interface ModelConfiguration<Type = unknown> extends
-    BaseModelConfiguration<Type>
-{
+export interface ModelConfiguration<
+    Type = unknown,
+    AdditionalSpecifications extends Mapping<unknown> = Mapping<unknown>
+> extends BaseModelConfiguration<Type, AdditionalSpecifications> {
     autoMigrationPath:string
-    entities:Models
+    entities:Models<Type, AdditionalSpecifications>
     triggerInitialCompaction:boolean
     updateConfiguration:boolean
     updateValidation:boolean
@@ -466,7 +470,10 @@ export interface RuntimeErrorData<
     runtime:string
 }
 //// region scopes
-export interface BasicScope<Type = unknown> {
+export interface BasicScope<
+    Type = unknown,
+    AdditionalSpecifications extends Mapping<unknown> = Mapping<unknown>
+> {
     attachmentWithPrefixExists:(namePrefix:string) => boolean
     checkDocument:(
         newDocument:PartialFullDocument,
@@ -485,8 +492,8 @@ export interface BasicScope<Type = unknown> {
     specialNames:SpecialPropertyNames
     typeName:string
 
-    modelConfiguration:BaseModelConfiguration<Type>
-    models:Models
+    modelConfiguration:BaseModelConfiguration<Type, AdditionalSpecifications>
+    models:Models<Type, AdditionalSpecifications>
 
     now:Date
     nowUTCTimestamp:number
@@ -507,7 +514,7 @@ export interface CommonScope<
         oldValue:unknown
     ) => CheckedPropertyResult
 
-    model:Model<Type>
+    model:Model<Type, AdditionalSpecifications>
     modelName:string
     type:Array<string>|string
 
@@ -549,7 +556,10 @@ export interface CheckedDocumentResult extends CheckedResult {
     newDocument:PartialFullDocument
 }
 /// endregion
-export type Migrator<Type = unknown> = (
+export type Migrator<
+    Type = unknown,
+    AdditionalSpecifications extends Mapping<unknown> = Mapping<unknown>
+> = (
     document:Document,
     scope:{
         configuration:Configuration
@@ -561,8 +571,8 @@ export type Migrator<Type = unknown> = (
         typeName:string
 
         migrater:Mapping<Migrator<Type>>
-        models:Models
-        modelConfiguration:ModelConfiguration<Type>
+        models:Models<Type, AdditionalSpecifications>
+        modelConfiguration:ModelConfiguration<Type, AdditionalSpecifications>
 
         selfFilePath:string
 
