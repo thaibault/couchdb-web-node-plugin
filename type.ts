@@ -349,6 +349,7 @@ export interface Runner {
 export interface SecuritySettings {
     admins:DatabaseUserConfiguration
     members:DatabaseUserConfiguration
+
     _validatedDocuments?:Set<string>
 }
 export type AdvancedFetchOptions = RequestInit & {timeout?:number}
@@ -356,7 +357,10 @@ export type ConnectorConfiguration = DatabaseConnectorConfiguration & {
     // NOTE: "pouchdb`s" version supports timeout parameter.
     fetch?:AdvancedFetchOptions|null
 }
-export interface CoreConfiguration {
+export interface CoreConfiguration<
+    Type = unknown,
+    AdditionalSpecifications extends Mapping<unknown> = Mapping<unknown>
+> {
     attachAutoRestarter:boolean
     backend:{
         configuration:PlainObject
@@ -379,7 +383,7 @@ export interface CoreConfiguration {
     local:boolean
     maximumRepresentationLength:number
     maximumRepresentationTryLength:number
-    model:ModelConfiguration
+    model:ModelConfiguration<Type, AdditionalSpecifications>
     path:string
     security:SecuritySettings
     skipIDDetermining:boolean
