@@ -126,7 +126,10 @@ export interface SelectionMapping {
     label:string
     value:unknown
 }
-export interface PropertySpecification<Type = unknown> {
+export interface PropertySpecification<
+    Type = unknown,
+    AdditionalSpecifications extends Mapping<unknown> = Mapping<unknown>
+> {
     allowedRoles?:AllowedRoles|null
     computed?:boolean
     // region expression
@@ -191,11 +194,14 @@ export interface PropertySpecification<Type = unknown> {
     oldName?:Array<string>|null|string
 
     value?:null|Type
+
+    additionalSpecifications?:AdditionalSpecifications
 }
-export interface FileSpecification<Type = Attachment> extends
-    PropertySpecification<Type>
-{
-    fileName?:PropertySpecification<string>
+export interface FileSpecification<
+    Type = Attachment,
+    AdditionalSpecifications extends Mapping<unknown> = Mapping<unknown>
+> extends PropertySpecification<Type, AdditionalSpecifications> {
+    fileName?:PropertySpecification<string, AdditionalSpecifications>
 }
 export interface BaseModel {
     _allowedRoles?:AllowedRoles|null
@@ -218,8 +224,10 @@ export interface BaseModel {
     _onUpdateExecution?:null|string
     _onUpdateExpression?:null|string
 }
-export type Model<Type = unknown> =
-    BaseModel & Mapping<PropertySpecification<Type>>
+export type Model<
+    Type = unknown,
+    AdditionalSpecifications extends Mapping<unknown> = Mapping<unknown>
+> = BaseModel & Mapping<PropertySpecification<Type, AdditionalSpecifications>>
 export type Models = Mapping<Model>
 
 export type UpdateStrategy = ''|'fillUp'|'incremental'|'migrate'
@@ -288,10 +296,15 @@ export interface PropertyNameConfiguration {
     }
     validatedDocumentsCache:string
 }
-export interface BaseModelConfiguration<Type = unknown> {
+export interface BaseModelConfiguration<
+    Type = unknown,
+    AdditionalSpecifications extends Mapping<unknown> = Mapping<unknown>
+> {
     dateTimeFormat:'iso'|'iso8601'|'number'
     property:{
-        defaultSpecification:PropertySpecification<Type>
+        defaultSpecification:PropertySpecification<
+            Type, AdditionalSpecifications
+        >
         name:PropertyNameConfiguration
     }
     updateStrategy:UpdateStrategy
@@ -482,11 +495,15 @@ export interface BasicScope<Type = unknown> {
 
     userContext:Partial<UserContext>
 }
-export interface CommonScope<Type> {
+export interface CommonScope<
+    Type, AdditionalSpecifications extends Mapping<unknown> = Mapping<unknown>
+> {
     checkPropertyContent:(
         newValue:unknown,
         name:string,
-        propertySpecification:PropertySpecification<Type>,
+        propertySpecification:PropertySpecification<
+            Type, AdditionalSpecifications
+        >,
         oldValue:unknown
     ) => CheckedPropertyResult
 
@@ -500,13 +517,16 @@ export interface CommonScope<Type> {
     parentNames:Array<string>
     pathDescription:string
 }
-export interface PropertyScope<Type = unknown> extends CommonScope<Type> {
+export interface PropertyScope<
+    Type = unknown,
+    AdditionalSpecifications extends Mapping<unknown> = Mapping<unknown>
+> extends CommonScope<Type, AdditionalSpecifications> {
     name:string
 
     newValue:Type
     oldValue:Type
 
-    propertySpecification:PropertySpecification<Type>
+    propertySpecification:PropertySpecification<Type, AdditionalSpecifications>
 }
 //// endregion
 export interface EvaluationResult<
