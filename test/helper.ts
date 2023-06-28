@@ -241,7 +241,9 @@ describe('helper', ():void => {
         const modelConfiguration:ModelConfiguration =
             Tools.copy(configuration.couchdb.model)
         modelConfiguration.entities = {}
-        modelConfiguration.property.defaultSpecification = {}
+        modelConfiguration.property.defaultSpecification = {
+            additionalSpecifications: {}
+        }
 
         for (const [expected, parameter] of [
             [{}, {}],

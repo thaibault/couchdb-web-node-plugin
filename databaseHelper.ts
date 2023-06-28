@@ -236,8 +236,7 @@ export class DatabaseHelper {
         const saveDateTimeAsNumber =
             !modelConfiguration.dateTimeFormat.startsWith('iso')
 
-        const specialNames:SpecialPropertyNames =
-            modelConfiguration.property.name.special
+        const specialNames = modelConfiguration.property.name.special
         const {id: idName, revision: revisionName, type: typeName} =
             specialNames
 
@@ -319,7 +318,7 @@ export class DatabaseHelper {
                         model, specialNames.oldType
                     ) &&
                     ![null, undefined].includes(
-                        model[specialNames.oldType] as unknown as null
+                        model[specialNames.oldType] as null
                     )
                 )
                     for (const oldName of ([] as Array<string>).concat(
@@ -1900,7 +1899,7 @@ export class DatabaseHelper {
                         )
                         /// region check/migrate array content
                         const propertySpecificationCopy:PropertySpecification =
-                            {}
+                            {additionalSpecifications: {}}
                         for (const key in propertySpecification)
                             if (Object.prototype.hasOwnProperty.call(
                                 propertySpecification, key
@@ -2021,32 +2020,32 @@ export class DatabaseHelper {
                     }
                 }
             /// region constraint
-            for (let type of Object.keys(specialNames.constraint))
-                if (
-                    (type = specialNames.constraint[
-                        type as keyof SpecialPropertyNames['constraint']
-                    ]) &&
-                    Object.prototype.hasOwnProperty.call(model, type)
-                )
+            for (const type of Object.keys(
+                specialNames.constraint
+            ) as Array<keyof SpecialPropertyNames['constraint']>) {
+                const constraintName = specialNames.constraint[type]
+
+                if (Object.prototype.hasOwnProperty.call(model, constraintName))
                     for (const constraint of ([] as Array<Constraint>).concat(
-                        model[type] as Array<Constraint>
+                        model[constraintName]!
                     )) {
                         let result:(
                             EvaluationResult<
-                                boolean|undefined, CommonScope<boolean>
+                                boolean | undefined, CommonScope<boolean>
                             > |
                             void
-                        ) = undefined
+                            ) = undefined
                         try {
                             result = evaluate<boolean, CommonScope<boolean>>(
                                 constraint.evaluation,
-                                type === specialNames.constraint.expression,
+                                constraintName ===
+                                    specialNames.constraint.expression,
                                 {
                                     checkPropertyContent,
 
                                     model: model as Model<boolean>,
                                     modelName,
-                                    type,
+                                    type: constraintName,
 
                                     newDocument,
                                     oldDocument,
@@ -2109,14 +2108,15 @@ export class DatabaseHelper {
                                         ` constraint "${result.code}" (` +
                                         `given "${serialize(newDocument)}")` +
                                         `${pathDescription}.`
-                                        /*
-                                            eslint-enable
-                                            @typescript-eslint/no-implied-eval
-                                        */
+                                    /*
+                                        eslint-enable
+                                        @typescript-eslint/no-implied-eval
+                                    */
                                 )
                             )
                         }
                     }
+            }
             /// endregion
             /// region attachment
             if (Object.prototype.hasOwnProperty.call(
