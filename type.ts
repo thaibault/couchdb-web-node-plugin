@@ -195,7 +195,7 @@ export interface PropertySpecification<
 
     value?:null|Type
 
-    additionalSpecifications:AdditionalSpecifications
+    additionalSpecifications?:AdditionalSpecifications
 }
 export interface FileSpecification<
     Type = Attachment,

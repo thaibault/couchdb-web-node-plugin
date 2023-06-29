@@ -241,9 +241,7 @@ describe('helper', ():void => {
         const modelConfiguration:ModelConfiguration =
             Tools.copy(configuration.couchdb.model)
         modelConfiguration.entities = {}
-        modelConfiguration.property.defaultSpecification = {
-            additionalSpecifications: {}
-        }
+        modelConfiguration.property.defaultSpecification = {}
 
         for (const [expected, parameter] of [
             [{}, {}],
@@ -252,11 +250,8 @@ describe('helper', ():void => {
             [{Test: {}}, {entities: {Test: {}}}],
             [
                 {
-                    Base: {b: {additionalSpecifications: {}}},
-                    Test: {
-                        a: {additionalSpecifications: {}},
-                        b: {additionalSpecifications: {}}
-                    }
+                    Base: {b: {}},
+                    Test: {a: {}, b: {}}
                 },
                 {entities: {
                     Base: {b: {}},
@@ -265,10 +260,10 @@ describe('helper', ():void => {
             ],
             [
                 {
-                    _base: {b: {additionalSpecifications: {}}},
+                    _base: {b: {}},
                     Test: {
-                        a: {additionalSpecifications: {}},
-                        b: {additionalSpecifications: {}}
+                        a: {},
+                        b: {}
                     }
                 },
                 {entities: {_base: {b: {}}, Test: {a: {}}}}
@@ -276,7 +271,7 @@ describe('helper', ():void => {
             [
                 {
                     _base: {},
-                    Test: {a: {maximum: 3, additionalSpecifications: {}}}
+                    Test: {a: {maximum: 3}}
                 },
                 {
                     property: {defaultSpecification: {maximum: 3}},
@@ -288,9 +283,7 @@ describe('helper', ():void => {
                 {entities: {Test: {[specialNames.attachment]: {}}}}
             ],
             [
-                {Test: {[specialNames.attachment]: {
-                    a: {minimum: 1, additionalSpecifications: {}}
-                }}},
+                {Test: {[specialNames.attachment]: {a: {minimum: 1}}}},
                 {
                     entities: {Test: {[specialNames.attachment]: {a: {}}}},
                     property: {defaultSpecification: {minimum: 1}}
