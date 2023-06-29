@@ -2034,7 +2034,7 @@ export class DatabaseHelper {
                                 boolean | undefined, CommonScope<boolean>
                             > |
                             void
-                            ) = undefined
+                        ) = undefined
                         try {
                             result = evaluate<boolean, CommonScope<boolean>>(
                                 constraint.evaluation,
@@ -2061,8 +2061,8 @@ export class DatabaseHelper {
                                 )
                             )(error))
                                 throwError(
-                                    `Compilation: Hook "${type}" has invalid` +
-                                    ` code "${error.code}": "` +
+                                    `Compilation: Hook "${constraintName}" ` +
+                                    `has invalid code "${error.code}": "` +
                                     `${error.message!}"${pathDescription}.`
                                 )
 
@@ -2072,8 +2072,9 @@ export class DatabaseHelper {
                                 )
                             )(error))
                                 throwError(
-                                    `Runtime: Hook "${type}" has thrown an ` +
-                                    `error with code "${error.code}": ` +
+                                    `Runtime: Hook "${constraintName}" ` +
+                                    `has thrown an error with code ` +
+                                    `"${error.code}": ` +
                                     `${error.message!}${pathDescription}.`
                                 )
 
@@ -2084,9 +2085,8 @@ export class DatabaseHelper {
                         }
 
                         if (result && !result.result) {
-                            const errorName:string = type.replace(
-                                /^[^a-zA-Z]+/, ''
-                            )
+                            const errorName =
+                                constraintName.replace(/^[^a-zA-Z]+/, '')
 
                             throwError(
                                 errorName.charAt(0).toUpperCase() +
