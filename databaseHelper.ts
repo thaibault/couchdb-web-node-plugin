@@ -2333,7 +2333,7 @@ export class DatabaseHelper {
                                 `${fileName}" doesn't satisfy specified ` +
                                 'regular expression pattern "' +
                                 specification.fileName
-                                    .regularExpressionPattern +
+                                    .regularExpressionPattern.toString() +
                                 `" from type "${type}"${pathDescription}.`
                             )
                         else if (
@@ -2349,7 +2349,8 @@ export class DatabaseHelper {
                                 `name "${fileName}" does satisfy specified ` +
                                 'regular expression pattern "' +
                                 specification.fileName
-                                    .invertedRegularExpressionPattern +
+                                    .invertedRegularExpressionPattern
+                                    .toString() +
                                 `" from type "${type}"${pathDescription}.`
                             )
                         else if (!(
