@@ -195,7 +195,7 @@ export interface PropertySpecification<
 
     value?:null|Type
 
-    additionalSpecifications?:AdditionalSpecifications
+    additionalSpecifications:AdditionalSpecifications
 }
 export interface FileSpecification<
     Type = Attachment,
@@ -268,26 +268,26 @@ export interface SpecialPropertyNames {
     type:'-type'
 
     constraint:{
-        execution:string
-        expression:string
+        execution:'_constraintExecutions'
+        expression:'_constraintExpressions'
     }
     create:{
-        execution:string
-        expression:string
+        execution:'_createExecution'
+        expression:'_createExecution'
     }
 
     designDocumentNamePrefix:string
 
-    localSequence:string
+    localSequence:'_local_seq'
 
-    maximumAggregatedSize:string
-    minimumAggregatedSize:string
+    maximumAggregatedSize:'_maximumAggregatedSize'
+    minimumAggregatedSize:'_minimumAggregatedSize'
 
-    oldType:string
+    oldType:'_oldType'
 
     update:{
-        execution:string
-        expression:string
+        execution:'_onUpdateExecution'
+        expression:'_onUpdateExpression'
     }
 }
 export interface PropertyNameConfiguration {
@@ -585,7 +585,7 @@ export type Migrator<
 ) => Document|null
 
 export type DateRepresentationType = Date|null|number|string
-/// region models
+/// region pre-defined models
 export type User = BaseDocument & {
     password:string
     roles:Array<string>

@@ -29,7 +29,7 @@ import {
     Document,
     ModelConfiguration,
     PartialFullDocument,
-    SpecialPropertyNames
+    SpecialPropertyNames, UpdateStrategy
 } from '../type'
 // endregion
 describe('databaseHelper', ():void => {
@@ -106,7 +106,7 @@ describe('databaseHelper', ():void => {
     )
     test.each(['', 'fillUp', 'incremental'] as const)(
         'validateDocumentUpdate (with update strategy "%s")',
-        (updateStrategy:''|'fillUp'|'incremental'):void => {
+        (updateStrategy:Exclude<UpdateStrategy, 'migrate'>):void => {
             const defaultModelConfiguration:ModelConfiguration = {
                 // Numbers are date cross implementation save.
                 ...Tools.copy(configuration.couchdb.model),
@@ -516,11 +516,13 @@ describe('databaseHelper', ():void => {
                 ],
                 [
                     [{[typeName]: 'Test', a: [2]}],
-                    {entities: {Test: {a: {type: 'string[]'}}}}, 'PropertyType'
+                    {entities: {Test: {a: {type: 'string[]'}}}},
+                    'PropertyType'
                 ],
                 [
                     [{[typeName]: 'Test', a: ['b']}],
-                    {entities: {Test: {a: {type: 'number[]'}}}}, 'PropertyType'
+                    {entities: {Test: {a: {type: 'number[]'}}}},
+                    'PropertyType'
                 ],
                 [
                     [{[typeName]: 'Test', a: [1]}],
@@ -529,7 +531,8 @@ describe('databaseHelper', ():void => {
                 ],
                 [
                     [{[typeName]: 'Test', a: '[1]'}],
-                    {entities: {Test: {a: {type: 'DateTime'}}}}, 'PropertyType'
+                    {entities: {Test: {a: {type: 'DateTime'}}}},
+                    'PropertyType'
                 ],
                 [
                     [{[typeName]: 'Test', a: '["a"]'}],
@@ -538,18 +541,21 @@ describe('databaseHelper', ():void => {
                 ],
                 [
                     [{[typeName]: 'Test', a: [{[typeName]: 'Test'}]}],
-                    {entities: {Test: {a: {type: 'Custom[]'}}}}, 'PropertyType'
+                    {entities: {Test: {a: {type: 'Custom[]'}}}},
+                    'PropertyType'
                 ],
                 [
                     [{[typeName]: 'Test', a: [{[typeName]: 'Custom'}, {
                         [typeName]: 'Test'
                     }]}],
-                    {entities: {Test: {a: {type: 'Custom[]'}}}}, 'PropertyType'
+                    {entities: {Test: {a: {type: 'Custom[]'}}}},
+                    'PropertyType'
                 ],
                 //// endregion
                 [
                     [{[typeName]: 'Test', a: [{[typeName]: 'Test', b: 2}]}],
-                    {entities: {Test: {a: {type: 'Test[]'}}}}, 'Property'
+                    {entities: {Test: {a: {type: 'Test[]'}}}},
+                    'Property'
                 ],
                 [
                     [{[typeName]: 'Test', a: [{
@@ -557,62 +563,81 @@ describe('databaseHelper', ():void => {
                     }], b: 'a'}],
                     {entities: {Test: {a: {type: 'Test[]'}, b: {
                         nullable: false
-                    }}}}, 'NotNull'
+                    }}}},
+                    'NotNull'
                 ],
-                [[
-                    {[typeName]: 'Test', a: [{[typeName]: 'Test', b: 'a'}]},
-                    {[typeName]: 'Test', a: [{[typeName]: 'Test', b: 'b'}]}
-                ], {entities: {
-                    Test: {a: {type: 'Test[]', writable: false}, b: {}}
-                }}, 'Readonly'],
+                [
+                    [
+                        {
+                            [typeName]: 'Test',
+                            a: [{[typeName]: 'Test', b: 'a'}]
+                        },
+                        {[typeName]: 'Test', a: [{[typeName]: 'Test', b: 'b'}]}
+                    ],
+                    {entities: {
+                        Test: {a: {type: 'Test[]', writable: false}, b: {}}
+                    }},
+                    'Readonly'],
                 [
                     [{[typeName]: 'Test', a: [4], b: [{[typeName]: 'Test', a: [
                         2
                     ]}]}], {entities: {Test: {
                         a: {type: 'number[]', minimum: 3},
                         b: {type: 'Test[]'}
-                    }}}, 'Minimum'
+                    }}},
+                    'Minimum'
                 ],
                 [
                     [{[typeName]: 'Test', a: [4]}], {entities: {Test: {
                         a: {type: 'integer[]', minimumNumber: 2}
-                    }}}, 'MinimumArrayLength'
+                    }}},
+                    'MinimumArrayLength'
                 ],
                 [
                     [{[typeName]: 'Test', a: []}], {entities: {Test: {a: {
                         emptyEqualsToNull: false,
                         minimumNumber: 1,
                         type: 'integer[]'
-                    }}}}, 'MinimumArrayLength'
+                    }}}},
+                    'MinimumArrayLength'
                 ],
                 [
                     [{[typeName]: 'Test', a: [1]}], {entities: {Test: {
                         a: {type: 'integer[]', maximumNumber: 0}
-                    }}}, 'MaximumArrayLength'
+                    }}},
+                    'MaximumArrayLength'
                 ],
                 [
                     [{[typeName]: 'Test', a: [1, 2]}], {entities: {Test: {
                         a: {type: 'integer[]', maximumNumber: 1}
-                    }}}, 'MaximumArrayLength'
+                    }}},
+                    'MaximumArrayLength'
                 ],
                 [
                     [{[typeName]: 'Test', a: [1, 2, 3]}], {entities: {Test: {
                         a: {type: 'integer[]', maximumNumber: 2}
-                    }}}, 'MaximumArrayLength'
+                    }}},
+                    'MaximumArrayLength'
                 ],
                 [
-                    [{[typeName]: 'Test', a: [1]}], {entities: {Test: {
-                        a: {type: 'integer[]', constraintExpression: {
-                            evaluation: 'newValue === 2'
-                        }}
-                    }}}, 'ConstraintExpression'
+                    [{[typeName]: 'Test', a: [1]}],
+                    {entities: {Test: {
+                        a: {
+                            type: 'integer[]',
+                            constraintExpression: {
+                                evaluation: 'newValue === 2'
+                            }
+                        }
+                    }}},
+                    'ConstraintExpression'
                 ],
                 [
                     [{[typeName]: 'Test', a: [1]}], {entities: {Test: {
                         a: {type: 'integer[]', arrayConstraintExpression: {
                             evaluation: 'newValue.length === 2'
                         }}
-                    }}}, 'ArrayConstraintExpression'
+                    }}},
+                    'ArrayConstraintExpression'
                 ],
                 /// endregion
                 /// region nested property
@@ -643,20 +668,26 @@ describe('databaseHelper', ():void => {
                 //// region property existence
                 [
                     [{[typeName]: 'Test', a: {[typeName]: 'Test', b: 2}}],
-                    {entities: {Test: {a: {type: 'Test'}}}}, 'Property'
+                    {entities: {Test: {a: {type: 'Test'}}}},
+                    'Property'
                 ],
-                [[{
-                    [typeName]: 'Test',
-                    a: {[typeName]: 'Test', b: null},
-                    b: 'a'
-                }], {entities: {Test: {a: {type: 'Test'}, b: {
-                    nullable: false
-                }}}}, 'NotNull'],
+                [
+                    [{
+                        [typeName]: 'Test',
+                        a: {[typeName]: 'Test', b: null},
+                        b: 'a'
+                    }],
+                    {entities: {Test: {a: {type: 'Test'}, b: {
+                        nullable: false
+                    }}}},
+                    'NotNull'
+                ],
                 [
                     [{[typeName]: 'Test', a: {[typeName]: 'Test'}, b: 'a'}],
                     {entities: {Test: {a: {type: 'Test'}, b: {
                         nullable: false
-                    }}}}, 'MissingProperty'
+                    }}}},
+                    'MissingProperty'
                 ],
                 //// endregion
                 //// region property readonly
@@ -664,25 +695,33 @@ describe('databaseHelper', ():void => {
                     [
                         {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'a'}},
                         {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'b'}}
-                    ], {entities: {Test: {a: {type: 'Test'}, b: {
+                    ],
+                    {entities: {Test: {a: {type: 'Test'}, b: {
                         writable: false
-                    }}}}, 'Readonly'
+                    }}}},
+                    'Readonly'
                 ],
                 [
                     [
                         {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'a'}},
                         {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'b'}}
-                    ], {entities: {Test: {a: {type: 'Test'}, b: {
-                        mutable: false
-                    }}}}, 'Immutable'
+                    ],
+                    {
+                        entities: {
+                            Test: {a: {type: 'Test'}, b: {mutable: false}}
+                        }
+                    },
+                    'Immutable'
                 ],
                 [
                     [
                         {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'a'}},
                         {[typeName]: 'Test', a: {[typeName]: 'Test'}}
-                    ], {entities: {Test: {a: {type: 'Test'}, b: {
-                        writable: false
-                    }}}}, 'Readonly'
+                    ],
+                    {entities: {
+                        Test: {a: {type: 'Test'}, b: {writable: false}}}
+                    },
+                    'Readonly'
                 ],
                 [
                     [
@@ -690,27 +729,36 @@ describe('databaseHelper', ():void => {
                         {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'b'}},
                         {}, {}
                     ],
-                    {entities: {Test: {a: {type: 'Test', writable: false}, b: {
-                    }}}}, 'Readonly'
+                    {entities: {
+                        Test: {a: {type: 'Test', writable: false}, b: {}}}
+                    },
+                    'Readonly'
                 ],
                 //// endregion
                 //// region property range
-                [[{
-                    [typeName]: 'Test',
-                    a: 4,
-                    b: {[typeName]: 'Test', a: 2}
-                }], {entities: {Test: {
-                    a: {type: ['number', 'string'], minimum: 3},
-                    b: {type: 'Test'}
-                }}}, 'Minimum'],
-                [[{
-                    [typeName]: 'Test',
-                    a: '1',
-                    b: {[typeName]: 'Test', a: '12'}
-                }], {entities: {Test: {
-                    a: {maximumLength: 1},
-                    b: {type: 'Test'}
-                }}}, 'MaximalLength'],
+                [
+                    [{
+                        [typeName]: 'Test',
+                        a: 4,
+                        b: {[typeName]: 'Test', a: 2}
+                    }],
+                    {entities: {Test: {
+                        a: {type: ['number', 'string'], minimum: 3},
+                        b: {type: 'Test'}
+                    }}},
+                    'Minimum'
+                ],
+                [
+                    [{
+                        [typeName]: 'Test',
+                        a: '1',
+                        b: {[typeName]: 'Test', a: '12'}
+                    }],
+                    {entities: {
+                        Test: {a: {maximumLength: 1}, b: {type: 'Test'}}}
+                    },
+                    'MaximalLength'
+                ],
                 //// endregion
                 //// region property pattern
                 [
@@ -718,42 +766,56 @@ describe('databaseHelper', ():void => {
                     {entities: {Test: {
                         a: {regularExpressionPattern: 'a'},
                         b: {type: 'Test'}
-                    }}}, 'PatternMatch'
+                    }}},
+                    'PatternMatch'
                 ],
                 [
                     [{[typeName]: 'Test', b: {[typeName]: 'Test', a: 'a'}}],
                     {entities: {Test: {
                         a: {invertedRegularExpressionPattern: 'a'},
                         b: {type: 'Test'}
-                    }}}, 'InvertedPatternMatch'
+                    }}},
+                    'InvertedPatternMatch'
                 ],
                 //// endregion
                 //// region property constraint
-                [[{
-                    [typeName]: 'Test',
-                    a: 'b',
-                    b: {[typeName]: 'Test', a: 'a'}
-                }], {entities: {Test: {
-                    a: {constraintExpression: {
-                        evaluation: 'newValue === "b"'
-                    }},
-                    b: {type: 'Test'}
-                }}}, 'ConstraintExpression'],
-                [[{[typeName]: 'Test', a: 'b', b: {
-                    [typeName]: 'Test', a: 'a'
-                }}], {entities: {Test: {
-                    a: {constraintExpression: {
-                        evaluation: 'newValue === "b"'
-                    }},
-                    b: {type: 'Test'}
-                }}}, 'ConstraintExpression'],
+                [
+                    [{
+                        [typeName]: 'Test',
+                        a: 'b',
+                        b: {[typeName]: 'Test', a: 'a'}
+                    }],
+                    {entities: {Test: {
+                        a: {constraintExpression: {
+                            evaluation: 'newValue === "b"'
+                        }},
+                        b: {type: 'Test'}
+                    }}},
+                    'ConstraintExpression'
+                ],
+                [
+                    [{
+                        [typeName]: 'Test',
+                        a: 'b',
+                        b: {[typeName]: 'Test', a: 'a'}
+                    }],
+                    {entities: {Test: {
+                        a: {constraintExpression: {
+                            evaluation: 'newValue === "b"'
+                        }},
+                        b: {type: 'Test'}
+                    }}},
+                    'ConstraintExpression'
+                ],
                 //// endregion
                 /// endregion
                 [
-                    [{[typeName]: 'Test1', a: 1}], {entities: {
+                    [{[typeName]: 'Test1', a: 1}],
+                    {entities: {
                         Test1: {a: {type: 'foreignKey:Test2'}},
                         Test2: {[idName]: {type: 'string'}}
-                    }}, 'PropertyType'
+                    }},
+                    'PropertyType'
                 ],
                 [
                     [{[typeName]: 'Test', a: 1}],
@@ -1046,9 +1108,10 @@ describe('databaseHelper', ():void => {
                 */
                 [
                     [
-                        {[typeName]: 'Test', [attachmentName]: {test: {
-                            data: null
-                        }}},
+                        {
+                            [typeName]: 'Test',
+                            [attachmentName]: {test: {data: null}}
+                        },
                         {
                             [typeName]: 'Test',
                             [attachmentName]: {test: {

@@ -56,7 +56,6 @@ import {
     FullDocument,
     Index,
     Migrator,
-    ModelConfiguration,
     Models,
     PartialFullDocument,
     PropertySpecification,
@@ -310,7 +309,7 @@ export class Database implements PluginHandler {
         if (Object.prototype.hasOwnProperty.call(couchdb, 'connection'))
             return {couchdb: promise}
 
-        const urlPrefix:string = Tools.stringFormat(
+        const urlPrefix = Tools.stringFormat(
             configuration.couchdb.url,
             `${configuration.couchdb.user.name}:` +
             `${configuration.couchdb.user.password}@`
@@ -514,11 +513,6 @@ export class Database implements PluginHandler {
         // endregion
         await initializeConnection(services, configuration)
 
-        const idName:SpecialPropertyNames['id'] =
-            configuration.couchdb.model.property.name.special.id
-        const typeName:SpecialPropertyNames['type'] =
-            configuration.couchdb.model.property.name.special.type
-
         // region ensure presence of database security settings
         if (configuration.couchdb.ensureSecuritySettingsPresence)
             try {
@@ -545,14 +539,15 @@ export class Database implements PluginHandler {
                 )
             }
         // endregion
-        const modelConfiguration:ModelConfiguration = Tools.copy(
-            configuration.couchdb.model
-        )
+        const modelConfiguration = Tools.copy(configuration.couchdb.model)
 
         delete (modelConfiguration.property as
             {defaultSpecification?:PropertySpecification}
         ).defaultSpecification
         delete (modelConfiguration as {entities?:Models}).entities
+
+        const specialNames = modelConfiguration.property.name.special
+        const {id: idName, type: typeName} = specialNames
 
         const models = extendModels(configuration.couchdb.model)
         if (configuration.couchdb.model.updateValidation) {
@@ -579,8 +574,7 @@ export class Database implements PluginHandler {
                             configuration.couchdb.model
                         )) +
                         `, '${idName}', '${typeName}', '` +
-                        configuration.couchdb.model.property.name.special
-                            .designDocumentNamePrefix +
+                        specialNames.designDocumentNamePrefix +
                         `'`
                 }
             ] as const) {
@@ -622,23 +616,20 @@ export class Database implements PluginHandler {
                     type.description,
                     true,
                     idName,
-                    modelConfiguration.property.name.special
-                        .designDocumentNamePrefix
+                    specialNames.designDocumentNamePrefix
                 )
             }
             // endregion
             // region check if all constraint descriptions compile
             for (const [modelName, model] of Object.entries(models))
                 for (const [name, specification] of Object.entries(model))
-                    if ([
-                        modelConfiguration.property.name.special.constraint
-                            .execution,
-                        modelConfiguration.property.name.special.constraint
-                            .expression
-                    ].includes(name)) {
+                    if (([
+                        specialNames.constraint.execution,
+                        specialNames.constraint.expression
+                    ] as Array<string>).includes(name)) {
                         for (const constraint of (
                             [] as Array<Constraint>
-                        ).concat(specification as Array<Constraint>))
+                        ).concat(specification as unknown as Array<Constraint>))
                             if (constraint.description)
                                 /*
                                     eslint-disable
@@ -661,7 +652,7 @@ export class Database implements PluginHandler {
                                     @typescript-eslint/no-implied-eval
                                 */
                     } else {
-                        const property:PropertySpecification = specification
+                        const property = specification
 
                         for (const type of [
                             'conflictingConstraintExpression',
@@ -712,10 +703,10 @@ export class Database implements PluginHandler {
                     resolve(configuration.couchdb.model.autoMigrationPath),
                     configuration.couchdb.debug ?
                         Tools.noop :
-                        ((file:File):boolean => file.name !== 'debug')
+                        ((file:File) => file.name !== 'debug')
                 )) {
-                    const extension:string = extname(file.name)
-                    const name:string = basename(file.name, extension)
+                    const extension = extname(file.name)
+                    const name = basename(file.name, extension)
 
                     if (extension === '.json') {
                         let document:Document

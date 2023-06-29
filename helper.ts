@@ -378,7 +378,9 @@ export const determineGenericIndexablePropertyNames = (
  * @returns Given model in extended version.
  */
 export const extendModel = (
-    modelName:string, models:Models, extendPropertyName = '_extends'
+    modelName:string,
+    models:Models,
+    extendPropertyName:SpecialPropertyNames['extend'] = '_extends'
 ):Model => {
     if (modelName === '_base')
         return models[modelName]
@@ -453,7 +455,7 @@ export const extendModels = (modelConfiguration:ModelConfiguration):Models => {
         for (const [propertyName, property] of Object.entries(model))
             if (propertyName === specialNames.attachment)
                 for (const [type, value] of Object.entries(property))
-                    (property as Mapping<FileSpecification>)[type] =
+                    (property as unknown as Mapping<FileSpecification>)[type] =
                         Tools.extend<FileSpecification>(
                             true,
                             Tools.copy(
@@ -462,7 +464,7 @@ export const extendModels = (modelConfiguration:ModelConfiguration):Models => {
                             ) as FileSpecification,
                             value as FileSpecification
                         )
-            else if (![
+            else if (!([
                 specialNames.allowedRole,
                 specialNames.constraint.execution,
                 specialNames.constraint.expression,
@@ -470,7 +472,7 @@ export const extendModels = (modelConfiguration:ModelConfiguration):Models => {
                 specialNames.maximumAggregatedSize,
                 specialNames.minimumAggregatedSize,
                 specialNames.oldType
-            ].includes(propertyName))
+            ] as Array<string>).includes(propertyName))
                 model[propertyName] = Tools.extend(
                     true,
                     Tools.copy(
