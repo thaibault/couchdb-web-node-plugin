@@ -1899,7 +1899,7 @@ export class DatabaseHelper {
                         )
                         /// region check/migrate array content
                         const propertySpecificationCopy:PropertySpecification =
-                            {additionalSpecifications: {}}
+                            {}
                         for (const key in propertySpecification)
                             if (Object.prototype.hasOwnProperty.call(
                                 propertySpecification, key
