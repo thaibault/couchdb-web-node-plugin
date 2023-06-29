@@ -148,8 +148,8 @@ export interface PropertySpecification<
     onUpdateExpression?:null|string
     // endregion
     // region validation
-    regularExpressionPattern?:null|string
-    invertedRegularExpressionPattern?:null|string
+    regularExpressionPattern?:null|RegExp|string
+    invertedRegularExpressionPattern?:null|RegExp|string
 
     contentTypeRegularExpressionPattern?:null|string
     invertedContentTypeRegularExpressionPattern?:null|string
