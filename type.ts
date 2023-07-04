@@ -39,14 +39,13 @@ export type FullAttachment = PouchDB.Core.FullAttachment
 export type StubAttachment = PouchDB.Core.StubAttachment
 
 export type ChangesMeta = PouchDB.Core.ChangesMeta
-export type ChangesResponseChange<
-    Type extends Mapping<unknown> = Mapping<unknown>
-> = PouchDB.Core.ChangesResponseChange<Type>
-export type ChangesStream<Type extends Mapping<unknown> = Mapping<unknown>> =
+export type ChangesResponseChange<Type extends object = Mapping<unknown>> =
+    PouchDB.Core.ChangesResponseChange<Type>
+export type ChangesStream<Type extends object = Mapping<unknown>> =
     PouchDB.Core.Changes<Type>
 export type ChangesStreamOptions = PouchDB.Core.ChangesOptions
 
-export type Connection<Type extends Mapping<unknown> = Mapping<unknown>> =
+export type Connection<Type extends object = Mapping<unknown>> =
     PouchDB.Database<Type>
 export type Connector = PouchDB.Static
 export type DatabaseConnectorConfiguration =
@@ -56,21 +55,19 @@ export type DatabaseError = PouchDB.Core.Error
 export type DatabaseFetch = PouchDB.Core.Options['fetch']
 export type DatabaseResponse = PouchDB.Core.Response
 
-export type Document<Type extends Mapping<unknown> = PlainObject> =
+export type Document<Type extends object = PlainObject> =
     PouchDB.Core.Document<Type>
-export type ExistingDocument<Type extends Mapping<unknown> = PlainObject> =
+export type ExistingDocument<Type extends object = PlainObject> =
     PouchDB.Core.ExistingDocument<Type>
 export type DocumentGetMeta = PouchDB.Core.GetMeta
 export type DocumentIDMeta = PouchDB.Core.IdMeta
 export type DocumentRevisionIDMeta = PouchDB.Core.RevisionIdMeta
 
-export type FindRequest<Type extends Mapping<unknown>> =
-    PouchDB.Find.FindRequest<Type>
+export type FindRequest<Type extends object> = PouchDB.Find.FindRequest<Type>
 export type DeleteIndexOptions = PouchDB.Find.DeleteIndexOptions
 export type GetOptions = PouchDB.Core.GetOptions
 export type PutOptions = PouchDB.Core.Options;
-export type PutDocument<Type extends Mapping<unknown>> =
-    PouchDB.Core.PutDocument<Type>;
+export type PutDocument<Type extends object> = PouchDB.Core.PutDocument<Type>;
 
 export type Index = PouchDB.Find.Index
 
@@ -127,8 +124,7 @@ export interface SelectionMapping {
     value:unknown
 }
 export interface PropertySpecification<
-    Type = unknown,
-    AdditionalSpecifications extends Mapping<unknown> = Mapping<unknown>
+    Type = unknown, AdditionalSpecifications extends object = Mapping<unknown>
 > {
     allowedRoles?:AllowedRoles|null
     computed?:boolean
@@ -199,7 +195,7 @@ export interface PropertySpecification<
 }
 export interface FileSpecification<
     Type = Attachment,
-    AdditionalSpecifications extends Mapping<unknown> = Mapping<unknown>
+    AdditionalSpecifications extends object = Mapping<unknown>
 > extends PropertySpecification<Type, AdditionalSpecifications> {
     fileName?:PropertySpecification<string, AdditionalSpecifications>
 }
@@ -225,12 +221,10 @@ export interface BaseModel {
     _onUpdateExpression?:null|string
 }
 export type Model<
-    Type = unknown,
-    AdditionalSpecifications extends Mapping<unknown> = Mapping<unknown>
+    Type = unknown, AdditionalSpecifications extends object = Mapping<unknown>
 > = BaseModel & Mapping<PropertySpecification<Type, AdditionalSpecifications>>
 export type Models<
-    Type = unknown,
-    AdditionalSpecifications extends Mapping<unknown> = Mapping<unknown>
+    Type = unknown, AdditionalSpecifications extends object = Mapping<unknown>
 > = Mapping<Model<Type, AdditionalSpecifications>>
 
 export type UpdateStrategy = ''|'fillUp'|'incremental'|'migrate'
@@ -246,11 +240,10 @@ export type BaseDocument =
     DocumentRevisionIDMeta &
     DocumentStrategyMeta &
     DocumentTypeMeta
-export type FullDocument<Type extends Mapping<unknown> = Mapping<unknown>> =
+export type FullDocument<Type extends object = Mapping<unknown>> =
     BaseDocument & Document<Type>
-export type PartialFullDocument<
-    Type extends Mapping<unknown> = Mapping<unknown>
-> = Partial<BaseDocument> & Partial<Document<Type>>
+export type PartialFullDocument<Type extends object = Mapping<unknown>> =
+    Partial<BaseDocument> & Partial<Document<Type>>
 
 export interface SpecialPropertyNames {
     additional:'_additional'
@@ -300,8 +293,7 @@ export interface PropertyNameConfiguration {
     validatedDocumentsCache:string
 }
 export interface BaseModelConfiguration<
-    Type = unknown,
-    AdditionalSpecifications extends Mapping<unknown> = Mapping<unknown>
+    Type = unknown, AdditionalSpecifications extends object = Mapping<unknown>
 > {
     dateTimeFormat:'iso'|'iso8601'|'number'
     property:{
@@ -313,8 +305,7 @@ export interface BaseModelConfiguration<
     updateStrategy:UpdateStrategy
 }
 export interface ModelConfiguration<
-    Type = unknown,
-    AdditionalSpecifications extends Mapping<unknown> = Mapping<unknown>
+    Type = unknown, AdditionalSpecifications extends object = Mapping<unknown>
 > extends BaseModelConfiguration<Type, AdditionalSpecifications> {
     autoMigrationPath:string
     entities:Models<Type, AdditionalSpecifications>
@@ -358,8 +349,7 @@ export type ConnectorConfiguration = DatabaseConnectorConfiguration & {
     fetch?:AdvancedFetchOptions|null
 }
 export interface CoreConfiguration<
-    Type = unknown,
-    AdditionalSpecifications extends Mapping<unknown> = Mapping<unknown>
+    Type = unknown, AdditionalSpecifications extends object = Mapping<unknown>
 > {
     attachAutoRestarter:boolean
     backend:{
@@ -397,7 +387,7 @@ export type Configuration<ConfigurationType = Mapping<unknown>> =
     BaseConfiguration<{couchdb:CoreConfiguration}> &
     ConfigurationType
 //// endregion
-export interface CouchDB<Type extends Mapping<unknown> = Mapping<unknown>> {
+export interface CouchDB<Type extends object = Mapping<unknown>> {
     changesStream:ChangesStream
 
     connection:Connection<Type>
@@ -475,8 +465,7 @@ export interface RuntimeErrorData<
 }
 //// region scopes
 export interface BasicScope<
-    Type = unknown,
-    AdditionalSpecifications extends Mapping<unknown> = Mapping<unknown>
+    Type = unknown, AdditionalSpecifications extends object = Mapping<unknown>
 > {
     attachmentWithPrefixExists:(namePrefix:string) => boolean
     checkDocument:(
@@ -507,7 +496,7 @@ export interface BasicScope<
     userContext:Partial<UserContext>
 }
 export interface CommonScope<
-    Type, AdditionalSpecifications extends Mapping<unknown> = Mapping<unknown>
+    Type, AdditionalSpecifications extends object = Mapping<unknown>
 > {
     checkPropertyContent:(
         newValue:unknown,
@@ -529,8 +518,7 @@ export interface CommonScope<
     pathDescription:string
 }
 export interface PropertyScope<
-    Type = unknown,
-    AdditionalSpecifications extends Mapping<unknown> = Mapping<unknown>
+    Type = unknown, AdditionalSpecifications extends object = Mapping<unknown>
 > extends CommonScope<Type, AdditionalSpecifications> {
     name:string
 
@@ -561,8 +549,7 @@ export interface CheckedDocumentResult extends CheckedResult {
 }
 /// endregion
 export type Migrator<
-    Type = unknown,
-    AdditionalSpecifications extends Mapping<unknown> = Mapping<unknown>
+    Type = unknown, AdditionalSpecifications extends object = Mapping<unknown>
 > = (
     document:Document,
     scope:{
