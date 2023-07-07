@@ -199,10 +199,15 @@ export interface FileSpecification<
 > extends PropertySpecification<Type, AdditionalSpecifications> {
     fileName?:PropertySpecification<string, AdditionalSpecifications>
 }
-export interface BaseModel {
+export interface BaseModel<
+    Type = Attachment,
+    AdditionalSpecifications extends object = Mapping<unknown>
+> {
     _allowedRoles?:AllowedRoles|null
 
-    _attachments?:Mapping<FileSpecification>|null
+    _attachments?:(
+        Mapping<FileSpecification<Type, AdditionalSpecifications>>|null
+    )
 
     _constraintExecutions?:Array<Constraint>|Constraint|null
     _constraintExpressions?:Array<Constraint>|Constraint|null
