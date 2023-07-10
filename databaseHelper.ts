@@ -43,7 +43,6 @@ import {
     Models,
     NormalizedAllowedModelRoles,
     PartialFullDocument,
-    PropertyName as BasePropertyName,
     PropertyScope,
     PropertySpecification,
     RuntimeErrorData,
@@ -201,13 +200,15 @@ export class DatabaseHelper {
      */
     static validateDocumentUpdate<
         ObjectType extends object = object,
-        AttachmentType = Attachment,
+        AttachmentType extends Attachment = Attachment,
         AdditionalSpecifications extends object = Mapping<unknown>,
         AdditionalPropertiesType = unknown
     >(
         this:void,
-        newDocument:PartialFullDocument<ObjectType>,
-        oldDocument:null|PartialFullDocument<ObjectType>,
+        newDocument:PartialFullDocument<ObjectType, AdditionalPropertiesType>,
+        oldDocument:(
+            null|PartialFullDocument<ObjectType, AdditionalPropertiesType>
+        ),
         userContext:Partial<UserContext>,
         securitySettings:Partial<SecuritySettings>,
         modelConfiguration:BaseModelConfiguration<
@@ -220,11 +221,26 @@ export class DatabaseHelper {
             AdditionalPropertiesType
         > = {},
         toJSON?:(value:unknown) => string
-    ):PartialFullDocument<ObjectType> {
+    ):PartialFullDocument<ObjectType, AdditionalPropertiesType> {
         type Attachments = Mapping<AttachmentType>
-        type PropertyName = BasePropertyName<ObjectType>
+
+        type PartialFullDocumentType = PartialFullDocument<
+            ObjectType, AdditionalPropertiesType
+        >
+
+        type PropertyName = keyof PartialFullDocumentType
         type PropertyValue =
             AdditionalPropertiesType|AttachmentType|ValueOf<ObjectType>
+
+        type BaseModelType = BaseModel<
+            AttachmentType, AdditionalSpecifications, AdditionalPropertiesType
+        >
+        type ModelType = Model<
+            ObjectType,
+            AttachmentType,
+            AdditionalSpecifications,
+            AdditionalPropertiesType
+        >
 
         // region ensure needed environment
         const throwError = <DataType = Mapping<unknown>>(
@@ -356,7 +372,7 @@ export class DatabaseHelper {
         else
             throwError('Needed "serializer" is not available.')
 
-        const specialPropertyNames:Array<keyof BaseModel> = [
+        const specialPropertyNames:Array<keyof BaseModelType> = [
             specialNames.additional,
             specialNames.allowedRole,
             specialNames.constraint.execution,
@@ -498,6 +514,7 @@ export class DatabaseHelper {
                 PropertyName,
                 AttachmentType,
                 AdditionalSpecifications,
+                AdditionalPropertiesType,
                 typeof basicScope &
                 {code:string} &
                 Scope
@@ -518,12 +535,14 @@ export class DatabaseHelper {
                 const scopeNames:Array<string> = Object.keys(scope)
                 // endregion
                 // region compile
-                let templateFunction:Evaluate<Type|undefined>|undefined
+                let templateFunction:(
+                    Evaluate<Type|undefined, Array<unknown>>|undefined
+                )
 
                 try {
                     /* eslint-disable @typescript-eslint/no-implied-eval */
                     templateFunction = new Function(...scopeNames, code) as
-                        Evaluate<Type|undefined>
+                        Evaluate<Type|undefined, Array<unknown>>
                     /* eslint-enable @typescript-eslint/no-implied-eval */
                 } catch (error) {
                     throwError<CompilationErrorData<CurrentScope>>(
@@ -540,6 +559,7 @@ export class DatabaseHelper {
                     PropertyName,
                     AttachmentType,
                     AdditionalSpecifications,
+                    AdditionalPropertiesType,
                     CurrentScope
                 > = {code, result: undefined, scope}
 
@@ -567,10 +587,10 @@ export class DatabaseHelper {
         }
         /// endregion
         const checkDocument = (
-            newDocument:PartialFullDocument<ObjectType>,
-            oldDocument:null|PartialFullDocument<ObjectType>,
+            newDocument:PartialFullDocumentType,
+            oldDocument:null|PartialFullDocumentType,
             parentNames:Array<string> = []
-        ):CheckedDocumentResult<ObjectType> => {
+        ):CheckedDocumentResult<ObjectType, AdditionalPropertiesType> => {
             const pathDescription =
                 parentNames.length ? ` in ${parentNames.join(' -> ')}` : ''
             let changedPath:Array<string> = []
@@ -628,12 +648,7 @@ export class DatabaseHelper {
             checkModelType()
 
             let modelName = newDocument[typeName] as string
-            const model:Model<
-                ObjectType,
-                AttachmentType,
-                AdditionalSpecifications,
-                AdditionalPropertiesType
-            > = models[modelName]
+            const model:ModelType = models[modelName]
             let additionalPropertySpecification:(
                 PropertySpecification<
                     AdditionalSpecifications, AdditionalSpecifications
@@ -651,7 +666,7 @@ export class DatabaseHelper {
             // region document specific functions
             const checkPropertyConstraints = <Type extends PropertyValue>(
                 newValue:Type,
-                name:PropertyName,
+                name:string,
                 propertySpecification:PropertySpecification<
                     Type, AdditionalSpecifications
                 >,
@@ -669,7 +684,8 @@ export class DatabaseHelper {
                             Type,
                             PropertyValue,
                             AttachmentType,
-                            AdditionalSpecifications
+                            AdditionalSpecifications,
+                            AdditionalPropertiesType
                         >
 
                         let result:(
@@ -679,6 +695,7 @@ export class DatabaseHelper {
                                 PropertyValue,
                                 AttachmentType,
                                 AdditionalSpecifications,
+                                AdditionalPropertiesType,
                                 Scope
                             > |
                             void
@@ -773,7 +790,7 @@ export class DatabaseHelper {
             }
             const checkPropertyContent = <Type extends PropertyValue>(
                 newValue:Type,
-                name:PropertyName,
+                name:string,
                 propertySpecification:PropertySpecification<
                     Type, AdditionalSpecifications
                 >,
@@ -796,8 +813,7 @@ export class DatabaseHelper {
                     types.length === 1 &&
                     Object.prototype.hasOwnProperty.call(models, types[0])
                 )
-                    (newValue as PartialFullDocument<ObjectType>)[typeName] =
-                        types[0]
+                    (newValue as PartialFullDocumentType)[typeName] = types[0]
                 let typeMatched = false
                 for (const type of types)
                     if (Object.prototype.hasOwnProperty.call(models, type)) {
@@ -808,9 +824,8 @@ export class DatabaseHelper {
                             Object.prototype.hasOwnProperty.call(
                                 newValue, typeName
                             ) &&
-                            (newValue as
-                                PartialFullDocument<ObjectType>
-                            )[typeName] !== type &&
+                            (newValue as PartialFullDocumentType)[typeName] !==
+                                type &&
                             updateStrategy === 'migrate' &&
                             types.length === 1
                         ) {
@@ -819,10 +834,8 @@ export class DatabaseHelper {
                                 type definition. Nested types have to be
                                 checked than.
                             */
-                            (
-                                newValue as
-                                    PartialFullDocument<ObjectType>
-                            )[typeName] = type
+                            (newValue as PartialFullDocumentType)[typeName] =
+                                type
                             changedPath = parentNames.concat(
                                 String(name), 'migrate nested object type')
                         }
@@ -833,14 +846,12 @@ export class DatabaseHelper {
                             Object.prototype.hasOwnProperty.call(
                                 newValue, typeName
                             ) &&
-                            (newValue as
-                                PartialFullDocument<ObjectType>
-                            )[typeName] === type
+                            (newValue as PartialFullDocumentType)[typeName] ===
+                                type
                         ) {
                             const result = checkDocument(
-                                newValue as PartialFullDocument<ObjectType>,
-                                oldValue as
-                                    null|PartialFullDocument<ObjectType>,
+                                newValue as PartialFullDocumentType,
+                                oldValue as null|PartialFullDocumentType,
                                 parentNames.concat(String(name))
                             )
                             if (result.changedPath.length)
@@ -1123,8 +1134,8 @@ export class DatabaseHelper {
                     propertySpecification:PropertySpecification<
                         Type, AdditionalSpecifications
                     >,
-                    newDocument:PartialFullDocument<ObjectType>,
-                    oldDocument:PartialFullDocument<ObjectType>|null,
+                    newDocument:PartialFullDocumentType,
+                    oldDocument:null|PartialFullDocumentType,
                     name:PropertyName,
                     pathDescription:string
                 ):boolean => {
@@ -1210,13 +1221,9 @@ export class DatabaseHelper {
                 propertySpecification:PropertySpecification<
                     Type, AdditionalSpecifications
                 >,
-                newDocument:Attachments|PartialFullDocument<ObjectType>,
-                oldDocument:(
-                    Attachments |
-                    null |
-                    PartialFullDocument<ObjectType>
-                ),
-                name:PropertyName
+                newDocument:PartialFullDocumentType,
+                oldDocument:null|PartialFullDocumentType,
+                name:keyof PartialFullDocumentType
             ) => {
                 if (!oldDocument)
                     for (const type of [
@@ -1227,25 +1234,28 @@ export class DatabaseHelper {
                         )) {
                             type Scope = PropertyScope<
                                 ObjectType,
-                                Type|undefined,
+                                null|Type|undefined,
                                 PropertyValue,
                                 AttachmentType,
-                                AdditionalSpecifications
+                                AdditionalSpecifications,
+                                AdditionalPropertiesType
                             >
 
                             let result:(
                                 EvaluationResult<
-                                    ObjectType,
+                                    PartialFullDocumentType,
                                     null|Type|undefined,
                                     PropertyValue,
                                     AttachmentType,
                                     AdditionalSpecifications,
+                                    AdditionalPropertiesType,
                                     Scope
                                 > |
                                 void
                             ) = undefined
+
                             try {
-                                result = evaluate<Type|undefined, Scope>(
+                                result = evaluate<null|Type|undefined, Scope>(
                                     propertySpecification[type],
                                     type.endsWith('Expression'),
                                     {
@@ -1253,7 +1263,7 @@ export class DatabaseHelper {
 
                                         model,
                                         modelName,
-                                        name,
+                                        name: String(name),
                                         type,
 
                                         newDocument,
@@ -1309,7 +1319,7 @@ export class DatabaseHelper {
                                     result.result as null
                                 )
                             )
-                                newDocument[name] = result.result
+                                (newDocument[name] as Type) = result.result!
                         }
             }
             /// endregion
@@ -1318,20 +1328,19 @@ export class DatabaseHelper {
                 propertySpecification:PropertySpecification<
                     Type, AdditionalSpecifications
                 >,
-                newDocument:Attachments|PartialFullDocument<ObjectType>,
-                oldDocument:(
-                    Attachments|null|PartialFullDocument<ObjectType>
-                ),
-                name:PropertyName
+                newDocument:PartialFullDocumentType,
+                oldDocument:null|PartialFullDocumentType,
+                name:keyof PartialFullDocumentType
             ) => {
                 if (!Object.prototype.hasOwnProperty.call(newDocument, name))
                     return
-s
+
                 if (
                     propertySpecification.trim &&
                     typeof newDocument[name] === 'string'
                 )
-                    newDocument[name] = (newDocument[name] as string).trim()
+                    (newDocument[name] as string) =
+                        (newDocument[name] as string).trim()
                 if (
                     propertySpecification.emptyEqualsToNull &&
                     (
@@ -1345,7 +1354,7 @@ s
                         Object.keys(newDocument).length === 0
                     )
                 )
-                    newDocument[name] = null
+                    (newDocument[name] as null) = null
                 for (const type of [
                     'onUpdateExecution', 'onUpdateExpression'
                 ] as const)
@@ -1353,14 +1362,15 @@ s
                         propertySpecification, type
                     ))
                         try {
-                            newDocument[name] = evaluate<
+                            (newDocument[name] as Type) = evaluate<
                                 Type,
                                 PropertyScope<
                                     ObjectType,
                                     Type,
                                     PropertyValue,
                                     AttachmentType,
-                                    AdditionalSpecifications
+                                    AdditionalSpecifications,
+                                    AdditionalPropertiesType
                                 >
                             >(
                                 propertySpecification[type],
@@ -1370,21 +1380,24 @@ s
 
                                     model,
                                     modelName,
-                                    name,
+                                    name: String(name),
                                     type,
 
                                     newDocument,
                                     oldDocument,
 
-                                    newValue: newDocument[name],
-                                    oldValue: oldDocument && oldDocument[name],
+                                    newValue: newDocument[name] as Type,
+                                    oldValue:
+                                        oldDocument &&
+                                        oldDocument[name] as Type ||
+                                        undefined,
 
                                     parentNames,
                                     pathDescription,
 
                                     propertySpecification
                                 }
-                            )!.result
+                            )!.result!
                         } catch (error) {
                             if (((
                                 error:unknown
@@ -1423,10 +1436,12 @@ s
             /// endregion
             // endregion
             const specifiedPropertyNames = (
-                Object.keys(model) as Array<keyof Model<ObjectType>>
+                Object.keys(model) as Array<keyof PartialFullDocumentType>
             )
                 .filter((name) =>
-                    !specialPropertyNames.includes(name as keyof BaseModel)
+                    !specialPropertyNames.includes(
+                        name as string as keyof BaseModelType
+                    )
                 ) as Array<keyof ObjectType>
             // region migrate old model specific property names
             if (updateStrategy === 'migrate')
@@ -1453,17 +1468,16 @@ s
                     specialNames.create.expression
                 ])
                     if (Object.prototype.hasOwnProperty.call(model, type)) {
-                        let result:(
-                            null|PartialFullDocument<ObjectType>|undefined
-                        )
+                        let result:null|PartialFullDocumentType|undefined
                         try {
                             result = evaluate<
-                                null|ObjectType,
+                                null|PartialFullDocumentType|undefined,
                                 CommonScope<
                                     ObjectType,
                                     PropertyValue,
                                     AttachmentType,
-                                    AdditionalSpecifications
+                                    AdditionalSpecifications,
+                                    AdditionalPropertiesType
                                 >
                             >(
                                 model[type as '_createExpression'],
@@ -1529,15 +1543,16 @@ s
                 specialNames.update.execution, specialNames.update.expression
             ])
                 if (Object.prototype.hasOwnProperty.call(model, type)) {
-                    let result:null|PartialFullDocument<ObjectType>|undefined
+                    let result:null|PartialFullDocumentType|undefined
                     try {
                         result = evaluate<
-                            null|PartialFullDocument<ObjectType>,
+                            null|PartialFullDocumentType,
                             CommonScope<
                                 ObjectType,
                                 PropertyValue,
                                 AttachmentType,
-                                AdditionalSpecifications
+                                AdditionalSpecifications,
+                                AdditionalPropertiesType
                             >
                         >(
                             model[type as '_createExpression'],
@@ -1591,24 +1606,28 @@ s
                         newDocument = result!
 
                     checkModelType()
+
                     modelName = newDocument[typeName]!
 
                     if (parentNames.length === 0)
                         setDocumentEnvironment()
                 }
             // endregion
+            const additionalPropertyNames = additionalPropertySpecification ?
+                (Object.keys(newDocument) as
+                    Array<keyof ObjectType>
+                ).filter((name:keyof ObjectType):boolean =>
+                    !specifiedPropertyNames.includes(name)
+                ) :
+                [] as Array<keyof ObjectType>
             for (const name of specifiedPropertyNames.concat(
-                additionalPropertySpecification ?
-                    Object.keys(newDocument).filter((name:string):boolean =>
-                        !specifiedPropertyNames.includes(name)
-                    ) :
-                    []
+                additionalPropertyNames
             ))
                 // region run hooks and check for presence of needed data
                 if (specialNames.attachment === name)
                     // region attachment
                     for (const [type, property] of Object.entries(
-                        model[name] as
+                        model[specialNames.attachment] as
                             FileSpecification<
                                 AttachmentType, AdditionalSpecifications
                             >
@@ -1617,9 +1636,9 @@ s
                             !Object.prototype.hasOwnProperty.call(
                                 newDocument, name
                             ) ||
-                            newDocument[name] === null
+                            newDocument[specialNames.attachment] === null
                         )
-                            newDocument[name] = {}
+                            newDocument[specialNames.attachment] = {}
 
                         if (
                             oldDocument &&
@@ -1627,17 +1646,22 @@ s
                                 oldDocument, name
                             )
                         )
-                            oldDocument[name] = {}
+                            oldDocument[specialNames.attachment] = {}
 
-                        const newFileNames:Array<string> =
-                            Object.keys(newDocument[name] as Attachments)
+                        const newFileNames:Array<keyof Attachments> =
+                            Object.keys(newDocument[specialNames.attachment]!)
                                 .filter((fileName:string):boolean =>
                                     ((
-                                        newDocument[name] as Attachments
-                                    )[fileName] as FullAttachment).data !==
+                                        newDocument[specialNames.attachment]
+                                    )![fileName] as FullAttachment).data !==
                                         null &&
                                     fileNameMatchesModelType(
-                                        type, fileName, property
+                                        type,
+                                        fileName,
+                                        property as FileSpecification<
+                                            AttachmentType,
+                                            AdditionalSpecifications
+                                        >
                                     )
                                 )
 
@@ -1678,14 +1702,20 @@ s
                                         ).digest)
                                     ) &&
                                     Boolean(fileNameMatchesModelType(
-                                        type, fileName, property
+                                        type,
+                                        fileName,
+                                        property as FileSpecification<
+                                            AttachmentType,
+                                            AdditionalSpecifications
+                                        >
                                     ))
                                 )
                         }
 
-                        const propertySpecification:PropertySpecification<
-                            ValueOf<ObjectType>, AdditionalSpecifications
-                        > = property
+                        const propertySpecification = property as
+                            PropertySpecification<
+                                AttachmentType, AdditionalSpecifications
+                            >
 
                         for (const fileName of newFileNames)
                             runCreatePropertyHook<AttachmentType>(
@@ -1767,14 +1797,14 @@ s
                             model[name] :
                             additionalPropertySpecification as
                                 PropertySpecification<
-                                    AdditionalPropertiesType,
+                                    PropertyValue,
                                     AdditionalSpecifications
                                 >
 
-                    runCreatePropertyHook<ValueOf<ObjectType>>(
+                    runCreatePropertyHook<PropertyValue>(
                         propertySpecification, newDocument, oldDocument, name
                     )
-                    runUpdatePropertyHook<ValueOf<ObjectType>>(
+                    runUpdatePropertyHook<PropertyValue>(
                         propertySpecification, newDocument, oldDocument, name
                     )
 
@@ -1902,8 +1932,8 @@ s
                         continue
                     } else
                         throwError(
-                            `Property: Given property "${name}" isn't ` +
-                            `specified in model "${modelName}"` +
+                            `Property: Given property "${String(name)}" ` +
+                            `isn't specified in model "${modelName}"` +
                             `${pathDescription}.`
                         )
 
@@ -1928,7 +1958,10 @@ s
                                             AttachmentType
                                         >(
                                             model[name]![type as
-                                                keyof PropertySpecification
+                                                keyof PropertySpecification<
+                                                    AttachmentType,
+                                                    AdditionalSpecifications
+                                                >
                                             ],
                                             newDocument,
                                             oldDocument,
@@ -2049,9 +2082,15 @@ s
                                         )]
                                 else
                                     (propertySpecificationCopy[
-                                        key as keyof PropertySpecification
+                                        key as keyof PropertySpecification<
+                                            ValueOf<ObjectType>,
+                                            AdditionalSpecifications
+                                        >
                                     ] as Primitive) = propertySpecification[
-                                        key as keyof PropertySpecification
+                                        key as keyof PropertySpecification<
+                                            ValueOf<ObjectType>,
+                                            AdditionalSpecifications
+                                        >
                                     ] as Primitive
                         //// region add missing array item types
                         /*
@@ -2081,7 +2120,7 @@ s
                         let index = 0
                         for (const value of newProperty.slice()) {
                             newProperty[index] = checkPropertyContent<
-                                ObjectType, ValueOf<ObjectType>
+                                ValueOf<ObjectType>
                             >(
                                 value,
                                 `${index + 1}. value in ${name}`,
@@ -2123,9 +2162,9 @@ s
                         const result:{
                             changedPath:Array<string>
                             newValue:unknown
-                        } = checkPropertyContent<
-                            ObjectType, ValueOf<ObjectType>
-                        >(newValue, name, propertySpecification, oldValue)
+                        } = checkPropertyContent<ValueOf<ObjectType>>(
+                            newValue, name, propertySpecification, oldValue
+                        )
 
                         newDocument[name] = result.newValue as PlainObject
 
@@ -2160,7 +2199,8 @@ s
                             ObjectType,
                             PropertyValue,
                             AttachmentType,
-                            AdditionalSpecifications
+                            AdditionalSpecifications,
+                            AdditionalPropertiesType
                         >
 
                         let result:(
@@ -2170,6 +2210,7 @@ s
                                 PropertyValue,
                                 AttachmentType,
                                 AdditionalSpecifications,
+                                AdditionalPropertiesType,
                                 Scope
                             > |
                             void
@@ -2711,7 +2752,10 @@ s
         }
         // endregion
         const basicScope:BasicScope<
-            ObjectType, AttachmentType, AdditionalSpecifications
+            ObjectType,
+            AttachmentType,
+            AdditionalSpecifications,
+            AdditionalPropertiesType
         > = {
             attachmentWithPrefixExists,
             checkDocument,

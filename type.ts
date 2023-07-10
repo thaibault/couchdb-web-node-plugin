@@ -17,7 +17,7 @@
 import {ChildProcess} from 'child_process'
 import Tools from 'clientnode'
 import {
-    AnyFunction, Mapping, PlainObject, Primitive, ProcessCloseReason, ValueOf
+    AnyFunction, Mapping, PlainObject, Primitive, ProcessCloseReason
 } from 'clientnode/type'
 import PouchDB from 'pouchdb-node'
 import {
@@ -124,7 +124,7 @@ export interface SelectionMapping {
     value:unknown
 }
 export interface PropertySpecification<
-    Type = unknown, AdditionalSpecifications extends object = Mapping<unknown>
+    Type, AdditionalSpecifications extends object
 > {
     allowedRoles?:AllowedRoles|null
     computed?:boolean
@@ -194,17 +194,19 @@ export interface PropertySpecification<
     additionalSpecifications?:AdditionalSpecifications
 }
 export interface FileSpecification<
-    Type = Attachment,
-    AdditionalSpecifications extends object = Mapping<unknown>
+    Type,
+    AdditionalSpecifications extends object
 > extends PropertySpecification<Type, AdditionalSpecifications> {
     fileName?:PropertySpecification<string, AdditionalSpecifications>
 }
 export interface BaseModel<
-    AttachmentType = Attachment,
-    AdditionalSpecifications extends object = Mapping<unknown>,
-    AdditionalPropertiesType = unknown
+    AttachmentType extends Attachment,
+    AdditionalSpecifications extends object,
+    AdditionalPropertiesType
 > {
-    _additional?:PropertySpecification<AdditionalPropertiesType>
+    _additional?:PropertySpecification<
+        AdditionalPropertiesType, AdditionalSpecifications
+    >
 
     _allowedRoles?:AllowedRoles|null
 
@@ -229,13 +231,13 @@ export interface BaseModel<
     _onUpdateExecution?:null|string
     _onUpdateExpression?:null|string
 
-    _id:PropertySpecification<string>
+    _id:PropertySpecification<string, AdditionalSpecifications>
 }
 export type Model<
-    Type extends object = object,
-    AttachmentType = Attachment,
-    AdditionalSpecifications extends object = Mapping<unknown>,
-    AdditionalPropertiesType = unknown
+    Type extends object,
+    AttachmentType extends Attachment,
+    AdditionalSpecifications extends object,
+    AdditionalPropertiesType
 > =
     BaseModel<
         AttachmentType, AdditionalSpecifications, AdditionalPropertiesType
@@ -246,10 +248,10 @@ export type Model<
         >
     }
 export type Models<
-    Type extends object = object,
-    AttachmentType = Attachment,
-    AdditionalSpecifications extends object = Mapping<unknown>,
-    AdditionalPropertiesType = unknown
+    Type extends object,
+    AttachmentType extends Attachment,
+    AdditionalSpecifications extends object,
+    AdditionalPropertiesType
 > = Mapping<Model<
     Type, AttachmentType, AdditionalSpecifications, AdditionalPropertiesType
 >>
@@ -267,10 +269,13 @@ export type BaseDocument =
     DocumentRevisionIDMeta &
     DocumentStrategyMeta &
     DocumentTypeMeta
-export type FullDocument<Type extends object = Mapping<unknown>> =
-    BaseDocument & Document<Type>
-export type PartialFullDocument<Type extends object = Mapping<unknown>> =
-    Partial<BaseDocument> & Partial<Document<Type>>
+export type FullDocument<
+    Type extends object, AdditionalPropertyTypes
+> = BaseDocument & Document<Type> & Mapping<AdditionalPropertyTypes>
+export type PartialFullDocument<Type extends object, AdditionalPropertyTypes> =
+    Partial<BaseDocument> &
+    Partial<Document<Type>> &
+    Mapping<AdditionalPropertyTypes>
 
 export interface SpecialPropertyNames {
     additional:'_additional'
@@ -320,7 +325,7 @@ export interface PropertyNameConfiguration {
     validatedDocumentsCache:string
 }
 export interface BaseModelConfiguration<
-    Type = unknown, AdditionalSpecifications extends object = Mapping<unknown>
+    Type, AdditionalSpecifications extends object
 > {
     dateTimeFormat:'iso'|'iso8601'|'number'
     property:{
@@ -332,12 +337,18 @@ export interface BaseModelConfiguration<
     updateStrategy:UpdateStrategy
 }
 export interface ModelConfiguration<
-    Type extends object = object,
-    AttachmentType = Attachment,
-    AdditionalSpecifications extends object = Mapping<unknown>
+    Type extends object,
+    AttachmentType extends Attachment,
+    AdditionalSpecifications extends object,
+    AdditionalPropertiesType
 > extends BaseModelConfiguration<Type, AdditionalSpecifications> {
     autoMigrationPath:string
-    entities:Models<Type, AttachmentType, AdditionalSpecifications>
+    entities:Models<
+        Type,
+        AttachmentType,
+        AdditionalSpecifications,
+        AdditionalPropertiesType
+    >
     triggerInitialCompaction:boolean
     updateConfiguration:boolean
     updateValidation:boolean
@@ -379,8 +390,9 @@ export type ConnectorConfiguration = DatabaseConnectorConfiguration & {
 }
 export interface CoreConfiguration<
     Type extends object = object,
-    AttachmentType = Attachment,
-    AdditionalSpecifications extends object = Mapping<unknown>
+    AttachmentType extends Attachment = Attachment,
+    AdditionalSpecifications extends object = Mapping<unknown>,
+    AdditionalPropertiesType = unknown
 > {
     attachAutoRestarter:boolean
     backend:{
@@ -404,7 +416,12 @@ export interface CoreConfiguration<
     local:boolean
     maximumRepresentationLength:number
     maximumRepresentationTryLength:number
-    model:ModelConfiguration<Type, AttachmentType, AdditionalSpecifications>
+    model:ModelConfiguration<
+        Type,
+        AttachmentType,
+        AdditionalSpecifications,
+        AdditionalPropertiesType
+    >
     path:string
     security:SecuritySettings
     skipIDDetermining:boolean
@@ -495,20 +512,18 @@ export interface RuntimeErrorData<
     runtime:string
 }
 //// region scopes
-export type PropertyName<ObjectType extends object> =
-    keyof (Attachments|FullDocument<ObjectType>)
-
 export interface BasicScope<
-    Type extends object = object,
-    AttachmentType = Attachment,
-    AdditionalSpecifications extends object = Mapping<unknown>
+    Type extends object,
+    AttachmentType extends Attachment,
+    AdditionalSpecifications extends object,
+    AdditionalPropertiesType
 > {
     attachmentWithPrefixExists:(namePrefix:string) => boolean
     checkDocument:(
-        newDocument:PartialFullDocument<Type>,
-        oldDocument:PartialFullDocument<Type>|null,
+        newDocument:PartialFullDocument<Type, AdditionalPropertiesType>,
+        oldDocument:PartialFullDocument<Type, AdditionalPropertiesType>|null,
         parentNames:Array<string>
-    ) => CheckedDocumentResult<Type>
+    ) => CheckedDocumentResult<Type, AdditionalPropertiesType>
     getFileNameByPrefix:(
         prefix?:string, attachments?:Mapping<AttachmentType>
     ) => null|string
@@ -523,7 +538,12 @@ export interface BasicScope<
     typeName:string
 
     modelConfiguration:BaseModelConfiguration<Type, AdditionalSpecifications>
-    models:Models<Type, AttachmentType, AdditionalSpecifications>
+    models:Models<
+        Type,
+        AttachmentType,
+        AdditionalSpecifications,
+        AdditionalPropertiesType
+    >
 
     now:Date
     nowUTCTimestamp:number
@@ -533,40 +553,53 @@ export interface BasicScope<
     userContext:Partial<UserContext>
 }
 export interface CommonScope<
-    ObjectType extends object = object,
-    Type = unknown,
-    AttachmentType = Attachment,
-    AdditionalSpecifications extends object = Mapping<unknown>
+    ObjectType extends object,
+    Type,
+    AttachmentType extends Attachment,
+    AdditionalSpecifications extends object,
+    AdditionalPropertiesType
 > {
     checkPropertyContent:(
         newValue:Type,
-        name:PropertyName<ObjectType>,
+        name:string,
         propertySpecification:PropertySpecification<
             Type, AdditionalSpecifications
         >,
         oldValue:Type
     ) => CheckedPropertyResult
 
-    model:Model<ObjectType, AttachmentType, AdditionalSpecifications>
+    model:Model<
+        ObjectType,
+        AttachmentType,
+        AdditionalSpecifications,
+        AdditionalPropertiesType
+    >
     modelName:string
     type:Array<string>|string
 
-    newDocument:Attachments|PartialFullDocument
-    oldDocument:Attachments|null|PartialFullDocument
+    newDocument:PartialFullDocument<ObjectType, AdditionalPropertiesType>
+    oldDocument:(
+        null|PartialFullDocument<ObjectType, AdditionalPropertiesType>
+    )
 
     parentNames:Array<string>
     pathDescription:string
 }
 export interface PropertyScope<
-    ObjectType extends object = object,
-    Type = unknown,
-    PropertyType = unknown,
-    AttachmentType = Attachment,
-    AdditionalSpecifications extends object = Mapping<unknown>
+    ObjectType extends object,
+    Type,
+    PropertyType,
+    AttachmentType extends Attachment,
+    AdditionalSpecifications extends object,
+    AdditionalPropertiesType
 > extends CommonScope<
-    ObjectType, PropertyType, AttachmentType, AdditionalSpecifications
+    ObjectType,
+    PropertyType,
+    AttachmentType,
+    AdditionalSpecifications,
+    AdditionalPropertiesType
 > {
-    name:PropertyName<ObjectType>
+    name:string
 
     newValue:Type
     oldValue?:Type
@@ -575,15 +608,25 @@ export interface PropertyScope<
 }
 //// endregion
 export interface EvaluationResult<
-    ObjectType extends object = object,
-    Type = unknown,
-    PropertyType = unknown,
-    AttachmentType = Attachment,
-    AdditionalSpecifications extends object = Mapping<unknown>,
+    ObjectType extends object,
+    Type,
+    PropertyType,
+    AttachmentType extends Attachment,
+    AdditionalSpecifications extends object,
+    AdditionalPropertiesType,
     Scope = (
-        BasicScope<ObjectType> &
+        BasicScope<
+            ObjectType,
+            AttachmentType,
+            AdditionalSpecifications,
+            AdditionalPropertiesType
+        > &
         CommonScope<
-            ObjectType, PropertyType, AttachmentType, AdditionalSpecifications
+            ObjectType,
+            PropertyType,
+            AttachmentType,
+            AdditionalSpecifications,
+            AdditionalPropertiesType
         >
     )
 > {
@@ -591,7 +634,7 @@ export interface EvaluationResult<
     result:Type
     scope:Scope
 }
-export type Evaluate<R = unknown, P = unknown> = (...parameters:Array<P>) => R
+export type Evaluate<R, P extends Array<unknown>> = (...parameters:P) => R
 /// endregion
 /// region checker results
 export interface CheckedResult {
@@ -601,15 +644,16 @@ export interface CheckedPropertyResult extends CheckedResult {
     newValue:unknown
 }
 export interface CheckedDocumentResult<
-    ObjectType extends object
+    ObjectType extends object, AdditionalPropertiesType
 > extends CheckedResult {
-    newDocument:PartialFullDocument<ObjectType>
+    newDocument:PartialFullDocument<ObjectType, AdditionalPropertiesType>
 }
 /// endregion
 export type Migrator<
-    Type extends object = object,
-    AttachmentType = Attachment,
-    AdditionalSpecifications extends object = Mapping<unknown>
+    Type extends object,
+    AttachmentType extends Attachment,
+    AdditionalSpecifications extends object,
+    AdditionalPropertiesType
 > = (
     document:Document,
     scope:{
@@ -621,10 +665,23 @@ export type Migrator<
         idName:string
         typeName:string
 
-        migrater:Mapping<Migrator<Type>>
-        models:Models<Type, AttachmentType, AdditionalSpecifications>
+        migrators:Mapping<Migrator<
+            Type,
+            AttachmentType,
+            AdditionalSpecifications,
+            AdditionalPropertiesType
+        >>
+        models:Models<
+            Type,
+            AttachmentType,
+            AdditionalSpecifications,
+            AdditionalPropertiesType
+        >
         modelConfiguration:ModelConfiguration<
-            Type, Attachment, AdditionalSpecifications
+            Type,
+            AttachmentType,
+            AdditionalSpecifications,
+            AdditionalPropertiesType
         >
 
         selfFilePath:string
