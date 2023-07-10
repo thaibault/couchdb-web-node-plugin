@@ -17,7 +17,7 @@
 import {ChildProcess} from 'child_process'
 import Tools from 'clientnode'
 import {
-    AnyFunction, Mapping, PlainObject, Primitive, ProcessCloseReason
+    AnyFunction, Mapping, PlainObject, Primitive, ProcessCloseReason, ValueOf
 } from 'clientnode/type'
 import PouchDB from 'pouchdb-node'
 import {
@@ -495,6 +495,9 @@ export interface RuntimeErrorData<
     runtime:string
 }
 //// region scopes
+export type PropertyName<ObjectType extends object> =
+    keyof (Attachments|FullDocument<ObjectType>)
+
 export interface BasicScope<
     Type extends object = object,
     AttachmentType = Attachment,
@@ -537,7 +540,7 @@ export interface CommonScope<
 > {
     checkPropertyContent:(
         newValue:Type,
-        name:string,
+        name:PropertyName<ObjectType>,
         propertySpecification:PropertySpecification<
             Type, AdditionalSpecifications
         >,
@@ -557,12 +560,13 @@ export interface CommonScope<
 export interface PropertyScope<
     ObjectType extends object = object,
     Type = unknown,
+    PropertyType = unknown,
     AttachmentType = Attachment,
     AdditionalSpecifications extends object = Mapping<unknown>
 > extends CommonScope<
-    ObjectType, Type, AttachmentType, AdditionalSpecifications
+    ObjectType, PropertyType, AttachmentType, AdditionalSpecifications
 > {
-    name:string
+    name:PropertyName<ObjectType>
 
     newValue:Type
     oldValue?:Type
@@ -573,7 +577,15 @@ export interface PropertyScope<
 export interface EvaluationResult<
     ObjectType extends object = object,
     Type = unknown,
-    Scope = BasicScope<ObjectType> & CommonScope<ObjectType, Type>
+    PropertyType = unknown,
+    AttachmentType = Attachment,
+    AdditionalSpecifications extends object = Mapping<unknown>,
+    Scope = (
+        BasicScope<ObjectType> &
+        CommonScope<
+            ObjectType, PropertyType, AttachmentType, AdditionalSpecifications
+        >
+    )
 > {
     code:string
     result:Type

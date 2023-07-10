@@ -38,11 +38,12 @@ import {
     EvaluationErrorData,
     EvaluationResult,
     FileSpecification,
-    FullAttachment, FullDocument,
+    FullAttachment,
     Model,
     Models,
     NormalizedAllowedModelRoles,
     PartialFullDocument,
+    PropertyName as BasePropertyName,
     PropertyScope,
     PropertySpecification,
     RuntimeErrorData,
@@ -221,7 +222,7 @@ export class DatabaseHelper {
         toJSON?:(value:unknown) => string
     ):PartialFullDocument<ObjectType> {
         type Attachments = Mapping<AttachmentType>
-        type PropertyName = keyof FullDocument<ObjectType>
+        type PropertyName = BasePropertyName<ObjectType>
         type PropertyValue =
             AdditionalPropertiesType|AttachmentType|ValueOf<ObjectType>
 
@@ -494,6 +495,9 @@ export class DatabaseHelper {
             EvaluationResult<
                 ObjectType,
                 Type|undefined,
+                PropertyName,
+                AttachmentType,
+                AdditionalSpecifications,
                 typeof basicScope &
                 {code:string} &
                 Scope
@@ -531,7 +535,12 @@ export class DatabaseHelper {
                 // endregion
                 // region run
                 const result:EvaluationResult<
-                    ObjectType, Type|undefined, CurrentScope
+                    ObjectType,
+                    Type|undefined,
+                    PropertyName,
+                    AttachmentType,
+                    AdditionalSpecifications,
+                    CurrentScope
                 > = {code, result: undefined, scope}
 
                 try {
@@ -655,29 +664,27 @@ export class DatabaseHelper {
                     if (Object.prototype.hasOwnProperty.call(
                         propertySpecification, type
                     )) {
+                        type Scope = PropertyScope<
+                            ObjectType,
+                            Type,
+                            PropertyValue,
+                            AttachmentType,
+                            AdditionalSpecifications
+                        >
+
                         let result:(
                             EvaluationResult<
                                 ObjectType,
                                 boolean|undefined,
-                                PropertyScope<
-                                    ObjectType,
-                                    Type,
-                                    AttachmentType,
-                                    AdditionalSpecifications
-                                >
+                                PropertyValue,
+                                AttachmentType,
+                                AdditionalSpecifications,
+                                Scope
                             > |
                             void
                         ) = undefined
                         try {
-                            result = evaluate<
-                                boolean,
-                                PropertyScope<
-                                    ObjectType,
-                                    Type,
-                                    AttachmentType,
-                                    AdditionalSpecifications
-                                >
-                            >(
+                            result = evaluate<boolean, Scope>(
                                 propertySpecification[type]!.evaluation,
                                 type.endsWith('Expression'),
                                 {
@@ -685,7 +692,7 @@ export class DatabaseHelper {
 
                                     model,
                                     modelName,
-                                    name: String(name),
+                                    name,
                                     type,
 
                                     newDocument,
@@ -764,17 +771,14 @@ export class DatabaseHelper {
                         }
                     }
             }
-            const checkPropertyContent = <
-                Type extends
-                    AdditionalPropertiesType|AttachmentType|ValueOf<ObjectType>
-                >(
-                    newValue:Type,
-                    name:PropertyName,
-                    propertySpecification:PropertySpecification<
-                        Type, AdditionalSpecifications
-                    >,
-                    oldValue?:Type
-                ):CheckedPropertyResult => {
+            const checkPropertyContent = <Type extends PropertyValue>(
+                newValue:Type,
+                name:PropertyName,
+                propertySpecification:PropertySpecification<
+                    Type, AdditionalSpecifications
+                >,
+                oldValue?:Type
+            ):CheckedPropertyResult => {
                 let changedPath:Array<string> = []
                 // region type
                 const types = ([] as Array<TypeNames>).concat(
@@ -1114,7 +1118,7 @@ export class DatabaseHelper {
                 return {newValue, changedPath}
             }
             const checkPropertyWriteableMutableNullable = <
-                Type extends ValueOf<ObjectType>
+                Type extends PropertyValue
             >(
                     propertySpecification:PropertySpecification<
                         Type, AdditionalSpecifications
@@ -1202,21 +1206,18 @@ export class DatabaseHelper {
                 return false
             }
             /// region create hook
-            const runCreatePropertyHook = <
-                Type extends
-                    AdditionalPropertiesType|AttachmentType|ValueOf<ObjectType>
-            >(
-                    propertySpecification:PropertySpecification<
-                        Type, AdditionalSpecifications
-                    >,
-                    newDocument:Attachments|PartialFullDocument<ObjectType>,
-                    oldDocument:(
-                        Attachments |
-                        null |
-                        PartialFullDocument<ObjectType>
-                    ),
-                    name:PropertyName
-                ) => {
+            const runCreatePropertyHook = <Type extends PropertyValue>(
+                propertySpecification:PropertySpecification<
+                    Type, AdditionalSpecifications
+                >,
+                newDocument:Attachments|PartialFullDocument<ObjectType>,
+                oldDocument:(
+                    Attachments |
+                    null |
+                    PartialFullDocument<ObjectType>
+                ),
+                name:PropertyName
+            ) => {
                 if (!oldDocument)
                     for (const type of [
                         'onCreateExecution', 'onCreateExpression'
@@ -1224,24 +1225,27 @@ export class DatabaseHelper {
                         if (Object.prototype.hasOwnProperty.call(
                             propertySpecification, type
                         )) {
+                            type Scope = PropertyScope<
+                                ObjectType,
+                                Type|undefined,
+                                PropertyValue,
+                                AttachmentType,
+                                AdditionalSpecifications
+                            >
+
                             let result:(
                                 EvaluationResult<
                                     ObjectType,
                                     null|Type|undefined,
-                                    PropertyScope
+                                    PropertyValue,
+                                    AttachmentType,
+                                    AdditionalSpecifications,
+                                    Scope
                                 > |
                                 void
                             ) = undefined
                             try {
-                                result = evaluate<
-                                    Type|undefined,
-                                    PropertyScope<
-                                        ObjectType,
-                                        Type|undefined,
-                                        AttachmentType,
-                                        AdditionalSpecifications
-                                    >
-                                >(
+                                result = evaluate<Type|undefined, Scope>(
                                     propertySpecification[type],
                                     type.endsWith('Expression'),
                                     {
@@ -1249,7 +1253,7 @@ export class DatabaseHelper {
 
                                         model,
                                         modelName,
-                                        name: String(name),
+                                        name,
                                         type,
 
                                         newDocument,
@@ -1310,22 +1314,19 @@ export class DatabaseHelper {
             }
             /// endregion
             /// region update hook
-            const runUpdatePropertyHook = <
-                Type extends
-                    AdditionalPropertiesType|AttachmentType|ValueOf<ObjectType>
-            >(
-                    propertySpecification:PropertySpecification<
-                        Type, AdditionalSpecifications
-                    >,
-                    newDocument:Attachments|PartialFullDocument<ObjectType>,
-                    oldDocument:(
-                        Attachments|null|PartialFullDocument<ObjectType>
-                    ),
-                    name:PropertyName
-                ) => {
+            const runUpdatePropertyHook = <Type extends PropertyValue>(
+                propertySpecification:PropertySpecification<
+                    Type, AdditionalSpecifications
+                >,
+                newDocument:Attachments|PartialFullDocument<ObjectType>,
+                oldDocument:(
+                    Attachments|null|PartialFullDocument<ObjectType>
+                ),
+                name:PropertyName
+            ) => {
                 if (!Object.prototype.hasOwnProperty.call(newDocument, name))
                     return
-
+s
                 if (
                     propertySpecification.trim &&
                     typeof newDocument[name] === 'string'
@@ -1357,6 +1358,7 @@ export class DatabaseHelper {
                                 PropertyScope<
                                     ObjectType,
                                     Type,
+                                    PropertyValue,
                                     AttachmentType,
                                     AdditionalSpecifications
                                 >
@@ -1368,7 +1370,7 @@ export class DatabaseHelper {
 
                                     model,
                                     modelName,
-                                    name: String(name),
+                                    name,
                                     type,
 
                                     newDocument,
@@ -1453,13 +1455,13 @@ export class DatabaseHelper {
                     if (Object.prototype.hasOwnProperty.call(model, type)) {
                         let result:(
                             null|PartialFullDocument<ObjectType>|undefined
-                            )
+                        )
                         try {
                             result = evaluate<
                                 null|ObjectType,
                                 CommonScope<
                                     ObjectType,
-                                    null|ObjectType,
+                                    PropertyValue,
                                     AttachmentType,
                                     AdditionalSpecifications
                                 >
@@ -1533,7 +1535,7 @@ export class DatabaseHelper {
                             null|PartialFullDocument<ObjectType>,
                             CommonScope<
                                 ObjectType,
-                                null|PartialFullDocument<ObjectType>,
+                                PropertyValue,
                                 AttachmentType,
                                 AdditionalSpecifications
                             >
@@ -1880,7 +1882,12 @@ export class DatabaseHelper {
                         specialNames.strategy
                     ).includes(name)
                 ) {
-                    let propertySpecification:PropertySpecification|undefined
+                    let propertySpecification:(
+                        PropertySpecification<
+                            PropertyValue, AdditionalSpecifications
+                        > |
+                        undefined
+                    )
                     if (Object.prototype.hasOwnProperty.call(model, name))
                         propertySpecification = model[name]
                     else if (additionalPropertySpecification)
@@ -1917,7 +1924,9 @@ export class DatabaseHelper {
                                     if (fileNameMatchesModelType(
                                         type, fileName, model[name]![type]
                                     )) {
-                                        checkPropertyWriteableMutableNullable(
+                                        checkPropertyWriteableMutableNullable<
+                                            AttachmentType
+                                        >(
                                             model[name]![type as
                                                 keyof PropertySpecification
                                             ],
@@ -1932,9 +1941,7 @@ export class DatabaseHelper {
 
                         continue
                     } else if (checkPropertyWriteableMutableNullable<
-                        ObjectType,
-                        ValueOf<ObjectType>,
-                        AdditionalSpecifications
+                        PropertyValue
                     >(
                         propertySpecification,
                         newDocument,
@@ -1998,9 +2005,7 @@ export class DatabaseHelper {
                                 `${pathDescription}.`
                             )
 
-                        checkPropertyConstraints<
-                            ObjectType, ValueOf<ObjectType>
-                        >(
+                        checkPropertyConstraints<PropertyValue>(
                             newProperty,
                             name,
                             propertySpecification,
@@ -2151,23 +2156,26 @@ export class DatabaseHelper {
                     for (const constraint of ([] as Array<Constraint>).concat(
                         model[constraintName]!
                     )) {
+                        type Scope = CommonScope<
+                            ObjectType,
+                            PropertyValue,
+                            AttachmentType,
+                            AdditionalSpecifications
+                        >
+
                         let result:(
                             EvaluationResult<
-                                boolean | undefined, CommonScope<boolean>
+                                ObjectType,
+                                boolean|undefined,
+                                PropertyValue,
+                                AttachmentType,
+                                AdditionalSpecifications,
+                                Scope
                             > |
                             void
                         ) = undefined
                         try {
-                            result = evaluate<
-                                ObjectType,
-                                boolean,
-                                CommonScope<
-                                    ObjectType,
-                                    boolean,
-                                    AttachmentType,
-                                    AdditionalSpecifications
-                                >
-                            >(
+                            result = evaluate<boolean, Scope>(
                                 constraint.evaluation,
                                 constraintName ===
                                     specialNames.constraint.expression,
