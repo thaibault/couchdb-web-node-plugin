@@ -124,7 +124,7 @@ export interface SelectionMapping {
     value:unknown
 }
 export interface PropertySpecification<
-    Type, AdditionalSpecifications extends object
+    Type = unknown, AdditionalSpecifications extends object = object
 > {
     allowedRoles?:AllowedRoles|null
     computed?:boolean
@@ -174,7 +174,7 @@ export interface PropertySpecification<
     type?:TypeSpecification|null
     // endregion
     // region simple transformation
-    default?:unknown
+    default?:null|Type
     emptyEqualsToNull?:boolean|null
     trim?:boolean|null
     // endregion
@@ -234,10 +234,10 @@ export interface BaseModel<
     _id:PropertySpecification<string, AdditionalSpecifications>
 }
 export type Model<
-    Type extends object,
-    AttachmentType extends Attachment,
-    AdditionalSpecifications extends object,
-    AdditionalPropertiesType
+    Type extends object = object,
+    AttachmentType extends Attachment = Attachment,
+    AdditionalSpecifications extends object = object,
+    AdditionalPropertiesType = unknown
 > =
     BaseModel<
         AttachmentType, AdditionalSpecifications, AdditionalPropertiesType
@@ -248,10 +248,10 @@ export type Model<
         >
     }
 export type Models<
-    Type extends object,
-    AttachmentType extends Attachment,
-    AdditionalSpecifications extends object,
-    AdditionalPropertiesType
+    Type extends object = object,
+    AttachmentType extends Attachment = Attachment,
+    AdditionalSpecifications extends object = object,
+    AdditionalPropertiesType = unknown
 > = Mapping<Model<
     Type, AttachmentType, AdditionalSpecifications, AdditionalPropertiesType
 >>
@@ -270,9 +270,12 @@ export type BaseDocument =
     DocumentStrategyMeta &
     DocumentTypeMeta
 export type FullDocument<
-    Type extends object, AdditionalPropertyTypes
+    Type extends object = object, AdditionalPropertyTypes = unknown
 > = BaseDocument & Document<Type> & Mapping<AdditionalPropertyTypes>
-export type PartialFullDocument<Type extends object, AdditionalPropertyTypes> =
+export type PartialFullDocument<
+    Type extends object = object,
+    AdditionalPropertyTypes = unknown
+> =
     Partial<BaseDocument> &
     Partial<Document<Type>> &
     Mapping<AdditionalPropertyTypes>
@@ -337,10 +340,10 @@ export interface BaseModelConfiguration<
     updateStrategy:UpdateStrategy
 }
 export interface ModelConfiguration<
-    Type extends object,
-    AttachmentType extends Attachment,
-    AdditionalSpecifications extends object,
-    AdditionalPropertiesType
+    Type extends object = object,
+    AttachmentType extends Attachment = Attachment,
+    AdditionalSpecifications extends object = object,
+    AdditionalPropertiesType = unknown
 > extends BaseModelConfiguration<Type, AdditionalSpecifications> {
     autoMigrationPath:string
     entities:Models<
@@ -566,7 +569,7 @@ export interface CommonScope<
             Type, AdditionalSpecifications
         >,
         oldValue:Type
-    ) => CheckedPropertyResult
+    ) => CheckedPropertyResult<Type>
 
     model:Model<
         ObjectType,
@@ -604,7 +607,11 @@ export interface PropertyScope<
     newValue:Type
     oldValue?:Type
 
-    propertySpecification:PropertySpecification<Type, AdditionalSpecifications>
+    propertySpecification:PropertySpecification<
+        Type, AdditionalSpecifications
+    >,
+
+    attachmentsTarget?:Mapping<AttachmentType>
 }
 //// endregion
 export interface EvaluationResult<
@@ -640,8 +647,9 @@ export type Evaluate<R, P extends Array<unknown>> = (...parameters:P) => R
 export interface CheckedResult {
     changedPath:Array<string>
 }
-export interface CheckedPropertyResult extends CheckedResult {
-    newValue:unknown
+export interface CheckedPropertyResult<Type> extends CheckedResult {
+    // NOTE: "null" means no changes regarding existing data.
+    newValue:null|Type
 }
 export interface CheckedDocumentResult<
     ObjectType extends object, AdditionalPropertiesType
@@ -650,10 +658,10 @@ export interface CheckedDocumentResult<
 }
 /// endregion
 export type Migrator<
-    Type extends object,
-    AttachmentType extends Attachment,
-    AdditionalSpecifications extends object,
-    AdditionalPropertiesType
+    Type extends object = object,
+    AttachmentType extends Attachment = Attachment,
+    AdditionalSpecifications extends object = object,
+    AdditionalPropertiesType = unknown
 > = (
     document:Document,
     scope:{

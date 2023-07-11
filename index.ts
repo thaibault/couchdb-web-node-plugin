@@ -24,7 +24,8 @@ import {
     Mapping,
     PlainObject,
     ProcessCloseReason,
-    SecondParameter
+    SecondParameter,
+    ValueOf
 } from 'clientnode/type'
 import {promises as fileSystem} from 'fs'
 import {basename, extname, resolve} from 'path'
@@ -55,7 +56,7 @@ import {
     ExistingDocument,
     FullDocument,
     Index,
-    Migrator,
+    Migrator, Model,
     Models,
     PartialFullDocument,
     PropertySpecification,
@@ -622,7 +623,9 @@ export class Database implements PluginHandler {
             // endregion
             // region check if all constraint descriptions compile
             for (const [modelName, model] of Object.entries(models))
-                for (const [name, specification] of Object.entries(model))
+                for (const [name, specification] of Object.entries(model) as
+                    Array<[keyof Model, ValueOf<Model>]>
+                )
                     if (([
                         specialNames.constraint.execution,
                         specialNames.constraint.expression
@@ -652,7 +655,7 @@ export class Database implements PluginHandler {
                                     @typescript-eslint/no-implied-eval
                                 */
                     } else {
-                        const property = specification
+                        const property = specification as PropertySpecification
 
                         for (const type of [
                             'conflictingConstraintExpression',
@@ -695,7 +698,7 @@ export class Database implements PluginHandler {
         }
         // region run auto-migration
         if (configuration.couchdb.model.autoMigrationPath) {
-            const migrater:Mapping<Migrator> = {}
+            const migrators:Mapping<Migrator> = {}
             if (await Tools.isDirectory(resolve(
                 configuration.couchdb.model.autoMigrationPath
             )))
@@ -758,15 +761,15 @@ export class Database implements PluginHandler {
                             `${document[typeName] as string}" was successful.`
                         )
                     } else if (['.js'].includes(extname(file.name)))
-                        // region collect script migrater
-                        migrater[file.path] = (
+                        // region collect script migrators
+                        migrators[file.path] = (
                             eval(`require('${file.path}')`) as
                                 {default:Migrator}
                         ).default
                         // endregion
                     else if (['.mjs'].includes(extname(file.name)))
-                        // region collect module migrater
-                        migrater[file.path] = (
+                        // region collect module migrators
+                        migrators[file.path] = (
                             (await eval(`import('${file.path}')`)) as
                                 {default:Migrator}
                         ).default
@@ -794,10 +797,10 @@ export class Database implements PluginHandler {
                             .strategy
                     ] = 'migrate'
 
-                    for (const name of Object.keys(migrater).sort()) {
+                    for (const name of Object.keys(migrators).sort()) {
                         let result:Document|null = null
                         try {
-                            result = migrater[name](
+                            result = migrators[name](
                                 newDocument,
                                 {
                                     configuration,
@@ -808,7 +811,7 @@ export class Database implements PluginHandler {
                                     idName,
                                     typeName,
 
-                                    migrater,
+                                    migrators,
                                     models,
                                     modelConfiguration,
 

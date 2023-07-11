@@ -651,7 +651,7 @@ export class DatabaseHelper {
             const model:ModelType = models[modelName]
             let additionalPropertySpecification:(
                 PropertySpecification<
-                    AdditionalSpecifications, AdditionalSpecifications
+                    AdditionalPropertiesType, AdditionalSpecifications
                 > |
                 undefined
             ) = undefined
@@ -795,7 +795,7 @@ export class DatabaseHelper {
                     Type, AdditionalSpecifications
                 >,
                 oldValue?:Type
-            ):CheckedPropertyResult => {
+            ):CheckedPropertyResult<Type> => {
                 let changedPath:Array<string> = []
                 // region type
                 const types = ([] as Array<TypeNames>).concat(
@@ -1223,7 +1223,8 @@ export class DatabaseHelper {
                 >,
                 newDocument:PartialFullDocumentType,
                 oldDocument:null|PartialFullDocumentType,
-                name:keyof PartialFullDocumentType
+                name:keyof PartialFullDocumentType,
+                attachmentsTarget?:Attachments
             ) => {
                 if (!oldDocument)
                     for (const type of [
@@ -1259,6 +1260,8 @@ export class DatabaseHelper {
                                     propertySpecification[type],
                                     type.endsWith('Expression'),
                                     {
+                                        attachmentsTarget,
+
                                         checkPropertyContent,
 
                                         model,
@@ -1319,7 +1322,11 @@ export class DatabaseHelper {
                                     result.result as null
                                 )
                             )
-                                (newDocument[name] as Type) = result.result!
+                                if (attachmentsTarget)
+                                    attachmentsTarget = result.result!
+                                else
+                                    (newDocument[name] as Type) =
+                                        result.result!
                         }
             }
             /// endregion
@@ -1330,7 +1337,8 @@ export class DatabaseHelper {
                 >,
                 newDocument:PartialFullDocumentType,
                 oldDocument:null|PartialFullDocumentType,
-                name:keyof PartialFullDocumentType
+                name:keyof PartialFullDocumentType,
+                attachmentsTarget?:Attachments
             ) => {
                 if (!Object.prototype.hasOwnProperty.call(newDocument, name))
                     return
@@ -1362,7 +1370,7 @@ export class DatabaseHelper {
                         propertySpecification, type
                     ))
                         try {
-                            (newDocument[name] as Type) = evaluate<
+                            const result = evaluate<
                                 Type,
                                 PropertyScope<
                                     ObjectType,
@@ -1376,6 +1384,8 @@ export class DatabaseHelper {
                                 propertySpecification[type],
                                 type.endsWith('Expression'),
                                 {
+                                    attachmentsTarget,
+
                                     checkPropertyContent,
 
                                     model,
@@ -1397,7 +1407,13 @@ export class DatabaseHelper {
 
                                     propertySpecification
                                 }
-                            )!.result!
+                            )!
+
+                            if (attachmentsTarget)
+                                attachmentsTarget[name as string] =
+                                    result.result as unknown as AttachmentType
+                            else
+                                (newDocument[name] as Type) = result.result!
                         } catch (error) {
                             if (((
                                 error:unknown
@@ -1720,21 +1736,23 @@ export class DatabaseHelper {
                         for (const fileName of newFileNames)
                             runCreatePropertyHook<AttachmentType>(
                                 propertySpecification,
-                                newAttachments,
+                                newDocument,
                                 oldDocument && oldDocument[name] ?
                                     oldDocument[name]! :
                                     null,
-                                fileName
+                                fileName,
+                                newAttachments
                             )
 
                         for (const fileName of newFileNames)
                             runUpdatePropertyHook<AttachmentType>(
                                 propertySpecification,
-                                newAttachments,
+                                newDocument,
                                 oldDocument && oldDocument[name] ?
                                     oldDocument[name]! :
                                     null,
-                                fileName
+                                fileName,
+                                newAttachments
                             )
 
                         if ([null, undefined].includes(
@@ -1778,6 +1796,7 @@ export class DatabaseHelper {
                                     )) {
                                         newAttachments[fileName] = (
                                             propertySpecification.default as
+                                                unknown as
                                                 Attachments
                                         )[fileName]
                                         changedPath = parentNames.concat(
@@ -1792,19 +1811,18 @@ export class DatabaseHelper {
                     }
                     // endregion
                 else {
-                    const propertySpecification =
+                    const propertySpecification = (
                         specifiedPropertyNames.includes(name) ?
                             model[name] :
-                            additionalPropertySpecification as
-                                PropertySpecification<
-                                    PropertyValue,
-                                    AdditionalSpecifications
-                                >
+                            additionalPropertySpecification
+                    ) as PropertySpecification<
+                        ValueOf<ObjectType>, AdditionalSpecifications
+                    >
 
-                    runCreatePropertyHook<PropertyValue>(
+                    runCreatePropertyHook<ValueOf<ObjectType>>(
                         propertySpecification, newDocument, oldDocument, name
                     )
-                    runUpdatePropertyHook<PropertyValue>(
+                    runUpdatePropertyHook<ValueOf<ObjectType>>(
                         propertySpecification, newDocument, oldDocument, name
                     )
 
@@ -1825,8 +1843,8 @@ export class DatabaseHelper {
                             )
                         ))
                             throwError(
-                                `MissingProperty: Missing property "${name}"` +
-                                `${pathDescription}.`
+                                `MissingProperty: Missing property ` +
+                                `"${String(name)}"${pathDescription}.`
                             )
 
                         if (
@@ -1842,7 +1860,7 @@ export class DatabaseHelper {
                                 newDocument[name] = oldDocument[name]
                             else if (!updateStrategy)
                                 changedPath = parentNames.concat(
-                                    name, 'property removed'
+                                    String(name), 'property removed'
                                 )
                     } else if (
                         !Object.prototype.hasOwnProperty.call(
@@ -1860,16 +1878,19 @@ export class DatabaseHelper {
                                 newDocument[name] = oldDocument[name]
                             else if (updateStrategy === 'migrate') {
                                 newDocument[name] =
-                                    propertySpecification.default as Primitive
+                                    propertySpecification.default as
+                                        typeof newDocument[keyof ObjectType]
                                 changedPath = parentNames.concat(
-                                    name, 'migrate default value'
+                                    String(name), 'migrate default value'
                                 )
                             }
                         } else {
                             newDocument[name] =
-                                propertySpecification.default as Primitive
-                            changedPath =
-                                changedPath.concat(name, 'add default value')
+                                propertySpecification.default as
+                                    typeof newDocument[keyof ObjectType]
+                            changedPath = changedPath.concat(
+                                String(name), 'add default value'
+                            )
                         }
                 }
                 // endregion
@@ -1899,7 +1920,10 @@ export class DatabaseHelper {
                     )
                         delete newDocument[name]
             /// endregion
-            for (const [name, newValue] of Object.entries(newDocument))
+            for (const [name, newValue] of (
+                Object.entries(newDocument) as
+                    Array<[keyof ObjectType, ValueOf<ObjectType>]>
+            ))
                 if (
                     !modelConfiguration.property.name.reserved.concat(
                         revisionName,
@@ -1910,23 +1934,26 @@ export class DatabaseHelper {
                         specialNames.revisions,
                         specialNames.revisionsInformation,
                         specialNames.strategy
-                    ).includes(name)
+                    ).includes(name as keyof BaseModelType)
                 ) {
                     let propertySpecification:(
+                        typeof model[keyof ObjectType] |
                         PropertySpecification<
-                            PropertyValue, AdditionalSpecifications
+                            AdditionalPropertiesType, AdditionalSpecifications
                         > |
                         undefined
                     )
                     if (Object.prototype.hasOwnProperty.call(model, name))
                         propertySpecification = model[name]
                     else if (additionalPropertySpecification)
-                        propertySpecification = additionalPropertySpecification
+                        (propertySpecification as PropertySpecification<
+                            AdditionalPropertiesType, AdditionalSpecifications
+                        >) = additionalPropertySpecification!
                     else if (updateStrategy === 'migrate') {
                         delete newDocument[name]
 
                         changedPath = parentNames.concat(
-                            name, 'migrate removed property'
+                            String(name), 'migrate removed property'
                         )
 
                         continue
@@ -1952,16 +1979,15 @@ export class DatabaseHelper {
                             ))
                                 for (const type in model[name])
                                     if (fileNameMatchesModelType(
-                                        type, fileName, model[name]![type]
+                                        type,
+                                        fileName,
+                                        model[specialNames.attachment]![type]
                                     )) {
                                         checkPropertyWriteableMutableNullable<
                                             AttachmentType
                                         >(
-                                            model[name]![type as
-                                                keyof PropertySpecification<
-                                                    AttachmentType,
-                                                    AdditionalSpecifications
-                                                >
+                                            model[specialNames.attachment]![
+                                                type
                                             ],
                                             newDocument,
                                             oldDocument,
@@ -1974,9 +2000,11 @@ export class DatabaseHelper {
 
                         continue
                     } else if (checkPropertyWriteableMutableNullable<
-                        PropertyValue
+                        AdditionalPropertiesType|ValueOf<ObjectType>
                     >(
-                        propertySpecification,
+                        propertySpecification as PropertySpecification<
+                            AdditionalPropertiesType, AdditionalSpecifications
+                        >,
                         newDocument,
                         oldDocument,
                         name,
@@ -1995,8 +2023,8 @@ export class DatabaseHelper {
                         // region check arrays
                         if (!Array.isArray(newProperty))
                             throwError(
-                                `PropertyType: Property "${name}" isn't of ` +
-                                `type "array -> ` +
+                                `PropertyType: Property "${String(name)}" ` +
+                                `isn't of type "array -> ` +
                                 `${propertySpecification.type as string}" ` +
                                 `(given "${serialize(newProperty)}")` +
                                 `${pathDescription}.`
@@ -2009,9 +2037,10 @@ export class DatabaseHelper {
                                 (propertySpecification.minimumNumber as number)
                         )
                             throwError(
-                                `MinimumArrayLength: Property "${name}" (` +
-                                `array of length ${newProperty.length}) ` +
-                                `doesn't fullfill minimum array length of ` +
+                                `MinimumArrayLength: Property ` +
+                                `"${String(name)}" (array of length ` +
+                                `${newProperty.length}) doesn't fullfill ` +
+                                `minimum array length of ` +
                                 (
                                     propertySpecification.minimumNumber as
                                         unknown as
@@ -2027,9 +2056,10 @@ export class DatabaseHelper {
                                 newProperty.length
                         )
                             throwError(
-                                `MaximumArrayLength: Property "${name}" (` +
-                                `array of length ${newProperty.length}) ` +
-                                `doesn't fullfill maximum array length of ` +
+                                `MaximumArrayLength: Property ` +
+                                `"${String(name)}" (array of length ` +
+                                `${newProperty.length}) doesn't fullfill ` +
+                                `maximum array length of ` +
                                 (
                                     propertySpecification.maximumNumber as
                                         unknown as
@@ -2039,9 +2069,12 @@ export class DatabaseHelper {
                             )
 
                         checkPropertyConstraints<PropertyValue>(
-                            newProperty,
-                            name,
-                            propertySpecification,
+                            newProperty as PropertyValue,
+                            String(name),
+                            propertySpecification as PropertySpecification<
+                                AdditionalPropertiesType,
+                                AdditionalSpecifications
+                            >,
                             oldDocument &&
                             Object.prototype.hasOwnProperty.call(
                                 oldDocument, name
@@ -2122,8 +2155,8 @@ export class DatabaseHelper {
                             newProperty[index] = checkPropertyContent<
                                 ValueOf<ObjectType>
                             >(
-                                value,
-                                `${index + 1}. value in ${name}`,
+                                value as ValueOf<ObjectType>,
+                                `${index + 1}. value in ${String(name)}`,
                                 propertySpecificationCopy
                             ).newValue as DocumentContent
                             if (value === null)
@@ -2144,8 +2177,9 @@ export class DatabaseHelper {
                             serialize(oldDocument[name]) ===
                                 serialize(newProperty)
                         ))
-                            changedPath =
-                                parentNames.concat(name, 'array updated')
+                            changedPath = parentNames.concat(
+                                String(name), 'array updated'
+                            )
                         /// endregion
                         // endregion
                     } else {
@@ -2159,14 +2193,19 @@ export class DatabaseHelper {
                                 oldDocument[name] :
                                 null
 
-                        const result:{
-                            changedPath:Array<string>
-                            newValue:unknown
-                        } = checkPropertyContent<ValueOf<ObjectType>>(
-                            newValue, name, propertySpecification, oldValue
-                        )
+                        const result =
+                            checkPropertyContent<ValueOf<ObjectType>>(
+                                newValue,
+                                String(name),
+                                propertySpecification as PropertySpecification<
+                                    ValueOf<ObjectType>,
+                                    AdditionalSpecifications
+                                >,
+                                oldValue as ValueOf<ObjectType>
+                            )
 
-                        newDocument[name] = result.newValue as PlainObject
+                        newDocument[name] = result.newValue as
+                            PartialFullDocumentType[keyof ObjectType]
 
                         if (result.changedPath.length)
                             changedPath = result.changedPath
@@ -2178,7 +2217,7 @@ export class DatabaseHelper {
                         if (newDocument[name] === null) {
                             if (oldValue !== null)
                                 changedPath = parentNames.concat(
-                                    name, 'property removed'
+                                    String(name), 'property removed'
                                 )
 
                             delete newDocument[name]

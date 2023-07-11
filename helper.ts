@@ -15,11 +15,11 @@
 */
 // region imports
 import Tools, {globalContext} from 'clientnode'
-import {Mapping} from 'clientnode/type'
+import {Mapping, ValueOf} from 'clientnode/type'
 
 import {
     AllowedModelRolesMapping,
-    AllowedRoles,
+    AllowedRoles, BaseModel,
     Configuration,
     Connection,
     DatabaseConnectorConfiguration,
@@ -30,7 +30,7 @@ import {
     Model,
     ModelConfiguration,
     Models,
-    NormalizedAllowedRoles,
+    NormalizedAllowedRoles, PropertySpecification,
     PutDocument,
     PutOptions,
     Services,
@@ -275,14 +275,18 @@ export const determineAllowedModelRolesMapping = (
                 ...normalizeAllowedRoles(model[allowedRoleName]!)
             }
 
-            for (const [name, property] of Object.entries(model))
+            for (const [name, property] of Object.entries(model) as
+                Array<[keyof Model, ValueOf<Model>]>
+            )
                 if (
                     property !== null &&
                     typeof property === 'object' &&
-                    property.allowedRoles
+                    (property as PropertySpecification).allowedRoles
                 )
                     allowedModelRolesMapping[modelName].properties[name] =
-                        normalizeAllowedRoles(property.allowedRoles)
+                        normalizeAllowedRoles(
+                            (property as PropertySpecification).allowedRoles!
+                        )
         } else
             allowedModelRolesMapping[modelName] = {
                 properties: {},
@@ -302,23 +306,23 @@ export const determineAllowedModelRolesMapping = (
 export const determineGenericIndexablePropertyNames = (
     modelConfiguration:ModelConfiguration, model:Model
 ):Array<string> => {
-    const specialNames:SpecialPropertyNames =
-        modelConfiguration.property.name.special
+    const specialNames = modelConfiguration.property.name.special
 
-    return Object.keys(model)
-        .filter((name:string):boolean =>
+    return (Object.keys(model) as Array<keyof Model>)
+        .filter((name):boolean =>
             model[name] !== null &&
             typeof model[name] === 'object' &&
             (
                 Object.prototype.hasOwnProperty.call(
                     model[name], 'index'
                 ) &&
-                model[name].index ||
+                // TODO
+                model[name]!.index ||
                 !(
                     Object.prototype.hasOwnProperty.call(
                         model[name], 'index'
                     ) &&
-                    !model[name].index ||
+                    !model[name]!.index ||
                     modelConfiguration.property.name.reserved.concat(
                         specialNames.additional,
 
@@ -365,7 +369,7 @@ export const determineGenericIndexablePropertyNames = (
                 )
             )
         )
-        .concat(specialNames.id, specialNames.revision)
+        .concat([specialNames.id, specialNames.revision] as Array<keyof Model>)
         .sort()
 }
 /**
