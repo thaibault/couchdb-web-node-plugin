@@ -24,8 +24,7 @@ import {
     Mapping,
     PlainObject,
     ProcessCloseReason,
-    SecondParameter,
-    ValueOf
+    SecondParameter
 } from 'clientnode/type'
 import {promises as fileSystem} from 'fs'
 import {basename, extname, resolve} from 'path'
@@ -56,7 +55,7 @@ import {
     ExistingDocument,
     FullDocument,
     Index,
-    Migrator, Model,
+    Migrator,
     Models,
     PartialFullDocument,
     PropertySpecification,
@@ -623,9 +622,7 @@ export class Database implements PluginHandler {
             // endregion
             // region check if all constraint descriptions compile
             for (const [modelName, model] of Object.entries(models))
-                for (const [name, specification] of Object.entries(model) as
-                    Array<[keyof Model, ValueOf<Model>]>
-                )
+                for (const [name, specification] of Object.entries(model))
                     if (([
                         specialNames.constraint.execution,
                         specialNames.constraint.expression
@@ -654,9 +651,7 @@ export class Database implements PluginHandler {
                                     eslint-enable
                                     @typescript-eslint/no-implied-eval
                                 */
-                    } else {
-                        const property = specification as PropertySpecification
-
+                    } else
                         for (const type of [
                             'conflictingConstraintExpression',
                             'conflictingConstraintExecution',
@@ -664,11 +659,11 @@ export class Database implements PluginHandler {
                             'constraintExecution'
                         ] as const)
                             if (
-                                property !== null &&
-                                typeof property === 'object'
+                                specification !== null &&
+                                typeof specification === 'object'
                             ) {
                                 const constraint:(Constraint|null|undefined) =
-                                    property[type]
+                                    specification[type]
 
                                 /*
                                     eslint-disable
@@ -693,7 +688,6 @@ export class Database implements PluginHandler {
                                     @typescript-eslint/no-implied-eval
                                 */
                             }
-                    }
             // endregion
         }
         // region run auto-migration

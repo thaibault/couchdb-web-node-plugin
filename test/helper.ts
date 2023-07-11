@@ -302,7 +302,7 @@ describe('helper', ():void => {
             Tools.extend(
                 true,
                 Tools.copy(modelConfiguration),
-                {entities: {a: {}}} as Partial<ModelConfiguration>
+                {entities: {a: {} as Model}} as Partial<ModelConfiguration>
             )
         )).toThrow()
 

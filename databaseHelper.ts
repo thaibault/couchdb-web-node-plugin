@@ -1223,7 +1223,7 @@ export class DatabaseHelper {
                 >,
                 newDocument:PartialFullDocumentType,
                 oldDocument:null|PartialFullDocumentType,
-                name:keyof PartialFullDocumentType,
+                name:(keyof Attachments)|(keyof PartialFullDocumentType),
                 attachmentsTarget?:Attachments
             ) => {
                 if (!oldDocument)
@@ -1323,7 +1323,11 @@ export class DatabaseHelper {
                                 )
                             )
                                 if (attachmentsTarget)
-                                    attachmentsTarget = result.result!
+                                    attachmentsTarget[
+                                        name as keyof Attachments
+                                    ] = result.result as
+                                        unknown as
+                                        AttachmentType
                                 else
                                     (newDocument[name] as Type) =
                                         result.result!
@@ -1337,7 +1341,7 @@ export class DatabaseHelper {
                 >,
                 newDocument:PartialFullDocumentType,
                 oldDocument:null|PartialFullDocumentType,
-                name:keyof PartialFullDocumentType,
+                name:(keyof Attachments)|(keyof PartialFullDocumentType),
                 attachmentsTarget?:Attachments
             ) => {
                 if (!Object.prototype.hasOwnProperty.call(newDocument, name))
@@ -1410,7 +1414,7 @@ export class DatabaseHelper {
                             )!
 
                             if (attachmentsTarget)
-                                attachmentsTarget[name as string] =
+                                attachmentsTarget[name as keyof Attachments] =
                                     result.result as unknown as AttachmentType
                             else
                                 (newDocument[name] as Type) = result.result!
@@ -1682,7 +1686,7 @@ export class DatabaseHelper {
                                 )
 
                         const newAttachments =
-                            newDocument[name] as Attachments
+                            newDocument[specialNames.attachment] as Attachments
 
                         let oldFileNames:Array<string> = []
                         if (oldDocument) {

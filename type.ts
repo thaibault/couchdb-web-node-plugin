@@ -194,15 +194,15 @@ export interface PropertySpecification<
     additionalSpecifications?:AdditionalSpecifications
 }
 export interface FileSpecification<
-    Type,
-    AdditionalSpecifications extends object
+    Type extends Attachment = Attachment,
+    AdditionalSpecifications extends object = object
 > extends PropertySpecification<Type, AdditionalSpecifications> {
     fileName?:PropertySpecification<string, AdditionalSpecifications>
 }
 export interface BaseModel<
-    AttachmentType extends Attachment,
-    AdditionalSpecifications extends object,
-    AdditionalPropertiesType
+    AttachmentType extends Attachment = Attachment,
+    AdditionalSpecifications extends object = object,
+    AdditionalPropertiesType = unknown
 > {
     _additional?:PropertySpecification<
         AdditionalPropertiesType, AdditionalSpecifications
@@ -234,7 +234,7 @@ export interface BaseModel<
     _id:PropertySpecification<string, AdditionalSpecifications>
 }
 export type Model<
-    Type extends object = object,
+    Type extends object = Mapping<unknown>,
     AttachmentType extends Attachment = Attachment,
     AdditionalSpecifications extends object = object,
     AdditionalPropertiesType = unknown
@@ -248,7 +248,7 @@ export type Model<
         >
     }
 export type Models<
-    Type extends object = object,
+    Type extends object = Mapping<unknown>,
     AttachmentType extends Attachment = Attachment,
     AdditionalSpecifications extends object = object,
     AdditionalPropertiesType = unknown
@@ -392,9 +392,9 @@ export type ConnectorConfiguration = DatabaseConnectorConfiguration & {
     fetch?:AdvancedFetchOptions|null
 }
 export interface CoreConfiguration<
-    Type extends object = object,
+    Type extends object = Mapping<unknown>,
     AttachmentType extends Attachment = Attachment,
-    AdditionalSpecifications extends object = Mapping<unknown>,
+    AdditionalSpecifications extends object = object,
     AdditionalPropertiesType = unknown
 > {
     attachAutoRestarter:boolean

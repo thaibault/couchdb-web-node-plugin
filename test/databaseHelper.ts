@@ -25,6 +25,7 @@ import DatabaseHelper from '../databaseHelper'
 import {extendModels} from '../helper'
 import packageConfiguration from '../package.json'
 import {
+    BaseModel,
     Configuration,
     Document,
     ModelConfiguration,
@@ -32,7 +33,7 @@ import {
     SpecialPropertyNames, UpdateStrategy
 } from '../type'
 // endregion
-describe('databaseHelper', ():void => {
+describe('databaseHelper', () => {
     // region prepare environment
     const configuration:Configuration =
         packageConfiguration.webNode as unknown as Configuration
@@ -119,7 +120,7 @@ describe('databaseHelper', ():void => {
             ))
                 if (propertyName !== typeName)
                     delete defaultModelConfiguration.entities._base[
-                        propertyName
+                        propertyName as keyof BaseModel
                     ]
             // region forbidden writes
             for (const test of [
@@ -1582,8 +1583,8 @@ describe('databaseHelper', ():void => {
                     }],
                     {entities: {Test: {[attachmentName]: {test: {
                         onCreateExpression:
-                            `(newDocument[name].data += ' footer') && ` +
-                            'newDocument[name]'
+                            `(attachmentsTarget[name].data += ' footer') && ` +
+                            'attachmentsTarget[name]'
                     }}}}},
                     {
                         fillUp: {
@@ -1629,8 +1630,8 @@ describe('databaseHelper', ():void => {
                     ],
                     {entities: {Test: {[attachmentName]: {test: {
                         onCreateExpression:
-                            `(newDocument[name].data += ' footer') && ` +
-                            'newDocument[name]'
+                            `(attachmentsTarget[name].data += ' footer') && ` +
+                            'attachmentsTarget[name]'
                     }}}}},
                     {
                         fillUp: {
@@ -1727,8 +1728,8 @@ describe('databaseHelper', ():void => {
                     }],
                     {entities: {Test: {[attachmentName]: {test: {
                         onUpdateExpression:
-                            `(newDocument[name].data += ' footer') && ` +
-                            'newDocument[name]'
+                            `(attachmentsTarget[name].data += ' footer') && ` +
+                            'attachmentsTarget[name]'
                     }}}}},
                     {
                         fillUp: {
@@ -1775,8 +1776,8 @@ describe('databaseHelper', ():void => {
                     ],
                     {entities: {Test: {[attachmentName]: {test: {
                         onUpdateExpression:
-                            `(newDocument[name].data += ' footer') && ` +
-                            'newDocument[name]'
+                            `(attachmentsTarget[name].data += ' footer') && ` +
+                            'attachmentsTarget[name]'
                     }}}}},
                     {
                         fillUp: {
@@ -1810,8 +1811,8 @@ describe('databaseHelper', ():void => {
                     {entities: {Test: {
                         [attachmentName]: {data: {
                             onUpdateExpression:
-                                `(newDocument[name].data += ' footer') && ` +
-                                'newDocument[name]'
+                                `(attachmentsTarget[name].data += ' footer')` +
+                                '&& attachmentsTarget[name]'
                         }},
                         a: {emptyEqualsToNull: false}
                     }}},
@@ -3856,7 +3857,7 @@ describe('databaseHelper', ():void => {
             ))
                 if (propertyName !== typeName)
                     delete defaultModelConfiguration.entities._base[
-                        propertyName
+                        propertyName as keyof BaseModel
                     ]
 
             const models = extendModels(Tools.extend(

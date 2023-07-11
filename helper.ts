@@ -19,7 +19,8 @@ import {Mapping, ValueOf} from 'clientnode/type'
 
 import {
     AllowedModelRolesMapping,
-    AllowedRoles, BaseModel,
+    AllowedRoles,
+    BaseModel,
     Configuration,
     Connection,
     DatabaseConnectorConfiguration,
@@ -30,7 +31,8 @@ import {
     Model,
     ModelConfiguration,
     Models,
-    NormalizedAllowedRoles, PropertySpecification,
+    NormalizedAllowedRoles,
+    PropertySpecification,
     PutDocument,
     PutOptions,
     Services,
@@ -275,18 +277,14 @@ export const determineAllowedModelRolesMapping = (
                 ...normalizeAllowedRoles(model[allowedRoleName]!)
             }
 
-            for (const [name, property] of Object.entries(model) as
-                Array<[keyof Model, ValueOf<Model>]>
-            )
+            for (const [name, property] of Object.entries(model))
                 if (
                     property !== null &&
                     typeof property === 'object' &&
-                    (property as PropertySpecification).allowedRoles
+                    property.allowedRoles
                 )
                     allowedModelRolesMapping[modelName].properties[name] =
-                        normalizeAllowedRoles(
-                            (property as PropertySpecification).allowedRoles!
-                        )
+                        normalizeAllowedRoles(property.allowedRoles)
         } else
             allowedModelRolesMapping[modelName] = {
                 properties: {},
@@ -296,6 +294,16 @@ export const determineAllowedModelRolesMapping = (
 
     return allowedModelRolesMapping
 }
+/**
+ * Determines whether given value of a model is a property specification.
+ * @param value - Value to analyze.
+ *
+ * @returns Boolean indicating the case.
+ */
+export const isPropertySpecification = (
+    value:ValueOf<Model>
+):value is PropertySpecification =>
+    value !== null && typeof value === 'object'
 /**
  * Determines all property names which are indexable in a generic manner.
  * @param modelConfiguration - Model specification object.
@@ -308,21 +316,22 @@ export const determineGenericIndexablePropertyNames = (
 ):Array<string> => {
     const specialNames = modelConfiguration.property.name.special
 
-    return (Object.keys(model) as Array<keyof Model>)
-        .filter((name):boolean =>
-            model[name] !== null &&
-            typeof model[name] === 'object' &&
-            (
+    return Object.keys(model)
+        .filter((name):boolean => {
+            const specification = model[name]
+
+            return (
+                isPropertySpecification(specification) &&
                 Object.prototype.hasOwnProperty.call(
-                    model[name], 'index'
+                    specification, 'index'
                 ) &&
-                // TODO
-                model[name]!.index ||
+                specification.index ||
+                isPropertySpecification(specification) &&
                 !(
                     Object.prototype.hasOwnProperty.call(
-                        model[name], 'index'
+                        specification, 'index'
                     ) &&
-                    !model[name]!.index ||
+                    !specification.index ||
                     modelConfiguration.property.name.reserved.concat(
                         specialNames.additional,
 
@@ -352,23 +361,23 @@ export const determineGenericIndexablePropertyNames = (
 
                         specialNames.type
                     ).includes(name) ||
-                    model[name].type &&
+                    specification.type &&
                     (
-                        typeof model[name].type === 'string' &&
-                        (model[name].type as string).endsWith('[]') ||
-                        Array.isArray(model[name].type) &&
-                        (model[name].type as Array<string>).length &&
+                        typeof specification.type === 'string' &&
+                        specification.type.endsWith('[]') ||
+                        Array.isArray(specification.type) &&
+                        (specification.type as Array<string>).length &&
                         Array.isArray(
-                            (model[name].type as Array<string>)[0]
+                            (specification.type as Array<string>)[0]
                         ) ||
                         Object.prototype.hasOwnProperty.call(
                             modelConfiguration.entities,
-                            model[name].type as string
+                            specification.type as string
                         )
                     )
                 )
             )
-        )
+        })
         .concat([specialNames.id, specialNames.revision] as Array<keyof Model>)
         .sort()
 }
@@ -383,11 +392,11 @@ export const determineGenericIndexablePropertyNames = (
  */
 export const extendModel = (
     modelName:string,
-    models:Models,
+    models:Mapping<Partial<Model>>,
     extendPropertyName:SpecialPropertyNames['extend'] = '_extends'
-):Model => {
+):Partial<Model> => {
     if (modelName === '_base')
-        return models[modelName]
+        return models[modelName] as Model
 
     if (Object.prototype.hasOwnProperty.call(models, '_base'))
         if (
@@ -422,7 +431,7 @@ export const extendModel = (
         delete models[modelName][extendPropertyName]
     }
 
-    return models[modelName]
+    return models[modelName] as Model
 }
 /**
  * Extend default specification with specific one.
@@ -431,8 +440,7 @@ export const extendModel = (
  * @returns Models with extended specific specifications.
  */
 export const extendModels = (modelConfiguration:ModelConfiguration):Models => {
-    const specialNames:SpecialPropertyNames =
-        modelConfiguration.property.name.special
+    const specialNames = modelConfiguration.property.name.special
     const models:Models = {}
 
     const {typeRegularExpressionPattern} = modelConfiguration.property.name
@@ -452,23 +460,26 @@ export const extendModels = (modelConfiguration:ModelConfiguration):Models => {
 
         models[modelName] = extendModel(
             modelName, modelConfiguration.entities, specialNames.extend
-        )
+        ) as Model
     }
 
     for (const model of Object.values(models))
         for (const [propertyName, property] of Object.entries(model))
-            if (propertyName === specialNames.attachment)
-                for (const [type, value] of Object.entries(property))
-                    (property as unknown as Mapping<FileSpecification>)[type] =
+            if (propertyName === specialNames.attachment) {
+                const fileSpecifications =
+                    property as Mapping<FileSpecification>
+                for (const [type, value] of Object.entries(
+                    fileSpecifications
+                ))
+                    fileSpecifications[type] =
                         Tools.extend<FileSpecification>(
                             true,
                             Tools.copy(
-                                modelConfiguration.property
-                                    .defaultSpecification
+                                modelConfiguration.property.defaultSpecification
                             ) as FileSpecification,
-                            value as FileSpecification
+                            value
                         )
-            else if (!([
+            } else if (!([
                 specialNames.allowedRole,
                 specialNames.constraint.execution,
                 specialNames.constraint.expression,
@@ -476,14 +487,20 @@ export const extendModels = (modelConfiguration:ModelConfiguration):Models => {
                 specialNames.maximumAggregatedSize,
                 specialNames.minimumAggregatedSize,
                 specialNames.oldType
-            ] as Array<string>).includes(propertyName))
-                model[propertyName] = Tools.extend(
-                    true,
-                    Tools.copy(
-                        modelConfiguration.property.defaultSpecification
-                    ),
-                    property
-                )
+            ] as Array<keyof BaseModel>).includes(
+                propertyName as keyof BaseModel
+            ))
+                (
+                    model[propertyName as keyof BaseModel] as
+                        PropertySpecification
+                ) =
+                    Tools.extend(
+                        true,
+                        Tools.copy(
+                            modelConfiguration.property.defaultSpecification
+                        ),
+                        property
+                    )
 
     return models
 }
