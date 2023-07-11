@@ -1344,29 +1344,34 @@ export class DatabaseHelper {
                 name:(keyof Attachments)|(keyof PartialFullDocumentType),
                 attachmentsTarget?:Attachments
             ) => {
-                if (!Object.prototype.hasOwnProperty.call(newDocument, name))
-                    return
+                if (!attachmentsTarget) {
+                    if (!Object.prototype.hasOwnProperty.call(
+                        newDocument, name
+                    ))
+                        return
 
-                if (
-                    propertySpecification.trim &&
-                    typeof newDocument[name] === 'string'
-                )
-                    (newDocument[name] as string) =
-                        (newDocument[name] as string).trim()
-                if (
-                    propertySpecification.emptyEqualsToNull &&
-                    (
-                        newDocument[name] === '' ||
-                        Array.isArray(newDocument[name]) &&
-                        (
-                            newDocument[name] as Array<DocumentContent>
-                        ).length === 0 ||
-                        newDocument[name] !== null &&
-                        typeof newDocument[name] === 'object' &&
-                        Object.keys(newDocument).length === 0
+                    if (
+                        propertySpecification.trim &&
+                        typeof newDocument[name] === 'string'
                     )
-                )
-                    (newDocument[name] as null) = null
+                        (newDocument[name] as string) =
+                            (newDocument[name] as string).trim()
+                    if (
+                        propertySpecification.emptyEqualsToNull &&
+                        (
+                            newDocument[name] === '' ||
+                            Array.isArray(newDocument[name]) &&
+                            (
+                                newDocument[name] as Array<DocumentContent>
+                            ).length === 0 ||
+                            newDocument[name] !== null &&
+                            typeof newDocument[name] === 'object' &&
+                            Object.keys(newDocument).length === 0
+                        )
+                    )
+                        (newDocument[name] as null) = null
+                }
+
                 for (const type of [
                     'onUpdateExecution', 'onUpdateExpression'
                 ] as const)
