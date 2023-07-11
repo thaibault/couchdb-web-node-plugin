@@ -232,6 +232,7 @@ export interface BaseModel<
     _onUpdateExpression?:null|string
 
     _id:PropertySpecification<string, AdditionalSpecifications>
+    _rev:PropertySpecification<string, AdditionalSpecifications>
 }
 export type Model<
     Type extends object = Mapping<unknown>,
