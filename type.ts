@@ -245,7 +245,31 @@ export type Model<
     > &
     {
         [Property in keyof Type]:PropertySpecification<
-            Type[Property], AdditionalSpecifications
+            Type[Property] extends Array<unknown> ?
+                (
+                    Type[Property][number] extends object ?
+                        PropertySpecification<
+                            Array<Model<
+                                Type[Property][number],
+                                AttachmentType,
+                                AdditionalSpecifications,
+                                AdditionalPropertiesType
+                            >>,
+                            AdditionalSpecifications
+                        > :
+                        PropertySpecification<
+                            Type[Property], AdditionalSpecifications
+                        >
+                ) :
+                Type[Property] extends object ?
+                    Model<
+                        Type[Property],
+                        AttachmentType,
+                        AdditionalSpecifications,
+                        AdditionalPropertiesType
+                    > :
+                    Type[Property],
+            AdditionalSpecifications
         >
     }
 export type Models<
