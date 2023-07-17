@@ -281,10 +281,12 @@ export const determineAllowedModelRolesMapping = (
                 if (
                     property !== null &&
                     typeof property === 'object' &&
-                    property.allowedRoles
+                    (property as PropertySpecification).allowedRoles
                 )
                     allowedModelRolesMapping[modelName].properties[name] =
-                        normalizeAllowedRoles(property.allowedRoles)
+                        normalizeAllowedRoles(
+                            (property as PropertySpecification).allowedRoles!
+                        )
         } else
             allowedModelRolesMapping[modelName] = {
                 properties: {},
@@ -316,7 +318,7 @@ export const determineGenericIndexablePropertyNames = (
 ):Array<string> => {
     const specialNames = modelConfiguration.property.name.special
 
-    return Object.keys(model)
+    return (Object.keys(model) as Array<keyof Model>)
         .filter((name):boolean => {
             const specification = model[name]
 
@@ -499,7 +501,7 @@ export const extendModels = (modelConfiguration:ModelConfiguration):Models => {
                         Tools.copy(
                             modelConfiguration.property.defaultSpecification
                         ),
-                        property
+                        property as PropertySpecification
                     )
 
     return models
