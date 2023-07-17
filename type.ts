@@ -105,7 +105,7 @@ export interface Constraint {
     evaluation:string
 }
 export type PrimitiveType = 'boolean'|'integer'|'number'|'string'|'DateTime'
-export type Type = 'any'|PrimitiveType|string
+export type Type = string // |'any'|PrimitiveType
 export type TypeSpecification = Array<Type>|Type
 export const PrimitiveTypes = [
     'boolean',

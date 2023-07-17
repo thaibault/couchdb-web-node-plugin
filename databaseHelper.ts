@@ -402,7 +402,7 @@ export class DatabaseHelper {
 
         const normalizeDateTime = (
             value:DateRepresentationType
-        ):typeof NaN|null|number|string => {
+        ):null|number|string => {
             if (saveDateTimeAsNumber) {
                 if (value !== null && typeof value !== 'number') {
                     value = new Date(value)
@@ -432,7 +432,7 @@ export class DatabaseHelper {
                 }
             }
 
-            return value as typeof NaN|null|number|string
+            return value as null|number|string
         }
 
         const fileNameMatchesModelType = (
@@ -1056,7 +1056,7 @@ export class DatabaseHelper {
                     let selection =
                         Array.isArray(propertySpecification.selection) ?
                             propertySpecification.selection.map(
-                                (value:SelectionMapping|unknown):unknown =>
+                                (value:unknown):unknown =>
                                     (value as SelectionMapping)?.value ===
                                         undefined ?
                                         value :
