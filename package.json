@@ -1,6 +1,6 @@
 {
   "name": "couchdb-web-node-plugin",
-  "version": "1.0.609",
+  "version": "1.0.610",
   "description": "A couchdb server, model instance conflict handler, rest api, authentication, session management, schema validator and model relation guarantee for webNode.",
   "keywords": [
     "api",
