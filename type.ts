@@ -235,7 +235,7 @@ export interface BaseModel<
     _rev:PropertySpecification<string, AdditionalSpecifications>
 }
 export type Model<
-    Type extends object = Mapping<unknown>,
+    Type extends object|undefined = object,
     AttachmentType extends Attachment = Attachment,
     AdditionalSpecifications extends object = object,
     AdditionalPropertiesType = unknown
@@ -247,7 +247,7 @@ export type Model<
         [Property in keyof Type]:PropertySpecification<
             Type[Property] extends Array<unknown> ?
                 (
-                    Type[Property][number] extends object ?
+                    Type[Property][number] extends object|undefined ?
                         Array<Model<
                             Type[Property][number],
                             AttachmentType,
@@ -256,9 +256,9 @@ export type Model<
                         >> :
                         Type[Property]
                 ) :
-                Type[Property] extends object ?
+                Type[Property] extends object|undefined ?
                     (
-                        Type[Property] extends Date ?
+                        Type[Property] extends Date|undefined ?
                             Type[Property] :
                             Model<
                                 Type[Property],
@@ -272,7 +272,7 @@ export type Model<
         >
     }
 export type Models<
-    Type extends object = Mapping<unknown>,
+    Type extends object = object,
     AttachmentType extends Attachment = Attachment,
     AdditionalSpecifications extends object = object,
     AdditionalPropertiesType = unknown

@@ -663,7 +663,9 @@ export class Database implements PluginHandler {
                                 typeof specification === 'object'
                             ) {
                                 const constraint:(Constraint|null|undefined) =
-                                    specification[type]
+                                    (specification as PropertySpecification)[
+                                        type
+                                    ]
 
                                 /*
                                     eslint-disable
