@@ -284,8 +284,8 @@ export type UpdateStrategy = ''|'fillUp'|'incremental'|'migrate'
 
 export type DocumentContent =
     Array<DocumentContent>|PlainObject|Primitive
-export type DocumentStrategyMeta = {_updateStrategy?:UpdateStrategy}
-export type DocumentTypeMeta = {'-type':string}
+export interface DocumentStrategyMeta {_updateStrategy?:UpdateStrategy}
+export interface DocumentTypeMeta {'-type':string}
 export type BaseDocument =
     ChangesMeta &
     DocumentGetMeta &
