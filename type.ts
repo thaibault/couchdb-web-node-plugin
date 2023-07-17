@@ -257,12 +257,16 @@ export type Model<
                         Type[Property]
                 ) :
                 Type[Property] extends object ?
-                    Model<
-                        Type[Property],
-                        AttachmentType,
-                        AdditionalSpecifications,
-                        AdditionalPropertiesType
-                    > :
+                    (
+                        Type[Property] extends Date ?
+                            Type[Property] :
+                            Model<
+                                Type[Property],
+                                AttachmentType,
+                                AdditionalSpecifications,
+                                AdditionalPropertiesType
+                            >
+                    ) :
                     Type[Property],
             AdditionalSpecifications
         >
