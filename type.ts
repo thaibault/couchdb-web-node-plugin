@@ -248,18 +248,13 @@ export type Model<
             Type[Property] extends Array<unknown> ?
                 (
                     Type[Property][number] extends object ?
-                        PropertySpecification<
-                            Array<Model<
-                                Type[Property][number],
-                                AttachmentType,
-                                AdditionalSpecifications,
-                                AdditionalPropertiesType
-                            >>,
-                            AdditionalSpecifications
-                        > :
-                        PropertySpecification<
-                            Type[Property], AdditionalSpecifications
-                        >
+                        Array<Model<
+                            Type[Property][number],
+                            AttachmentType,
+                            AdditionalSpecifications,
+                            AdditionalPropertiesType
+                        >> :
+                        Type[Property]
                 ) :
                 Type[Property] extends object ?
                     Model<
