@@ -351,9 +351,7 @@ export class DatabaseHelper {
                     Object.prototype.hasOwnProperty.call(
                         model, specialNames.oldType
                     ) &&
-                    ![null, undefined].includes(
-                        model[specialNames.oldType] as null
-                    )
+                    model[specialNames.oldType]
                 )
                     for (const oldName of ([] as Array<string>).concat(
                         model[specialNames.oldType] as Array<string>
@@ -975,11 +973,9 @@ export class DatabaseHelper {
                 // region range
                 if (typeof newValue === 'string') {
                     if (
-                        ![null, undefined].includes(
-                            propertySpecification.minimumLength as null
-                        ) &&
-                        newValue.length <
-                            (propertySpecification.minimumLength as number)
+                        typeof propertySpecification.minimumLength ===
+                            'number' &&
+                        newValue.length < propertySpecification.minimumLength
                     )
                         throwError(
                             `MinimalLength: Property "` +
@@ -993,11 +989,9 @@ export class DatabaseHelper {
                             `${pathDescription}.`
                         )
                     if (
-                        ![null, undefined].includes(
-                            propertySpecification.maximumLength as null
-                        ) &&
-                        newValue.length >
-                            (propertySpecification.maximumLength as number)
+                        typeof propertySpecification.maximumLength ===
+                            'number' &&
+                        newValue.length > propertySpecification.maximumLength
                     )
                         throwError(
                             `MaximalLength: Property "` +
@@ -1014,10 +1008,8 @@ export class DatabaseHelper {
                 }
                 if (typeof newValue === 'number') {
                     if (
-                        ![null, undefined].includes(
-                            propertySpecification.minimum as null
-                        ) &&
-                        newValue < (propertySpecification.minimum as number)
+                        typeof propertySpecification.minimum === 'number' &&
+                        newValue < propertySpecification.minimum
                     )
                         throwError(
                             `Minimum: Property "${String(name)}" (type ` +
@@ -1032,10 +1024,8 @@ export class DatabaseHelper {
                             `${pathDescription}.`
                         )
                     if (
-                        ![null, undefined].includes(
-                            propertySpecification.maximum as null
-                        ) &&
-                        newValue > (propertySpecification.maximum as number)
+                        typeof propertySpecification.maximum === 'number' &&
+                        newValue > propertySpecification.maximum
                     )
                         throwError(
                             `Maximum: Property "${String(name)}" (type ` +
@@ -1079,15 +1069,13 @@ export class DatabaseHelper {
                 }
                 // endregion
                 // region pattern
-                if (!(
-                    [null, undefined].includes(
-                        propertySpecification.regularExpressionPattern as null
-                    ) ||
-                    new RegExp(
+                if (
+                    propertySpecification.regularExpressionPattern &&
+                    !(new RegExp(
                         propertySpecification.regularExpressionPattern as
                             string
-                    ).test(newValue as string)
-                ))
+                    ).test(newValue as string))
+                )
                     throwError(
                         `PatternMatch: Property "${String(name)}" should ` +
                         'match regular expression pattern ' +
@@ -1097,16 +1085,13 @@ export class DatabaseHelper {
                         ) +
                         ` (given "${newValue as string}")${pathDescription}.`
                     )
-                else if (!(
-                    [null, undefined].includes(
-                        propertySpecification
-                            .invertedRegularExpressionPattern as null
-                    ) ||
-                    !(new RegExp(
+                else if (
+                    propertySpecification.invertedRegularExpressionPattern &&
+                    new RegExp(
                         propertySpecification
                             .invertedRegularExpressionPattern as string
-                    )).test(newValue as string)
-                ))
+                    ).test(newValue as string)
+                )
                     throwError(
                         `InvertedPatternMatch: Property "${String(name)}" ` +
                         'should not match regular expression pattern ' +
@@ -1471,9 +1456,7 @@ export class DatabaseHelper {
             // region migrate old model specific property names
             if (updateStrategy === 'migrate')
                 for (const name of specifiedPropertyNames)
-                    if (![null, undefined].includes(
-                        model[name].oldName as null
-                    ))
+                    if (model[name].oldName)
                         for (const oldName of (
                             [] as Array<keyof ObjectType>
                         ).concat(
@@ -1764,9 +1747,10 @@ export class DatabaseHelper {
                                 newAttachments
                             )
 
-                        if ([null, undefined].includes(
-                            propertySpecification.default as null
-                        )) {
+                        if (
+                            typeof propertySpecification.default ===
+                                'undefined'
+                        ) {
                             if (!(
                                 propertySpecification.nullable ||
                                 newFileNames.length > 0 ||
@@ -1796,10 +1780,12 @@ export class DatabaseHelper {
                                 for (
                                     const fileName in
                                         propertySpecification.default as
+                                            unknown as
                                             object
                                 )
                                     if (Object.prototype.hasOwnProperty.call(
                                         propertySpecification.default as
+                                            unknown as
                                             object,
                                         fileName
                                     )) {
@@ -2039,11 +2025,10 @@ export class DatabaseHelper {
                                 `${pathDescription}.`
                             )
                         else if (
-                            ![null, undefined].includes(
-                                propertySpecification.minimumNumber as null
-                            ) &&
+                            typeof propertySpecification.minimumNumber ===
+                                'number' &&
                             (newProperty).length <
-                                (propertySpecification.minimumNumber as number)
+                                propertySpecification.minimumNumber
                         )
                             throwError(
                                 `MinimumArrayLength: Property ` +
@@ -2058,10 +2043,9 @@ export class DatabaseHelper {
                                 `${pathDescription}.`
                             )
                         else if (
-                            ![null, undefined].includes(
-                                propertySpecification.maximumNumber as null
-                            ) &&
-                            (propertySpecification.maximumNumber as number) <
+                            typeof propertySpecification.maximumNumber ===
+                                'number' &&
+                            propertySpecification.maximumNumber <
                                 newProperty.length
                         )
                             throwError(
@@ -2515,39 +2499,30 @@ export class DatabaseHelper {
                     const numberOfAttachments =
                         attachmentToTypeMapping[type].length
                     if (
-                        specification.maximumNumber !== null &&
-                        numberOfAttachments >
-                            (specification.maximumNumber as number)
+                        typeof specification.maximumNumber === 'number' &&
+                        numberOfAttachments > specification.maximumNumber
                     )
                         throwError(
                             'AttachmentMaximum: given number of attachments ' +
                             `(${numberOfAttachments}) doesn't satisfy ` +
                             'specified maximum of ' +
-                            (
-                                specification.maximumNumber as
-                                    unknown as
-                                    string
-                            ) +
-                            ` from type "${type}"${pathDescription}.`
+                            `${specification.maximumNumber} from type ` +
+                            `"${type}"${pathDescription}.`
                         )
 
                     if (
                         !(
                             specification.nullable && numberOfAttachments === 0
                         ) &&
-                        numberOfAttachments <
-                            (specification.minimumNumber as number)
+                        typeof specification.minimumNumber === 'number' &&
+                        numberOfAttachments < specification.minimumNumber
                     )
                         throwError(
                             'AttachmentMinimum: given number of attachments ' +
                             `(${numberOfAttachments}) doesn't satisfy ` +
                             'specified minimum of ' +
-                            (
-                                specification.minimumNumber as
-                                    unknown as
-                                    string
-                            ) +
-                            ` from type "${type}"${pathDescription}.`
+                            `${specification.minimumNumber} from type ` +
+                            `"${type}"${pathDescription}.`
                         )
 
                     let aggregatedSize = 0
@@ -2584,16 +2559,12 @@ export class DatabaseHelper {
                                 `" from type "${type}"${pathDescription}.`
                             )
                         else if (!(
-                            [null, undefined].includes(
-                                specification
-                                    .contentTypeRegularExpressionPattern as
-                                        null
-                            ) ||
+                            !specification
+                                .contentTypeRegularExpressionPattern ||
                             newAttachments[fileName].content_type &&
                             new RegExp(
                                 specification
-                                    .contentTypeRegularExpressionPattern as
-                                        string
+                                    .contentTypeRegularExpressionPattern
                             )
                                 .test(newAttachments[fileName].content_type)
                         ))
@@ -2605,8 +2576,7 @@ export class DatabaseHelper {
                                 'expression pattern "' +
                                 (
                                     specification
-                                        .contentTypeRegularExpressionPattern as
-                                        string
+                                        .contentTypeRegularExpressionPattern
                                 ) +
                                 `" from type "${type}"${pathDescription}.`
                             )
@@ -2615,9 +2585,9 @@ export class DatabaseHelper {
                             .invertedContentTypeRegularExpressionPattern
 
                         if (!(
-                            [null, undefined].includes(pattern as null) ||
+                            !pattern ||
                             newAttachments[fileName].content_type &&
-                            !(new RegExp(pattern as string))
+                            !(new RegExp(pattern))
                                 .test(newAttachments[fileName].content_type)
                         ))
                             throwError(
@@ -2648,10 +2618,8 @@ export class DatabaseHelper {
                                 ).data as Buffer).length
 
                         if (
-                            ![null, undefined].includes(
-                                specification.minimumSize as null
-                            ) &&
-                            (specification.minimumSize as number) > length
+                            typeof specification.minimumSize === 'number' &&
+                            specification.minimumSize > length
                         )
                             throwError(
                                 'AttachmentMinimumSize: given attachment ' +
@@ -2665,63 +2633,45 @@ export class DatabaseHelper {
                                 ` byte ${pathDescription}.`
                             )
                         else if (
-                            ![null, undefined].includes(
-                                specification.maximumSize as null
-                            ) &&
-                            (specification.maximumSize as number) < length
+                            typeof specification.maximumSize === 'number' &&
+                            specification.maximumSize < length
                         )
                             throwError(
                                 'AttachmentMaximumSize: given attachment ' +
                                 `size ${length} byte doesn't satisfy ` +
                                 'specified maximum of ' +
-                                (
-                                    specification.maximumSize as
-                                        unknown as
-                                        string
-                                ) +
-                                ` byte ${pathDescription}.`
+                                `${specification.maximumSize} byte ` +
+                                `${pathDescription}.`
                             )
 
                         aggregatedSize += length
                     }
 
                     if (
-                        ![null, undefined].includes(
-                            specification.minimumAggregatedSize as null
-                        ) &&
-                        (specification.minimumAggregatedSize as number) >
-                            aggregatedSize
+                        typeof specification.minimumAggregatedSize ===
+                            'number' &&
+                        specification.minimumAggregatedSize > aggregatedSize
                     )
                         throwError(
                             'AttachmentAggregatedMinimumSize: given ' +
                             'aggregated size of attachments from type "' +
                             `${type}" ${aggregatedSize} byte doesn't ` +
                             'satisfy specified minimum of ' +
-                            (
-                                specification.minimumAggregatedSize as
-                                    unknown as
-                                    string
-                            ) +
-                            ` byte ${pathDescription}.`
+                            `${specification.minimumAggregatedSize} byte ` +
+                            `${pathDescription}.`
                         )
                     else if (
-                        ![null, undefined].includes(
-                            specification.maximumAggregatedSize as null
-                        ) &&
-                        (specification.maximumAggregatedSize as number) <
-                            aggregatedSize
+                        typeof specification.maximumAggregatedSize ===
+                            'number' &&
+                        specification.maximumAggregatedSize < aggregatedSize
                     )
                         throwError(
                             'AttachmentAggregatedMaximumSize: given ' +
                             'aggregated size of attachments from type "' +
                             `${type}" ${aggregatedSize} byte doesn't ` +
                             'satisfy specified maximum of ' +
-                            (
-                                specification.maximumAggregatedSize as
-                                    unknown as
-                                    string
-                            ) +
-                            ` byte ${pathDescription}.`
+                            `${specification.maximumAggregatedSize} byte ` +
+                            `${pathDescription}.`
                         )
 
                     sumOfAggregatedSizes += aggregatedSize
@@ -2731,43 +2681,30 @@ export class DatabaseHelper {
                     Object.prototype.hasOwnProperty.call(
                         model, specialNames.minimumAggregatedSize
                     ) &&
-                    ![null, undefined].includes(
-                        model[specialNames.minimumAggregatedSize] as
-                            unknown as
-                            null
-                    ) &&
-                    (model[specialNames.minimumAggregatedSize] as number) >
+                    typeof model[specialNames.minimumAggregatedSize] ===
+                        'number' &&
+                    model[specialNames.minimumAggregatedSize]! >
                         sumOfAggregatedSizes
                 )
                     throwError(
                         'AggregatedMinimumSize: given aggregated size ' +
                         `${sumOfAggregatedSizes} byte doesn't satisfy ` +
                         'specified minimum of ' +
-                        (
-                            model[specialNames.minimumAggregatedSize] as
-                                unknown as
-                                string
-                        ) +
-                        ` byte ${pathDescription}.`
+                        `${model[specialNames.minimumAggregatedSize]} byte ` +
+                        `${pathDescription}.`
                     )
                 else if (
-                    ![null, undefined].includes(
-                        model[specialNames.maximumAggregatedSize] as
-                            unknown as null
-                    ) &&
-                    (model[specialNames.maximumAggregatedSize] as number) <
+                    typeof model[specialNames.maximumAggregatedSize] ===
+                        'number' &&
+                    model[specialNames.maximumAggregatedSize]! <
                         sumOfAggregatedSizes
                 )
                     throwError(
                         'AggregatedMaximumSize: given aggregated size ' +
                         `${sumOfAggregatedSizes} byte doesn't satisfy ` +
                         'specified maximum of ' +
-                        (
-                            model[specialNames.maximumAggregatedSize] as
-                                unknown as
-                                string
-                        ) +
-                        ` byte ${pathDescription}.`
+                        `${model[specialNames.maximumAggregatedSize]} byte ` +
+                        `${pathDescription}.`
                     )
             }
             /// endregion
