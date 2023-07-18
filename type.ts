@@ -101,7 +101,7 @@ export interface NormalizedAllowedModelRoles extends NormalizedAllowedRoles {
 export type AllowedModelRolesMapping = Mapping<NormalizedAllowedModelRoles>
 
 export interface Constraint {
-    description?:null|string
+    description?:string
     evaluation:string
 }
 export type PrimitiveType = 'boolean'|'integer'|'number'|'string'|'DateTime'
@@ -126,57 +126,57 @@ export interface SelectionMapping {
 export interface PropertySpecification<
     Type = unknown, AdditionalSpecifications extends object = object
 > {
-    allowedRoles?:AllowedRoles|null
+    allowedRoles?:AllowedRoles
     computed?:boolean
     // region expression
-    arrayConstraintExecution?:Constraint|null
-    arrayConstraintExpression?:Constraint|null
+    arrayConstraintExecution?:Constraint
+    arrayConstraintExpression?:Constraint
 
-    conflictingConstraintExecution?:Constraint|null
-    conflictingConstraintExpression?:Constraint|null
+    conflictingConstraintExecution?:Constraint
+    conflictingConstraintExpression?:Constraint
 
-    constraintExecution?:Constraint|null
-    constraintExpression?:Constraint|null
+    constraintExecution?:Constraint
+    constraintExpression?:Constraint
 
-    onCreateExecution?:null|string
-    onCreateExpression?:null|string
-    onUpdateExecution?:null|string
-    onUpdateExpression?:null|string
+    onCreateExecution?:string
+    onCreateExpression?:string
+    onUpdateExecution?:string
+    onUpdateExpression?:string
     // endregion
     // region validation
-    regularExpressionPattern?:null|RegExp|string
-    invertedRegularExpressionPattern?:null|RegExp|string
+    regularExpressionPattern?:RegExp|string
+    invertedRegularExpressionPattern?:RegExp|string
 
-    contentTypeRegularExpressionPattern?:null|string
-    invertedContentTypeRegularExpressionPattern?:null|string
+    contentTypeRegularExpressionPattern?:string
+    invertedContentTypeRegularExpressionPattern?:string
 
-    maximum?:null|number
-    minimum?:null|number
+    maximum?:number
+    minimum?:number
 
-    maximumAggregatedSize?:null|number
-    minimumAggregatedSize?:null|number
+    maximumAggregatedSize?:number
+    minimumAggregatedSize?:number
 
-    maximumLength?:null|number
-    minimumLength?:null|number
+    maximumLength?:number
+    minimumLength?:number
 
-    maximumNumber?:null|number
-    minimumNumber?:null|number
+    maximumNumber?:number
+    minimumNumber?:number
 
-    maximumSize?:null|number
-    minimumSize?:null|number
+    maximumSize?:number
+    minimumSize?:number
 
-    mutable?:boolean|null
-    nullable?:boolean|null
-    writable?:boolean|null
+    mutable?:boolean
+    nullable?:boolean
+    writable?:boolean
 
-    selection?:Array<unknown>|Array<SelectionMapping>|Mapping<unknown>|null
+    selection?:Array<unknown>|Array<SelectionMapping>|Mapping<unknown>
 
-    type?:TypeSpecification|null
+    type?:TypeSpecification
     // endregion
     // region simple transformation
-    default?:null|Type
-    emptyEqualsToNull?:boolean|null
-    trim?:boolean|null
+    default?:Type
+    emptyEqualsToNull?:boolean
+    trim?:boolean
     // endregion
     // region representation
     // NOTE: Can als be defined via key in parent data structure.
@@ -184,12 +184,12 @@ export interface PropertySpecification<
     declaration?:string
     description?:string
     // endregion
-    index?:boolean|null
+    index?:boolean
 
     // NOTE: Actual name is usually specified via key parent data structure.
-    oldName?:Array<string>|null|string
+    oldName?:Array<string>|string
 
-    value?:null|Type
+    value?:Type
 
     additionalSpecifications?:AdditionalSpecifications
 }
@@ -208,28 +208,28 @@ export interface BaseModel<
         AdditionalPropertiesType, AdditionalSpecifications
     >
 
-    _allowedRoles?:AllowedRoles|null
+    _allowedRoles?:AllowedRoles
 
     _attachments?:(
         Mapping<FileSpecification<AttachmentType, AdditionalSpecifications>> |
         null
     )
 
-    _constraintExecutions?:Array<Constraint>|Constraint|null
-    _constraintExpressions?:Array<Constraint>|Constraint|null
+    _constraintExecutions?:Array<Constraint>|Constraint
+    _constraintExpressions?:Array<Constraint>|Constraint
 
-    _createExecution?:null|string
-    _createExpression?:null|string
+    _createExecution?:string
+    _createExpression?:string
 
-    _extends?:Array<string>|null|string
+    _extends?:Array<string>|string
 
-    _maximumAggregatedSize?:null|number
-    _minimumAggregatedSize?:null|number
+    _maximumAggregatedSize?:number
+    _minimumAggregatedSize?:number
 
-    _oldType?:Array<string>|null|string
+    _oldType?:Array<string>|string
 
-    _onUpdateExecution?:null|string
-    _onUpdateExpression?:null|string
+    _onUpdateExecution?:string
+    _onUpdateExpression?:string
 
     _id:PropertySpecification<string, AdditionalSpecifications>
     _rev:PropertySpecification<string, AdditionalSpecifications>
