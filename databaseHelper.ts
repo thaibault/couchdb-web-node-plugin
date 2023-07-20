@@ -445,9 +445,11 @@ export class DatabaseHelper {
                     return fileType.fileName.value === fileName
 
                 if (fileType.fileName.regularExpressionPattern)
-                    return (new RegExp(
-                        fileType.fileName.regularExpressionPattern
-                    )).test(fileName)
+                    return ([] as Array<RegExp|string>)
+                        .concat(fileType.fileName.regularExpressionPattern)
+                        .some((pattern) =>
+                            new RegExp(pattern).test(fileName)
+                        )
             }
 
             return typeName === fileName
@@ -1069,39 +1071,37 @@ export class DatabaseHelper {
                 }
                 // endregion
                 // region pattern
-                if (
-                    propertySpecification.regularExpressionPattern &&
-                    !(new RegExp(
-                        propertySpecification.regularExpressionPattern as
-                            string
-                    ).test(newValue as string))
-                )
-                    throwError(
-                        `PatternMatch: Property "${String(name)}" should ` +
-                        'match regular expression pattern ' +
-                        (
-                            propertySpecification.regularExpressionPattern as
-                                string
-                        ) +
-                        ` (given "${newValue as string}")${pathDescription}.`
-                    )
-                else if (
-                    propertySpecification.invertedRegularExpressionPattern &&
-                    new RegExp(
-                        propertySpecification
-                            .invertedRegularExpressionPattern as string
-                    ).test(newValue as string)
-                )
-                    throwError(
-                        `InvertedPatternMatch: Property "${String(name)}" ` +
-                        'should not match regular expression pattern ' +
-                        (
-                            propertySpecification
-                                .invertedRegularExpressionPattern as
-                                string
-                        ) +
-                        ` (given "${newValue as string}")${pathDescription}.`
-                    )
+                if (propertySpecification.regularExpressionPattern) {
+                    const patterns = (
+                        [] as Array<RegExp | string>
+                    ).concat(propertySpecification.regularExpressionPattern)
+                    let matched = false
+                    for (const pattern of patterns)
+                        if (new RegExp(pattern).test(newValue as string)) {
+                            matched = true
+                            break
+                        }
+                    if (!matched)
+                        throwError(
+                            `PatternMatch: Property "${String(name)}" should ` +
+                            'match one regular expression pattern ' +
+                            `"${patterns.join('", "')}" (given ` +
+                            `"${newValue as string}")${pathDescription}.`
+                        )
+                }
+                if (propertySpecification.invertedRegularExpressionPattern)
+                    for (const pattern of (
+                        [] as Array<RegExp|string>
+                    ).concat(
+                        propertySpecification.invertedRegularExpressionPattern
+                    ))
+                        if (new RegExp(pattern).test(newValue as string))
+                            throwError(
+                                'InvertedPatternMatch: Property ' +
+                                `"${String(name)}" should not match regular ` +
+                                `expression pattern ${pattern} (given ` +
+                                `"${newValue as string}")${pathDescription}.`
+                            )
                 // endregion
                 checkPropertyConstraints<Type>(
                     newValue, name, propertySpecification, oldValue
@@ -2527,77 +2527,101 @@ export class DatabaseHelper {
 
                     let aggregatedSize = 0
                     for (const fileName of attachmentToTypeMapping[type]) {
-                        if (
-                            specification.fileName?.regularExpressionPattern &&
-                            !new RegExp(
+                        if (specification.fileName?.regularExpressionPattern) {
+                            const patterns = (
+                                [] as Array<RegExp | string>
+                            ).concat(
                                 specification.fileName.regularExpressionPattern
-                            ).test(fileName)
-                        )
-                            throwError(
-                                'AttachmentName: given attachment name "' +
-                                `${fileName}" doesn't satisfy specified ` +
-                                'regular expression pattern "' +
-                                specification.fileName
-                                    .regularExpressionPattern.toString() +
-                                `" from type "${type}"${pathDescription}.`
                             )
-                        else if (
+                            let matched = false
+                            for (const pattern of patterns)
+                                if (new RegExp(pattern).test(fileName)) {
+                                    matched = true
+                                    break
+                                }
+                            if (!matched)
+                                throwError(
+                                    'AttachmentName: given attachment ' +
+                                    `name "${fileName}" doesn't satisfy ` +
+                                    'one of specified regular expression ' +
+                                    `patterns "${patterns.join('", "')}" ` +
+                                    `from type "${type}"${pathDescription}.`
+                                )
+                        }
+
+                        if (
                             specification
-                                .fileName?.invertedRegularExpressionPattern &&
-                            new RegExp(
-                                specification.fileName
-                                    .invertedRegularExpressionPattern
-                            ).test(fileName)
+                                .fileName?.invertedRegularExpressionPattern
                         )
-                            throwError(
-                                'InvertedAttachmentName: given attachment ' +
-                                `name "${fileName}" does satisfy specified ` +
-                                'regular expression pattern "' +
+                            for (const pattern of (
+                                [] as Array<RegExp|string>
+                            ).concat(
                                 specification.fileName
                                     .invertedRegularExpressionPattern
-                                    .toString() +
-                                `" from type "${type}"${pathDescription}.`
-                            )
-                        else if (!(
-                            !specification
-                                .contentTypeRegularExpressionPattern ||
-                            newAttachments[fileName].content_type &&
-                            new RegExp(
+                            ))
+                                if (new RegExp(pattern).test(fileName))
+                                    throwError(
+                                        'InvertedAttachmentName: given ' +
+                                        `attachment name "${fileName}" does ` +
+                                        `satisfy specified regular ` +
+                                        `expression pattern "` +
+                                        `${pattern.toString()}" from type ` +
+                                        `"${type}"${pathDescription}.`
+                                    )
+
+                        if (newAttachments[fileName].content_type) {
+                            if (
                                 specification
                                     .contentTypeRegularExpressionPattern
-                            )
-                                .test(newAttachments[fileName].content_type)
-                        ))
-                            throwError(
-                                'AttachmentContentType: given attachment ' +
-                                'content type "' +
-                                `${newAttachments[fileName].content_type}" ` +
-                                `doesn't satisfy specified regular ` +
-                                'expression pattern "' +
-                                (
+                            ) {
+                                const patterns = (
+                                    [] as Array<RegExp | string>
+                                ).concat(
                                     specification
                                         .contentTypeRegularExpressionPattern
-                                ) +
-                                `" from type "${type}"${pathDescription}.`
-                            )
+                                )
+                                let matched = false
+                                for (const pattern of patterns)
+                                    if (new RegExp(pattern).test(
+                                        newAttachments[fileName].content_type
+                                    )) {
+                                        matched = true
+                                        break
+                                    }
+                                if (!matched)
+                                    throwError(
+                                        'AttachmentContentType: given ' +
+                                        'attachment content type "' +
+                                        newAttachments[fileName].content_type +
+                                        `" doesn't satisfy specified regular` +
+                                        ' expression pattern ' +
+                                        `"${patterns.join('", "')}" from ` +
+                                        `type "${type}"${pathDescription}.`
+                                    )
+                            }
 
-                        const pattern:null|string|undefined = specification
-                            .invertedContentTypeRegularExpressionPattern
+                            const invertedPatterns =
+                                specification
+                                    .invertedContentTypeRegularExpressionPattern
 
-                        if (!(
-                            !pattern ||
-                            newAttachments[fileName].content_type &&
-                            !(new RegExp(pattern))
-                                .test(newAttachments[fileName].content_type)
-                        ))
-                            throwError(
-                                'InvertedAttachmentContentType: given ' +
-                                'attachment content type "' +
-                                `${newAttachments[fileName].content_type}" ` +
-                                `does satisfy specified regular expression ` +
-                                `pattern "${pattern as unknown as string}" ` +
-                                `from type "${type}"${pathDescription}.`
-                            )
+                            if (invertedPatterns)
+                                for (const pattern of (
+                                    [] as Array<RegExp | string>
+                                ).concat(invertedPatterns))
+                                    if (new RegExp(pattern).test(
+                                        newAttachments[fileName].content_type
+                                    ))
+                                        throwError(
+                                            'InvertedAttachmentContentType: ' +
+                                            'given attachment content type "' +
+                                            newAttachments[fileName]
+                                                .content_type +
+                                            '" does satisfy specified ' +
+                                            'regular expression pattern ' +
+                                            `"${pattern.toString()}" from ` +
+                                            `type "${type}"${pathDescription}.`
+                                        )
+                        }
 
                         let length = 0
                         if ('length' in newAttachments[fileName])

@@ -2786,7 +2786,45 @@ describe('databaseHelper', () => {
                 [
                     [{[typeName]: 'Test', b: {[typeName]: 'Test', a: 'a'}}],
                     {entities: {Test: {
+                        a: {regularExpressionPattern: ['b', 'a']},
+                        b: {type: 'Test'}
+                    }}},
+                    {
+                        fillUp: {[typeName]: 'Test', b: {
+                            [typeName]: 'Test', a: 'a'
+                        }},
+                        incremental: {[typeName]: 'Test', b: {
+                            [typeName]: 'Test', a: 'a'
+                        }},
+                        '': {
+                            [typeName]: 'Test',
+                            b: {[typeName]: 'Test', a: 'a'}
+                        }
+                    }
+                ],
+                [
+                    [{[typeName]: 'Test', b: {[typeName]: 'Test', a: 'a'}}],
+                    {entities: {Test: {
                         a: {invertedRegularExpressionPattern: 'b'},
+                        b: {type: 'Test'}
+                    }}},
+                    {
+                        fillUp: {[typeName]: 'Test', b: {
+                            [typeName]: 'Test', a: 'a'
+                        }},
+                        incremental: {[typeName]: 'Test', b: {
+                            [typeName]: 'Test', a: 'a'
+                        }},
+                        '': {
+                            [typeName]: 'Test',
+                            b: {[typeName]: 'Test', a: 'a'}
+                        }
+                    }
+                ],
+                [
+                    [{[typeName]: 'Test', b: {[typeName]: 'Test', a: 'a'}}],
+                    {entities: {Test: {
+                        a: {invertedRegularExpressionPattern: ['b', 'c']},
                         b: {type: 'Test'}
                     }}},
                     {
@@ -2983,7 +3021,29 @@ describe('databaseHelper', () => {
                 [
                     [{[typeName]: 'Test', a: 'a'}],
                     {entities: {Test: {a: {
+                        regularExpressionPattern: ['b', 'a']
+                    }}}},
+                    {
+                        fillUp: {[typeName]: 'Test', a: 'a'},
+                        incremental: {[typeName]: 'Test', a: 'a'},
+                        '': {[typeName]: 'Test', a: 'a'}
+                    }
+                ],
+                [
+                    [{[typeName]: 'Test', a: 'a'}],
+                    {entities: {Test: {a: {
                         invertedRegularExpressionPattern: 'b'
+                    }}}},
+                    {
+                        fillUp: {[typeName]: 'Test', a: 'a'},
+                        incremental: {[typeName]: 'Test', a: 'a'},
+                        '': {[typeName]: 'Test', a: 'a'}
+                    }
+                ],
+                [
+                    [{[typeName]: 'Test', a: 'a'}],
+                    {entities: {Test: {a: {
+                        invertedRegularExpressionPattern: ['b', 'c']
                     }}}},
                     {
                         fillUp: {[typeName]: 'Test', a: 'a'},
@@ -3184,6 +3244,55 @@ describe('databaseHelper', () => {
                 [
                     [{
                         [typeName]: 'Test',
+                        [attachmentName]: {'favicon.png': {
+                            /* eslint-disable camelcase */
+                            content_type: 'image/png',
+                            /* eslint-enable camelcase */
+                            data: 'abc'
+                        }}
+                    }],
+                    {entities: {Test: {[attachmentName]: {data: {
+                        contentTypeRegularExpressionPattern: [
+                            'image/(?:p?jpe?g)',
+                            'image/(?:png|svg)'
+                        ],
+                        fileName: {regularExpressionPattern: [
+                            '.+\\.(?:jpe?g|svg)',
+                            '.+\\.(?:jpe?g|png)'
+                        ]},
+                        maximumNumber: 1,
+                        nullable: false
+                    }}}}},
+                    {
+                        fillUp: {[typeName]: 'Test', [attachmentName]: {
+                            'favicon.png': {
+                                /* eslint-disable camelcase */
+                                content_type: 'image/png',
+                                /* eslint-enable camelcase */
+                                data: 'abc'
+                            }
+                        }},
+                        incremental: {[typeName]: 'Test', [attachmentName]: {
+                            'favicon.png': {
+                                /* eslint-disable camelcase */
+                                content_type: 'image/png',
+                                /* eslint-enable camelcase */
+                                data: 'abc'
+                            }
+                        }},
+                        '': {[typeName]: 'Test', [attachmentName]: {
+                            'favicon.png': {
+                                /* eslint-disable camelcase */
+                                content_type: 'image/png',
+                                /* eslint-enable camelcase */
+                                data: 'abc'
+                            }
+                        }}
+                    }
+                ],
+                [
+                    [{
+                        [typeName]: 'Test',
                         [attachmentName]: {test: {
                             /* eslint-disable camelcase */
                             content_type: 'text/plain',
@@ -3265,6 +3374,42 @@ describe('databaseHelper', () => {
                         }
                     }],
                     {entities: {Test: {[attachmentName]: {data: {
+                        fileName: {regularExpressionPattern: [/[cd]/, /[ab]/]},
+                        maximumNumber: 2,
+                        minimumNumber: 2
+                    }}}}},
+                    {
+                        fillUp: {[typeName]: 'Test', [attachmentName]: {
+                            /* eslint-disable camelcase */
+                            a: {content_type: 'text/plain', data: ''},
+                            b: {content_type: 'text/plain', data: ''}
+                            /* eslint-enable camelcase */
+                        }},
+                        incremental: {[typeName]: 'Test', [attachmentName]: {
+                            /* eslint-disable camelcase */
+                            a: {content_type: 'text/plain', data: ''},
+                            b: {content_type: 'text/plain', data: ''}
+                            /* eslint-enable camelcase */
+                        }},
+                        '': {[typeName]: 'Test', [attachmentName]: {
+                            /* eslint-disable camelcase */
+                            a: {content_type: 'text/plain', data: ''},
+                            b: {content_type: 'text/plain', data: ''}
+                            /* eslint-enable camelcase */
+                        }}
+                    }
+                ],
+                [
+                    [{
+                        [typeName]: 'Test',
+                        [attachmentName]: {
+                            /* eslint-disable camelcase */
+                            a: {content_type: 'text/plain', data: ''},
+                            b: {content_type: 'text/plain', data: ''}
+                            /* eslint-enable camelcase */
+                        }
+                    }],
+                    {entities: {Test: {[attachmentName]: {data: {
                         fileName: {regularExpressionPattern: 'a|b'},
                         maximumNumber: 2
                     }}}}},
@@ -3301,7 +3446,7 @@ describe('databaseHelper', () => {
                     }],
                     {entities: {Test: {[attachmentName]: {data: {
                         fileName: {
-                            invertedRegularExpressionPattern: 'c|d',
+                            invertedRegularExpressionPattern: ['c|d'],
                             regularExpressionPattern: /.*/
                         },
                         maximumNumber: 2
