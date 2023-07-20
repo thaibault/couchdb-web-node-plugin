@@ -123,6 +123,7 @@ export interface SelectionMapping {
     label:string
     value:unknown
 }
+export type Pattern = Array<RegExp|string>|RegExp|string
 export interface PropertySpecification<
     Type = unknown, AdditionalSpecifications extends object = object
 > {
@@ -144,11 +145,11 @@ export interface PropertySpecification<
     onUpdateExpression?:string
     // endregion
     // region validation
-    regularExpressionPattern?:RegExp|string
-    invertedRegularExpressionPattern?:RegExp|string
+    regularExpressionPattern?:Pattern
+    invertedRegularExpressionPattern?:Pattern
 
-    contentTypeRegularExpressionPattern?:string
-    invertedContentTypeRegularExpressionPattern?:string
+    contentTypeRegularExpressionPattern?:Pattern
+    invertedContentTypeRegularExpressionPattern?:Pattern
 
     maximum?:number
     minimum?:number
@@ -169,7 +170,7 @@ export interface PropertySpecification<
     nullable?:boolean
     writable?:boolean
 
-    selection?:Array<unknown>|Array<SelectionMapping>|Mapping<unknown>
+    selection?:Array<SelectionMapping>|Array<unknown>|Mapping<unknown>
 
     type?:TypeSpecification
     // endregion
