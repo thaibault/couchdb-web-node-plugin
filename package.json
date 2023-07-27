@@ -297,7 +297,7 @@
             "_additional": {
               "declaration": "Templatedata",
               "description": "String mapped values.",
-              "emptyEqualsToNull": false,
+              "emptyEqualsNull": false,
               "type": "string"
             }
           },
@@ -332,7 +332,7 @@
         },
         "property": {
           "defaultSpecification": {
-            "emptyEqualsToNull": true,
+            "emptyEqualsNull": true,
             "maximumAggregatedSize": 100000000,
             "minimumAggregatedSize": 0,
             "minimumLength": 0,
