@@ -849,7 +849,7 @@ export class Database implements PluginHandler {
                           is specified.
                         - Trim existing strings if newly specified.
                         - Remove property values if there values equals to an
-                          empty instance and the "emptyEqualsToNull" property
+                          empty instance and the "emptyEqualsNull" property
                           is specified as positive.
                         - Rename custom type properties if new specified model
                           provides is a super set of existing properties.

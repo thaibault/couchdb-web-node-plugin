@@ -1342,7 +1342,7 @@ export class DatabaseHelper {
                         (newDocument[name] as string) =
                             (newDocument[name] as string).trim()
                     if (
-                        propertySpecification.emptyEqualsToNull &&
+                        propertySpecification.emptyEqualsNull &&
                         (
                             newDocument[name] === '' ||
                             Array.isArray(newDocument[name]) &&

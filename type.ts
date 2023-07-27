@@ -176,7 +176,7 @@ export interface PropertySpecification<
     // endregion
     // region simple transformation
     default?:Type
-    emptyEqualsToNull?:boolean
+    emptyEqualsNull?:boolean
     trim?:boolean
     // endregion
     // region representation

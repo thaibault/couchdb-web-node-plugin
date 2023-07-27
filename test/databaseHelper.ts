@@ -181,7 +181,7 @@ describe('databaseHelper', () => {
                         },
                         {[typeName]: 'Test', a: ''}
                     ],
-                    {entities: {Test: {a: {emptyEqualsToNull: false}}}},
+                    {entities: {Test: {a: {emptyEqualsNull: false}}}},
                     'NoChange'
                 ],
                 [
@@ -239,7 +239,7 @@ describe('databaseHelper', () => {
                 [
                     [{[typeName]: 'Test', a: []}, {[typeName]: 'Test', a: []}],
                     {entities: {Test: {a: {
-                        type: 'integer[]', emptyEqualsToNull: false
+                        type: 'integer[]', emptyEqualsNull: false
                     }}}},
                     'NoChange'
                 ],
@@ -596,7 +596,7 @@ describe('databaseHelper', () => {
                 ],
                 [
                     [{[typeName]: 'Test', a: []}], {entities: {Test: {a: {
-                        emptyEqualsToNull: false,
+                        emptyEqualsNull: false,
                         minimumNumber: 1,
                         type: 'integer[]'
                     }}}},
@@ -1708,7 +1708,7 @@ describe('databaseHelper', () => {
                     ],
                     {entities: {Test: {
                         a: {onUpdateExpression: `'2'`},
-                        b: {emptyEqualsToNull: false}
+                        b: {emptyEqualsNull: false}
                     }}},
                     {
                         fillUp: {[typeName]: 'Test', a: '2', b: ''},
@@ -1814,7 +1814,7 @@ describe('databaseHelper', () => {
                                 `(attachmentsTarget[name].data += ' footer')` +
                                 '&& attachmentsTarget[name]'
                         }},
-                        a: {emptyEqualsToNull: false}
+                        a: {emptyEqualsNull: false}
                     }}},
                     {
                         fillUp: {[typeName]: 'Test', a: ''},
@@ -1831,7 +1831,7 @@ describe('databaseHelper', () => {
                         {[typeName]: 'Test', a: 'b'}
                     ],
                     {entities: {Test: {a: {writable: false}, b: {
-                        emptyEqualsToNull: false
+                        emptyEqualsNull: false
                     }}}},
                     {
                         fillUp: {[typeName]: 'Test', a: 'b', b: ''},
@@ -1846,7 +1846,7 @@ describe('databaseHelper', () => {
                     ],
                     {entities: {Test: {
                         a: {writable: false},
-                        b: {emptyEqualsToNull: false}
+                        b: {emptyEqualsNull: false}
                     }}},
                     {
                         fillUp: {[typeName]: 'Test', b: ''},
@@ -1870,7 +1870,7 @@ describe('databaseHelper', () => {
                         {[typeName]: 'Test', a: null},
                         {[typeName]: 'Test', a: ''}
                     ],
-                    {entities: {Test: {a: {emptyEqualsToNull: false}}}},
+                    {entities: {Test: {a: {emptyEqualsNull: false}}}},
                     {
                         fillUp: {[typeName]: 'Test'},
                         incremental: {},
@@ -1957,7 +1957,7 @@ describe('databaseHelper', () => {
                         {[typeName]: 'Test', a: '2 ', b: ''},
                         {[typeName]: 'Test', a: '2'}
                     ],
-                    {entities: {Test: {a: {}, b: {emptyEqualsToNull: false}}}},
+                    {entities: {Test: {a: {}, b: {emptyEqualsNull: false}}}},
                     {
                         fillUp: {[typeName]: 'Test', a: '2', b: ''},
                         incremental: {b: ''},
@@ -2000,7 +2000,7 @@ describe('databaseHelper', () => {
                         {[typeName]: 'Test', a: true}
                     ],
                     {entities: {Test: {
-                        a: {type: 'boolean'}, b: {emptyEqualsToNull: false}
+                        a: {type: 'boolean'}, b: {emptyEqualsNull: false}
                     }}},
                     {
                         fillUp: {[typeName]: 'Test', a: true, b: ''},
@@ -2016,7 +2016,7 @@ describe('databaseHelper', () => {
                     {
                         entities: {Test: {
                             a: {type: 'DateTime'},
-                            b: {emptyEqualsToNull: false}
+                            b: {emptyEqualsNull: false}
                         }}
                     },
                     {
@@ -2042,7 +2042,7 @@ describe('databaseHelper', () => {
                         }
                     ],
                     {entities: {Test: {
-                        a: {type: 'DateTime'}, b: {emptyEqualsToNull: false}
+                        a: {type: 'DateTime'}, b: {emptyEqualsNull: false}
                     }}},
                     {
                         fillUp: {[typeName]: 'Test', a: 0, b: ''},
@@ -2067,7 +2067,7 @@ describe('databaseHelper', () => {
                         }
                     ],
                     {entities: {Test: {
-                        a: {type: 'DateTime'}, b: {emptyEqualsToNull: false}
+                        a: {type: 'DateTime'}, b: {emptyEqualsNull: false}
                     }}},
                     {
                         fillUp: {[typeName]: 'Test', a: 0, b: ''},
@@ -2093,7 +2093,7 @@ describe('databaseHelper', () => {
                     ],
                     {entities: {Test: {
                         a: {type: 'DateTime'},
-                        b: {emptyEqualsToNull: false}}}
+                        b: {emptyEqualsNull: false}}}
                     },
                     {
                         fillUp: {[typeName]: 'Test', a: 0, b: ''},
@@ -2119,7 +2119,7 @@ describe('databaseHelper', () => {
                     ],
                     {entities: {Test: {
                         a: {type: 'DateTime'},
-                        b: {emptyEqualsToNull: false}
+                        b: {emptyEqualsNull: false}
                     }}},
                     {
                         fillUp: {[typeName]: 'Test', a: 1, b: ''},
@@ -2145,7 +2145,7 @@ describe('databaseHelper', () => {
                     ],
                     {entities: {Test: {
                         a: {type: 'DateTime'},
-                        b: {emptyEqualsToNull: false}
+                        b: {emptyEqualsNull: false}
                     }}},
                     {
                         fillUp: {[typeName]: 'Test', a: 2, b: ''},
@@ -2171,7 +2171,7 @@ describe('databaseHelper', () => {
                     ],
                     {entities: {Test: {
                         a: {type: 'DateTime'},
-                        b: {emptyEqualsToNull: false}
+                        b: {emptyEqualsNull: false}
                     }}},
                     {
                         fillUp: {
@@ -2190,7 +2190,7 @@ describe('databaseHelper', () => {
                 [
                     [{[typeName]: 'Test', a: 2, b: ''}],
                     {entities: {Test: {[specialNames.additional]: {
-                        type: 'any', emptyEqualsToNull: false
+                        type: 'any', emptyEqualsNull: false
                     }}}},
                     {
                         fillUp: {[typeName]: 'Test', a: 2, b: ''},
@@ -2201,7 +2201,7 @@ describe('databaseHelper', () => {
                 [
                     [{[typeName]: 'Test', a: '2', b: ''}],
                     {entities: {Test: {[specialNames.additional]: {
-                        emptyEqualsToNull: false
+                        emptyEqualsNull: false
                     }}}},
                     {
                         fillUp: {[typeName]: 'Test', a: '2', b: ''},
@@ -2216,7 +2216,7 @@ describe('databaseHelper', () => {
                         {[typeName]: 'Test', a: ['2']}
                     ],
                     {entities: {Test: {
-                        a: {type: 'string[]'}, b: {emptyEqualsToNull: false}
+                        a: {type: 'string[]'}, b: {emptyEqualsNull: false}
                     }}},
                     {
                         fillUp: {[typeName]: 'Test', a: ['2'], b: ''},
@@ -2263,7 +2263,7 @@ describe('databaseHelper', () => {
                         {[typeName]: 'Test'}
                     ],
                     {entities: {Test: {
-                        a: {type: 'string[]'}, b: {emptyEqualsToNull: false}
+                        a: {type: 'string[]'}, b: {emptyEqualsNull: false}
                     }}},
                     {
                         fillUp: {[typeName]: 'Test', b: ''},
@@ -2310,7 +2310,7 @@ describe('databaseHelper', () => {
                 [
                     [{[typeName]: 'Test', a: []}, {[typeName]: 'Test'}],
                     {entities: {Test: {a: {
-                        emptyEqualsToNull: false, type: 'DateTime[]'
+                        emptyEqualsNull: false, type: 'DateTime[]'
                     }}}},
                     {
                         fillUp: {[typeName]: 'Test', a: []},
