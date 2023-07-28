@@ -423,37 +423,49 @@ export interface CoreConfiguration<
     AdditionalPropertiesType = unknown
 > {
     attachAutoRestarter:boolean
+
     backend:{
         configuration:PlainObject
         prefixes:Array<string>
     }
+
     binary:{
         memoryInMegaByte:string
         nodePath:string
         runner:Array<Runner>
     }
+
     changesStream:ChangesStreamOptions
     connector:ConnectorConfiguration
+    security:SecuritySettings
+
     createGenericFlatIndex:boolean
     databaseName:string
     debug:boolean
+
     ensureAdminPresence:boolean
     ensureSecuritySettingsPresence:boolean
     ensureUserPresence:boolean
     ignoreNoChangeError:boolean
+
     local:boolean
+
     maximumRepresentationLength:number
     maximumRepresentationTryLength:number
+
     model:ModelConfiguration<
         Type,
         AttachmentType,
         AdditionalSpecifications,
         AdditionalPropertiesType
     >
+
     path:string
-    security:SecuritySettings
+
     skipIDDetermining:boolean
+
     url:string
+
     user:{
         name:string
         password:string
