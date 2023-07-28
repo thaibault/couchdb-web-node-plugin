@@ -197,7 +197,7 @@ export interface PropertySpecification<
 export interface FileSpecification<
     Type extends Attachment = Attachment,
     AdditionalSpecifications extends object = object
-> extends PropertySpecification<Type, AdditionalSpecifications> {
+> extends PropertySpecification<null|Type, AdditionalSpecifications> {
     fileName?:PropertySpecification<string, AdditionalSpecifications>
 }
 export interface BaseModel<

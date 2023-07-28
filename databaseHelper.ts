@@ -230,7 +230,7 @@ export class DatabaseHelper {
 
         type PropertyName = keyof PartialFullDocumentType
         type PropertyValue =
-            AdditionalPropertiesType|AttachmentType|ValueOf<ObjectType>
+            AdditionalPropertiesType|AttachmentType|ValueOf<ObjectType>|null
 
         type BaseModelType = BaseModel<
             AttachmentType, AdditionalSpecifications, AdditionalPropertiesType
@@ -519,7 +519,7 @@ export class DatabaseHelper {
                 {code:string} &
                 Scope
             > |
-            void
+            undefined
         ) => {
             type CurrentScope = typeof basicScope & {code:string} & Scope
 
@@ -1405,7 +1405,7 @@ export class DatabaseHelper {
 
                             if (attachmentsTarget)
                                 attachmentsTarget[name as keyof Attachments] =
-                                    result.result as unknown as AttachmentType
+                                    result.result as AttachmentType
                             else
                                 (newDocument[name] as Type) = result.result!
                         } catch (error) {
@@ -1979,7 +1979,7 @@ export class DatabaseHelper {
                                         model[specialNames.attachment]![type]
                                     )) {
                                         checkPropertyWriteableMutableNullable<
-                                            AttachmentType
+                                            AttachmentType|null
                                         >(
                                             model[specialNames.attachment]![
                                                 type
