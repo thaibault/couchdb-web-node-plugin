@@ -104,16 +104,19 @@ export interface Constraint {
     description?:string
     evaluation:string
 }
-export type PrimitiveType = 'boolean'|'integer'|'number'|'string'|'DateTime'
-export type Type = string // |'any'|PrimitiveType
-export type TypeSpecification = Array<Type>|Type
 export const PrimitiveTypes = [
     'boolean',
+
     'DateTime',
+
     'integer',
     'number',
+
     'string'
 ] as const
+export type PrimitiveType = typeof PrimitiveTypes[number]
+export type Type = string // |'any'|PrimitiveType
+export type TypeSpecification = Array<Type>|Type
 
 export type ConstraintKey =
     'arrayConstraintExecution'|'arrayConstraintExpression'|
