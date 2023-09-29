@@ -19,7 +19,7 @@ import Tools from 'clientnode'
 import {
     testEachAgainstSameExpectation, ThrowSymbol
 } from 'clientnode/testHelper'
-import {PlainObject} from 'clientnode/type'
+import {Mapping, PlainObject} from 'clientnode/type'
 
 import DatabaseHelper from '../databaseHelper'
 import {extendModels} from '../helper'
@@ -108,6 +108,8 @@ describe('databaseHelper', () => {
     test.each(['', 'fillUp', 'incremental'] as const)(
         'validateDocumentUpdate (with update strategy "%s")',
         (updateStrategy:Exclude<UpdateStrategy, 'migrate'>):void => {
+            let only = false
+            let skip = false
             const defaultModelConfiguration:ModelConfiguration = {
                 // Numbers are date cross implementation save.
                 ...Tools.copy(configuration.couchdb.model),
@@ -1406,10 +1408,10 @@ describe('databaseHelper', () => {
                 [
                     [
                         {
-                            a: null,
+                            [typeName]: 'Test',
                             [idName]: 1,
                             [revisionName]: 1,
-                            [typeName]: 'Test'
+                            a: null
                         },
                         {
                             [typeName]: 'Test',
@@ -1423,7 +1425,7 @@ describe('databaseHelper', () => {
                         fillUp: {
                             [typeName]: 'Test', [idName]: 1, [revisionName]: 1
                         },
-                        incremental: {[idName]: 1, [revisionName]: 1},
+                        incremental: {[idName]: 1, [revisionName]: 1, a: null},
                         '': {
                             [idName]: 1,
                             [revisionName]: 1,
@@ -1873,7 +1875,7 @@ describe('databaseHelper', () => {
                     {entities: {Test: {a: {emptyEqualsNull: false}}}},
                     {
                         fillUp: {[typeName]: 'Test'},
-                        incremental: {},
+                        incremental: {a: null},
                         '': {[typeName]: 'Test'}
                     }
                 ],
@@ -1952,7 +1954,6 @@ describe('databaseHelper', () => {
                 ],
                 // endregion
                 // region property type
-                /*
                 [
                     [
                         {[typeName]: 'Test', a: '2 ', b: ''},
@@ -2433,6 +2434,78 @@ describe('databaseHelper', () => {
                         }
                     }
                 ],
+                // Delete array
+                [
+                    [{[typeName]: 'Test', a: null}],
+                    {entities: {Test: {a: {type: 'Test[]'}}}},
+                    {
+                        fillUp: {[typeName]: 'Test'},
+                        incremental: {[typeName]: 'Test'},
+                        '': {[typeName]: 'Test'}
+                    }
+                ],
+                [
+                    [{[typeName]: 'Test', a: undefined}],
+                    {entities: {
+                        Test: {a: {type: 'string[]', default: ['a']}}}
+                    },
+                    {
+                        fillUp: {[typeName]: 'Test', a: ['a']},
+                        incremental: {[typeName]: 'Test', a: ['a']},
+                        '': {[typeName]: 'Test', a: ['a']}
+                    }
+                ],
+                [
+                    [
+                        {[typeName]: 'Test', a: null, b: 2},
+                        {[typeName]: 'Test', a: []}
+                    ],
+                    {entities: {
+                        Test: {
+                            a: {type: 'string[]', default: ['a']},
+                            b: {type: 'number'}
+                        }}
+                    },
+                    {
+                        fillUp: {[typeName]: 'Test', b: 2},
+                        incremental: {a: null, b: 2},
+                        '': {[typeName]: 'Test', b: 2}
+                    }
+                ],
+                [
+                    [
+                        {[typeName]: 'Test', a: null, b: 2},
+                        {[typeName]: 'Test'}
+                    ],
+                    {entities: {
+                        Test: {
+                            a: {type: 'string[]', default: ['a']},
+                            b: {type: 'number'}
+                        }}
+                    },
+                    {
+                        fillUp: {[typeName]: 'Test', b: 2},
+                        incremental: {b: 2},
+                        '': {[typeName]: 'Test', b: 2}
+                    }
+                ],
+                [
+                    [
+                        {[typeName]: 'Test', a: null, b: 2},
+                        {[typeName]: 'Test', a: []}
+                    ],
+                    {entities: {
+                        Test: {
+                            a: {type: 'string[]', default: ['a']},
+                            b: {type: 'number'}
+                        }}
+                    },
+                    {
+                        fillUp: {[typeName]: 'Test', b: 2},
+                        incremental: {a: null, b: 2},
+                        '': {[typeName]: 'Test', b: 2}
+                    }
+                ],
                 /// endregion
                 /// region nested property
                 //// region property type
@@ -2597,7 +2670,6 @@ describe('databaseHelper', () => {
                         }
                     }
                 ],
-                */
                 [
                     [
                         {
@@ -2622,7 +2694,6 @@ describe('databaseHelper', () => {
                         }
                     }
                 ],
-                /*
                 [
                     [
                         {
@@ -2916,7 +2987,6 @@ describe('databaseHelper', () => {
                         '': {[typeName]: 'Test', a: false}
                     }
                 ],
-                */
                 // endregion
                 // region property range
                 [
@@ -3753,7 +3823,31 @@ describe('databaseHelper', () => {
                     }
                 ]
                 // endregion
-            ] as const) {
+            ]
+                /*
+                    Provides test only one or skip all tests from specified one
+                    to support delta debugging when searching for failing test.
+                */
+                .filter((test:Array<unknown>) => {
+                    if (only || skip)
+                        return false
+                    if (test[0] === 'only')
+                        only = true
+                    if (test[0] === 'skip') {
+                        skip = true
+                        return false
+                    }
+                    return true
+                })
+                .filter((test, index, tests) =>
+                    !only || index === tests.length - 1
+                )
+                .map((test:Array<unknown>) =>
+                    ['only', 'skip'].includes(test[0] as string) ?
+                        test.slice(1) :
+                        test
+                )
+            ) {
                 const modelConfiguration:ModelConfiguration = Tools.extend(
                     true,
                     Tools.copy(defaultModelConfiguration),
@@ -3770,15 +3864,23 @@ describe('databaseHelper', () => {
 
                 expect(DatabaseHelper.validateDocumentUpdate(
                     ...(
-                        (test[0] as unknown as Array<unknown>)
-                            .concat([null, {}, {}].slice(test[0].length - 1))
+                        (test[0] as Array<unknown>)
+                            .concat(
+                                [null, {}, {}].slice(
+                                    (test[0] as Array<unknown>).length - 1
+                                )
+                            )
                             .concat(modelConfiguration, models)
                     ) as
                         Parameters<typeof DatabaseHelper.validateDocumentUpdate>
-                )).toStrictEqual(
-                    test[2][updateStrategy] as
-                    ReturnType<typeof DatabaseHelper.validateDocumentUpdate>
-                )
+                )).toStrictEqual((
+                    test[2] as Mapping<
+                        ReturnType<
+                            typeof DatabaseHelper.validateDocumentUpdate
+                        >,
+                        UpdateStrategy
+                    >
+                )[updateStrategy])
             }
             // endregion
         }
