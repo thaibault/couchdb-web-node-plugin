@@ -196,7 +196,9 @@ export const initializeConnection = async (
         "post" call so we have to wrap runtime generated methods.
     */
     type Put = <Type extends Mapping<unknown>>(
-        document:PutDocument<Type>, options?:PutOptions
+        document:PutDocument<Type>,
+        options?:PutOptions,
+        ...parameters:Array<unknown>
     ) => Promise<DatabaseResponse>
 
     for (const pluginName of ['post', 'put'] as const) {
@@ -205,10 +207,13 @@ export const initializeConnection = async (
         ;(connection[pluginName] as Put) = async function<
             Type extends Mapping<unknown> = Mapping<unknown>
         >(
-            this:Connection, document:PutDocument<Type>, options?:PutOptions
+            this:Connection,
+            document:PutDocument<Type>,
+            options?:PutOptions,
+            ...parameters:Array<unknown>
         ) {
             try {
-                return await nativeMethod(document, options)
+                return await nativeMethod(document, options, ...parameters)
             } catch (error) {
                 const id = document[idName]
 
