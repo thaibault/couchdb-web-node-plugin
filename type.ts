@@ -696,8 +696,10 @@ export interface CheckedResult {
     changedPath:Array<string>
 }
 export interface CheckedPropertyResult<Type> extends CheckedResult {
-    // NOTE: "null" means no changes regarding existing data.
-    newValue:null|Type
+    /*
+     NOTE: "undefined" means no changes regarding existing data and null
+    */
+    newValue?:null|Type
 }
 export interface CheckedDocumentResult<
     ObjectType extends object, AdditionalPropertiesType

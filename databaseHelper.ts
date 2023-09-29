@@ -854,12 +854,11 @@ export class DatabaseHelper {
                                 oldValue as null|PartialFullDocumentType,
                                 parentNames.concat(String(name))
                             )
-                            console.log('A', result, newValue, oldValue, type)
                             if (result.changedPath.length)
                                 changedPath = result.changedPath
                             newValue = result.newDocument as Type
                             if (serialize(newValue) === serialize({}))
-                                return {newValue: null, changedPath}
+                                return {newValue: undefined, changedPath}
 
                             typeMatched = true
                             break
@@ -1181,7 +1180,12 @@ export class DatabaseHelper {
                 // region nullable
                 if (value === null)
                     if (propertySpecification.nullable) {
-                        delete newDocument[name]
+                        if (
+                            updateStrategy !== 'incremental' ||
+                            !oldDocument ||
+                            oldDocument[name] === undefined
+                        )
+                            delete newDocument[name]
 
                         if (
                             oldDocument &&
@@ -1866,14 +1870,9 @@ export class DatabaseHelper {
                         !Object.prototype.hasOwnProperty.call(
                             newDocument, name
                         ) ||
-                        [null, undefined].includes(newDocument[name])
+                        [null, undefined].includes(newDocument[name] as null)
                     )
-                        if (
-                            oldDocument &&
-                            Object.prototype.hasOwnProperty.call(
-                                oldDocument, name
-                            )
-                        ) {
+                        if (oldDocument) {
                             if (
                                 newDocument[name] !== null &&
                                 updateStrategy === 'fillUp'
@@ -2160,7 +2159,9 @@ export class DatabaseHelper {
                                 `${index + 1}. value in ${String(name)}`,
                                 propertySpecificationCopy
                             ).newValue as DocumentContent
-                            if (value === null)
+                            if ([null, undefined].includes(
+                                newProperty[index] as null
+                            ))
                                 newProperty.splice(index, 1)
 
                             index += 1
@@ -2212,7 +2213,9 @@ export class DatabaseHelper {
                             changedPath = result.changedPath
 
                         // NOTE: Do not use "newValue" here anymore.
-                        if ([null, undefined].includes(newDocument[name])) {
+                        if ([null, undefined].includes(
+                            newDocument[name] as null
+                        )) {
                             if (oldValue !== null)
                                 changedPath = parentNames.concat(
                                     String(name), 'property removed'
@@ -2220,7 +2223,7 @@ export class DatabaseHelper {
 
                             if (!(
                                 updateStrategy === 'incremental' &&
-                                oldValue !== null
+                                oldValue === null
                             ))
                                 delete newDocument[name]
                         }
