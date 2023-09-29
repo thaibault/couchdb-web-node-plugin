@@ -854,6 +854,7 @@ export class DatabaseHelper {
                                 oldValue as null|PartialFullDocumentType,
                                 parentNames.concat(String(name))
                             )
+                            console.log('A', result, newValue, oldValue, type)
                             if (result.changedPath.length)
                                 changedPath = result.changedPath
                             newValue = result.newDocument as Type
@@ -1829,7 +1830,8 @@ export class DatabaseHelper {
                             (
                                 Object.prototype.hasOwnProperty.call(
                                     newDocument, name
-                                ) ||
+                                ) &&
+                                newDocument[name] !== undefined ||
                                 oldDocument &&
                                 Object.prototype.hasOwnProperty.call(
                                     oldDocument, name
@@ -1843,8 +1845,11 @@ export class DatabaseHelper {
                             )
 
                         if (
-                            !Object.prototype.hasOwnProperty.call(
-                                newDocument, name
+                            (
+                                !Object.prototype.hasOwnProperty.call(
+                                    newDocument, name
+                                ) ||
+                                newDocument[name] === undefined
                             ) &&
                             oldDocument &&
                             Object.prototype.hasOwnProperty.call(
@@ -1861,7 +1866,7 @@ export class DatabaseHelper {
                         !Object.prototype.hasOwnProperty.call(
                             newDocument, name
                         ) ||
-                        newDocument[name] === null
+                        [null, undefined].includes(newDocument[name])
                     )
                         if (
                             oldDocument &&
@@ -1869,7 +1874,10 @@ export class DatabaseHelper {
                                 oldDocument, name
                             )
                         ) {
-                            if (updateStrategy === 'fillUp')
+                            if (
+                                newDocument[name] !== null &&
+                                updateStrategy === 'fillUp'
+                            )
                                 newDocument[name] = oldDocument[name]
                             else if (updateStrategy === 'migrate') {
                                 newDocument[name] =
@@ -2203,17 +2211,18 @@ export class DatabaseHelper {
                         if (result.changedPath.length)
                             changedPath = result.changedPath
 
-                        /*
-                            NOTE: Do not use "newValue" here since it was
-                            overwritten recently.
-                        */
-                        if (newDocument[name] === null) {
+                        // NOTE: Do not use "newValue" here anymore.
+                        if ([null, undefined].includes(newDocument[name])) {
                             if (oldValue !== null)
                                 changedPath = parentNames.concat(
                                     String(name), 'property removed'
                                 )
 
-                            delete newDocument[name]
+                            if (!(
+                                updateStrategy === 'incremental' &&
+                                oldValue !== null
+                            ))
+                                delete newDocument[name]
                         }
                     }
                 }
@@ -2790,6 +2799,20 @@ export class DatabaseHelper {
             userContext
         }
 
+        // region migrate attachment content types
+        if (newDocument[specialNames.attachment])
+            for (const attachment of Object.values(
+                newDocument[specialNames.attachment]!
+            ))
+                if (Object.prototype.hasOwnProperty.call(
+                    attachment, 'contentType'
+                )) {
+                    /* eslint-disable camelcase */
+                    attachment.content_type = attachment.contentType!
+                    /* eslint-enable camelcase */
+                    delete attachment.contentType
+                }
+        // endregion
         const result = checkDocument(newDocument, oldDocument)
         // region check if changes happened
         if (

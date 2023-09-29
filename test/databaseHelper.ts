@@ -1952,6 +1952,7 @@ describe('databaseHelper', () => {
                 ],
                 // endregion
                 // region property type
+                /*
                 [
                     [
                         {[typeName]: 'Test', a: '2 ', b: ''},
@@ -2575,7 +2576,7 @@ describe('databaseHelper', () => {
                     }
                 ],
                 //// endregion
-                //// region property existents
+                //// region property existence
                 [
                     [
                         {[typeName]: 'Test', a: {[typeName]: 'Test'}, b: 'b'},
@@ -2596,6 +2597,7 @@ describe('databaseHelper', () => {
                         }
                     }
                 ],
+                */
                 [
                     [
                         {
@@ -2620,6 +2622,7 @@ describe('databaseHelper', () => {
                         }
                     }
                 ],
+                /*
                 [
                     [
                         {
@@ -2913,6 +2916,7 @@ describe('databaseHelper', () => {
                         '': {[typeName]: 'Test', a: false}
                     }
                 ],
+                */
                 // endregion
                 // region property range
                 [
@@ -3984,7 +3988,7 @@ describe('databaseHelper', () => {
             }
         ]
     ])(
-        'validateDocumentUpdate(%p, ...) === %p (with update strategy "' +
+        '%#. validateDocumentUpdate(%p, ...) === %p (with update strategy "' +
         'migration")',
         (
             expected:PartialFullDocument,

@@ -33,8 +33,15 @@ import DatabaseHelper from './databaseHelper'
 // endregion
 // region exports
 /// region database implementation
-export type Attachment = PouchDB.Core.Attachment
-export type Attachments = PouchDB.Core.Attachments
+export type Attachment =
+    PouchDB.Core.Attachment &
+    {
+        content_type?:PouchDB.Core.Attachment['content_type']
+        contentType?:PouchDB.Core.Attachment['content_type']
+    }
+export interface Attachments {
+    [attachmentId:string]:Attachment
+}
 export type FullAttachment = PouchDB.Core.FullAttachment
 export type StubAttachment = PouchDB.Core.StubAttachment
 
@@ -296,7 +303,8 @@ export type BaseDocument =
     DocumentIDMeta &
     DocumentRevisionIDMeta &
     DocumentStrategyMeta &
-    DocumentTypeMeta
+    DocumentTypeMeta &
+    {_attachments?:Attachments}
 export type FullDocument<
     Type extends object = object, AdditionalPropertyTypes = unknown
 > = BaseDocument & Document<Type> & Mapping<AdditionalPropertyTypes>
