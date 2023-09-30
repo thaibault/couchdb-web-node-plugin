@@ -2015,12 +2015,14 @@ export class DatabaseHelper {
                         continue
                     // endregion
                     if (
-                        typeof propertySpecification.type === 'string' &&
-                        propertySpecification.type.endsWith('[]') ||
-                        Array.isArray(propertySpecification.type) &&
-                        propertySpecification.type.length &&
-                        Array.isArray(propertySpecification.type[0]) &&
-                        ![null, undefined].includes(newValue as null)
+                        ![null, undefined].includes(newValue as null) &&
+                        (
+                            typeof propertySpecification.type === 'string' &&
+                            propertySpecification.type.endsWith('[]') ||
+                            Array.isArray(propertySpecification.type) &&
+                            propertySpecification.type.length &&
+                            Array.isArray(propertySpecification.type[0])
+                        )
                     ) {
                         const newProperty = newValue as Array<DocumentContent>
                         // region check arrays
