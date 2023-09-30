@@ -76,7 +76,7 @@ describe('helper', ():void => {
             {put: ():Promise<DatabaseResponse> =>
                 new Promise<DatabaseResponse>((
                     resolve:(value:DatabaseResponse) => void
-                ):void => {
+                ) => {
                     void Tools.timeout().then(() =>
                         resolve(null as unknown as DatabaseResponse)
                     )
