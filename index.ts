@@ -42,6 +42,7 @@ import {
     initializeConnection,
     mayStripRepresentation
 } from './helper'
+import packageConfiguration from './package.json'
 import {restart, start, stop} from './server'
 import {
     ChangesStream,
@@ -547,7 +548,8 @@ export class Database implements PluginHandler {
         delete (modelConfiguration as {entities?:Models}).entities
 
         const specialNames = modelConfiguration.property.name.special
-        const {id: idName, type: typeName} = specialNames
+        const {id: idName, revision: revisionName, type: typeName} =
+            specialNames
 
         const models = extendModels(configuration.couchdb.model)
         if (configuration.couchdb.model.updateValidation) {
@@ -610,12 +612,14 @@ export class Database implements PluginHandler {
                     {
                         helper: databaseHelperCode,
                         /* eslint-disable camelcase */
-                        validate_doc_update: code
+                        validate_doc_update: code,
                         /* eslint-enable camelcase */
+                        version: packageConfiguration.version
                     },
                     type.description,
                     true,
                     idName,
+                    revisionName,
                     specialNames.designDocumentNamePrefix
                 )
             }
@@ -726,10 +730,7 @@ export class Database implements PluginHandler {
                         }
 
                         document[idName] = name
-                        document[
-                            configuration.couchdb.model.property.name.special
-                                .revision
-                        ] = 'upsert'
+                        document[revisionName] = 'upsert'
 
                         try {
                             await couchdb.connection.put(document)

@@ -109,6 +109,7 @@ export const mayStripRepresentation = (
  * @param description - Used to produce semantic logging messages.
  * @param log - Enables logging.
  * @param idName - Property name for ids.
+ * @param revisionName - Property name for revisions.
  * @param designDocumentNamePrefix - Document name prefix indicating deign
  * documents.
  *
@@ -122,6 +123,7 @@ export const ensureValidationDocumentPresence = async (
     description:string,
     log = true,
     idName:SpecialPropertyNames['id'] = '_id',
+    revisionName:SpecialPropertyNames['revision'] = '_rev',
     designDocumentNamePrefix = '_design/'
 ):Promise<void> => {
     const newDocument:Partial<Document> = {
@@ -134,7 +136,7 @@ export const ensureValidationDocumentPresence = async (
         const oldDocument:Document = await databaseConnection.get(
             `${designDocumentNamePrefix}${documentName}`
         )
-        newDocument._rev = oldDocument._rev
+        newDocument[revisionName] = oldDocument[revisionName]
 
         await databaseConnection.put(newDocument)
 
