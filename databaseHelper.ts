@@ -2019,7 +2019,8 @@ export class DatabaseHelper {
                         propertySpecification.type.endsWith('[]') ||
                         Array.isArray(propertySpecification.type) &&
                         propertySpecification.type.length &&
-                        Array.isArray(propertySpecification.type[0])
+                        Array.isArray(propertySpecification.type[0]) &&
+                        ![null, undefined].includes(newValue as null)
                     ) {
                         const newProperty = newValue as Array<DocumentContent>
                         // region check arrays
