@@ -2014,15 +2014,16 @@ export class DatabaseHelper {
                     ))
                         continue
                     // endregion
+                    const isArrayType = (
+                        typeof propertySpecification.type === 'string' &&
+                        propertySpecification.type.endsWith('[]') ||
+                        Array.isArray(propertySpecification.type) &&
+                        propertySpecification.type.length &&
+                        Array.isArray(propertySpecification.type[0])
+                    )
                     if (
-                        ![null, undefined].includes(newValue as null) &&
-                        (
-                            typeof propertySpecification.type === 'string' &&
-                            propertySpecification.type.endsWith('[]') ||
-                            Array.isArray(propertySpecification.type) &&
-                            propertySpecification.type.length &&
-                            Array.isArray(propertySpecification.type[0])
-                        )
+                        isArrayType &&
+                        ![null, undefined].includes(newValue as null)
                     ) {
                         const newProperty = newValue as Array<DocumentContent>
                         // region check arrays
@@ -2037,7 +2038,7 @@ export class DatabaseHelper {
                         else if (
                             typeof propertySpecification.minimumNumber ===
                                 'number' &&
-                            (newProperty).length <
+                            newProperty.length <
                                 propertySpecification.minimumNumber
                         )
                             throwError(
@@ -2112,7 +2113,7 @@ export class DatabaseHelper {
                                                 string
                                         ).substring(
                                             0,
-                                            propertySpecification.type
+                                            propertySpecification.type!
                                                 .length -
                                                 '[]'.length
                                         )]
@@ -2198,7 +2199,8 @@ export class DatabaseHelper {
                                 oldDocument[name] :
                                 null
 
-                        const result =
+                        const result = isArrayType ?
+                            {newValue: null, changedPath: []} :
                             checkPropertyContent<ValueOf<ObjectType>>(
                                 newValue,
                                 String(name),

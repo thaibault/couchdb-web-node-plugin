@@ -2506,6 +2506,20 @@ describe('databaseHelper', () => {
                         '': {[typeName]: 'Test', b: 2}
                     }
                 ],
+                [
+                    [{[typeName]: 'Test', b: 2}, {[typeName]: 'Test'}],
+                    {entities: {
+                        Test: {
+                            a: {type: 'string[]', default: ['a']},
+                            b: {type: 'number'}
+                        }}
+                    },
+                    {
+                        fillUp: {[typeName]: 'Test', b: 2},
+                        incremental: {b: 2},
+                        '': {[typeName]: 'Test', b: 2}
+                    }
+                ],
                 /// endregion
                 /// region nested property
                 //// region property type
