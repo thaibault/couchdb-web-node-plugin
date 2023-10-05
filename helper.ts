@@ -24,7 +24,6 @@ import {
     Configuration,
     Connection,
     DatabaseConnectorConfiguration,
-    DatabaseError,
     DatabaseResponse,
     Document,
     FileSpecification,
@@ -198,9 +197,7 @@ export const initializeConnection = async (
         "post" call so we have to wrap runtime generated methods.
     */
     type Put = <Type extends Mapping<unknown>>(
-        document:PutDocument<Type>,
-        options?:PutOptions,
-        ...parameters:Array<unknown>
+        document:PutDocument<Type>, ...parameters:Array<unknown>
     ) => Promise<DatabaseResponse>
 
     for (const pluginName of ['post', 'put'] as const) {
@@ -211,23 +208,30 @@ export const initializeConnection = async (
         >(
             this:Connection,
             document:PutDocument<Type>,
-            options?:PutOptions,
             ...parameters:Array<unknown>
         ) {
+            const options:PutOptions =
+                parameters.length && typeof parameters[0] === 'object' ?
+                    parameters[0] as PutOptions :
+                    {}
+
             try {
-                return await nativeMethod(document, options, ...parameters)
-            } catch (error) {
+                return await nativeMethod(document, ...parameters)
+            } catch (givenError) {
                 const id = document[idName]
+                const error = givenError as Mapping
 
                 if (
                     id &&
                     config.ignoreNoChangeError &&
-                    (error as DatabaseError).name === 'forbidden' &&
-                    (error as DatabaseError).message?.startsWith('NoChange:')
+                    'name' in error &&
+                    error.name === 'forbidden' &&
+                    'message' in error &&
+                    error.message.startsWith('NoChange:')
                 ) {
-                    const revision = (
-                        typeof options === 'object' && revisionName in options
-                    ) ? options[revisionName] : document[revisionName]!
+                    const revision = revisionName in options ?
+                        options[revisionName] :
+                        document[revisionName]!
 
                     return {
                         id,

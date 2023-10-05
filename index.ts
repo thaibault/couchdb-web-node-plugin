@@ -71,12 +71,13 @@ import {
 /**
  * Launches an application server und triggers all some pluginable hooks on
  * an event.
- * @property static:toggleIDDetermining - Token to provide to "bulkDocs" method
- * call to indicate id determination skip or not (depends on
- * "skipIDDetermining" configuration).
+ * @property static:toggleLatestRevisionDetermining - Token to provide to
+ * "bulkDocs" method call to indicate id determination skip or not (depends on
+ * "skipLatestRevisionDetermining" configuration).
  */
 export class Database implements PluginHandler {
-    static toggleIDDetermining = Symbol('toggleIDDetermining')
+    static toggleLatestRevisionDetermining =
+        Symbol('toggleLatestRevisionDetermining')
     /**
      * Appends an application server to the web node services.
      * @param state - Application state.
@@ -109,15 +110,16 @@ export class Database implements PluginHandler {
                 firstParameter:unknown,
                 ...parameters:Array<unknown>
             ):Promise<Array<DatabaseError|DatabaseResponse>> {
-                const toggleIDDetermining:boolean = (
+                const toggleLatestRevisionDetermining:boolean = (
                     parameters.length > 0 &&
                     parameters[parameters.length - 1] ===
-                        Database.toggleIDDetermining
+                        Database.toggleLatestRevisionDetermining
                 )
-                const skipIDDetermining:boolean = toggleIDDetermining ?
-                    !configuration.skipIDDetermining :
-                    configuration.skipIDDetermining
-                if (toggleIDDetermining)
+                const skipLatestRevisionDetermining:boolean =
+                    toggleLatestRevisionDetermining ?
+                        !configuration.skipLatestRevisionDetermining :
+                        configuration.skipLatestRevisionDetermining
+                if (toggleLatestRevisionDetermining)
                     parameters.pop()
                 /*
                     Implements a generic retry mechanism for "upsert" and
@@ -180,7 +182,7 @@ export class Database implements PluginHandler {
                             result[index] = {
                                 id: data[index][idName], ok: true
                             }
-                            if (!skipIDDetermining)
+                            if (!skipLatestRevisionDetermining)
                                 result[index].rev =
                                     revisionName in data[index] &&
                                     !['latest', 'upsert'].includes(
@@ -198,8 +200,10 @@ export class Database implements PluginHandler {
 
                 if (conflicts.length) {
                     data = conflicts
-                    if (toggleIDDetermining)
-                        parameters.push(Database.toggleIDDetermining)
+                    if (toggleLatestRevisionDetermining)
+                        parameters.push(
+                            Database.toggleLatestRevisionDetermining
+                        )
 
                     const retriedResults:Array<
                         DatabaseError|DatabaseResponse

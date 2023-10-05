@@ -411,7 +411,7 @@
           ]
         }
       },
-      "skipIDDetermining": true,
+      "skipLatestRevisionDetermining": true,
       "url": {
         "__evaluate__": "`http://{1}${self.couchdb.backend.configuration['httpd/host']}:${self.couchdb.backend.configuration['httpd/port']}`"
       },
