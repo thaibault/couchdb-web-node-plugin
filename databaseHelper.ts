@@ -888,8 +888,8 @@ export class DatabaseHelper {
                             if (types.length === 1)
                                 throwError(
                                     `PropertyType: Property "${String(name)}"` +
-                                    `isn't of (valid) type "DateTime" (given` +
-                                    '"' +
+                                    ` isn't of (valid) type "DateTime" (` +
+                                    'given"' +
                                     (
                                         serialize(initialNewValue)
                                             .replace(/^"/, '')
