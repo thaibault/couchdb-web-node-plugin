@@ -473,7 +473,7 @@ export interface CoreConfiguration<
 
     path:string
 
-    skipIDDetermining:boolean
+    skipLatestRevisionDetermining:boolean
 
     url:string
 
