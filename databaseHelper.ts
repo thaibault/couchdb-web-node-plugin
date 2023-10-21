@@ -987,7 +987,7 @@ export class DatabaseHelper {
                                 string
                             ) +
                             ` (given ${newValue as string} with length ` +
-                            `i${(newValue as string).length}) ` +
+                            `${(newValue as string).length}) ` +
                             `${pathDescription}.`
                         )
                     if (
