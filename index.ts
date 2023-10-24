@@ -857,7 +857,7 @@ export class Database implements PluginHandler {
                           empty instance and the "emptyEqualsNull" property
                           is specified as positive.
                         - Rename custom type properties if new specified model
-                          provides is a super set of existing properties.
+                          provided is a super set of existing properties.
                         - TODO: Renames property names if "oldPropertyName" is
                           provided in model specification.
                     */
