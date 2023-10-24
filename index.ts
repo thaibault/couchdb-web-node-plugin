@@ -710,21 +710,24 @@ export class Database implements PluginHandler {
                     resolve(configuration.couchdb.model.autoMigrationPath),
                     configuration.couchdb.debug ?
                         Tools.noop :
-                        ((file:File) => file.name !== 'debug')
+                        (file:File) =>
+                            !['debug', 'deprecated'].includes(file.name)
                 )) {
                     const extension = extname(file.name)
                     const name = basename(file.name, extension)
 
                     if (extension === '.json') {
-                        let document:Document
+                        let documents:Array<Document>
                         try {
-                            document = JSON.parse(await fileSystem.readFile(
-                                file.path,
-                                {
-                                    encoding: configuration.core.encoding,
-                                    flag: 'r'
-                                }
-                            )) as Document
+                            documents = ([] as Array<Document>).concat(
+                                JSON.parse(await fileSystem.readFile(
+                                    file.path,
+                                    {
+                                        encoding: configuration.core.encoding,
+                                        flag: 'r'
+                                    }
+                                )) as Document
+                            )
                         } catch (error) {
                             throw new Error(
                                 `Parsing document "${file.path}" to include ` +
@@ -733,34 +736,41 @@ export class Database implements PluginHandler {
                             )
                         }
 
-                        document[idName] = name
-                        document[revisionName] = 'upsert'
-
-                        try {
-                            await couchdb.connection.put(document)
-                        } catch (error) {
-                            if ((
-                                error as {forbidden:string}
-                            ).forbidden?.startsWith('NoChange:'))
-                                console.info(
-                                    'Including document "' +
-                                    `${document[idName]}" of type ` +
-                                    `"${document[typeName] as string}" ` +
-                                    `hasn't changed existing document.`
-                                )
-                            throw new Error(
-                                `Migrating document "` +
-                                `${document[idName]}" of type "` +
-                                `${document[typeName] as string}" has failed` +
-                                `: ${Tools.represent(error)}`
-                            )
+                        if (documents.length === 1) {
+                            if (!documents[0][idName])
+                                documents[0][idName] = name
+                            if (!documents[0][revisionName])
+                                documents[0][revisionName] = 'upsert'
                         }
 
-                        console.info(
-                            'Including document "' +
-                            `${document[idName]}" of type "` +
-                            `${document[typeName] as string}" was successful.`
-                        )
+                        for (const document of documents) {
+                            try {
+                                await couchdb.connection.put(document)
+                            } catch (error) {
+                                if ((
+                                    error as { forbidden:string }
+                                ).forbidden?.startsWith('NoChange:'))
+                                    console.info(
+                                        'Including document "' +
+                                        `${document[idName]}" of type ` +
+                                        `"${document[typeName] as string}" ` +
+                                        `hasn't changed existing document.`
+                                    )
+                                throw new Error(
+                                    `Migrating document "` +
+                                    `${document[idName]}" of type "` +
+                                    `${document[typeName] as string}" has ` +
+                                    `failed: ${Tools.represent(error)}`
+                                )
+                            }
+
+                            console.info(
+                                'Including document "' +
+                                `${document[idName]}" of type "` +
+                                `${document[typeName] as string}" was ` +
+                                'successful.'
+                            )
+                        }
                     } else if (['.js'].includes(extname(file.name)))
                         // region collect script migrators
                         migrators[file.path] = (
