@@ -42,7 +42,6 @@ import {
     initializeConnection,
     mayStripRepresentation
 } from './helper'
-import packageConfiguration from './package.json'
 import {restart, start, stop} from './server'
 import {
     ChangesStream,
@@ -616,9 +615,8 @@ export class Database implements PluginHandler {
                     {
                         helper: databaseHelperCode,
                         /* eslint-disable camelcase */
-                        validate_doc_update: code,
+                        validate_doc_update: code
                         /* eslint-enable camelcase */
-                        version: packageConfiguration.version
                     },
                     type.description,
                     true,
