@@ -17,6 +17,7 @@
 import Tools, {globalContext} from 'clientnode'
 import {Mapping, ValueOf} from 'clientnode/type'
 
+import packageConfiguration from './package.json'
 import {
     AllowedModelRolesMapping,
     AllowedRoles,
@@ -128,6 +129,7 @@ export const ensureValidationDocumentPresence = async (
     const newDocument:Partial<Document> = {
         [idName]: `${designDocumentNamePrefix}${documentName}`,
         language: 'javascript',
+        version: packageConfiguration.version,
         ...documentData
     }
 

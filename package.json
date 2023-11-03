@@ -125,6 +125,7 @@
           "couch_httpd_auth/timeout": {
             "__evaluate__": "60 ** 2 * 24 * 14"
           },
+          "chttpd/require_valid_user": true,
           "httpd/allow_jsonp": true,
           "httpd/bind_address": {
             "__evaluate__": "self.couchdb.backend.configuration['httpd/host']"
