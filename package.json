@@ -444,6 +444,16 @@
         "#": "Share same library version.",
         "node-fetch$": "pouchdb-node/node_modules/node-fetch/lib/index.js"
       },
+      "optimizer": {
+        "babelMinify": {
+          "bundle": {
+            "transform": {
+              "#": "To provide a logging output we need to exclude this feature.",
+              "removeConsole": false
+            }
+          }
+        }
+      },
       "skipParseRegularExpressions": {
         "__evaluate__": "/(?:(?:bindings\\/bindings)|(?:colors\\/lib\\/(?:colors)|(?:extendStringPrototype))|(?:encoding\\/lib\\/iconv-loader)|(?:global)|(?:module))\\.js(?:\\?.+|$)/"
       }
