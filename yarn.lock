@@ -3211,9 +3211,9 @@ camelcase@^6.2.0:
   integrity sha512-Gmy6FhYlCY7uOElZUSbxo2UCDH8owEk996gkbrpsgGtrJLM3J7jGxl9Ic7Qwwj4ivOE5AWZWRMecDdF7hqGjFA==
 
 caniuse-lite@^1.0.30000844, caniuse-lite@^1.0.30001565:
-  version "1.0.30001571"
-  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001571.tgz#4182e93d696ff42930f4af7eba515ddeb57917ac"
-  integrity sha512-tYq/6MoXhdezDLFZuCO/TKboTzuQ/xR5cFdgXPfDtM7/kchBO3b4VWghE/OAi/DV7tTdhmLjZiZBZi1fA/GheQ==
+  version "1.0.30001572"
+  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001572.tgz#1ccf7dc92d2ee2f92ed3a54e11b7b4a3041acfa0"
+  integrity sha512-1Pbh5FLmn5y4+QhNyJE9j3/7dK44dGB83/ZMjv/qJk86TvDbjk0LosiZo0i0WB0Vx607qMX9jYrn1VLHCkN4rw==
 
 catharsis@^0.9.0:
   version "0.9.0"
@@ -3308,9 +3308,9 @@ cli-table3@^0.5.0:
     colors "^1.1.2"
 
 clientnode@*:
-  version "3.0.1100"
-  resolved "https://registry.yarnpkg.com/clientnode/-/clientnode-3.0.1100.tgz#a032a41ab21081f8ba5cf92e92a42124eec203ef"
-  integrity sha512-htnnG0pfXJqY/nv4fYNCG8u+ad5RoM5nbLBD6jiiMqTfbd5Ju20MyhcqE3LLO/h2KWuFJKMVGnz3Yu5RwMkKOQ==
+  version "3.0.1102"
+  resolved "https://registry.yarnpkg.com/clientnode/-/clientnode-3.0.1102.tgz#3cdb6d53ffa75b8c97ddcf2c1b05e3360231a5ae"
+  integrity sha512-BoEqCurMiEPKCiEWgHioDRUanDCtqjbIBYSpa0M4n2tJCjtA1/SSR4oJXvwTxi3z9ekZed/euHp/fZsIoHf27w==
 
 cliui@^4.0.0:
   version "4.1.0"
@@ -3830,9 +3830,9 @@ doctrine@^3.0.0:
     esutils "^2.0.2"
 
 documentation-website@*:
-  version "1.0.317"
-  resolved "https://registry.yarnpkg.com/documentation-website/-/documentation-website-1.0.317.tgz#7d347ec705a6bca19fc63fa7c0799b23a4d5dda8"
-  integrity sha512-qPOwZUXc4d3SdNxbU6TwtEcL2sw/AFaBlaTlX3Btn1+XQwXfAQS9jIm426UQDMxGvZACz2cClPpDACZmlWs26Q==
+  version "1.0.319"
+  resolved "https://registry.yarnpkg.com/documentation-website/-/documentation-website-1.0.319.tgz#ce4c23cc0c39d91ab88c5e91b2f2ca72cb6999f2"
+  integrity sha512-mdKzZNxun31LsCSt0ymdpJShrQfcfIeYVmeYCIGWndxyOIOpA1A7aLa1gSn/YlkOQP7KBByMjdT1BviTJSfzBA==
 
 dom-converter@^0.2.0:
   version "0.2.0"
@@ -8657,9 +8657,9 @@ watchpack@^2.4.0:
     graceful-fs "^4.1.2"
 
 web-node@*:
-  version "1.0.504"
-  resolved "https://registry.yarnpkg.com/web-node/-/web-node-1.0.504.tgz#2c3808319e366dce90e5330f6f920bfe5a9569f5"
-  integrity sha512-QXW9lsC48xGBjRmGqNgSjWswXdUpwG7fM1kbU/apGXHUekLrz7Pm+3aZIah9LF1yfxGSDXB+gt3AmbMO3Y0lHw==
+  version "1.0.505"
+  resolved "https://registry.yarnpkg.com/web-node/-/web-node-1.0.505.tgz#94a11a474f7ea3fbc6eb2878e0a9e8f758fe0471"
+  integrity sha512-7IXFS/0sKy0IpFrjnl3e6eF8pAb6YrIln363AiSXdcMzpqLlsVvuqRrCgcRbv/1Zd9bZY4mzjeD9WDx51cyD7g==
 
 web-streams-polyfill@^3.0.3:
   version "3.2.1"
@@ -8677,9 +8677,9 @@ webidl-conversions@^7.0.0:
   integrity sha512-VwddBukDzu71offAQR975unBIGqfKZpM+8ZX6ySk8nYhVoo5CYaZyzt3YBvYtRtO+aoGlqxPg/B87NGVZ/fu6g==
 
 weboptimizer@*:
-  version "2.0.1407"
-  resolved "https://registry.yarnpkg.com/weboptimizer/-/weboptimizer-2.0.1407.tgz#113203d12664b1f1e35ea09dbb5ec11e071da369"
-  integrity sha512-7M81ZhnScsvtvCMnr+r8fUAkKsYzIdBwIgHKfQWlfYezkZKfevi4bT1fXBDbcxijuqqPU+z8u4lwBi5RNgUP1A==
+  version "2.0.1409"
+  resolved "https://registry.yarnpkg.com/weboptimizer/-/weboptimizer-2.0.1409.tgz#9c31e1f03956d8632e5a084c2f4413740c8438e2"
+  integrity sha512-YJKaLvjIR9DDnmTypk8XAmv6Dx8cSnVuFGKifizTkWs3D9mxK0J0IJGklPCAG0cVOaKEQlY56HLevyfSItFsBw==
   dependencies:
     "@babel/core" "*"
     "@babel/plugin-proposal-class-properties" "*"
