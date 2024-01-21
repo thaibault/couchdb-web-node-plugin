@@ -1735,7 +1735,8 @@ export class DatabaseHelper {
                                 propertySpecification,
                                 newDocument,
                                 oldDocument && oldDocument[name] ?
-                                    oldDocument[name]! :
+                                    oldDocument[name] as
+                                        PartialFullDocumentType :
                                     null,
                                 fileName,
                                 newAttachments
@@ -1746,7 +1747,8 @@ export class DatabaseHelper {
                                 propertySpecification,
                                 newDocument,
                                 oldDocument && oldDocument[name] ?
-                                    oldDocument[name]! :
+                                    oldDocument[name] as
+                                        PartialFullDocumentType :
                                     null,
                                 fileName,
                                 newAttachments
