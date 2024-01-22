@@ -358,8 +358,8 @@ export class Database implements PluginHandler {
                     } catch (error) {
                         console.error(
                             `Can't login as existing admin user "` +
-                            `${configuration.couchdb.user.name}": "` +
-                            `${Tools.represent(error)}".`
+                            `${configuration.couchdb.user.name}": ` +
+                            `${Tools.represent(error)}`
                         )
                     } finally {
                         void authenticatedUserDatabaseConnection.close()
@@ -367,8 +367,8 @@ export class Database implements PluginHandler {
                 } else
                     console.error(
                         `Can't create new admin user "` +
-                        `${configuration.couchdb.user.name}": "` +
-                        `${Tools.represent(error)}".`
+                        `${configuration.couchdb.user.name}": ` +
+                        `${Tools.represent(error)}`
                     )
             } finally {
                 void unauthenticatedUserDatabaseConnection.close()
@@ -417,8 +417,8 @@ export class Database implements PluginHandler {
                             }
                         else
                             throw new Error(
-                                `Couldn't check for presence of user "` +
-                                `${name}": ${Tools.represent(error)}`
+                                `Couldn't check for presence of user ` +
+                                `"${name}": ${Tools.represent(error)}`
                             )
                     } finally {
                         void userDatabaseConnection.close()
@@ -450,7 +450,7 @@ export class Database implements PluginHandler {
                         } catch (error) {
                             console.warn(
                                 `Configuration "${fullPath}" (with desired ` +
-                                `value "${Tools.represent(value)}") couldn't` +
+                                `value [${Tools.represent(value)}]) couldn't` +
                                 ` be determined: ${Tools.represent(error)}`
                             )
                         }
@@ -470,8 +470,8 @@ export class Database implements PluginHandler {
                                     } catch (error) {
                                         console.warn(
                                             'Error checking curent value of ' +
-                                            `"${fullPath}" to be "` +
-                                            `${Tools.represent(value)}": ` +
+                                            `"${fullPath}" to be ` +
+                                            `[${Tools.represent(value)}]: ` +
                                             Tools.represent(error)
                                         )
                                     }
@@ -495,22 +495,22 @@ export class Database implements PluginHandler {
                                     } catch (error) {
                                         console.error(
                                             `Configuration "${fullPath}" ` +
-                                            `couldn't be applied to "` +
-                                            `${Tools.represent(value)}": ` +
+                                            `couldn't be applied to ` +
+                                            `[${Tools.represent(value)}]: ` +
                                             Tools.represent(error)
                                         )
                                     }
                                 else
                                     console.info(
                                         `Configuration "${fullPath}" is ` +
-                                        'already set to desired value "' +
-                                        `${Tools.represent(value)}".`
+                                        'already set to desired value ' +
+                                        `[${Tools.represent(value)}].`
                                     )
                             } else
                                 console.info(
                                     `Configuration "${fullPath}" does not ` +
-                                    `exist (desired value "` +
-                                    `${Tools.represent(value)}"). Response ` +
+                                    `exist (desired value ` +
+                                    `[${Tools.represent(value)}]). Response ` +
                                     `code is ${response.status}.`
                                 )
                     }
@@ -538,7 +538,7 @@ export class Database implements PluginHandler {
                 )
             } catch (error) {
                 console.error(
-                    `Security object couldn't be applied.: ` +
+                    `Security object couldn't be applied: ` +
                     Tools.represent(error)
                 )
             }
@@ -650,7 +650,7 @@ export class Database implements PluginHandler {
                                         `Specified constraint description "` +
                                         `${constraint.description}" for ` +
                                         `model "${modelName}" doesn't ` +
-                                        `compile: "${Tools.represent(error)}".`
+                                        `compile: ${Tools.represent(error)}`
                                     )
                                 }
                                 /*
@@ -687,8 +687,8 @@ export class Database implements PluginHandler {
                                             constraint.description +
                                             `" for model "${modelName}" in ` +
                                             `property "${name}" as "${type}"` +
-                                            ' doesn\'t compile: "' +
-                                            `${Tools.represent(error)}".`
+                                            ' doesn\'t compile: ' +
+                                            `${Tools.represent(error)}`
                                         )
                                     }
                                 /*
@@ -1091,7 +1091,7 @@ export class Database implements PluginHandler {
                         console.warn(
                             'Observing changes feed throws an error for ' +
                             `${numberOfErrorsThrough} times through: ` +
-                            `${Tools.represent(error)}. Restarting database ` +
+                            `${Tools.represent(error)} Restarting database ` +
                             'server and reinitialize changes stream...'
                         )
 
@@ -1103,7 +1103,7 @@ export class Database implements PluginHandler {
                         console.warn(
                             'Observing changes feed throws an error for ' +
                             `${numberOfErrorsThrough} times through: ` +
-                            `${Tools.represent(error)}. Reinitializing ` +
+                            `${Tools.represent(error)} Reinitializing ` +
                             'changes stream...'
                         )
 
