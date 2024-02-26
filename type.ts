@@ -155,11 +155,11 @@ export interface PropertySpecification<
     onUpdateExpression?:string
     // endregion
     // region validation
-    regularExpressionPattern?:Pattern
-    invertedRegularExpressionPattern?:Pattern
+    pattern?:Pattern
+    invertedPattern?:Pattern
 
-    contentTypeRegularExpressionPattern?:Pattern
-    invertedContentTypeRegularExpressionPattern?:Pattern
+    contentTypePattern?:Pattern
+    invertedContentTypePattern?:Pattern
 
     maximum?:number
     minimum?:number
@@ -357,7 +357,7 @@ export interface SpecialPropertyNames {
 export interface PropertyNameConfiguration {
     reserved:Array<string>
     special:SpecialPropertyNames
-    typeRegularExpressionPattern:{
+    typePattern:{
         private:string
         public:string
     }

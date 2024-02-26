@@ -238,8 +238,8 @@
               "minimumLength": 1,
               "nullable": false,
               "mutable": false,
-              "regularExpressionPattern": {
-                "__evaluate__": "`(?:${self.couchdb.model.property.name.typeRegularExpressionPattern.public}|${self.couchdb.model.property.name.typeRegularExpressionPattern.private})`"
+              "pattern": {
+                "__evaluate__": "`(?:${self.couchdb.model.property.name.typePattern.public}|${self.couchdb.model.property.name.typePattern.private})`"
               }
             }
           },
@@ -380,7 +380,7 @@
                 "expression": "_onUpdateExpression"
               }
             },
-            "typeRegularExpressionPattern": {
+            "typePattern": {
               "private": "^_[a-z][A-Za-z0-9]+$",
               "public": "^[A-Z][A-Za-z0-9]+$"
             },
