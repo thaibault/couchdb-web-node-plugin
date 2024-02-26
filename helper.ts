@@ -458,19 +458,17 @@ export const extendModels = (modelConfiguration:ModelConfiguration):Models => {
     const specialNames = modelConfiguration.property.name.special
     const models:Models = {}
 
-    const {typeRegularExpressionPattern} = modelConfiguration.property.name
+    const {typePattern} = modelConfiguration.property.name
 
     for (const modelName of Object.keys(modelConfiguration.entities)) {
         if (!(
-            new RegExp(typeRegularExpressionPattern.public).test(modelName) ||
-            (new RegExp(typeRegularExpressionPattern.private)).test(modelName)
+            new RegExp(typePattern.public).test(modelName) ||
+            (new RegExp(typePattern.private)).test(modelName)
         ))
             throw new Error(
-                'Model names have to match "' +
-                typeRegularExpressionPattern.public +
-                '" or "' +
-                typeRegularExpressionPattern.private +
-                `" for private one (given name: "${modelName}").`
+                'Model names have to match ' +
+                `"${typePattern.public}" or "${typePattern.private}"` +
+                ` for private one (given name: "${modelName}").`
             )
 
         models[modelName] = extendModel(

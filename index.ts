@@ -952,8 +952,8 @@ export class Database implements PluginHandler {
 
             for (const [modelName, model] of Object.entries(models))
                 if ((new RegExp(
-                    configuration.couchdb.model.property.name
-                        .typeRegularExpressionPattern.public
+                    configuration.couchdb.model.property.name.typePattern
+                        .public
                 )).test(modelName)) {
                     await couchdb.connection.createIndex({index: {
                         ddoc: `${modelName}-GenericIndex`,

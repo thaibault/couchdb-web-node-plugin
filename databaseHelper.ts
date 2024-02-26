@@ -444,9 +444,9 @@ export class DatabaseHelper {
                 if (fileType.fileName.value)
                     return fileType.fileName.value === fileName
 
-                if (fileType.fileName.regularExpressionPattern)
+                if (fileType.fileName.pattern)
                     return ([] as Array<RegExp|string>)
-                        .concat(fileType.fileName.regularExpressionPattern)
+                        .concat(fileType.fileName.pattern)
                         .some((pattern) =>
                             new RegExp(pattern).test(fileName)
                         )
@@ -616,15 +616,13 @@ export class DatabaseHelper {
                 if (!(
                     parentNames.length ||
                     (new RegExp(
-                        modelConfiguration.property.name
-                            .typeRegularExpressionPattern.public
+                        modelConfiguration.property.name.typePattern.public
                     )).test(newDocument[typeName] as string)
                 ))
                     throwError(
                         'TypeName: You have to specify a model type which ' +
                         'matches "' +
-                        modelConfiguration.property.name
-                            .typeRegularExpressionPattern.public +
+                        modelConfiguration.property.name.typePattern.public +
                         `" as public type (given "` +
                         `${newDocument[typeName] as string}")` +
                         `${pathDescription}.`
@@ -1071,10 +1069,10 @@ export class DatabaseHelper {
                 }
                 // endregion
                 // region pattern
-                if (propertySpecification.regularExpressionPattern) {
+                if (propertySpecification.pattern) {
                     const patterns = (
                         [] as Array<RegExp | string>
-                    ).concat(propertySpecification.regularExpressionPattern)
+                    ).concat(propertySpecification.pattern)
                     let matched = false
                     for (const pattern of patterns)
                         if (new RegExp(pattern).test(newValue as string)) {
@@ -1089,12 +1087,10 @@ export class DatabaseHelper {
                             `"${newValue as string}")${pathDescription}.`
                         )
                 }
-                if (propertySpecification.invertedRegularExpressionPattern)
+                if (propertySpecification.invertedPattern)
                     for (const pattern of (
                         [] as Array<RegExp|string>
-                    ).concat(
-                        propertySpecification.invertedRegularExpressionPattern
-                    ))
+                    ).concat(propertySpecification.invertedPattern))
                         if (new RegExp(pattern).test(newValue as string))
                             throwError(
                                 'InvertedPatternMatch: Property ' +
@@ -2546,12 +2542,10 @@ export class DatabaseHelper {
 
                     let aggregatedSize = 0
                     for (const fileName of attachmentToTypeMapping[type]) {
-                        if (specification.fileName?.regularExpressionPattern) {
+                        if (specification.fileName?.pattern) {
                             const patterns = (
                                 [] as Array<RegExp | string>
-                            ).concat(
-                                specification.fileName.regularExpressionPattern
-                            )
+                            ).concat(specification.fileName.pattern)
                             let matched = false
                             for (const pattern of patterns)
                                 if (new RegExp(pattern).test(fileName)) {
@@ -2568,16 +2562,10 @@ export class DatabaseHelper {
                                 )
                         }
 
-                        if (
-                            specification
-                                .fileName?.invertedRegularExpressionPattern
-                        )
+                        if (specification.fileName?.invertedPattern)
                             for (const pattern of (
                                 [] as Array<RegExp|string>
-                            ).concat(
-                                specification.fileName
-                                    .invertedRegularExpressionPattern
-                            ))
+                            ).concat(specification.fileName.invertedPattern))
                                 if (new RegExp(pattern).test(fileName))
                                     throwError(
                                         'InvertedAttachmentName: given ' +
@@ -2589,16 +2577,10 @@ export class DatabaseHelper {
                                     )
 
                         if (newAttachments[fileName].content_type) {
-                            if (
-                                specification
-                                    .contentTypeRegularExpressionPattern
-                            ) {
+                            if (specification.contentTypePattern) {
                                 const patterns = (
                                     [] as Array<RegExp | string>
-                                ).concat(
-                                    specification
-                                        .contentTypeRegularExpressionPattern
-                                )
+                                ).concat(specification.contentTypePattern)
                                 let matched = false
                                 for (const pattern of patterns)
                                     if (new RegExp(pattern).test(
@@ -2620,8 +2602,7 @@ export class DatabaseHelper {
                             }
 
                             const invertedPatterns =
-                                specification
-                                    .invertedContentTypeRegularExpressionPattern
+                                specification.invertedContentTypePattern
 
                             if (invertedPatterns)
                                 for (const pattern of (
