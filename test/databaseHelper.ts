@@ -766,17 +766,13 @@ describe('databaseHelper', () => {
                 //// region property pattern
                 [
                     [{[typeName]: 'Test', b: {[typeName]: 'Test', a: 'b'}}],
-                    {entities: {Test: {
-                        a: {regularExpressionPattern: 'a'},
-                        b: {type: 'Test'}
-                    }}},
+                    {entities: {Test: {a: {pattern: 'a'}, b: {type: 'Test'}}}},
                     'PatternMatch'
                 ],
                 [
                     [{[typeName]: 'Test', b: {[typeName]: 'Test', a: 'a'}}],
                     {entities: {Test: {
-                        a: {invertedRegularExpressionPattern: 'a'},
-                        b: {type: 'Test'}
+                        a: {invertedPattern: 'a'}, b: {type: 'Test'}
                     }}},
                     'InvertedPatternMatch'
                 ],
@@ -895,14 +891,12 @@ describe('databaseHelper', () => {
                 // Values have to match their specified pattern.
                 [
                     [{[typeName]: 'Test', a: 'b'}],
-                    {entities: {Test: {a: {regularExpressionPattern: 'a'}}}},
+                    {entities: {Test: {a: {pattern: 'a'}}}},
                     'PatternMatch'
                 ],
                 [
                     [{[typeName]: 'Test', a: 'a'}],
-                    {entities: {Test: {a: {
-                        invertedRegularExpressionPattern: 'a'
-                    }}}},
+                    {entities: {Test: {a: {invertedPattern: 'a'}}}},
                     'InvertedPatternMatch'
                 ],
                 // endregion
@@ -1014,7 +1008,7 @@ describe('databaseHelper', () => {
                     [{[typeName]: 'Test'}],
                     {entities: {Test: {[attachmentName]: {
                         data: {
-                            fileName: {regularExpressionName: '.*'},
+                            fileName: {pattern: '.*'},
                             minimumNumber: 1,
                             nullable: false
                         }
@@ -1082,7 +1076,7 @@ describe('databaseHelper', () => {
                         /* eslint-enable camelcase */
                     }}],
                     {entities: {Test: {[attachmentName]: {data: {
-                        fileName: {regularExpressionPattern: '.*'},
+                        fileName: {pattern: '.*'},
                         maximumNumber: 1
                     }}}}},
                     'AttachmentMaximum'
@@ -1156,10 +1150,7 @@ describe('databaseHelper', () => {
                         /* eslint-enable camelcase */
                     }}}],
                     {entities: {Test: {[attachmentName]: {data: {
-                        fileName: {
-                            regularExpressionPattern: /b/g,
-                            value: 'a'
-                        }
+                        fileName: {pattern: /b/g, value: 'a'}
                     }}}}},
                     'AttachmentName'
                 ],
@@ -1170,7 +1161,7 @@ describe('databaseHelper', () => {
                         /* eslint-enable camelcase */
                     }}}],
                     {entities: {Test: {[attachmentName]: {a: {
-                        fileName: {invertedRegularExpressionPattern: /a/g}
+                        fileName: {invertedPattern: /a/g}
                     }}}}},
                     'InvertedAttachmentName'
                 ],
@@ -1182,7 +1173,7 @@ describe('databaseHelper', () => {
                         /* eslint-enable camelcase */
                     }}],
                     {entities: {Test: {[attachmentName]: {data: {
-                        fileName: {regularExpressionPattern: /a/}
+                        fileName: {pattern: /a/}
                     }}}}},
                     'AttachmentTypeMatch'
                 ],
@@ -1194,10 +1185,7 @@ describe('databaseHelper', () => {
                         /* eslint-enable camelcase */
                     }}],
                     {entities: {Test: {[attachmentName]: {data: {
-                        fileName: {
-                            regularExpressionPattern: /[ab]/,
-                            invertedRegularExpressionPattern: /a/
-                        }
+                        fileName: {pattern: /[ab]/, invertedPattern: /a/}
                     }}}}},
                     'InvertedAttachmentName'
                 ],
@@ -1210,8 +1198,8 @@ describe('databaseHelper', () => {
                         /* eslint-enable camelcase */
                     }}],
                     {entities: {Test: {[attachmentName]: {data: {
-                        contentTypeRegularExpressionPattern: /text\/plain/,
-                        fileName: {regularExpressionPattern: /.*/}
+                        contentTypePattern: /text\/plain/,
+                        fileName: {pattern: /.*/}
                     }}}}},
                     'AttachmentContentType'
                 ],
@@ -2854,9 +2842,24 @@ describe('databaseHelper', () => {
                 //// region property pattern
                 [
                     [{[typeName]: 'Test', b: {[typeName]: 'Test', a: 'a'}}],
+                    {entities: {Test: {a: {pattern: 'a'}, b: {type: 'Test'}}}},
+                    {
+                        fillUp: {[typeName]: 'Test', b: {
+                            [typeName]: 'Test', a: 'a'
+                        }},
+                        incremental: {[typeName]: 'Test', b: {
+                            [typeName]: 'Test', a: 'a'
+                        }},
+                        '': {
+                            [typeName]: 'Test',
+                            b: {[typeName]: 'Test', a: 'a'}
+                        }
+                    }
+                ],
+                [
+                    [{[typeName]: 'Test', b: {[typeName]: 'Test', a: 'a'}}],
                     {entities: {Test: {
-                        a: {regularExpressionPattern: 'a'},
-                        b: {type: 'Test'}
+                        a: {pattern: ['b', 'a']}, b: {type: 'Test'}
                     }}},
                     {
                         fillUp: {[typeName]: 'Test', b: {
@@ -2874,8 +2877,7 @@ describe('databaseHelper', () => {
                 [
                     [{[typeName]: 'Test', b: {[typeName]: 'Test', a: 'a'}}],
                     {entities: {Test: {
-                        a: {regularExpressionPattern: ['b', 'a']},
-                        b: {type: 'Test'}
+                        a: {invertedPattern: 'b'}, b: {type: 'Test'}
                     }}},
                     {
                         fillUp: {[typeName]: 'Test', b: {
@@ -2893,27 +2895,7 @@ describe('databaseHelper', () => {
                 [
                     [{[typeName]: 'Test', b: {[typeName]: 'Test', a: 'a'}}],
                     {entities: {Test: {
-                        a: {invertedRegularExpressionPattern: 'b'},
-                        b: {type: 'Test'}
-                    }}},
-                    {
-                        fillUp: {[typeName]: 'Test', b: {
-                            [typeName]: 'Test', a: 'a'
-                        }},
-                        incremental: {[typeName]: 'Test', b: {
-                            [typeName]: 'Test', a: 'a'
-                        }},
-                        '': {
-                            [typeName]: 'Test',
-                            b: {[typeName]: 'Test', a: 'a'}
-                        }
-                    }
-                ],
-                [
-                    [{[typeName]: 'Test', b: {[typeName]: 'Test', a: 'a'}}],
-                    {entities: {Test: {
-                        a: {invertedRegularExpressionPattern: ['b', 'c']},
-                        b: {type: 'Test'}
+                        a: {invertedPattern: ['b', 'c']}, b: {type: 'Test'}
                     }}},
                     {
                         fillUp: {[typeName]: 'Test', b: {
@@ -3099,7 +3081,7 @@ describe('databaseHelper', () => {
                 // region property pattern
                 [
                     [{[typeName]: 'Test', a: 'a'}],
-                    {entities: {Test: {a: {regularExpressionPattern: 'a'}}}},
+                    {entities: {Test: {a: {pattern: 'a'}}}},
                     {
                         fillUp: {[typeName]: 'Test', a: 'a'},
                         incremental: {[typeName]: 'Test', a: 'a'},
@@ -3108,9 +3090,7 @@ describe('databaseHelper', () => {
                 ],
                 [
                     [{[typeName]: 'Test', a: 'a'}],
-                    {entities: {Test: {a: {
-                        regularExpressionPattern: ['b', 'a']
-                    }}}},
+                    {entities: {Test: {a: {pattern: ['b', 'a']}}}},
                     {
                         fillUp: {[typeName]: 'Test', a: 'a'},
                         incremental: {[typeName]: 'Test', a: 'a'},
@@ -3119,9 +3099,7 @@ describe('databaseHelper', () => {
                 ],
                 [
                     [{[typeName]: 'Test', a: 'a'}],
-                    {entities: {Test: {a: {
-                        invertedRegularExpressionPattern: 'b'
-                    }}}},
+                    {entities: {Test: {a: {invertedPattern: 'b'}}}},
                     {
                         fillUp: {[typeName]: 'Test', a: 'a'},
                         incremental: {[typeName]: 'Test', a: 'a'},
@@ -3130,9 +3108,7 @@ describe('databaseHelper', () => {
                 ],
                 [
                     [{[typeName]: 'Test', a: 'a'}],
-                    {entities: {Test: {a: {
-                        invertedRegularExpressionPattern: ['b', 'c']
-                    }}}},
+                    {entities: {Test: {a: {invertedPattern: ['b', 'c']}}}},
                     {
                         fillUp: {[typeName]: 'Test', a: 'a'},
                         incremental: {[typeName]: 'Test', a: 'a'},
@@ -3294,11 +3270,8 @@ describe('databaseHelper', () => {
                         }}
                     }],
                     {entities: {Test: {[attachmentName]: {data: {
-                        contentTypeRegularExpressionPattern:
-                            'image/(?:p?jpe?g|png|svg)',
-                        fileName: {
-                            regularExpressionPattern: '.+\\.(?:jpe?g|png|svg)'
-                        },
+                        contentTypePattern: 'image/(?:p?jpe?g|png|svg)',
+                        fileName: {pattern: '.+\\.(?:jpe?g|png|svg)'},
                         maximumNumber: 1,
                         nullable: false
                     }}}}},
@@ -3340,13 +3313,11 @@ describe('databaseHelper', () => {
                         }}
                     }],
                     {entities: {Test: {[attachmentName]: {data: {
-                        contentTypeRegularExpressionPattern: [
-                            'image/(?:p?jpe?g)',
-                            'image/(?:png|svg)'
+                        contentTypePattern: [
+                            'image/(?:p?jpe?g)', 'image/(?:png|svg)'
                         ],
-                        fileName: {regularExpressionPattern: [
-                            '.+\\.(?:jpe?g|svg)',
-                            '.+\\.(?:jpe?g|png)'
+                        fileName: {pattern: [
+                            '.+\\.(?:jpe?g|svg)', '.+\\.(?:jpe?g|png)'
                         ]},
                         maximumNumber: 1,
                         nullable: false
@@ -3426,7 +3397,7 @@ describe('databaseHelper', () => {
                         }
                     }],
                     {entities: {Test: {[attachmentName]: {data: {
-                        fileName: {regularExpressionPattern: /[ab]/},
+                        fileName: {pattern: /[ab]/},
                         maximumNumber: 2,
                         minimumNumber: 2
                     }}}}},
@@ -3462,7 +3433,7 @@ describe('databaseHelper', () => {
                         }
                     }],
                     {entities: {Test: {[attachmentName]: {data: {
-                        fileName: {regularExpressionPattern: [/[cd]/, /[ab]/]},
+                        fileName: {pattern: [/[cd]/, /[ab]/]},
                         maximumNumber: 2,
                         minimumNumber: 2
                     }}}}},
@@ -3498,8 +3469,7 @@ describe('databaseHelper', () => {
                         }
                     }],
                     {entities: {Test: {[attachmentName]: {data: {
-                        fileName: {regularExpressionPattern: 'a|b'},
-                        maximumNumber: 2
+                        fileName: {pattern: 'a|b'}, maximumNumber: 2
                     }}}}},
                     {
                         fillUp: {[typeName]: 'Test', [attachmentName]: {
@@ -3533,10 +3503,7 @@ describe('databaseHelper', () => {
                         }
                     }],
                     {entities: {Test: {[attachmentName]: {data: {
-                        fileName: {
-                            invertedRegularExpressionPattern: ['c|d'],
-                            regularExpressionPattern: /.*/
-                        },
+                        fileName: {invertedPattern: ['c|d'], pattern: /.*/},
                         maximumNumber: 2
                     }}}}},
                     {
@@ -3580,8 +3547,8 @@ describe('databaseHelper', () => {
                         }
                     }],
                     {entities: {Test: {[attachmentName]: {data: {
-                        contentTypeRegularExpressionPattern: /image\/.+/,
-                        fileName: {regularExpressionPattern: 'a|b'}
+                        contentTypePattern: /image\/.+/,
+                        fileName: {pattern: 'a|b'}
                     }}}}},
                     {
                         fillUp: {
@@ -3633,7 +3600,7 @@ describe('databaseHelper', () => {
                         }
                     ],
                     {entities: {Test: {[attachmentName]: {data: {
-                        fileName: {regularExpressionPattern: '.*'}
+                        fileName: {pattern: '.*'}
                     }}}}},
                     {
                         fillUp: {[typeName]: 'Test', [attachmentName]: {
