@@ -311,9 +311,7 @@ describe('helper', ():void => {
                 true,
                 Tools.copy(modelConfiguration),
                 {
-                    property: {name: {typeRegularExpressionPattern: {
-                        public: 'a'
-                    }}},
+                    property: {name: {typePattern: {public: 'a'}}},
                     entities: {a: {}}
                 } as unknown as Partial<ModelConfiguration>
             )
