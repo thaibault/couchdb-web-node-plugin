@@ -57,7 +57,7 @@
     "test": "weboptimizer test",
     "test:coverage": "weboptimizer test:coverage",
     "test:coverage:report": "weboptimizer test:coverage:report",
-    "update": "yarn version --patch",
+    "update": "yarn version patch && git push --tags",
     "update:documentation": "documentation-website",
     "watch": "weboptimizer build --watch"
   },
