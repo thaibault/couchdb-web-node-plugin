@@ -14,7 +14,7 @@
     endregion
 */
 // region imports
-import {Mapping, Primitive, PlainObject, ValueOf} from 'clientnode/type'
+import {Mapping, Primitive, PlainObject, ValueOf} from 'clientnode'
 
 import {
     AllowedModelRolesMapping,
@@ -64,21 +64,17 @@ export class DatabaseHelper {
      * @param newDocument - Updated document.
      * @param oldDocument - If an existing document should be updated its given
      * here.
-     *
      * @param userContext - Contains meta information about currently acting
      * user.
      * @param _securitySettings - Database security settings.
      * @param allowedModelRolesMapping - Allowed roles for given models.
-     *
      * @param idPropertyName - Property name indicating the id field name.
      * @param typePropertyName - Property name indicating to which model a
      * document belongs to.
      * @param designDocumentNamePrefix - Document name prefix indicating a
      * design document.
-     *
      * @param read - Indicates whether a read or write of given document should
      * be authorized or not.
-     *
      * @returns Throws an exception if authorisation is not accepted and "true"
      * otherwise.
      */
@@ -195,7 +191,6 @@ export class DatabaseHelper {
      * @param modelConfiguration - Model configuration object.
      * @param models - Models specification object.
      * @param toJSON - JSON stringifier.
-     *
      * @returns Modified given new document.
      */
     static validateDocumentUpdate<
@@ -2840,7 +2835,3 @@ export class DatabaseHelper {
     }
 }
 export default DatabaseHelper
-// region vim modline
-// vim: set tabstop=4 shiftwidth=4 expandtab:
-// vim: foldmethod=marker foldmarker=region,endregion:
-// endregion

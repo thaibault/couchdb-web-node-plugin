@@ -15,10 +15,18 @@
 */
 // region imports
 import {spawn as spawnChildProcess} from 'child_process'
-import Tools, {CloseEventNames, globalContext} from 'clientnode'
 import {
-    ProcessCloseCallback, ProcessCloseReason, ProcessErrorCallback
-} from 'clientnode/type'
+    checkReachability,
+    checkUnreachability,
+    CLOSE_EVENT_NAMES,
+    format,
+    getProcessCloseHandler,
+    globalContext,
+    NOOP,
+    ProcessCloseCallback,
+    ProcessCloseReason,
+    ProcessErrorCallback
+} from 'clientnode'
 import nodeFetch from 'node-fetch'
 import {promises as fileSystem} from 'fs'
 import {dirname} from 'path'
@@ -32,7 +40,6 @@ globalContext.fetch = nodeFetch as unknown as typeof fetch
  * Starts server process.
  * @param services - An object with stored service instances.
  * @param configuration - Mutable by plugins extended configuration object.
- *
  * @returns A promise representing the server process wrapped in a promise
  * which resolves after server is reachable.
  */
@@ -94,16 +101,13 @@ export const start = async (
     ;(new Promise((
         resolve:ProcessCloseCallback, reject:ProcessErrorCallback
     ):void => {
-        for (const closeEventName of CloseEventNames)
+        for (const closeEventName of CLOSE_EVENT_NAMES)
             server.process.on(
                 closeEventName,
-                Tools.getProcessCloseHandler(
+                getProcessCloseHandler(
                     resolve,
                     reject,
-                    {
-                        process: server.process,
-                        reason: closeEventName
-                    }
+                    {process: server.process, reason: closeEventName}
                 )
             )
     }))
@@ -122,17 +126,16 @@ export const start = async (
             }
         )
 
-    await Tools.checkReachability(
-        Tools.stringFormat(configuration.couchdb.url, ''), {wait: true}
+    await checkReachability(
+        format(configuration.couchdb.url, ''), {wait: true}
     )
 }
 /**
- * Stops open database connection if exist, stops server process, restarts
+ * Stops open database connection if exists, stops server process, restarts
  * server process and re-initializes server connection.
  * @param state - Application state.
- *
  * @returns Given object of services wrapped in a promise resolving after
- * after finish.
+ * finish.
  */
 export const restart = async (state:State):Promise<void> => {
     const {configuration, pluginAPI, services} = state
@@ -144,7 +147,7 @@ export const restart = async (state:State):Promise<void> => {
         server.reject
 
     // Avoid to notify web node about server process stop.
-    server.resolve = server.reject = Tools.noop
+    server.resolve = server.reject = NOOP
 
     await stop(services, configuration)
 
@@ -165,9 +168,8 @@ export const restart = async (state:State):Promise<void> => {
  * @param configuration - Mutable by plugins extended configuration object.
  * @param configuration.couchdb - Mutable by plugins extended configuration
  * object.
- *
  * @returns Given object of services wrapped in a promise resolving after
- * after finish.
+ * finish.
  */
 export const stop = async (
     {couchdb}:Services, {couchdb: configuration}:Configuration
@@ -178,11 +180,7 @@ export const stop = async (
     if (couchdb.server.process)
         couchdb.server.process.kill('SIGINT')
 
-    await Tools.checkUnreachability(
-        Tools.stringFormat(configuration.url, ''), {wait: true}
+    await checkUnreachability(
+        format(configuration.url, ''), {wait: true}
     )
 }
-// region vim modline
-// vim: set tabstop=4 shiftwidth=4 expandtab:
-// vim: foldmethod=marker foldmarker=region,endregion:
-// endregion

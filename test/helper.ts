@@ -15,10 +15,10 @@
 */
 // region imports
 import {describe, expect, test} from '@jest/globals'
-import Tools from 'clientnode'
+import {copy, extend, timeout} from 'clientnode'
 import {
-    testEach, testEachPromiseAgainstSameExpectation, UndefinedSymbol
-} from 'clientnode/testHelper'
+    testEach, testEachPromiseAgainstSameExpectation, TEST_UNDEFINED_SYMBOL
+} from 'clientnode/dist/test-helper'
 
 import {
     determineAllowedModelRolesMapping,
@@ -70,14 +70,14 @@ describe('helper', ():void => {
     >(
         'ensureValidationDocumentPresence',
         ensureValidationDocumentPresence,
-        UndefinedSymbol,
+        TEST_UNDEFINED_SYMBOL,
 
         [
             {put: ():Promise<DatabaseResponse> =>
                 new Promise<DatabaseResponse>((
                     resolve:(value:DatabaseResponse) => void
                 ) => {
-                    void Tools.timeout().then(() =>
+                    void timeout().then(() =>
                         resolve(null as unknown as DatabaseResponse)
                     )
                 })
@@ -90,7 +90,7 @@ describe('helper', ():void => {
     )
     /// region model
     const mockModelConfiguration:ModelConfiguration =
-        Tools.copy(configuration.couchdb.model)
+        copy(configuration.couchdb.model)
     mockModelConfiguration.entities = {}
 
     testEach<typeof determineAllowedModelRolesMapping>(
@@ -152,9 +152,9 @@ describe('helper', ():void => {
             AllowedModelRolesMapping, ModelConfiguration
         ] => [
             expected as AllowedModelRolesMapping,
-            Tools.extend(
+            extend(
                 true,
-                Tools.copy(mockModelConfiguration),
+                copy(mockModelConfiguration),
                 modelConfiguration
             ) as ModelConfiguration
         ])
@@ -175,9 +175,9 @@ describe('helper', ():void => {
             Array<string>, ModelConfiguration, Model
         ] => [
             expected as Array<string>,
-            Tools.extend(
+            extend(
                 true,
-                Tools.copy(configuration.couchdb.model),
+                copy(configuration.couchdb.model),
                 modelConfiguration as Partial<ModelConfiguration>
             ),
             model as Model
@@ -239,7 +239,7 @@ describe('helper', ():void => {
     )
     test('extendModels', ():void => {
         const modelConfiguration:ModelConfiguration =
-            Tools.copy(configuration.couchdb.model)
+            copy(configuration.couchdb.model)
         modelConfiguration.entities = {}
         modelConfiguration.property.defaultSpecification = {}
 
@@ -291,25 +291,25 @@ describe('helper', ():void => {
             ]
         ] as const)
             expect(extendModels(
-                Tools.extend(
+                extend(
                     true,
-                    Tools.copy(modelConfiguration),
+                    copy(modelConfiguration),
                     parameter as Partial<ModelConfiguration>
                 )
             )).toStrictEqual(expected)
 
         expect(():Models => extendModels(
-            Tools.extend(
+            extend(
                 true,
-                Tools.copy(modelConfiguration),
+                copy(modelConfiguration),
                 {entities: {a: {} as Model}} as Partial<ModelConfiguration>
             )
         )).toThrow()
 
         expect(extendModels(
-            Tools.extend(
+            extend(
                 true,
-                Tools.copy(modelConfiguration),
+                copy(modelConfiguration),
                 {
                     property: {name: {typePattern: {public: 'a'}}},
                     entities: {a: {}}
@@ -333,7 +333,3 @@ describe('helper', ():void => {
     /// endregion
     // endregion
 })
-// region vim modline
-// vim: set tabstop=4 shiftwidth=4 expandtab:
-// vim: foldmethod=marker foldmarker=region,endregion:
-// endregion

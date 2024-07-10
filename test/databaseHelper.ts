@@ -15,11 +15,11 @@
 */
 // region imports
 import {describe, expect, test} from '@jest/globals'
-import Tools from 'clientnode'
+import {copy, extend, Mapping, PlainObject} from 'clientnode'
 import {
-    testEachAgainstSameExpectation, ThrowSymbol
-} from 'clientnode/testHelper'
-import {Mapping, PlainObject} from 'clientnode/type'
+    TEST_THROW_SYMBOL,
+    testEachAgainstSameExpectation
+} from 'clientnode/dist/test-helper'
 
 import DatabaseHelper from '../databaseHelper'
 import {extendModels} from '../helper'
@@ -30,7 +30,8 @@ import {
     Document,
     ModelConfiguration,
     PartialFullDocument,
-    SpecialPropertyNames, UpdateStrategy
+    SpecialPropertyNames,
+    UpdateStrategy
 } from '../type'
 // endregion
 describe('databaseHelper', () => {
@@ -55,7 +56,7 @@ describe('databaseHelper', () => {
     testEachAgainstSameExpectation<typeof DatabaseHelper.authenticate>(
         'authenticate',
         DatabaseHelper.authenticate,
-        ThrowSymbol,
+        TEST_THROW_SYMBOL,
 
         [
             {...baseDocument, type: 'Test'},
@@ -112,7 +113,7 @@ describe('databaseHelper', () => {
             let skip = false
             const defaultModelConfiguration:ModelConfiguration = {
                 // Numbers are date cross implementation save.
-                ...Tools.copy(configuration.couchdb.model),
+                ...copy(configuration.couchdb.model),
                 dateTimeFormat: 'number',
                 updateStrategy
             }
@@ -150,9 +151,8 @@ describe('databaseHelper', () => {
                 // region changes
                 /*
                     Get an exception if nothing really changes. Those database
-                    requests should be avoid by the application to improve
-                    performance and avoiding to have useless document
-                    revisions.
+                    requests should be avoided by the application to improve
+                    performance and avoiding have useless document revisions.
                 */
                 [
                     [{[typeName]: 'Test'}, {[typeName]: 'Test'}],
@@ -1266,9 +1266,9 @@ describe('databaseHelper', () => {
                 if (test.length < 3)
                     (test as unknown as Array<unknown>).splice(1, 0, {})
 
-                const modelConfiguration:ModelConfiguration = Tools.extend(
+                const modelConfiguration:ModelConfiguration = extend(
                     true,
-                    Tools.copy(defaultModelConfiguration),
+                    copy(defaultModelConfiguration),
                     test[1] as Partial<ModelConfiguration>
                 )
                 const models = extendModels(modelConfiguration)
@@ -3829,9 +3829,9 @@ describe('databaseHelper', () => {
                         test
                 )
             ) {
-                const modelConfiguration:ModelConfiguration = Tools.extend(
+                const modelConfiguration:ModelConfiguration = extend(
                     true,
-                    Tools.copy(defaultModelConfiguration),
+                    copy(defaultModelConfiguration),
                     test[1] as Partial<ModelConfiguration>
                 )
                 const models = extendModels(modelConfiguration)
@@ -4080,7 +4080,7 @@ describe('databaseHelper', () => {
             oldDocument:null|PartialFullDocument = null
         ):void => {
             const defaultModelConfiguration:ModelConfiguration = {
-                ...Tools.copy(configuration.couchdb.model),
+                ...copy(configuration.couchdb.model),
                 updateStrategy: 'migrate'
             }
 
@@ -4092,14 +4092,14 @@ describe('databaseHelper', () => {
                         propertyName as keyof BaseModel
                     ]
 
-            const models = extendModels(Tools.extend(
+            const models = extendModels(extend(
                 true,
-                Tools.copy(defaultModelConfiguration),
+                copy(defaultModelConfiguration),
                 modelConfiguration as Partial<ModelConfiguration>
             ))
-            const testModelConfiguration:ModelConfiguration = Tools.extend(
+            const testModelConfiguration:ModelConfiguration = extend(
                 true,
-                Tools.copy(defaultModelConfiguration),
+                copy(defaultModelConfiguration),
                 modelConfiguration as Partial<ModelConfiguration>
             )
 
@@ -4123,7 +4123,3 @@ describe('databaseHelper', () => {
     /// endregion
     // endregion
 })
-// region vim modline
-// vim: set tabstop=4 shiftwidth=4 expandtab:
-// vim: foldmethod=marker foldmarker=region,endregion:
-// endregion

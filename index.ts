@@ -17,15 +17,23 @@
     endregion
 */
 // region imports
-import Tools, {globalContext} from 'clientnode'
 import {
+    copy,
+    debounce,
     File,
     FirstParameter,
+    format,
+    globalContext,
+    isDirectory,
+    isFile,
     Mapping,
+    NOOP,
     PlainObject,
     ProcessCloseReason,
-    SecondParameter
-} from 'clientnode/type'
+    represent,
+    SecondParameter, UTILITY_SCOPE,
+    walkDirectoryRecursively
+} from 'clientnode'
 import {promises as fileSystem} from 'fs'
 import {basename, extname, resolve} from 'path'
 import PouchDB from 'pouchdb-node'
@@ -70,8 +78,8 @@ import {
 /**
  * Launches an application server und triggers all some pluginable hooks on
  * an event.
- * @property static:toggleLatestRevisionDetermining - Token to provide to
- * "bulkDocs" method call to indicate id determination skip or not (depends on
+ * @property toggleLatestRevisionDetermining - Token to provide to "bulkDocs"
+ * method call to indicate id determination skip or not (depends on
  * "skipLatestRevisionDetermining" configuration).
  */
 export class Database implements PluginHandler {
@@ -83,7 +91,6 @@ export class Database implements PluginHandler {
      * @param state.configuration - Applications configuration.
      * @param state.configuration.couchdb - Plugins configuration.
      * @param state.services - Applications services.
-     *
      * @returns Promise resolving to nothing.
      */
     static async preLoadService({
@@ -102,7 +109,6 @@ export class Database implements PluginHandler {
             couchdb.connector = PouchDB
             // region apply "latest/upsert" and ignore "NoChange" error plugin
             const nativeBulkDocs:Connection['bulkDocs'] =
-                // eslint-disable-next-line @typescript-eslint/unbound-method
                 (couchdb.connector.prototype as Connection).bulkDocs
             couchdb.connector.plugin({bulkDocs: async function(
                 this:Connection,
@@ -244,7 +250,7 @@ export class Database implements PluginHandler {
                             resolve(directoryPath, name)
                         triedPaths.push(binaryFilePath)
 
-                        if (await Tools.isFile(binaryFilePath)) {
+                        if (await isFile(binaryFilePath)) {
                             runner.binaryFilePath = binaryFilePath
                             couchdb.server.runner = runner
 
@@ -280,7 +286,6 @@ export class Database implements PluginHandler {
      * @param state - Application state.
      * @param state.configuration - Applications configuration.
      * @param state.services - Applications services.
-     *
      * @returns A mapping to promises which correspond to the plugin specific
      * continues services.
      */
@@ -313,7 +318,7 @@ export class Database implements PluginHandler {
         if (Object.prototype.hasOwnProperty.call(couchdb, 'connection'))
             return {couchdb: promise}
 
-        const urlPrefix = Tools.stringFormat(
+        const urlPrefix = format(
             configuration.couchdb.url,
             `${configuration.couchdb.user.name}:` +
             `${configuration.couchdb.user.password}@`
@@ -322,8 +327,7 @@ export class Database implements PluginHandler {
         if (configuration.couchdb.ensureAdminPresence) {
             const unauthenticatedUserDatabaseConnection:Connection =
                 new couchdb.connector(
-                    `${Tools.stringFormat(configuration.couchdb.url, '')}/` +
-                        `_users`,
+                    `${format(configuration.couchdb.url, '')}/_users`,
                     getConnectorOptions(configuration)
                 )
 
@@ -337,7 +341,7 @@ export class Database implements PluginHandler {
                 )
 
                 await globalContext.fetch(
-                    `${Tools.stringFormat(configuration.couchdb.url, '')}/` +
+                    `${format(configuration.couchdb.url, '')}/` +
                     couchdb.server.runner.adminUserConfigurationPath +
                     `/${configuration.couchdb.user.name}`,
                     {
@@ -359,7 +363,7 @@ export class Database implements PluginHandler {
                         console.error(
                             `Can't login as existing admin user "` +
                             `${configuration.couchdb.user.name}": ` +
-                            `${Tools.represent(error)}`
+                            `${represent(error)}`
                         )
                     } finally {
                         void authenticatedUserDatabaseConnection.close()
@@ -368,7 +372,7 @@ export class Database implements PluginHandler {
                     console.error(
                         `Can't create new admin user "` +
                         `${configuration.couchdb.user.name}": ` +
-                        `${Tools.represent(error)}`
+                        `${represent(error)}`
                     )
             } finally {
                 void unauthenticatedUserDatabaseConnection.close()
@@ -412,13 +416,13 @@ export class Database implements PluginHandler {
                             } catch (error) {
                                 throw new Error(
                                     `Couldn't create missing user "${name}":` +
-                                    ` ${Tools.represent(error)}`
+                                    ` ${represent(error)}`
                                 )
                             }
                         else
                             throw new Error(
                                 `Couldn't check for presence of user ` +
-                                `"${name}": ${Tools.represent(error)}`
+                                `"${name}": ${represent(error)}`
                             )
                     } finally {
                         void userDatabaseConnection.close()
@@ -450,8 +454,8 @@ export class Database implements PluginHandler {
                         } catch (error) {
                             console.warn(
                                 `Configuration "${fullPath}" (with desired ` +
-                                `value [${Tools.represent(value)}]) couldn't` +
-                                ` be determined: ${Tools.represent(error)}`
+                                `value [${represent(value)}]) couldn't be ` +
+                                `determined: ${represent(error)}`
                             )
                         }
 
@@ -471,8 +475,8 @@ export class Database implements PluginHandler {
                                         console.warn(
                                             'Error checking curent value of ' +
                                             `"${fullPath}" to be ` +
-                                            `[${Tools.represent(value)}]: ` +
-                                            Tools.represent(error)
+                                            `[${represent(value)}]: ` +
+                                            represent(error)
                                         )
                                     }
 
@@ -496,22 +500,22 @@ export class Database implements PluginHandler {
                                         console.error(
                                             `Configuration "${fullPath}" ` +
                                             `couldn't be applied to ` +
-                                            `[${Tools.represent(value)}]: ` +
-                                            Tools.represent(error)
+                                            `[${represent(value)}]: ` +
+                                            represent(error)
                                         )
                                     }
                                 else
                                     console.info(
                                         `Configuration "${fullPath}" is ` +
                                         'already set to desired value ' +
-                                        `[${Tools.represent(value)}].`
+                                        `[${represent(value)}].`
                                     )
                             } else
                                 console.info(
                                     `Configuration "${fullPath}" does not ` +
                                     `exist (desired value ` +
-                                    `[${Tools.represent(value)}]). Response ` +
-                                    `code is ${response.status}.`
+                                    `[${represent(value)}]). Response code ` +
+                                    `is ${response.status}.`
                                 )
                     }
         // endregion
@@ -538,12 +542,11 @@ export class Database implements PluginHandler {
                 )
             } catch (error) {
                 console.error(
-                    `Security object couldn't be applied: ` +
-                    Tools.represent(error)
+                    `Security object couldn't be applied: ${represent(error)}`
                 )
             }
         // endregion
-        const modelConfiguration = Tools.copy(configuration.couchdb.model)
+        const modelConfiguration = copy(configuration.couchdb.model)
 
         delete (modelConfiguration.property as
             {defaultSpecification?:PropertySpecification}
@@ -585,7 +588,7 @@ export class Database implements PluginHandler {
             ] as const) {
                 /*
                     NOTE: This code should be widely supported since no
-                    transpiler can interacts here easily.
+                    transpiler can interact here easily.
                 */
                 const code:string = 'function(...parameters) {\n' +
                     `    return require('helper').default.${type.methodName}` +
@@ -600,7 +603,7 @@ export class Database implements PluginHandler {
                 } catch (error) {
                     throw new Error(
                         `Generated ${type.name} code "${code}" doesn't ` +
-                        `compile: ${Tools.represent(error)}`
+                        `compile: ${represent(error)}`
                     )
                 }
 
@@ -650,7 +653,7 @@ export class Database implements PluginHandler {
                                         `Specified constraint description "` +
                                         `${constraint.description}" for ` +
                                         `model "${modelName}" doesn't ` +
-                                        `compile: ${Tools.represent(error)}`
+                                        `compile: ${represent(error)}`
                                     )
                                 }
                                 /*
@@ -688,7 +691,7 @@ export class Database implements PluginHandler {
                                             `" for model "${modelName}" in ` +
                                             `property "${name}" as "${type}"` +
                                             ' doesn\'t compile: ' +
-                                            `${Tools.represent(error)}`
+                                            `${represent(error)}`
                                         )
                                     }
                                 /*
@@ -701,13 +704,13 @@ export class Database implements PluginHandler {
         // region run auto-migration
         if (configuration.couchdb.model.autoMigrationPath) {
             const migrators:Mapping<Migrator> = {}
-            if (await Tools.isDirectory(resolve(
+            if (await isDirectory(resolve(
                 configuration.couchdb.model.autoMigrationPath
             )))
-                for (const file of await Tools.walkDirectoryRecursively(
+                for (const file of await walkDirectoryRecursively(
                     resolve(configuration.couchdb.model.autoMigrationPath),
                     configuration.couchdb.debug ?
-                        Tools.noop :
+                        NOOP :
                         (file:File) =>
                             !['debug', 'deprecated'].includes(file.name)
                 )) {
@@ -730,7 +733,7 @@ export class Database implements PluginHandler {
                             throw new Error(
                                 `Parsing document "${file.path}" to include ` +
                                 'by automigration of has failed: ' +
-                                Tools.represent(error)
+                                represent(error)
                             )
                         }
 
@@ -758,7 +761,7 @@ export class Database implements PluginHandler {
                                     `Migrating document "` +
                                     `${document[idName]}" of type "` +
                                     `${document[typeName] as string}" has ` +
-                                    `failed: ${Tools.represent(error)}`
+                                    `failed: ${represent(error)}`
                                 )
                             }
 
@@ -800,7 +803,7 @@ export class Database implements PluginHandler {
                     )
                 )) {
                     const document:ExistingDocument = retrievedDocument.doc!
-                    let newDocument:Document = Tools.copy(document)
+                    let newDocument:Document = copy(document)
                     newDocument[
                         configuration.couchdb.model.property.name.special
                             .strategy
@@ -812,10 +815,11 @@ export class Database implements PluginHandler {
                             result = migrators[name](
                                 newDocument,
                                 {
+                                    ...UTILITY_SCOPE,
+
                                     configuration,
 
                                     databaseHelper: DatabaseHelper,
-                                    Tools,
 
                                     idName,
                                     typeName,
@@ -839,7 +843,7 @@ export class Database implements PluginHandler {
                                     configuration.couchdb
                                         .maximumRepresentationLength
                                 ) +
-                                `" failed: ${Tools.represent(error)}`
+                                `" failed: ${represent(error)}`
                             )
                         }
 
@@ -876,14 +880,14 @@ export class Database implements PluginHandler {
                                 be removed so final removing would be skipped
                                 if we do not use a copy here.
                             */
-                            Tools.copy(newDocument) as FullDocument,
+                            copy(newDocument) as FullDocument,
                             /*
                                 NOTE: During processing attachments sub object
                                 will be manipulated so copying is needed to
                                 copy to avoid unexpected behavior in this
                                 context.
                             */
-                            Tools.copy(document) as FullDocument,
+                            copy(document) as FullDocument,
                             {
                                 db: configuration.couchdb.databaseName,
                                 name: configuration.couchdb.user.name,
@@ -893,7 +897,7 @@ export class Database implements PluginHandler {
                                 NOTE: We need a copy to ignore validated
                                 document caches.
                             */
-                            Tools.copy(configuration.couchdb.security),
+                            copy(configuration.couchdb.security),
                             modelConfiguration,
                             models
                         )
@@ -915,7 +919,7 @@ export class Database implements PluginHandler {
                                     ) +
                                     `" doesn't satisfy its schema (and can ` +
                                     'not be migrated automatically): ' +
-                                    Tools.represent(error)
+                                    represent(error)
                                 )
 
                             continue
@@ -929,7 +933,7 @@ export class Database implements PluginHandler {
                         throw new Error(
                             `Replacing auto migrated document "` +
                             `${newDocument[idName]}" has failed: ` +
-                            Tools.represent(error)
+                            represent(error)
                         )
                     }
 
@@ -1031,7 +1035,7 @@ export class Database implements PluginHandler {
             } catch (error) {
                 console.warn(
                     'Initial database compaction has failed: ' +
-                    Tools.represent(error)
+                    represent(error)
                 )
             }
         // endregion
@@ -1041,7 +1045,6 @@ export class Database implements PluginHandler {
      * Add database event listener to auto restart database server on
      * unexpected server issues.
      * @param state - Application state.
-     *
      * @returns Promise resolving to nothing.
      */
     static postLoadService(state:State):Promise<void> {
@@ -1076,7 +1079,7 @@ export class Database implements PluginHandler {
         setInterval(():void =>
             couchdb.changesStream.emit('error', {test: 2}), 6 * 1000)
         */
-        const initialize = Tools.debounce(async ():Promise<void> => {
+        const initialize = debounce(async ():Promise<void> => {
             if (couchdb.changesStream as unknown as boolean)
                 couchdb.changesStream.cancel()
 
@@ -1091,8 +1094,8 @@ export class Database implements PluginHandler {
                         console.warn(
                             'Observing changes feed throws an error for ' +
                             `${numberOfErrorsThrough} times through: ` +
-                            `${Tools.represent(error)} Restarting database ` +
-                            'server and reinitialize changes stream...'
+                            `${represent(error)} Restarting database server ` +
+                            'and reinitialize changes stream...'
                         )
 
                         numberOfErrorsThrough = 0
@@ -1103,8 +1106,8 @@ export class Database implements PluginHandler {
                         console.warn(
                             'Observing changes feed throws an error for ' +
                             `${numberOfErrorsThrough} times through: ` +
-                            `${Tools.represent(error)} Reinitializing ` +
-                            'changes stream...'
+                            `${represent(error)} Reinitializing changes ` +
+                            'stream...'
                         )
 
                     void initialize()
@@ -1128,7 +1131,6 @@ export class Database implements PluginHandler {
      * @param state - Application state.
      * @param state.configuration - Applications configuration.
      * @param state.services - Applications services.
-     *
      * @returns Promise resolving to nothing.
      */
     static async shouldExit({configuration, services}:State):Promise<void> {
@@ -1137,13 +1139,9 @@ export class Database implements PluginHandler {
         delete (services as {couchdb?:Services['couchdb']}).couchdb
 
         const logFilePath = 'log.txt'
-        if (await Tools.isFile(logFilePath))
+        if (await isFile(logFilePath))
             await fileSystem.unlink(logFilePath)
     }
 }
 export default Database
-// endregion
-// region vim modline
-// vim: set tabstop=4 shiftwidth=4 expandtab:
-// vim: foldmethod=marker foldmarker=region,endregion:
 // endregion
