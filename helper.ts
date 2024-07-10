@@ -14,8 +14,16 @@
     endregion
 */
 // region imports
-import Tools, {globalContext} from 'clientnode'
-import {Mapping, ValueOf} from 'clientnode/type'
+import {
+    checkReachability,
+    copy,
+    extend,
+    format,
+    globalContext,
+    Mapping,
+    represent,
+    ValueOf
+} from 'clientnode'
 
 import packageConfiguration from './package.json'
 import {
@@ -44,9 +52,8 @@ import {
  * Converts internal declarative database connector configuration object
  * into a database compatible one.
  * @param configuration - Mutable by plugins extended configuration object.
- *
  * @returns Database compatible configuration object.
-*/
+ */
 export const getConnectorOptions = (
     configuration:Configuration
 ):DatabaseConnectorConfiguration => {
@@ -56,9 +63,9 @@ export const getConnectorOptions = (
                 url:RequestInfo, options?:RequestInit
             ):Promise<Response> => globalContext.fetch(
                 url,
-                Tools.extend(
+                extend(
                     true,
-                    Tools.copy(configuration.couchdb.connector.fetch),
+                    copy(configuration.couchdb.connector.fetch),
                     options || {}
                 )
             ))
@@ -77,7 +84,6 @@ export const getConnectorOptions = (
  * process.
  * @param maximumRepresentationLength - Maximum length of returned
  * representation.
- *
  * @returns Representation string.
  */
 export const mayStripRepresentation = (
@@ -85,7 +91,7 @@ export const mayStripRepresentation = (
     maximumRepresentationTryLength:number,
     maximumRepresentationLength:number
 ):string => {
-    const representation:string = Tools.represent(object)
+    const representation:string = represent(object)
     if (representation.length <= maximumRepresentationTryLength) {
         if (representation.length > maximumRepresentationLength)
             return (
@@ -112,7 +118,6 @@ export const mayStripRepresentation = (
  * @param revisionName - Property name for revisions.
  * @param designDocumentNamePrefix - Document name prefix indicating deign
  * documents.
- *
  * @returns Promise which will be resolved after given document has updated
  * successfully.
  */
@@ -152,7 +157,7 @@ export const ensureValidationDocumentPresence = async (
             else
                 console.info(
                     `${description} couldn't be updated: "` +
-                    `${Tools.represent(error)}" create new one.`
+                    `${represent(error)}" create new one.`
                 )
         try {
             await databaseConnection.put(newDocument)
@@ -162,7 +167,7 @@ export const ensureValidationDocumentPresence = async (
         } catch (error) {
             throw new Error(
                 `${description} couldn't be installed/updated: "` +
-                `${Tools.represent(error)}".`
+                `${represent(error)}".`
             )
         }
     }
@@ -171,7 +176,6 @@ export const ensureValidationDocumentPresence = async (
  * Initializes a database connection instance.
  * @param services - An object with stored service instances.
  * @param configuration - Mutable by plugins extended configuration object.
- *
  * @returns Given and extended object of services.
  */
 export const initializeConnection = async (
@@ -180,10 +184,7 @@ export const initializeConnection = async (
     const config = configuration.couchdb
 
     const url:string =
-        Tools.stringFormat(
-            config.url,
-            `${config.user.name}:${config.user.password}@`
-        ) +
+        format(config.url, `${config.user.name}:${config.user.password}@`) +
         `/${config.databaseName}`
 
     services.couchdb.connection =
@@ -255,7 +256,7 @@ export const initializeConnection = async (
     // endregion
     // region ensure database presence
     try {
-        await Tools.checkReachability(url)
+        await checkReachability(url)
     } catch (error) {
         console.info('Database could not be retrieved yet: Creating it.')
 
@@ -269,7 +270,6 @@ export const initializeConnection = async (
  * Determines a mapping of all models to roles who are allowed to edit
  * corresponding model instances.
  * @param modelConfiguration - Model specification object.
- *
  * @returns The mapping object.
  */
 export const determineAllowedModelRolesMapping = (
@@ -312,7 +312,6 @@ export const determineAllowedModelRolesMapping = (
 /**
  * Determines whether given value of a model is a property specification.
  * @param value - Value to analyze.
- *
  * @returns Boolean indicating the case.
  */
 export const isPropertySpecification = (
@@ -323,7 +322,6 @@ export const isPropertySpecification = (
  * Determines all property names which are indexable in a generic manner.
  * @param modelConfiguration - Model specification object.
  * @param model - Model to determine property names from.
- *
  * @returns The mapping object.
  */
 export const determineGenericIndexablePropertyNames = (
@@ -402,7 +400,6 @@ export const determineGenericIndexablePropertyNames = (
  * @param models - Pool of models to extend from.
  * @param extendPropertyName - Property name which indicates model
  * inheritance.
- *
  * @returns Given model in extended version.
  */
 export const extendModel = (
@@ -435,9 +432,9 @@ export const extendModel = (
         for (const modelNameToExtend of ([] as Array<string>).concat(
             models[modelName][extendPropertyName] as Array<string>
         ))
-            models[modelName] = Tools.extend(
+            models[modelName] = extend(
                 true,
-                Tools.copy(extendModel(
+                copy(extendModel(
                     modelNameToExtend, models, extendPropertyName
                 )),
                 models[modelName]
@@ -451,7 +448,6 @@ export const extendModel = (
 /**
  * Extend default specification with specific one.
  * @param modelConfiguration - Model specification object.
- *
  * @returns Models with extended specific specifications.
  */
 export const extendModels = (modelConfiguration:ModelConfiguration):Models => {
@@ -484,14 +480,13 @@ export const extendModels = (modelConfiguration:ModelConfiguration):Models => {
                 for (const [type, value] of Object.entries(
                     fileSpecifications
                 ))
-                    fileSpecifications[type] =
-                        Tools.extend<FileSpecification>(
-                            true,
-                            Tools.copy(
-                                modelConfiguration.property.defaultSpecification
-                            ) as FileSpecification,
-                            value
-                        )
+                    fileSpecifications[type] = extend<FileSpecification>(
+                        true,
+                        copy(
+                            modelConfiguration.property.defaultSpecification
+                        ) as FileSpecification,
+                        value
+                    )
             } else if (!([
                 specialNames.allowedRole,
                 specialNames.constraint.execution,
@@ -507,11 +502,9 @@ export const extendModels = (modelConfiguration:ModelConfiguration):Models => {
                     model[propertyName as keyof BaseModel] as
                         PropertySpecification
                 ) =
-                    Tools.extend(
+                    extend(
                         true,
-                        Tools.copy(
-                            modelConfiguration.property.defaultSpecification
-                        ),
+                        copy(modelConfiguration.property.defaultSpecification),
                         property as PropertySpecification
                     )
 
@@ -519,8 +512,7 @@ export const extendModels = (modelConfiguration:ModelConfiguration):Models => {
 }
 /**
  * Convert given roles to its normalized representation.
- * @param roles - Unstructured roles description.
- *
+ * @param roles - Unstructured role' s description.
  * @returns Normalized roles representation.
  */
 export const normalizeAllowedRoles = (
@@ -546,8 +538,4 @@ export const normalizeAllowedRoles = (
 
     return {read: [roles], write: [roles]}
 }
-// endregion
-// region vim modline
-// vim: set tabstop=4 shiftwidth=4 expandtab:
-// vim: foldmethod=marker foldmarker=region,endregion:
 // endregion

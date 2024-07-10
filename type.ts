@@ -15,11 +15,14 @@
 */
 // region imports
 import {ChildProcess} from 'child_process'
-import Tools from 'clientnode'
 import {
-    AnyFunction, Mapping, PlainObject, Primitive, ProcessCloseReason
-} from 'clientnode/type'
-import PouchDB from 'pouchdb-node'
+    AnyFunction,
+    Mapping,
+    PlainObject,
+    Primitive,
+    ProcessCloseReason,
+    UTILITY_SCOPE
+} from 'clientnode'
 import {
     Configuration as BaseConfiguration,
     PluginHandler as BasePluginHandler,
@@ -529,14 +532,12 @@ export interface PluginHandler extends BasePluginHandler {
     /**
      * Hook after each data change.
      * @param state - Application state.
-     *
      * @returns Promise resolving to nothing.
      */
     couchdbInitializeChangesStream?(state:State<ChangesStream>):Promise<void>
     /**
-     * Hook after each data base restart.
+     * Hook after each database restart.
      * @param state - Application state.
-     *
      * @returns Promise resolving to nothing.
      */
     restartCouchdb?(state:State):Promise<void>
@@ -714,38 +715,40 @@ export type Migrator<
     AdditionalPropertiesType = unknown
 > = (
     document:Document,
-    scope:{
-        configuration:Configuration
+    scope:(
+        typeof UTILITY_SCOPE &
+        {
+            configuration:Configuration
 
-        databaseHelper:DatabaseHelper
-        Tools:typeof Tools
+            databaseHelper:DatabaseHelper
 
-        idName:string
-        typeName:string
+            idName:string
+            typeName:string
 
-        migrators:Mapping<Migrator<
-            Type,
-            AttachmentType,
-            AdditionalSpecifications,
-            AdditionalPropertiesType
-        >>
-        models:Models<
-            Type,
-            AttachmentType,
-            AdditionalSpecifications,
-            AdditionalPropertiesType
-        >
-        modelConfiguration:ModelConfiguration<
-            Type,
-            AttachmentType,
-            AdditionalSpecifications,
-            AdditionalPropertiesType
-        >
+            migrators:Mapping<Migrator<
+                Type,
+                AttachmentType,
+                AdditionalSpecifications,
+                AdditionalPropertiesType
+            >>
+            models:Models<
+                Type,
+                AttachmentType,
+                AdditionalSpecifications,
+                AdditionalPropertiesType
+            >
+            modelConfiguration:ModelConfiguration<
+                Type,
+                AttachmentType,
+                AdditionalSpecifications,
+                AdditionalPropertiesType
+            >
 
-        selfFilePath:string
+            selfFilePath:string
 
-        services:Services
-    }
+            services:Services
+        }
+    )
 ) => Document|null
 
 export type DateRepresentationType = Date|null|number|string
@@ -763,8 +766,4 @@ export interface Location {
     longitude:number
 }
 /// endregion
-// endregion
-// region vim modline
-// vim: set tabstop=4 shiftwidth=4 expandtab:
-// vim: foldmethod=marker foldmarker=region,endregion:
 // endregion
