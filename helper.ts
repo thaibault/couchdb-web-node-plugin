@@ -222,7 +222,7 @@ export const initializeConnection = async (
                 return await nativeMethod(document, ...parameters)
             } catch (givenError) {
                 const id = document[idName]
-                const error = givenError as Mapping
+                const error = givenError as Error
 
                 if (
                     id &&
@@ -234,7 +234,7 @@ export const initializeConnection = async (
                 ) {
                     const revision = revisionName in options ?
                         options[revisionName] :
-                        document[revisionName]!
+                        document[revisionName]
 
                     return {
                         id,
@@ -257,7 +257,7 @@ export const initializeConnection = async (
     // region ensure database presence
     try {
         await checkReachability(url)
-    } catch (error) {
+    } catch (_error) {
         console.info('Database could not be retrieved yet: Creating it.')
 
         await globalContext.fetch(url, {method: 'PUT'})
@@ -281,24 +281,22 @@ export const determineAllowedModelRolesMapping = (
     const models:Models = extendModels(modelConfiguration)
 
     for (const [modelName, model] of Object.entries(models))
-        if (Object.prototype.hasOwnProperty.call(
-            model, allowedRoleName
-        )) {
+        if (model[allowedRoleName]) {
             allowedModelRolesMapping[modelName] = {
                 properties: {},
 
-                ...normalizeAllowedRoles(model[allowedRoleName]!)
+                ...normalizeAllowedRoles(model[allowedRoleName])
             }
 
             for (const [name, property] of Object.entries(model))
                 if (
                     property !== null &&
                     typeof property === 'object' &&
-                    (property as PropertySpecification).allowedRoles
+                    property.allowedRoles
                 )
                     allowedModelRolesMapping[modelName].properties[name] =
                         normalizeAllowedRoles(
-                            (property as PropertySpecification).allowedRoles!
+                            property.allowedRoles as AllowedRoles
                         )
         } else
             allowedModelRolesMapping[modelName] = {

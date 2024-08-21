@@ -32,7 +32,13 @@ import {promises as fileSystem} from 'fs'
 import {dirname} from 'path'
 
 import {initializeConnection} from './helper'
-import {Configuration, Services, State} from './type'
+import {
+    Configuration,
+    CoreConfiguration,
+    CouchDB,
+    Services,
+    State
+} from './type'
 // endregion
 globalContext.fetch = nodeFetch as unknown as typeof fetch
 // region functions
@@ -51,10 +57,10 @@ export const start = async (
     const {binary} = configuration.couchdb
 
     // region  create configuration file if needed
-    if (Object.prototype.hasOwnProperty.call(runner, 'configurationFile')) {
+    if (runner.configurationFile) {
         try {
             await fileSystem.mkdir(
-                dirname(runner.configurationFile!.path), {recursive: true}
+                dirname(runner.configurationFile.path), {recursive: true}
             )
         } catch (error) {
             if ((error as NodeJS.ErrnoException).code !== 'EEXIST')
@@ -62,8 +68,8 @@ export const start = async (
         }
 
         await fileSystem.writeFile(
-            runner.configurationFile!.path,
-            runner.configurationFile!.content,
+            runner.configurationFile.path,
+            runner.configurationFile.content,
             {encoding: configuration.core.encoding}
         )
     }
@@ -79,7 +85,7 @@ export const start = async (
                 [] :
                 [
                     `--max-old-space-size=${binary.memoryInMegaByte}`,
-                    runner.binaryFilePath!
+                    runner.binaryFilePath as string
                 ]
         )
             .concat(runner.arguments ? runner.arguments : []),
@@ -102,7 +108,7 @@ export const start = async (
         resolve:ProcessCloseCallback, reject:ProcessErrorCallback
     ):void => {
         for (const closeEventName of CLOSE_EVENT_NAMES)
-            server.process.on(
+            server.process?.on(
                 closeEventName,
                 getProcessCloseHandler(
                     resolve,
@@ -116,13 +122,19 @@ export const start = async (
                 NOTE: Please be aware of newly set server instances when
                 resolving happens here.
              */
-            (value:ProcessCloseReason):void => {
-                if (services.couchdb?.server?.resolve as unknown)
+            (value:ProcessCloseReason) => {
+                if ((
+                    services.couchdb as {server?:CouchDB['server']}|undefined
+                )?.server?.resolve)
                     services.couchdb.server.resolve.call(this, value)
             },
-            (reason:ProcessCloseReason):void => {
-                if (services.couchdb?.server?.resolve as unknown)
-                    services.couchdb.server.reject.call(this, reason)
+            (reason:unknown) => {
+                if ((
+                    services.couchdb as {server?:CouchDB['server']}|undefined
+                )?.server?.reject)
+                    services.couchdb.server.reject.call(
+                        this, reason as ProcessCloseReason
+                    )
             }
         )
 

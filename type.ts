@@ -42,9 +42,8 @@ export type Attachment =
         content_type?:PouchDB.Core.Attachment['content_type']
         contentType?:PouchDB.Core.Attachment['content_type']
     }
-export interface Attachments {
-    [attachmentId:string]:Attachment
-}
+export type Attachments = Record<string, Attachment>
+
 export type FullAttachment = PouchDB.Core.FullAttachment
 export type StubAttachment = PouchDB.Core.StubAttachment
 
@@ -492,11 +491,11 @@ export type Configuration<ConfigurationType = Mapping<unknown>> =
 export interface CouchDB<Type extends object = Mapping<unknown>> {
     changesStream:ChangesStream
 
-    connection:Connection<Type>
+    connection?:Connection<Type>
     connector:Connector
 
     server:{
-        process:ChildProcess
+        process?:ChildProcess
 
         reject:(value:ProcessCloseReason) => void
         resolve:(reason:ProcessCloseReason) => void
