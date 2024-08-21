@@ -32,7 +32,7 @@ import {
     ServicesState as BaseServicesState
 } from 'web-node/type'
 
-import DatabaseHelper from './databaseHelper'
+import databaseHelper from './databaseHelper'
 // endregion
 // region exports
 /// region database implementation
@@ -719,7 +719,7 @@ export type Migrator<
         {
             configuration:Configuration
 
-            databaseHelper:DatabaseHelper
+            databaseHelper:typeof databaseHelper
 
             idName:string
             typeName:string

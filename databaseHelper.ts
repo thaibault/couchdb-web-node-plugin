@@ -138,7 +138,7 @@ export const authenticate = (
                 allowedModelRolesMapping, type
             )
         ) {
-            const allowedModelRoles:NormalizedAllowedModelRoles =
+            const allowedModelRoles:Partial<NormalizedAllowedModelRoles> =
                 allowedModelRolesMapping[type]
 
             for (const operation of ['read', 'write'] as const)
@@ -146,7 +146,8 @@ export const authenticate = (
                     allowedModelRoles[operation] || []
                 )
 
-            allowedRoles.properties = allowedModelRoles.properties
+            allowedRoles.properties =
+                (allowedModelRoles as NormalizedAllowedModelRoles).properties
         }
         // endregion
         // TODO check for each property recursively
@@ -156,12 +157,13 @@ export const authenticate = (
                 return true
 
         userRolesDescription =
-            `Current user "${userContext.name!}" owns the following roles: ` +
-            `"${userContext.roles.join('", "')}"`
+            `Current user "${userContext.name ?? 'unknown'}" owns the ` +
+            `following roles: "${userContext.roles.join('", "')}"`
         //
     } else
         userRolesDescription =
-            `Current user "${userContext.name!}" doesn't own any role`
+            `Current user "${userContext.name ?? 'unknown'}" doesn't own any` +
+            'role'
 
     /* eslint-disable @typescript-eslint/only-throw-error,no-throw-literal */
     throw {
@@ -500,31 +502,25 @@ export const validateDocumentUpdate = <
         givenExpression?:null|string,
         isEvaluation = false,
         givenScope = {} as Scope
-    ):(
-        EvaluationResult<
-            ObjectType,
-            Type|undefined,
-            PropertyName,
-            AttachmentType,
-            AdditionalSpecifications,
-            AdditionalPropertiesType,
-            typeof basicScope &
-            {code:string} &
-            Scope
-        > |
-        undefined
-    ) => {
-        type CurrentScope = typeof basicScope & {code:string} & Scope
+    ):EvaluationResult<
+        ObjectType,
+        Type|undefined,
+        PropertyName,
+        AttachmentType,
+        AdditionalSpecifications,
+        AdditionalPropertiesType,
+        typeof BASIC_SCOPE &
+        {code:string} &
+        Scope
+    > => {
+        type CurrentScope = typeof BASIC_SCOPE & {code:string} & Scope
+        const scope = {...BASIC_SCOPE, code: '', ...givenScope}
 
         const expression = determineTrimmedString(givenExpression)
         if (expression) {
             const code = (isEvaluation ? 'return ' : '') + expression
             // region determine scope
-            const scope = {
-                ...basicScope,
-                code,
-                ...givenScope
-            } as CurrentScope
+            scope.code = code
             const scopeNames:Array<string> = Object.keys(scope)
             // endregion
             // region compile
@@ -578,6 +574,8 @@ export const validateDocumentUpdate = <
         throwError<EmptyEvaluationErrorData>(
             'No expression to evaluate provided.', 'empty'
         )
+
+        return {code: scope.code, result: undefined, scope}
     }
     /// endregion
     const checkDocument = (
@@ -694,7 +692,7 @@ export const validateDocumentUpdate = <
                     ) = undefined
                     try {
                         result = evaluate<boolean, Scope>(
-                            // @ts-expect-error "prop..S..[type]" is optional.
+                            // @ts-expect-error "prop...S..[type]" is optional.
                             propertySpecification[type].evaluation,
                             type.endsWith('Expression'),
                             {
@@ -726,8 +724,9 @@ export const validateDocumentUpdate = <
                         )(error))
                             throwError(
                                 `Compilation: Hook "${type}" has invalid` +
-                                ` code "${error.code}": "` +
-                                `${error.message}"${pathDescription}.`
+                                ` code "${error.code}": ` +
+                                `"${error.message ?? 'unknown'}"` +
+                                `${pathDescription}.`
                             )
 
                         if (((
@@ -739,8 +738,9 @@ export const validateDocumentUpdate = <
                         )(error))
                             throwError(
                                 `Runtime: Hook "${type}" has throw an ` +
-                                `error with code "${error.code}": "` +
-                                `${error.message}"${pathDescription}.`
+                                `error with code "${error.code}": ` +
+                                `"${error.message ?? 'unknown'}"` +
+                                `${pathDescription}.`
                             )
 
                         if (!Object.prototype.hasOwnProperty.call(
@@ -751,7 +751,7 @@ export const validateDocumentUpdate = <
 
                     if (result && !result.result) {
                         const description = determineTrimmedString(
-                            propertySpecification[type]!.description
+                            propertySpecification[type]?.description
                         )
 
                         throwError(
@@ -961,22 +961,24 @@ export const validateDocumentUpdate = <
                             string
                         ) +
                         ` (given ${newValue as string} with length ` +
-                        `${(newValue as string).length})${pathDescription}.`
+                        `${String((newValue as string).length)})` +
+                        `${pathDescription}.`
                     )
                 if (
                     typeof propertySpecification.maximumLength === 'number' &&
                     newValue.length > propertySpecification.maximumLength
                 )
                     throwError(
-                        `MaximalLength: Property "` +
-                        `${String(name)}" must have maximal length ` +
+                        `MaximalLength: Property "${String(name)}" must ` +
+                        'have maximal length ' +
                         (
                             propertySpecification.maximumLength as
                                 unknown as
                                 string
                         ) +
                         ` (given ${newValue as string} with length ` +
-                        `${(newValue as string).length})${pathDescription}.`
+                        `${String((newValue as string).length)})` +
+                        `${pathDescription}.`
                     )
             }
             if (typeof newValue === 'number') {
@@ -1020,10 +1022,11 @@ export const validateDocumentUpdate = <
                     Array.isArray(propertySpecification.selection) ?
                         propertySpecification.selection.map(
                             (value:unknown):unknown =>
-                                (value as SelectionMapping)?.value ===
-                                    undefined ?
-                                        value :
-                                        (value as SelectionMapping).value
+                                (
+                                    value as SelectionMapping|undefined
+                                )?.value === undefined ?
+                                    value :
+                                    (value as SelectionMapping).value
                         ) :
                         Object.keys(propertySpecification.selection)
 
@@ -1245,7 +1248,8 @@ export const validateDocumentUpdate = <
                                     `Compilation: Hook "${type}" has ` +
                                     `invalid code "${error.code}" for ` +
                                     `property "${String(name)}": ` +
-                                    `${error.message!}${pathDescription}.`
+                                    `"${error.message ?? 'unknown'}"` +
+                                    `${pathDescription}.`
                                 )
 
                             if (((error:unknown):error is EvaluationError =>
@@ -1257,7 +1261,8 @@ export const validateDocumentUpdate = <
                                     `Runtime: Hook "${type}" has throw ` +
                                     `an error with code "${error.code}" for ` +
                                     `property "${String(name)}": ` +
-                                    `${error.message!}${pathDescription}.`
+                                    `"${error.message ?? 'unknown'}"` +
+                                    `${pathDescription}.`
                                 )
 
                             if (!Object.prototype.hasOwnProperty.call(
@@ -1274,7 +1279,8 @@ export const validateDocumentUpdate = <
                                 attachmentsTarget[name as keyof Attachments] =
                                     result.result as unknown as AttachmentType
                             else
-                                (newDocument[name] as Type) = result.result!
+                                (newDocument[name] as Type) =
+                                    result.result as Type
                     }
         }
         /// endregion
@@ -1358,13 +1364,13 @@ export const validateDocumentUpdate = <
 
                                 propertySpecification
                             }
-                        )!
+                        )
 
                         if (attachmentsTarget)
                             attachmentsTarget[name as keyof Attachments] =
                                 result.result as AttachmentType
-                        else
-                            (newDocument[name] as Type) = result.result!
+                        else if (result.result !== undefined)
+                            (newDocument[name] as Type) = result.result
                     } catch (error) {
                         if (((error:unknown):error is EvaluationError =>
                             Object.prototype.hasOwnProperty.call(
@@ -1374,7 +1380,8 @@ export const validateDocumentUpdate = <
                             throwError(
                                 `Compilation: Hook "${type}" has invalid ` +
                                 `code "${error.code}" for property "` +
-                                `${String(name)}": ${error.message!}` +
+                                `${String(name)}": ` +
+                                `"${error.message ?? 'unknown'}"` +
                                 `${pathDescription}.`
                             )
 
@@ -1386,7 +1393,8 @@ export const validateDocumentUpdate = <
                             throwError(
                                 `Runtime: Hook "${type}" has throw an error` +
                                 ` with code "${error.code}" for property ` +
-                                `"${String(name)}": ${error.message!}` +
+                                `"${String(name)}": ` +
+                                `"${error.message ?? 'unknown'}"` +
                                 `${pathDescription}.`
                             )
 
@@ -1455,7 +1463,7 @@ export const validateDocumentUpdate = <
                                 parentNames,
                                 pathDescription
                             }
-                        )!.result
+                        ).result
                     } catch (error) {
                         if (((error:unknown):error is EvaluationError =>
                             Object.prototype.hasOwnProperty.call(
@@ -1465,7 +1473,8 @@ export const validateDocumentUpdate = <
                             throwError(
                                 `Compilation: Hook "${type}" has invalid ` +
                                 `code "${error.code}" for document "` +
-                                `${modelName}": ${error.message!}` +
+                                `${modelName}": ` +
+                                `"${error.message ?? 'unknown'}"` +
                                 `${pathDescription}.`
                             )
 
@@ -1478,7 +1487,8 @@ export const validateDocumentUpdate = <
                                 `Runtime: Hook "${type}" has throw an error` +
                                 ` with code "${error.code}" for ` +
                                 `document "${modelName}": ` +
-                                `${error.message!}${pathDescription}.`
+                                `"${error.message ?? 'unknown'}"` +
+                                `${pathDescription}.`
                             )
 
                         if (!Object.prototype.hasOwnProperty.call(
@@ -1488,11 +1498,12 @@ export const validateDocumentUpdate = <
                     }
 
                     if (![null, undefined].includes(result as null))
-                        newDocument = result!
+                        // @ts-expect-error Typescript cannot determine.
+                        newDocument = result
 
                     checkModelType()
 
-                    modelName = newDocument[typeName]!
+                    modelName = newDocument[typeName] as string
 
                     if (parentNames.length === 0)
                         setDocumentEnvironment()
@@ -1530,7 +1541,7 @@ export const validateDocumentUpdate = <
                             parentNames,
                             pathDescription
                         }
-                    )!.result
+                    ).result
                 } catch (error) {
                     if (((error:unknown):error is EvaluationError =>
                         Object.prototype.hasOwnProperty.call(
@@ -1539,8 +1550,10 @@ export const validateDocumentUpdate = <
                     )(error))
                         throwError(
                             `Compilation: Hook "${type}" has invalid ` +
-                            `code "${error.code}" for document "${modelName}` +
-                            `": ${error.message!}${pathDescription}.`
+                            `code "${error.code}" for document ` +
+                            `"${modelName}": ` +
+                            `"${error.message ?? 'unknown'}"` +
+                            `${pathDescription}.`
                         )
 
                     if (((error:unknown):error is EvaluationError =>
@@ -1548,8 +1561,9 @@ export const validateDocumentUpdate = <
                     )(error))
                         throwError(
                             `Runtime: Hook "${type}" has throw an error ` +
-                            `with code "${error.code}" for document "` +
-                            `${modelName}": ${error.message!}` +
+                            `with code "${error.code}" for document ` +
+                            `"${modelName}": ` +
+                            `"${error.message ?? 'unknown'}"` +
                             `${pathDescription}.`
                         )
 
@@ -1560,11 +1574,12 @@ export const validateDocumentUpdate = <
                 }
 
                 if (![undefined, null].includes(result as null))
-                    newDocument = result!
+                    // @ts-expect-error Typescript cannot determine.
+                    newDocument = result
 
                 checkModelType()
 
-                modelName = newDocument[typeName]!
+                modelName = newDocument[typeName] as string
 
                 if (parentNames.length === 0)
                     setDocumentEnvironment()
@@ -2219,8 +2234,9 @@ export const validateDocumentUpdate = <
                         )(error))
                             throwError(
                                 `Compilation: Hook "${constraintName}" has ` +
-                                `invalid code "${error.code}": "` +
-                                `${error.message!}"${pathDescription}.`
+                                `invalid code "${error.code}": ` +
+                                `"${error.message ?? 'unknown'}"` +
+                                `${pathDescription}.`
                             )
 
                         if (((error:unknown):error is EvaluationError =>
@@ -2231,7 +2247,8 @@ export const validateDocumentUpdate = <
                             throwError(
                                 `Runtime: Hook "${constraintName}" ` +
                                 `has thrown an error with code ` +
-                                `"${error.code}": ${error.message!}` +
+                                `"${error.code}": ` +
+                                `"${error.message ?? 'unknown'}"` +
                                 `${pathDescription}.`
                             )
 
@@ -2615,9 +2632,10 @@ export const validateDocumentUpdate = <
                     throwError(
                         'AttachmentAggregatedMaximumSize: given ' +
                         `aggregated size of attachments from type "${type}" ` +
-                        `${aggregatedSize} byte doesn't satisfy specified ` +
-                        `maximum of ${specification.maximumAggregatedSize} ` +
-                        `byte ${pathDescription}.`
+                        `${String(aggregatedSize)} byte doesn't satisfy ` +
+                        `specified maximum of ` +
+                        `${String(specification.maximumAggregatedSize)} byte` +
+                        ` ${pathDescription}.`
                     )
 
                 sumOfAggregatedSizes += aggregatedSize
@@ -2634,10 +2652,10 @@ export const validateDocumentUpdate = <
             )
                 throwError(
                     'AggregatedMinimumSize: given aggregated size ' +
-                    `${sumOfAggregatedSizes} byte doesn't satisfy specified ` +
-                    'minimum of ' +
-                    `${model[specialNames.minimumAggregatedSize]} byte ` +
-                    `${pathDescription}.`
+                    `${String(sumOfAggregatedSizes)} byte doesn't satisfy ` +
+                    'specified minimum of ' +
+                    `${String(model[specialNames.minimumAggregatedSize])} ` +
+                    `byte ${pathDescription}.`
                 )
             else if (
                 typeof model[specialNames.maximumAggregatedSize] ===
@@ -2647,8 +2665,9 @@ export const validateDocumentUpdate = <
             )
                 throwError(
                     'AggregatedMaximumSize: given aggregated size ' +
-                    `${sumOfAggregatedSizes} byte doesn't satisfy specified ` +
-                    `maximum of ${model[specialNames.maximumAggregatedSize]}` +
+                    `${String(sumOfAggregatedSizes)} byte doesn't satisfy ` +
+                    'specified maximum of ' +
+                    `${String(model[specialNames.maximumAggregatedSize])} ` +
                     `byte ${pathDescription}.`
                 )
         }
@@ -2681,7 +2700,7 @@ export const validateDocumentUpdate = <
         return {changedPath, newDocument}
     }
     // endregion
-    const basicScope:BasicScope<
+    const BASIC_SCOPE:BasicScope<
         ObjectType,
         AttachmentType,
         AdditionalSpecifications,
