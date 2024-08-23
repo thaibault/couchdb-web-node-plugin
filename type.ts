@@ -42,9 +42,11 @@ export type Attachment =
         content_type?:PouchDB.Core.Attachment['content_type']
         contentType?:PouchDB.Core.Attachment['content_type']
     }
-export type Attachments = Record<string, Attachment>
+export type Attachments = Record<string, Attachment|null>
 
-export type FullAttachment = PouchDB.Core.FullAttachment
+export type FullAttachment =
+    Omit<PouchDB.Core.FullAttachment, 'data'> &
+    {data?:null|PouchDB.Core.FullAttachment['data']}
 export type StubAttachment = PouchDB.Core.StubAttachment
 
 export type ChangesMeta = PouchDB.Core.ChangesMeta
@@ -300,13 +302,13 @@ export type DocumentContent =
 export interface DocumentStrategyMeta {_updateStrategy?:UpdateStrategy}
 export interface DocumentTypeMeta {'-type':string}
 export type BaseDocument =
-    ChangesMeta &
-    DocumentGetMeta &
+    Omit<ChangesMeta, '_attachments'> &
+    Omit<DocumentGetMeta, '_attachments'> &
     DocumentIDMeta &
     DocumentRevisionIDMeta &
     DocumentStrategyMeta &
     DocumentTypeMeta &
-    {_attachments?:Attachments}
+    {_attachments?:Attachments|null}
 export type FullDocument<
     Type extends object = object, AdditionalPropertyTypes = unknown
 > = BaseDocument & Document<Type> & Mapping<AdditionalPropertyTypes>
@@ -659,7 +661,7 @@ export interface PropertyScope<
         Type, AdditionalSpecifications
     >,
 
-    attachmentsTarget?:Mapping<AttachmentType>
+    attachmentsTarget?:Mapping<AttachmentType|null>
 }
 //// endregion
 export interface EvaluationResult<

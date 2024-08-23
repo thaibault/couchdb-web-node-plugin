@@ -213,7 +213,7 @@ export const validateDocumentUpdate = <
         > = {},
         toJSON?:(value:unknown) => string
     ):PartialFullDocument<ObjectType, AdditionalPropertiesType> => {
-    type Attachments = Mapping<AttachmentType>
+    type Attachments = Mapping<AttachmentType|null>
 
     type PartialFullDocumentType = PartialFullDocument<
         ObjectType, AdditionalPropertiesType
@@ -1603,12 +1603,9 @@ export const validateDocumentUpdate = <
                             AttachmentType, AdditionalSpecifications
                         >
                 )) {
-                    if (
-                        !Object.prototype.hasOwnProperty.call(
-                            newDocument, name
-                        ) ||
-                        newDocument[specialNames.attachment] === null
-                    )
+                    if ([null, undefined].includes(
+                        newDocument[specialNames.attachment] as null
+                    ))
                         newDocument[specialNames.attachment] = {}
 
                     if (
@@ -1619,13 +1616,15 @@ export const validateDocumentUpdate = <
                     )
                         oldDocument[specialNames.attachment] = {}
 
+                    const newAttachments =
+                        newDocument[specialNames.attachment] as Attachments
+
                     const newFileNames:Array<keyof Attachments> =
-                        Object.keys(newDocument[specialNames.attachment]!)
+                        Object.keys(newAttachments)
                             .filter((fileName:string):boolean =>
-                                ((
-                                    newDocument[specialNames.attachment]
-                                )![fileName] as FullAttachment).data !==
-                                    null &&
+                                (
+                                    newAttachments[fileName] as FullAttachment
+                                ).data !== null &&
                                 fileNameMatchesModelType(
                                     type,
                                     fileName,
@@ -1635,9 +1634,6 @@ export const validateDocumentUpdate = <
                                     >
                                 )
                             )
-
-                    const newAttachments =
-                        newDocument[specialNames.attachment] as Attachments
 
                     let oldFileNames:Array<string> = []
                     if (oldDocument) {
@@ -1665,9 +1661,9 @@ export const validateDocumentUpdate = <
                                     (oldAttachments[fileName] as
                                         FullAttachment
                                     ).data !== null ||
-                                    (oldAttachments[fileName] as
-                                        StubAttachment
-                                    ).stub &&
+                                    Object.prototype.hasOwnProperty.call(
+                                        oldAttachments[fileName], 'stub'
+                                    ) &&
                                     Boolean((oldAttachments[fileName] as
                                         StubAttachment
                                     ).digest)
@@ -1710,10 +1706,7 @@ export const validateDocumentUpdate = <
                             newAttachments
                         )
 
-                    if (
-                        typeof propertySpecification.default ===
-                            'undefined'
-                    ) {
+                    if (typeof propertySpecification.default === 'undefined') {
                         if (!(
                             propertySpecification.nullable ||
                             newFileNames.length > 0 ||
@@ -1735,9 +1728,10 @@ export const validateDocumentUpdate = <
                                         name, fileName, 'file removed'
                                     )
                                 else
+                                    // @ts-expect-error Existing old file name
                                     newAttachments[fileName] = ((
                                         oldDocument
-                                    )![name] as Attachments)[fileName]
+                                    )[name] as Attachments)[fileName]
                     } else if (newFileNames.length === 0)
                         if (oldFileNames.length === 0) {
                             for (
@@ -1763,9 +1757,10 @@ export const validateDocumentUpdate = <
                                 }
                         } else if (updateStrategy === 'fillUp')
                             for (const fileName of oldFileNames)
+                                // @ts-expect-error Existing old file name
                                 newAttachments[fileName] = ((
                                     oldDocument
-                                )![name] as Attachments)[fileName]
+                                )[name] as Attachments)[fileName]
                 }
                 // endregion
             else {
@@ -1904,7 +1899,7 @@ export const validateDocumentUpdate = <
                 else if (additionalPropertySpecification)
                     (propertySpecification as PropertySpecification<
                         AdditionalPropertiesType, AdditionalSpecifications
-                    >) = additionalPropertySpecification!
+                    >) = additionalPropertySpecification
                 else if (updateStrategy === 'migrate') {
                     delete newDocument[name]
 
@@ -1931,16 +1926,20 @@ export const validateDocumentUpdate = <
                         if (Object.prototype.hasOwnProperty.call(
                             attachments, fileName
                         ))
-                            for (const type in model[name])
+                            for (const type of Object.keys(model[name])) {
+                                const file = (
+                                    model[specialNames.attachment] as
+                                        Attachments
+                                )[type] as FileSpecification<
+                                    AttachmentType, AdditionalSpecifications
+                                >
                                 if (fileNameMatchesModelType(
-                                    type,
-                                    fileName,
-                                    model[specialNames.attachment]![type]
+                                    type, fileName, file
                                 )) {
                                     checkPropertyWriteableMutableNullable<
-                                        AttachmentType|null
+                                        AttachmentType | null
                                     >(
-                                        model[specialNames.attachment]![type],
+                                        file,
                                         newDocument,
                                         oldDocument,
                                         fileName,
@@ -1949,6 +1948,7 @@ export const validateDocumentUpdate = <
 
                                     break
                                 }
+                            }
 
                     continue
                 } else if (checkPropertyWriteableMutableNullable<
@@ -2048,21 +2048,21 @@ export const validateDocumentUpdate = <
                         if (Object.prototype.hasOwnProperty.call(
                             propertySpecification, key
                         ))
-                            if (key === 'type')
+                            if (key === 'type') {
+                                const type =
+                                    propertySpecification[key] as
+                                        Array<string>|string
                                 if (Array.isArray(propertySpecification[key]))
                                     propertySpecificationCopy[key] = (
-                                        propertySpecification[key] as
-                                            Array<string>
+                                        type as Array<string>
                                     )[0]
                                 else
                                     propertySpecificationCopy[key] = [(
-                                        propertySpecification[key] as string
+                                        type as string
                                     ).substring(
-                                        0,
-                                        propertySpecification.type!.length -
-                                        '[]'.length
+                                        0, type.length - '[]'.length
                                     )]
-                            else
+                            } else
                                 (propertySpecificationCopy[
                                     key as keyof PropertySpecification<
                                         ValueOf<ObjectType>,
@@ -2127,9 +2127,8 @@ export const validateDocumentUpdate = <
                         ).length === newProperty.length &&
                         serialize(oldDocument[name]) === serialize(newProperty)
                     ))
-                        changedPath = parentNames.concat(
-                            String(name), 'array updated'
-                        )
+                        changedPath =
+                            parentNames.concat(String(name), 'array updated')
                     /// endregion
                     // endregion
                 } else {
@@ -2183,9 +2182,10 @@ export const validateDocumentUpdate = <
         ) as Array<keyof SpecialPropertyNames['constraint']>) {
             const constraintName = specialNames.constraint[type]
 
-            if (Object.prototype.hasOwnProperty.call(model, constraintName))
+            if (Object.prototype.hasOwnProperty.call(model, constraintName)) {
+                const constraints = model[constraintName] as Array<Constraint>
                 for (const constraint of ([] as Array<Constraint>).concat(
-                    model[constraintName]!
+                    constraints
                 )) {
                     type Scope = CommonScope<
                         ObjectType,
@@ -2195,10 +2195,10 @@ export const validateDocumentUpdate = <
                         AdditionalPropertiesType
                     >
 
-                    let result:(
+                    let result: (
                         EvaluationResult<
                             ObjectType,
-                            boolean|undefined,
+                            boolean | undefined,
                             PropertyValue,
                             AttachmentType,
                             AdditionalSpecifications,
@@ -2206,12 +2206,12 @@ export const validateDocumentUpdate = <
                             Scope
                         > |
                         undefined
-                    ) = undefined
+                        ) = undefined
                     try {
                         result = evaluate<boolean, Scope>(
                             constraint.evaluation,
                             constraintName ===
-                                specialNames.constraint.expression,
+                            specialNames.constraint.expression,
                             {
                                 checkPropertyContent,
 
@@ -2290,6 +2290,7 @@ export const validateDocumentUpdate = <
                         )
                     }
                 }
+            }
         }
         /// endregion
         /// region attachment
@@ -2317,7 +2318,7 @@ export const validateDocumentUpdate = <
                 )
             ) {
                 oldAttachments =
-                    oldDocument[specialNames.attachment] as Attachments
+                    oldDocument[specialNames.attachment] as Attachments|null
                 if (
                     oldAttachments !== null &&
                     typeof oldAttachments === 'object'
@@ -2325,9 +2326,12 @@ export const validateDocumentUpdate = <
                     for (const [fileName, oldAttachment] of Object.entries(
                         oldAttachments
                     ))
-                        if (Object.prototype.hasOwnProperty.call(
-                            newAttachments, fileName
-                        )) {
+                        if (
+                            oldAttachment &&
+                            Object.prototype.hasOwnProperty.call(
+                                newAttachments, fileName
+                            )
+                        ) {
                             const newAttachment = newAttachments[fileName]
 
                             if (
@@ -2381,13 +2385,11 @@ export const validateDocumentUpdate = <
 
             for (const [fileName, newAttachment] of Object.entries(
                 newAttachments
-            ))
-                if (
-                    [null, undefined].includes(
-                        newAttachment as unknown as null
-                    ) ||
-                    (newAttachment as FullAttachment).data === null
-                )
+            )) {
+                if (!newAttachment)
+                    break
+
+                if ((newAttachment as unknown as FullAttachment).data === null)
                     delete newAttachments[fileName]
                 else if (!(
                     oldAttachments &&
@@ -2395,7 +2397,7 @@ export const validateDocumentUpdate = <
                         oldAttachments, fileName
                     ) &&
                     newAttachment.content_type ===
-                        oldAttachments[fileName].content_type &&
+                    oldAttachments[fileName]?.content_type &&
                     (
                         (newAttachment as FullAttachment).data === (
                             oldAttachments[fileName] as FullAttachment
@@ -2410,13 +2412,14 @@ export const validateDocumentUpdate = <
                         fileName,
                         'attachment updated'
                     )
+            }
             // endregion
             if (Object.keys(newAttachments).length === 0)
                 delete newDocument[specialNames.attachment]
 
             const attachmentToTypeMapping:Mapping<Array<string>> = {}
             for (const type of Object.keys(
-                model[specialNames.attachment]!
+                model[specialNames.attachment] as Attachments
             ))
                 attachmentToTypeMapping[type] = []
 
@@ -2424,7 +2427,7 @@ export const validateDocumentUpdate = <
                 let matched = false
 
                 for (const [type, specification] of Object.entries(
-                    model[specialNames.attachment]!
+                    model[specialNames.attachment]
                 ))
                     if (fileNameMatchesModelType(
                         type, name, specification
@@ -2560,8 +2563,7 @@ export const validateDocumentUpdate = <
                                     throwError(
                                         'InvertedAttachmentContentType: ' +
                                         'given attachment content type "' +
-                                        newAttachments[fileName]
-                                            .content_type +
+                                        newAttachments[fileName].content_type +
                                         '" does satisfy specified regular ' +
                                         'expression pattern ' +
                                         `"${pattern.toString()}" from type ` +
