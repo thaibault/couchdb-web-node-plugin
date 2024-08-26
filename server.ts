@@ -32,13 +32,7 @@ import {promises as fileSystem} from 'fs'
 import {dirname} from 'path'
 
 import {initializeConnection} from './helper'
-import {
-    Configuration,
-    CoreConfiguration,
-    CouchDB,
-    Services,
-    State
-} from './type'
+import {Configuration, CouchDB, Services, State} from './type'
 // endregion
 globalContext.fetch = nodeFetch as unknown as typeof fetch
 // region functions

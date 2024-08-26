@@ -2417,17 +2417,20 @@ export const validateDocumentUpdate = <
             if (Object.keys(newAttachments).length === 0)
                 delete newDocument[specialNames.attachment]
 
+            const attachmentModel =
+                model[specialNames.attachment] as Mapping<
+                    FileSpecification<AttachmentType, AdditionalSpecifications
+                >>
+
             const attachmentToTypeMapping:Mapping<Array<string>> = {}
-            for (const type of Object.keys(
-                model[specialNames.attachment] as Attachments
-            ))
+            for (const type of Object.keys(attachmentModel))
                 attachmentToTypeMapping[type] = []
 
             for (const name of Object.keys(newAttachments)) {
                 let matched = false
 
                 for (const [type, specification] of Object.entries(
-                    model[specialNames.attachment]
+                    attachmentModel
                 ))
                     if (fileNameMatchesModelType(
                         type, name, specification
@@ -2443,8 +2446,7 @@ export const validateDocumentUpdate = <
                     throwError(
                         'AttachmentTypeMatch: None of the specified ' +
                         'attachment types ("' +
-                        Object.keys(model[specialNames.attachment]!)
-                            .join('", "') +
+                        Object.keys(attachmentModel).join('", "') +
                         `") matches given one ("${name}")${pathDescription}.`
                     )
             }
@@ -2453,7 +2455,7 @@ export const validateDocumentUpdate = <
             for (const type of Object.keys(attachmentToTypeMapping)) {
                 const specification:FileSpecification<
                     AttachmentType, AdditionalSpecifications
-                > = model[specialNames.attachment]![type]
+                > = attachmentModel[type]
 
                 if (!Object.prototype.hasOwnProperty.call(
                     attachmentToTypeMapping, type
@@ -2525,7 +2527,7 @@ export const validateDocumentUpdate = <
                                     `"${type}"${pathDescription}.`
                                 )
 
-                    if (newAttachments[fileName].content_type) {
+                    if (newAttachments[fileName]?.content_type) {
                         if (specification.contentTypePattern) {
                             const patterns = (
                                 [] as Array<RegExp | string>
@@ -2572,12 +2574,21 @@ export const validateDocumentUpdate = <
                     }
 
                     let length = 0
-                    if ('length' in newAttachments[fileName])
+                    if (
+                        newAttachments[fileName] &&
+                        'length' in newAttachments[fileName]
+                    )
                         length = (
                             newAttachments[fileName] as StubAttachment
                         ).length
-                    else if ('data' in newAttachments[fileName])
-                        if (Buffer && 'byteLength' in Buffer)
+                    else if (
+                        newAttachments[fileName] &&
+                        'data' in newAttachments[fileName]
+                    )
+                        if (
+                            typeof Buffer !== 'undefined' &&
+                            'byteLength' in Buffer
+                        )
                             length = Buffer.byteLength(
                                 (newAttachments[fileName] as
                                     FullAttachment
@@ -2597,8 +2608,8 @@ export const validateDocumentUpdate = <
                             'AttachmentMinimumSize: given attachment ' +
                             `size ${String(length)} byte doesn't satisfy ` +
                             'specified minimum of ' +
-                            (specification.minimumSize as unknown as string) +
-                            ` byte ${pathDescription}.`
+                            `${String(specification.minimumSize)} byte ` +
+                            `${pathDescription}.`
                         )
                     else if (
                         typeof specification.maximumSize === 'number' &&
@@ -2621,8 +2632,8 @@ export const validateDocumentUpdate = <
                 )
                     throwError(
                         'AttachmentAggregatedMinimumSize: given ' +
-                        'aggregated size of attachments from type "' +
-                        `${type}" ${String(aggregatedSize)} byte doesn't ` +
+                        'aggregated size of attachments from type ' +
+                        `"${type}" ${String(aggregatedSize)} byte doesn't ` +
                         'satisfy specified minimum of ' +
                         `${String(specification.minimumAggregatedSize)} byte` +
                         ` ${pathDescription}.`
@@ -2644,12 +2655,7 @@ export const validateDocumentUpdate = <
             }
 
             if (
-                Object.prototype.hasOwnProperty.call(
-                    model, specialNames.minimumAggregatedSize
-                ) &&
-                typeof model[specialNames.minimumAggregatedSize] ===
-                    'number' &&
-                model[specialNames.minimumAggregatedSize]! >
+                (model[specialNames.minimumAggregatedSize] ?? 0) >
                     sumOfAggregatedSizes
             )
                 throwError(
@@ -2660,9 +2666,7 @@ export const validateDocumentUpdate = <
                     `byte ${pathDescription}.`
                 )
             else if (
-                typeof model[specialNames.maximumAggregatedSize] ===
-                    'number' &&
-                model[specialNames.maximumAggregatedSize]! <
+                (model[specialNames.maximumAggregatedSize] ?? Infinity) <
                     sumOfAggregatedSizes
             )
                 throwError(
@@ -2732,17 +2736,16 @@ export const validateDocumentUpdate = <
         userContext
     }
 
+    const newAttachments =
+        newDocument[specialNames.attachment] as Attachments
     // region migrate attachment content types
     if (newDocument[specialNames.attachment])
         for (const attachment of Object.values(
-            newDocument[specialNames.attachment]!
+            newAttachments
         ))
-            if (Object.prototype.hasOwnProperty.call(
-                attachment, 'contentType'
-            )) {
-                /* eslint-disable camelcase */
-                attachment.content_type = attachment.contentType!
-                /* eslint-enable camelcase */
+            if (attachment?.contentType) {
+                // eslint-disable-next-line camelcase
+                attachment.content_type = attachment.contentType
                 delete attachment.contentType
             }
     // endregion

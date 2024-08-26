@@ -31,7 +31,8 @@ import {
     PlainObject,
     ProcessCloseReason,
     represent,
-    SecondParameter, UTILITY_SCOPE,
+    SecondParameter,
+    UTILITY_SCOPE,
     walkDirectoryRecursively
 } from 'clientnode'
 import {promises as fileSystem} from 'fs'
@@ -40,7 +41,7 @@ import PouchDB from 'pouchdb-node'
 import PouchDBFindPlugin from 'pouchdb-find'
 import {PluginHandler, PluginPromises} from 'web-node/type'
 
-import DatabaseHelper from './databaseHelper'
+import databaseHelper, {validateDocumentUpdate} from './databaseHelper'
 import {
     determineAllowedModelRolesMapping,
     determineGenericIndexablePropertyNames,
@@ -67,6 +68,7 @@ import {
     Models,
     PartialFullDocument,
     PropertySpecification,
+    PutDocument,
     Runner,
     Services,
     ServicesState,
@@ -205,10 +207,10 @@ export const preLoadService = async ({
 
                 const retriedResults:Array<
                     DatabaseError|DatabaseResponse
-                > = (await this.bulkDocs(
-                    data,
+                > = await this.bulkDocs(
+                    data as Array<PutDocument<Mapping<unknown>>>,
                     ...parameters as [SecondParameter<Connection['bulkDocs']>]
-                )) as
+                ) as
                     unknown as
                     Array<DatabaseError|DatabaseResponse>
                 for (const retriedResult of retriedResults)
@@ -595,21 +597,21 @@ export const loadService = async (
             if (configuration.core.debug)
                 console.debug(`${type.name} code: \n\n"${code}" integrated.`)
 
-            await ensureValidationDocumentPresence(
-                couchdb.connection,
-                type.name,
-                {
-                    helper: databaseHelperCode,
-                    /* eslint-disable-next-line camelcase */
-                    validate_doc_update: code
-                    /* eslint-enable camelcase */
-                },
-                type.description,
-                true,
-                idName,
-                revisionName,
-                specialNames.designDocumentNamePrefix
-            )
+            if (couchdb.connection)
+                await ensureValidationDocumentPresence(
+                    couchdb.connection,
+                    type.name,
+                    {
+                        helper: databaseHelperCode,
+                        // eslint-disable-next-line camelcase
+                        validate_doc_update: code
+                    },
+                    type.description,
+                    true,
+                    idName,
+                    revisionName,
+                    specialNames.designDocumentNamePrefix
+                )
         }
         // endregion
         // region check if all constraint descriptions compile
@@ -685,7 +687,7 @@ export const loadService = async (
         // endregion
     }
     // region run auto-migration
-    if (configuration.couchdb.model.autoMigrationPath) {
+    if (couchdb.connection && configuration.couchdb.model.autoMigrationPath) {
         const migrators:Mapping<Migrator> = {}
         if (await isDirectory(resolve(
             configuration.couchdb.model.autoMigrationPath
@@ -735,23 +737,23 @@ export const loadService = async (
                                 error as {forbidden?:string}
                             ).forbidden?.startsWith('NoChange:'))
                                 console.info(
-                                    'Including document "' +
-                                    `${document[idName]}" of type ` +
+                                    'Including document ' +
+                                    `"${document[idName]}" of type ` +
                                     `"${document[typeName] as string}" ` +
                                     `hasn't changed existing document.`
                                 )
                             throw new Error(
-                                `Migrating document "` +
-                                `${document[idName]}" of type "` +
-                                `${document[typeName] as string}" has ` +
+                                `Migrating document ` +
+                                `"${document[idName]}" of type ` +
+                                `"${document[typeName] as string}" has ` +
                                 `failed: ${represent(error)}`
                             )
                         }
 
                         console.info(
-                            'Including document "' +
-                            `${document[idName]}" of type "` +
-                            `${document[typeName] as string}" was successful.`
+                            'Including document ' +
+                            `"${document[idName]}" of type ` +
+                            `"${document[typeName] as string}" was successful.`
                         )
                     }
                 } else if (['.js'].includes(extname(file.name)))
@@ -771,9 +773,8 @@ export const loadService = async (
         // region ensure all constraints to have a consistent initial state
         for (const retrievedDocument of (
             await couchdb.connection.allDocs<PlainObject>({
-                /* eslint-disable camelcase */
+                // eslint-disable-next-line camelcase
                 include_docs: true
-                /* eslint-enable camelcase */
             })
         ).rows)
             if (!(
@@ -799,7 +800,7 @@ export const loadService = async (
 
                                 configuration,
 
-                                databaseHelper: DatabaseHelper,
+                                databaseHelper,
 
                                 idName,
                                 typeName,
@@ -854,7 +855,7 @@ export const loadService = async (
                       provided in model specification.
                 */
                 try {
-                    DatabaseHelper.validateDocumentUpdate(
+                    validateDocumentUpdate(
                         /*
                             NOTE: Removed property marked with "null" will be
                             removed so final removing would be skipped if we do
@@ -926,6 +927,7 @@ export const loadService = async (
     // endregion
     // region create/remove needed/unneeded generic indexes
     if (
+        couchdb.connection &&
         configuration.couchdb.createGenericFlatIndex &&
         configuration.couchdb.model.autoMigrationPath
     ) {
@@ -1008,7 +1010,10 @@ export const loadService = async (
     // TODO check conflicting constraints and mark them if necessary (check
     // how couchdb deals with "id" conflicts)
     // region initial compaction
-    if (configuration.couchdb.model.triggerInitialCompaction)
+    if (
+        couchdb.connection &&
+        configuration.couchdb.model.triggerInitialCompaction
+    )
         try {
             await couchdb.connection.compact()
         } catch (error) {
@@ -1065,8 +1070,9 @@ export const postLoadService = (state:State):Promise<void> => {
         if (couchdb.changesStream as unknown as boolean)
             couchdb.changesStream.cancel()
 
-        couchdb.changesStream =
-            couchdb.connection.changes(configuration.changesStream)
+        if (couchdb.connection)
+            couchdb.changesStream =
+                couchdb.connection.changes(configuration.changesStream)
 
         void couchdb.changesStream.on(
             'error',
