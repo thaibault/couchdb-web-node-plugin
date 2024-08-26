@@ -16,9 +16,9 @@
 // region imports
 import {describe, expect, test} from '@jest/globals'
 import path from 'path'
-import {PluginAPI} from 'web-node'
+import {pluginAPI} from 'web-node'
 
-import Index from '../index'
+import {loadService, preLoadService, shouldExit} from '../index'
 import packageConfiguration from '../package.json'
 import {Configuration, Runner, ServicePromises, Services} from '../type'
 // endregion
@@ -35,10 +35,10 @@ describe('index', ():void => {
         ]
 
         const services:Services = {} as Services
-        await expect(Index.preLoadService({
+        await expect(preLoadService({
             configuration,
             hook: 'preLoadService',
-            pluginAPI: PluginAPI,
+            pluginAPI,
             plugins: [],
             services
         }))
@@ -50,10 +50,10 @@ describe('index', ():void => {
         )
     })
     test('loadService', ():Promise<void> =>
-        expect(Index.loadService({
+        expect(loadService({
             configuration,
             hook: 'loadService',
-            pluginAPI: PluginAPI,
+            pluginAPI,
             plugins: [],
             servicePromises: {} as ServicePromises,
             services: {couchdb: {
@@ -69,21 +69,21 @@ describe('index', ():void => {
                 connection: {close: ():void => {
                     testValue += 1
                 }},
-                server: {process: {kill: (_signal?:number):boolean => {
+                server: {process: {kill: ():boolean => {
                     testValue += 1
 
                     return true
                 }}}
             } as Services['couchdb']}
 
-            await expect((Index.shouldExit({
+            await expect(shouldExit({
                 configuration,
                 hook: 'shouldExit',
-                pluginAPI: PluginAPI,
+                pluginAPI,
                 plugins: [],
                 servicePromises: {} as ServicePromises,
                 services
-            }))).resolves.toBeUndefined()
+            })).resolves.toBeUndefined()
             expect(services).toStrictEqual({})
             expect(testValue).toStrictEqual(2)
         },

@@ -21,7 +21,7 @@ import {
     testEachAgainstSameExpectation
 } from 'clientnode/dist/test-helper'
 
-import DatabaseHelper from '../databaseHelper'
+import {authenticate, validateDocumentUpdate} from '../databaseHelper'
 import {extendModels} from '../helper'
 import packageConfiguration from '../package.json'
 import {
@@ -53,9 +53,9 @@ describe('databaseHelper', () => {
         {[idName]: '', [revisionName]: '', [typeName]: 'base'}
     // endregion
     // region tests
-    testEachAgainstSameExpectation<typeof DatabaseHelper.authenticate>(
+    testEachAgainstSameExpectation<typeof authenticate>(
         'authenticate',
-        DatabaseHelper.authenticate,
+        authenticate,
         TEST_THROW_SYMBOL,
 
         [
@@ -77,9 +77,9 @@ describe('databaseHelper', () => {
             'type'
         ]
     )
-    testEachAgainstSameExpectation<typeof DatabaseHelper.authenticate>(
+    testEachAgainstSameExpectation<typeof authenticate>(
         'authenticate',
-        DatabaseHelper.authenticate,
+        authenticate,
         true,
 
         [{}],
@@ -1280,25 +1280,21 @@ describe('databaseHelper', () => {
                 delete (modelConfiguration as Partial<ModelConfiguration>)
                     .entities
 
-                const parameters:Parameters<
-                    typeof DatabaseHelper.validateDocumentUpdate
-                > = (test[0] as unknown as Array<unknown>)
-                    .concat([null, {}, {}].slice(test[0].length - 1))
-                    .concat(modelConfiguration, models) as
-                        Parameters<
-                            typeof DatabaseHelper.validateDocumentUpdate
-                        >
+                const parameters:Parameters<typeof validateDocumentUpdate> =
+                    (test[0] as unknown as Array<unknown>)
+                        .concat([null, {}, {}].slice(test[0].length - 1))
+                        .concat(modelConfiguration, models) as
+                            Parameters<typeof validateDocumentUpdate>
 
                 if (typeof test[2] !== 'string') {
-                    expect(
-                        DatabaseHelper.validateDocumentUpdate(...parameters)
-                    ).toStrictEqual(test[2])
+                    expect(validateDocumentUpdate(...parameters))
+                        .toStrictEqual(test[2])
 
                     continue
                 }
 
                 expect(():PartialFullDocument =>
-                    DatabaseHelper.validateDocumentUpdate(...parameters)
+                    validateDocumentUpdate(...parameters)
                 ).toThrow(new RegExp(`^${test[2]}: .+[.!]$`, 's'))
             }
             // endregion
@@ -3843,7 +3839,7 @@ describe('databaseHelper', () => {
                 delete (modelConfiguration as Partial<ModelConfiguration>)
                     .entities
 
-                expect(DatabaseHelper.validateDocumentUpdate(
+                expect(validateDocumentUpdate(
                     ...(
                         (test[0] as Array<unknown>)
                             .concat(
@@ -3852,13 +3848,10 @@ describe('databaseHelper', () => {
                                 )
                             )
                             .concat(modelConfiguration, models)
-                    ) as
-                        Parameters<typeof DatabaseHelper.validateDocumentUpdate>
+                    ) as Parameters<typeof validateDocumentUpdate>
                 )).toStrictEqual((
                     test[2] as Mapping<
-                        ReturnType<
-                            typeof DatabaseHelper.validateDocumentUpdate
-                        >,
+                        ReturnType<typeof validateDocumentUpdate>,
                         UpdateStrategy
                     >
                 )[updateStrategy])
@@ -3917,8 +3910,8 @@ describe('databaseHelper', () => {
             {[typeName]: 'Test', a: '1'}
         ],
         /*
-            Set property to default value if property is missing which has
-            a specified default (string) value.
+            Set property to default value if property is missing which has a
+            specified default (string) value.
         */
         [
             {[typeName]: 'Test', a: '2'},
@@ -3927,8 +3920,8 @@ describe('databaseHelper', () => {
             {[typeName]: 'Test', a: '1'}
         ],
         /*
-            Set property to default value if property is missing which has
-            a specified default value and remove not existing properties.
+            Set property to default value if property is missing which has a
+            specified default value and remove not existing properties.
         */
         [
             {[typeName]: 'Test', a: '2'},
@@ -3937,8 +3930,8 @@ describe('databaseHelper', () => {
             {[typeName]: 'Test', a: '1'}
         ],
         /*
-            Set property to default value if property is missing which has
-            a specified default (number) value.
+            Set property to default value if property is missing which has a
+            specified default (number) value.
         */
         [
             {[typeName]: 'Test', a: 2},
@@ -3946,8 +3939,8 @@ describe('databaseHelper', () => {
             {entities: {Test: {a: {default: 2, type: 'number'}}}}
         ],
         /*
-            Set property to default value if property is missing which has
-            a specified default (any) value.
+            Set property to default value if property is missing which has a
+            specified default (any) value.
         */
         [
             {[typeName]: 'Test', a: 2},
@@ -3955,8 +3948,8 @@ describe('databaseHelper', () => {
             {entities: {Test: {a: {default: 2, type: 'any'}}}}
         ],
         /*
-            Set property to default value if property is missing which has
-            a specified default value (where on is any).
+            Set property to default value if property is missing which has a
+            specified default value (where on is any).
         */
         [
             {[typeName]: 'Test', a: 2},
@@ -3964,9 +3957,8 @@ describe('databaseHelper', () => {
             {entities: {Test: {a: {default: 2, type: ['any']}}}}
         ],
         /*
-            Set property to default value if property is missing which has
-            a specified default value (where a selection of types is
-            provided).
+            Set property to default value if property is missing which has a
+            specified default value (where a selection of types is provided).
         */
         [
             {[typeName]: 'Test', a: 2},
@@ -4110,7 +4102,7 @@ describe('databaseHelper', () => {
             delete (testModelConfiguration as Partial<ModelConfiguration>)
                 .entities
 
-            expect(DatabaseHelper.validateDocumentUpdate(
+            expect(validateDocumentUpdate(
                 newDocument,
                 oldDocument,
                 {},

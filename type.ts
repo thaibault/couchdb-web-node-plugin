@@ -32,7 +32,7 @@ import {
     ServicesState as BaseServicesState
 } from 'web-node/type'
 
-import DatabaseHelper from './databaseHelper'
+import databaseHelper from './databaseHelper'
 // endregion
 // region exports
 /// region database implementation
@@ -42,10 +42,11 @@ export type Attachment =
         content_type?:PouchDB.Core.Attachment['content_type']
         contentType?:PouchDB.Core.Attachment['content_type']
     }
-export interface Attachments {
-    [attachmentId:string]:Attachment
-}
-export type FullAttachment = PouchDB.Core.FullAttachment
+export type Attachments = Record<string, Attachment|null>
+
+export type FullAttachment =
+    Omit<PouchDB.Core.FullAttachment, 'data'> &
+    {data?:null|PouchDB.Core.FullAttachment['data']}
 export type StubAttachment = PouchDB.Core.StubAttachment
 
 export type ChangesMeta = PouchDB.Core.ChangesMeta
@@ -301,13 +302,13 @@ export type DocumentContent =
 export interface DocumentStrategyMeta {_updateStrategy?:UpdateStrategy}
 export interface DocumentTypeMeta {'-type':string}
 export type BaseDocument =
-    ChangesMeta &
-    DocumentGetMeta &
+    Omit<ChangesMeta, '_attachments'> &
+    Omit<DocumentGetMeta, '_attachments'> &
     DocumentIDMeta &
     DocumentRevisionIDMeta &
     DocumentStrategyMeta &
     DocumentTypeMeta &
-    {_attachments?:Attachments}
+    {_attachments?:Attachments|null}
 export type FullDocument<
     Type extends object = object, AdditionalPropertyTypes = unknown
 > = BaseDocument & Document<Type> & Mapping<AdditionalPropertyTypes>
@@ -492,11 +493,11 @@ export type Configuration<ConfigurationType = Mapping<unknown>> =
 export interface CouchDB<Type extends object = Mapping<unknown>> {
     changesStream:ChangesStream
 
-    connection:Connection<Type>
+    connection?:Connection<Type>
     connector:Connector
 
     server:{
-        process:ChildProcess
+        process?:ChildProcess
 
         reject:(value:ProcessCloseReason) => void
         resolve:(reason:ProcessCloseReason) => void
@@ -660,7 +661,7 @@ export interface PropertyScope<
         Type, AdditionalSpecifications
     >,
 
-    attachmentsTarget?:Mapping<AttachmentType>
+    attachmentsTarget?:Mapping<AttachmentType|null>
 }
 //// endregion
 export interface EvaluationResult<
@@ -720,7 +721,7 @@ export type Migrator<
         {
             configuration:Configuration
 
-            databaseHelper:DatabaseHelper
+            databaseHelper:typeof databaseHelper
 
             idName:string
             typeName:string

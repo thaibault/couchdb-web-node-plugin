@@ -77,9 +77,9 @@ describe('helper', ():void => {
                 new Promise<DatabaseResponse>((
                     resolve:(value:DatabaseResponse) => void
                 ) => {
-                    void timeout().then(() =>
+                    void timeout().then(() => {
                         resolve(null as unknown as DatabaseResponse)
-                    )
+                    })
                 })
             } as unknown as Connection,
             'test',
