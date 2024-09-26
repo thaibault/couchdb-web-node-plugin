@@ -240,7 +240,7 @@ export const initializeConnection = async (
                         id,
                         rev: (
                             revisionName in document &&
-                            !['latest', 'upsert'].includes(revision as string)
+                            !['0-latest', '0-upsert'].includes(revision as string)
                         ) ?
                             revision as string :
                             (await this.get(id))[revisionName],

@@ -327,7 +327,7 @@ export const validateDocumentUpdate = <
             revision =
                 newDocument[revisionName] =
                 oldDocument[revisionName] as string
-        else if (revision === 'latest')
+        else if (revision === '0-latest')
             throwError('Revision: No old document available to update.')
         else
             delete (newDocument as Partial<Document>)[revisionName]
