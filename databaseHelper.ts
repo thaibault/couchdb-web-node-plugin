@@ -77,20 +77,20 @@ import {
  * otherwise.
  */
 export const authenticate = (
-    newDocument:Partial<Document>,
-    oldDocument:null|Partial<Document> = null,
-    userContext:Partial<UserContext> = {},
+    newDocument: Partial<Document>,
+    oldDocument: null|Partial<Document> = null,
+    userContext: Partial<UserContext> = {},
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _securitySettings:Partial<SecuritySettings> = {
+    _securitySettings: Partial<SecuritySettings> = {
         admins: {names: [], roles: []}, members: {names: [], roles: []}
     },
-    allowedModelRolesMapping?:AllowedModelRolesMapping,
+    allowedModelRolesMapping?: AllowedModelRolesMapping,
     idPropertyName = '_id',
     typePropertyName = '-type',
     designDocumentNamePrefix = '_design/',
     read = false
-):true => {
-    const type:string|undefined =
+): true => {
+    const type: string|undefined =
         newDocument[typePropertyName] as string|undefined ??
         (oldDocument && oldDocument[typePropertyName]) as string
     /*
@@ -102,10 +102,10 @@ export const authenticate = (
     if (!type)
         return true
 
-    const operationType:'read'|'write' = read ? 'read': 'write'
+    const operationType = read ? 'read': 'write'
 
     // Define roles who are allowed to read and write everything.
-    const allowedRoles:NormalizedAllowedModelRoles = {
+    const allowedRoles: NormalizedAllowedModelRoles = {
         properties: {},
 
         read: ['_admin', 'readonlyadmin'],
@@ -138,7 +138,7 @@ export const authenticate = (
                 allowedModelRolesMapping, type
             )
         ) {
-            const allowedModelRoles:Partial<NormalizedAllowedModelRoles> =
+            const allowedModelRoles: Partial<NormalizedAllowedModelRoles> =
                 allowedModelRolesMapping[type]
 
             for (const operation of ['read', 'write'] as const)
@@ -151,7 +151,7 @@ export const authenticate = (
         }
         // endregion
         // TODO check for each property recursively
-        const relevantRoles:Array<string> = allowedRoles[operationType]
+        const relevantRoles: Array<string> = allowedRoles[operationType]
         for (const userRole of userContext.roles)
             if (relevantRoles.includes(userRole))
                 return true
@@ -196,23 +196,23 @@ export const validateDocumentUpdate = <
     AdditionalSpecifications extends object = Mapping<unknown>,
     AdditionalPropertiesType = unknown
 >(
-        newDocument:PartialFullDocument<ObjectType, AdditionalPropertiesType>,
+        newDocument: PartialFullDocument<ObjectType, AdditionalPropertiesType>,
         oldDocument:(
             null|PartialFullDocument<ObjectType, AdditionalPropertiesType>
         ),
-        userContext:Partial<UserContext>,
-        securitySettings:Partial<SecuritySettings>,
-        modelConfiguration:BaseModelConfiguration<
+        userContext: Partial<UserContext>,
+        securitySettings: Partial<SecuritySettings>,
+        modelConfiguration: BaseModelConfiguration<
             ObjectType, AdditionalSpecifications
         >,
-        models:Models<
+        models: Models<
             ObjectType,
             AttachmentType,
             AdditionalSpecifications,
             AdditionalPropertiesType
         > = {},
-        toJSON?:(value:unknown) => string
-    ):PartialFullDocument<ObjectType, AdditionalPropertiesType> => {
+        toJSON?: (value: unknown) => string
+    ): PartialFullDocument<ObjectType, AdditionalPropertiesType> => {
     type Attachments = Mapping<AttachmentType|null>
 
     type PartialFullDocumentType = PartialFullDocument<
@@ -235,10 +235,10 @@ export const validateDocumentUpdate = <
 
     // region ensure needed environment
     const throwError = <DataType = Mapping<unknown>>(
-        message:string,
+        message: string,
         type = 'forbidden',
-        additionalErrorData:Partial<DataType> = {} as Partial<DataType>
-    ):never => {
+        additionalErrorData: Partial<DataType> = {} as Partial<DataType>
+    ): never => {
         /*
             eslint-disable no-throw-literal,@typescript-eslint/only-throw-error
         */
@@ -254,7 +254,7 @@ export const validateDocumentUpdate = <
     }
 
     const now = new Date()
-    const nowUTCTimestamp:number = Date.UTC(
+    const nowUTCTimestamp: number = Date.UTC(
         now.getUTCFullYear(),
         now.getUTCMonth(),
         now.getUTCDate(),
@@ -340,7 +340,7 @@ export const validateDocumentUpdate = <
         delete newDocument[specialNames.strategy]
     }
     /// region collect old model types to migrate.
-    const oldModelMapping:Mapping = {}
+    const oldModelMapping: Mapping = {}
     if (updateStrategy === 'migrate')
         for (const [name, model] of Object.entries(models))
             if (
@@ -355,7 +355,7 @@ export const validateDocumentUpdate = <
                     oldModelMapping[oldName] = name
     /// endregion
     // endregion
-    let serializeData:(value:unknown) => string
+    let serializeData: (value: unknown) => string
     if (toJSON)
         serializeData = toJSON
     else if (
@@ -363,11 +363,11 @@ export const validateDocumentUpdate = <
         Object.prototype.hasOwnProperty.call(JSON, 'stringify')
     )
         serializeData =
-            (object:unknown):string => JSON.stringify(object, null, 4)
+            (object: unknown): string => JSON.stringify(object, null, 4)
     else
         throwError('Needed "serializer" is not available.')
 
-    const specialPropertyNames:Array<keyof BaseModelType> = [
+    const specialPropertyNames: Array<keyof BaseModelType> = [
         specialNames.additional,
         specialNames.allowedRole,
         specialNames.constraint.execution,
@@ -383,10 +383,10 @@ export const validateDocumentUpdate = <
     ]
     // region functions
     /// region generic functions
-    const serialize = (value:unknown):string =>
+    const serialize = (value: unknown): string =>
         value instanceof Error ? String(value) : serializeData(value)
 
-    const determineTrimmedString = (value?:null|string):string => {
+    const determineTrimmedString = (value?: null|string): string => {
         if (typeof value === 'string')
             return value.trim()
 
@@ -394,8 +394,8 @@ export const validateDocumentUpdate = <
     }
 
     const normalizeDateTime = (
-        value:DateRepresentationType
-    ):null|number|string => {
+        value: DateRepresentationType
+    ): null|number|string => {
         if (saveDateTimeAsNumber) {
             if (value !== null && typeof value !== 'number') {
                 value = new Date(value)
@@ -429,12 +429,12 @@ export const validateDocumentUpdate = <
     }
 
     const fileNameMatchesModelType = (
-        typeName:string,
-        fileName:string,
-        fileType:FileSpecification<
+        typeName: string,
+        fileName: string,
+        fileType: FileSpecification<
             AttachmentType, AdditionalSpecifications
         >
-    ):boolean => {
+    ): boolean => {
         if (fileType.fileName) {
             if (fileType.fileName.value)
                 return fileType.fileName.value === fileName
@@ -451,8 +451,8 @@ export const validateDocumentUpdate = <
     }
 
     const getFileNameByPrefix = (
-        prefix?:string, attachments?:Attachments
-    ):null|string => {
+        prefix?: string, attachments?: Attachments
+    ): null|string => {
         if (!attachments)
             attachments =
                 newDocument[specialNames.attachment] as Attachments
@@ -462,7 +462,7 @@ export const validateDocumentUpdate = <
                 if (name.startsWith(prefix))
                     return name
         } else {
-            const keys:Array<string> = Object.keys(attachments)
+            const keys: Array<string> = Object.keys(attachments)
             if (keys.length)
                 return keys[0]
         }
@@ -470,13 +470,13 @@ export const validateDocumentUpdate = <
         return null
     }
 
-    const attachmentWithPrefixExists = (namePrefix:string):boolean => {
+    const attachmentWithPrefixExists = (namePrefix: string): boolean => {
         if (Object.prototype.hasOwnProperty.call(
             newDocument, specialNames.attachment
         )) {
             const attachments =
                 newDocument[specialNames.attachment] as Attachments
-            const name:null|string = getFileNameByPrefix(namePrefix)
+            const name: null|string = getFileNameByPrefix(namePrefix)
 
             if (name)
                 return (
@@ -499,10 +499,10 @@ export const validateDocumentUpdate = <
     }
 
     const evaluate = <Type, Scope>(
-        givenExpression?:null|string,
+        givenExpression?: null|string,
         isEvaluation = false,
         givenScope = {} as Scope
-    ):EvaluationResult<
+    ): EvaluationResult<
         ObjectType,
         Type|undefined,
         PropertyName,
@@ -510,10 +510,10 @@ export const validateDocumentUpdate = <
         AdditionalSpecifications,
         AdditionalPropertiesType,
         typeof BASIC_SCOPE &
-        {code:string} &
+        {code: string} &
         Scope
     > => {
-        type CurrentScope = typeof BASIC_SCOPE & {code:string} & Scope
+        type CurrentScope = typeof BASIC_SCOPE & {code: string} & Scope
         const scope = {...BASIC_SCOPE, code: '', ...givenScope}
 
         const expression = determineTrimmedString(givenExpression)
@@ -521,7 +521,7 @@ export const validateDocumentUpdate = <
             const code = (isEvaluation ? 'return ' : '') + expression
             // region determine scope
             scope.code = code
-            const scopeNames:Array<string> = Object.keys(scope)
+            const scopeNames: Array<string> = Object.keys(scope)
             // endregion
             // region compile
             let templateFunction:(
@@ -542,7 +542,7 @@ export const validateDocumentUpdate = <
             }
             // endregion
             // region run
-            const result:EvaluationResult<
+            const result: EvaluationResult<
                 ObjectType,
                 Type|undefined,
                 PropertyName,
@@ -555,7 +555,7 @@ export const validateDocumentUpdate = <
             try {
                 // @ts-expect-error "templateFunction" can be not defined.
                 result.result = templateFunction(
-                    ...scopeNames.map((name:string):unknown =>
+                    ...scopeNames.map((name: string): unknown =>
                         scope[name as keyof typeof scope]
                     )
                 )
@@ -579,13 +579,13 @@ export const validateDocumentUpdate = <
     }
     /// endregion
     const checkDocument = (
-        newDocument:PartialFullDocumentType,
-        oldDocument:null|PartialFullDocumentType,
-        parentNames:Array<string> = []
-    ):CheckedDocumentResult<ObjectType, AdditionalPropertiesType> => {
+        newDocument: PartialFullDocumentType,
+        oldDocument: null|PartialFullDocumentType,
+        parentNames: Array<string> = []
+    ): CheckedDocumentResult<ObjectType, AdditionalPropertiesType> => {
         const pathDescription =
             parentNames.length ? ` in ${parentNames.join(' -> ')}` : ''
-        let changedPath:Array<string> = []
+        let changedPath: Array<string> = []
 
         const checkModelType = () => {
             // region check for model type (optionally migrate them)
@@ -638,7 +638,7 @@ export const validateDocumentUpdate = <
         checkModelType()
 
         let modelName = newDocument[typeName] as string
-        const model:ModelType = models[modelName]
+        const model: ModelType = models[modelName]
         let additionalPropertySpecification:(
             PropertySpecification<
                 AdditionalPropertiesType, AdditionalSpecifications
@@ -655,13 +655,13 @@ export const validateDocumentUpdate = <
                 model[specialNames.additional] as AdditionalSpecifications
         // region document specific functions
         const checkPropertyConstraints = <Type extends PropertyValue>(
-            newValue:Type,
-            name:string,
-            propertySpecification:PropertySpecification<
+            newValue: Type,
+            name: string,
+            propertySpecification: PropertySpecification<
                 Type, AdditionalSpecifications
             >,
-            oldValue?:Type,
-            types:Array<ConstraintKey> = [
+            oldValue?: Type,
+            types: Array<ConstraintKey> = [
                 'constraintExecution', 'constraintExpression'
             ]
         ) => {
@@ -716,8 +716,8 @@ export const validateDocumentUpdate = <
                         )
                     } catch (error) {
                         if (((
-                            error:unknown
-                        ):error is DatabaseError & EvaluationErrorData =>
+                            error: unknown
+                        ): error is DatabaseError & EvaluationErrorData =>
                             Object.prototype.hasOwnProperty.call(
                                 error, 'compilation'
                             )
@@ -730,8 +730,8 @@ export const validateDocumentUpdate = <
                             )
 
                         if (((
-                            error:unknown
-                        ):error is DatabaseError & EvaluationErrorData =>
+                            error: unknown
+                        ): error is DatabaseError & EvaluationErrorData =>
                             Object.prototype.hasOwnProperty.call(
                                 error, 'runtime'
                             )
@@ -760,7 +760,8 @@ export const validateDocumentUpdate = <
                             (description ?
                                 /*
                                     eslint-disable
-                                    @typescript-eslint/no-implied-eval
+                                    @typescript-eslint/no-implied-eval,
+                                    @typescript-eslint/no-unsafe-call
                                 */
                                 new Function(
                                     ...Object.keys(result.scope),
@@ -774,7 +775,8 @@ export const validateDocumentUpdate = <
                                 `${pathDescription}.`
                                 /*
                                     eslint-enable
-                                    @typescript-eslint/no-implied-eval
+                                    @typescript-eslint/no-implied-eval,
+                                    @typescript-eslint/no-unsafe-call
                                 */
                             )
                         )
@@ -782,14 +784,14 @@ export const validateDocumentUpdate = <
                 }
         }
         const checkPropertyContent = <Type extends PropertyValue>(
-            newValue:Type,
-            name:string,
-            propertySpecification:PropertySpecification<
+            newValue: Type,
+            name: string,
+            propertySpecification: PropertySpecification<
                 Type, AdditionalSpecifications
             >,
-            oldValue?:Type
-        ):CheckedPropertyResult<Type> => {
-            let changedPath:Array<string> = []
+            oldValue?: Type
+        ): CheckedPropertyResult<Type> => {
+            let changedPath: Array<string> = []
             // region type
             const types = ([] as Array<TypeNames>).concat(
                 propertySpecification.type ? propertySpecification.type : []
@@ -855,7 +857,7 @@ export const validateDocumentUpdate = <
                             `${typeof newValue})${pathDescription}.`
                         )
                 } else if (type === 'DateTime') {
-                    const initialNewValue:unknown = newValue
+                    const initialNewValue: unknown = newValue
 
                     newValue = normalizeDateTime(
                         newValue as DateRepresentationType
@@ -907,7 +909,7 @@ export const validateDocumentUpdate = <
                 else if (
                     typeof type === 'string' && type.startsWith('foreignKey:')
                 ) {
-                    const foreignKeyType:string =
+                    const foreignKeyType: string =
                         models[type.substring('foreignKey:'.length)][idName]
                             .type as string
                     if (foreignKeyType === typeof newValue) {
@@ -1021,7 +1023,7 @@ export const validateDocumentUpdate = <
                 let selection =
                     Array.isArray(propertySpecification.selection) ?
                         propertySpecification.selection.map(
-                            (value:unknown):unknown =>
+                            (value: unknown): unknown =>
                                 (
                                     value as SelectionMapping|undefined
                                 )?.value === undefined ?
@@ -1087,14 +1089,14 @@ export const validateDocumentUpdate = <
         const checkPropertyWriteableMutableNullable = <
             Type extends PropertyValue
         >(
-                propertySpecification:PropertySpecification<
+                propertySpecification: PropertySpecification<
                     Type, AdditionalSpecifications
                 >,
-                newDocument:PartialFullDocumentType,
-                oldDocument:null|PartialFullDocumentType,
-                name:PropertyName,
-                pathDescription:string
-            ):boolean => {
+                newDocument: PartialFullDocumentType,
+                oldDocument: null|PartialFullDocumentType,
+                name: PropertyName,
+                pathDescription: string
+            ): boolean => {
             const value = newDocument[name] as Type
             // region writable
             if (!propertySpecification.writable)
@@ -1175,13 +1177,13 @@ export const validateDocumentUpdate = <
         }
         /// region create hook
         const runCreatePropertyHook = <Type extends PropertyValue>(
-            propertySpecification:PropertySpecification<
+            propertySpecification: PropertySpecification<
                 Type, AdditionalSpecifications
             >,
-            newDocument:PartialFullDocumentType,
-            oldDocument:null|PartialFullDocumentType,
-            name:(keyof Attachments)|(keyof PartialFullDocumentType),
-            attachmentsTarget?:Attachments
+            newDocument: PartialFullDocumentType,
+            oldDocument: null|PartialFullDocumentType,
+            name: (keyof Attachments)|(keyof PartialFullDocumentType),
+            attachmentsTarget?: Attachments
         ) => {
             if (!oldDocument)
                 for (const type of [
@@ -1239,7 +1241,7 @@ export const validateDocumentUpdate = <
                                 }
                             )
                         } catch (error) {
-                            if (((error:unknown):error is EvaluationError =>
+                            if (((error: unknown): error is EvaluationError =>
                                 Object.prototype.hasOwnProperty.call(
                                     error, 'compilation'
                                 )
@@ -1252,7 +1254,7 @@ export const validateDocumentUpdate = <
                                     `${pathDescription}.`
                                 )
 
-                            if (((error:unknown):error is EvaluationError =>
+                            if (((error: unknown): error is EvaluationError =>
                                 Object.prototype.hasOwnProperty.call(
                                     error, 'runtime'
                                 )
@@ -1286,13 +1288,13 @@ export const validateDocumentUpdate = <
         /// endregion
         /// region update hook
         const runUpdatePropertyHook = <Type extends PropertyValue>(
-            propertySpecification:PropertySpecification<
+            propertySpecification: PropertySpecification<
                 Type, AdditionalSpecifications
             >,
-            newDocument:PartialFullDocumentType,
-            oldDocument:null|PartialFullDocumentType,
-            name:(keyof Attachments)|(keyof PartialFullDocumentType),
-            attachmentsTarget?:Attachments
+            newDocument: PartialFullDocumentType,
+            oldDocument: null|PartialFullDocumentType,
+            name: (keyof Attachments)|(keyof PartialFullDocumentType),
+            attachmentsTarget?: Attachments
         ) => {
             if (!attachmentsTarget) {
                 if (!Object.prototype.hasOwnProperty.call(newDocument, name))
@@ -1372,7 +1374,7 @@ export const validateDocumentUpdate = <
                         else if (result.result !== undefined)
                             (newDocument[name] as Type) = result.result
                     } catch (error) {
-                        if (((error:unknown):error is EvaluationError =>
+                        if (((error: unknown): error is EvaluationError =>
                             Object.prototype.hasOwnProperty.call(
                                 error, 'compilation'
                             )
@@ -1385,7 +1387,7 @@ export const validateDocumentUpdate = <
                                 `${pathDescription}.`
                             )
 
-                        if (((error:unknown):error is EvaluationError =>
+                        if (((error: unknown): error is EvaluationError =>
                             Object.prototype.hasOwnProperty.call(
                                 error, 'runtime'
                             )
@@ -1436,7 +1438,7 @@ export const validateDocumentUpdate = <
                 specialNames.create.execution, specialNames.create.expression
             ])
                 if (Object.prototype.hasOwnProperty.call(model, type)) {
-                    let result:null|PartialFullDocumentType|undefined
+                    let result: null|PartialFullDocumentType|undefined
                     try {
                         result = evaluate<
                             null|PartialFullDocumentType|undefined,
@@ -1465,7 +1467,7 @@ export const validateDocumentUpdate = <
                             }
                         ).result
                     } catch (error) {
-                        if (((error:unknown):error is EvaluationError =>
+                        if (((error: unknown): error is EvaluationError =>
                             Object.prototype.hasOwnProperty.call(
                                 error, 'compilation'
                             )
@@ -1478,7 +1480,7 @@ export const validateDocumentUpdate = <
                                 `${pathDescription}.`
                             )
 
-                        if (((error:unknown):error is EvaluationError =>
+                        if (((error: unknown): error is EvaluationError =>
                             Object.prototype.hasOwnProperty.call(
                                 error, 'runtime'
                             )
@@ -1514,7 +1516,7 @@ export const validateDocumentUpdate = <
             specialNames.update.execution, specialNames.update.expression
         ])
             if (Object.prototype.hasOwnProperty.call(model, type)) {
-                let result:null|PartialFullDocumentType|undefined
+                let result: null|PartialFullDocumentType|undefined
                 try {
                     result = evaluate<
                         null|PartialFullDocumentType,
@@ -1543,7 +1545,7 @@ export const validateDocumentUpdate = <
                         }
                     ).result
                 } catch (error) {
-                    if (((error:unknown):error is EvaluationError =>
+                    if (((error: unknown): error is EvaluationError =>
                         Object.prototype.hasOwnProperty.call(
                             error, 'compilation'
                         )
@@ -1556,7 +1558,7 @@ export const validateDocumentUpdate = <
                             `${pathDescription}.`
                         )
 
-                    if (((error:unknown):error is EvaluationError =>
+                    if (((error: unknown): error is EvaluationError =>
                         Object.prototype.hasOwnProperty.call(error, 'runtime')
                     )(error))
                         throwError(
@@ -1587,7 +1589,7 @@ export const validateDocumentUpdate = <
         // endregion
         const additionalPropertyNames = additionalPropertySpecification ?
             (Object.keys(newDocument) as Array<keyof ObjectType>).filter(
-                (name:keyof ObjectType):boolean =>
+                (name: keyof ObjectType): boolean =>
                     !specifiedPropertyNames.includes(name)
             ) :
             [] as Array<keyof ObjectType>
@@ -1619,9 +1621,9 @@ export const validateDocumentUpdate = <
                     const newAttachments =
                         newDocument[specialNames.attachment] as Attachments
 
-                    const newFileNames:Array<keyof Attachments> =
+                    const newFileNames: Array<keyof Attachments> =
                         Object.keys(newAttachments)
-                            .filter((fileName:string):boolean =>
+                            .filter((fileName: string): boolean =>
                                 (
                                     newAttachments[fileName] as FullAttachment
                                 ).data !== null &&
@@ -1635,12 +1637,12 @@ export const validateDocumentUpdate = <
                                 )
                             )
 
-                    let oldFileNames:Array<string> = []
+                    let oldFileNames: Array<string> = []
                     if (oldDocument) {
                         const oldAttachments =
                             oldDocument[name] as Attachments
                         oldFileNames = Object.keys(oldAttachments)
-                            .filter((fileName:string):boolean =>
+                            .filter((fileName: string): boolean =>
                                 !(
                                     Object.prototype.hasOwnProperty.call(
                                         newAttachments, fileName
@@ -2132,7 +2134,7 @@ export const validateDocumentUpdate = <
                     /// endregion
                     // endregion
                 } else {
-                    const oldValue:unknown =
+                    const oldValue: unknown =
                         (
                             oldDocument &&
                             Object.prototype.hasOwnProperty.call(
@@ -2227,7 +2229,7 @@ export const validateDocumentUpdate = <
                             }
                         )
                     } catch (error) {
-                        if (((error:unknown):error is EvaluationError =>
+                        if (((error: unknown): error is EvaluationError =>
                             Object.prototype.hasOwnProperty.call(
                                 error, 'compilation'
                             )
@@ -2239,7 +2241,7 @@ export const validateDocumentUpdate = <
                                 `${pathDescription}.`
                             )
 
-                        if (((error:unknown):error is EvaluationError =>
+                        if (((error: unknown): error is EvaluationError =>
                             Object.prototype.hasOwnProperty.call(
                                 error, 'runtime'
                             )
@@ -2269,7 +2271,8 @@ export const validateDocumentUpdate = <
                                 constraint.description ?
                                     /*
                                         eslint-disable
-                                        @typescript-eslint/no-implied-eval
+                                        @typescript-eslint/no-implied-eval,
+                                        @typescript-eslint/no-unsafe-call
                                     */
                                     new Function(
                                         ...Object.keys(result.scope),
@@ -2284,7 +2287,8 @@ export const validateDocumentUpdate = <
                                     `${pathDescription}.`
                                 /*
                                     eslint-enable
-                                    @typescript-eslint/no-implied-eval
+                                    @typescript-eslint/no-implied-eval,
+                                    @typescript-eslint/no-unsafe-call
                                 */
                             )
                         )
@@ -2310,7 +2314,7 @@ export const validateDocumentUpdate = <
                 )
 
             // region migrate old attachments
-            let oldAttachments:Attachments|null = null
+            let oldAttachments: Attachments|null = null
             if (
                 oldDocument &&
                 Object.prototype.hasOwnProperty.call(
@@ -2422,7 +2426,7 @@ export const validateDocumentUpdate = <
                     FileSpecification<AttachmentType, AdditionalSpecifications
                 >>
 
-            const attachmentToTypeMapping:Mapping<Array<string>> = {}
+            const attachmentToTypeMapping: Mapping<Array<string>> = {}
             for (const type of Object.keys(attachmentModel))
                 attachmentToTypeMapping[type] = []
 
@@ -2453,7 +2457,7 @@ export const validateDocumentUpdate = <
 
             let sumOfAggregatedSizes = 0
             for (const type of Object.keys(attachmentToTypeMapping)) {
-                const specification:FileSpecification<
+                const specification: FileSpecification<
                     AttachmentType, AdditionalSpecifications
                 > = attachmentModel[type]
 
@@ -2706,7 +2710,7 @@ export const validateDocumentUpdate = <
         return {changedPath, newDocument}
     }
     // endregion
-    const BASIC_SCOPE:BasicScope<
+    const BASIC_SCOPE: BasicScope<
         ObjectType,
         AttachmentType,
         AdditionalSpecifications,

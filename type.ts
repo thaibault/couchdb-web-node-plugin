@@ -39,14 +39,14 @@ import databaseHelper from './databaseHelper'
 export type Attachment =
     PouchDB.Core.Attachment &
     {
-        content_type?:PouchDB.Core.Attachment['content_type']
-        contentType?:PouchDB.Core.Attachment['content_type']
+        content_type?: PouchDB.Core.Attachment['content_type']
+        contentType?: PouchDB.Core.Attachment['content_type']
     }
 export type Attachments = Record<string, Attachment|null>
 
 export type FullAttachment =
     Omit<PouchDB.Core.FullAttachment, 'data'> &
-    {data?:null|PouchDB.Core.FullAttachment['data']}
+    {data?: null|PouchDB.Core.FullAttachment['data']}
 export type StubAttachment = PouchDB.Core.StubAttachment
 
 export type ChangesMeta = PouchDB.Core.ChangesMeta
@@ -90,20 +90,20 @@ export type AllowedRoles = (
     Array<string> |
     string |
     {
-        read?:Array<string>|string
-        write?:Array<string>|string
+        read?: Array<string>|string
+        write?: Array<string>|string
     }
 )
 export interface NormalizedAllowedRoles {
-    read:Array<string>
-    write:Array<string>
+    read: Array<string>
+    write: Array<string>
 }
 /*
     Recursive mapping from model and properties to their allowed read and write
     roles.
 */
 export interface NormalizedAllowedModelRoles extends NormalizedAllowedRoles {
-    properties:Mapping<NormalizedAllowedRoles>
+    properties: Mapping<NormalizedAllowedRoles>
 }
 /*
     Maps an artefact (usually type or property) to corresponding operations
@@ -112,8 +112,8 @@ export interface NormalizedAllowedModelRoles extends NormalizedAllowedRoles {
 export type AllowedModelRolesMapping = Mapping<NormalizedAllowedModelRoles>
 
 export interface Constraint {
-    description?:string
-    evaluation:string
+    description?: string
+    evaluation: string
 }
 export const PrimitiveTypes = [
     'boolean',
@@ -134,120 +134,120 @@ export type ConstraintKey =
     'conflictingConstraintExecution'|'conflictingConstraintExpression'|
     'constraintExecution'|'constraintExpression'
 export interface SelectionMapping {
-    label:string
-    value:unknown
+    label: string
+    value: unknown
 }
 export type Pattern = Array<RegExp|string>|RegExp|string
 export interface PropertySpecification<
     Type = unknown, AdditionalSpecifications extends object = object
 > {
-    allowedRoles?:AllowedRoles
-    computed?:boolean
+    allowedRoles?: AllowedRoles
+    computed?: boolean
     // region expression
-    arrayConstraintExecution?:Constraint
-    arrayConstraintExpression?:Constraint
+    arrayConstraintExecution?: Constraint
+    arrayConstraintExpression?: Constraint
 
-    conflictingConstraintExecution?:Constraint
-    conflictingConstraintExpression?:Constraint
+    conflictingConstraintExecution?: Constraint
+    conflictingConstraintExpression?: Constraint
 
-    constraintExecution?:Constraint
-    constraintExpression?:Constraint
+    constraintExecution?: Constraint
+    constraintExpression?: Constraint
 
-    onCreateExecution?:string
-    onCreateExpression?:string
-    onUpdateExecution?:string
-    onUpdateExpression?:string
+    onCreateExecution?: string
+    onCreateExpression?: string
+    onUpdateExecution?: string
+    onUpdateExpression?: string
     // endregion
     // region validation
-    pattern?:Pattern
-    invertedPattern?:Pattern
+    pattern?: Pattern
+    invertedPattern?: Pattern
 
-    contentTypePattern?:Pattern
-    invertedContentTypePattern?:Pattern
+    contentTypePattern?: Pattern
+    invertedContentTypePattern?: Pattern
 
-    maximum?:number
-    minimum?:number
+    maximum?: number
+    minimum?: number
 
-    maximumAggregatedSize?:number
-    minimumAggregatedSize?:number
+    maximumAggregatedSize?: number
+    minimumAggregatedSize?: number
 
-    maximumLength?:number
-    minimumLength?:number
+    maximumLength?: number
+    minimumLength?: number
 
-    maximumNumber?:number
-    minimumNumber?:number
+    maximumNumber?: number
+    minimumNumber?: number
 
-    maximumSize?:number
-    minimumSize?:number
+    maximumSize?: number
+    minimumSize?: number
 
-    mutable?:boolean
-    nullable?:boolean
-    writable?:boolean
+    mutable?: boolean
+    nullable?: boolean
+    writable?: boolean
 
-    selection?:Array<SelectionMapping>|Array<unknown>|Mapping<unknown>
+    selection?: Array<SelectionMapping>|Array<unknown>|Mapping<unknown>
 
-    type?:TypeSpecification
+    type?: TypeSpecification
     // endregion
     // region simple transformation
-    default?:Type
-    emptyEqualsNull?:boolean
-    trim?:boolean
+    default?: Type
+    emptyEqualsNull?: boolean
+    trim?: boolean
     // endregion
     // region representation
     // NOTE: Can als be defined via key in parent data structure.
-    name?:string
-    declaration?:string
-    description?:string
+    name?: string
+    declaration?: string
+    description?: string
     // endregion
-    index?:boolean
+    index?: boolean
 
     // NOTE: Actual name is usually specified via key parent data structure.
-    oldName?:Array<string>|string
+    oldName?: Array<string>|string
 
-    value?:Type
+    value?: Type
 
-    additionalSpecifications?:AdditionalSpecifications
+    additionalSpecifications?: AdditionalSpecifications
 }
 export interface FileSpecification<
     Type extends Attachment = Attachment,
     AdditionalSpecifications extends object = object
 > extends PropertySpecification<null|Type, AdditionalSpecifications> {
-    fileName?:PropertySpecification<string, AdditionalSpecifications>
+    fileName?: PropertySpecification<string, AdditionalSpecifications>
 }
 export interface BaseModel<
     AttachmentType extends Attachment = Attachment,
     AdditionalSpecifications extends object = object,
     AdditionalPropertiesType = unknown
 > {
-    _additional?:PropertySpecification<
+    _additional?: PropertySpecification<
         AdditionalPropertiesType, AdditionalSpecifications
     >
 
-    _allowedRoles?:AllowedRoles
+    _allowedRoles?: AllowedRoles
 
     _attachments?:(
         Mapping<FileSpecification<AttachmentType, AdditionalSpecifications>> |
         null
     )
 
-    _constraintExecutions?:Array<Constraint>|Constraint
-    _constraintExpressions?:Array<Constraint>|Constraint
+    _constraintExecutions?: Array<Constraint>|Constraint
+    _constraintExpressions?: Array<Constraint>|Constraint
 
-    _createExecution?:string
-    _createExpression?:string
+    _createExecution?: string
+    _createExpression?: string
 
-    _extends?:Array<string>|string
+    _extends?: Array<string>|string
 
-    _maximumAggregatedSize?:number
-    _minimumAggregatedSize?:number
+    _maximumAggregatedSize?: number
+    _minimumAggregatedSize?: number
 
-    _oldType?:Array<string>|string
+    _oldType?: Array<string>|string
 
-    _onUpdateExecution?:string
-    _onUpdateExpression?:string
+    _onUpdateExecution?: string
+    _onUpdateExpression?: string
 
-    _id:PropertySpecification<string, AdditionalSpecifications>
-    _rev:PropertySpecification<string, AdditionalSpecifications>
+    _id: PropertySpecification<string, AdditionalSpecifications>
+    _rev: PropertySpecification<string, AdditionalSpecifications>
 }
 export type Model<
     Type extends object|undefined = object,
@@ -259,7 +259,7 @@ export type Model<
         AttachmentType, AdditionalSpecifications, AdditionalPropertiesType
     > &
     {
-        [Property in keyof Type]:PropertySpecification<
+        [Property in keyof Type]: PropertySpecification<
             Type[Property] extends Array<unknown> ?
                 (
                     Type[Property][number] extends object|undefined ?
@@ -299,8 +299,8 @@ export type UpdateStrategy = ''|'fillUp'|'incremental'|'migrate'
 
 export type DocumentContent =
     Array<DocumentContent>|PlainObject|Primitive
-export interface DocumentStrategyMeta {_updateStrategy?:UpdateStrategy}
-export interface DocumentTypeMeta {'-type':string}
+export interface DocumentStrategyMeta {_updateStrategy?: UpdateStrategy}
+export interface DocumentTypeMeta {'-type': string}
 export type BaseDocument =
     Omit<ChangesMeta, '_attachments'> &
     Omit<DocumentGetMeta, '_attachments'> &
@@ -308,7 +308,7 @@ export type BaseDocument =
     DocumentRevisionIDMeta &
     DocumentStrategyMeta &
     DocumentTypeMeta &
-    {_attachments?:Attachments|null}
+    {_attachments?: Attachments|null}
 export type FullDocument<
     Type extends object = object, AdditionalPropertyTypes = unknown
 > = BaseDocument & Document<Type> & Mapping<AdditionalPropertyTypes>
@@ -321,63 +321,63 @@ export type PartialFullDocument<
     Mapping<AdditionalPropertyTypes>
 
 export interface SpecialPropertyNames {
-    additional:'_additional'
-    allowedRole:'_allowedRoles'
-    attachment:'_attachments'
-    conflict:'_conflicts'
-    deleted:'_deleted'
-    deletedConflict:'_deleted_conflict'
-    extend:'_extends'
-    id:'_id'
-    revision:'_rev'
-    revisions:'_revisions'
-    revisionsInformation:'_revs_info'
-    strategy:'_updateStrategy'
-    type:'-type'
+    additional: '_additional'
+    allowedRole: '_allowedRoles'
+    attachment: '_attachments'
+    conflict: '_conflicts'
+    deleted: '_deleted'
+    deletedConflict: '_deleted_conflict'
+    extend: '_extends'
+    id: '_id'
+    revision: '_rev'
+    revisions: '_revisions'
+    revisionsInformation: '_revs_info'
+    strategy: '_updateStrategy'
+    type: '-type'
 
-    constraint:{
-        execution:'_constraintExecutions'
-        expression:'_constraintExpressions'
+    constraint: {
+        execution: '_constraintExecutions'
+        expression: '_constraintExpressions'
     }
-    create:{
-        execution:'_createExecution'
-        expression:'_createExecution'
+    create: {
+        execution: '_createExecution'
+        expression: '_createExecution'
     }
 
-    designDocumentNamePrefix:string
+    designDocumentNamePrefix: string
 
-    localSequence:'_local_seq'
+    localSequence: '_local_seq'
 
-    maximumAggregatedSize:'_maximumAggregatedSize'
-    minimumAggregatedSize:'_minimumAggregatedSize'
+    maximumAggregatedSize: '_maximumAggregatedSize'
+    minimumAggregatedSize: '_minimumAggregatedSize'
 
-    oldType:'_oldType'
+    oldType: '_oldType'
 
-    update:{
-        execution:'_onUpdateExecution'
-        expression:'_onUpdateExpression'
+    update: {
+        execution: '_onUpdateExecution'
+        expression: '_onUpdateExpression'
     }
 }
 export interface PropertyNameConfiguration {
-    reserved:Array<string>
-    special:SpecialPropertyNames
-    typePattern:{
-        private:string
-        public:string
+    reserved: Array<string>
+    special: SpecialPropertyNames
+    typePattern: {
+        private: string
+        public: string
     }
-    validatedDocumentsCache:string
+    validatedDocumentsCache: string
 }
 export interface BaseModelConfiguration<
     Type, AdditionalSpecifications extends object
 > {
-    dateTimeFormat:'iso'|'iso8601'|'number'
-    property:{
-        defaultSpecification:PropertySpecification<
+    dateTimeFormat: 'iso'|'iso8601'|'number'
+    property: {
+        defaultSpecification: PropertySpecification<
             Type, AdditionalSpecifications
         >
-        name:PropertyNameConfiguration
+        name: PropertyNameConfiguration
     }
-    updateStrategy:UpdateStrategy
+    updateStrategy: UpdateStrategy
 }
 export interface ModelConfiguration<
     Type extends object = object,
@@ -385,51 +385,51 @@ export interface ModelConfiguration<
     AdditionalSpecifications extends object = object,
     AdditionalPropertiesType = unknown
 > extends BaseModelConfiguration<Type, AdditionalSpecifications> {
-    autoMigrationPath:string
-    entities:Models<
+    autoMigrationPath: string
+    entities: Models<
         Type,
         AttachmentType,
         AdditionalSpecifications,
         AdditionalPropertiesType
     >
-    triggerInitialCompaction:boolean
-    updateConfiguration:boolean
-    updateValidation:boolean
+    triggerInitialCompaction: boolean
+    updateConfiguration: boolean
+    updateValidation: boolean
 }
 /// endregion
 /// region web-node api
 //// region configuration
 export interface UserContext {
-    db:string
-    name?:string
-    roles:Array<string>
+    db: string
+    name?: string
+    roles: Array<string>
 }
 export interface DatabaseUserConfiguration {
-    names:Array<string>
-    roles:Array<string>
+    names: Array<string>
+    roles: Array<string>
 }
 export interface Runner {
-    adminUserConfigurationPath:string
-    arguments?:Array<string>|null|string
-    binaryFilePath?:null|string
-    configurationFile?:null|{
-        content:string
-        path:string
+    adminUserConfigurationPath: string
+    arguments?: Array<string>|null|string
+    binaryFilePath?: null|string
+    configurationFile?: null|{
+        content: string
+        path: string
     }
-    environment?:null|Mapping
-    location:Array<string>|string
-    name:Array<string>|string
+    environment?: null|Mapping
+    location: Array<string>|string
+    name: Array<string>|string
 }
 export interface SecuritySettings {
-    admins:DatabaseUserConfiguration
-    members:DatabaseUserConfiguration
+    admins: DatabaseUserConfiguration
+    members: DatabaseUserConfiguration
 
-    _validatedDocuments?:Set<string>
+    _validatedDocuments?: Set<string>
 }
-export type AdvancedFetchOptions = RequestInit & {timeout?:number}
+export type AdvancedFetchOptions = RequestInit & {timeout?: number}
 export type ConnectorConfiguration = DatabaseConnectorConfiguration & {
     // NOTE: "pouchdb`s" version supports timeout parameter.
-    fetch?:AdvancedFetchOptions|null
+    fetch?: AdvancedFetchOptions|null
 }
 export interface CoreConfiguration<
     Type extends object = Mapping<unknown>,
@@ -437,85 +437,85 @@ export interface CoreConfiguration<
     AdditionalSpecifications extends object = object,
     AdditionalPropertiesType = unknown
 > {
-    attachAutoRestarter:boolean
+    attachAutoRestarter: boolean
 
-    backend:{
-        configuration:PlainObject
-        prefixes:Array<string>
+    backend: {
+        configuration: PlainObject
+        prefixes: Array<string>
     }
 
-    binary:{
-        memoryInMegaByte:string
-        nodePath:string
-        runner:Array<Runner>
+    binary: {
+        memoryInMegaByte: string
+        nodePath: string
+        runner: Array<Runner>
     }
 
-    changesStream:ChangesStreamOptions
-    connector:ConnectorConfiguration
-    security:SecuritySettings
+    changesStream: ChangesStreamOptions
+    connector: ConnectorConfiguration
+    security: SecuritySettings
 
-    createGenericFlatIndex:boolean
-    databaseName:string
-    debug:boolean
+    createGenericFlatIndex: boolean
+    databaseName: string
+    debug: boolean
 
-    ensureAdminPresence:boolean
-    ensureSecuritySettingsPresence:boolean
-    ensureUserPresence:boolean
-    ignoreNoChangeError:boolean
+    ensureAdminPresence: boolean
+    ensureSecuritySettingsPresence: boolean
+    ensureUserPresence: boolean
+    ignoreNoChangeError: boolean
 
-    local:boolean
+    local: boolean
 
-    maximumRepresentationLength:number
-    maximumRepresentationTryLength:number
+    maximumRepresentationLength: number
+    maximumRepresentationTryLength: number
 
-    model:ModelConfiguration<
+    model: ModelConfiguration<
         Type,
         AttachmentType,
         AdditionalSpecifications,
         AdditionalPropertiesType
     >
 
-    path:string
+    path: string
 
-    skipLatestRevisionDetermining:boolean
+    skipLatestRevisionDetermining: boolean
 
-    url:string
+    url: string
 
-    user:{
-        name:string
-        password:string
+    user: {
+        name: string
+        password: string
     }
 }
 export type Configuration<ConfigurationType = Mapping<unknown>> =
-    BaseConfiguration<{couchdb:CoreConfiguration}> &
+    BaseConfiguration<{couchdb: CoreConfiguration}> &
     ConfigurationType
 //// endregion
 export interface CouchDB<Type extends object = Mapping<unknown>> {
-    changesStream:ChangesStream
+    changesStream: ChangesStream
 
-    connection?:Connection<Type>
-    connector:Connector
+    connection?: Connection<Type>
+    connector: Connector
 
-    server:{
-        process?:ChildProcess
+    server: {
+        process?: ChildProcess
 
-        reject:(value:ProcessCloseReason) => void
-        resolve:(reason:ProcessCloseReason) => void
+        reject: (value: ProcessCloseReason) => void
+        resolve: (reason: ProcessCloseReason) => void
 
-        restart:(state:State) => Promise<void>
-        start:(services:Services, configuration:Configuration) =>
+        restart: (state: State) => Promise<void>
+        start: (services: Services, configuration: Configuration) =>
             Promise<void>
-        stop:(services:Services, configuration:Configuration) =>
+        stop: (services: Services, configuration: Configuration) =>
             Promise<void>
 
-        runner:Runner
+        runner: Runner
     }
 }
 
 export type ServicePromises<Type = Mapping<unknown>> =
-    BaseServicePromises<{couchdb:Promise<ProcessCloseReason>}> & Type
+    BaseServicePromises<{couchdb: Promise<ProcessCloseReason>}> & Type
 export type Services<Type = Mapping<unknown>> =
-    BaseServices<{couchdb:CouchDB}> & Type
+    BaseServices<{couchdb: CouchDB}> & Type
 
 export type ServicesState<Type = undefined> = BaseServicesState<
     Type,
@@ -535,34 +535,34 @@ export interface PluginHandler extends BasePluginHandler {
      * @param state - Application state.
      * @returns Promise resolving to nothing.
      */
-    couchdbInitializeChangesStream?(state:State<ChangesStream>):Promise<void>
+    couchdbInitializeChangesStream?(state: State<ChangesStream>): Promise<void>
     /**
      * Hook after each database restart.
      * @param state - Application state.
      * @returns Promise resolving to nothing.
      */
-    restartCouchdb?(state:State):Promise<void>
+    restartCouchdb?(state: State): Promise<void>
 }
 /// endregion
 /// region evaluation
 export interface EmptyEvaluationErrorData {
-    empty:string
+    empty: string
 }
 export interface EvaluationErrorData<S = Mapping<unknown>> {
-    code:string
-    error:unknown
-    scope:S
+    code: string
+    error: unknown
+    scope: S
 }
 export type EvaluationError = DatabaseError & EvaluationErrorData
 export interface CompilationErrorData<
     S = Mapping<unknown>
 > extends EvaluationErrorData<S> {
-    compilation:string
+    compilation: string
 }
 export interface RuntimeErrorData<
     S = Mapping<unknown>
 > extends EvaluationErrorData<S> {
-    runtime:string
+    runtime: string
 }
 //// region scopes
 export interface BasicScope<
@@ -571,39 +571,39 @@ export interface BasicScope<
     AdditionalSpecifications extends object,
     AdditionalPropertiesType
 > {
-    attachmentWithPrefixExists:(namePrefix:string) => boolean
-    checkDocument:(
-        newDocument:PartialFullDocument<Type, AdditionalPropertiesType>,
-        oldDocument:PartialFullDocument<Type, AdditionalPropertiesType>|null,
-        parentNames:Array<string>
+    attachmentWithPrefixExists: (namePrefix: string) => boolean
+    checkDocument: (
+        newDocument: PartialFullDocument<Type, AdditionalPropertiesType>,
+        oldDocument: PartialFullDocument<Type, AdditionalPropertiesType>|null,
+        parentNames: Array<string>
     ) => CheckedDocumentResult<Type, AdditionalPropertiesType>
-    getFileNameByPrefix:(
-        prefix?:string, attachments?:Mapping<AttachmentType>
+    getFileNameByPrefix: (
+        prefix?: string, attachments?: Mapping<AttachmentType>
     ) => null|string
-    serialize:(value:unknown) => string
+    serialize: (value: unknown) => string
 
-    id:string
-    revision:string
+    id: string
+    revision: string
 
-    idName:string
-    revisionName:string
-    specialNames:SpecialPropertyNames
-    typeName:string
+    idName: string
+    revisionName: string
+    specialNames: SpecialPropertyNames
+    typeName: string
 
-    modelConfiguration:BaseModelConfiguration<Type, AdditionalSpecifications>
-    models:Models<
+    modelConfiguration: BaseModelConfiguration<Type, AdditionalSpecifications>
+    models: Models<
         Type,
         AttachmentType,
         AdditionalSpecifications,
         AdditionalPropertiesType
     >
 
-    now:Date
-    nowUTCTimestamp:number
+    now: Date
+    nowUTCTimestamp: number
 
-    securitySettings:Partial<SecuritySettings>
+    securitySettings: Partial<SecuritySettings>
 
-    userContext:Partial<UserContext>
+    userContext: Partial<UserContext>
 }
 export interface CommonScope<
     ObjectType extends object,
@@ -612,31 +612,31 @@ export interface CommonScope<
     AdditionalSpecifications extends object,
     AdditionalPropertiesType
 > {
-    checkPropertyContent:(
-        newValue:Type,
-        name:string,
-        propertySpecification:PropertySpecification<
+    checkPropertyContent: (
+        newValue: Type,
+        name: string,
+        propertySpecification: PropertySpecification<
             Type, AdditionalSpecifications
         >,
-        oldValue:Type
+        oldValue: Type
     ) => CheckedPropertyResult<Type>
 
-    model:Model<
+    model: Model<
         ObjectType,
         AttachmentType,
         AdditionalSpecifications,
         AdditionalPropertiesType
     >
-    modelName:string
-    type:Array<string>|string
+    modelName: string
+    type: Array<string>|string
 
-    newDocument:PartialFullDocument<ObjectType, AdditionalPropertiesType>
+    newDocument: PartialFullDocument<ObjectType, AdditionalPropertiesType>
     oldDocument:(
         null|PartialFullDocument<ObjectType, AdditionalPropertiesType>
     )
 
-    parentNames:Array<string>
-    pathDescription:string
+    parentNames: Array<string>
+    pathDescription: string
 }
 export interface PropertyScope<
     ObjectType extends object,
@@ -652,16 +652,16 @@ export interface PropertyScope<
     AdditionalSpecifications,
     AdditionalPropertiesType
 > {
-    name:string
+    name: string
 
-    newValue:Type
-    oldValue?:Type
+    newValue: Type
+    oldValue?: Type
 
-    propertySpecification:PropertySpecification<
+    propertySpecification: PropertySpecification<
         Type, AdditionalSpecifications
     >,
 
-    attachmentsTarget?:Mapping<AttachmentType|null>
+    attachmentsTarget?: Mapping<AttachmentType|null>
 }
 //// endregion
 export interface EvaluationResult<
@@ -687,26 +687,26 @@ export interface EvaluationResult<
         >
     )
 > {
-    code:string
-    result:Type
-    scope:Scope
+    code: string
+    result: Type
+    scope: Scope
 }
-export type Evaluate<R, P extends Array<unknown>> = (...parameters:P) => R
+export type Evaluate<R, P extends Array<unknown>> = (...parameters: P) => R
 /// endregion
 /// region checker results
 export interface CheckedResult {
-    changedPath:Array<string>
+    changedPath: Array<string>
 }
 export interface CheckedPropertyResult<Type> extends CheckedResult {
     /*
      NOTE: "undefined" means no changes regarding existing data and null
     */
-    newValue?:null|Type
+    newValue?: null|Type
 }
 export interface CheckedDocumentResult<
     ObjectType extends object, AdditionalPropertiesType
 > extends CheckedResult {
-    newDocument:PartialFullDocument<ObjectType, AdditionalPropertiesType>
+    newDocument: PartialFullDocument<ObjectType, AdditionalPropertiesType>
 }
 /// endregion
 export type Migrator<
@@ -715,39 +715,39 @@ export type Migrator<
     AdditionalSpecifications extends object = object,
     AdditionalPropertiesType = unknown
 > = (
-    document:Document,
+    document: Document,
     scope:(
         typeof UTILITY_SCOPE &
         {
-            configuration:Configuration
+            configuration: Configuration
 
-            databaseHelper:typeof databaseHelper
+            databaseHelper: typeof databaseHelper
 
-            idName:string
-            typeName:string
+            idName: string
+            typeName: string
 
-            migrators:Mapping<Migrator<
+            migrators: Mapping<Migrator<
                 Type,
                 AttachmentType,
                 AdditionalSpecifications,
                 AdditionalPropertiesType
             >>
-            models:Models<
+            models: Models<
                 Type,
                 AttachmentType,
                 AdditionalSpecifications,
                 AdditionalPropertiesType
             >
-            modelConfiguration:ModelConfiguration<
+            modelConfiguration: ModelConfiguration<
                 Type,
                 AttachmentType,
                 AdditionalSpecifications,
                 AdditionalPropertiesType
             >
 
-            selfFilePath:string
+            selfFilePath: string
 
-            services:Services
+            services: Services
         }
     )
 ) => Document|null
@@ -755,16 +755,16 @@ export type Migrator<
 export type DateRepresentationType = Date|null|number|string
 /// region pre-defined models
 export type User = BaseDocument & {
-    password:string
-    roles:Array<string>
+    password: string
+    roles: Array<string>
 }
 export interface Interval {
-    end:number
-    start:number
+    end: number
+    start: number
 }
 export interface Location {
-    latitude:number
-    longitude:number
+    latitude: number
+    longitude: number
 }
 /// endregion
 // endregion

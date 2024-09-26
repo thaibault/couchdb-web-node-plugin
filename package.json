@@ -84,8 +84,8 @@
     "node-fetch": "^3.3.2",
     "rimraf": "^6.0.1",
     "typescript-eslint": "^8.7.0",
-    "web-node": "^1.0.519",
-    "weboptimizer": "^2.0.1512"
+    "web-node": "^1.0.520",
+    "weboptimizer": "^2.0.1515"
   },
   "peerDependencies": {
     "@babel/runtime": "*",

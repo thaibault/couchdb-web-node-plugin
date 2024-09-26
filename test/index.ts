@@ -22,19 +22,19 @@ import {loadService, preLoadService, shouldExit} from '../index'
 import packageConfiguration from '../package.json'
 import {Configuration, Runner, ServicePromises, Services} from '../type'
 // endregion
-describe('index', ():void => {
+describe('index', (): void => {
     // region prepare environment
-    const configuration:Configuration =
+    const configuration: Configuration =
         packageConfiguration.webNode as unknown as Configuration
     configuration.couchdb.url = 'http://dummy-url'
     // endregion
     // region tests
-    test('preLoadService', async ():Promise<void> => {
-        const runner:Runner = configuration.couchdb.binary.runner[
+    test('preLoadService', async (): Promise<void> => {
+        const runner: Runner = configuration.couchdb.binary.runner[
             configuration.couchdb.binary.runner.length - 1
         ]
 
-        const services:Services = {} as Services
+        const services: Services = {} as Services
         await expect(preLoadService({
             configuration,
             hook: 'preLoadService',
@@ -49,7 +49,7 @@ describe('index', ():void => {
             path.resolve(runner.location[0], runner.name as string)
         )
     })
-    test('loadService', ():Promise<void> =>
+    test('loadService', (): Promise<void> =>
         expect(loadService({
             configuration,
             hook: 'loadService',
@@ -63,13 +63,13 @@ describe('index', ():void => {
     )
     test(
         'shouldExit',
-        async ():Promise<void> => {
+        async (): Promise<void> => {
             let testValue = 0
-            const services:Services = {couchdb: {
-                connection: {close: ():void => {
+            const services: Services = {couchdb: {
+                connection: {close: () => {
                     testValue += 1
                 }},
-                server: {process: {kill: ():boolean => {
+                server: {process: {kill: (): boolean => {
                     testValue += 1
 
                     return true

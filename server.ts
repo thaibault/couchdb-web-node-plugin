@@ -44,8 +44,8 @@ globalContext.fetch = nodeFetch as unknown as typeof fetch
  * which resolves after server is reachable.
  */
 export const start = async (
-    services:Services, configuration:Configuration
-):Promise<void> => {
+    services: Services, configuration: Configuration
+): Promise<void> => {
     const {server} = services.couchdb
     const {runner} = server
     const {binary} = configuration.couchdb
@@ -99,8 +99,8 @@ export const start = async (
     )
 
     ;(new Promise((
-        resolve:ProcessCloseCallback, reject:ProcessErrorCallback
-    ):void => {
+        resolve: ProcessCloseCallback, reject: ProcessErrorCallback
+    ): void => {
         for (const closeEventName of CLOSE_EVENT_NAMES)
             server.process?.on(
                 closeEventName,
@@ -116,15 +116,15 @@ export const start = async (
                 NOTE: Please be aware of newly set server instances when
                 resolving happens here.
              */
-            (value:ProcessCloseReason) => {
+            (value: ProcessCloseReason) => {
                 if ((
-                    services.couchdb as {server?:CouchDB['server']}|undefined
+                    services.couchdb as {server?: CouchDB['server']}|undefined
                 )?.server?.resolve)
                     services.couchdb.server.resolve.call(this, value)
             },
-            (reason:unknown) => {
+            (reason: unknown) => {
                 if ((
-                    services.couchdb as {server?:CouchDB['server']}|undefined
+                    services.couchdb as {server?: CouchDB['server']}|undefined
                 )?.server?.reject)
                     services.couchdb.server.reject.call(
                         this, reason as ProcessCloseReason
@@ -143,13 +143,13 @@ export const start = async (
  * @returns Given object of services wrapped in a promise resolving after
  * finish.
  */
-export const restart = async (state:State):Promise<void> => {
+export const restart = async (state: State): Promise<void> => {
     const {configuration, pluginAPI, services} = state
     const {couchdb: {server}} = services
 
-    const resolveServerProcessBackup:(value:ProcessCloseReason) => void =
+    const resolveServerProcessBackup: (value: ProcessCloseReason) => void =
         server.resolve
-    const rejectServerProcessBackup:(reason:ProcessCloseReason) => void =
+    const rejectServerProcessBackup: (reason: ProcessCloseReason) => void =
         server.reject
 
     // Avoid to notify web node about server process stop.
@@ -178,8 +178,8 @@ export const restart = async (state:State):Promise<void> => {
  * finish.
  */
 export const stop = async (
-    {couchdb}:Services, {couchdb: configuration}:Configuration
-):Promise<void> => {
+    {couchdb}: Services, {couchdb: configuration}: Configuration
+): Promise<void> => {
     if (couchdb.connection)
         void couchdb.connection.close()
 
