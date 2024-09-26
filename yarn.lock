@@ -2996,12 +2996,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^22.7.2":
-  version: 22.7.2
-  resolution: "@types/node@npm:22.7.2"
+"@types/node@npm:^22.7.3":
+  version: 22.7.3
+  resolution: "@types/node@npm:22.7.3"
   dependencies:
     undici-types: "npm:~6.19.2"
-  checksum: 10c0/987e4df034e4af0ce76b938c2c0d94373da376b228f1c93081a661c77e682795c599bcad47c93c70a25b8ea443587137cf23088fb7f62ef442955f13046eae3d
+  checksum: 10c0/0e579813528b0370454337a952f43b792cd12731e10fdca0fdb627158e980c1219bba99e9048c134b6a19325d817016059afe016ccd372326c838a1b85a51574
   languageName: node
   linkType: hard
 
@@ -5847,7 +5847,7 @@ __metadata:
     "@babel/runtime": "npm:^7.25.6"
     "@stylistic/eslint-plugin-ts": "npm:^2.8.0"
     "@types/ejs": "npm:^3.1.5"
-    "@types/node": "npm:^22.7.2"
+    "@types/node": "npm:^22.7.3"
     "@types/pouchdb-node": "npm:^6.1.7"
     "@typescript-eslint/eslint-plugin": "npm:^8.7.0"
     "@typescript-eslint/parser": "npm:^8.7.0"
@@ -5855,7 +5855,7 @@ __metadata:
     documentation-website: "npm:^1.0.332"
     eslint: "npm:^9.11.1"
     eslint-config-google: "npm:^0.14.0"
-    eslint-plugin-jsdoc: "npm:^50.2.5"
+    eslint-plugin-jsdoc: "npm:^50.3.0"
     jest: "npm:^29.7.0"
     jsdoc: "npm:^4.0.3"
     node-fetch: "npm:^3.3.2"
@@ -5864,7 +5864,7 @@ __metadata:
     pouchdb-server: "npm:^4.2.0"
     rimraf: "npm:^6.0.1"
     typescript-eslint: "npm:^8.7.0"
-    web-node: "npm:^1.0.520"
+    web-node: "npm:^1.0.521"
     weboptimizer: "npm:^2.0.1515"
   peerDependencies:
     "@babel/runtime": "*"
@@ -6558,9 +6558,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-jsdoc@npm:^50.2.5":
-  version: 50.2.5
-  resolution: "eslint-plugin-jsdoc@npm:50.2.5"
+"eslint-plugin-jsdoc@npm:^50.3.0":
+  version: 50.3.0
+  resolution: "eslint-plugin-jsdoc@npm:50.3.0"
   dependencies:
     "@es-joy/jsdoccomment": "npm:~0.48.0"
     are-docs-informative: "npm:^0.0.2"
@@ -6575,7 +6575,7 @@ __metadata:
     synckit: "npm:^0.9.1"
   peerDependencies:
     eslint: ^7.0.0 || ^8.0.0 || ^9.0.0
-  checksum: 10c0/f62a67f2b387588fb0733aef44f3f02f9640c616047f1e22dcab09a7d857c4be4b751fc866832e9a68e32ecc4fa0ea75c2f25cc7a96ffe9dc705c2cebfa540a2
+  checksum: 10c0/2188f10c350f3306f476913f63880bb3324932006a40f28f4b7b95c10d147e8fd98b03917357c01ae2f81d60bc1c169dbdacc72031e2c1ae602445f39e574da1
   languageName: node
   linkType: hard
 
@@ -13159,9 +13159,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"web-node@npm:^1.0.520":
-  version: 1.0.520
-  resolution: "web-node@npm:1.0.520"
+"web-node@npm:^1.0.521":
+  version: 1.0.521
+  resolution: "web-node@npm:1.0.521"
   peerDependencies:
     "@babel/runtime": "*"
     clientnode: "*"
@@ -13170,7 +13170,7 @@ __metadata:
       optional: true
   bin:
     web-node: index.js
-  checksum: 10c0/d54973ed2fd80ccc84c4ffbbd20c13f7d77f424f357a2ce3dc4420134527fc8a99b83d0e327f48ad4d6d529e37a49cd1b1d58dfd1a9c04e771ece9d8fe3fbbe5
+  checksum: 10c0/cd4596a04ef882f610620f2c19ac3b9f7918e2991739c67d03d35a506917f397d0d4c6f64025b5d2c867accbf7b08618fb9244ab1563e4168d9de5ff4157f725
   languageName: node
   linkType: hard
 
