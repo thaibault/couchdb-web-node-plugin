@@ -166,7 +166,7 @@ export const preLoadService = async ({
                     if (
                         revisionName in data[index] &&
                         (item as DatabaseError).name === 'conflict' &&
-                        ['latest', 'upsert'].includes(
+                        ['0-latest', '0-upsert'].includes(
                             data[index][revisionName] as string
                         )
                     ) {
@@ -186,7 +186,7 @@ export const preLoadService = async ({
                         if (!skipLatestRevisionDetermining)
                             result[index].rev =
                                 revisionName in data[index] &&
-                                !['latest', 'upsert'].includes(
+                                !['0-latest', '0-upsert'].includes(
                                     data[index][revisionName] as string
                                 ) ?
                                     data[index][revisionName] :
@@ -726,7 +726,7 @@ export const loadService = async (
                         if (!documents[0][idName])
                             documents[0][idName] = name
                         if (!documents[0][revisionName])
-                            documents[0][revisionName] = 'upsert'
+                            documents[0][revisionName] = '0-upsert'
                     }
 
                     for (const document of documents) {
