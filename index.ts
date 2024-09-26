@@ -76,7 +76,6 @@ import {
     State
 } from './type'
 // endregion
-// region plugins/classes
 /**
  * Launches an application server und triggers all some pluginable hooks on
  * an event.
@@ -96,32 +95,32 @@ export const TOGGLE_LATEST_REVISION_DETERMINING =
  */
 export const preLoadService = async ({
     configuration: {couchdb: configuration}, services
-}:ServicesState):Promise<void> => {
+}: ServicesState): Promise<void> => {
     if (!Object.prototype.hasOwnProperty.call(services, 'couchdb'))
         services.couchdb = {} as Services['couchdb']
     const {couchdb} = services
 
     if (!Object.prototype.hasOwnProperty.call(couchdb, 'connector')) {
-        const idName:SpecialPropertyNames['id'] =
+        const idName: SpecialPropertyNames['id'] =
             configuration.model.property.name.special.id
-        const revisionName:SpecialPropertyNames['revision'] =
+        const revisionName: SpecialPropertyNames['revision'] =
             configuration.model.property.name.special.revision
 
         couchdb.connector = PouchDB
         // region apply "latest/upsert" and ignore "NoChange" error plugin
-        const nativeBulkDocs:Connection['bulkDocs'] =
+        const nativeBulkDocs: Connection['bulkDocs'] =
             couchdb.connector.prototype.bulkDocs
         couchdb.connector.plugin({bulkDocs: async function(
-            this:Connection,
-            firstParameter:unknown,
-            ...parameters:Array<unknown>
-        ):Promise<Array<DatabaseError|DatabaseResponse>> {
-            const toggleLatestRevisionDetermining:boolean = (
+            this: Connection,
+            firstParameter: unknown,
+            ...parameters: Array<unknown>
+        ): Promise<Array<DatabaseError|DatabaseResponse>> {
+            const toggleLatestRevisionDetermining: boolean = (
                 parameters.length > 0 &&
                 parameters[parameters.length - 1] ===
                     TOGGLE_LATEST_REVISION_DETERMINING
             )
-            const skipLatestRevisionDetermining:boolean =
+            const skipLatestRevisionDetermining: boolean =
                 toggleLatestRevisionDetermining ?
                     !configuration.skipLatestRevisionDetermining :
                     configuration.skipLatestRevisionDetermining
@@ -131,7 +130,7 @@ export const preLoadService = async ({
                 Implements a generic retry mechanism for "upsert" and "latest"
                 updates and optionally supports to ignore "NoChange" errors.
             */
-            let data:Array<PartialFullDocument> = (
+            let data: Array<PartialFullDocument> = (
                 !Array.isArray(firstParameter) &&
                 firstParameter !== null &&
                 typeof firstParameter === 'object' &&
@@ -151,15 +150,15 @@ export const preLoadService = async ({
                     timeout: configuration.connector.fetch.timeout
                 })
 
-            const result:Array<DatabaseError|DatabaseResponse> =
+            const result: Array<DatabaseError|DatabaseResponse> =
                 await nativeBulkDocs.call(
                     this,
                     data as FirstParameter<Connection['bulkDocs']>,
                     ...parameters as [SecondParameter<Connection['bulkDocs']>]
                 )
 
-            const conflictingIndexes:Array<number> = []
-            const conflicts:Array<PartialFullDocument> = []
+            const conflictingIndexes: Array<number> = []
+            const conflicts: Array<PartialFullDocument> = []
             let index = 0
             for (const item of result) {
                 if (typeof data[index] === 'object')
@@ -205,7 +204,7 @@ export const preLoadService = async ({
                 if (toggleLatestRevisionDetermining)
                     parameters.push(TOGGLE_LATEST_REVISION_DETERMINING)
 
-                const retriedResults:Array<
+                const retriedResults: Array<
                     DatabaseError|DatabaseResponse
                 > = await this.bulkDocs(
                     data as Array<PutDocument<Mapping<unknown>>>,
@@ -230,7 +229,7 @@ export const preLoadService = async ({
     if (!Object.prototype.hasOwnProperty.call(couchdb, 'server')) {
         couchdb.server = {} as Services['couchdb']['server']
         // region search for binary file to start database server
-        const triedPaths:Array<string> = []
+        const triedPaths: Array<string> = []
         for (const runner of ([] as Array<Runner>).concat(
             configuration.binary.runner
         )) {
@@ -240,7 +239,7 @@ export const preLoadService = async ({
                 for (const name of (
                     ([] as Array<string>).concat(runner.name)
                 )) {
-                    const binaryFilePath:string =
+                    const binaryFilePath: string =
                         resolve(directoryPath, name)
                     triedPaths.push(binaryFilePath)
 
@@ -282,9 +281,9 @@ export const preLoadService = async ({
  * continues services.
  */
 export const loadService = async (
-    {configuration, services}:State
-):Promise<PluginPromises> => {
-    let promise:null|Promise<ProcessCloseReason> = null
+    {configuration, services}: State
+): Promise<PluginPromises> => {
+    let promise: null|Promise<ProcessCloseReason> = null
     const {couchdb} = services
 
     if (Object.prototype.hasOwnProperty.call(couchdb.server, 'runner')) {
@@ -295,9 +294,9 @@ export const loadService = async (
         couchdb.server.stop = stop
 
         promise = new Promise<ProcessCloseReason>((
-            resolve:(value:ProcessCloseReason) => void,
-            reject:(reason:ProcessCloseReason) => void
-        ):void => {
+            resolve: (value: ProcessCloseReason) => void,
+            reject: (reason: ProcessCloseReason) => void
+        ): void => {
             // NOTE: These callbacks can be reassigned during server restart.
             couchdb.server.resolve = resolve
             couchdb.server.reject = reject
@@ -314,7 +313,7 @@ export const loadService = async (
     )
     // region ensure presence of global admin user
     if (configuration.couchdb.ensureAdminPresence) {
-        const unauthenticatedUserDatabaseConnection:Connection =
+        const unauthenticatedUserDatabaseConnection: Connection =
             new couchdb.connector(
                 `${format(configuration.couchdb.url, '')}/_users`,
                 getConnectorOptions(configuration)
@@ -340,7 +339,7 @@ export const loadService = async (
             )
         } catch (error) {
             if ((error as DatabaseError).name === 'unauthorized') {
-                const authenticatedUserDatabaseConnection:Connection =
+                const authenticatedUserDatabaseConnection: Connection =
                     new couchdb.connector(
                         `${urlPrefix}/_users`,
                         getConnectorOptions(configuration)
@@ -374,7 +373,7 @@ export const loadService = async (
             configuration.couchdb.security.members
         ])
             for (const name of type.names) {
-                const userDatabaseConnection:Connection =
+                const userDatabaseConnection: Connection =
                     new couchdb.connector(
                         `${urlPrefix}/_users`,
                         getConnectorOptions(configuration)
@@ -385,7 +384,7 @@ export const loadService = async (
                         `org.couchdb.user:${name}`
                     )
                 } catch (error) {
-                    if ((error as {error:string}).error === 'not_found')
+                    if ((error as {error: string}).error === 'not_found')
                         try {
                             await userDatabaseConnection.put({
                                 [
@@ -430,12 +429,12 @@ export const loadService = async (
                         `/${prefix}${prefix.trim() ? '/' : ''}${subPath}`
                     const url = `${urlPrefix}${fullPath}`
 
-                    const value:unknown =
+                    const value: unknown =
                         configuration.couchdb.backend.configuration[
                             subPath
                         ]
 
-                    let response:Response|undefined
+                    let response: Response|undefined
                     try {
                         response = await globalContext.fetch(url)
                     } catch (error) {
@@ -536,9 +535,9 @@ export const loadService = async (
     const modelConfiguration = copy(configuration.couchdb.model)
 
     delete (modelConfiguration.property as
-        {defaultSpecification?:PropertySpecification}
+        {defaultSpecification?: PropertySpecification}
     ).defaultSpecification
-    delete (modelConfiguration as {entities?:Models}).entities
+    delete (modelConfiguration as {entities?: Models}).entities
 
     const specialNames = modelConfiguration.property.name.special
     const {id: idName, revision: revisionName, type: typeName} =
@@ -546,7 +545,7 @@ export const loadService = async (
 
     const models = extendModels(configuration.couchdb.model)
     if (configuration.couchdb.model.updateValidation) {
-        const databaseHelperCode:string = await fileSystem.readFile(
+        const databaseHelperCode: string = await fileSystem.readFile(
             eval(`require.resolve('./databaseHelper')`) as string,
             {encoding: configuration.core.encoding, flag: 'r'}
         )
@@ -577,7 +576,7 @@ export const loadService = async (
                 NOTE: This code should be widely supported since no transpiler
                 can interact here easily.
             */
-            const code:string = 'function(...parameters) {\n' +
+            const code: string = 'function(...parameters) {\n' +
                 `    return require('helper').default.${type.methodName}` +
                     `(...parameters.concat([${type.serializedParameter}]` +
                     '))\n' +
@@ -688,7 +687,7 @@ export const loadService = async (
     }
     // region run auto-migration
     if (couchdb.connection && configuration.couchdb.model.autoMigrationPath) {
-        const migrators:Mapping<Migrator> = {}
+        const migrators: Mapping<Migrator> = {}
         if (await isDirectory(resolve(
             configuration.couchdb.model.autoMigrationPath
         )))
@@ -696,14 +695,14 @@ export const loadService = async (
                 resolve(configuration.couchdb.model.autoMigrationPath),
                 configuration.couchdb.debug ?
                     NOOP :
-                    (file:File) =>
+                    (file: File) =>
                         !['debug', 'deprecated'].includes(file.name)
             )) {
                 const extension = extname(file.name)
                 const name = basename(file.name, extension)
 
                 if (extension === '.json') {
-                    let documents:Array<Document>
+                    let documents: Array<Document>
                     try {
                         documents = ([] as Array<Document>).concat(
                             JSON.parse(await fileSystem.readFile(
@@ -734,7 +733,7 @@ export const loadService = async (
                             await couchdb.connection.put(document)
                         } catch (error) {
                             if ((
-                                error as {forbidden?:string}
+                                error as {forbidden?: string}
                             ).forbidden?.startsWith('NoChange:'))
                                 console.info(
                                     'Including document ' +
@@ -759,14 +758,15 @@ export const loadService = async (
                 } else if (['.js'].includes(extname(file.name)))
                     // region collect script migrators
                     migrators[file.path] = (
-                        eval(`require('${file.path}')`) as {default:Migrator}
+                        eval(`require('${file.path}')`) as
+                            {default: Migrator}
                     ).default
                     // endregion
                 else if (['.mjs'].includes(extname(file.name)))
                     // region collect module migrators
                     migrators[file.path] = (
                         (await eval(`import('${file.path}')`)) as
-                            {default:Migrator}
+                            {default: Migrator}
                     ).default
                     // endregion
             }
@@ -785,13 +785,13 @@ export const loadService = async (
                 )
             )) {
                 const document = retrievedDocument.doc as ExistingDocument
-                let newDocument:Document = copy(document)
+                let newDocument: Document = copy(document)
                 newDocument[
                     configuration.couchdb.model.property.name.special.strategy
                 ] = 'migrate'
 
                 for (const name of Object.keys(migrators).sort()) {
-                    let result:Document|null = null
+                    let result: Document|null = null
                     try {
                         result = migrators[name](
                             newDocument,
@@ -886,7 +886,7 @@ export const loadService = async (
                         error, 'forbidden'
                     )) {
                         if (!(
-                            error as {forbidden:string}
+                            error as {forbidden: string}
                         ).forbidden.startsWith('NoChange:'))
                             console.warn(
                                 `Document "` +
@@ -931,7 +931,7 @@ export const loadService = async (
         configuration.couchdb.createGenericFlatIndex &&
         configuration.couchdb.model.autoMigrationPath
     ) {
-        const indexes:Array<Index> = (
+        const indexes: Array<Index> = (
             await couchdb.connection.getIndexes()
         ).indexes
 
@@ -1030,7 +1030,7 @@ export const loadService = async (
  * @param state - Application state.
  * @returns Promise resolving to nothing.
  */
-export const postLoadService = (state:State):Promise<void> => {
+export const postLoadService = (state: State): Promise<void> => {
     const {configuration: {couchdb: configuration}, pluginAPI, services} =
         state
     const {couchdb} = services
@@ -1066,7 +1066,7 @@ export const postLoadService = (state:State):Promise<void> => {
         6 * 1000
     )
     */
-    const initialize = debounce(async ():Promise<void> => {
+    const initialize = debounce(async (): Promise<void> => {
         if (couchdb.changesStream as unknown as boolean)
             couchdb.changesStream.cancel()
 
@@ -1076,7 +1076,7 @@ export const postLoadService = (state:State):Promise<void> => {
 
         void couchdb.changesStream.on(
             'error',
-            async (error:DatabaseError):Promise<void> => {
+            async (error: DatabaseError): Promise<void> => {
                 numberOfErrorsThrough += 1
                 if (numberOfErrorsThrough > 3) {
                     console.warn(
@@ -1121,11 +1121,11 @@ export const postLoadService = (state:State):Promise<void> => {
  * @returns Promise resolving to nothing.
  */
 export const shouldExit = async (
-    {configuration, services}:State
-):Promise<void> => {
+    {configuration, services}: State
+): Promise<void> => {
     await stop(services, configuration)
 
-    delete (services as {couchdb?:Services['couchdb']}).couchdb
+    delete (services as {couchdb?: Services['couchdb']}).couchdb
 
     const logFilePath = 'log.txt'
     if (await isFile(logFilePath))
@@ -1134,4 +1134,3 @@ export const shouldExit = async (
 
 export const database = module.exports satisfies PluginHandler
 export default database
-// endregion

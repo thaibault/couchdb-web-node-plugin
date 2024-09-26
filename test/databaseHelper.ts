@@ -36,10 +36,10 @@ import {
 // endregion
 describe('databaseHelper', () => {
     // region prepare environment
-    const configuration:Configuration =
+    const configuration: Configuration =
         packageConfiguration.webNode as unknown as Configuration
 
-    const specialNames:SpecialPropertyNames =
+    const specialNames: SpecialPropertyNames =
         configuration.couchdb.model.property.name.special
 
     const {
@@ -49,7 +49,7 @@ describe('databaseHelper', () => {
         type: typeName
     } = specialNames
 
-    const baseDocument:Document =
+    const baseDocument: Document =
         {[idName]: '', [revisionName]: '', [typeName]: 'base'}
     // endregion
     // region tests
@@ -108,10 +108,10 @@ describe('databaseHelper', () => {
     )
     test.each(['', 'fillUp', 'incremental'] as const)(
         'validateDocumentUpdate (with update strategy "%s")',
-        (updateStrategy:Exclude<UpdateStrategy, 'migrate'>):void => {
+        (updateStrategy: Exclude<UpdateStrategy, 'migrate'>): void => {
             let only = false
             let skip = false
-            const defaultModelConfiguration:ModelConfiguration = {
+            const defaultModelConfiguration: ModelConfiguration = {
                 // Numbers are date cross implementation save.
                 ...copy(configuration.couchdb.model),
                 dateTimeFormat: 'number',
@@ -1266,7 +1266,7 @@ describe('databaseHelper', () => {
                 if (test.length < 3)
                     (test as unknown as Array<unknown>).splice(1, 0, {})
 
-                const modelConfiguration:ModelConfiguration = extend(
+                const modelConfiguration: ModelConfiguration = extend(
                     true,
                     copy(defaultModelConfiguration),
                     test[1] as Partial<ModelConfiguration>
@@ -1280,7 +1280,7 @@ describe('databaseHelper', () => {
                 delete (modelConfiguration as Partial<ModelConfiguration>)
                     .entities
 
-                const parameters:Parameters<typeof validateDocumentUpdate> =
+                const parameters: Parameters<typeof validateDocumentUpdate> =
                     (test[0] as unknown as Array<unknown>)
                         .concat([null, {}, {}].slice(test[0].length - 1))
                         .concat(modelConfiguration, models) as
@@ -1293,7 +1293,7 @@ describe('databaseHelper', () => {
                     continue
                 }
 
-                expect(():PartialFullDocument =>
+                expect((): PartialFullDocument =>
                     validateDocumentUpdate(...parameters)
                 ).toThrow(new RegExp(`^${test[2]}: .+[.!]$`, 's'))
             }
@@ -3815,7 +3815,7 @@ describe('databaseHelper', () => {
                     Provides test only one or skip all tests from specified one
                     to support delta debugging when searching for failing test.
                 */
-                .filter((test:Array<unknown>) => {
+                .filter((test: Array<unknown>) => {
                     if (only || skip)
                         return false
                     if (test[0] === 'only')
@@ -3829,13 +3829,13 @@ describe('databaseHelper', () => {
                 .filter((test, index, tests) =>
                     !only || index === tests.length - 1
                 )
-                .map((test:Array<unknown>) =>
+                .map((test: Array<unknown>) =>
                     ['only', 'skip'].includes(test[0] as string) ?
                         test.slice(1) :
                         test
                 )
             ) {
-                const modelConfiguration:ModelConfiguration = extend(
+                const modelConfiguration: ModelConfiguration = extend(
                     true,
                     copy(defaultModelConfiguration),
                     test[1] as Partial<ModelConfiguration>
@@ -4076,12 +4076,12 @@ describe('databaseHelper', () => {
         '%#. validateDocumentUpdate(%p, ...) === %p (with update strategy "' +
         'migration")',
         (
-            expected:PartialFullDocument,
-            newDocument:PartialFullDocument,
-            modelConfiguration:PlainObject,
-            oldDocument:null|PartialFullDocument = null
-        ):void => {
-            const defaultModelConfiguration:ModelConfiguration = {
+            expected: PartialFullDocument,
+            newDocument: PartialFullDocument,
+            modelConfiguration: PlainObject,
+            oldDocument: null|PartialFullDocument = null
+        ): void => {
+            const defaultModelConfiguration: ModelConfiguration = {
                 ...copy(configuration.couchdb.model),
                 updateStrategy: 'migrate'
             }
@@ -4099,7 +4099,7 @@ describe('databaseHelper', () => {
                 copy(defaultModelConfiguration),
                 modelConfiguration as Partial<ModelConfiguration>
             ))
-            const testModelConfiguration:ModelConfiguration = extend(
+            const testModelConfiguration: ModelConfiguration = extend(
                 true,
                 copy(defaultModelConfiguration),
                 modelConfiguration as Partial<ModelConfiguration>

@@ -41,11 +41,11 @@ import {
     SpecialPropertyNames
 } from '../type'
 // endregion
-describe('helper', ():void => {
+describe('helper', (): void => {
     // region prepare environment
-    const configuration:Configuration =
+    const configuration: Configuration =
         packageConfiguration.webNode as unknown as Configuration
-    const specialNames:SpecialPropertyNames =
+    const specialNames: SpecialPropertyNames =
         configuration.couchdb.model.property.name.special
     // endregion
     // region tests
@@ -73,9 +73,9 @@ describe('helper', ():void => {
         TEST_UNDEFINED_SYMBOL,
 
         [
-            {put: ():Promise<DatabaseResponse> =>
+            {put: (): Promise<DatabaseResponse> =>
                 new Promise<DatabaseResponse>((
-                    resolve:(value:DatabaseResponse) => void
+                    resolve: (value: DatabaseResponse) => void
                 ) => {
                     void timeout().then(() => {
                         resolve(null as unknown as DatabaseResponse)
@@ -89,7 +89,7 @@ describe('helper', ():void => {
         ]
     )
     /// region model
-    const mockModelConfiguration:ModelConfiguration =
+    const mockModelConfiguration: ModelConfiguration =
         copy(configuration.couchdb.model)
     mockModelConfiguration.entities = {}
 
@@ -148,7 +148,7 @@ describe('helper', ():void => {
                     entities: {Test: {roles: {read: 'a', write: ['b']}}}
                 }
             ]
-        ].map(([expected, modelConfiguration]):[
+        ].map(([expected, modelConfiguration]): [
             AllowedModelRolesMapping, ModelConfiguration
         ] => [
             expected as AllowedModelRolesMapping,
@@ -171,7 +171,7 @@ describe('helper', ():void => {
                 {},
                 {a: {}, b: {}}
             ]
-        ].map(([expected, modelConfiguration, model]):[
+        ].map(([expected, modelConfiguration, model]): [
             Array<string>, ModelConfiguration, Model
         ] => [
             expected as Array<string>,
@@ -237,8 +237,8 @@ describe('helper', ():void => {
             ReturnType<typeof extendModel>, ...Parameters<typeof extendModel>
         ]>
     )
-    test('extendModels', ():void => {
-        const modelConfiguration:ModelConfiguration =
+    test('extendModels', (): void => {
+        const modelConfiguration: ModelConfiguration =
             copy(configuration.couchdb.model)
         modelConfiguration.entities = {}
         modelConfiguration.property.defaultSpecification = {}
@@ -298,7 +298,7 @@ describe('helper', ():void => {
                 )
             )).toStrictEqual(expected)
 
-        expect(():Models => extendModels(
+        expect((): Models => extendModels(
             extend(
                 true,
                 copy(modelConfiguration),

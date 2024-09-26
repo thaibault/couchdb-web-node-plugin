@@ -55,13 +55,13 @@ import {
  * @returns Database compatible configuration object.
  */
 export const getConnectorOptions = (
-    configuration:Configuration
-):DatabaseConnectorConfiguration => {
+    configuration: Configuration
+): DatabaseConnectorConfiguration => {
     if (configuration.couchdb.connector.fetch)
         return {
             fetch: ((
-                url:RequestInfo, options?:RequestInit
-            ):Promise<Response> => globalContext.fetch(
+                url: RequestInfo, options?: RequestInit
+            ): Promise<Response> => globalContext.fetch(
                 url,
                 extend(
                     true,
@@ -73,8 +73,8 @@ export const getConnectorOptions = (
 
     return {
         fetch: ((
-            url:RequestInfo, options?:RequestInit
-        ):Promise<Response> => globalContext.fetch(url, options))
+            url: RequestInfo, options?: RequestInit
+        ): Promise<Response> => globalContext.fetch(url, options))
     }
 }
 /**
@@ -87,11 +87,11 @@ export const getConnectorOptions = (
  * @returns Representation string.
  */
 export const mayStripRepresentation = (
-    object:unknown,
-    maximumRepresentationTryLength:number,
-    maximumRepresentationLength:number
-):string => {
-    const representation:string = represent(object)
+    object: unknown,
+    maximumRepresentationTryLength: number,
+    maximumRepresentationLength: number
+): string => {
+    const representation: string = represent(object)
     if (representation.length <= maximumRepresentationTryLength) {
         if (representation.length > maximumRepresentationLength)
             return (
@@ -122,16 +122,16 @@ export const mayStripRepresentation = (
  * successfully.
  */
 export const ensureValidationDocumentPresence = async (
-    databaseConnection:Connection,
-    documentName:string,
-    documentData:Mapping,
-    description:string,
+    databaseConnection: Connection,
+    documentName: string,
+    documentData: Mapping,
+    description: string,
     log = true,
-    idName:SpecialPropertyNames['id'] = '_id',
-    revisionName:SpecialPropertyNames['revision'] = '_rev',
+    idName: SpecialPropertyNames['id'] = '_id',
+    revisionName: SpecialPropertyNames['revision'] = '_rev',
     designDocumentNamePrefix = '_design/'
-):Promise<void> => {
-    const newDocument:Partial<Document> = {
+): Promise<void> => {
+    const newDocument: Partial<Document> = {
         [idName]: `${designDocumentNamePrefix}${documentName}`,
         language: 'javascript',
         version: packageConfiguration.version,
@@ -139,7 +139,7 @@ export const ensureValidationDocumentPresence = async (
     }
 
     try {
-        const oldDocument:Document = await databaseConnection.get(
+        const oldDocument: Document = await databaseConnection.get(
             `${designDocumentNamePrefix}${documentName}`
         )
         newDocument[revisionName] = oldDocument[revisionName]
@@ -150,7 +150,7 @@ export const ensureValidationDocumentPresence = async (
             console.info(`${description} updated.`)
     } catch (error) {
         if (log)
-            if ((error as {error:string}).error === 'not_found')
+            if ((error as {error: string}).error === 'not_found')
                 console.info(
                     `${description} not available: create new one.`
                 )
@@ -179,11 +179,11 @@ export const ensureValidationDocumentPresence = async (
  * @returns Given and extended object of services.
  */
 export const initializeConnection = async (
-    services:Services, configuration:Configuration
-):Promise<Services> => {
+    services: Services, configuration: Configuration
+): Promise<Services> => {
     const config = configuration.couchdb
 
-    const url:string =
+    const url: string =
         format(config.url, `${config.user.name}:${config.user.password}@`) +
         `/${config.databaseName}`
 
@@ -200,7 +200,7 @@ export const initializeConnection = async (
         "post" call so we have to wrap runtime generated methods.
     */
     type Put = <Type extends Mapping<unknown>>(
-        document:PutDocument<Type>, ...parameters:Array<unknown>
+        document: PutDocument<Type>, ...parameters: Array<unknown>
     ) => Promise<DatabaseResponse>
 
     for (const pluginName of ['post', 'put'] as const) {
@@ -209,11 +209,11 @@ export const initializeConnection = async (
         ;(connection[pluginName] as Put) = async function<
             Type extends Mapping<unknown> = Mapping<unknown>
         >(
-            this:Connection,
-            document:PutDocument<Type>,
-            ...parameters:Array<unknown>
+            this: Connection,
+            document: PutDocument<Type>,
+            ...parameters: Array<unknown>
         ) {
-            const options:PutOptions =
+            const options: PutOptions =
                 parameters.length && typeof parameters[0] === 'object' ?
                     parameters[0] as PutOptions :
                     {}
@@ -240,7 +240,9 @@ export const initializeConnection = async (
                         id,
                         rev: (
                             revisionName in document &&
-                            !['0-latest', '0-upsert'].includes(revision as string)
+                            !['0-latest', '0-upsert'].includes(
+                                revision as string
+                            )
                         ) ?
                             revision as string :
                             (await this.get(id))[revisionName],
@@ -273,12 +275,12 @@ export const initializeConnection = async (
  * @returns The mapping object.
  */
 export const determineAllowedModelRolesMapping = (
-    modelConfiguration:ModelConfiguration
-):AllowedModelRolesMapping => {
+    modelConfiguration: ModelConfiguration
+): AllowedModelRolesMapping => {
     const {allowedRole: allowedRoleName} =
         modelConfiguration.property.name.special
-    const allowedModelRolesMapping:AllowedModelRolesMapping = {}
-    const models:Models = extendModels(modelConfiguration)
+    const allowedModelRolesMapping: AllowedModelRolesMapping = {}
+    const models: Models = extendModels(modelConfiguration)
 
     for (const [modelName, model] of Object.entries(models))
         if (model[allowedRoleName]) {
@@ -313,8 +315,8 @@ export const determineAllowedModelRolesMapping = (
  * @returns Boolean indicating the case.
  */
 export const isPropertySpecification = (
-    value:ValueOf<Model>
-):value is PropertySpecification =>
+    value: ValueOf<Model>
+): value is PropertySpecification =>
     value !== null && typeof value === 'object'
 /**
  * Determines all property names which are indexable in a generic manner.
@@ -323,12 +325,12 @@ export const isPropertySpecification = (
  * @returns The mapping object.
  */
 export const determineGenericIndexablePropertyNames = (
-    modelConfiguration:ModelConfiguration, model:Model
-):Array<string> => {
+    modelConfiguration: ModelConfiguration, model: Model
+): Array<string> => {
     const specialNames = modelConfiguration.property.name.special
 
     return (Object.keys(model) as Array<keyof Model>)
-        .filter((name):boolean => {
+        .filter((name): boolean => {
             const specification = model[name]
 
             return (
@@ -401,10 +403,10 @@ export const determineGenericIndexablePropertyNames = (
  * @returns Given model in extended version.
  */
 export const extendModel = (
-    modelName:string,
-    models:Mapping<Partial<Model>>,
-    extendPropertyName:SpecialPropertyNames['extend'] = '_extends'
-):Partial<Model> => {
+    modelName: string,
+    models: Mapping<Partial<Model>>,
+    extendPropertyName: SpecialPropertyNames['extend'] = '_extends'
+): Partial<Model> => {
     if (modelName === '_base')
         return models[modelName] as Model
 
@@ -448,9 +450,11 @@ export const extendModel = (
  * @param modelConfiguration - Model specification object.
  * @returns Models with extended specific specifications.
  */
-export const extendModels = (modelConfiguration:ModelConfiguration):Models => {
+export const extendModels = (
+    modelConfiguration: ModelConfiguration
+): Models => {
     const specialNames = modelConfiguration.property.name.special
-    const models:Models = {}
+    const models: Models = {}
 
     const {typePattern} = modelConfiguration.property.name
 
@@ -514,13 +518,13 @@ export const extendModels = (modelConfiguration:ModelConfiguration):Models => {
  * @returns Normalized roles representation.
  */
 export const normalizeAllowedRoles = (
-    roles:AllowedRoles
-):NormalizedAllowedRoles => {
+    roles: AllowedRoles
+): NormalizedAllowedRoles => {
     if (Array.isArray(roles))
         return {read: roles, write: roles}
 
     if (typeof roles === 'object') {
-        const result:NormalizedAllowedRoles = {read: [], write: []}
+        const result: NormalizedAllowedRoles = {read: [], write: []}
 
         for (const type of Object.keys(result))
             if (Object.prototype.hasOwnProperty.call(roles, type))
