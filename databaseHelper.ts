@@ -319,7 +319,7 @@ export const validateDocumentUpdate = <
         return newDocument
     }
 
-    if (['latest', 'upsert'].includes(revision))
+    if (['0-latest', '0-upsert'].includes(revision))
         if (
             oldDocument &&
             Object.prototype.hasOwnProperty.call(oldDocument, revisionName)

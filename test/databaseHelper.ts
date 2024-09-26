@@ -133,16 +133,16 @@ describe('databaseHelper', () => {
                     exist (or has no revision).
                 */
                 [
-                    [{[typeName]: 'Test', [revisionName]: 'latest'}, null],
+                    [{[typeName]: 'Test', [revisionName]: '0-latest'}, null],
                     'Revision'
                 ],
                 [
-                    [{[typeName]: 'Test', [revisionName]: 'latest'}, {}],
+                    [{[typeName]: 'Test', [revisionName]: '0-latest'}, {}],
                     'Revision'
                 ],
                 [
                     [
-                        {[typeName]: 'Test', [revisionName]: 'latest'},
+                        {[typeName]: 'Test', [revisionName]: '0-latest'},
                         {[typeName]: 'Test'}
                     ],
                     'Revision'
@@ -1419,7 +1419,11 @@ describe('databaseHelper', () => {
                 ],
                 [
                     [
-                        {[typeName]: 'Test', [revisionName]: 'latest', a: 'a'},
+                        {
+                            [typeName]: 'Test',
+                            [revisionName]: '0-latest',
+                            a: 'a'
+                        },
                         {[typeName]: 'Test', [revisionName]: 1}
                     ],
                     {entities: {Test: {a: {}}}},
@@ -1434,18 +1438,24 @@ describe('databaseHelper', () => {
                 ],
                 [
                     [
-                        {[typeName]: 'Test', [revisionName]: 'upsert', a: 'a'},
+                        {
+                            [typeName]: 'Test',
+                            [revisionName]: '0-upsert',
+                            a: 'a'
+                        },
                         {[typeName]: 'Test', [revisionName]: 1}
                     ],
                     {entities: {Test: {a: {}}}},
                     {
-                        fillUp: {[typeName]: 'Test', [revisionName]: 1, a: 'a'},
+                        fillUp: {
+                            [typeName]: 'Test', [revisionName]: 1, a: 'a'
+                        },
                         incremental: {[revisionName]: 1, a: 'a'},
                         '': {[typeName]: 'Test', [revisionName]: 1, a: 'a'}
                     }
                 ],
                 [
-                    [{[typeName]: 'Test', [revisionName]: 'upsert'}],
+                    [{[typeName]: 'Test', [revisionName]: '0-upsert'}],
                     {entities: {Test: {}}},
                     {
                         fillUp: {[typeName]: 'Test'},
