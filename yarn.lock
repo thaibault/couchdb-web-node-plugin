@@ -5431,9 +5431,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"clientnode@npm:^3.0.1187":
-  version: 3.0.1187
-  resolution: "clientnode@npm:3.0.1187"
+"clientnode@npm:^3.0.1191":
+  version: 3.0.1191
+  resolution: "clientnode@npm:3.0.1191"
   peerDependencies:
     "@babel/runtime": "*"
     "@types/prop-types": "*"
@@ -5451,7 +5451,7 @@ __metadata:
       optional: true
     prop-types:
       optional: true
-  checksum: 10c0/4624b543904b2dbf1ae28ca411c440aafcb408a844f69db17c505004761de875cdb39aff6868db9a787d5fa831fede8957bc65e980d56610a886c424b61275cf
+  checksum: 10c0/fc9de4de8daffc90111b23936bcd0744434438128f4fc009f8266531b58722ac4f8c48e249df1827c65b5e8a3d99e4528c8e5d5d2d5976ff8c5ea215c53b1ff8
   languageName: node
   linkType: hard
 
@@ -5851,7 +5851,7 @@ __metadata:
     "@types/pouchdb-node": "npm:^6.1.7"
     "@typescript-eslint/eslint-plugin": "npm:^8.7.0"
     "@typescript-eslint/parser": "npm:^8.7.0"
-    clientnode: "npm:^3.0.1187"
+    clientnode: "npm:^3.0.1191"
     documentation-website: "npm:^1.0.332"
     eslint: "npm:^9.11.1"
     eslint-config-google: "npm:^0.14.0"
