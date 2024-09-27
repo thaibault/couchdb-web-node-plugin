@@ -545,6 +545,7 @@ export const loadService = async (
 
     const models = extendModels(configuration.couchdb.model)
     if (configuration.couchdb.model.updateValidation) {
+        // NOTE: Transpiling should happen here.
         const databaseHelperCode: string = await fileSystem.readFile(
             eval(`require.resolve('./databaseHelper')`) as string,
             {encoding: configuration.core.encoding, flag: 'r'}
@@ -577,7 +578,7 @@ export const loadService = async (
                 can interact here easily.
             */
             const code: string = 'function(...parameters) {\n' +
-                `    return require('helper').default.${type.methodName}` +
+                `    return require('helper').${type.methodName}` +
                     `(...parameters.concat([${type.serializedParameter}]` +
                     '))\n' +
                 '}'
