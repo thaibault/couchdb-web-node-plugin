@@ -74,7 +74,7 @@
     "@types/pouchdb-node": "^6.1.7",
     "@typescript-eslint/eslint-plugin": "^8.7.0",
     "@typescript-eslint/parser": "^8.7.0",
-    "clientnode": "^3.0.1187",
+    "clientnode": "^3.0.1191",
     "documentation-website": "^1.0.332",
     "eslint": "^9.11.1",
     "eslint-config-google": "^0.14.0",
