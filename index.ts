@@ -545,7 +545,7 @@ export const loadService = async (
 
     const models = extendModels(configuration.couchdb.model)
     if (configuration.couchdb.model.updateValidation) {
-        // NOTE: Transpiling should happen here.
+        // NOTE: We import pre-transpiled javascript code here.
         const databaseHelperCode: string = await fileSystem.readFile(
             eval(`require.resolve('./databaseHelper')`) as string,
             {encoding: configuration.core.encoding, flag: 'r'}
