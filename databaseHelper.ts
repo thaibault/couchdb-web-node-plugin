@@ -213,7 +213,7 @@ export const validateDocumentUpdate = <
         > = {},
         toJSON?: (value: unknown) => string
     ): PartialFullDocument<ObjectType, AdditionalPropertiesType> => {
-    console.debug(`Got new document`, newDocument, 'to update', oldDocument)
+    // console.debug(`Got new document`, newDocument, 'to update', oldDocument)
 
     type Attachments = Mapping<AttachmentType|null>
 
