@@ -283,6 +283,9 @@ export const preLoadService = async ({
 export const loadService = async (
     {configuration, services}: State
 ): Promise<PluginPromises> => {
+    if (!globalContext.fetch)
+        throw new Error('Missing fetch implementation.')
+
     let promise: null|Promise<ProcessCloseReason> = null
     const {couchdb} = services
 
