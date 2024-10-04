@@ -61,20 +61,30 @@ export const getConnectorOptions = (
         return {
             fetch: ((
                 url: RequestInfo, options?: RequestInit
-            ): Promise<Response> => globalContext.fetch(
-                url,
-                extend(
-                    true,
-                    copy(configuration.couchdb.connector.fetch),
-                    options || {}
+            ): Promise<Response> => {
+                if (!globalContext.fetch)
+                    throw new Error('Missing fetch implementation.')
+
+                return globalContext.fetch(
+                    url,
+                    extend(
+                        true,
+                        copy(configuration.couchdb.connector.fetch),
+                        options || {}
+                    )
                 )
-            ))
+            })
         }
 
     return {
         fetch: ((
             url: RequestInfo, options?: RequestInit
-        ): Promise<Response> => globalContext.fetch(url, options))
+        ): Promise<Response> => {
+            if (!globalContext.fetch)
+                throw new Error('Missing fetch implementation.')
+
+            return globalContext.fetch(url, options)
+        })
     }
 }
 /**
@@ -261,6 +271,9 @@ export const initializeConnection = async (
         await checkReachability(url)
     } catch (_error) {
         console.info('Database could not be retrieved yet: Creating it.')
+
+        if (!globalContext.fetch)
+            throw new Error('Missing fetch implementation.')
 
         await globalContext.fetch(url, {method: 'PUT'})
     }
