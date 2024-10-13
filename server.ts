@@ -180,8 +180,7 @@ export const restart = async (state: State): Promise<void> => {
 export const stop = async (
     {couchdb}: Services, {couchdb: configuration}: Configuration
 ): Promise<void> => {
-    if (couchdb.connection)
-        void couchdb.connection.close()
+    void couchdb.connection.close()
 
     if (couchdb.server.process)
         couchdb.server.process.kill('SIGINT')

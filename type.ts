@@ -493,7 +493,7 @@ export type Configuration<ConfigurationType = Mapping<unknown>> =
 export interface CouchDB<Type extends object = Mapping<unknown>> {
     changesStream: ChangesStream
 
-    connection?: Connection<Type>
+    connection: Connection<Type>
     connector: Connector
 
     server: {
