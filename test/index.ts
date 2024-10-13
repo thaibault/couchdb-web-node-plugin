@@ -37,6 +37,7 @@ describe('index', (): void => {
         const services: Services = {} as Services
         await expect(preLoadService({
             configuration,
+            data: undefined,
             hook: 'preLoadService',
             pluginAPI,
             plugins: [],
@@ -52,6 +53,7 @@ describe('index', (): void => {
     test('loadService', (): Promise<void> =>
         expect(loadService({
             configuration,
+            data: undefined,
             hook: 'loadService',
             pluginAPI,
             plugins: [],
@@ -78,6 +80,7 @@ describe('index', (): void => {
 
             await expect(shouldExit({
                 configuration,
+                data: undefined,
                 hook: 'shouldExit',
                 pluginAPI,
                 plugins: [],
