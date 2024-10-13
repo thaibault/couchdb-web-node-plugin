@@ -600,21 +600,20 @@ export const loadService = async (
             if (configuration.core.debug)
                 console.debug(`${type.name} code: \n\n"${code}" integrated.`)
 
-            if (couchdb.connection)
-                await ensureValidationDocumentPresence(
-                    couchdb.connection,
-                    type.name,
-                    {
-                        helper: databaseHelperCode,
-                        // eslint-disable-next-line camelcase
-                        validate_doc_update: code
-                    },
-                    type.description,
-                    true,
-                    idName,
-                    revisionName,
-                    specialNames.designDocumentNamePrefix
-                )
+            await ensureValidationDocumentPresence(
+                couchdb.connection,
+                type.name,
+                {
+                    helper: databaseHelperCode,
+                    // eslint-disable-next-line camelcase
+                    validate_doc_update: code
+                },
+                type.description,
+                true,
+                idName,
+                revisionName,
+                specialNames.designDocumentNamePrefix
+            )
         }
         // endregion
         // region check if all constraint descriptions compile
@@ -690,7 +689,7 @@ export const loadService = async (
         // endregion
     }
     // region run auto-migration
-    if (couchdb.connection && configuration.couchdb.model.autoMigrationPath) {
+    if (configuration.couchdb.model.autoMigrationPath) {
         const migrators: Mapping<Migrator> = {}
         if (await isDirectory(resolve(
             configuration.couchdb.model.autoMigrationPath
@@ -931,7 +930,6 @@ export const loadService = async (
     // endregion
     // region create/remove needed/unneeded generic indexes
     if (
-        couchdb.connection &&
         configuration.couchdb.createGenericFlatIndex &&
         configuration.couchdb.model.autoMigrationPath
     ) {
@@ -1014,10 +1012,7 @@ export const loadService = async (
     // TODO check conflicting constraints and mark them if necessary (check
     // how couchdb deals with "id" conflicts)
     // region initial compaction
-    if (
-        couchdb.connection &&
-        configuration.couchdb.model.triggerInitialCompaction
-    )
+    if (configuration.couchdb.model.triggerInitialCompaction)
         try {
             await couchdb.connection.compact()
         } catch (error) {
@@ -1074,9 +1069,8 @@ export const postLoadService = (state: State): Promise<void> => {
         if (couchdb.changesStream as unknown as boolean)
             couchdb.changesStream.cancel()
 
-        if (couchdb.connection)
-            couchdb.changesStream =
-                couchdb.connection.changes(configuration.changesStream)
+        couchdb.changesStream =
+            couchdb.connection.changes(configuration.changesStream)
 
         void couchdb.changesStream.on(
             'error',
