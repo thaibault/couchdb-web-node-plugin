@@ -56,8 +56,14 @@ export type ChangesStream<Type extends object = Mapping<unknown>> =
     PouchDB.Core.Changes<Type>
 export type ChangesStreamOptions = PouchDB.Core.ChangesOptions
 
-export type Connection<Type extends object = Mapping<unknown>> =
-    PouchDB.Database<Type>
+export interface Connection<Type extends object = Mapping<unknown>>
+    extends
+PouchDB.Database<Type> {
+    bulkDocs<Model>(
+        docs: Array<PutDocument<Type & Model>>,
+        options?: PouchDB.Core.BulkDocsOptions | null,
+    ): Promise<Array<PouchDB.Core.Response | PouchDB.Core.Error>>
+}
 export type Connector = PouchDB.Static
 export type DatabaseConnectorConfiguration =
     PouchDB.Configuration.RemoteDatabaseConfiguration
@@ -78,7 +84,12 @@ export type FindRequest<Type extends object> = PouchDB.Find.FindRequest<Type>
 export type DeleteIndexOptions = PouchDB.Find.DeleteIndexOptions
 export type GetOptions = PouchDB.Core.GetOptions
 export type PutOptions = PouchDB.Core.Options;
-export type PutDocument<Type extends object> = PouchDB.Core.PutDocument<Type>;
+export type PostDocument =
+    Omit<PouchDB.Core.PostDocument<Type>, 'attachments'> &
+    {_attachments?: Attachments|null}
+export type PutDocument<Type extends object> =
+    Omit<PouchDB.Core.PutDocument<Type>, 'attachments'> &
+    {_attachments?: Attachments|null}
 
 export type Index = PouchDB.Find.Index
 
@@ -226,7 +237,8 @@ export interface BaseModel<
     _allowedRoles?: AllowedRoles
 
     _attachments?:
-        Mapping<FileSpecification<AttachmentType, AdditionalSpecifications>>
+        Mapping<FileSpecification<AttachmentType, AdditionalSpecifications>> |
+        null
 
     _constraintExecutions?: Array<Constraint>|Constraint
     _constraintExpressions?: Array<Constraint>|Constraint
@@ -306,7 +318,7 @@ export type BaseDocument =
     DocumentRevisionIDMeta &
     DocumentStrategyMeta &
     DocumentTypeMeta &
-    {_attachments?: Attachments}
+    {_attachments?: Attachments|null}
 export type FullDocument<
     Type extends object = object, AdditionalPropertyTypes = unknown
 > = BaseDocument & Document<Type> & Mapping<AdditionalPropertyTypes>
