@@ -225,10 +225,8 @@ export interface BaseModel<
 
     _allowedRoles?: AllowedRoles
 
-    _attachments?:(
-        Mapping<FileSpecification<AttachmentType, AdditionalSpecifications>> |
-        null
-    )
+    _attachments?:
+        Mapping<FileSpecification<AttachmentType, AdditionalSpecifications>>
 
     _constraintExecutions?: Array<Constraint>|Constraint
     _constraintExpressions?: Array<Constraint>|Constraint
