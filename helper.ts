@@ -328,7 +328,7 @@ export const determineAllowedModelRolesMapping = (
  * @returns Boolean indicating the case.
  */
 export const isPropertySpecification = (
-    value: ValueOf<Model>|null
+    value: ValueOf<Model>
 ): value is PropertySpecification =>
     value !== null && typeof value === 'object'
 /**
