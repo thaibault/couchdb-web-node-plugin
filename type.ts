@@ -63,6 +63,16 @@ PouchDB.Database<Type> {
         docs: Array<PutDocument<Type & Model>>,
         options?: PouchDB.Core.BulkDocsOptions | null,
     ): Promise<Array<PouchDB.Core.Response | PouchDB.Core.Error>>
+
+    post<Model>(
+        doc: PostDocument<Type & Model>,
+        options?: PouchDB.Core.Options | null
+    ): Promise<PouchDB.Core.Response>;
+
+    put<Model>(
+        doc: PutDocument<Type & Model>,
+        options?: PouchDB.Core.PutOptions | null
+    ): Promise<PouchDB.Core.Response>;
 }
 export type Connector = PouchDB.Static
 export type DatabaseConnectorConfiguration =
@@ -84,7 +94,7 @@ export type FindRequest<Type extends object> = PouchDB.Find.FindRequest<Type>
 export type DeleteIndexOptions = PouchDB.Find.DeleteIndexOptions
 export type GetOptions = PouchDB.Core.GetOptions
 export type PutOptions = PouchDB.Core.Options;
-export type PostDocument =
+export type PostDocument<Type extends object> =
     Omit<PouchDB.Core.PostDocument<Type>, 'attachments'> &
     {_attachments?: Attachments|null}
 export type PutDocument<Type extends object> =
