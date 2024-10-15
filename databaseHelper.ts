@@ -1607,9 +1607,7 @@ export const validateDocumentUpdate = <
                             AttachmentType, AdditionalSpecifications
                         >
                 )) {
-                    if ([null, undefined].includes(
-                        newDocument[specialNames.attachment] as null
-                    ))
+                    if (!newDocument[specialNames.attachment])
                         newDocument[specialNames.attachment] = {}
 
                     if (
