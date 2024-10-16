@@ -78,7 +78,7 @@ import {
  */
 export const authenticate = (
     newDocument: Partial<Document>,
-    oldDocument: null|Partial<Document> = null,
+    oldDocument: null | Partial<Document> = null,
     userContext: Partial<UserContext> = {},
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _securitySettings: Partial<SecuritySettings> = {
@@ -90,8 +90,8 @@ export const authenticate = (
     designDocumentNamePrefix = '_design/',
     read = false
 ): true => {
-    const type: string|undefined =
-        newDocument[typePropertyName] as string|undefined ??
+    const type: string | undefined =
+        newDocument[typePropertyName] as string | undefined ??
         (oldDocument && oldDocument[typePropertyName]) as string
     /*
         NOTE: Special documents and change sequences are not checked further
@@ -198,7 +198,7 @@ export const validateDocumentUpdate = <
 >(
         newDocument: PartialFullDocument<ObjectType, AdditionalPropertiesType>,
         oldDocument:(
-            null|PartialFullDocument<ObjectType, AdditionalPropertiesType>
+            null | PartialFullDocument<ObjectType, AdditionalPropertiesType>
         ),
         userContext: Partial<UserContext>,
         securitySettings: Partial<SecuritySettings>,
@@ -215,7 +215,7 @@ export const validateDocumentUpdate = <
     ): PartialFullDocument<ObjectType, AdditionalPropertiesType> => {
     // console.debug(`Got new document`, newDocument, 'to update', oldDocument)
 
-    type Attachments = Mapping<AttachmentType|null>
+    type Attachments = Mapping<AttachmentType | null>
 
     type PartialFullDocumentType = PartialFullDocument<
         ObjectType, AdditionalPropertiesType
@@ -223,7 +223,7 @@ export const validateDocumentUpdate = <
 
     type PropertyName = keyof PartialFullDocumentType
     type PropertyValue =
-        AdditionalPropertiesType|AttachmentType|ValueOf<ObjectType>|null
+        AdditionalPropertiesType | AttachmentType | ValueOf<ObjectType> | null
 
     type BaseModelType = BaseModel<
         AttachmentType, AdditionalSpecifications, AdditionalPropertiesType
@@ -388,7 +388,7 @@ export const validateDocumentUpdate = <
     const serialize = (value: unknown): string =>
         value instanceof Error ? String(value) : serializeData(value)
 
-    const determineTrimmedString = (value?: null|string): string => {
+    const determineTrimmedString = (value?: null | string): string => {
         if (typeof value === 'string')
             return value.trim()
 
@@ -397,7 +397,7 @@ export const validateDocumentUpdate = <
 
     const normalizeDateTime = (
         value: DateRepresentationType
-    ): null|number|string => {
+    ): null | number | string => {
         if (saveDateTimeAsNumber) {
             if (value !== null && typeof value !== 'number') {
                 value = new Date(value)
@@ -417,7 +417,7 @@ export const validateDocumentUpdate = <
             value = new Date(
                 typeof value === 'number' && !isNaN(value) ?
                     value * 1000 :
-                    value as Date|string
+                    value as Date | string
             )
             try {
                 // Use ISO 8601 format to save date as string.
@@ -427,7 +427,7 @@ export const validateDocumentUpdate = <
             }
         }
 
-        return value as null|number|string
+        return value as null | number | string
     }
 
     const fileNameMatchesModelType = (
@@ -442,7 +442,7 @@ export const validateDocumentUpdate = <
                 return fileType.fileName.value === fileName
 
             if (fileType.fileName.pattern)
-                return ([] as Array<RegExp|string>)
+                return ([] as Array<RegExp | string>)
                     .concat(fileType.fileName.pattern)
                     .some((pattern) =>
                         new RegExp(pattern).test(fileName)
@@ -454,7 +454,7 @@ export const validateDocumentUpdate = <
 
     const getFileNameByPrefix = (
         prefix?: string, attachments?: Attachments
-    ): null|string => {
+    ): null | string => {
         if (!attachments)
             attachments =
                 newDocument[specialNames.attachment] as Attachments
@@ -478,7 +478,7 @@ export const validateDocumentUpdate = <
         )) {
             const attachments =
                 newDocument[specialNames.attachment] as Attachments
-            const name: null|string = getFileNameByPrefix(namePrefix)
+            const name: null | string = getFileNameByPrefix(namePrefix)
 
             if (name)
                 return (
@@ -501,12 +501,12 @@ export const validateDocumentUpdate = <
     }
 
     const evaluate = <Type, Scope>(
-        givenExpression?: null|string,
+        givenExpression?: null | string,
         isEvaluation = false,
         givenScope = {} as Scope
     ): EvaluationResult<
         ObjectType,
-        Type|undefined,
+        Type | undefined,
         PropertyName,
         AttachmentType,
         AdditionalSpecifications,
@@ -527,13 +527,13 @@ export const validateDocumentUpdate = <
             // endregion
             // region compile
             let templateFunction:(
-                Evaluate<Type|undefined, Array<unknown>>|undefined
+                Evaluate<Type | undefined, Array<unknown>> | undefined
             )
 
             try {
                 /* eslint-disable @typescript-eslint/no-implied-eval */
                 templateFunction = new Function(...scopeNames, code) as
-                    Evaluate<Type|undefined, Array<unknown>>
+                    Evaluate<Type | undefined, Array<unknown>>
                 /* eslint-enable @typescript-eslint/no-implied-eval */
             } catch (error) {
                 throwError<CompilationErrorData<CurrentScope>>(
@@ -546,7 +546,7 @@ export const validateDocumentUpdate = <
             // region run
             const result: EvaluationResult<
                 ObjectType,
-                Type|undefined,
+                Type | undefined,
                 PropertyName,
                 AttachmentType,
                 AdditionalSpecifications,
@@ -582,7 +582,7 @@ export const validateDocumentUpdate = <
     /// endregion
     const checkDocument = (
         newDocument: PartialFullDocumentType,
-        oldDocument: null|PartialFullDocumentType,
+        oldDocument: null | PartialFullDocumentType,
         parentNames: Array<string> = []
     ): CheckedDocumentResult<ObjectType, AdditionalPropertiesType> => {
         const pathDescription =
@@ -683,7 +683,7 @@ export const validateDocumentUpdate = <
                     let result:(
                         EvaluationResult<
                             ObjectType,
-                            boolean|undefined,
+                            boolean | undefined,
                             PropertyValue,
                             AttachmentType,
                             AdditionalSpecifications,
@@ -840,7 +840,7 @@ export const validateDocumentUpdate = <
                     ) {
                         const result = checkDocument(
                             newValue as PartialFullDocumentType,
-                            oldValue as null|PartialFullDocumentType,
+                            oldValue as null | PartialFullDocumentType,
                             parentNames.concat(String(name))
                         )
                         if (result.changedPath.length)
@@ -1027,7 +1027,7 @@ export const validateDocumentUpdate = <
                         propertySpecification.selection.map(
                             (value: unknown): unknown =>
                                 (
-                                    value as SelectionMapping|undefined
+                                    value as SelectionMapping | undefined
                                 )?.value === undefined ?
                                     value :
                                     (value as SelectionMapping).value
@@ -1036,7 +1036,7 @@ export const validateDocumentUpdate = <
 
                 if (propertySpecification.type === 'DateTime')
                     selection =
-                        (selection as Array<Date|null|number|string>)
+                        (selection as Array<Date | null | number | string>)
                             .map(normalizeDateTime)
 
                 if (!selection.includes(newValue))
@@ -1069,7 +1069,7 @@ export const validateDocumentUpdate = <
             }
             if (propertySpecification.invertedPattern)
                 for (const pattern of (
-                    [] as Array<RegExp|string>
+                    [] as Array<RegExp | string>
                 ).concat(propertySpecification.invertedPattern))
                     if (new RegExp(pattern).test(newValue as string))
                         throwError(
@@ -1095,7 +1095,7 @@ export const validateDocumentUpdate = <
                     Type, AdditionalSpecifications
                 >,
                 newDocument: PartialFullDocumentType,
-                oldDocument: null|PartialFullDocumentType,
+                oldDocument: null | PartialFullDocumentType,
                 name: PropertyName,
                 pathDescription: string
             ): boolean => {
@@ -1183,8 +1183,8 @@ export const validateDocumentUpdate = <
                 Type, AdditionalSpecifications
             >,
             newDocument: PartialFullDocumentType,
-            oldDocument: null|PartialFullDocumentType,
-            name: (keyof Attachments)|(keyof PartialFullDocumentType),
+            oldDocument: null | PartialFullDocumentType,
+            name: (keyof Attachments) | (keyof PartialFullDocumentType),
             attachmentsTarget?: Attachments
         ) => {
             if (!oldDocument)
@@ -1196,7 +1196,7 @@ export const validateDocumentUpdate = <
                     )) {
                         type Scope = PropertyScope<
                             ObjectType,
-                            null|Type|undefined,
+                            null | Type | undefined,
                             PropertyValue,
                             AttachmentType,
                             AdditionalSpecifications,
@@ -1206,7 +1206,7 @@ export const validateDocumentUpdate = <
                         let result:(
                             EvaluationResult<
                                 PartialFullDocumentType,
-                                null|Type|undefined,
+                                null | Type | undefined,
                                 PropertyValue,
                                 AttachmentType,
                                 AdditionalSpecifications,
@@ -1217,7 +1217,7 @@ export const validateDocumentUpdate = <
                         ) = undefined
 
                         try {
-                            result = evaluate<null|Type|undefined, Scope>(
+                            result = evaluate<null | Type | undefined, Scope>(
                                 propertySpecification[type],
                                 type.endsWith('Expression'),
                                 {
@@ -1294,8 +1294,8 @@ export const validateDocumentUpdate = <
                 Type, AdditionalSpecifications
             >,
             newDocument: PartialFullDocumentType,
-            oldDocument: null|PartialFullDocumentType,
-            name: (keyof Attachments)|(keyof PartialFullDocumentType),
+            oldDocument: null | PartialFullDocumentType,
+            name: (keyof Attachments) | (keyof PartialFullDocumentType),
             attachmentsTarget?: Attachments
         ) => {
             if (!attachmentsTarget) {
@@ -1440,10 +1440,10 @@ export const validateDocumentUpdate = <
                 specialNames.create.execution, specialNames.create.expression
             ])
                 if (Object.prototype.hasOwnProperty.call(model, type)) {
-                    let result: null|PartialFullDocumentType|undefined
+                    let result: null | PartialFullDocumentType | undefined
                     try {
                         result = evaluate<
-                            null|PartialFullDocumentType|undefined,
+                            null | PartialFullDocumentType | undefined,
                             CommonScope<
                                 ObjectType,
                                 PropertyValue,
@@ -1518,10 +1518,10 @@ export const validateDocumentUpdate = <
             specialNames.update.execution, specialNames.update.expression
         ])
             if (Object.prototype.hasOwnProperty.call(model, type)) {
-                let result: null|PartialFullDocumentType|undefined
+                let result: null | PartialFullDocumentType | undefined
                 try {
                     result = evaluate<
-                        null|PartialFullDocumentType,
+                        null | PartialFullDocumentType,
                         CommonScope<
                             ObjectType,
                             PropertyValue,
@@ -1954,7 +1954,7 @@ export const validateDocumentUpdate = <
 
                     continue
                 } else if (checkPropertyWriteableMutableNullable<
-                    AdditionalPropertiesType|ValueOf<ObjectType>
+                    AdditionalPropertiesType | ValueOf<ObjectType>
                 >(
                     propertySpecification as PropertySpecification<
                         AdditionalPropertiesType, AdditionalSpecifications
@@ -2053,7 +2053,7 @@ export const validateDocumentUpdate = <
                             if (key === 'type') {
                                 const type =
                                     propertySpecification[key] as
-                                        Array<string>|string
+                                        Array<string> | string
                                 if (Array.isArray(propertySpecification[key]))
                                     propertySpecificationCopy[key] = (
                                         type as Array<string>
@@ -2314,7 +2314,7 @@ export const validateDocumentUpdate = <
                 )
 
             // region migrate old attachments
-            let oldAttachments: Attachments|null = null
+            let oldAttachments: Attachments | null = null
             if (
                 oldDocument &&
                 Object.prototype.hasOwnProperty.call(
@@ -2322,7 +2322,7 @@ export const validateDocumentUpdate = <
                 )
             ) {
                 oldAttachments =
-                    oldDocument[specialNames.attachment] as Attachments|null
+                    oldDocument[specialNames.attachment] as Attachments | null
                 if (
                     oldAttachments !== null &&
                     typeof oldAttachments === 'object'
@@ -2519,7 +2519,7 @@ export const validateDocumentUpdate = <
 
                     if (specification.fileName?.invertedPattern)
                         for (const pattern of (
-                            [] as Array<RegExp|string>
+                            [] as Array<RegExp | string>
                         ).concat(specification.fileName.invertedPattern))
                             if (new RegExp(pattern).test(fileName))
                                 throwError(

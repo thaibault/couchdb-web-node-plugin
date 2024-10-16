@@ -4079,7 +4079,7 @@ describe('databaseHelper', () => {
             expected: PartialFullDocument,
             newDocument: PartialFullDocument,
             modelConfiguration: PlainObject,
-            oldDocument: null|PartialFullDocument = null
+            oldDocument: null | PartialFullDocument = null
         ): void => {
             const defaultModelConfiguration: ModelConfiguration = {
                 ...copy(configuration.couchdb.model),

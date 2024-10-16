@@ -541,12 +541,12 @@ export const normalizeAllowedRoles = (
 
         for (const type of Object.keys(result))
             if (Object.prototype.hasOwnProperty.call(roles, type))
-                if (Array.isArray(roles[type as 'read'|'write']))
-                    result[type as 'read'|'write'] =
-                        roles[type as 'read'|'write'] as Array<string>
+                if (Array.isArray(roles[type as 'read' | 'write']))
+                    result[type as 'read' | 'write'] =
+                        roles[type as 'read' | 'write'] as Array<string>
                 else
-                    result[type as 'read'|'write'] =
-                        [roles[type as 'read'|'write'] as string]
+                    result[type as 'read' | 'write'] =
+                        [roles[type as 'read' | 'write'] as string]
 
         return result
     }
