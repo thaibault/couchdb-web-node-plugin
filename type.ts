@@ -42,11 +42,11 @@ export type Attachment =
         content_type?: PouchDB.Core.Attachment['content_type']
         contentType?: PouchDB.Core.Attachment['content_type']
     }
-export type Attachments = Record<string, Attachment|null>
+export type Attachments = Record<string, Attachment | null>
 
 export type FullAttachment =
     Omit<PouchDB.Core.FullAttachment, 'data'> &
-    {data?: null|PouchDB.Core.FullAttachment['data']}
+    {data?: null | PouchDB.Core.FullAttachment['data']}
 export type StubAttachment = PouchDB.Core.StubAttachment
 
 export type ChangesMeta = PouchDB.Core.ChangesMeta
@@ -96,10 +96,10 @@ export type GetOptions = PouchDB.Core.GetOptions
 export type PutOptions = PouchDB.Core.Options;
 export type PostDocument<Type extends object> =
     Omit<PouchDB.Core.PostDocument<Type>, 'attachments'> &
-    {_attachments?: Attachments|null}
+    {_attachments?: Attachments | null}
 export type PutDocument<Type extends object> =
     Omit<PouchDB.Core.PutDocument<Type>, 'attachments'> &
-    {_attachments?: Attachments|null}
+    {_attachments?: Attachments | null}
 
 export type Index = PouchDB.Find.Index
 
@@ -111,8 +111,8 @@ export type AllowedRoles = (
     Array<string> |
     string |
     {
-        read?: Array<string>|string
-        write?: Array<string>|string
+        read?: Array<string> | string
+        write?: Array<string> | string
     }
 )
 export interface NormalizedAllowedRoles {
@@ -147,18 +147,21 @@ export const PrimitiveTypes = [
     'string'
 ] as const
 export type PrimitiveType = typeof PrimitiveTypes[number]
-export type Type = string // |'any'|PrimitiveType
-export type TypeSpecification = Array<Type>|Type
+export type Type = string // | 'any' | PrimitiveType
+export type TypeSpecification = Array<Type> | Type
 
 export type ConstraintKey =
-    'arrayConstraintExecution'|'arrayConstraintExpression'|
-    'conflictingConstraintExecution'|'conflictingConstraintExpression'|
-    'constraintExecution'|'constraintExpression'
+    'arrayConstraintExecution' |
+    'arrayConstraintExpression' |
+    'conflictingConstraintExecution' |
+    'conflictingConstraintExpression' |
+    'constraintExecution' |
+    'constraintExpression'
 export interface SelectionMapping {
     label: string
     value: unknown
 }
-export type Pattern = Array<RegExp|string>|RegExp|string
+export type Pattern = Array<RegExp | string> | RegExp | string
 export interface PropertySpecification<
     Type = unknown, AdditionalSpecifications extends object = object
 > {
@@ -205,7 +208,7 @@ export interface PropertySpecification<
     nullable?: boolean
     writable?: boolean
 
-    selection?: Array<SelectionMapping>|Array<unknown>|Mapping<unknown>
+    selection?: Array<SelectionMapping> | Array<unknown> | Mapping<unknown>
 
     type?: TypeSpecification
     // endregion
@@ -223,7 +226,7 @@ export interface PropertySpecification<
     index?: boolean
 
     // NOTE: Actual name is usually specified via key parent data structure.
-    oldName?: Array<string>|string
+    oldName?: Array<string> | string
 
     value?: Type
 
@@ -232,7 +235,7 @@ export interface PropertySpecification<
 export interface FileSpecification<
     Type extends Attachment = Attachment,
     AdditionalSpecifications extends object = object
-> extends PropertySpecification<null|Type, AdditionalSpecifications> {
+> extends PropertySpecification<null | Type, AdditionalSpecifications> {
     fileName?: PropertySpecification<string, AdditionalSpecifications>
 }
 export interface BaseModel<
@@ -250,18 +253,18 @@ export interface BaseModel<
         Mapping<FileSpecification<AttachmentType, AdditionalSpecifications>> |
         null
 
-    _constraintExecutions?: Array<Constraint>|Constraint
-    _constraintExpressions?: Array<Constraint>|Constraint
+    _constraintExecutions?: Array<Constraint> | Constraint
+    _constraintExpressions?: Array<Constraint> | Constraint
 
     _createExecution?: string
     _createExpression?: string
 
-    _extends?: Array<string>|string
+    _extends?: Array<string> | string
 
     _maximumAggregatedSize?: number
     _minimumAggregatedSize?: number
 
-    _oldType?: Array<string>|string
+    _oldType?: Array<string> | string
 
     _onUpdateExecution?: string
     _onUpdateExpression?: string
@@ -270,7 +273,7 @@ export interface BaseModel<
     _rev: PropertySpecification<string, AdditionalSpecifications>
 }
 export type Model<
-    Type extends object|undefined = object,
+    Type extends object | undefined = object,
     AttachmentType extends Attachment = Attachment,
     AdditionalSpecifications extends object = object,
     AdditionalPropertiesType = unknown
@@ -282,7 +285,7 @@ export type Model<
         [Property in keyof Type]: PropertySpecification<
             Type[Property] extends Array<unknown> ?
                 (
-                    Type[Property][number] extends object|undefined ?
+                    Type[Property][number] extends object | undefined ?
                         Array<Model<
                             Type[Property][number],
                             AttachmentType,
@@ -291,9 +294,9 @@ export type Model<
                         >> :
                         Type[Property]
                 ) :
-                Type[Property] extends object|undefined ?
+                Type[Property] extends object | undefined ?
                     (
-                        Type[Property] extends Date|undefined ?
+                        Type[Property] extends Date | undefined ?
                             Type[Property] :
                             Model<
                                 Type[Property],
@@ -315,10 +318,10 @@ export type Models<
     Type, AttachmentType, AdditionalSpecifications, AdditionalPropertiesType
 >>
 
-export type UpdateStrategy = ''|'fillUp'|'incremental'|'migrate'
+export type UpdateStrategy = '' | 'fillUp' | 'incremental' | 'migrate'
 
 export type DocumentContent =
-    Array<DocumentContent>|PlainObject|Primitive
+    Array<DocumentContent> | PlainObject | Primitive
 export interface DocumentStrategyMeta {_updateStrategy?: UpdateStrategy}
 export interface DocumentTypeMeta {'-type': string}
 export type BaseDocument =
@@ -328,7 +331,7 @@ export type BaseDocument =
     DocumentRevisionIDMeta &
     DocumentStrategyMeta &
     DocumentTypeMeta &
-    {_attachments?: Attachments|null}
+    {_attachments?: Attachments | null}
 export type FullDocument<
     Type extends object = object, AdditionalPropertyTypes = unknown
 > = BaseDocument & Document<Type> & Mapping<AdditionalPropertyTypes>
@@ -390,7 +393,7 @@ export interface PropertyNameConfiguration {
 export interface BaseModelConfiguration<
     Type, AdditionalSpecifications extends object
 > {
-    dateTimeFormat: 'iso'|'iso8601'|'number'
+    dateTimeFormat: 'iso' | 'iso8601' | 'number'
     property: {
         defaultSpecification: PropertySpecification<
             Type, AdditionalSpecifications
@@ -430,15 +433,17 @@ export interface DatabaseUserConfiguration {
 }
 export interface Runner {
     adminUserConfigurationPath: string
-    arguments?: Array<string>|null|string
-    binaryFilePath?: null|string
-    configurationFile?: null|{
-        content: string
-        path: string
-    }
-    environment?: null|Mapping
-    location: Array<string>|string
-    name: Array<string>|string
+    arguments?: Array<string> | null | string
+    binaryFilePath?: null | string
+    configurationFile?:
+        null |
+        {
+            content: string
+            path: string
+        }
+    environment?: null | Mapping
+    location: Array<string> | string
+    name: Array<string> | string
 }
 export interface SecuritySettings {
     admins: DatabaseUserConfiguration
@@ -449,7 +454,7 @@ export interface SecuritySettings {
 export type AdvancedFetchOptions = RequestInit & {timeout?: number}
 export type ConnectorConfiguration = DatabaseConnectorConfiguration & {
     // NOTE: "pouchdb`s" version supports timeout parameter.
-    fetch?: AdvancedFetchOptions|null
+    fetch?: AdvancedFetchOptions | null
 }
 export interface CoreConfiguration<
     Type extends object = Mapping<unknown>,
@@ -594,12 +599,14 @@ export interface BasicScope<
     attachmentWithPrefixExists: (namePrefix: string) => boolean
     checkDocument: (
         newDocument: PartialFullDocument<Type, AdditionalPropertiesType>,
-        oldDocument: PartialFullDocument<Type, AdditionalPropertiesType>|null,
+        oldDocument:
+            PartialFullDocument<Type, AdditionalPropertiesType> |
+            null,
         parentNames: Array<string>
     ) => CheckedDocumentResult<Type, AdditionalPropertiesType>
     getFileNameByPrefix: (
         prefix?: string, attachments?: Mapping<AttachmentType>
-    ) => null|string
+    ) => null | string
     serialize: (value: unknown) => string
 
     id: string
@@ -648,12 +655,11 @@ export interface CommonScope<
         AdditionalPropertiesType
     >
     modelName: string
-    type: Array<string>|string
+    type: Array<string> | string
 
     newDocument: PartialFullDocument<ObjectType, AdditionalPropertiesType>
-    oldDocument:(
-        null|PartialFullDocument<ObjectType, AdditionalPropertiesType>
-    )
+    oldDocument:
+        null | PartialFullDocument<ObjectType, AdditionalPropertiesType>
 
     parentNames: Array<string>
     pathDescription: string
@@ -681,7 +687,7 @@ export interface PropertyScope<
         Type, AdditionalSpecifications
     >,
 
-    attachmentsTarget?: Mapping<AttachmentType|null>
+    attachmentsTarget?: Mapping<AttachmentType | null>
 }
 //// endregion
 export interface EvaluationResult<
@@ -721,7 +727,7 @@ export interface CheckedPropertyResult<Type> extends CheckedResult {
     /*
      NOTE: "undefined" means no changes regarding existing data and null
     */
-    newValue?: null|Type
+    newValue?: null | Type
 }
 export interface CheckedDocumentResult<
     ObjectType extends object, AdditionalPropertiesType
@@ -770,9 +776,9 @@ export type Migrator<
             services: Services
         }
     )
-) => Document|null
+) => Document | null
 
-export type DateRepresentationType = Date|null|number|string
+export type DateRepresentationType = Date | null | number | string
 /// region pre-defined models
 export type User = BaseDocument & {
     password: string

@@ -118,13 +118,13 @@ export const start = async (
              */
             (value: ProcessCloseReason) => {
                 if ((
-                    services.couchdb as {server?: CouchDB['server']}|undefined
+                    services.couchdb as {server?: CouchDB['server']} | undefined
                 )?.server?.resolve)
                     services.couchdb.server.resolve.call(this, value)
             },
             (reason: unknown) => {
                 if ((
-                    services.couchdb as {server?: CouchDB['server']}|undefined
+                    services.couchdb as {server?: CouchDB['server']} | undefined
                 )?.server?.reject)
                     services.couchdb.server.reject.call(
                         this, reason as ProcessCloseReason

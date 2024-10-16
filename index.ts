@@ -114,7 +114,7 @@ export const preLoadService = async ({
             this: Connection,
             firstParameter: unknown,
             ...parameters: Array<unknown>
-        ): Promise<Array<DatabaseError|DatabaseResponse>> {
+        ): Promise<Array<DatabaseError | DatabaseResponse>> {
             const toggleLatestRevisionDetermining: boolean = (
                 parameters.length > 0 &&
                 parameters[parameters.length - 1] ===
@@ -150,7 +150,7 @@ export const preLoadService = async ({
                     timeout: configuration.connector.fetch.timeout
                 })
 
-            const result: Array<DatabaseError|DatabaseResponse> =
+            const result: Array<DatabaseError | DatabaseResponse> =
                 await nativeBulkDocs.call(
                     this,
                     data as FirstParameter<Connection['bulkDocs']>,
@@ -205,13 +205,13 @@ export const preLoadService = async ({
                     parameters.push(TOGGLE_LATEST_REVISION_DETERMINING)
 
                 const retriedResults: Array<
-                    DatabaseError|DatabaseResponse
+                    DatabaseError | DatabaseResponse
                 > = await this.bulkDocs(
                     data as Array<PutDocument<Mapping<unknown>>>,
                     ...parameters as [SecondParameter<Connection['bulkDocs']>]
                 ) as
                     unknown as
-                    Array<DatabaseError|DatabaseResponse>
+                    Array<DatabaseError | DatabaseResponse>
                 for (const retriedResult of retriedResults)
                     result[conflictingIndexes.shift() as number] =
                         retriedResult
@@ -286,7 +286,7 @@ export const loadService = async (
     if (!globalContext.fetch)
         throw new Error('Missing fetch implementation.')
 
-    let promise: null|Promise<ProcessCloseReason> = null
+    let promise: null | Promise<ProcessCloseReason> = null
     const {couchdb} = services
 
     if (Object.prototype.hasOwnProperty.call(couchdb.server, 'runner')) {
@@ -437,7 +437,7 @@ export const loadService = async (
                             subPath
                         ]
 
-                    let response: Response|undefined
+                    let response: Response | undefined
                     try {
                         response = await globalContext.fetch(url)
                     } catch (error) {
@@ -658,7 +658,7 @@ export const loadService = async (
                             specification !== null &&
                             typeof specification === 'object'
                         ) {
-                            const constraint:(Constraint|null|undefined) =
+                            const constraint:(Constraint | null | undefined) =
                                 (specification as PropertySpecification)[
                                     type
                                 ]
@@ -794,7 +794,7 @@ export const loadService = async (
                 ] = 'migrate'
 
                 for (const name of Object.keys(migrators).sort()) {
-                    let result: Document|null = null
+                    let result: Document | null = null
                     try {
                         result = migrators[name](
                             newDocument,
