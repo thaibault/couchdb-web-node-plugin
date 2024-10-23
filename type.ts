@@ -784,9 +784,13 @@ export type User = BaseDocument & {
     password: string
     roles: Array<string>
 }
+/*
+    Start and end time can be represented as number (of seconds) or an iso
+    based datetime string.
+*/
 export interface Interval {
-    end: number
-    start: number
+    end: number | string
+    start: number | string
 }
 export interface Location {
     latitude: number
