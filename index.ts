@@ -26,6 +26,7 @@ import {
     globalContext,
     isDirectory,
     isFile,
+    isObject,
     Mapping,
     NOOP,
     PlainObject,
@@ -132,8 +133,7 @@ export const preLoadService = async ({
             */
             let data: Array<PartialFullDocument> = (
                 !Array.isArray(firstParameter) &&
-                firstParameter !== null &&
-                typeof firstParameter === 'object' &&
+                isObject(firstParameter) &&
                 idName in firstParameter
             ) ?
                 [firstParameter as PartialFullDocument] :
@@ -654,10 +654,7 @@ export const loadService = async (
                         'constraintExpression',
                         'constraintExecution'
                     ] as const)
-                        if (
-                            specification !== null &&
-                            typeof specification === 'object'
-                        ) {
+                        if (isObject(specification)) {
                             const constraint:(Constraint | null | undefined) =
                                 (specification as PropertySpecification)[
                                     type

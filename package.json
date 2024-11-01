@@ -67,14 +67,14 @@
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.25.9",
-    "@babel/runtime": "^7.25.9",
-    "@stylistic/eslint-plugin-ts": "^2.9.0",
+    "@babel/runtime": "^7.26.0",
+    "@stylistic/eslint-plugin-ts": "^2.10.1",
     "@types/ejs": "^3.1.5",
-    "@types/node": "^22.7.9",
+    "@types/node": "^22.8.6",
     "@types/pouchdb-node": "^6.1.7",
-    "@typescript-eslint/eslint-plugin": "^8.11.0",
-    "@typescript-eslint/parser": "^8.11.0",
-    "clientnode": "^3.0.1217",
+    "@typescript-eslint/eslint-plugin": "^8.12.2",
+    "@typescript-eslint/parser": "^8.12.2",
+    "clientnode": "^3.0.1222",
     "documentation-website": "^1.0.337",
     "eslint": "^9.13.0",
     "eslint-config-google": "^0.14.0",
@@ -83,9 +83,9 @@
     "jsdoc": "^4.0.4",
     "node-fetch": "^3.3.2",
     "rimraf": "^6.0.1",
-    "typescript-eslint": "^8.11.0",
+    "typescript-eslint": "^8.12.2",
     "web-node": "^1.0.528",
-    "weboptimizer": "^2.0.1532"
+    "weboptimizer": "^2.0.1534"
   },
   "peerDependencies": {
     "@babel/runtime": "*",

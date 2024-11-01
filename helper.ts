@@ -19,6 +19,7 @@ import {
     copy,
     extend,
     format,
+    isObject,
     globalContext,
     Mapping,
     represent,
@@ -304,11 +305,7 @@ export const determineAllowedModelRolesMapping = (
             }
 
             for (const [name, property] of Object.entries(model))
-                if (
-                    property !== null &&
-                    typeof property === 'object' &&
-                    property.allowedRoles
-                )
+                if (isObject(property) && property.allowedRoles)
                     allowedModelRolesMapping[modelName].properties[name] =
                         normalizeAllowedRoles(
                             property.allowedRoles as AllowedRoles
@@ -330,7 +327,7 @@ export const determineAllowedModelRolesMapping = (
 export const isPropertySpecification = (
     value: ValueOf<Model>
 ): value is PropertySpecification =>
-    value !== null && typeof value === 'object'
+    isObject(value)
 /**
  * Determines all property names which are indexable in a generic manner.
  * @param modelConfiguration - Model specification object.
