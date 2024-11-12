@@ -270,7 +270,7 @@ export const initializeConnection = async (
     // region ensure database presence
     try {
         await checkReachability(url)
-    } catch (_error) {
+    } catch {
         console.info('Database could not be retrieved yet: Creating it.')
 
         if (!globalContext.fetch)
