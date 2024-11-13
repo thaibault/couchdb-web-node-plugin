@@ -422,7 +422,7 @@ export const validateDocumentUpdate = <
             try {
                 // Use ISO 8601 format to save date as string.
                 value = value.toISOString()
-            } catch (_error) {
+            } catch {
                 // Ignore exception.
             }
         }
