@@ -17,9 +17,8 @@
 import {describe, expect, test} from '@jest/globals'
 import {copy, extend, Mapping, PlainObject} from 'clientnode'
 import {
-    TEST_THROW_SYMBOL,
-    testEachAgainstSameExpectation
-} from 'clientnode/dist/test-helper'
+    TEST_THROW_SYMBOL, testEachAgainstSameExpectation
+} from 'clientnode/test-helper'
 
 import {authenticate, validateDocumentUpdate} from '../databaseHelper'
 import {extendModels} from '../helper'
