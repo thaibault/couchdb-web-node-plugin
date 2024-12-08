@@ -15,11 +15,14 @@
 */
 // region imports
 import {describe, expect, test} from '@jest/globals'
-import {copy, extend, Mapping, PlainObject} from 'clientnode'
 import {
+    copy,
+    extend,
+    Mapping,
+    PlainObject,
     TEST_THROW_SYMBOL,
     testEachAgainstSameExpectation
-} from 'clientnode/dist/test-helper'
+} from 'clientnode'
 
 import {authenticate, validateDocumentUpdate} from '../databaseHelper'
 import {extendModels} from '../helper'
