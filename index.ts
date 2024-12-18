@@ -433,9 +433,7 @@ export const loadService = async (
                     const url = `${urlPrefix}${fullPath}`
 
                     const value: unknown =
-                        configuration.couchdb.backend.configuration[
-                            subPath
-                        ]
+                        configuration.couchdb.backend.configuration[subPath]
 
                     let response: Response | undefined
                     try {
@@ -926,18 +924,19 @@ export const loadService = async (
     }
     // endregion
     // region create/remove needed/unneeded generic indexes
+    const indexes: Array<Index> = (
+        await couchdb.connection.getIndexes()
+    ).indexes
     if (
         configuration.couchdb.createGenericFlatIndex &&
-        configuration.couchdb.model.autoMigrationPath
+        (
+            configuration.couchdb.model.autoMigrationPath &&
+            indexes.length === 0
+        )
     ) {
-        const indexes: Array<Index> = (
-            await couchdb.connection.getIndexes()
-        ).indexes
-
         for (const [modelName, model] of Object.entries(models))
             if ((new RegExp(
-                configuration.couchdb.model.property.name.typePattern
-                    .public
+                configuration.couchdb.model.property.name.typePattern.public
             )).test(modelName)) {
                 await couchdb.connection.createIndex({index: {
                     ddoc: `${modelName}-GenericIndex`,
@@ -951,8 +950,7 @@ export const loadService = async (
                         configuration.couchdb.model, model
                     )
                 ) {
-                    const name =
-                        `${modelName}-${propertyName}-GenericIndex`
+                    const name = `${modelName}-${propertyName}-GenericIndex`
                     let foundPosition = -1
                     let position = 0
 
