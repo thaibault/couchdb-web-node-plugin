@@ -924,14 +924,16 @@ export const loadService = async (
     }
     // endregion
     // region create/remove needed/unneeded generic indexes
-    const indexes: Array<Index> = (
+    const genericIndexes: Array<Index> = (
         await couchdb.connection.getIndexes()
     ).indexes
+        .filter((index) => index.name.endsWith('-GenericIndex'))
+
     if (
         configuration.couchdb.createGenericFlatIndex &&
         (
             configuration.couchdb.model.autoMigrationPath ||
-            indexes.length === 0
+            genericIndexes.length === 0
         )
     ) {
         for (const [modelName, model] of Object.entries(models))
@@ -954,7 +956,7 @@ export const loadService = async (
                     let foundPosition = -1
                     let position = 0
 
-                    for (const index of indexes) {
+                    for (const index of genericIndexes) {
                         if (index.name === name) {
                             foundPosition = position
 
@@ -973,35 +975,34 @@ export const loadService = async (
                             }
                         })
                     else
-                        indexes.slice(position, 1)
+                        genericIndexes.slice(position, 1)
                 }
             }
 
-        for (const index of indexes)
-            if (index.name.endsWith('-GenericIndex')) {
-                let exists = false
-                for (const [modelName, model] of Object.entries(models))
-                    if (index.name.startsWith(`${modelName}-`)) {
-                        for (
-                            const name of
-                            determineGenericIndexablePropertyNames(
-                                configuration.couchdb.model, model
-                            )
+        for (const index of genericIndexes) {
+            let exists = false
+            for (const [modelName, model] of Object.entries(models))
+                if (index.name.startsWith(`${modelName}-`)) {
+                    for (
+                        const name of
+                        determineGenericIndexablePropertyNames(
+                            configuration.couchdb.model, model
                         )
-                            if ([
-                                `${modelName}-${name}-GenericIndex`,
-                                `${modelName}-GenericIndex`
-                            ].includes(index.name))
-                                exists = true
-
-                        break
-                    }
-
-                if (!exists)
-                    await couchdb.connection.deleteIndex(
-                        index as DeleteIndexOptions
                     )
-            }
+                        if ([
+                            `${modelName}-${name}-GenericIndex`,
+                            `${modelName}-GenericIndex`
+                        ].includes(index.name))
+                            exists = true
+
+                    break
+                }
+
+            if (!exists)
+                await couchdb.connection.deleteIndex(
+                    index as DeleteIndexOptions
+                )
+        }
     }
     // endregion
     // TODO check conflicting constraints and mark them if necessary (check
