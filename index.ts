@@ -930,7 +930,7 @@ export const loadService = async (
     if (
         configuration.couchdb.createGenericFlatIndex &&
         (
-            configuration.couchdb.model.autoMigrationPath &&
+            configuration.couchdb.model.autoMigrationPath ||
             indexes.length === 0
         )
     ) {
