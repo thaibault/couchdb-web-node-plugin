@@ -54,6 +54,7 @@ import {
 } from './helper'
 import {restart, start, stop} from './server'
 import {
+    ChangesResponseChange,
     ChangesStream,
     Connection,
     Constraint,
@@ -1100,6 +1101,14 @@ export const postLoadService = (state: State): Promise<void> => {
             data: couchdb.changesStream,
             hook: 'couchdbInitializeChangesStream'
         })
+
+        void couchdb.changesStream.on(
+            'change',
+            (change: ChangesResponseChange): Promise<void> =>
+                pluginAPI.callStack<State<ChangesResponseChange>>({
+                    ...state, data: change, hook: 'couchdbChange'
+                })
+        )
     })
 
     if (configuration.attachAutoRestarter)
