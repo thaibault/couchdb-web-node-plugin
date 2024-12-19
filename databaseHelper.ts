@@ -1062,7 +1062,7 @@ export const validateDocumentUpdate = <
                 if (!matched)
                     throwError(
                         `PatternMatch: Property "${String(name)}" should ` +
-                        'match one regular expression pattern ' +
+                        'match regular expression pattern ' +
                         `"${patterns.join('", "')}" (given ` +
                         `"${newValue as string}")${pathDescription}.`
                     )
