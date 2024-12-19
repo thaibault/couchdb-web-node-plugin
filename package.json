@@ -84,7 +84,7 @@
     "node-fetch": "^3.3.2",
     "rimraf": "^6.0.1",
     "typescript-eslint": "^8.18.1",
-    "web-node": "^1.0.535",
+    "web-node": "^1.0.536",
     "weboptimizer": "^2.0.1550"
   },
   "peerDependencies": {

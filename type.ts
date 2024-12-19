@@ -556,11 +556,17 @@ export type State<Type = undefined> = BaseServicePromisesState<
 
 export interface PluginHandler extends BasePluginHandler {
     /**
-     * Hook after each data change.
+     * Hook after changes stream initialization.
      * @param state - Application state.
      * @returns Promise resolving to nothing.
      */
     couchdbInitializeChangesStream?(state: State<ChangesStream>): Promise<void>
+    /**
+     * Hook after each data change.
+     * @param state - Application state.
+     * @returns Promise resolving to nothing.
+     */
+    couchdbChange?(state: State<ChangesResponseChange>): Promise<void>
     /**
      * Hook after each database restart.
      * @param state - Application state.
