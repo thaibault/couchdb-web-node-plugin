@@ -1066,6 +1066,8 @@ export const postLoadService = (state: State): Promise<void> => {
         if (couchdb.changesStream as unknown as boolean)
             couchdb.changesStream.cancel()
 
+        console.info('Initialize changes stream.')
+
         couchdb.changesStream =
             couchdb.connection.changes(configuration.changesStream)
 
@@ -1101,6 +1103,8 @@ export const postLoadService = (state: State): Promise<void> => {
             data: couchdb.changesStream,
             hook: 'couchdbInitializeChangesStream'
         })
+
+        console.info('Changes stream initialized.')
 
         void couchdb.changesStream.on(
             'change',
