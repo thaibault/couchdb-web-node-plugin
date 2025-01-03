@@ -2167,6 +2167,14 @@ export const validateDocumentUpdate = <
                         changedPath = parentNames.concat(
                             String(name), 'property removed'
                         )
+
+                    // NOTE: Do not use "newValue" here anymore.
+                    if (
+                        newDocument[name] === undefined &&
+                        oldValue === undefined &&
+                        updateStrategy === 'incremental'
+                    )
+                        delete newDocument[name]
                 }
             }
         /// region constraint
