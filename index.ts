@@ -40,7 +40,7 @@ import {promises as fileSystem} from 'fs'
 import {basename, extname, resolve} from 'path'
 import PouchDB from 'pouchdb-node'
 import PouchDBFindPlugin from 'pouchdb-find'
-import {PluginHandler, PluginPromises} from 'web-node/type'
+import {HookPromiseResult, PluginHandler, PluginPromises} from 'web-node/type'
 
 import databaseHelper, {validateDocumentUpdate} from './databaseHelper'
 import {
@@ -1108,7 +1108,7 @@ export const postLoadService = (state: State): Promise<void> => {
 
         void couchdb.changesStream.on(
             'change',
-            (change: ChangesResponseChange): Promise<void> =>
+            (change: ChangesResponseChange): HookPromiseResult<undefined> =>
                 pluginAPI.callStack<State<ChangesResponseChange>>({
                     ...state, data: change, hook: 'couchdbChange'
                 })

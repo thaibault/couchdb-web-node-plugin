@@ -1308,6 +1308,7 @@ export const validateDocumentUpdate = <
                 )
                     (newDocument[name] as string) =
                         (newDocument[name] as string).trim()
+
                 if (
                     propertySpecification.emptyEqualsNull &&
                     (
@@ -2142,7 +2143,7 @@ export const validateDocumentUpdate = <
                             )
                         ) ?
                             oldDocument[name] :
-                            null
+                            undefined
 
                     const result = isArrayType ?
                         {newValue: null, changedPath: []} :
@@ -2162,20 +2163,10 @@ export const validateDocumentUpdate = <
                         changedPath = result.changedPath
 
                     // NOTE: Do not use "newValue" here anymore.
-                    if ([null, undefined].includes(
-                        newDocument[name] as null
-                    )) {
-                        if (oldValue !== null)
-                            changedPath = parentNames.concat(
-                                String(name), 'property removed'
-                            )
-
-                        if (!(
-                            updateStrategy === 'incremental' &&
-                            oldValue === null
-                        ))
-                            delete newDocument[name]
-                    }
+                    if (newDocument[name] === null && oldValue !== undefined)
+                        changedPath = parentNames.concat(
+                            String(name), 'property removed'
+                        )
                 }
             }
         /// region constraint

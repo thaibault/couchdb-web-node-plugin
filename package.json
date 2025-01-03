@@ -70,11 +70,11 @@
     "@babel/runtime": "^7.26.0",
     "@stylistic/eslint-plugin-ts": "^2.12.1",
     "@types/ejs": "^3.1.5",
-    "@types/node": "^22.10.2",
+    "@types/node": "^22.10.5",
     "@types/pouchdb-node": "^6.1.7",
-    "@typescript-eslint/eslint-plugin": "^8.18.1",
-    "@typescript-eslint/parser": "^8.18.1",
-    "clientnode": "^3.0.1253",
+    "@typescript-eslint/eslint-plugin": "^8.19.0",
+    "@typescript-eslint/parser": "^8.19.0",
+    "clientnode": "^3.0.1255",
     "documentation-website": "^1.0.341",
     "eslint": "^9.17.0",
     "eslint-config-google": "^0.14.0",
@@ -83,9 +83,9 @@
     "jsdoc": "^4.0.4",
     "node-fetch": "^3.3.2",
     "rimraf": "^6.0.1",
-    "typescript-eslint": "^8.18.1",
-    "web-node": "^1.0.536",
-    "weboptimizer": "^2.0.1550"
+    "typescript-eslint": "^8.19.0",
+    "web-node": "^1.0.538",
+    "weboptimizer": "^2.0.1552"
   },
   "peerDependencies": {
     "@babel/runtime": "*",
