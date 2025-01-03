@@ -2572,8 +2572,8 @@ describe('databaseHelper', () => {
                 {entities: {Test: {a: {}}}},
                 {
                     fillUp: {[typeName]: 'Test'},
-                    incremental: {[typeName]: 'Test'},
-                    '': {[typeName]: 'Test'}
+                    incremental: {[typeName]: 'Test', a: null},
+                    '': {[typeName]: 'Test', a: null}
                 }
             ],
             [

@@ -2168,10 +2168,8 @@ export const validateDocumentUpdate = <
                             String(name), 'property removed'
                         )
 
-                    // NOTE: Do not use "newValue" here anymore.
                     if (
                         newDocument[name] === undefined &&
-                        oldValue === undefined &&
                         updateStrategy === 'incremental'
                     )
                         delete newDocument[name]
