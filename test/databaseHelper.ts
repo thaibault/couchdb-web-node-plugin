@@ -15,7 +15,9 @@
 */
 // region imports
 import {describe, expect, test} from '@jest/globals'
-import {copy, extend, Mapping, PlainObject} from 'clientnode'
+import {
+    copy, extend, FirstParameter, Mapping, PlainObject, SecondParameter
+} from 'clientnode'
 import {
     TEST_THROW_SYMBOL, testEachAgainstSameExpectation
 } from 'clientnode/test-helper'
@@ -125,8 +127,27 @@ describe('databaseHelper', () => {
                     propertyName as keyof BaseModel
                 ]
         // region forbidden writes
-        const forbiddenTester = (...test): void => {
-            if (test.length < 3)
+        type NormalizedForbiddenTest =
+            [
+                [
+                    FirstParameter<typeof validateDocumentUpdate>,
+                    SecondParameter<typeof validateDocumentUpdate>?
+                ],
+                Partial<ModelConfiguration>,
+                string
+            ]
+        type ForbiddenTest =
+            NormalizedForbiddenTest |
+            [
+                [
+                    FirstParameter<typeof validateDocumentUpdate>,
+                    SecondParameter<typeof validateDocumentUpdate>?
+                ],
+                string
+            ]
+        const forbiddenTester = (...givenTest: ForbiddenTest): void => {
+            const test = givenTest as NormalizedForbiddenTest
+            if (givenTest.length < 3)
                 (test as unknown as Array<unknown>).splice(1, 0, {})
 
             const modelConfiguration: ModelConfiguration = extend(
@@ -181,7 +202,7 @@ describe('databaseHelper', () => {
                 ],
                 'Revision'
             ]
-        ] as const)(
+        ] as Array<ForbiddenTest>)(
             '%#. forbidden general environment validateDocumentUpdate ' +
             `(with update strategy "${updateStrategy}")`,
             forbiddenTester
@@ -335,12 +356,12 @@ describe('databaseHelper', () => {
             ],
             [
                 [{[typeName]: 'Test'}, {[typeName]: 'Test', a: '1'}],
-                {entities: {Test: {a: {}}}},
+                {entities: {Test: {a: {}}} as object},
                 updateStrategy === 'replace' ?
                     {[typeName]: 'Test'} :
                     'NoChange'
             ]
-        ] as const)(
+        ] as Array<ForbiddenTest>)(
             '%#. forbidden changes validateDocumentUpdate ' +
             `(with update strategy "${updateStrategy}")`,
             forbiddenTester
@@ -418,7 +439,7 @@ describe('databaseHelper', () => {
                 },
                 'TypeName'
             ]
-        ] as const)(
+        ] as Array<ForbiddenTest>)(
             '%#. forbidden model validateDocumentUpdate ' +
             `(with update strategy "${updateStrategy}")`,
             forbiddenTester
@@ -485,7 +506,9 @@ describe('databaseHelper', () => {
             ],
             [
                 [{[typeName]: 'Test', a: ''}],
-                {entities: {Test: {a: {onUpdateExecution: 'return +'}}}},
+                {entities: {
+                    Test: {a: {onUpdateExecution: 'return +'}}
+                } as object},
                 'Compilation'
             ],
             /*
@@ -520,7 +543,7 @@ describe('databaseHelper', () => {
                 'Runtime'
             ]
             // endregion
-        ] as const)(
+        ] as Array<ForbiddenTest>)(
             '%#. forbidden hooks validateDocumentUpdate ' +
             `(with update strategy "${updateStrategy}")`,
             forbiddenTester
@@ -538,10 +561,10 @@ describe('databaseHelper', () => {
                     {[typeName]: 'Test', a: 'b'},
                     {[typeName]: 'Test', a: 'a'}
                 ],
-                {entities: {Test: {a: {writable: false}}}},
+                {entities: {Test: {a: {writable: false}}} as object},
                 'Readonly'
             ]
-        ] as const)(
+        ] as Array<ForbiddenTest>)(
             '%#. forbidden property writable/mutable validateDocumentUpdate ' +
             `(with update strategy "${updateStrategy}")`,
             forbiddenTester
@@ -571,10 +594,10 @@ describe('databaseHelper', () => {
             ],
             [
                 [{[typeName]: 'Test'}, {[typeName]: 'Test', a: ''}],
-                {entities: {Test: {a: {nullable: false}}}},
+                {entities: {Test: {a: {nullable: false}}} as object},
                 updateStrategy === 'replace' ? 'MissingProperty' : 'NoChange'
             ]
-        ] as const)(
+        ] as Array<ForbiddenTest>)(
             '%#. forbidden property existence validateDocumentUpdate ' +
             `(with update strategy "${updateStrategy}")`,
             forbiddenTester
@@ -1062,10 +1085,10 @@ describe('databaseHelper', () => {
             ],
             [
                 [{[typeName]: 'Test', a: 1}],
-                {entities: {Test: {a: {type: 2}}}},
+                {entities: {Test: {a: {type: 2}}} as object},
                 'PropertyType'
             ]
-        ] as const)(
+        ] as Array<ForbiddenTest>)(
             '%#. forbidden property type validateDocumentUpdate ' +
             `(with update strategy "${updateStrategy}")`,
             forbiddenTester
@@ -1096,10 +1119,10 @@ describe('databaseHelper', () => {
             ],
             [
                 [{[typeName]: 'Test', a: '12'}],
-                {entities: {Test: {a: {maximumLength: 1}}}},
+                {entities: {Test: {a: {maximumLength: 1}}} as object},
                 'MaximalLength'
             ]
-        ] as const)(
+        ] as Array<ForbiddenTest>)(
             '%#. forbidden property range validateDocumentUpdate ' +
             `(with update strategy "${updateStrategy}")`,
             forbiddenTester
@@ -1158,12 +1181,12 @@ describe('databaseHelper', () => {
                                 ],
                                 type: 'number'
                             }
-                        }
+                        } as object
                     }
                 },
                 'Selection'
             ]
-        ] as const)(
+        ] as Array<ForbiddenTest>)(
             '%#. forbidden selection validateDocumentUpdate ' +
             `(with update strategy "${updateStrategy}")`,
             forbiddenTester
@@ -1179,10 +1202,10 @@ describe('databaseHelper', () => {
             ],
             [
                 [{[typeName]: 'Test', a: 'a'}],
-                {entities: {Test: {a: {invertedPattern: 'a'}}}},
+                {entities: {Test: {a: {invertedPattern: 'a'}}} as object},
                 'InvertedPatternMatch'
             ]
-        ] as const)(
+        ] as Array<ForbiddenTest>)(
             '%#. forbidden property pattern validateDocumentUpdate ' +
             `(with update strategy "${updateStrategy}")`,
             forbiddenTester
@@ -1219,7 +1242,7 @@ describe('databaseHelper', () => {
                                     evaluation: 'return false'
                                 }
                             }
-                        }
+                        } as object
                     }
                 },
                 'ConstraintExecution'
@@ -1284,7 +1307,7 @@ describe('databaseHelper', () => {
                 },
                 'ConstraintExpression'
             ]
-        ] as const)(
+        ] as Array<ForbiddenTest>)(
             '%#. forbidden property constraint validateDocumentUpdate ' +
             `(with update strategy "${updateStrategy}")`,
             forbiddenTester
@@ -1335,7 +1358,7 @@ describe('databaseHelper', () => {
                             }],
                             a: {},
                             b: {}
-                        }
+                        } as object
                     }
                 },
                 'ConstraintExecutions'
@@ -1357,7 +1380,7 @@ describe('databaseHelper', () => {
                 },
                 'ConstraintExecutions'
             ]
-        ] as const)(
+        ] as Array<ForbiddenTest>)(
             '%#. forbidden constraint validateDocumentUpdate ' +
             `(with update strategy "${updateStrategy}")`,
             forbiddenTester
@@ -1848,7 +1871,7 @@ describe('databaseHelper', () => {
                 },
                 'AggregatedMaximumSize'
             ]
-        ] as const)(
+        ] as Array<ForbiddenTest>)(
             '%#. forbidden attachment validateDocumentUpdate ' +
             `(with update strategy "${updateStrategy}")`,
             forbiddenTester
@@ -1856,13 +1879,27 @@ describe('databaseHelper', () => {
         /// endregion
         // endregion
         // region allowed writes
+        type AllowedTest = [
+            [
+                FirstParameter<typeof validateDocumentUpdate>,
+                SecondParameter<typeof validateDocumentUpdate>?
+            ],
+            Partial<ModelConfiguration>,
+            {
+                fillUp: ReturnType<typeof validateDocumentUpdate>
+                incremental: ReturnType<typeof validateDocumentUpdate>
+                replace: ReturnType<typeof validateDocumentUpdate>
+            }
+        ]
         const allowedTester = (
-            ...test
+            parameters: AllowedTest[0],
+            givenModelConfiguration: AllowedTest[1],
+            expected: AllowedTest[2]
         ): void => {
             const modelConfiguration: ModelConfiguration = extend(
                 true,
                 copy(defaultModelConfiguration),
-                test[1] as Partial<ModelConfiguration>
+                givenModelConfiguration
             )
             const models = extendModels(modelConfiguration)
 
@@ -1875,22 +1912,13 @@ describe('databaseHelper', () => {
 
             expect(validateDocumentUpdate(
                 ...(
-                    (test[0] as Array<unknown>)
-                        .concat(
-                            [null, {}, {}].slice(
-                                (test[0] as Array<unknown>).length - 1
-                            )
-                        )
+                    parameters
+                        .concat([null, {}, {}].slice(parameters.length - 1))
                         .concat(modelConfiguration, models)
                 ) as Parameters<typeof validateDocumentUpdate>
-            )).toStrictEqual((
-                test[2] as Mapping<
-                    ReturnType<typeof validateDocumentUpdate>,
-                    UpdateStrategy
-                >
-            )[updateStrategy])
+            )).toStrictEqual((expected)[updateStrategy])
         }
-        const adaptTests = (tests) =>
+        const adaptTests = (tests: Array<AllowedTest>) =>
             /*
                 Provides test only one or skip all tests from specified one to
                 support delta debugging when searching for failing test.
