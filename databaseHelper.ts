@@ -1982,11 +1982,10 @@ export const validateDocumentUpdate = <
                     // region check arrays
                     if (!Array.isArray(newProperty))
                         throwError(
-                            `PropertyType: Property "${String(name)}" isn't` +
-                            ` of type "array -> ` +
-                            `${propertySpecification.type as string}" ` +
-                            `(given "${serialize(newProperty)}")` +
-                            `${pathDescription}.`
+                            `PropertyType: Property "${String(name)}" isn't ` +
+                            `of type "array -> ` +
+                            `${propertySpecification.type as string}" (given` +
+                            `"${serialize(newProperty)}")${pathDescription}.`
                         )
                     else if (
                         typeof propertySpecification.minimumNumber ===
@@ -1995,10 +1994,9 @@ export const validateDocumentUpdate = <
                             propertySpecification.minimumNumber
                     )
                         throwError(
-                            `MinimumArrayLength: Property ` +
-                            `"${String(name)}" (array of length ` +
-                            `${String(newProperty.length)}) doesn't fullfill ` +
-                            `minimum array length of ` +
+                            `MinimumArrayLength: Property "${String(name)}" ` +
+                            `(array of length ${String(newProperty.length)})` +
+                            ` doesn't fullfill minimum array length of ` +
                             (
                                 propertySpecification.minimumNumber as
                                     unknown as
@@ -2013,10 +2011,9 @@ export const validateDocumentUpdate = <
                             newProperty.length
                     )
                         throwError(
-                            `MaximumArrayLength: Property ` +
-                            `"${String(name)}" (array of length ` +
-                            `${String(newProperty.length)}) doesn't fullfill` +
-                            ` maximum array length of ` +
+                            `MaximumArrayLength: Property "${String(name)}" ` +
+                            `(array of length ${String(newProperty.length)})` +
+                            ` doesn't fullfill maximum array length of ` +
                             (
                                 propertySpecification.maximumNumber as
                                     unknown as
@@ -2062,9 +2059,7 @@ export const validateDocumentUpdate = <
                                 else
                                     propertySpecificationCopy[key] = [(
                                         type as string
-                                    ).substring(
-                                        0, type.length - '[]'.length
-                                    )]
+                                    ).substring(0, type.length - '[]'.length)]
                             } else
                                 (propertySpecificationCopy[
                                     key as keyof PropertySpecification<

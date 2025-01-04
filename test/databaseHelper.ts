@@ -16,7 +16,13 @@
 // region imports
 import {describe, expect, test} from '@jest/globals'
 import {
-    copy, extend, FirstParameter, Mapping, PlainObject, SecondParameter
+    copy,
+    extend,
+    FirstParameter,
+    PlainObject,
+    RecursivePartial,
+    SecondParameter,
+    ThirdParameter
 } from 'clientnode'
 import {
     TEST_THROW_SYMBOL, testEachAgainstSameExpectation
@@ -26,13 +32,13 @@ import {authenticate, validateDocumentUpdate} from '../databaseHelper'
 import {extendModels} from '../helper'
 import packageConfiguration from '../package.json'
 import {
+    Attachments,
     BaseModel,
     Configuration,
     Document,
     ModelConfiguration,
     PartialFullDocument,
-    SpecialPropertyNames,
-    UpdateStrategy
+    SpecialPropertyNames
 } from '../type'
 // endregion
 describe('databaseHelper', () => {
@@ -1390,8 +1396,8 @@ describe('databaseHelper', () => {
         test.each([
             // Non specified attachments aren't allowed.
             [
-                [{[typeName]: 'Test', [attachmentName]: {}}],
-                {entities: {Test: {}}},
+                [{[typeName]: 'Test', [attachmentName]: {} as Attachments}],
+                {entities: {Test: {}} as object},
                 'Property'
             ],
             // Required attachments have to be present.
@@ -1884,7 +1890,7 @@ describe('databaseHelper', () => {
                 FirstParameter<typeof validateDocumentUpdate>,
                 SecondParameter<typeof validateDocumentUpdate>?
             ],
-            Partial<ModelConfiguration>,
+            RecursivePartial<ModelConfiguration>,
             {
                 fillUp: ReturnType<typeof validateDocumentUpdate>
                 incremental: ReturnType<typeof validateDocumentUpdate>
@@ -1914,8 +1920,13 @@ describe('databaseHelper', () => {
                 ...(
                     parameters
                         .concat([null, {}, {}].slice(parameters.length - 1))
-                        .concat(modelConfiguration, models)
-                ) as Parameters<typeof validateDocumentUpdate>
+                ) as [
+                    FirstParameter<typeof validateDocumentUpdate>,
+                    SecondParameter<typeof validateDocumentUpdate>,
+                    ThirdParameter<typeof validateDocumentUpdate>
+                ],
+                modelConfiguration,
+                models
             )).toStrictEqual((expected)[updateStrategy])
         }
         const adaptTests = (tests: Array<AllowedTest>) =>
@@ -1990,7 +2001,7 @@ describe('databaseHelper', () => {
                     {[typeName]: 'Test', _deleted: true},
                     {[typeName]: 'Test'}
                 ],
-                {entities: {Test: {}}},
+                {entities: {Test: {} as object}},
                 {
                     fillUp: {[typeName]: 'Test', _deleted: true},
                     incremental: {_deleted: true},
