@@ -21,6 +21,7 @@ import {
     Attachment,
     BaseModel,
     BaseModelConfiguration,
+    BasePropertySpecification,
     BasicScope,
     CheckedDocumentResult,
     CheckedPropertyResult,
@@ -50,7 +51,8 @@ import {
     SelectionMapping,
     SpecialPropertyNames,
     StubAttachment,
-    Type as TypeNames, UpdateStrategy,
+    TypeSpecification,
+    UpdateStrategy,
     UserContext
 } from './type'
 // endregion
@@ -795,7 +797,7 @@ export const validateDocumentUpdate = <
         ): CheckedPropertyResult<Type> => {
             let changedPath: Array<string> = []
             // region type
-            const types = ([] as Array<TypeNames>).concat(
+            const types = ([] as Array<TypeSpecification>).concat(
                 propertySpecification.type ? propertySpecification.type : []
             )
             // Derive nested missing explicit type definition if possible.
@@ -804,12 +806,16 @@ export const validateDocumentUpdate = <
                 Object.getPrototypeOf(newValue) === Object.prototype &&
                 !Object.prototype.hasOwnProperty.call(newValue, typeName) &&
                 types.length === 1 &&
+                typeof types[0] === 'string' &&
                 Object.prototype.hasOwnProperty.call(models, types[0])
             )
                 (newValue as PartialFullDocumentType)[typeName] = types[0]
             let typeMatched = false
             for (const type of types)
-                if (Object.prototype.hasOwnProperty.call(models, type)) {
+                if (
+                    typeof type === 'string' &&
+                    Object.prototype.hasOwnProperty.call(models, type)
+                ) {
                     if (
                         typeof newValue === 'object' &&
                         Object.getPrototypeOf(newValue) === Object.prototype &&
@@ -887,9 +893,10 @@ export const validateDocumentUpdate = <
                         typeMatched = true
                         break
                     }
-                } else if (['boolean', 'integer', 'number', 'string'].includes(
-                    type
-                ))
+                } else if (
+                    typeof type === 'string' &&
+                    ['boolean', 'integer', 'number', 'string'].includes(type)
+                )
                     if (
                         typeof newValue === 'number' &&
                         isNaN(newValue) ||
@@ -933,7 +940,8 @@ export const validateDocumentUpdate = <
                 } else if (types.length === 1)
                     throwError(
                         'PropertyType: Property ' +
-                        `"${String(name)}" isn't value "${type}" (given "` +
+                        `"${String(name)}" isn't value "${String(type)}" ` +
+                        `(given "` +
                         serialize(newValue)
                             .replace(/^"/, '')
                             .replace(/"$/, '') +
@@ -1091,7 +1099,7 @@ export const validateDocumentUpdate = <
         const checkPropertyWriteableMutableNullable = <
             Type extends PropertyValue
         >(
-                propertySpecification: PropertySpecification<
+                propertySpecification: BasePropertySpecification<
                     Type, AdditionalSpecifications
                 >,
                 newDocument: PartialFullDocumentType,
@@ -1308,6 +1316,7 @@ export const validateDocumentUpdate = <
                 )
                     (newDocument[name] as string) =
                         (newDocument[name] as string).trim()
+
                 if (
                     propertySpecification.emptyEqualsNull &&
                     (
@@ -1737,22 +1746,16 @@ export const validateDocumentUpdate = <
                     } else if (newFileNames.length === 0)
                         if (oldFileNames.length === 0) {
                             for (
-                                const fileName in
-                                    propertySpecification.default as
-                                        unknown as
-                                        object
+                                const fileName in propertySpecification.default
                             )
                                 if (Object.prototype.hasOwnProperty.call(
-                                    propertySpecification.default as
-                                        unknown as
-                                        object,
+                                    propertySpecification.default,
                                     fileName
                                 )) {
-                                    newAttachments[fileName] = (
-                                        propertySpecification.default as
-                                            unknown as
-                                            Attachments
-                                    )[fileName]
+                                    newAttachments[fileName] =
+                                        propertySpecification.default[
+                                            fileName
+                                        ] as AttachmentType
                                     changedPath = parentNames.concat(
                                         name, type, 'add default file'
                                     )
@@ -1795,7 +1798,7 @@ export const validateDocumentUpdate = <
                             Object.prototype.hasOwnProperty.call(
                                 oldDocument, name
                             ) &&
-                            updateStrategy
+                            updateStrategy !== 'replace'
                         )
                     ))
                         throwError(
@@ -1815,7 +1818,7 @@ export const validateDocumentUpdate = <
                     )
                         if (updateStrategy === 'fillUp')
                             newDocument[name] = oldDocument[name]
-                        else if (!updateStrategy)
+                        else if (updateStrategy === 'replace')
                             changedPath = parentNames.concat(
                                 String(name), 'property removed'
                             )
@@ -1981,11 +1984,10 @@ export const validateDocumentUpdate = <
                     // region check arrays
                     if (!Array.isArray(newProperty))
                         throwError(
-                            `PropertyType: Property "${String(name)}" isn't` +
-                            ` of type "array -> ` +
-                            `${propertySpecification.type as string}" ` +
-                            `(given "${serialize(newProperty)}")` +
-                            `${pathDescription}.`
+                            `PropertyType: Property "${String(name)}" isn't ` +
+                            `of type "array -> ` +
+                            `${propertySpecification.type as string}" (given` +
+                            `"${serialize(newProperty)}")${pathDescription}.`
                         )
                     else if (
                         typeof propertySpecification.minimumNumber ===
@@ -1994,10 +1996,9 @@ export const validateDocumentUpdate = <
                             propertySpecification.minimumNumber
                     )
                         throwError(
-                            `MinimumArrayLength: Property ` +
-                            `"${String(name)}" (array of length ` +
-                            `${String(newProperty.length)}) doesn't fullfill ` +
-                            `minimum array length of ` +
+                            `MinimumArrayLength: Property "${String(name)}" ` +
+                            `(array of length ${String(newProperty.length)})` +
+                            ` doesn't fullfill minimum array length of ` +
                             (
                                 propertySpecification.minimumNumber as
                                     unknown as
@@ -2012,10 +2013,9 @@ export const validateDocumentUpdate = <
                             newProperty.length
                     )
                         throwError(
-                            `MaximumArrayLength: Property ` +
-                            `"${String(name)}" (array of length ` +
-                            `${String(newProperty.length)}) doesn't fullfill` +
-                            ` maximum array length of ` +
+                            `MaximumArrayLength: Property "${String(name)}" ` +
+                            `(array of length ${String(newProperty.length)})` +
+                            ` doesn't fullfill maximum array length of ` +
                             (
                                 propertySpecification.maximumNumber as
                                     unknown as
@@ -2061,9 +2061,7 @@ export const validateDocumentUpdate = <
                                 else
                                     propertySpecificationCopy[key] = [(
                                         type as string
-                                    ).substring(
-                                        0, type.length - '[]'.length
-                                    )]
+                                    ).substring(0, type.length - '[]'.length)]
                             } else
                                 (propertySpecificationCopy[
                                     key as keyof PropertySpecification<
@@ -2083,7 +2081,10 @@ export const validateDocumentUpdate = <
                         definition will receive one.
                     */
                     if (
-                        propertySpecificationCopy.type?.length === 1 &&
+                        Array.isArray(propertySpecificationCopy.type) &&
+                        propertySpecificationCopy.type.length === 1 &&
+                        typeof propertySpecificationCopy.type[0] ===
+                            'string' &&
                         Object.prototype.hasOwnProperty.call(
                             models, propertySpecificationCopy.type[0]
                         )
@@ -2142,7 +2143,7 @@ export const validateDocumentUpdate = <
                             )
                         ) ?
                             oldDocument[name] :
-                            null
+                            undefined
 
                     const result = isArrayType ?
                         {newValue: null, changedPath: []} :
@@ -2162,20 +2163,20 @@ export const validateDocumentUpdate = <
                         changedPath = result.changedPath
 
                     // NOTE: Do not use "newValue" here anymore.
-                    if ([null, undefined].includes(
-                        newDocument[name] as null
-                    )) {
-                        if (oldValue !== null)
+                    if (newDocument[name] === null)
+                        if (oldValue === undefined) {
+                            if (updateStrategy === 'fillUp')
+                                delete newDocument[name]
+                        } else
                             changedPath = parentNames.concat(
                                 String(name), 'property removed'
                             )
 
-                        if (!(
-                            updateStrategy === 'incremental' &&
-                            oldValue === null
-                        ))
-                            delete newDocument[name]
-                    }
+                    if (
+                        newDocument[name] === undefined &&
+                        updateStrategy === 'incremental'
+                    )
+                        delete newDocument[name]
                 }
             }
         /// region constraint
@@ -2379,7 +2380,7 @@ export const validateDocumentUpdate = <
                                 )
                         } else if (updateStrategy === 'fillUp')
                             newAttachments[fileName] = oldAttachment
-                        else if (!updateStrategy)
+                        else if (updateStrategy === 'replace')
                             changedPath = parentNames.concat(
                                 specialNames.attachment,
                                 fileName,
@@ -2436,9 +2437,7 @@ export const validateDocumentUpdate = <
                 for (const [type, specification] of Object.entries(
                     attachmentModel
                 ))
-                    if (fileNameMatchesModelType(
-                        type, name, specification
-                    )) {
+                    if (fileNameMatchesModelType(type, name, specification)) {
                         attachmentToTypeMapping[type].push(name)
 
                         matched = true

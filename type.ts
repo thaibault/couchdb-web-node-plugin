@@ -147,8 +147,8 @@ export const PrimitiveTypes = [
     'string'
 ] as const
 export type PrimitiveType = typeof PrimitiveTypes[number]
-export type Type = string // | 'any' | PrimitiveType
-export type TypeSpecification = Array<Type> | Type
+export type Type = boolean | number | string // | 'any' | PrimitiveType
+export type TypeSpecification = Array<TypeSpecification> | Type
 
 export type ConstraintKey =
     'arrayConstraintExecution' |
@@ -162,8 +162,8 @@ export interface SelectionMapping {
     value: unknown
 }
 export type Pattern = Array<RegExp | string> | RegExp | string
-export interface PropertySpecification<
-    Type = unknown, AdditionalSpecifications extends object = object
+export interface BasePropertySpecification<
+    Type, AdditionalSpecifications extends object
 > {
     allowedRoles?: AllowedRoles
     computed?: boolean
@@ -213,7 +213,6 @@ export interface PropertySpecification<
     type?: TypeSpecification
     // endregion
     // region simple transformation
-    default?: Type
     emptyEqualsNull?: boolean
     trim?: boolean
     // endregion
@@ -232,10 +231,17 @@ export interface PropertySpecification<
 
     additionalSpecifications?: AdditionalSpecifications
 }
+export interface PropertySpecification<
+    Type = unknown, AdditionalSpecifications extends object = object
+> extends BasePropertySpecification<Type, AdditionalSpecifications> {
+    default?: Type
+}
+
 export interface FileSpecification<
     Type extends Attachment = Attachment,
     AdditionalSpecifications extends object = object
-> extends PropertySpecification<null | Type, AdditionalSpecifications> {
+> extends BasePropertySpecification<Type, AdditionalSpecifications> {
+    default?: Mapping<Type>
     fileName?: PropertySpecification<string, AdditionalSpecifications>
 }
 export interface BaseModel<
@@ -318,7 +324,7 @@ export type Models<
     Type, AttachmentType, AdditionalSpecifications, AdditionalPropertiesType
 >>
 
-export type UpdateStrategy = '' | 'fillUp' | 'incremental' | 'migrate'
+export type UpdateStrategy = 'fillUp' | 'incremental' | 'migrate' | 'replace'
 
 export type DocumentContent =
     Array<DocumentContent> | PlainObject | Primitive
