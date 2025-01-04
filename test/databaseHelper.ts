@@ -1904,6 +1904,7 @@ describe('databaseHelper', () => {
             givenModelConfiguration: AllowedTest[1],
             expected: AllowedTest[2]
         ): void => {
+            // @ts-expect-error Is complaining about "autoMigrationPath".
             const modelConfiguration: ModelConfiguration = extend(
                 true,
                 copy(defaultModelConfiguration),
@@ -2742,7 +2743,6 @@ describe('databaseHelper', () => {
                             [attachmentName]: {
                                 test: {
                                     default: {
-                                        // TODO understand
                                         test: {
                                             /* eslint-disable camelcase */
                                             data: '',

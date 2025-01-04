@@ -21,6 +21,7 @@ import {
     Attachment,
     BaseModel,
     BaseModelConfiguration,
+    BasePropertySpecification,
     BasicScope,
     CheckedDocumentResult,
     CheckedPropertyResult,
@@ -1091,7 +1092,7 @@ export const validateDocumentUpdate = <
         const checkPropertyWriteableMutableNullable = <
             Type extends PropertyValue
         >(
-                propertySpecification: PropertySpecification<
+                propertySpecification: BasePropertySpecification<
                     Type, AdditionalSpecifications
                 >,
                 newDocument: PartialFullDocumentType,
@@ -1738,22 +1739,16 @@ export const validateDocumentUpdate = <
                     } else if (newFileNames.length === 0)
                         if (oldFileNames.length === 0) {
                             for (
-                                const fileName in
-                                    propertySpecification.default as
-                                        unknown as
-                                        object
+                                const fileName in propertySpecification.default
                             )
                                 if (Object.prototype.hasOwnProperty.call(
-                                    propertySpecification.default as
-                                        unknown as
-                                        object,
+                                    propertySpecification.default,
                                     fileName
                                 )) {
-                                    newAttachments[fileName] = (
-                                        propertySpecification.default as
-                                            unknown as
-                                            Attachments
-                                    )[fileName]
+                                    newAttachments[fileName] =
+                                        propertySpecification.default[
+                                            fileName
+                                        ] as AttachmentType
                                     changedPath = parentNames.concat(
                                         name, type, 'add default file'
                                     )
@@ -2432,9 +2427,7 @@ export const validateDocumentUpdate = <
                 for (const [type, specification] of Object.entries(
                     attachmentModel
                 ))
-                    if (fileNameMatchesModelType(
-                        type, name, specification
-                    )) {
+                    if (fileNameMatchesModelType(type, name, specification)) {
                         attachmentToTypeMapping[type].push(name)
 
                         matched = true
