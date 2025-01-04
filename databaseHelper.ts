@@ -51,7 +51,8 @@ import {
     SelectionMapping,
     SpecialPropertyNames,
     StubAttachment,
-    Type as TypeNames, UpdateStrategy,
+    TypeSpecification,
+    UpdateStrategy,
     UserContext
 } from './type'
 // endregion
@@ -796,7 +797,7 @@ export const validateDocumentUpdate = <
         ): CheckedPropertyResult<Type> => {
             let changedPath: Array<string> = []
             // region type
-            const types = ([] as Array<TypeNames>).concat(
+            const types = ([] as Array<TypeSpecification>).concat(
                 propertySpecification.type ? propertySpecification.type : []
             )
             // Derive nested missing explicit type definition if possible.
@@ -805,12 +806,16 @@ export const validateDocumentUpdate = <
                 Object.getPrototypeOf(newValue) === Object.prototype &&
                 !Object.prototype.hasOwnProperty.call(newValue, typeName) &&
                 types.length === 1 &&
+                typeof types[0] === 'string' &&
                 Object.prototype.hasOwnProperty.call(models, types[0])
             )
                 (newValue as PartialFullDocumentType)[typeName] = types[0]
             let typeMatched = false
             for (const type of types)
-                if (Object.prototype.hasOwnProperty.call(models, type)) {
+                if (
+                    typeof type === 'string' &&
+                    Object.prototype.hasOwnProperty.call(models, type)
+                ) {
                     if (
                         typeof newValue === 'object' &&
                         Object.getPrototypeOf(newValue) === Object.prototype &&
@@ -888,9 +893,10 @@ export const validateDocumentUpdate = <
                         typeMatched = true
                         break
                     }
-                } else if (['boolean', 'integer', 'number', 'string'].includes(
-                    type
-                ))
+                } else if (
+                    typeof type === 'string' &&
+                    ['boolean', 'integer', 'number', 'string'].includes(type)
+                )
                     if (
                         typeof newValue === 'number' &&
                         isNaN(newValue) ||
@@ -934,7 +940,8 @@ export const validateDocumentUpdate = <
                 } else if (types.length === 1)
                     throwError(
                         'PropertyType: Property ' +
-                        `"${String(name)}" isn't value "${type}" (given "` +
+                        `"${String(name)}" isn't value "${String(type)}" ` +
+                        `(given "` +
                         serialize(newValue)
                             .replace(/^"/, '')
                             .replace(/"$/, '') +
@@ -2074,7 +2081,10 @@ export const validateDocumentUpdate = <
                         definition will receive one.
                     */
                     if (
-                        propertySpecificationCopy.type?.length === 1 &&
+                        Array.isArray(propertySpecificationCopy.type) &&
+                        propertySpecificationCopy.type.length === 1 &&
+                        typeof propertySpecificationCopy.type[0] ===
+                            'string' &&
                         Object.prototype.hasOwnProperty.call(
                             models, propertySpecificationCopy.type[0]
                         )

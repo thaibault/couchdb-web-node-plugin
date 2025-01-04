@@ -31,6 +31,7 @@ import {authenticate, validateDocumentUpdate} from '../databaseHelper'
 import {extendModels} from '../helper'
 import packageConfiguration from '../package.json'
 import {
+    Attachment,
     Attachments,
     BaseModel,
     Configuration,
@@ -1891,7 +1892,9 @@ describe('databaseHelper', () => {
             RecursivePartial<ModelConfiguration<{
                 a: unknown
                 b: unknown
+                c: unknown
                 class: unknown
+                type: unknown
             }>>,
             {
                 fillUp: ReturnType<typeof validateDocumentUpdate>
@@ -1933,7 +1936,7 @@ describe('databaseHelper', () => {
                 models
             )).toStrictEqual((expected)[updateStrategy])
         }
-        const adaptTests = (tests: Array<AllowedTest>) =>
+        const adaptTests = (tests: Array<AllowedTest>): Array<AllowedTest> =>
             /*
                 Provides test only one or skip all tests from specified one to
                 support delta debugging when searching for failing test.
@@ -1957,7 +1960,7 @@ describe('databaseHelper', () => {
                     ['only', 'skip'].includes(test[0] as string) ?
                         test.slice(1) :
                         test
-                )
+                ) as Array<AllowedTest>
         /// region general environment
         test.each(adaptTests([
             /*
@@ -4940,7 +4943,9 @@ describe('databaseHelper', () => {
                 [
                     {
                         [typeName]: 'Test',
-                        [attachmentName]: {a: {data: null}},
+                        [attachmentName]: {
+                            a: {data: null} as unknown as Attachment
+                        },
                         b: 'b'
                     },
                     {
@@ -4966,7 +4971,9 @@ describe('databaseHelper', () => {
                 [
                     {
                         [typeName]: 'Test',
-                        [attachmentName]: {a: {data: null}},
+                        [attachmentName]: {
+                            a: {data: null} as unknown as Attachment
+                        },
                         b: 'b'
                     },
                     {
@@ -5099,7 +5106,9 @@ describe('databaseHelper', () => {
             [
                 [{
                     [typeName]: 'Test',
-                    [attachmentName]: {a: {data: 'a', length: 1}}
+                    [attachmentName]: {
+                        a: {data: 'a', length: 1} as unknown as Attachment
+                    }
                 }],
                 {
                     entities: {
@@ -5115,22 +5124,30 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {
                         [typeName]: 'Test',
-                        [attachmentName]: {a: {data: 'a', length: 1}}
+                        [attachmentName]: {
+                            a: {data: 'a', length: 1} as unknown as Attachment
+                        }
                     },
                     incremental: {
                         [typeName]: 'Test',
-                        [attachmentName]: {a: {data: 'a', length: 1}}
+                        [attachmentName]: {
+                            a: {data: 'a', length: 1} as unknown as Attachment
+                        }
                     },
                     replace: {
                         [typeName]: 'Test',
-                        [attachmentName]: {a: {data: 'a', length: 1}}
+                        [attachmentName]: {
+                            a: {data: 'a', length: 1} as unknown as Attachment
+                        }
                     }
                 }
             ],
             [
                 [{
                     [typeName]: 'Test',
-                    [attachmentName]: {a: {data: 'abc', length: 3}}
+                    [attachmentName]: {
+                        a: {data: 'abc', length: 3} as unknown as Attachment
+                    }
                 }],
                 {
                     entities: {
@@ -5146,15 +5163,27 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {
                         [typeName]: 'Test',
-                        [attachmentName]: {a: {data: 'abc', length: 3}}
+                        [attachmentName]: {
+                            a: {data: 'abc', length: 3} as
+                                unknown as
+                                Attachment
+                        }
                     },
                     incremental: {
                         [typeName]: 'Test',
-                        [attachmentName]: {a: {data: 'abc', length: 3}}
+                        [attachmentName]: {
+                            a: {data: 'abc', length: 3} as
+                                unknown as
+                                Attachment
+                        }
                     },
                     replace: {
                         [typeName]: 'Test',
-                        [attachmentName]: {a: {data: 'abc', length: 3}}
+                        [attachmentName]: {
+                            a: {data: 'abc', length: 3} as
+                                unknown as
+                                Attachment
+                        }
                     }
                 }
             ]
