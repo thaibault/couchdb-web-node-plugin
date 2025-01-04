@@ -1796,7 +1796,7 @@ export const validateDocumentUpdate = <
                             Object.prototype.hasOwnProperty.call(
                                 oldDocument, name
                             ) &&
-                            updateStrategy
+                            updateStrategy !== 'replace'
                         )
                     ))
                         throwError(
@@ -1816,7 +1816,7 @@ export const validateDocumentUpdate = <
                     )
                         if (updateStrategy === 'fillUp')
                             newDocument[name] = oldDocument[name]
-                        else if (!updateStrategy)
+                        else if (updateStrategy === 'replace')
                             changedPath = parentNames.concat(
                                 String(name), 'property removed'
                             )
@@ -2163,10 +2163,14 @@ export const validateDocumentUpdate = <
                         changedPath = result.changedPath
 
                     // NOTE: Do not use "newValue" here anymore.
-                    if (newDocument[name] === null && oldValue !== undefined)
-                        changedPath = parentNames.concat(
-                            String(name), 'property removed'
-                        )
+                    if (newDocument[name] === null)
+                        if (oldValue === undefined) {
+                            if (updateStrategy === 'fillUp')
+                                delete newDocument[name]
+                        } else
+                            changedPath = parentNames.concat(
+                                String(name), 'property removed'
+                            )
 
                     if (
                         newDocument[name] === undefined &&
@@ -2376,7 +2380,7 @@ export const validateDocumentUpdate = <
                                 )
                         } else if (updateStrategy === 'fillUp')
                             newAttachments[fileName] = oldAttachment
-                        else if (!updateStrategy)
+                        else if (updateStrategy === 'replace')
                             changedPath = parentNames.concat(
                                 specialNames.attachment,
                                 fileName,

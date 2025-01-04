@@ -105,7 +105,9 @@ describe('databaseHelper', () => {
             {Test: {properties: {}, read: [], write: ['users']}}
         ]
     )
-    for (const updateStrategy of ['', 'fillUp', 'incremental'] as const) {
+    for (const updateStrategy of [
+        'fillUp', 'incremental', 'replace'
+    ] as const) {
         let only = false
         let skip = false
         const defaultModelConfiguration: ModelConfiguration = {
@@ -123,7 +125,7 @@ describe('databaseHelper', () => {
                     propertyName as keyof BaseModel
                 ]
         // region forbidden writes
-        const tester = (...test): void => {
+        const forbiddenTester = (...test): void => {
             if (test.length < 3)
                 (test as unknown as Array<unknown>).splice(1, 0, {})
 
@@ -180,8 +182,9 @@ describe('databaseHelper', () => {
                 'Revision'
             ]
         ] as const)(
-            `%#. forbidden general environment validateDocumentUpdate (with update strategy "${updateStrategy}")`,
-            tester
+            '%#. forbidden general environment validateDocumentUpdate ' +
+            `(with update strategy "${updateStrategy}")`,
+            forbiddenTester
         )
         /// endregion
         /// region changes
@@ -333,11 +336,14 @@ describe('databaseHelper', () => {
             [
                 [{[typeName]: 'Test'}, {[typeName]: 'Test', a: '1'}],
                 {entities: {Test: {a: {}}}},
-                updateStrategy ? 'NoChange' : {[typeName]: 'Test'}
+                updateStrategy === 'replace' ?
+                    {[typeName]: 'Test'} :
+                    'NoChange'
             ]
         ] as const)(
-            `%#. forbidden changes validateDocumentUpdate (with update strategy "${updateStrategy}")`,
-            tester
+            '%#. forbidden changes validateDocumentUpdate ' +
+            `(with update strategy "${updateStrategy}")`,
+            forbiddenTester
         )
         /// endregion
         /// region model
@@ -413,8 +419,9 @@ describe('databaseHelper', () => {
                 'TypeName'
             ]
         ] as const)(
-            `%#. forbidden model validateDocumentUpdate (with update strategy "${updateStrategy}")`,
-            tester
+            '%#. forbidden model validateDocumentUpdate ' +
+            `(with update strategy "${updateStrategy}")`,
+            forbiddenTester
         )
         /// endregion
         /// region hooks
@@ -511,11 +518,12 @@ describe('databaseHelper', () => {
                     }
                 },
                 'Runtime'
-            ],
+            ]
             // endregion
         ] as const)(
-            `%#. forbidden hooks validateDocumentUpdate (with update strategy "${updateStrategy}")`,
-            tester
+            '%#. forbidden hooks validateDocumentUpdate ' +
+            `(with update strategy "${updateStrategy}")`,
+            forbiddenTester
         )
         /// endregion
         /// region property writable/mutable
@@ -534,8 +542,9 @@ describe('databaseHelper', () => {
                 'Readonly'
             ]
         ] as const)(
-            `%#. forbidden property writable/mutable validateDocumentUpdate (with update strategy "${updateStrategy}")`,
-            tester
+            '%#. forbidden property writable/mutable validateDocumentUpdate ' +
+            `(with update strategy "${updateStrategy}")`,
+            forbiddenTester
         )
         /// endregion
         /// region property existence
@@ -563,11 +572,12 @@ describe('databaseHelper', () => {
             [
                 [{[typeName]: 'Test'}, {[typeName]: 'Test', a: ''}],
                 {entities: {Test: {a: {nullable: false}}}},
-                updateStrategy ? 'NoChange' : 'MissingProperty'
+                updateStrategy === 'replace' ? 'MissingProperty' : 'NoChange'
             ]
         ] as const)(
-            `%#. forbidden property existence validateDocumentUpdate (with update strategy "${updateStrategy}")`,
-            tester
+            '%#. forbidden property existence validateDocumentUpdate ' +
+            `(with update strategy "${updateStrategy}")`,
+            forbiddenTester
         )
         /// endregion
         /// region property type
@@ -1056,8 +1066,9 @@ describe('databaseHelper', () => {
                 'PropertyType'
             ]
         ] as const)(
-            `%#. forbidden property type validateDocumentUpdate (with update strategy "${updateStrategy}")`,
-            tester
+            '%#. forbidden property type validateDocumentUpdate ' +
+            `(with update strategy "${updateStrategy}")`,
+            forbiddenTester
         )
         /// endregion
         /// region property range
@@ -1089,8 +1100,9 @@ describe('databaseHelper', () => {
                 'MaximalLength'
             ]
         ] as const)(
-            `%#. forbidden property range validateDocumentUpdate (with update strategy "${updateStrategy}")`,
-            tester
+            '%#. forbidden property range validateDocumentUpdate ' +
+            `(with update strategy "${updateStrategy}")`,
+            forbiddenTester
         )
         /// endregion
         /// region selection
@@ -1152,8 +1164,9 @@ describe('databaseHelper', () => {
                 'Selection'
             ]
         ] as const)(
-            `%#. forbidden selection validateDocumentUpdate (with update strategy "${updateStrategy}")`,
-            tester
+            '%#. forbidden selection validateDocumentUpdate ' +
+            `(with update strategy "${updateStrategy}")`,
+            forbiddenTester
         )
         /// endregion
         /// region property pattern
@@ -1170,8 +1183,9 @@ describe('databaseHelper', () => {
                 'InvertedPatternMatch'
             ]
         ] as const)(
-            `%#. forbidden property pattern validateDocumentUpdate (with update strategy "${updateStrategy}")`,
-            tester
+            '%#. forbidden property pattern validateDocumentUpdate ' +
+            `(with update strategy "${updateStrategy}")`,
+            forbiddenTester
         )
         /// endregion
         /// region property constraint
@@ -1271,8 +1285,9 @@ describe('databaseHelper', () => {
                 'ConstraintExpression'
             ]
         ] as const)(
-            `%#. forbidden property constraint validateDocumentUpdate (with update strategy "${updateStrategy}")`,
-            tester
+            '%#. forbidden property constraint validateDocumentUpdate ' +
+            `(with update strategy "${updateStrategy}")`,
+            forbiddenTester
         )
         /// endregion
         /// region constraint
@@ -1343,8 +1358,9 @@ describe('databaseHelper', () => {
                 'ConstraintExecutions'
             ]
         ] as const)(
-            `%#. forbidden constraint validateDocumentUpdate (with update strategy "${updateStrategy}")`,
-            tester
+            '%#. forbidden constraint validateDocumentUpdate ' +
+            `(with update strategy "${updateStrategy}")`,
+            forbiddenTester
         )
         /// endregion
         /// region attachment
@@ -1833,14 +1849,74 @@ describe('databaseHelper', () => {
                 'AggregatedMaximumSize'
             ]
         ] as const)(
-            `%#. forbidden attachment validateDocumentUpdate (with update strategy "${updateStrategy}")`,
-            tester
+            '%#. forbidden attachment validateDocumentUpdate ' +
+            `(with update strategy "${updateStrategy}")`,
+            forbiddenTester
         )
         /// endregion
         // endregion
         // region allowed writes
-        test.each([
-            // region general environment
+        const allowedTester = (
+            ...test
+        ): void => {
+            const modelConfiguration: ModelConfiguration = extend(
+                true,
+                copy(defaultModelConfiguration),
+                test[1] as Partial<ModelConfiguration>
+            )
+            const models = extendModels(modelConfiguration)
+
+            delete (
+                modelConfiguration.property as
+                    Partial<ModelConfiguration['property']>
+            ).defaultSpecification
+            delete (modelConfiguration as Partial<ModelConfiguration>)
+                .entities
+
+            expect(validateDocumentUpdate(
+                ...(
+                    (test[0] as Array<unknown>)
+                        .concat(
+                            [null, {}, {}].slice(
+                                (test[0] as Array<unknown>).length - 1
+                            )
+                        )
+                        .concat(modelConfiguration, models)
+                ) as Parameters<typeof validateDocumentUpdate>
+            )).toStrictEqual((
+                test[2] as Mapping<
+                    ReturnType<typeof validateDocumentUpdate>,
+                    UpdateStrategy
+                >
+            )[updateStrategy])
+        }
+        const adaptTests = (tests) =>
+            /*
+                Provides test only one or skip all tests from specified one to
+                support delta debugging when searching for failing test.
+            */
+            tests
+                .filter((test: Array<unknown>) => {
+                    if (only || skip)
+                        return false
+                    if (test[0] === 'only')
+                        only = true
+                    if (test[0] === 'skip') {
+                        skip = true
+                        return false
+                    }
+                    return true
+                })
+                .filter((test, index, tests) =>
+                    !only || index === tests.length - 1
+                )
+                .map((test: Array<unknown>) =>
+                    ['only', 'skip'].includes(test[0] as string) ?
+                        test.slice(1) :
+                        test
+                )
+        /// region general environment
+        test.each(adaptTests([
             /*
                 NOTE: Needed if we are able to validate "_users" table:
 
@@ -1855,7 +1931,7 @@ describe('databaseHelper', () => {
                         incremental: {
                             type: 'user', [idName]: 'org.couchdb.user:test'
                         },
-                        '': {
+                        replace: {
                             type: 'user', [idName]: 'org.couchdb.user:test'
                         }
                     }
@@ -1874,7 +1950,7 @@ describe('databaseHelper', () => {
                         incremental: {
                             type: 'user', [idName]: 'org.couchdb.user:test'
                         },
-                        '': {
+                        replace: {
                             type: 'user', [idName]: 'org.couchdb.user:test'
                         }
                     }
@@ -1890,13 +1966,13 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', _deleted: true},
                     incremental: {_deleted: true},
-                    '': {[typeName]: 'Test', _deleted: true}
+                    replace: {[typeName]: 'Test', _deleted: true}
                 }
             ],
             /*
-                    It should be possible to migrate documents with non
-                    specified properties.
-                */
+                It should be possible to migrate documents with non specified
+                properties.
+            */
             [
                 [{
                     a: 2,
@@ -1907,7 +1983,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test'},
                     incremental: {[typeName]: 'Test'},
-                    '': {[typeName]: 'Test'}
+                    replace: {[typeName]: 'Test'}
                 }
             ],
             // TODO document what is really tested.
@@ -1926,7 +2002,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[idName]: 1, [revisionName]: 1},
                     incremental: {[idName]: 1, [revisionName]: 1},
-                    '': {[idName]: 1, [revisionName]: 1}
+                    replace: {[idName]: 1, [revisionName]: 1}
                 }
             ],
             [
@@ -1950,7 +2026,7 @@ describe('databaseHelper', () => {
                         [typeName]: 'Test', [idName]: 1, [revisionName]: 1
                     },
                     incremental: {[idName]: 1, [revisionName]: 1, a: null},
-                    '': {
+                    replace: {
                         [idName]: 1,
                         [revisionName]: 1,
                         [typeName]: 'Test'
@@ -1973,7 +2049,7 @@ describe('databaseHelper', () => {
                         [revisionName]: 1, a: 'a'
                     },
                     incremental: {[revisionName]: 1, a: 'a'},
-                    '': {[typeName]: 'Test', [revisionName]: 1, a: 'a'}
+                    replace: {[typeName]: 'Test', [revisionName]: 1, a: 'a'}
                 }
             ],
             [
@@ -1991,7 +2067,7 @@ describe('databaseHelper', () => {
                         [typeName]: 'Test', [revisionName]: 1, a: 'a'
                     },
                     incremental: {[revisionName]: 1, a: 'a'},
-                    '': {[typeName]: 'Test', [revisionName]: 1, a: 'a'}
+                    replace: {[typeName]: 'Test', [revisionName]: 1, a: 'a'}
                 }
             ],
             [
@@ -2000,7 +2076,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test'},
                     incremental: {[typeName]: 'Test'},
-                    '': {[typeName]: 'Test'}
+                    replace: {[typeName]: 'Test'}
                 }
             ],
             [
@@ -2013,13 +2089,13 @@ describe('databaseHelper', () => {
                         [typeName]: 'Test', [revisionName]: 1, a: 'a'
                     },
                     incremental: {[revisionName]: 1, a: 'a'},
-                    '': {[typeName]: 'Test', [revisionName]: 1, a: 'a'}
+                    replace: {[typeName]: 'Test', [revisionName]: 1, a: 'a'}
                 }
             ],
             /*
-                    Only explicitly specified properties should be
-                    automatically filled up from old documents.
-                */
+                Only explicitly specified properties should be automatically
+                filled up from old documents.
+            */
             [
                 [{[typeName]: 'Test', a: 1}, {[typeName]: 'Test', b: 2}],
                 {
@@ -2034,11 +2110,17 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: 1},
                     incremental: {a: 1},
-                    '': {[typeName]: 'Test', a: 1}
+                    replace: {[typeName]: 'Test', a: 1}
                 }
-            ],
-            // endregion
-            // region model
+            ]
+        ]))(
+            '%#. allowed general environment validateDocumentUpdate ' +
+            `(with update strategy "${updateStrategy}")`,
+            allowedTester
+        )
+        /// endregion
+        /// region model
+        test.each(adaptTests([
             // It specified be possible to created specified documents.
             [
                 [{[typeName]: 'Test'}],
@@ -2046,7 +2128,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test'},
                     incremental: {[typeName]: 'Test'},
-                    '': {[typeName]: 'Test'}
+                    replace: {[typeName]: 'Test'}
                 }
             ],
             [
@@ -2055,7 +2137,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test'},
                     incremental: {[typeName]: 'Test'},
-                    '': {[typeName]: 'Test'}
+                    replace: {[typeName]: 'Test'}
                 }
             ],
             [
@@ -2064,7 +2146,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test'},
                     incremental: {[typeName]: 'Test'},
-                    '': {[typeName]: 'Test'}
+                    replace: {[typeName]: 'Test'}
                 }
             ],
             [
@@ -2076,7 +2158,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: '2', b: 'b'},
                     incremental: {b: 'b'},
-                    '': {[typeName]: 'Test', b: 'b'}
+                    replace: {[typeName]: 'Test', b: 'b'}
                 }
             ],
             [
@@ -2088,7 +2170,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {a: '3', [typeName]: 'Test'},
                     incremental: {a: '3'},
-                    '': {[typeName]: 'Test', a: '3'}
+                    replace: {[typeName]: 'Test', a: '3'}
                 }
             ],
             [
@@ -2100,19 +2182,25 @@ describe('databaseHelper', () => {
                         [typeName]: 'Test',
                         a: {[typeName]: '_test'}
                     },
-                    '': {[typeName]: 'Test', a: {[typeName]: '_test'}}
+                    replace: {[typeName]: 'Test', a: {[typeName]: '_test'}}
                 }
-            ],
-            // endregion
-            // region hooks
-            /// region on create
+            ]
+        ]))(
+            '%#. allowed model validateDocumentUpdate (with update strategy ' +
+            `"${updateStrategy}")`,
+            allowedTester
+        )
+        /// endregion
+        /// region hooks
+        test.each(adaptTests([
+            // region on create
             [
                 [{[typeName]: 'Test', a: ''}],
                 {entities: {Test: {a: {onCreateExpression: `'2'`}}}},
                 {
                     fillUp: {[typeName]: 'Test', a: '2'},
                     incremental: {[typeName]: 'Test', a: '2'},
-                    '': {[typeName]: 'Test', a: '2'}
+                    replace: {[typeName]: 'Test', a: '2'}
                 }
             ],
             [
@@ -2166,7 +2254,7 @@ describe('databaseHelper', () => {
                             }
                         }
                     },
-                    '': {
+                    replace: {
                         [typeName]: 'Test',
                         [attachmentName]: {
                             test: {
@@ -2230,7 +2318,7 @@ describe('databaseHelper', () => {
                             }
                         }
                     },
-                    '': {
+                    replace: {
                         [typeName]: 'Test',
                         [attachmentName]: {
                             test: {
@@ -2248,7 +2336,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: '2'},
                     incremental: {[typeName]: 'Test', a: '2'},
-                    '': {[typeName]: 'Test', a: '2'}
+                    replace: {[typeName]: 'Test', a: '2'}
                 }
             ],
             [
@@ -2267,18 +2355,18 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: '3', b: 'b'},
                     incremental: {b: 'b'},
-                    '': {[typeName]: 'Test', a: '3', b: 'b'}
+                    replace: {[typeName]: 'Test', a: '3', b: 'b'}
                 }
             ],
-            /// endregion
-            /// region on update
+            // endregion
+            // region on update
             [
                 [{[typeName]: 'Test', a: ''}],
                 {entities: {Test: {a: {onUpdateExpression: `'2'`}}}},
                 {
                     fillUp: {[typeName]: 'Test', a: '2'},
                     incremental: {[typeName]: 'Test', a: '2'},
-                    '': {[typeName]: 'Test', a: '2'}
+                    replace: {[typeName]: 'Test', a: '2'}
                 }
             ],
             [
@@ -2287,7 +2375,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: '2'},
                     incremental: {[typeName]: 'Test', a: '2'},
-                    '': {[typeName]: 'Test', a: '2'}
+                    replace: {[typeName]: 'Test', a: '2'}
                 }
             ],
             [
@@ -2306,7 +2394,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: '2', b: ''},
                     incremental: {b: ''},
-                    '': {[typeName]: 'Test', a: '2', b: ''}
+                    replace: {[typeName]: 'Test', a: '2', b: ''}
                 }
             ],
             [
@@ -2361,7 +2449,7 @@ describe('databaseHelper', () => {
                             }
                         }
                     },
-                    '': {
+                    replace: {
                         [typeName]: 'Test',
                         [attachmentName]: {
                             test: {
@@ -2428,7 +2516,7 @@ describe('databaseHelper', () => {
                             }
                         }
                     },
-                    '': {
+                    replace: {
                         [typeName]: 'Test',
                         [attachmentName]: {
                             test: {
@@ -2464,12 +2552,18 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: ''},
                     incremental: {a: ''},
-                    '': {[typeName]: 'Test', a: ''}
+                    replace: {[typeName]: 'Test', a: ''}
                 }
-            ],
-            /// endregion
+            ]
             // endregion
-            // region property writable/mutable
+        ]))(
+            '%#. allowed hooks validateDocumentUpdate ' +
+            `(with update strategy "${updateStrategy}")`,
+            allowedTester
+        )
+        /// endregion
+        /// region property writable/mutable
+        test.each(adaptTests([
             [
                 [
                     {[typeName]: 'Test', a: 'b', b: ''},
@@ -2487,7 +2581,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: 'b', b: ''},
                     incremental: {b: ''},
-                    '': {[typeName]: 'Test', a: 'b', b: ''}
+                    replace: {[typeName]: 'Test', a: 'b', b: ''}
                 }
             ],
             [
@@ -2506,7 +2600,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', b: ''},
                     incremental: {b: ''},
-                    '': {[typeName]: 'Test', b: ''}
+                    replace: {[typeName]: 'Test', b: ''}
                 }
             ],
             [
@@ -2515,11 +2609,17 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: '2'},
                     incremental: {a: '2'},
-                    '': {[typeName]: 'Test', a: '2'}
+                    replace: {[typeName]: 'Test', a: '2'}
                 }
-            ],
-            // endregion
-            // region property existence
+            ]
+        ]))(
+            '%#. allowed property writable/mutable validateDocumentUpdate ' +
+            `(with update strategy "${updateStrategy}")`,
+            allowedTester
+        )
+        /// endregion
+        /// region property existence
+        test.each(adaptTests([
             [
                 [
                     {[typeName]: 'Test', a: null},
@@ -2529,7 +2629,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test'},
                     incremental: {a: null},
-                    '': {[typeName]: 'Test'}
+                    replace: {[typeName]: 'Test'}
                 }
             ],
             [
@@ -2541,30 +2641,28 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: ''},
                     incremental: {a: ''},
-                    '': {[typeName]: 'Test', a: ''}
+                    replace: {[typeName]: 'Test', a: ''}
                 }
             ],
-            /* TODO fails
+            [
                 [
-                    [
-                        {[typeName]: 'Test', a: ''},
-                        {[typeName]: 'Test', a: 'old'}
-                    ],
-                    {entities: {Test: {a: {emptyEqualsNull: true}}}},
-                    {
-                        fillUp: {[typeName]: 'Test', a: null},
-                        incremental: {a: null},
-                        '': {[typeName]: 'Test', a: null}
-                    }
+                    {[typeName]: 'Test', a: ''},
+                    {[typeName]: 'Test', a: 'old'}
                 ],
-                */
+                {entities: {Test: {a: {emptyEqualsNull: true}}}},
+                {
+                    fillUp: {[typeName]: 'Test'},
+                    incremental: {a: null},
+                    replace: {[typeName]: 'Test'}
+                }
+            ],
             [
                 [{[typeName]: 'Test', a: 2}],
                 {entities: {Test: {a: {type: 'number'}}}},
                 {
                     fillUp: {[typeName]: 'Test', a: 2},
                     incremental: {[typeName]: 'Test', a: 2},
-                    '': {[typeName]: 'Test', a: 2}
+                    replace: {[typeName]: 'Test', a: 2}
                 }
             ],
             [
@@ -2572,8 +2670,8 @@ describe('databaseHelper', () => {
                 {entities: {Test: {a: {}}}},
                 {
                     fillUp: {[typeName]: 'Test'},
-                    incremental: {[typeName]: 'Test', a: null},
-                    '': {[typeName]: 'Test', a: null}
+                    incremental: {[typeName]: 'Test'},
+                    replace: {[typeName]: 'Test'}
                 }
             ],
             [
@@ -2582,7 +2680,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: 'a'},
                     incremental: {[typeName]: 'Test', a: 'a'},
-                    '': {[typeName]: 'Test', a: 'a'}
+                    replace: {[typeName]: 'Test', a: 'a'}
                 }
             ],
             [
@@ -2591,7 +2689,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: '2'},
                     incremental: {[typeName]: 'Test', a: '2'},
-                    '': {[typeName]: 'Test', a: '2'}
+                    replace: {[typeName]: 'Test', a: '2'}
                 }
             ],
             [
@@ -2636,7 +2734,7 @@ describe('databaseHelper', () => {
                             }
                         }
                     },
-                    '': {
+                    replace: {
                         [typeName]: 'Test',
                         [attachmentName]: {
                             test: {
@@ -2647,9 +2745,15 @@ describe('databaseHelper', () => {
                         }
                     }
                 }
-            ],
-            // endregion
-            // region property type
+            ]
+        ]))(
+            '%#. allowed property existence validateDocumentUpdate ' +
+            `(with update strategy "${updateStrategy}")`,
+            allowedTester
+        )
+        /// endregion
+        /// region property type
+        test.each(adaptTests([
             [
                 [
                     {[typeName]: 'Test', a: '2 ', b: ''},
@@ -2659,7 +2763,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: '2', b: ''},
                     incremental: {b: ''},
-                    '': {[typeName]: 'Test', a: '2', b: ''}
+                    replace: {[typeName]: 'Test', a: '2', b: ''}
                 }
             ],
             [
@@ -2671,7 +2775,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: '2 '},
                     incremental: {a: '2 '},
-                    '': {[typeName]: 'Test', a: '2 '}
+                    replace: {[typeName]: 'Test', a: '2 '}
                 }
             ],
             [
@@ -2680,7 +2784,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: 3},
                     incremental: {a: 3},
-                    '': {[typeName]: 'Test', a: 3}
+                    replace: {[typeName]: 'Test', a: 3}
                 }
             ],
             [
@@ -2689,7 +2793,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: 2.2},
                     incremental: {a: 2.2},
-                    '': {[typeName]: 'Test', a: 2.2}
+                    replace: {[typeName]: 'Test', a: 2.2}
                 }
             ],
             [
@@ -2707,7 +2811,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: true, b: ''},
                     incremental: {b: ''},
-                    '': {[typeName]: 'Test', a: true, b: ''}
+                    replace: {[typeName]: 'Test', a: true, b: ''}
                 }
             ],
             [
@@ -2726,7 +2830,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: 1, b: ''},
                     incremental: {b: ''},
-                    '': {[typeName]: 'Test', a: 1, b: ''}
+                    replace: {[typeName]: 'Test', a: 1, b: ''}
                 }
             ],
             [
@@ -2755,7 +2859,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: 0, b: ''},
                     incremental: {b: ''},
-                    '': {[typeName]: 'Test', a: 0, b: ''}
+                    replace: {[typeName]: 'Test', a: 0, b: ''}
                 }
             ],
             [
@@ -2784,7 +2888,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: 0, b: ''},
                     incremental: {b: ''},
-                    '': {[typeName]: 'Test', a: 0, b: ''}
+                    replace: {[typeName]: 'Test', a: 0, b: ''}
                 }
             ],
             [
@@ -2814,7 +2918,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: 0, b: ''},
                     incremental: {b: ''},
-                    '': {[typeName]: 'Test', a: 0, b: ''}
+                    replace: {[typeName]: 'Test', a: 0, b: ''}
                 }
             ],
             [
@@ -2844,7 +2948,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: 1, b: ''},
                     incremental: {b: ''},
-                    '': {[typeName]: 'Test', a: 1, b: ''}
+                    replace: {[typeName]: 'Test', a: 1, b: ''}
                 }
             ],
             [
@@ -2874,7 +2978,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: 2, b: ''},
                     incremental: {b: ''},
-                    '': {[typeName]: 'Test', a: 2, b: ''}
+                    replace: {[typeName]: 'Test', a: 2, b: ''}
                 }
             ],
             [
@@ -2908,7 +3012,7 @@ describe('databaseHelper', () => {
                         b: ''
                     },
                     incremental: {b: ''},
-                    '': {
+                    replace: {
                         [typeName]: 'Test',
                         a: 5 * 60 ** 2 + 2,
                         b: ''
@@ -2929,7 +3033,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: 2, b: ''},
                     incremental: {[typeName]: 'Test', a: 2, b: ''},
-                    '': {[typeName]: 'Test', a: 2, b: ''}
+                    replace: {[typeName]: 'Test', a: 2, b: ''}
                 }
             ],
             [
@@ -2946,10 +3050,10 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: '2', b: ''},
                     incremental: {[typeName]: 'Test', a: '2', b: ''},
-                    '': {[typeName]: 'Test', a: '2', b: ''}
+                    replace: {[typeName]: 'Test', a: '2', b: ''}
                 }
             ],
-            /// region array
+            // region array
             [
                 [
                     {[typeName]: 'Test', a: ['2'], b: ''},
@@ -2965,7 +3069,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: ['2'], b: ''},
                     incremental: {b: ''},
-                    '': {[typeName]: 'Test', a: ['2'], b: ''}
+                    replace: {[typeName]: 'Test', a: ['2'], b: ''}
                 }
             ],
             [
@@ -2977,7 +3081,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: ['2']},
                     incremental: {a: ['2']},
-                    '': {[typeName]: 'Test', a: ['2']}
+                    replace: {[typeName]: 'Test', a: ['2']}
                 }
             ],
             [
@@ -2989,7 +3093,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: ['3']},
                     incremental: {a: ['3']},
-                    '': {[typeName]: 'Test', a: ['3']}
+                    replace: {[typeName]: 'Test', a: ['3']}
                 }
             ],
             [
@@ -2998,7 +3102,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: ['2']},
                     incremental: {a: ['2']},
-                    '': {[typeName]: 'Test', a: ['2']}
+                    replace: {[typeName]: 'Test', a: ['2']}
                 }
             ],
             [
@@ -3016,7 +3120,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', b: ''},
                     incremental: {b: ''},
-                    '': {[typeName]: 'Test', b: ''}
+                    replace: {[typeName]: 'Test', b: ''}
                 }
             ],
             [
@@ -3025,7 +3129,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: [2]},
                     incremental: {a: [2]},
-                    '': {[typeName]: 'Test', a: [2]}
+                    replace: {[typeName]: 'Test', a: [2]}
                 }
             ],
             [
@@ -3034,7 +3138,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: [2.3]},
                     incremental: {a: [2.3]},
-                    '': {[typeName]: 'Test', a: [2.3]}
+                    replace: {[typeName]: 'Test', a: [2.3]}
                 }
             ],
             [
@@ -3043,7 +3147,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: [true]},
                     incremental: {a: [true]},
-                    '': {[typeName]: 'Test', a: [true]}
+                    replace: {[typeName]: 'Test', a: [true]}
                 }
             ],
             [
@@ -3052,7 +3156,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: [1]},
                     incremental: {a: [1]},
-                    '': {[typeName]: 'Test', a: [1]}
+                    replace: {[typeName]: 'Test', a: [1]}
                 }
             ],
             [
@@ -3069,7 +3173,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: []},
                     incremental: {a: []},
-                    '': {[typeName]: 'Test', a: []}
+                    replace: {[typeName]: 'Test', a: []}
                 }
             ],
             [
@@ -3086,7 +3190,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: [2]},
                     incremental: {a: [2]},
-                    '': {[typeName]: 'Test', a: [2]}
+                    replace: {[typeName]: 'Test', a: [2]}
                 }
             ],
             [
@@ -3098,7 +3202,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: [2, 1.1]},
                     incremental: {a: [2, 1.1]},
-                    '': {[typeName]: 'Test', a: [2, 1.1]}
+                    replace: {[typeName]: 'Test', a: [2, 1.1]}
                 }
             ],
             [
@@ -3117,7 +3221,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: [2, 1]},
                     incremental: {[typeName]: 'Test', a: [2, 1]},
-                    '': {[typeName]: 'Test', a: [2, 1]}
+                    replace: {[typeName]: 'Test', a: [2, 1]}
                 }
             ],
             [
@@ -3136,7 +3240,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: [2, 1]},
                     incremental: {[typeName]: 'Test', a: [2, 1]},
-                    '': {[typeName]: 'Test', a: [2, 1]}
+                    replace: {[typeName]: 'Test', a: [2, 1]}
                 }
             ],
             [
@@ -3153,7 +3257,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: [2]},
                     incremental: {[typeName]: 'Test', a: [2]},
-                    '': {[typeName]: 'Test', a: [2]}
+                    replace: {[typeName]: 'Test', a: [2]}
                 }
             ],
             [
@@ -3170,7 +3274,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test'},
                     incremental: {[typeName]: 'Test'},
-                    '': {[typeName]: 'Test'}
+                    replace: {[typeName]: 'Test'}
                 }
             ],
             [
@@ -3179,7 +3283,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: [2, '2']},
                     incremental: {[typeName]: 'Test', a: [2, '2']},
-                    '': {[typeName]: 'Test', a: [2, '2']}
+                    replace: {[typeName]: 'Test', a: [2, '2']}
                 }
             ],
             [
@@ -3188,7 +3292,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: [2, '2']},
                     incremental: {[typeName]: 'Test', a: [2, '2']},
-                    '': {[typeName]: 'Test', a: [2, '2']}
+                    replace: {[typeName]: 'Test', a: [2, '2']}
                 }
             ],
             [
@@ -3209,7 +3313,7 @@ describe('databaseHelper', () => {
                             b: 'b'
                         }]
                     },
-                    '': {
+                    replace: {
                         [typeName]: 'Test',
                         a: [{
                             [typeName]: 'Test',
@@ -3235,34 +3339,33 @@ describe('databaseHelper', () => {
                         a: [{[typeName]: 'Data', b: 'new'}]
                     },
                     incremental: {a: [{[typeName]: 'Data', b: 'new'}]},
-                    '': {
+                    replace: {
                         [typeName]: 'Test',
                         a: [{[typeName]: 'Data', b: 'new'}]
                     }
                 }
             ],
-            /* TODO fails
+            [
                 [
-                    [
-                        {[typeName]: 'Test', a: [{b: ''}]},
-                        {[typeName]: 'Test', a: [{b: 'old'}]}
-                    ],
-                    {entities: {
-                        Data: {b: {}},
-                        Test: {a: {type: 'Data[]'}}
-                    }},
-                    {
-                        fillUp: {
-                            [typeName]: 'Test',
-                            a: [{[typeName]: 'Data', b: ''}]
-                        },
-                        incremental: {a: [{[typeName]: 'Data', b: ''}]},
-                        '': {
-                            [typeName]: 'Test',
-                            a: [{[typeName]: 'Data', b: ''}]
-                        }
+                    {[typeName]: 'Test', a: [{b: ''}]},
+                    {[typeName]: 'Test', a: [{b: 'old'}]}
+                ],
+                {entities: {
+                    Data: {b: {}},
+                    Test: {a: {type: 'Data[]'}}
+                }},
+                {
+                    fillUp: {
+                        [typeName]: 'Test',
+                        a: [{[typeName]: 'Data'}]
+                    },
+                    incremental: {a: [{[typeName]: 'Data'}]},
+                    replace: {
+                        [typeName]: 'Test',
+                        a: [{[typeName]: 'Data'}]
                     }
-                ],*/
+                }
+            ],
             // Delete array
             [
                 [{[typeName]: 'Test', a: null}],
@@ -3270,7 +3373,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test'},
                     incremental: {[typeName]: 'Test'},
-                    '': {[typeName]: 'Test'}
+                    replace: {[typeName]: 'Test'}
                 }
             ],
             [
@@ -3283,7 +3386,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: ['a']},
                     incremental: {[typeName]: 'Test', a: ['a']},
-                    '': {[typeName]: 'Test', a: ['a']}
+                    replace: {[typeName]: 'Test', a: ['a']}
                 }
             ],
             [
@@ -3302,7 +3405,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', b: 2},
                     incremental: {a: null, b: 2},
-                    '': {[typeName]: 'Test', b: 2}
+                    replace: {[typeName]: 'Test', b: 2}
                 }
             ],
             [
@@ -3321,7 +3424,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', b: 2},
                     incremental: {b: 2},
-                    '': {[typeName]: 'Test', b: 2}
+                    replace: {[typeName]: 'Test', b: 2}
                 }
             ],
             [
@@ -3340,7 +3443,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', b: 2},
                     incremental: {a: null, b: 2},
-                    '': {[typeName]: 'Test', b: 2}
+                    replace: {[typeName]: 'Test', b: 2}
                 }
             ],
             [
@@ -3356,12 +3459,12 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', b: 2},
                     incremental: {b: 2},
-                    '': {[typeName]: 'Test', b: 2}
+                    replace: {[typeName]: 'Test', b: 2}
                 }
             ],
-            /// endregion
-            /// region nested property
-            //// region property type
+            // endregion
+            // region nested property
+            /// region property type
             [
                 [
                     {[typeName]: 'Test', a: {[typeName]: 'Test'}, b: 'b'},
@@ -3375,7 +3478,7 @@ describe('databaseHelper', () => {
                         b: 'b'
                     },
                     incremental: {b: 'b'},
-                    '': {
+                    replace: {
                         [typeName]: 'Test',
                         a: {[typeName]: 'Test'},
                         b: 'b'
@@ -3391,7 +3494,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', b: 'b'},
                     incremental: {b: 'b'},
-                    '': {[typeName]: 'Test', b: 'b'}
+                    replace: {[typeName]: 'Test', b: 'b'}
                 }
             ],
             [
@@ -3411,7 +3514,7 @@ describe('databaseHelper', () => {
                         b: 'b'
                     },
                     incremental: {b: 'b'},
-                    '': {
+                    replace: {
                         [typeName]: 'Test',
                         a: {[typeName]: 'Test'},
                         b: 'b'
@@ -3435,7 +3538,7 @@ describe('databaseHelper', () => {
                         b: 'b'
                     },
                     incremental: {b: 'b'},
-                    '': {
+                    replace: {
                         [typeName]: 'Test',
                         a: {[typeName]: 'Test', b: '2'},
                         b: 'b'
@@ -3463,7 +3566,7 @@ describe('databaseHelper', () => {
                         b: '3'
                     },
                     incremental: {b: '3'},
-                    '': {
+                    replace: {
                         [typeName]: 'Test',
                         a: {[typeName]: 'Test', b: 'a'},
                         b: '3'
@@ -3480,7 +3583,7 @@ describe('databaseHelper', () => {
                     incremental: {
                         [typeName]: 'Test', a: {[typeName]: 'Test', b: 2}
                     },
-                    '': {[typeName]: 'Test', a: {[typeName]: 'Test', b: 2}}
+                    replace: {[typeName]: 'Test', a: {[typeName]: 'Test', b: 2}}
                 }
             ],
             [
@@ -3495,14 +3598,14 @@ describe('databaseHelper', () => {
                         [typeName]: 'Test',
                         a: {[typeName]: 'Test', b: 'b'}
                     },
-                    '': {
+                    replace: {
                         [typeName]: 'Test',
                         a: {[typeName]: 'Test', b: 'b'}
                     }
                 }
             ],
-            //// endregion
-            //// region property existence
+            /// endregion
+            /// region property existence
             [
                 [
                     {[typeName]: 'Test', a: {[typeName]: 'Test'}, b: 'b'},
@@ -3516,7 +3619,7 @@ describe('databaseHelper', () => {
                         b: 'b'
                     },
                     incremental: {b: 'b'},
-                    '': {
+                    replace: {
                         [typeName]: 'Test',
                         a: {[typeName]: 'Test'},
                         b: 'b'
@@ -3540,7 +3643,7 @@ describe('databaseHelper', () => {
                         b: 'b'
                     },
                     incremental: {b: 'b'},
-                    '': {
+                    replace: {
                         [typeName]: 'Test',
                         a: {[typeName]: 'Test'},
                         b: 'b'
@@ -3574,15 +3677,15 @@ describe('databaseHelper', () => {
                         b: 'b'
                     },
                     incremental: {b: 'b'},
-                    '': {
+                    replace: {
                         [typeName]: 'Test',
                         a: {[typeName]: 'Test', b: '2'},
                         b: 'b'
                     }
                 }
             ],
-            //// endregion
-            //// region property readonly
+            /// endregion
+            /// region property readonly
             [
                 [
                     {
@@ -3608,7 +3711,7 @@ describe('databaseHelper', () => {
                         c: 'c'
                     },
                     incremental: {c: 'c'},
-                    '': {
+                    replace: {
                         [typeName]: 'Test',
                         a: {[typeName]: 'Test', b: 'b'},
                         c: 'c'
@@ -3638,15 +3741,15 @@ describe('databaseHelper', () => {
                         b: 'b'
                     },
                     incremental: {b: 'b'},
-                    '': {
+                    replace: {
                         [typeName]: 'Test',
                         a: {[typeName]: 'Test', b: 'a'},
                         b: 'b'
                     }
                 }
             ],
-            //// endregion
-            //// region property range
+            /// endregion
+            /// region property range
             [
                 [
                     {
@@ -3671,7 +3774,7 @@ describe('databaseHelper', () => {
                         b: {[typeName]: 'Test', a: 3}
                     },
                     incremental: {a: 4, b: {[typeName]: 'Test', a: 3}},
-                    '': {
+                    replace: {
                         [typeName]: 'Test',
                         a: 4,
                         b: {[typeName]: 'Test', a: 3}
@@ -3702,15 +3805,15 @@ describe('databaseHelper', () => {
                         a: '1',
                         b: {[typeName]: 'Test', a: '1'}
                     },
-                    '': {
+                    replace: {
                         [typeName]: 'Test',
                         a: '1',
                         b: {[typeName]: 'Test', a: '1'}
                     }
                 }
             ],
-            //// endregion
-            //// region property pattern
+            /// endregion
+            /// region property pattern
             [
                 [{[typeName]: 'Test', b: {[typeName]: 'Test', a: 'a'}}],
                 {entities: {Test: {a: {pattern: 'a'}, b: {type: 'Test'}}}},
@@ -3725,7 +3828,7 @@ describe('databaseHelper', () => {
                             [typeName]: 'Test', a: 'a'
                         }
                     },
-                    '': {
+                    replace: {
                         [typeName]: 'Test',
                         b: {[typeName]: 'Test', a: 'a'}
                     }
@@ -3751,7 +3854,7 @@ describe('databaseHelper', () => {
                             [typeName]: 'Test', a: 'a'
                         }
                     },
-                    '': {
+                    replace: {
                         [typeName]: 'Test',
                         b: {[typeName]: 'Test', a: 'a'}
                     }
@@ -3777,7 +3880,7 @@ describe('databaseHelper', () => {
                             [typeName]: 'Test', a: 'a'
                         }
                     },
-                    '': {
+                    replace: {
                         [typeName]: 'Test',
                         b: {[typeName]: 'Test', a: 'a'}
                     }
@@ -3803,14 +3906,14 @@ describe('databaseHelper', () => {
                             [typeName]: 'Test', a: 'a'
                         }
                     },
-                    '': {
+                    replace: {
                         [typeName]: 'Test',
                         b: {[typeName]: 'Test', a: 'a'}
                     }
                 }
             ],
-            //// endregion
-            //// region property constraint
+            /// endregion
+            /// region property constraint
             [
                 [{
                     [typeName]: 'Test',
@@ -3840,15 +3943,15 @@ describe('databaseHelper', () => {
                         a: 'b',
                         b: {[typeName]: 'Test', a: 'b'}
                     },
-                    '': {
+                    replace: {
                         [typeName]: 'Test',
                         a: 'b',
                         b: {[typeName]: 'Test', a: 'b'}
                     }
                 }
             ],
-            //// endregion
             /// endregion
+            // endregion
             [
                 [{[typeName]: 'Test1', a: 2}],
                 {
@@ -3860,7 +3963,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test1', a: 2},
                     incremental: {[typeName]: 'Test1', a: 2},
-                    '': {[typeName]: 'Test1', a: 2}
+                    replace: {[typeName]: 'Test1', a: 2}
                 }
             ],
             [
@@ -3869,7 +3972,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: 2},
                     incremental: {a: 2},
-                    '': {[typeName]: 'Test', a: 2}
+                    replace: {[typeName]: 'Test', a: 2}
                 }
             ],
             [
@@ -3878,7 +3981,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: 2},
                     incremental: {a: 2},
-                    '': {[typeName]: 'Test', a: 2}
+                    replace: {[typeName]: 'Test', a: 2}
                 }
             ],
             [
@@ -3887,18 +3990,24 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: false},
                     incremental: {a: false},
-                    '': {[typeName]: 'Test', a: false}
+                    replace: {[typeName]: 'Test', a: false}
                 }
-            ],
-            // endregion
-            // region property range
+            ]
+        ]))(
+            '%#. allowed property type validateDocumentUpdate ' +
+            `(with update strategy "${updateStrategy}")`,
+            allowedTester
+        )
+        /// endregion
+        /// region property range
+        test.each(adaptTests([
             [
                 [{[typeName]: 'Test'}],
                 {entities: {Test: {a: {type: 'number', default: 2}}}},
                 {
                     fillUp: {[typeName]: 'Test', a: 2},
                     incremental: {[typeName]: 'Test', a: 2},
-                    '': {[typeName]: 'Test', a: 2}
+                    replace: {[typeName]: 'Test', a: 2}
                 }
             ],
             [
@@ -3907,7 +4016,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: 3},
                     incremental: {a: 3},
-                    '': {[typeName]: 'Test', a: 3}
+                    replace: {[typeName]: 'Test', a: 3}
                 }
             ],
             [
@@ -3916,7 +4025,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: 1},
                     incremental: {a: 1},
-                    '': {[typeName]: 'Test', a: 1}
+                    replace: {[typeName]: 'Test', a: 1}
                 }
             ],
             [
@@ -3925,7 +4034,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: '123'},
                     incremental: {a: '123'},
-                    '': {[typeName]: 'Test', a: '123'}
+                    replace: {[typeName]: 'Test', a: '123'}
                 }
             ],
             [
@@ -3934,18 +4043,24 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: '1'},
                     incremental: {[typeName]: 'Test', a: '1'},
-                    '': {[typeName]: 'Test', a: '1'}
+                    replace: {[typeName]: 'Test', a: '1'}
                 }
-            ],
-            // endregion
-            // region selection
+            ]
+        ]))(
+            '%#. allowed property range validateDocumentUpdate ' +
+            `(with update strategy "${updateStrategy}")`,
+            allowedTester
+        )
+        /// endregion
+        /// region selection
+        test.each(adaptTests([
             [
                 [{[typeName]: 'Test', a: 2}],
                 {entities: {Test: {a: {selection: [2], type: 'number'}}}},
                 {
                     fillUp: {[typeName]: 'Test', a: 2},
                     incremental: {[typeName]: 'Test', a: 2},
-                    '': {[typeName]: 'Test', a: 2}
+                    replace: {[typeName]: 'Test', a: 2}
                 }
             ],
             [
@@ -3962,7 +4077,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: 2},
                     incremental: {[typeName]: 'Test', a: 2},
-                    '': {[typeName]: 'Test', a: 2}
+                    replace: {[typeName]: 'Test', a: 2}
                 }
             ],
             [
@@ -3979,7 +4094,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: '2'},
                     incremental: {[typeName]: 'Test', a: '2'},
-                    '': {[typeName]: 'Test', a: '2'}
+                    replace: {[typeName]: 'Test', a: '2'}
                 }
             ],
             [
@@ -4002,18 +4117,24 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: 2},
                     incremental: {[typeName]: 'Test', a: 2},
-                    '': {[typeName]: 'Test', a: 2}
+                    replace: {[typeName]: 'Test', a: 2}
                 }
-            ],
-            // endregion
-            // region property pattern
+            ]
+        ]))(
+            '%#. allowed selection validateDocumentUpdate ' +
+            `(with update strategy "${updateStrategy}")`,
+            allowedTester
+        )
+        /// endregion
+        /// region property pattern
+        test.each(adaptTests([
             [
                 [{[typeName]: 'Test', a: 'a'}],
                 {entities: {Test: {a: {pattern: 'a'}}}},
                 {
                     fillUp: {[typeName]: 'Test', a: 'a'},
                     incremental: {[typeName]: 'Test', a: 'a'},
-                    '': {[typeName]: 'Test', a: 'a'}
+                    replace: {[typeName]: 'Test', a: 'a'}
                 }
             ],
             [
@@ -4022,7 +4143,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: 'a'},
                     incremental: {[typeName]: 'Test', a: 'a'},
-                    '': {[typeName]: 'Test', a: 'a'}
+                    replace: {[typeName]: 'Test', a: 'a'}
                 }
             ],
             [
@@ -4031,7 +4152,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: 'a'},
                     incremental: {[typeName]: 'Test', a: 'a'},
-                    '': {[typeName]: 'Test', a: 'a'}
+                    replace: {[typeName]: 'Test', a: 'a'}
                 }
             ],
             [
@@ -4040,11 +4161,17 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: 'a'},
                     incremental: {[typeName]: 'Test', a: 'a'},
-                    '': {[typeName]: 'Test', a: 'a'}
+                    replace: {[typeName]: 'Test', a: 'a'}
                 }
-            ],
-            // endregion
-            // region property constraint
+            ]
+        ]))(
+            '%#. allowed property pattern validateDocumentUpdate ' +
+            `(with update strategy "${updateStrategy}")`,
+            allowedTester
+        )
+        /// endregion
+        /// region property constraint
+        test.each(adaptTests([
             [
                 [{[typeName]: 'Test', a: 'b'}],
                 {
@@ -4061,7 +4188,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: 'b'},
                     incremental: {[typeName]: 'Test', a: 'b'},
-                    '': {[typeName]: 'Test', a: 'b'}
+                    replace: {[typeName]: 'Test', a: 'b'}
                 }
             ],
             [
@@ -4080,7 +4207,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: 'a'},
                     incremental: {[typeName]: 'Test', a: 'a'},
-                    '': {[typeName]: 'Test', a: 'a'}
+                    replace: {[typeName]: 'Test', a: 'a'}
                 }
             ],
             [
@@ -4099,7 +4226,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: 'a'},
                     incremental: {[typeName]: 'Test', a: 'a'},
-                    '': {[typeName]: 'Test', a: 'a'}
+                    replace: {[typeName]: 'Test', a: 'a'}
                 }
             ],
             [
@@ -4120,11 +4247,17 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: 'a'},
                     incremental: {[typeName]: 'Test', a: 'a'},
-                    '': {[typeName]: 'Test', a: 'a'}
+                    replace: {[typeName]: 'Test', a: 'a'}
                 }
-            ],
-            // endregion
-            // region constraint
+            ]
+        ]))(
+            '%#. allowed property constraint validateDocumentUpdate ' +
+            `(with update strategy "${updateStrategy}")`,
+            allowedTester
+        )
+        /// endregion
+        /// region constraint
+        test.each(adaptTests([
             [
                 [{[typeName]: 'Test', a: 'a', b: 'b'}],
                 {
@@ -4139,7 +4272,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: 'a', b: 'b'},
                     incremental: {[typeName]: 'Test', a: 'a', b: 'b'},
-                    '': {[typeName]: 'Test', a: 'a', b: 'b'}
+                    replace: {[typeName]: 'Test', a: 'a', b: 'b'}
                 }
             ],
             [
@@ -4160,7 +4293,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: 'a', b: 'b'},
                     incremental: {[typeName]: 'Test', a: 'a', b: 'b'},
-                    '': {[typeName]: 'Test', a: 'a', b: 'b'}
+                    replace: {[typeName]: 'Test', a: 'a', b: 'b'}
                 }
             ],
             [
@@ -4179,11 +4312,17 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', a: 'a', b: 'a'},
                     incremental: {[typeName]: 'Test', a: 'a', b: 'a'},
-                    '': {[typeName]: 'Test', a: 'a', b: 'a'}
+                    replace: {[typeName]: 'Test', a: 'a', b: 'a'}
                 }
-            ],
-            // endregion
-            // region attachment
+            ]
+        ]))(
+            '%#. allowed constraint validateDocumentUpdate ' +
+            `(with update strategy "${updateStrategy}")`,
+            allowedTester
+        )
+        /// endregion
+        /// region attachment
+        test.each(adaptTests([
             [
                 [{[typeName]: 'Test'}],
                 {
@@ -4200,7 +4339,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test'},
                     incremental: {[typeName]: 'Test'},
-                    '': {[typeName]: 'Test'}
+                    replace: {[typeName]: 'Test'}
                 }
             ],
             [
@@ -4247,7 +4386,7 @@ describe('databaseHelper', () => {
                             }
                         }
                     },
-                    '': {
+                    replace: {
                         [typeName]: 'Test', [attachmentName]: {
                             test: {
                                 /* eslint-disable camelcase */
@@ -4308,7 +4447,7 @@ describe('databaseHelper', () => {
                             }
                         }
                     },
-                    '': {
+                    replace: {
                         [typeName]: 'Test', [attachmentName]: {
                             'favicon.png': {
                                 /* eslint-disable camelcase */
@@ -4374,7 +4513,7 @@ describe('databaseHelper', () => {
                             }
                         }
                     },
-                    '': {
+                    replace: {
                         [typeName]: 'Test', [attachmentName]: {
                             'favicon.png': {
                                 /* eslint-disable camelcase */
@@ -4431,7 +4570,7 @@ describe('databaseHelper', () => {
                             }
                         }
                     },
-                    '': {
+                    replace: {
                         [typeName]: 'Test', [attachmentName]: {
                             test: {
                                 /* eslint-disable camelcase */
@@ -4483,7 +4622,7 @@ describe('databaseHelper', () => {
                             /* eslint-enable camelcase */
                         }
                     },
-                    '': {
+                    replace: {
                         [typeName]: 'Test', [attachmentName]: {
                             /* eslint-disable camelcase */
                             a: {content_type: 'text/plain', data: ''},
@@ -4533,7 +4672,7 @@ describe('databaseHelper', () => {
                             /* eslint-enable camelcase */
                         }
                     },
-                    '': {
+                    replace: {
                         [typeName]: 'Test', [attachmentName]: {
                             /* eslint-disable camelcase */
                             a: {content_type: 'text/plain', data: ''},
@@ -4582,7 +4721,7 @@ describe('databaseHelper', () => {
                             /* eslint-enable camelcase */
                         }
                     },
-                    '': {
+                    replace: {
                         [typeName]: 'Test', [attachmentName]: {
                             /* eslint-disable camelcase */
                             a: {content_type: 'text/plain', data: ''},
@@ -4636,7 +4775,7 @@ describe('databaseHelper', () => {
                             /* eslint-enable camelcase */
                         }
                     },
-                    '': {
+                    replace: {
                         [typeName]: 'Test',
                         [attachmentName]: {
                             /* eslint-disable camelcase */
@@ -4688,7 +4827,7 @@ describe('databaseHelper', () => {
                             /* eslint-enable camelcase */
                         }
                     },
-                    '': {
+                    replace: {
                         [typeName]: 'Test',
                         [attachmentName]: {
                             /* eslint-disable camelcase */
@@ -4745,7 +4884,7 @@ describe('databaseHelper', () => {
                             /* eslint-enable camelcase */
                         }
                     },
-                    '': {
+                    replace: {
                         [typeName]: 'Test', [attachmentName]: {
                             /* eslint-disable camelcase */
                             a: {content_type: 'image/png', data: ''}
@@ -4777,7 +4916,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', b: 'b'},
                     incremental: {b: 'b'},
-                    '': {[typeName]: 'Test', b: 'b'}
+                    replace: {[typeName]: 'Test', b: 'b'}
                 }
             ],
             [
@@ -4803,7 +4942,7 @@ describe('databaseHelper', () => {
                 {
                     fillUp: {[typeName]: 'Test', b: 'b'},
                     incremental: {b: 'b'},
-                    '': {[typeName]: 'Test', b: 'b'}
+                    replace: {[typeName]: 'Test', b: 'b'}
                 }
             ],
             [
@@ -4835,7 +4974,7 @@ describe('databaseHelper', () => {
                         a: 'a'
                     },
                     incremental: {a: 'a'},
-                    '': {[typeName]: 'Test', a: 'a'}
+                    replace: {[typeName]: 'Test', a: 'a'}
                 }
             ],
             [
@@ -4867,7 +5006,7 @@ describe('databaseHelper', () => {
                         a: 'a'
                     },
                     incremental: {a: 'a'},
-                    '': {[typeName]: 'Test', a: 'a'}
+                    replace: {[typeName]: 'Test', a: 'a'}
                 }
             ],
             [
@@ -4911,7 +5050,7 @@ describe('databaseHelper', () => {
                         a: 'a'
                     },
                     incremental: {a: 'a'},
-                    '': {[typeName]: 'Test', a: 'a'}
+                    replace: {[typeName]: 'Test', a: 'a'}
                 }
             ],
             [
@@ -4939,7 +5078,7 @@ describe('databaseHelper', () => {
                         [typeName]: 'Test',
                         [attachmentName]: {a: {data: 'a', length: 1}}
                     },
-                    '': {
+                    replace: {
                         [typeName]: 'Test',
                         [attachmentName]: {a: {data: 'a', length: 1}}
                     }
@@ -4970,71 +5109,18 @@ describe('databaseHelper', () => {
                         [typeName]: 'Test',
                         [attachmentName]: {a: {data: 'abc', length: 3}}
                     },
-                    '': {
+                    replace: {
                         [typeName]: 'Test',
                         [attachmentName]: {a: {data: 'abc', length: 3}}
                     }
                 }
             ]
-            // endregion
-        ]
-            /*
-                Provides test only one or skip all tests from specified one
-                to support delta debugging when searching for failing test.
-            */
-            .filter((test: Array<unknown>) => {
-                if (only || skip)
-                    return false
-                if (test[0] === 'only')
-                    only = true
-                if (test[0] === 'skip') {
-                    skip = true
-                    return false
-                }
-                return true
-            })
-            .filter((test, index, tests) =>
-                !only || index === tests.length - 1
-            )
-            .map((test: Array<unknown>) =>
-                ['only', 'skip'].includes(test[0] as string) ?
-                    test.slice(1) :
-                    test
-            )
-        )(`%#. allowed validateDocumentUpdate (with update strategy "${updateStrategy}")`, (
-            ...test
-        ): void => {
-            const modelConfiguration: ModelConfiguration = extend(
-                true,
-                copy(defaultModelConfiguration),
-                test[1] as Partial<ModelConfiguration>
-            )
-            const models = extendModels(modelConfiguration)
-
-            delete (
-                modelConfiguration.property as
-                    Partial<ModelConfiguration['property']>
-            ).defaultSpecification
-            delete (modelConfiguration as Partial<ModelConfiguration>)
-                .entities
-
-            expect(validateDocumentUpdate(
-                ...(
-                    (test[0] as Array<unknown>)
-                        .concat(
-                            [null, {}, {}].slice(
-                                (test[0] as Array<unknown>).length - 1
-                            )
-                        )
-                        .concat(modelConfiguration, models)
-                ) as Parameters<typeof validateDocumentUpdate>
-            )).toStrictEqual((
-                test[2] as Mapping<
-                    ReturnType<typeof validateDocumentUpdate>,
-                    UpdateStrategy
-                >
-            )[updateStrategy])
-        })
+        ]))(
+            '%#. allowed attachment validateDocumentUpdate ' +
+            `(with update strategy "${updateStrategy}")`,
+            allowedTester
+        )
+        /// endregion
         // endregion
     }
     /// region migration writes

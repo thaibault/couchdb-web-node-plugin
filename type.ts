@@ -318,7 +318,7 @@ export type Models<
     Type, AttachmentType, AdditionalSpecifications, AdditionalPropertiesType
 >>
 
-export type UpdateStrategy = '' | 'fillUp' | 'incremental' | 'migrate'
+export type UpdateStrategy = 'fillUp' | 'incremental' | 'migrate' | 'replace'
 
 export type DocumentContent =
     Array<DocumentContent> | PlainObject | Primitive
