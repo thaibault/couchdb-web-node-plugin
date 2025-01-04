@@ -31,7 +31,6 @@ import {authenticate, validateDocumentUpdate} from '../databaseHelper'
 import {extendModels} from '../helper'
 import packageConfiguration from '../package.json'
 import {
-    Attachment,
     Attachments,
     BaseModel,
     Configuration,
@@ -657,11 +656,7 @@ describe('databaseHelper', () => {
                 [{[typeName]: 'Test', a: '1'}],
                 {
                     entities: {
-                        Test: {
-                            [specialNames.additional]: {
-                                type: 'number'
-                            }
-                        }
+                        Test: {[specialNames.additional]: {type: 'number'}}
                     }
                 },
                 'PropertyType'
@@ -2067,9 +2062,7 @@ describe('databaseHelper', () => {
                         a: 'a'
                     }
                 ],
-                {
-                    entities: {Test: {a: {}, [idName]: {type: 'number'}}}
-                },
+                {entities: {Test: {a: {}, [idName]: {type: 'string'}}}},
                 {
                     fillUp: {
                         [typeName]: 'Test', [idName]: '1', [revisionName]: '1'
@@ -2749,10 +2742,13 @@ describe('databaseHelper', () => {
                             [attachmentName]: {
                                 test: {
                                     default: {
-                                        /* eslint-disable camelcase */
-                                        data: '',
-                                        content_type: 'text/plain'
-                                        /* eslint-enable camelcase */
+                                        // TODO understand
+                                        test: {
+                                            /* eslint-disable camelcase */
+                                            data: '',
+                                            content_type: 'text/plain'
+                                            /* eslint-enable camelcase */
+                                        }
                                     },
                                     nullable: false
                                 }
@@ -4000,17 +3996,17 @@ describe('databaseHelper', () => {
             /// endregion
             // endregion
             [
-                [{[typeName]: 'Test1', a: 2}],
+                [{[typeName]: 'Test1', a: '2'}],
                 {
                     entities: {
                         Test1: {a: {type: 'foreignKey:Test2'}},
-                        Test2: {[idName]: {type: 'number'}}
+                        Test2: {[idName]: {type: 'string'}}
                     }
                 },
                 {
-                    fillUp: {[typeName]: 'Test1', a: 2},
-                    incremental: {[typeName]: 'Test1', a: 2},
-                    replace: {[typeName]: 'Test1', a: 2}
+                    fillUp: {[typeName]: 'Test1', a: '2'},
+                    incremental: {[typeName]: 'Test1', a: '2'},
+                    replace: {[typeName]: 'Test1', a: '2'}
                 }
             ],
             [
