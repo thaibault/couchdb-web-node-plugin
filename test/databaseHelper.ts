@@ -21,8 +21,7 @@ import {
     FirstParameter,
     PlainObject,
     RecursivePartial,
-    SecondParameter,
-    ThirdParameter
+    SecondParameter
 } from 'clientnode'
 import {
     TEST_THROW_SYMBOL, testEachAgainstSameExpectation
@@ -32,6 +31,7 @@ import {authenticate, validateDocumentUpdate} from '../databaseHelper'
 import {extendModels} from '../helper'
 import packageConfiguration from '../package.json'
 import {
+    Attachment,
     Attachments,
     BaseModel,
     Configuration,
@@ -139,7 +139,10 @@ describe('databaseHelper', () => {
                     FirstParameter<typeof validateDocumentUpdate>,
                     SecondParameter<typeof validateDocumentUpdate>?
                 ],
-                Partial<ModelConfiguration>,
+                RecursivePartial<ModelConfiguration<{
+                    a: unknown
+                    b: unknown
+                }>>,
                 string
             ]
         type ForbiddenTest =
@@ -362,7 +365,7 @@ describe('databaseHelper', () => {
             ],
             [
                 [{[typeName]: 'Test'}, {[typeName]: 'Test', a: '1'}],
-                {entities: {Test: {a: {}}} as object},
+                {entities: {Test: {a: {}}}},
                 updateStrategy === 'replace' ?
                     {[typeName]: 'Test'} :
                     'NoChange'
@@ -512,9 +515,7 @@ describe('databaseHelper', () => {
             ],
             [
                 [{[typeName]: 'Test', a: ''}],
-                {entities: {
-                    Test: {a: {onUpdateExecution: 'return +'}}
-                } as object},
+                {entities: {Test: {a: {onUpdateExecution: 'return +'}}}},
                 'Compilation'
             ],
             /*
@@ -567,7 +568,7 @@ describe('databaseHelper', () => {
                     {[typeName]: 'Test', a: 'b'},
                     {[typeName]: 'Test', a: 'a'}
                 ],
-                {entities: {Test: {a: {writable: false}}} as object},
+                {entities: {Test: {a: {writable: false}}}},
                 'Readonly'
             ]
         ] as Array<ForbiddenTest>)(
@@ -600,7 +601,7 @@ describe('databaseHelper', () => {
             ],
             [
                 [{[typeName]: 'Test'}, {[typeName]: 'Test', a: ''}],
-                {entities: {Test: {a: {nullable: false}}} as object},
+                {entities: {Test: {a: {nullable: false}}}},
                 updateStrategy === 'replace' ? 'MissingProperty' : 'NoChange'
             ]
         ] as Array<ForbiddenTest>)(
@@ -1091,7 +1092,7 @@ describe('databaseHelper', () => {
             ],
             [
                 [{[typeName]: 'Test', a: 1}],
-                {entities: {Test: {a: {type: 2}}} as object},
+                {entities: {Test: {a: {type: 2}}}},
                 'PropertyType'
             ]
         ] as Array<ForbiddenTest>)(
@@ -1125,7 +1126,7 @@ describe('databaseHelper', () => {
             ],
             [
                 [{[typeName]: 'Test', a: '12'}],
-                {entities: {Test: {a: {maximumLength: 1}}} as object},
+                {entities: {Test: {a: {maximumLength: 1}}}},
                 'MaximalLength'
             ]
         ] as Array<ForbiddenTest>)(
@@ -1187,7 +1188,7 @@ describe('databaseHelper', () => {
                                 ],
                                 type: 'number'
                             }
-                        } as object
+                        }
                     }
                 },
                 'Selection'
@@ -1208,7 +1209,7 @@ describe('databaseHelper', () => {
             ],
             [
                 [{[typeName]: 'Test', a: 'a'}],
-                {entities: {Test: {a: {invertedPattern: 'a'}}} as object},
+                {entities: {Test: {a: {invertedPattern: 'a'}}}},
                 'InvertedPatternMatch'
             ]
         ] as Array<ForbiddenTest>)(
@@ -1248,7 +1249,7 @@ describe('databaseHelper', () => {
                                     evaluation: 'return false'
                                 }
                             }
-                        } as object
+                        }
                     }
                 },
                 'ConstraintExecution'
@@ -1364,7 +1365,7 @@ describe('databaseHelper', () => {
                             }],
                             a: {},
                             b: {}
-                        } as object
+                        }
                     }
                 },
                 'ConstraintExecutions'
@@ -1397,7 +1398,7 @@ describe('databaseHelper', () => {
             // Non specified attachments aren't allowed.
             [
                 [{[typeName]: 'Test', [attachmentName]: {} as Attachments}],
-                {entities: {Test: {}} as object},
+                {entities: {Test: {}}},
                 'Property'
             ],
             // Required attachments have to be present.
@@ -1887,10 +1888,16 @@ describe('databaseHelper', () => {
         // region allowed writes
         type AllowedTest = [
             [
-                FirstParameter<typeof validateDocumentUpdate>,
-                SecondParameter<typeof validateDocumentUpdate>?
+                Parameters<typeof validateDocumentUpdate>[0],
+                Parameters<typeof validateDocumentUpdate>[1]?,
+                Parameters<typeof validateDocumentUpdate>[2]?,
+                Parameters<typeof validateDocumentUpdate>[3]?
             ],
-            RecursivePartial<ModelConfiguration>,
+            RecursivePartial<ModelConfiguration<{
+                a: unknown
+                b: unknown
+                class: unknown
+            }>>,
             {
                 fillUp: ReturnType<typeof validateDocumentUpdate>
                 incremental: ReturnType<typeof validateDocumentUpdate>
@@ -1905,7 +1912,7 @@ describe('databaseHelper', () => {
             const modelConfiguration: ModelConfiguration = extend(
                 true,
                 copy(defaultModelConfiguration),
-                givenModelConfiguration
+                givenModelConfiguration as ModelConfiguration
             )
             const models = extendModels(modelConfiguration)
 
@@ -1921,9 +1928,10 @@ describe('databaseHelper', () => {
                     parameters
                         .concat([null, {}, {}].slice(parameters.length - 1))
                 ) as [
-                    FirstParameter<typeof validateDocumentUpdate>,
-                    SecondParameter<typeof validateDocumentUpdate>,
-                    ThirdParameter<typeof validateDocumentUpdate>
+                    Parameters<typeof validateDocumentUpdate>[0],
+                    Parameters<typeof validateDocumentUpdate>[1],
+                    Parameters<typeof validateDocumentUpdate>[2],
+                    Parameters<typeof validateDocumentUpdate>[3]
                 ],
                 modelConfiguration,
                 models
@@ -2001,7 +2009,7 @@ describe('databaseHelper', () => {
                     {[typeName]: 'Test', _deleted: true},
                     {[typeName]: 'Test'}
                 ],
-                {entities: {Test: {} as object}},
+                {entities: {Test: {}}},
                 {
                     fillUp: {[typeName]: 'Test', _deleted: true},
                     incremental: {_deleted: true},
@@ -2028,7 +2036,7 @@ describe('databaseHelper', () => {
             // TODO document what is really tested.
             [
                 [
-                    {[idName]: 1, [revisionName]: 1},
+                    {[idName]: '1', [revisionName]: '1'},
                     null,
                     {},
                     {
@@ -2039,35 +2047,37 @@ describe('databaseHelper', () => {
                 ],
                 {},
                 {
-                    fillUp: {[idName]: 1, [revisionName]: 1},
-                    incremental: {[idName]: 1, [revisionName]: 1},
-                    replace: {[idName]: 1, [revisionName]: 1}
+                    fillUp: {[idName]: '1', [revisionName]: '1'},
+                    incremental: {[idName]: '1', [revisionName]: '1'},
+                    replace: {[idName]: '1', [revisionName]: '1'}
                 }
             ],
             [
                 [
                     {
                         [typeName]: 'Test',
-                        [idName]: 1,
-                        [revisionName]: 1,
+                        [idName]: '1',
+                        [revisionName]: '1',
                         a: null
                     },
                     {
                         [typeName]: 'Test',
-                        [idName]: 1,
-                        [revisionName]: 0,
+                        [idName]: '1',
+                        [revisionName]: '0',
                         a: 'a'
                     }
                 ],
-                {entities: {Test: {a: {}, [idName]: {type: 'number'}}}},
+                {
+                    entities: {Test: {a: {}, [idName]: {type: 'number'}}}
+                },
                 {
                     fillUp: {
-                        [typeName]: 'Test', [idName]: 1, [revisionName]: 1
+                        [typeName]: 'Test', [idName]: '1', [revisionName]: '1'
                     },
-                    incremental: {[idName]: 1, [revisionName]: 1, a: null},
+                    incremental: {[idName]: '1', [revisionName]: '1', a: null},
                     replace: {
-                        [idName]: 1,
-                        [revisionName]: 1,
+                        [idName]: '1',
+                        [revisionName]: '1',
                         [typeName]: 'Test'
                     }
                 }
@@ -2079,16 +2089,16 @@ describe('databaseHelper', () => {
                         [revisionName]: '0-latest',
                         a: 'a'
                     },
-                    {[typeName]: 'Test', [revisionName]: 1}
+                    {[typeName]: 'Test', [revisionName]: '1'}
                 ],
                 {entities: {Test: {a: {}}}},
                 {
                     fillUp: {
                         [typeName]: 'Test',
-                        [revisionName]: 1, a: 'a'
+                        [revisionName]: '1', a: 'a'
                     },
-                    incremental: {[revisionName]: 1, a: 'a'},
-                    replace: {[typeName]: 'Test', [revisionName]: 1, a: 'a'}
+                    incremental: {[revisionName]: '1', a: 'a'},
+                    replace: {[typeName]: 'Test', [revisionName]: '1', a: 'a'}
                 }
             ],
             [
@@ -2098,15 +2108,15 @@ describe('databaseHelper', () => {
                         [revisionName]: '0-upsert',
                         a: 'a'
                     },
-                    {[typeName]: 'Test', [revisionName]: 1}
+                    {[typeName]: 'Test', [revisionName]: '1'}
                 ],
                 {entities: {Test: {a: {}}}},
                 {
                     fillUp: {
-                        [typeName]: 'Test', [revisionName]: 1, a: 'a'
+                        [typeName]: 'Test', [revisionName]: '1', a: 'a'
                     },
-                    incremental: {[revisionName]: 1, a: 'a'},
-                    replace: {[typeName]: 'Test', [revisionName]: 1, a: 'a'}
+                    incremental: {[revisionName]: '1', a: 'a'},
+                    replace: {[typeName]: 'Test', [revisionName]: '1', a: 'a'}
                 }
             ],
             [
@@ -2120,15 +2130,15 @@ describe('databaseHelper', () => {
             ],
             [
                 [
-                    {[typeName]: 'Test', [revisionName]: 1, a: 'a'},
-                    {[typeName]: 'Test', [revisionName]: 1}
+                    {[typeName]: 'Test', [revisionName]: '1', a: 'a'},
+                    {[typeName]: 'Test', [revisionName]: '1'}
                 ], {entities: {Test: {a: {}}}},
                 {
                     fillUp: {
-                        [typeName]: 'Test', [revisionName]: 1, a: 'a'
+                        [typeName]: 'Test', [revisionName]: '1', a: 'a'
                     },
-                    incremental: {[revisionName]: 1, a: 'a'},
-                    replace: {[typeName]: 'Test', [revisionName]: 1, a: 'a'}
+                    incremental: {[revisionName]: '1', a: 'a'},
+                    replace: {[typeName]: 'Test', [revisionName]: '1', a: 'a'}
                 }
             ],
             /*
@@ -2739,12 +2749,10 @@ describe('databaseHelper', () => {
                             [attachmentName]: {
                                 test: {
                                     default: {
-                                        test: {
-                                            /* eslint-disable camelcase */
-                                            data: '',
-                                            content_type: 'text/plain'
-                                            /* eslint-enable camelcase */
-                                        }
+                                        /* eslint-disable camelcase */
+                                        data: '',
+                                        content_type: 'text/plain'
+                                        /* eslint-enable camelcase */
                                     },
                                     nullable: false
                                 }
