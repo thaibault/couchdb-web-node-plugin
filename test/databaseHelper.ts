@@ -3412,6 +3412,39 @@ describe('databaseHelper', () => {
                     }
                 }
             ],
+            [
+                [
+                    {[typeName]: 'Test', a: {b: [{c: ''}]}},
+                    {[typeName]: 'Test', a: {b: [{c: 'old'}]}}
+                ],
+                {entities: {
+                    Item: {c: {}},
+                    Data: {b: {type: 'Item[]'}},
+                    Test: {a: {type: 'Data'}}
+                }},
+                {
+                    fillUp: {
+                        [typeName]: 'Test',
+                        a: {
+                            [typeName]: 'Data',
+                            b: [{[typeName]: 'Item'}]
+                        }
+                    },
+                    incremental: {
+                        a: {
+                            [typeName]: 'Data',
+                            b: [{[typeName]: 'Item'}]
+                        }
+                    },
+                    replace: {
+                        [typeName]: 'Test',
+                        a: {
+                            [typeName]: 'Data',
+                            b: [{[typeName]: 'Item'}]
+                        }
+                    }
+                }
+            ],
             // Delete array
             [
                 [{[typeName]: 'Test', a: null}],
