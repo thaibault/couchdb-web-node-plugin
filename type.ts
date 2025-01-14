@@ -146,7 +146,7 @@ export const PrimitiveTypes = [
 ] as const
 export type PrimitiveType = typeof PrimitiveTypes[number]
 export type Type = boolean | number | string // | 'any' | PrimitiveType
-export type TypeSpecification = Array<TypeSpecification> | Type
+export type TypeSpecification = Array<Type> | Array<Array<Type>> | Type
 
 export type ConstraintKey =
     'arrayConstraintExecution' |
