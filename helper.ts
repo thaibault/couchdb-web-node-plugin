@@ -524,7 +524,7 @@ export const extendModels = (
 }
 /**
  * Convert given roles to its normalized representation.
- * @param roles - Unstructured role' s description.
+ * @param roles - Unstructured role's description.
  * @returns Normalized roles representation.
  */
 export const normalizeAllowedRoles = (
