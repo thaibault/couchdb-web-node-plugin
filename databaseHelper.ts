@@ -51,8 +51,7 @@ import {
     SelectionMapping,
     SpecialPropertyNames,
     StubAttachment,
-    TypeSpecification,
-    UpdateStrategy,
+    Type as TypeNames, UpdateStrategy,
     UserContext
 } from './type'
 // endregion
@@ -585,8 +584,7 @@ export const validateDocumentUpdate = <
     const checkDocument = (
         newDocument: PartialFullDocumentType,
         oldDocument: null | PartialFullDocumentType,
-        parentNames: Array<string> = [],
-        computed = false
+        parentNames: Array<string> = []
     ): CheckedDocumentResult<ObjectType, AdditionalPropertiesType> => {
         const pathDescription =
             parentNames.length ? ` in ${parentNames.join(' -> ')}` : ''
@@ -794,12 +792,11 @@ export const validateDocumentUpdate = <
             propertySpecification: PropertySpecification<
                 Type, AdditionalSpecifications
             >,
-            oldValue?: Type,
-            computed = false
+            oldValue?: Type
         ): CheckedPropertyResult<Type> => {
             let changedPath: Array<string> = []
             // region type
-            const types = ([] as Array<TypeSpecification>).concat(
+            const types = ([] as Array<TypeNames>).concat(
                 propertySpecification.type ? propertySpecification.type : []
             )
             // Derive nested missing explicit type definition if possible.
@@ -808,16 +805,12 @@ export const validateDocumentUpdate = <
                 Object.getPrototypeOf(newValue) === Object.prototype &&
                 !Object.prototype.hasOwnProperty.call(newValue, typeName) &&
                 types.length === 1 &&
-                typeof types[0] === 'string' &&
                 Object.prototype.hasOwnProperty.call(models, types[0])
             )
                 (newValue as PartialFullDocumentType)[typeName] = types[0]
             let typeMatched = false
             for (const type of types)
-                if (
-                    typeof type === 'string' &&
-                    Object.prototype.hasOwnProperty.call(models, type)
-                ) {
+                if (Object.prototype.hasOwnProperty.call(models, type)) {
                     if (
                         typeof newValue === 'object' &&
                         Object.getPrototypeOf(newValue) === Object.prototype &&
@@ -849,8 +842,7 @@ export const validateDocumentUpdate = <
                         const result = checkDocument(
                             newValue as PartialFullDocumentType,
                             oldValue as null | PartialFullDocumentType,
-                            parentNames.concat(String(name)),
-                            computed || propertySpecification.computed
+                            parentNames.concat(String(name))
                         )
                         if (result.changedPath.length)
                             changedPath = result.changedPath
@@ -862,8 +854,8 @@ export const validateDocumentUpdate = <
                         break
                     } else if (types.length === 1)
                         throwError(
-                            `NestedType: Under key "${String(name)}" isn't ` +
-                            `of type "${type}" (given ` +
+                            `NestedType: Under key "${String(name)}" ` +
+                            `isn't of type "${type}" (given ` +
                             `"${serialize(newValue)}" of type ` +
                             `${typeof newValue})${pathDescription}.`
                         )
@@ -882,8 +874,8 @@ export const validateDocumentUpdate = <
                     ) {
                         if (types.length === 1)
                             throwError(
-                                `PropertyType: Property "${String(name)}" ` +
-                                `isn't of (valid) type "DateTime" (given"` +
+                                `PropertyType: Property "${String(name)}"` +
+                                ` isn't of (valid) type "DateTime" (given"` +
                                 (
                                     serialize(initialNewValue)
                                         .replace(/^"/, '')
@@ -896,10 +888,9 @@ export const validateDocumentUpdate = <
                         typeMatched = true
                         break
                     }
-                } else if (
-                    typeof type === 'string' &&
-                    ['boolean', 'integer', 'number', 'string'].includes(type)
-                )
+                } else if (['boolean', 'integer', 'number', 'string'].includes(
+                    type
+                ))
                     if (
                         typeof newValue === 'number' &&
                         isNaN(newValue) ||
@@ -909,8 +900,8 @@ export const validateDocumentUpdate = <
                     ) {
                         if (types.length === 1)
                             throwError(
-                                `PropertyType: Property "${String(name)}" ` +
-                                `isn't of (valid) type "${type}" (given ` +
+                                `PropertyType: Property "${String(name)}"` +
+                                ` isn't of (valid) type "${type}" (given ` +
                                 `"${serialize(newValue)}" of type "` +
                                 `${typeof newValue}")${pathDescription}.`
                             )
@@ -943,8 +934,7 @@ export const validateDocumentUpdate = <
                 } else if (types.length === 1)
                     throwError(
                         'PropertyType: Property ' +
-                        `"${String(name)}" isn't value "${String(type)}" ` +
-                        `(given "` +
+                        `"${String(name)}" isn't value "${type}" (given "` +
                         serialize(newValue)
                             .replace(/^"/, '')
                             .replace(/"$/, '') +
@@ -1810,7 +1800,6 @@ export const validateDocumentUpdate = <
                         )
 
                     if (
-                        !(computed || propertySpecification.computed) &&
                         (
                             !Object.prototype.hasOwnProperty.call(
                                 newDocument, name
@@ -1832,7 +1821,6 @@ export const validateDocumentUpdate = <
                 )
                     if (oldDocument) {
                         if (
-                            !(computed || propertySpecification.computed) &&
                             newDocument[name] !== null &&
                             updateStrategy === 'fillUp'
                         )
@@ -2003,7 +1991,7 @@ export const validateDocumentUpdate = <
                         throwError(
                             `MinimumArrayLength: Property "${String(name)}" ` +
                             `(array of length ${String(newProperty.length)})` +
-                            ` doesn't fulfill minimum array length of ` +
+                            ` doesn't fullfill minimum array length of ` +
                             (
                                 propertySpecification.minimumNumber as
                                     unknown as
@@ -2020,7 +2008,7 @@ export const validateDocumentUpdate = <
                         throwError(
                             `MaximumArrayLength: Property "${String(name)}" ` +
                             `(array of length ${String(newProperty.length)})` +
-                            ` doesn't fulfill maximum array length of ` +
+                            ` doesn't fullfill maximum array length of ` +
                             (
                                 propertySpecification.maximumNumber as
                                     unknown as
@@ -2086,10 +2074,7 @@ export const validateDocumentUpdate = <
                         definition will receive one.
                     */
                     if (
-                        Array.isArray(propertySpecificationCopy.type) &&
-                        propertySpecificationCopy.type.length === 1 &&
-                        typeof propertySpecificationCopy.type[0] ===
-                            'string' &&
+                        propertySpecificationCopy.type?.length === 1 &&
                         Object.prototype.hasOwnProperty.call(
                             models, propertySpecificationCopy.type[0]
                         )
@@ -2114,9 +2099,7 @@ export const validateDocumentUpdate = <
                         >(
                             value as ValueOf<ObjectType>,
                             `${String(index + 1)}. value in ${String(name)}`,
-                            propertySpecificationCopy,
-                            undefined,
-                            computed || propertySpecificationCopy.computed
+                            propertySpecificationCopy
                         ).newValue as DocumentContent
                         if ([null, undefined].includes(
                             newProperty[index] as null
@@ -2160,8 +2143,7 @@ export const validateDocumentUpdate = <
                             propertySpecification as PropertySpecification<
                                 ValueOf<ObjectType>, AdditionalSpecifications
                             >,
-                            oldValue as ValueOf<ObjectType>,
-                            computed || propertySpecification.computed
+                            oldValue as ValueOf<ObjectType>
                         )
 
                     newDocument[name] = result.newValue as
@@ -2792,9 +2774,6 @@ export const validateDocumentUpdate = <
                 keyof SecuritySettings
         ] as Set<string>) = new Set([`${id}-${revision}`])
     // endregion
-
-    // console.debug('Determined new document:', result.newDocument)
-
     return result.newDocument
 }
 
