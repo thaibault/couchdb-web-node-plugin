@@ -56,7 +56,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/eslint-parser@npm:^7.25.9":
+"@babel/eslint-parser@npm:^7.26.5":
   version: 7.26.5
   resolution: "@babel/eslint-parser@npm:7.26.5"
   dependencies:
@@ -1982,7 +1982,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@stylistic/eslint-plugin-ts@npm:^2.12.1":
+"@stylistic/eslint-plugin-ts@npm:^2.13.0":
   version: 2.13.0
   resolution: "@stylistic/eslint-plugin-ts@npm:2.13.0"
   dependencies:
@@ -2176,7 +2176,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:^22.10.5":
+"@types/node@npm:*, @types/node@npm:^22.10.6":
   version: 22.10.6
   resolution: "@types/node@npm:22.10.6"
   dependencies:
@@ -2284,7 +2284,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript-eslint/eslint-plugin@npm:8.20.0, @typescript-eslint/eslint-plugin@npm:^8.19.0":
+"@typescript-eslint/eslint-plugin@npm:8.20.0, @typescript-eslint/eslint-plugin@npm:^8.20.0":
   version: 8.20.0
   resolution: "@typescript-eslint/eslint-plugin@npm:8.20.0"
   dependencies:
@@ -2305,7 +2305,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript-eslint/parser@npm:8.20.0, @typescript-eslint/parser@npm:^8.19.0":
+"@typescript-eslint/parser@npm:8.20.0, @typescript-eslint/parser@npm:^8.20.0":
   version: 8.20.0
   resolution: "@typescript-eslint/parser@npm:8.20.0"
   dependencies:
@@ -4433,7 +4433,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"clientnode@npm:^3.0.1255":
+"clientnode@npm:^3.0.1256":
   version: 3.0.1256
   resolution: "clientnode@npm:3.0.1256"
   peerDependencies:
@@ -4827,17 +4827,17 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "couchdb-web-node-plugin@workspace:."
   dependencies:
-    "@babel/eslint-parser": "npm:^7.25.9"
+    "@babel/eslint-parser": "npm:^7.26.5"
     "@babel/runtime": "npm:^7.26.0"
-    "@stylistic/eslint-plugin-ts": "npm:^2.12.1"
+    "@stylistic/eslint-plugin-ts": "npm:^2.13.0"
     "@types/ejs": "npm:^3.1.5"
-    "@types/node": "npm:^22.10.5"
+    "@types/node": "npm:^22.10.6"
     "@types/pouchdb-node": "npm:^6.1.7"
-    "@typescript-eslint/eslint-plugin": "npm:^8.19.0"
-    "@typescript-eslint/parser": "npm:^8.19.0"
-    clientnode: "npm:^3.0.1255"
-    documentation-website: "npm:^1.0.341"
-    eslint: "npm:^9.17.0"
+    "@typescript-eslint/eslint-plugin": "npm:^8.20.0"
+    "@typescript-eslint/parser": "npm:^8.20.0"
+    clientnode: "npm:^3.0.1256"
+    documentation-website: "npm:^1.0.342"
+    eslint: "npm:^9.18.0"
     eslint-config-google: "npm:^0.14.0"
     eslint-plugin-jsdoc: "npm:^50.6.1"
     jest: "npm:^29.7.0"
@@ -4847,9 +4847,9 @@ __metadata:
     pouchdb-node: "npm:^9.0.0"
     pouchdb-server: "npm:^4.2.0"
     rimraf: "npm:^6.0.1"
-    typescript-eslint: "npm:^8.19.0"
-    web-node: "npm:^1.0.538"
-    weboptimizer: "npm:^2.0.1552"
+    typescript-eslint: "npm:^8.20.0"
+    web-node: "npm:^1.0.539"
+    weboptimizer: "npm:^2.0.1553"
   peerDependencies:
     "@babel/runtime": "*"
     clientnode: "*"
@@ -5147,7 +5147,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"documentation-website@npm:^1.0.341":
+"documentation-website@npm:^1.0.342":
   version: 1.0.342
   resolution: "documentation-website@npm:1.0.342"
   bin:
@@ -5585,7 +5585,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint@npm:^9.17.0":
+"eslint@npm:^9.18.0":
   version: 9.18.0
   resolution: "eslint@npm:9.18.0"
   dependencies:
@@ -11732,7 +11732,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript-eslint@npm:^8.19.0":
+"typescript-eslint@npm:^8.20.0":
   version: 8.20.0
   resolution: "typescript-eslint@npm:8.20.0"
   dependencies:
@@ -12016,7 +12016,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"web-node@npm:^1.0.538":
+"web-node@npm:^1.0.539":
   version: 1.0.539
   resolution: "web-node@npm:1.0.539"
   peerDependencies:
@@ -12052,7 +12052,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"weboptimizer@npm:^2.0.1552":
+"weboptimizer@npm:^2.0.1553":
   version: 2.0.1553
   resolution: "weboptimizer@npm:2.0.1553"
   dependencies:
