@@ -40,7 +40,7 @@ import {promises as fileSystem} from 'fs'
 import {basename, extname, resolve} from 'path'
 import PouchDB from 'pouchdb-node'
 import PouchDBFindPlugin from 'pouchdb-find'
-import {HookPromiseResult, PluginHandler, PluginPromises} from 'web-node/type'
+import {PluginHandler, PluginPromises} from 'web-node/type'
 
 import databaseHelper, {validateDocumentUpdate} from './databaseHelper'
 import {
@@ -1066,10 +1066,18 @@ export const postLoadService = (state: State): Promise<void> => {
         if (couchdb.changesStream as unknown as boolean)
             couchdb.changesStream.cancel()
 
-        console.info('Initialize changes stream.')
+        const changesConfiguration = configuration.changesStream
+        if (services.couchdbLastChangesSequenceIdentifier !== undefined)
+            changesConfiguration.since =
+                services.couchdbLastChangesSequenceIdentifier
+
+        console.info(
+            'Initialize changes stream since ' +
+            `"${String(changesConfiguration.since)}".`
+        )
 
         couchdb.changesStream =
-            couchdb.connection.changes(configuration.changesStream)
+            couchdb.connection.changes(changesConfiguration)
 
         void couchdb.changesStream.on(
             'error',
@@ -1108,10 +1116,22 @@ export const postLoadService = (state: State): Promise<void> => {
 
         void couchdb.changesStream.on(
             'change',
-            (change: ChangesResponseChange): HookPromiseResult<undefined> =>
-                pluginAPI.callStack<State<ChangesResponseChange>>({
-                    ...state, data: change, hook: 'couchdbChange'
-                })
+            async (change: ChangesResponseChange) => {
+                numberOfErrorsThrough = 0
+
+                try {
+                    await pluginAPI.callStack<State<ChangesResponseChange>>({
+                        ...state, data: change, hook: 'couchdbChange'
+                    })
+                } catch (error) {
+                    console.error(
+                        'An error occured durring on change database hook:',
+                        error
+                    )
+                }
+
+                services.couchdbLastChangesSequenceIdentifier = change.seq
+            }
         )
     })
 
