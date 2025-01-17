@@ -544,7 +544,11 @@ export interface CouchDB<Type extends object = Mapping<unknown>> {
 export type ServicePromises<Type = Mapping<unknown>> =
     BaseServicePromises<{couchdb: Promise<ProcessCloseReason>}> & Type
 export type Services<Type = Mapping<unknown>> =
-    BaseServices<{couchdb: CouchDB}> & Type
+    BaseServices<{
+        couchdb: CouchDB
+        couchdbLastChangesSequenceIdentifier?: number | string
+    }> &
+    Type
 
 export type ServicesState<Type = undefined> = BaseServicesState<
     Type,

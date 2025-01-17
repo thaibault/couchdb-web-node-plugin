@@ -199,7 +199,7 @@
         ]
       },
       "changesStream": {
-        "include_docs": true,
+        "include_docs": false,
         "live": true,
         "since": "now",
         "timeout": false
