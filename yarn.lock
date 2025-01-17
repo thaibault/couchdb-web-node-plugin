@@ -2176,12 +2176,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:^22.10.6":
+"@types/node@npm:*":
   version: 22.10.6
   resolution: "@types/node@npm:22.10.6"
   dependencies:
     undici-types: "npm:~6.20.0"
   checksum: 10c0/8b67affc211e5f9c74f7949cda04ca669721e50b83d71b8772a7bed7a4a3c41d663b3a794413f618e763ca6c5da8c234c25ffebcb0737983fc3e7415818ab9a7
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:^22.10.7":
+  version: 22.10.7
+  resolution: "@types/node@npm:22.10.7"
+  dependencies:
+    undici-types: "npm:~6.20.0"
+  checksum: 10c0/c941b4689dfc4044b64a5f601306cbcb0c7210be853ba378a5dd44137898c45accedd796ee002ad9407024cac7ecaf5049304951cb1d80ce3d7cebbbae56f20e
   languageName: node
   linkType: hard
 
@@ -4831,7 +4840,7 @@ __metadata:
     "@babel/runtime": "npm:^7.26.0"
     "@stylistic/eslint-plugin-ts": "npm:^2.13.0"
     "@types/ejs": "npm:^3.1.5"
-    "@types/node": "npm:^22.10.6"
+    "@types/node": "npm:^22.10.7"
     "@types/pouchdb-node": "npm:^6.1.7"
     "@typescript-eslint/eslint-plugin": "npm:^8.20.0"
     "@typescript-eslint/parser": "npm:^8.20.0"
@@ -4848,7 +4857,7 @@ __metadata:
     pouchdb-server: "npm:^4.2.0"
     rimraf: "npm:^6.0.1"
     typescript-eslint: "npm:^8.20.0"
-    web-node: "npm:^1.0.539"
+    web-node: "npm:^1.0.540"
     weboptimizer: "npm:^2.0.1553"
   peerDependencies:
     "@babel/runtime": "*"
@@ -12016,9 +12025,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"web-node@npm:^1.0.539":
-  version: 1.0.539
-  resolution: "web-node@npm:1.0.539"
+"web-node@npm:^1.0.540":
+  version: 1.0.540
+  resolution: "web-node@npm:1.0.540"
   peerDependencies:
     "@babel/runtime": "*"
     clientnode: "*"
@@ -12027,7 +12036,7 @@ __metadata:
       optional: true
   bin:
     web-node: index.js
-  checksum: 10c0/8e159b41f267543fcd9a8a85757c626c8700c6d3e8d34a72bfbb9dd49897db7b6d55e417f96460b746f4c7c1d6be964d80f94497b14faf56ac1cd7a3004d4f6e
+  checksum: 10c0/298dd7e25ce64332629e42ccc1737dc44884e4c2a57406936baa373ca3c896a0ed955983e96bce6425eb8625cdcba45828ee9f7558e8234c92beb296acb82c92
   languageName: node
   linkType: hard
 
