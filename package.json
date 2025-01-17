@@ -78,13 +78,13 @@
     "documentation-website": "^1.0.342",
     "eslint": "^9.18.0",
     "eslint-config-google": "^0.14.0",
-    "eslint-plugin-jsdoc": "^50.6.1",
+    "eslint-plugin-jsdoc": "^50.6.2",
     "jest": "^29.7.0",
     "jsdoc": "^4.0.4",
     "node-fetch": "^3.3.2",
     "rimraf": "^6.0.1",
     "typescript-eslint": "^8.20.0",
-    "web-node": "^1.0.540",
+    "web-node": "^1.0.541",
     "weboptimizer": "^2.0.1553"
   },
   "peerDependencies": {
