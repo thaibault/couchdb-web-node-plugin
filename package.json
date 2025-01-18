@@ -332,7 +332,7 @@
             "lastUser": {
               "nullable": false,
               "onUpdateExpression": {
-                "__evaluate__": "`userContext.name || '${self.couchdb.user.name}'`"
+                "__evaluate__": "`userContext.name || '${self.couchdb.admin.name}'`"
               }
             }
           }
@@ -400,32 +400,36 @@
       },
       "path": "database",
       "security": {
-        "admins": {
-          "names": [
-            "readonlyadmin"
-          ],
-          "roles": [
-            "readonlyadmins"
-          ]
+        "_default": {
+          "admins": {
+            "names": [],
+            "roles": ["admin"]
+          },
+          "members": {
+            "names": [],
+            "roles": []
+          }
         },
-        "members": {
-          "names": [
-            "readonlymember"
-          ],
-          "roles": [
-            "readonlymembers",
-            "users"
-          ]
+        "_users": {
+          "admins": {
+            "names": ["admin"],
+            "roles": ["admin"]
+          },
+          "members": {
+            "names": ["admin"],
+            "roles": ["admin"]
+          }
         }
       },
       "skipLatestRevisionDetermining": true,
       "url": {
         "__evaluate__": "`http://{1}${self.couchdb.backend.configuration['httpd/host']}:${self.couchdb.backend.configuration['httpd/port']}`"
       },
-      "user": {
+      "admin": {
         "name": "admin",
         "password": "admin"
-      }
+      },
+      "users": {}
     }
   },
   "webOptimizer": {
