@@ -195,7 +195,7 @@ export const initializeConnection = async (
     const config = configuration.couchdb
 
     const url: string =
-        format(config.url, `${config.user.name}:${config.user.password}@`) +
+        format(config.url, `${config.admin.name}:${config.admin.password}@`) +
         `/${config.databaseName}`
 
     services.couchdb.connection =

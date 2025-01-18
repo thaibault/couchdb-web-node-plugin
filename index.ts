@@ -310,10 +310,10 @@ export const loadService = async (
     if (Object.prototype.hasOwnProperty.call(couchdb, 'connection'))
         return {couchdb: promise}
 
-    const urlPrefix = format(
+    const urlPrefixWithCredentials = format(
         configuration.couchdb.url,
-        `${configuration.couchdb.user.name}:` +
-        `${configuration.couchdb.user.password}@`
+        `${configuration.couchdb.admin.name}:` +
+        `${configuration.couchdb.admin.password}@`
     )
     // region ensure presence of global admin user
     if (configuration.couchdb.ensureAdminPresence) {
@@ -328,16 +328,16 @@ export const loadService = async (
             await unauthenticatedUserDatabaseConnection.allDocs()
 
             console.info(
-                'No admin user available. Automatically creating admin user' +
-                `" ${configuration.couchdb.user.name}".`
+                'No admin user available. Automatically creating admin user ' +
+                `"${configuration.couchdb.admin.name}".`
             )
 
             await globalContext.fetch(
                 `${format(configuration.couchdb.url, '')}/` +
                 couchdb.server.runner.adminUserConfigurationPath +
-                `/${configuration.couchdb.user.name}`,
+                `/${configuration.couchdb.admin.name}`,
                 {
-                    body: `"${configuration.couchdb.user.password}"`,
+                    body: `"${configuration.couchdb.admin.password}"`,
                     method: 'PUT'
                 }
             )
@@ -345,7 +345,7 @@ export const loadService = async (
             if ((error as DatabaseError).name === 'unauthorized') {
                 const authenticatedUserDatabaseConnection: Connection =
                     new couchdb.connector(
-                        `${urlPrefix}/_users`,
+                        `${urlPrefixWithCredentials}/_users`,
                         getConnectorOptions(configuration)
                     )
 
@@ -354,7 +354,7 @@ export const loadService = async (
                 } catch (error) {
                     console.error(
                         `Can't login as existing admin user ` +
-                        `"${configuration.couchdb.user.name}": ` +
+                        `"${configuration.couchdb.admin.name}": ` +
                         represent(error)
                     )
                 } finally {
@@ -363,7 +363,7 @@ export const loadService = async (
             } else
                 console.error(
                     `Can't create new admin user "` +
-                    `${configuration.couchdb.user.name}": ${represent(error)}`
+                    `${configuration.couchdb.admin.name}": ${represent(error)}`
                 )
         } finally {
             void unauthenticatedUserDatabaseConnection.close()
@@ -371,54 +371,48 @@ export const loadService = async (
     }
     // endregion
     // region ensure presence of regular users
-    if (configuration.couchdb.ensureUserPresence)
-        for (const type of [
-            configuration.couchdb.security.admins,
-            configuration.couchdb.security.members
-        ])
-            for (const name of type.names) {
-                const userDatabaseConnection: Connection =
-                    new couchdb.connector(
-                        `${urlPrefix}/_users`,
-                        getConnectorOptions(configuration)
-                    )
+    if (configuration.couchdb.ensureUserPresence) {
+        const userDatabaseConnection: Connection =
+            new couchdb.connector(
+                `${urlPrefixWithCredentials}/_users`,
+                getConnectorOptions(configuration)
+            )
 
-                try {
-                    await userDatabaseConnection.get(
-                        `org.couchdb.user:${name}`
-                    )
-                } catch (error) {
-                    if ((error as {error: string}).error === 'not_found')
-                        try {
-                            await userDatabaseConnection.put({
-                                [
-                                configuration.couchdb.model.property.name
-                                    .special.id
-                                ]: `org.couchdb.user:${name}`,
-                                name,
-                                password: name,
-                                roles: ([] as Array<string>).concat(
-                                    type.roles.includes(`${name}s`) ?
-                                        `${name}s` :
-                                        []
-                                ),
-                                type: 'user'
-                            })
-                        } catch (error) {
-                            throw new Error(
-                                `Couldn't create missing user "${name}":` +
-                                ` ${represent(error)}`
-                            )
-                        }
-                    else
+        for (const [name, userConfiguration] of Object.entries(
+            configuration.couchdb.users
+        ))
+            try {
+                await userDatabaseConnection.get(`org.couchdb.user:${name}`)
+            } catch (error) {
+                if ((error as { error: string }).error === 'not_found') {
+                    console.info(`Create missing database user "${name}".`)
+
+                    try {
+                        await userDatabaseConnection.put({
+                            [
+                            configuration.couchdb.model.property.name
+                                .special.id
+                            ]: `org.couchdb.user:${name}`,
+                            name,
+                            password: userConfiguration.password,
+                            roles: userConfiguration.roles,
+                            type: 'user'
+                        })
+                    } catch (error) {
                         throw new Error(
-                            `Couldn't check for presence of user "${name}": ` +
-                            represent(error)
+                            `Couldn't create missing user "${name}":` +
+                            ` ${represent(error)}`
                         )
-                } finally {
-                    void userDatabaseConnection.close()
-                }
+                    }
+                } else
+                    throw new Error(
+                        `Couldn't check for presence of user ` +
+                        `"${name}": ${represent(error)}`
+                    )
+            } finally {
+                void userDatabaseConnection.close()
             }
+    }
     // endregion
     // region apply database/rest api configuration
     if (configuration.couchdb.model.updateConfiguration)
@@ -431,7 +425,7 @@ export const loadService = async (
                 )) {
                     const fullPath =
                         `/${prefix}${prefix.trim() ? '/' : ''}${subPath}`
-                    const url = `${urlPrefix}${fullPath}`
+                    const url = `${urlPrefixWithCredentials}${fullPath}`
 
                     const value: unknown =
                         configuration.couchdb.backend.configuration[subPath]
@@ -510,29 +504,74 @@ export const loadService = async (
     await initializeConnection(services, configuration)
 
     // region ensure presence of database security settings
-    if (configuration.couchdb.ensureSecuritySettingsPresence)
-        try {
-            /*
-                NOTE: As a needed side effect:
-                This clears preexisting document references in
-                "securitySettings[
-                    configuration.couchdb.model.property.name
-                        .validatedDocumentsCache
-                ]".
-            */
-            await globalContext.fetch(
-                `${urlPrefix}/${configuration.couchdb.databaseName}/` +
-                '_security',
-                {
-                    body: JSON.stringify(configuration.couchdb.security),
-                    method: 'PUT'
-                }
+    if (configuration.couchdb.ensureSecuritySettingsPresence) {
+        const securityConfigurations = configuration.couchdb.security
+        for (const [databaseName, securityObject] of Object.entries(
+            securityConfigurations
+        )) {
+            if (databaseName === '_default')
+                continue
+
+            const fullSecurityObject = securityObject
+            if (databaseName !== '_users') {
+                fullSecurityObject.admins.names =
+                    securityConfigurations._default.admins.names.concat(
+                        fullSecurityObject.admins.names
+                    )
+                fullSecurityObject.admins.roles =
+                    securityConfigurations._default.admins.roles.concat(
+                        fullSecurityObject.admins.roles
+                    )
+
+                fullSecurityObject.members.names =
+                    securityConfigurations._default.members.names.concat(
+                        fullSecurityObject.members.names
+                    )
+                fullSecurityObject.members.roles =
+                    securityConfigurations._default.members.roles.concat(
+                        fullSecurityObject.members.roles
+                    )
+            }
+
+            console.info(
+                `Apply security settings for database "${databaseName}":`,
+                represent(fullSecurityObject)
             )
-        } catch (error) {
-            console.error(
-                `Security object couldn't be applied: ${represent(error)}`
-            )
+
+            try {
+                /*
+                    NOTE: As a needed side effect:
+                    This clears preexisting document references in
+
+                    "securitySettings[
+                        configuration.couchdb.model.property.name
+                            .validatedDocumentsCache
+                    ]".
+                */
+                console.log()
+                console.log('TODO 1', databaseName, fullSecurityObject)
+                console.log()
+                await globalContext.fetch(
+                    `${urlPrefixWithCredentials}/` +
+                    `${configuration.couchdb.databaseName}/` +
+                    '_security',
+                    {
+                        body: JSON.stringify(fullSecurityObject),
+                        method: 'PUT'
+                    }
+                )
+                console.log()
+                console.log('TODO 2')
+                console.log()
+            } catch (error) {
+                console.error(
+                    `Security object for database "${databaseName}" couldn't` +
+                    ` be applied:`,
+                    represent(error)
+                )
+            }
         }
+    }
     // endregion
     const modelConfiguration = copy(configuration.couchdb.model)
 
@@ -869,14 +908,18 @@ export const loadService = async (
                         copy(document) as FullDocument,
                         {
                             db: configuration.couchdb.databaseName,
-                            name: configuration.couchdb.user.name,
+                            name: configuration.couchdb.admin.name,
                             roles: ['_admin']
                         },
                         /*
                             NOTE: We need a copy to ignore validated document
                             caches.
                         */
-                        copy(configuration.couchdb.security),
+                        copy(
+                            configuration.couchdb.security[
+                                configuration.couchdb.databaseName
+                            ]
+                        ),
                         modelConfiguration,
                         models
                     )

@@ -481,7 +481,11 @@ export interface CoreConfiguration<
 
     changesStream: ChangesStreamOptions
     connector: ConnectorConfiguration
-    security: SecuritySettings
+    security: {
+        _default: SecuritySettings
+        _users: SecuritySettings
+        [key: string]: SecuritySettings
+    }
 
     createGenericFlatIndex: boolean
     databaseName: string
@@ -510,10 +514,15 @@ export interface CoreConfiguration<
 
     url: string
 
-    user: {
+    admin: {
         name: string
         password: string
     }
+    users: Mapping<{
+        name: string
+        password: string
+        roles: Array<string>
+    }>
 }
 export type Configuration<ConfigurationType = Mapping<unknown>> =
     BaseConfiguration<{couchdb: CoreConfiguration}> &
