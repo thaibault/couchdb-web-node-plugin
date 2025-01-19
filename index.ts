@@ -310,17 +310,25 @@ export const loadService = async (
     if (Object.prototype.hasOwnProperty.call(couchdb, 'connection'))
         return {couchdb: promise}
 
-    const urlPrefixWithCredentials = format(
-        configuration.couchdb.url,
-        `${configuration.couchdb.admin.name}:` +
-        `${configuration.couchdb.admin.password}@`
-    )
+    const urlPrefix = format(configuration.couchdb.url, '')
+    const authorizationHeader = {
+        Authorization:
+            'Basic ' +
+            Buffer.from(
+                `${configuration.couchdb.admin.name}:` +
+                configuration.couchdb.admin.password,
+                'binary'
+            ).toString('base64')
+    }
+    const headers = {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+    }
     // region ensure presence of global admin user
     if (configuration.couchdb.ensureAdminPresence) {
         const unauthenticatedUserDatabaseConnection: Connection =
             new couchdb.connector(
-                `${format(configuration.couchdb.url, '')}/_users`,
-                getConnectorOptions(configuration)
+                `${urlPrefix}/_users`, getConnectorOptions(configuration)
             )
 
         try {
@@ -333,9 +341,9 @@ export const loadService = async (
             )
 
             await globalContext.fetch(
-                `${format(configuration.couchdb.url, '')}/` +
-                couchdb.server.runner.adminUserConfigurationPath +
-                `/${configuration.couchdb.admin.name}`,
+                `${urlPrefix}/` +
+                `${couchdb.server.runner.adminUserConfigurationPath}/` +
+                configuration.couchdb.admin.name,
                 {
                     body: `"${configuration.couchdb.admin.password}"`,
                     method: 'PUT'
@@ -345,8 +353,14 @@ export const loadService = async (
             if ((error as DatabaseError).name === 'unauthorized') {
                 const authenticatedUserDatabaseConnection: Connection =
                     new couchdb.connector(
-                        `${urlPrefixWithCredentials}/_users`,
-                        getConnectorOptions(configuration)
+                        `${urlPrefix}/_users`,
+                        {
+                            ...getConnectorOptions(configuration),
+                            auth: {
+                                username: configuration.couchdb.admin.name,
+                                password: configuration.couchdb.admin.password
+                            }
+                        }
                     )
 
                 try {
@@ -374,8 +388,14 @@ export const loadService = async (
     if (configuration.couchdb.ensureUserPresence) {
         const userDatabaseConnection: Connection =
             new couchdb.connector(
-                `${urlPrefixWithCredentials}/_users`,
-                getConnectorOptions(configuration)
+                `${urlPrefix}/_users`,
+                {
+                    ...getConnectorOptions(configuration),
+                    auth: {
+                        username: configuration.couchdb.admin.name,
+                        password: configuration.couchdb.admin.password
+                    }
+                }
             )
 
         for (const [name, userConfiguration] of Object.entries(
@@ -425,14 +445,16 @@ export const loadService = async (
                 )) {
                     const fullPath =
                         `/${prefix}${prefix.trim() ? '/' : ''}${subPath}`
-                    const url = `${urlPrefixWithCredentials}${fullPath}`
+                    const url = `${urlPrefix}${fullPath}`
 
                     const value: unknown =
                         configuration.couchdb.backend.configuration[subPath]
 
                     let response: Response | undefined
                     try {
-                        response = await globalContext.fetch(url)
+                        response = await globalContext.fetch(
+                            url, {headers: authorizationHeader}
+                        )
                     } catch (error) {
                         console.warn(
                             `Configuration "${fullPath}" (with desired ` +
@@ -514,23 +536,35 @@ export const loadService = async (
 
             const fullSecurityObject = securityObject
             if (databaseName !== '_users') {
-                fullSecurityObject.admins.names =
-                    securityConfigurations._default.admins.names.concat(
-                        fullSecurityObject.admins.names
-                    )
-                fullSecurityObject.admins.roles =
-                    securityConfigurations._default.admins.roles.concat(
-                        fullSecurityObject.admins.roles
-                    )
+                if (!fullSecurityObject.admins)
+                    fullSecurityObject.admins = {names: [], roles: []}
 
-                fullSecurityObject.members.names =
-                    securityConfigurations._default.members.names.concat(
-                        fullSecurityObject.members.names
-                    )
-                fullSecurityObject.members.roles =
-                    securityConfigurations._default.members.roles.concat(
-                        fullSecurityObject.members.roles
-                    )
+                if (securityConfigurations._default.admins) {
+                    if (securityConfigurations._default.admins.names)
+                        fullSecurityObject.admins.names =
+                            securityConfigurations._default.admins.names.concat(
+                                fullSecurityObject.admins.names ?? []
+                            )
+                    if (securityConfigurations._default.admins.roles)
+                        fullSecurityObject.admins.roles =
+                            securityConfigurations._default.admins.roles.concat(
+                                fullSecurityObject.admins.roles ?? []
+                            )
+                }
+
+                if (!fullSecurityObject.members)
+                    fullSecurityObject.members = {names: [], roles: []}
+
+                if (securityConfigurations._default.members) {
+                    if (securityConfigurations._default.members.names)
+                        fullSecurityObject.members.names =
+                            securityConfigurations._default.members.names
+                                .concat(fullSecurityObject.members.names ?? [])
+                    if (securityConfigurations._default.members.roles)
+                        fullSecurityObject.members.roles =
+                            securityConfigurations._default.members.roles
+                                .concat(fullSecurityObject.members.roles ?? [])
+                }
             }
 
             console.info(
@@ -548,21 +582,18 @@ export const loadService = async (
                             .validatedDocumentsCache
                     ]".
                 */
-                console.log()
-                console.log('TODO 1', databaseName, fullSecurityObject)
-                console.log()
-                await globalContext.fetch(
-                    `${urlPrefixWithCredentials}/` +
-                    `${configuration.couchdb.databaseName}/` +
+                const response = await globalContext.fetch(
+                    `${urlPrefix}/${configuration.couchdb.databaseName}/` +
                     '_security',
                     {
                         body: JSON.stringify(fullSecurityObject),
+                        headers: {...headers, ...authorizationHeader},
                         method: 'PUT'
                     }
                 )
-                console.log()
-                console.log('TODO 2')
-                console.log()
+
+                if (!response.ok)
+                    throw new Error(response.statusText)
             } catch (error) {
                 console.error(
                     `Security object for database "${databaseName}" couldn't` +

@@ -432,8 +432,8 @@ export interface UserContext {
     roles: Array<string>
 }
 export interface DatabaseUserConfiguration {
-    names: Array<string>
-    roles: Array<string>
+    names?: Array<string>
+    roles?: Array<string>
 }
 export interface Runner {
     adminUserConfigurationPath: string
@@ -450,8 +450,8 @@ export interface Runner {
     name: Array<string> | string
 }
 export interface SecuritySettings {
-    admins: DatabaseUserConfiguration
-    members: DatabaseUserConfiguration
+    admins?: DatabaseUserConfiguration
+    members?: DatabaseUserConfiguration
 
     _validatedDocuments?: Set<string>
 }
