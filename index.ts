@@ -583,8 +583,7 @@ export const loadService = async (
                     ]".
                 */
                 const response = await globalContext.fetch(
-                    `${urlPrefix}/${configuration.couchdb.databaseName}/` +
-                    '_security',
+                    `${urlPrefix}/${databaseName}/_security`,
                     {
                         body: JSON.stringify(fullSecurityObject),
                         headers: {...headers, ...authorizationHeader},
