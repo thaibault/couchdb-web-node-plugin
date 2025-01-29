@@ -17,6 +17,7 @@ Project status
 [![npm downloads](https://img.shields.io/npm/dy/couchdb-web-node-plugin.svg?style=for-the-badge)](https://www.npmjs.com/package/couchdb-web-node-plugin)
 
 [![build](https://img.shields.io/github/actions/workflow/status/thaibault/couchdb-web-node-plugin/build.yaml?style=for-the-badge)](https://github.com/thaibault/couchdb-web-node-plugin/actions/workflows/build.yaml)
+[![build push package](https://img.shields.io/github/actions/workflow/status/thaibault/couchdb-web-node-plugin/build-package-and-push.yaml?label=build%20push%20package&style=for-the-badge)](https://github.com/thaibault/couchdb-web-node-plugin/actions/workflows/build-package-and-push.yaml)
 
 [![check types](https://img.shields.io/github/actions/workflow/status/thaibault/couchdb-web-node-plugin/check-types.yaml?label=check%20types&style=for-the-badge)](https://github.com/thaibault/couchdb-web-node-plugin/actions/workflows/check-types.yaml)
 [![lint](https://img.shields.io/github/actions/workflow/status/thaibault/couchdb-web-node-plugin/lint.yaml?label=lint&style=for-the-badge)](https://github.com/thaibault/couchdb-web-node-plugin/actions/workflows/lint.yaml)
