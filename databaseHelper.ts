@@ -2744,6 +2744,8 @@ export const validateDocumentUpdate = <
 
         securitySettings,
 
+        updateStrategy,
+
         userContext
     }
 
