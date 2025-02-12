@@ -653,6 +653,8 @@ export interface BasicScope<
 
     securitySettings: Partial<SecuritySettings>
 
+    updateStrategy: UpdateStrategy
+
     userContext: Partial<UserContext>
 }
 export interface CommonScope<
