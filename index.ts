@@ -152,12 +152,28 @@ export const preLoadService = async ({
                     timeout: configuration.connector.fetch.timeout
                 })
 
-            const result: Array<DatabaseError | DatabaseResponse> =
-                await nativeBulkDocs.call(
-                    this,
-                    data as FirstParameter<Connection['bulkDocs']>,
-                    ...parameters as [SecondParameter<Connection['bulkDocs']>]
+
+            const chunkSize =
+                configuration.maximumNumberOfEntitiesInBulkOperation
+            const result: Array<DatabaseError | DatabaseResponse> = []
+            for (let index = 0; index < data.length; index += chunkSize) {
+                const chunk = data.slice(index, index + chunkSize)
+
+                result.concat(
+                    await nativeBulkDocs.call(
+                        this,
+                        chunk as FirstParameter<Connection['bulkDocs']>,
+                        ...parameters as
+                            [SecondParameter<Connection['bulkDocs']>]
+                    )
                 )
+
+                await timeout(
+                    configuration
+                        .waitingDelayBetweenTwoRelatedBulkOperationsInSeconds *
+                    1000
+                )
+            }
 
             const conflictingIndexes: Array<number> = []
             const conflicts: Array<PartialFullDocument> = []
@@ -1106,7 +1122,16 @@ export const postLoadService = (state: State): Promise<void> => {
     const {couchdb} = services
     // region register database changes stream
     let numberOfErrorsThrough = 0
-    const periodToClearNumberOfErrorsInSeconds = 30
+    let periodToClearNumberOfErrorsInSeconds = 0
+    for (
+        let count = 0;
+        count <= configuration.changesStreamReinitializer.retries;
+        count += 1
+    )
+        periodToClearNumberOfErrorsInSeconds +=
+            configuration.changesStreamReinitializer
+                .retryWaitingFactorInSeconds **
+            count
 
     setInterval(
         () => {
@@ -1172,19 +1197,21 @@ export const postLoadService = (state: State): Promise<void> => {
                     couchdb.changesStream.cancel()
 
                     await couchdb.server.restart(state)
-                } else
+                } else {
+                    const waitingTimeInSeconds =
+                        configuration.changesStreamReinitializer
+                            .retryWaitingFactorInSeconds **
+                        numberOfErrorsThrough
+
                     console.warn(
                         'Observing changes feed throws an error for ' +
                         `${String(numberOfErrorsThrough)} times through: ` +
-                        `${represent(error)} Reinitializing changes stream...`
+                        `${represent(error)} Reinitializing changes stream ` +
+                        `in ${String(waitingTimeInSeconds)} seconds...`
                     )
 
-                await timeout(
-                    1000 *
-                    configuration.changesStreamReinitializer
-                        .retryWaitingFactorInSeconds **
-                    numberOfErrorsThrough
-                )
+                    await timeout(1000 * waitingTimeInSeconds)
+                }
 
                 void initialize()
             }
