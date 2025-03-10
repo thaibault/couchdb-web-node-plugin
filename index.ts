@@ -1121,8 +1121,14 @@ export const postLoadService = (state: State): Promise<void> => {
         state
     const {couchdb} = services
     // region register database changes stream
+    /*
+        Maximum time one request could take + number of retries plus there
+        waiting times.
+    */
     let numberOfErrorsThrough = 0
-    let periodToClearNumberOfErrorsInSeconds = 0
+    let periodToClearNumberOfErrorsInSeconds =
+        configuration.changesStreamReinitializer.retries *
+        31
     for (
         let count = 0;
         count <= configuration.changesStreamReinitializer.retries;
