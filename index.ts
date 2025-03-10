@@ -33,6 +33,7 @@ import {
     ProcessCloseReason,
     represent,
     SecondParameter,
+    timeout,
     UTILITY_SCOPE,
     walkDirectoryRecursively
 } from 'clientnode'
@@ -1156,7 +1157,10 @@ export const postLoadService = (state: State): Promise<void> => {
             'error',
             async (error: DatabaseError): Promise<void> => {
                 numberOfErrorsThrough += 1
-                if (numberOfErrorsThrough > 3) {
+                if (
+                    numberOfErrorsThrough >
+                    configuration.changesStreamReinitializer.retries
+                ) {
                     console.warn(
                         'Observing changes feed throws an error for ' +
                         `${String(numberOfErrorsThrough)} times through: ` +
@@ -1174,6 +1178,13 @@ export const postLoadService = (state: State): Promise<void> => {
                         `${String(numberOfErrorsThrough)} times through: ` +
                         `${represent(error)} Reinitializing changes stream...`
                     )
+
+                await timeout(
+                    1000 *
+                    configuration.changesStreamReinitializer
+                        .retryWaitingFactorInSeconds **
+                    numberOfErrorsThrough
+                )
 
                 void initialize()
             }
@@ -1198,7 +1209,7 @@ export const postLoadService = (state: State): Promise<void> => {
                     })
                 } catch (error) {
                     console.error(
-                        'An error occured durring on change database hook:',
+                        'An error occurred during on change database hook:',
                         error
                     )
                 }
