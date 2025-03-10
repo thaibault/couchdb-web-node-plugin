@@ -203,6 +203,10 @@
         "since": "now",
         "timeout": false
       },
+      "changesStreamReinitializer": {
+        "retries": 4,
+        "retryWaitingFactorInSeconds": 3
+      },
       "connector": {
         "fetch": {
           "timeout": {

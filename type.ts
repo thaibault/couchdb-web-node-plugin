@@ -480,6 +480,10 @@ export interface CoreConfiguration<
     }
 
     changesStream: ChangesStreamOptions
+    changesStreamReinitializer: {
+        retries: number,
+        retryWaitingFactorInSeconds: number
+    }
     connector: ConnectorConfiguration
     security: {
         _default: SecuritySettings
