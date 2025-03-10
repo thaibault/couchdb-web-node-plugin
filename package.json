@@ -222,8 +222,8 @@
       "ensureUserPresence": true,
       "ignoreNoChangeError": true,
       "local": false,
-      "maximumNumberOfEntitiesInBulkOperation": 40,
-      "waitingDelayBetweenTwoRelatedBulkOperationsInSeconds": 1,
+      "maximumNumberOfEntitiesInBulkOperation": 30,
+      "waitingDelayBetweenTwoRelatedBulkOperationsInSeconds": 3,
       "maximumRepresentationLength": 1000,
       "maximumRepresentationTryLength": 1000000,
       "model": {
