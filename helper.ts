@@ -19,11 +19,12 @@ import {
     copy,
     extend,
     format,
+    identity,
     isObject,
     globalContext,
     Mapping,
     represent,
-    ValueOf, identity
+    ValueOf
 } from 'clientnode'
 import {lastValueFrom, map, retry, timer} from 'rxjs'
 import {fromFetch} from 'rxjs/fetch'
@@ -91,6 +92,10 @@ export const getConnectorOptions = (
                 exponentialBackoff,
                 maximumRetryIntervallInSeconds
             } = configuration.couchdb.connector.fetchInterceptor
+
+            console.log()
+            console.log('Run ', url)
+            console.log()
 
             // Provides a retry mechanism with configurable delay mechanism.
             const $result = fromFetch(url, getOptions(options)).pipe(
