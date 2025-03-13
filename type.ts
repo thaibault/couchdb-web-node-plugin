@@ -489,9 +489,11 @@ export interface CoreConfiguration<
 
     changesStream: ChangesStreamOptions
     changesStreamReinitializer: {
-        retries: number,
+        retries: number
         retryWaitingFactorInSeconds: number
     }
+    numberOfParallelChangesRunner: number
+
     connector: ConnectorConfiguration
     security: {
         _default: SecuritySettings

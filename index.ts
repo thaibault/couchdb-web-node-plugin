@@ -1245,7 +1245,9 @@ export const postLoadService = (state: State): Promise<void> => {
 
         console.info('Changes stream initialized.')
 
-        const semaphore = new Semaphore(2)
+        const semaphore = new Semaphore(
+            configuration.numberOfParallelChangesRunner
+        )
         void couchdb.changesStream.on(
             'change',
             async (change: ChangesResponseChange) => {
