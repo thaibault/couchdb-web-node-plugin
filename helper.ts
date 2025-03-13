@@ -93,10 +93,6 @@ export const getConnectorOptions = (
                 maximumRetryIntervallInSeconds
             } = configuration.couchdb.connector.fetchInterceptor
 
-            console.log()
-            console.log('Run ', url)
-            console.log()
-
             // Provides a retry mechanism with configurable delay mechanism.
             const $result = fromFetch(url, getOptions(options)).pipe(
                 map((response) => {
@@ -157,7 +153,7 @@ export const getConnectorOptions = (
                             retryIntervalInSeconds
 
                         return timer(
-                            Math.max(delay, maximumRetryIntervallInSeconds)
+                            Math.min(delay, maximumRetryIntervallInSeconds)
                         )
                     }
                 })
