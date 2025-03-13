@@ -1148,10 +1148,13 @@ export const postLoadService = (state: State): Promise<void> => {
         count <= configuration.changesStreamReinitializer.retries;
         count += 1
     )
-        periodToClearNumberOfErrorsInSeconds +=
+        periodToClearNumberOfErrorsInSeconds += Math.max(
             configuration.changesStreamReinitializer
                 .retryWaitingFactorInSeconds **
-            count
+            count,
+            configuration.changesStreamReinitializer
+                .maxmumRetryWaitingTimeInSeconds
+        )
 
     setInterval(
         () => {
@@ -1219,9 +1222,13 @@ export const postLoadService = (state: State): Promise<void> => {
                     await couchdb.server.restart(state)
                 } else {
                     const waitingTimeInSeconds =
-                        configuration.changesStreamReinitializer
-                            .retryWaitingFactorInSeconds **
-                        numberOfErrorsThrough
+                        Math.max(
+                            configuration.changesStreamReinitializer
+                                .retryWaitingFactorInSeconds **
+                            numberOfErrorsThrough,
+                            configuration.changesStreamReinitializer
+                                .maxmumRetryWaitingTimeInSeconds
+                        )
 
                     console.warn(
                         'Observing changes feed throws an error for ' +
