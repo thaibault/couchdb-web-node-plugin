@@ -33,6 +33,7 @@ import {
     ProcessCloseReason,
     represent,
     SecondParameter,
+    Semaphore,
     timeout,
     UTILITY_SCOPE,
     walkDirectoryRecursively
@@ -1244,23 +1245,26 @@ export const postLoadService = (state: State): Promise<void> => {
 
         console.info('Changes stream initialized.')
 
+        const semaphore = new Semaphore(2)
         void couchdb.changesStream.on(
             'change',
             async (change: ChangesResponseChange) => {
                 numberOfErrorsThrough = 0
 
                 try {
+                    await semaphore.acquire()
                     await pluginAPI.callStack<State<ChangesResponseChange>>({
                         ...state, data: change, hook: 'couchdbChange'
                     })
+                    services.couchdbLastChangesSequenceIdentifier = change.seq
                 } catch (error) {
                     console.error(
                         'An error occurred during on change database hook:',
                         error
                     )
+                } finally {
+                    semaphore.release()
                 }
-
-                services.couchdbLastChangesSequenceIdentifier = change.seq
             }
         )
     })
