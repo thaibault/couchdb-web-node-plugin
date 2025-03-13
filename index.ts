@@ -238,20 +238,6 @@ export const preLoadService = async ({
             return result
         } as unknown as DatabasePlugin})
         // endregion
-        // region apply "retry" for errors plugin
-        const nativeGet: Connection['get'] =
-            couchdb.connector.prototype.get
-        couchdb.connector.plugin({get: async function(
-            this: Connection,
-            ...parameters: Parameters<Connection['get']>
-        ): ReturnType<Connection['get']> {
-            const result = await nativeGet.call(this, ...parameters)
-            console.log()
-            console.log('TODO', result)
-            console.log()
-            return result
-        } as unknown as DatabasePlugin})
-        // endregion
         if (configuration.debug)
             couchdb.connector.debug.enable('*')
 
