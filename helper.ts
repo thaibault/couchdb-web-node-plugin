@@ -128,32 +128,55 @@ export const getConnectorOptions = (
 
                                 const futureRetryMoment = new Date(retryValue)
                                 if (!isNaN(futureRetryMoment.getTime())) {
-                                    if (new Date() < futureRetryMoment) {
-                                        console.info(
-                                            'Retry at',
+                                    const now = new Date()
+                                    if (now < futureRetryMoment) {
+                                        if (
+                                            maximumRetryIntervallInSeconds <
+                                            (
+                                                futureRetryMoment.getTime() -
+                                                now.getTime()
+                                            ) /
+                                            1000
+                                        ) {
+                                            console.info(
+                                                'Retry at',
+                                                futureRetryMoment
+                                                    .toUTCString(),
+                                                'according to given retry',
+                                                'value.'
+                                            )
+
+                                            return timer(futureRetryMoment)
+                                        }
+
+                                        console.warn(
+                                            'The recommended retry attempt is',
                                             futureRetryMoment.toUTCString(),
-                                            'according to given retry value.'
+                                            'further in the future than the',
+                                            'configured maximum wait time of',
+                                            maximumRetryIntervallInSeconds,
+                                            'seconds.'
                                         )
-
-                                        return timer(futureRetryMoment)
-                                    }
-
-                                    console.warn(
-                                        'Given retry time recommendation from ',
-                                        'server is in the past and has to be',
-                                        'ignored therefore.'
-                                    )
+                                    } else
+                                        console.warn(
+                                            'Given retry time recommendation',
+                                            'from server is in the past and',
+                                            'has to be ignored therefore.'
+                                        )
                                 }
                             }
                         }
 
-                        const delay = exponentialBackoff ?
+                        const delayInSeconds = exponentialBackoff ?
                             Math.pow(2, retryCount - 1) *
-                            retryIntervalInSeconds * 1000 :
+                            retryIntervalInSeconds :
                             retryIntervalInSeconds
 
                         return timer(
-                            Math.min(delay, maximumRetryIntervallInSeconds)
+                            Math.min(
+                                delayInSeconds, maximumRetryIntervallInSeconds
+                            ) *
+                            1000
                         )
                     }
                 })
