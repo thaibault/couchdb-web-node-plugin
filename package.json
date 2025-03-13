@@ -205,8 +205,9 @@
         "timeout": false
       },
       "changesStreamReinitializer": {
-        "retries": 3,
-        "retryWaitingFactorInSeconds": 3
+        "retries": 10,
+        "retryWaitingFactorInSeconds": 3,
+        "maxmumRetryWaitingTimeInSeconds": 120
       },
       "numberOfParallelChangesRunner": 1,
       "connector": {

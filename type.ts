@@ -491,6 +491,7 @@ export interface CoreConfiguration<
     changesStreamReinitializer: {
         retries: number
         retryWaitingFactorInSeconds: number
+        maxmumRetryWaitingTimeInSeconds: number
     }
     numberOfParallelChangesRunner: number
 
