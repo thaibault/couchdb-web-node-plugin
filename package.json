@@ -208,6 +208,7 @@
         "retries": 3,
         "retryWaitingFactorInSeconds": 3
       },
+      "numberOfParallelChangesRunner": 2,
       "connector": {
         "fetch": {
           "timeout": {
