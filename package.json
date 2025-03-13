@@ -484,6 +484,7 @@
               "removeConsole": false
             }
           },
+          "#": "Avoids \"Couldn't find intersection\" build error.",
           "module": false
         }
       },
