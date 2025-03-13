@@ -1217,10 +1217,14 @@ export const postLoadService = (state: State): Promise<void> => {
                         )
 
                     console.warn(
-                        'Observing changes feed throws an error for ' +
-                        `${String(numberOfErrorsThrough)} times through: ` +
-                        `${represent(error)} Reinitializing changes stream ` +
-                        `in ${String(waitingTimeInSeconds)} seconds...`
+                        'Observing changes feed throws an error for',
+                        `${String(numberOfErrorsThrough)} of`,
+                        String(
+                            configuration.changesStreamReinitializer.retries
+                        ),
+                        `allowed times through: ${represent(error)}`,
+                        'Reinitializing changes stream in',
+                        `${String(waitingTimeInSeconds)} seconds...`
                     )
 
                     await timeout(1000 * waitingTimeInSeconds)
