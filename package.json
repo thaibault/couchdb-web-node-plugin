@@ -43,7 +43,7 @@
     "url": "https://github.com/thaibault/couchdb-web-node-plugin.git"
   },
   "scripts": {
-    "build": "yarn clear && weboptimizer build:types && yarn build:databaseHelper && weboptimizer build",
+    "build": "weboptimizer build:types && yarn build:databaseHelper && weboptimizer build",
     "build:databaseHelper": "weboptimizer build '{__reference__: \"target:databaseHelper\"}'",
     "check:types": "weboptimizer check:types",
     "clear": "weboptimizer clear && rimraf log.txt",
@@ -484,9 +484,7 @@
               "removeConsole": false
             }
           },
-          "module": {
-            "removeConsole": false
-          }
+          "module": false
         }
       },
       "skipParseRegularExpressions": {
