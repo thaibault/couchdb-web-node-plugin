@@ -456,10 +456,18 @@ export interface SecuritySettings {
     _validatedDocuments?: Set<string>
 }
 export type AdvancedFetchOptions = RequestInit & {timeout?: number}
-export type ConnectorConfiguration = DatabaseConnectorConfiguration & {
-    // NOTE: "pouchdb`s" version supports timeout parameter.
-    fetch?: AdvancedFetchOptions | null
-}
+export type ConnectorConfiguration =
+    DatabaseConnectorConfiguration &
+    {
+        // NOTE: "pouchdb`s" version supports timeout parameter.
+        fetch?: AdvancedFetchOptions | null,
+        fetchInterceptor: {
+            numberOfRetries: number
+            retryIntervalInSeconds: number
+            exponentialBackoff: boolean
+            maximumRetryIntervallInSeconds: number
+        }
+    }
 export interface CoreConfiguration<
     Type extends object = Mapping<unknown>,
     AttachmentType extends Attachment = Attachment,

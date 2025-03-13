@@ -35,6 +35,7 @@ describe('index', (): void => {
         ]
 
         const services: Services = {} as Services
+
         await expect(preLoadService({
             configuration,
             data: undefined,

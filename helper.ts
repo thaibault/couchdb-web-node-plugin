@@ -23,8 +23,10 @@ import {
     globalContext,
     Mapping,
     represent,
-    ValueOf
+    ValueOf, identity
 } from 'clientnode'
+import {lastValueFrom, map, retry, timer} from 'rxjs'
+import {fromFetch} from 'rxjs/fetch'
 
 import packageConfiguration from './package.json'
 import {
@@ -58,33 +60,105 @@ import {
 export const getConnectorOptions = (
     configuration: Configuration
 ): DatabaseConnectorConfiguration => {
-    if (configuration.couchdb.connector.fetch)
-        return {
-            fetch: ((
-                url: RequestInfo, options?: RequestInit
-            ): Promise<Response> => {
-                if (!globalContext.fetch)
-                    throw new Error('Missing fetch implementation.')
+    /*
+        NOTE: We convert given fetch options into a fetch function wrapper
+        which is than accepted by pouchdb's api.
+    */
+    const getOptions = configuration.couchdb.connector.fetch ?
+        (options?: RequestInit) => extend(
+            true,
+            copy(configuration.couchdb.connector.fetch),
+            options || {}
+        ) :
+        identity
 
-                return globalContext.fetch(
-                    url,
-                    extend(
-                        true,
-                        copy(configuration.couchdb.connector.fetch),
-                        options || {}
-                    )
-                )
-            })
-        }
+    const KNOWN_ERRORS = new Map([
+        [408, 'Request Timeout'],
+        [425, 'Too Early'],
+        [429, 'Too Many Requests'],
+        [502, 'Bad Gateway'],
+        [503, 'Service Unavailable'],
+        [504, 'Gateway Timeout']
+    ])
 
     return {
         fetch: ((
             url: RequestInfo, options?: RequestInit
         ): Promise<Response> => {
-            if (!globalContext.fetch)
-                throw new Error('Missing fetch implementation.')
+            const {
+                numberOfRetries,
+                retryIntervalInSeconds,
+                exponentialBackoff,
+                maximumRetryIntervallInSeconds
+            } = configuration.couchdb.connector.fetchInterceptor
 
-            return globalContext.fetch(url, options)
+            // Provides a retry mechanism with configurable delay mechanism.
+            const $result = fromFetch(url, getOptions(options)).pipe(
+                map((response) => {
+                    if (KNOWN_ERRORS.has(response.status))
+                        // eslint-disable-next-line no-throw-literal
+                        throw response as unknown as Error
+
+                    return response
+                }),
+                retry({
+                    count: numberOfRetries,
+                    delay: (error, retryCount) => {
+                        // Client side error will just be forwarded
+                        if (typeof error.status !== 'number')
+                            throw error
+
+                        const httpError = error as Response
+
+                        if (httpError.headers.has('retry-after')) {
+                            const retryValue =
+                                httpError.headers.get('retry-after')
+
+                            if (typeof retryValue === 'string') {
+                                const intervallInSeconds = parseInt(retryValue)
+                                if (String(intervallInSeconds) === retryValue) {
+                                    console.info(
+                                        `Retry in ${retryValue} seconds`,
+                                        'according to given retry value.'
+                                    )
+                                    // We interpret value as seconds.
+                                    return timer(intervallInSeconds * 1000)
+                                }
+
+                                const futureRetryMoment = new Date(retryValue)
+                                if (!isNaN(futureRetryMoment.getTime())) {
+                                    if (new Date() < futureRetryMoment) {
+                                        console.info(
+                                            'Retry at',
+                                            futureRetryMoment.toUTCString(),
+                                            'according to given retry value.'
+                                        )
+
+                                        return timer(futureRetryMoment)
+                                    }
+
+                                    console.warn(
+                                        'Given retry time recommendation from ',
+                                        'server is in the past and has to be',
+                                        'ignored therefore.'
+                                    )
+                                }
+                            }
+                        }
+
+                        const delay = exponentialBackoff ?
+                            Math.pow(2, retryCount - 1) *
+                            retryIntervalInSeconds * 1000 :
+                            retryIntervalInSeconds
+
+                        return timer(
+                            Math.max(delay, maximumRetryIntervallInSeconds)
+                        )
+                    }
+                })
+            )
+
+            return lastValueFrom($result)
         })
     }
 }
