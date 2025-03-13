@@ -153,7 +153,7 @@ export const getConnectorOptions = (
                             retryIntervalInSeconds
 
                         return timer(
-                            Math.max(delay, maximumRetryIntervallInSeconds)
+                            Math.min(delay, maximumRetryIntervallInSeconds)
                         )
                     }
                 })

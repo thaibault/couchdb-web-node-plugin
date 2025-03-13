@@ -1134,7 +1134,7 @@ export const postLoadService = (state: State): Promise<void> => {
         count <= configuration.changesStreamReinitializer.retries;
         count += 1
     )
-        periodToClearNumberOfErrorsInSeconds += Math.max(
+        periodToClearNumberOfErrorsInSeconds += Math.min(
             configuration.changesStreamReinitializer
                 .retryWaitingFactorInSeconds **
             count,
@@ -1208,7 +1208,7 @@ export const postLoadService = (state: State): Promise<void> => {
                     await couchdb.server.restart(state)
                 } else {
                     const waitingTimeInSeconds =
-                        Math.max(
+                        Math.min(
                             configuration.changesStreamReinitializer
                                 .retryWaitingFactorInSeconds **
                             numberOfErrorsThrough,
