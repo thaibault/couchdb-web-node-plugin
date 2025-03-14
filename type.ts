@@ -568,8 +568,10 @@ export interface CouchDB<Type extends object = Mapping<unknown>> {
         runner: Runner
     }
 
-    validateDocument: (document: FullDocument, oldDocument?: FullDocument) =>
-        Error | true
+    validateDocument: (
+        document: FullDocument,
+        options: {type?: string, oldDocument?: FullDocument}
+    ) => Error | true
 }
 
 export type ServicePromises<Type = Mapping<unknown>> =
