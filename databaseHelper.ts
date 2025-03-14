@@ -189,6 +189,7 @@ export const authenticate = (
  * @param securitySettings - Database security settings.
  * @param modelConfiguration - Model configuration object.
  * @param models - Models specification object.
+ * @param checkPublicModelType - Indicates whether to public model types only.
  * @param toJSON - JSON stringifier.
  * @returns Modified given new document.
  */
@@ -213,6 +214,7 @@ export const validateDocumentUpdate = <
             AdditionalSpecifications,
             AdditionalPropertiesType
         > = {},
+        checkPublicModelType = true,
         toJSON?: (value: unknown) => string
     ): PartialFullDocument<ObjectType, AdditionalPropertiesType> => {
     // console.debug(`Got new document`, newDocument, 'to update', oldDocument)
@@ -610,12 +612,15 @@ export const validateDocumentUpdate = <
                         'Type: You have to specify a model type via ' +
                         `property "${typeName}"${pathDescription}.`
                     )
-            if (!(
-                parentNames.length ||
-                (new RegExp(
-                    modelConfiguration.property.name.typePattern.public
-                )).test(newDocument[typeName] as string)
-            ))
+            if (
+                checkPublicModelType &&
+                !(
+                    parentNames.length ||
+                    (new RegExp(
+                        modelConfiguration.property.name.typePattern.public
+                    )).test(newDocument[typeName] as string)
+                )
+            )
                 throwError(
                     'TypeName: You have to specify a model type which ' +
                     'matches "' +

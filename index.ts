@@ -301,9 +301,14 @@ export const preLoadService = async ({
 
     couchdb.validateDocument = (
         document: FullDocument,
-        options: {type?: string, oldDocument?: FullDocument}
+        options: {
+            checkPublicModelType?: boolean
+            type?: string
+            oldDocument?: FullDocument
+        }
     ): Error | true => {
         const oldDocument = copy(options.oldDocument ?? document)
+        const checkPublicModelType = Boolean(options.checkPublicModelType)
         document = copy(document)
 
         if (options.type)
@@ -333,7 +338,8 @@ export const preLoadService = async ({
                 // NOTE: We need a copy to ignore validated document caches.s
                 copy(configuration.security[configuration.databaseName]),
                 modelConfiguration,
-                models
+                models,
+                checkPublicModelType
             )
             return true
         } catch (error) {
@@ -991,7 +997,8 @@ export const loadService = async (
                       provided in model specification.
                 */
                 const result = couchdb.validateDocument(
-                    newDocument, {oldDocument: document}
+                    newDocument,
+                    {checkPublicModelType: true, oldDocument: document}
                 )
                 if (result !== true)
                     if (Object.prototype.hasOwnProperty.call(
