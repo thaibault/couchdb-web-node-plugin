@@ -300,10 +300,16 @@ export const preLoadService = async ({
     const models = extendModels(configuration.model)
 
     couchdb.validateDocument = (
-        document: FullDocument, oldDocument?: FullDocument
+        document: FullDocument,
+        options: {type?: string, oldDocument?: FullDocument}
     ): Error | true => {
-        if (!oldDocument)
-            oldDocument = copy(document)
+        const oldDocument = copy(options.oldDocument ?? document)
+        document = copy(document)
+
+        if (options.type)
+            document[modelConfiguration.property.name.special.type] =
+                oldDocument[modelConfiguration.property.name.special.type] =
+                options.type
 
         try {
             validateDocumentUpdate(
@@ -312,7 +318,7 @@ export const preLoadService = async ({
                     so final removing would be skipped if we do not use a copy
                     here.
                 */
-                copy(document),
+                document,
                 /*
                     NOTE: During processing attachments sub object will be
                     manipulated so copying is needed to copy to avoid
@@ -984,7 +990,9 @@ export const loadService = async (
                     - TODO: Renames property names if "oldPropertyName" is
                       provided in model specification.
                 */
-                const result = couchdb.validateDocument(newDocument, document)
+                const result = couchdb.validateDocument(
+                    newDocument, {oldDocument: document}
+                )
                 if (result !== true)
                     if (Object.prototype.hasOwnProperty.call(
                         result, 'forbidden'
