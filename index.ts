@@ -159,6 +159,10 @@ export const preLoadService = async ({
             for (let index = 0; index < data.length; index += chunkSize) {
                 const chunk = data.slice(index, index + chunkSize)
 
+                console.log()
+                console.log('TODO', chunk)
+                console.log()
+
                 result.concat(
                     await nativeBulkDocs.call(
                         this,
