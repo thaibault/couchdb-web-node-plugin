@@ -570,7 +570,11 @@ export interface CouchDB<Type extends object = Mapping<unknown>> {
 
     validateDocument: (
         document: FullDocument,
-        options: {type?: string, oldDocument?: FullDocument}
+        options: {
+            checkPublicModelType?: boolean
+            type?: string
+            oldDocument?: FullDocument
+        }
     ) => Error | true
 }
 
