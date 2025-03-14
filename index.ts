@@ -65,7 +65,6 @@ import {
     DatabaseResponse,
     DeleteIndexOptions,
     Document,
-    ExistingDocument,
     FullDocument,
     Index,
     Migrator,
@@ -291,6 +290,49 @@ export const preLoadService = async ({
                 ` "${triedPaths.join('", "')}".`
             )
         // endregion
+    }
+
+    const modelConfiguration = copy(configuration.model)
+    delete (modelConfiguration.property as
+        {defaultSpecification?: PropertySpecification}
+    ).defaultSpecification
+    delete (modelConfiguration as {entities?: Models}).entities
+    const models = extendModels(configuration.model)
+
+    couchdb.validateDocument = (
+        document: FullDocument, oldDocument?: FullDocument
+    ): Error | true => {
+        if (!oldDocument)
+            oldDocument = copy(document)
+
+        try {
+            validateDocumentUpdate(
+                /*
+                    NOTE: Removed property marked with "null" will be removed
+                    so final removing would be skipped if we do not use a copy
+                    here.
+                */
+                copy(document),
+                /*
+                    NOTE: During processing attachments sub object will be
+                    manipulated so copying is needed to copy to avoid
+                    unexpected behavior in this context.
+                */
+                oldDocument,
+                {
+                    db: configuration.databaseName,
+                    name: configuration.admin.name,
+                    roles: ['_admin']
+                },
+                // NOTE: We need a copy to ignore validated document caches.s
+                copy(configuration.security[configuration.databaseName]),
+                modelConfiguration,
+                models
+            )
+            return true
+        } catch (error) {
+            return error as Error
+        }
     }
 }
 /**
@@ -825,10 +867,10 @@ export const loadService = async (
                                 error as {forbidden?: string}
                             ).forbidden?.startsWith('NoChange:'))
                                 console.info(
-                                    'Including document ' +
-                                    `"${document[idName]}" of type ` +
-                                    `"${document[typeName] as string}" ` +
-                                    `hasn't changed existing document.`
+                                    `Including document "${document[idName]}"`,
+                                    'of type',
+                                    `"${document[typeName] as string}" hasn't`,
+                                    'changed existing document.'
                                 )
                             throw new Error(
                                 `Migrating document ` +
@@ -839,9 +881,9 @@ export const loadService = async (
                         }
 
                         console.info(
-                            'Including document ' +
-                            `"${document[idName]}" of type ` +
-                            `"${document[typeName] as string}" was successful.`
+                            `Including document "${document[idName]}" of`,
+                            `type "${document[typeName] as string}" was`,
+                            'successful.'
                         )
                     }
                 } else if (['.js'].includes(extname(file.name)))
@@ -873,8 +915,8 @@ export const loadService = async (
                         .designDocumentNamePrefix
                 )
             )) {
-                const document = retrievedDocument.doc as ExistingDocument
-                let newDocument: Document = copy(document)
+                const document = retrievedDocument.doc as FullDocument
+                let newDocument: FullDocument = copy(document)
                 newDocument[
                     configuration.couchdb.model.property.name.special.strategy
                 ] = 'migrate'
@@ -883,7 +925,7 @@ export const loadService = async (
                     let result: Document | null = null
                     try {
                         result = migrators[name](
-                            newDocument,
+                            newDocument as Document,
                             {
                                 ...UTILITY_SCOPE,
 
@@ -918,13 +960,12 @@ export const loadService = async (
                     }
 
                     if (result) {
-                        newDocument = result
+                        newDocument = result as FullDocument
 
                         console.info(
-                            `Running migrater "${name}" for document "` +
-                            `${newDocument[idName]}" (of type ` +
-                            `"${newDocument[typeName] as string}") was ` +
-                            'successful.'
+                            `Running migrater "${name}" for document`,
+                            `"${newDocument[idName]}" (of type`,
+                            `"${newDocument[typeName]}") was successful.`
                         )
                     }
                 }
@@ -943,43 +984,13 @@ export const loadService = async (
                     - TODO: Renames property names if "oldPropertyName" is
                       provided in model specification.
                 */
-                try {
-                    validateDocumentUpdate(
-                        /*
-                            NOTE: Removed property marked with "null" will be
-                            removed so final removing would be skipped if we do
-                            not use a copy here.
-                        */
-                        copy(newDocument) as FullDocument,
-                        /*
-                            NOTE: During processing attachments sub object will
-                            be manipulated so copying is needed to copy to
-                            avoid unexpected behavior in this context.
-                        */
-                        copy(document) as FullDocument,
-                        {
-                            db: configuration.couchdb.databaseName,
-                            name: configuration.couchdb.admin.name,
-                            roles: ['_admin']
-                        },
-                        /*
-                            NOTE: We need a copy to ignore validated document
-                            caches.
-                        */
-                        copy(
-                            configuration.couchdb.security[
-                                configuration.couchdb.databaseName
-                            ]
-                        ),
-                        modelConfiguration,
-                        models
-                    )
-                } catch (error) {
+                const result = couchdb.validateDocument(newDocument, document)
+                if (result !== true)
                     if (Object.prototype.hasOwnProperty.call(
-                        error, 'forbidden'
+                        result, 'forbidden'
                     )) {
                         if (!(
-                            error as {forbidden: string}
+                            result as unknown as {forbidden: string}
                         ).forbidden.startsWith('NoChange:'))
                             console.warn(
                                 `Document "` +
@@ -990,29 +1001,27 @@ export const loadService = async (
                                     configuration.couchdb
                                         .maximumRepresentationLength
                                 ) +
-                                `" doesn't satisfy its schema (and can ` +
-                                'not be migrated automatically): ' +
-                                represent(error)
+                                `" doesn't satisfy its schema (and can not be`,
+                                `migrated automatically): ${represent(result)}`
                             )
 
                         continue
                     } else
-                        throw error
-                }
+                        throw result
 
                 try {
                     await couchdb.connection.put(newDocument)
                 } catch (error) {
                     throw new Error(
-                        `Replacing auto migrated document "` +
-                        `${newDocument[idName]}" has failed: ` +
+                        `Replacing auto migrated document ` +
+                        `"${newDocument[idName]}" has failed: ` +
                         represent(error)
                     )
                 }
 
                 console.info(
-                    `Auto migrating document "${newDocument[idName]}" ` +
-                    'was successful.'
+                    `Auto migrating document "${newDocument[idName]}" was`,
+                    'successful.'
                 )
             }
         // endregion
@@ -1150,10 +1159,10 @@ export const postLoadService = (state: State): Promise<void> => {
         () => {
             if (numberOfErrorsThrough > 0) {
                 console.info(
-                    'No additional errors (initially got ' +
-                    `${String(numberOfErrorsThrough)} errors through) ` +
-                    'occurred during observing changes stream for ' +
-                    `${String(periodToClearNumberOfErrorsInSeconds)} ` +
+                    'No additional errors (initially got',
+                    `${String(numberOfErrorsThrough)} errors through)`,
+                    'occurred during observing changes stream for',
+                    String(periodToClearNumberOfErrorsInSeconds),
                     'seconds. Clearing saved number of errors through.'
                 )
                 numberOfErrorsThrough = 0
@@ -1180,11 +1189,10 @@ export const postLoadService = (state: State): Promise<void> => {
 
         const changesConfiguration = configuration.changesStream
         if (services.couchdbLastChangesSequenceIdentifier !== undefined)
-            changesConfiguration.since =
-                services.couchdbLastChangesSequenceIdentifier
+            changesConfiguration.since = couchdb.lastChangesSequenceIdentifier
 
         console.info(
-            'Initialize changes stream since ' +
+            'Initialize changes stream since',
             `"${String(changesConfiguration.since)}".`
         )
 
@@ -1200,9 +1208,9 @@ export const postLoadService = (state: State): Promise<void> => {
                     configuration.changesStreamReinitializer.retries
                 ) {
                     console.warn(
-                        'Observing changes feed throws an error for ' +
-                        `${String(numberOfErrorsThrough)} times through: ` +
-                        `${represent(error)} Restarting database server and ` +
+                        'Observing changes feed throws an error for',
+                        `${String(numberOfErrorsThrough)} times through:`,
+                        `${represent(error)} Restarting database server and`,
                         'reinitialize changes stream...'
                     )
 

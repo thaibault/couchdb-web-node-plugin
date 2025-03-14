@@ -548,6 +548,7 @@ export type Configuration<ConfigurationType = Mapping<unknown>> =
 //// endregion
 export interface CouchDB<Type extends object = Mapping<unknown>> {
     changesStream: ChangesStream
+    lastChangesSequenceIdentifier?: number | string
 
     connection: Connection<Type>
     connector: Connector
@@ -566,6 +567,9 @@ export interface CouchDB<Type extends object = Mapping<unknown>> {
 
         runner: Runner
     }
+
+    validateDocument: (document: FullDocument, oldDocument?: FullDocument) =>
+        Error | true
 }
 
 export type ServicePromises<Type = Mapping<unknown>> =
@@ -573,7 +577,6 @@ export type ServicePromises<Type = Mapping<unknown>> =
 export type Services<Type = Mapping<unknown>> =
     BaseServices<{
         couchdb: CouchDB
-        couchdbLastChangesSequenceIdentifier?: number | string
     }> &
     Type
 
@@ -790,8 +793,7 @@ export type Migrator<
         {
             configuration: Configuration
 
-            // TODO
-            databaseHelper: object
+            databaseHelper: Mapping<unknown>
 
             idName: string
             typeName: string
