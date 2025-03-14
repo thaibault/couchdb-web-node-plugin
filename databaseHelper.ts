@@ -292,7 +292,7 @@ export const validateDocumentUpdate = <
     setDocumentEnvironment()
 
     /*
-        NOTE: Needed if we are able to validate users table.
+        NOTE: Needed to be able to validate user documents.
 
         if (
             newDocument.hasOwnProperty('type') &&
