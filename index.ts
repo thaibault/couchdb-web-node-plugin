@@ -346,6 +346,14 @@ export const preLoadService = async ({
             )
             return true
         } catch (error) {
+            if (
+                Object.prototype.hasOwnProperty.call(error, 'forbidden') &&
+                (error as {forbidden: string}).forbidden.startsWith(
+                    'NoChange:'
+                )
+            )
+                return true
+
             return error as Error
         }
     }
@@ -1006,25 +1014,20 @@ export const loadService = async (
                 if (result !== true)
                     if (Object.prototype.hasOwnProperty.call(
                         result, 'forbidden'
-                    )) {
-                        if (!(
-                            result as unknown as {forbidden: string}
-                        ).forbidden.startsWith('NoChange:'))
-                            console.warn(
-                                `Document "` +
-                                mayStripRepresentation(
-                                    document,
-                                    configuration.couchdb
-                                        .maximumRepresentationTryLength,
-                                    configuration.couchdb
-                                        .maximumRepresentationLength
-                                ) +
-                                `" doesn't satisfy its schema (and can not be`,
-                                `migrated automatically): ${represent(result)}`
-                            )
-
-                        continue
-                    } else
+                    ))
+                        console.warn(
+                            `Document "` +
+                            mayStripRepresentation(
+                                document,
+                                configuration.couchdb
+                                    .maximumRepresentationTryLength,
+                                configuration.couchdb
+                                    .maximumRepresentationLength
+                            ) +
+                            `" doesn't satisfy its schema (and can not be`,
+                            `migrated automatically): ${represent(result)}`
+                        )
+                    else
                         throw result
 
                 try {
