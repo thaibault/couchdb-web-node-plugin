@@ -311,6 +311,9 @@ export const preLoadService = async ({
         const checkPublicModelType = Boolean(options.checkPublicModelType)
         document = copy(document)
 
+        document[configuration.model.property.name.special.strategy] =
+            'migrate'
+
         if (options.type)
             document[modelConfiguration.property.name.special.type] =
                 oldDocument[modelConfiguration.property.name.special.type] =
