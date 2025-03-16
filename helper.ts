@@ -314,11 +314,6 @@ export const bulkDocsFactory = (
         firstParameter: unknown,
         ...parameters: Array<unknown>
     ): Promise<Array<DatabaseError | DatabaseResponse>> {
-        // TODO does not work
-        console.log()
-        console.log('TODO', firstParameter)
-        console.log()
-
         const toggleLatestRevisionDetermining: boolean = (
             parameters.length > 0 &&
             parameters[parameters.length - 1] ===
@@ -446,8 +441,8 @@ export const initializeConnection = async (
         we have to wrap runtime generated method.
     */
     connection.bulkDocs = bulkDocsFactory(
-        services.couchdb.connector.prototype.bulkDocs as
-            Connection['bulkDocs'],
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        connection.bulkDocs,
         configuration.couchdb
     )
     connection.put = async function(
@@ -456,9 +451,9 @@ export const initializeConnection = async (
         options?: PouchDB.Core.PutOptions | null
     ): Promise<DatabaseResponse> {
         const result =
-            (await connection.bulkDocs([document], options))[0]
+            (await connection.bulkDocs.call(this, [document], options))[0]
 
-        if ((result as DatabaseError).name)
+        if ((result as DatabaseError | undefined)?.name)
             /*
                 eslint-disable
                 @typescript-eslint/only-throw-error,no-throw-literal
