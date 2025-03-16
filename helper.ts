@@ -18,12 +18,14 @@ import {
     checkReachability,
     copy,
     extend,
+    FirstParameter,
     format,
     identity,
     isObject,
     globalContext,
     Mapping,
     represent,
+    SecondParameter,
     ValueOf
 } from 'clientnode'
 import {lastValueFrom, map, retry, timer} from 'rxjs'
@@ -36,21 +38,32 @@ import {
     BaseModel,
     Configuration,
     Connection,
+    CoreConfiguration,
     DatabaseConnectorConfiguration,
+    DatabaseError,
+    DatabasePlugin,
     DatabaseResponse,
     Document,
     FileSpecification,
+    FullDocument,
     Model,
     ModelConfiguration,
     Models,
     NormalizedAllowedRoles,
+    PartialFullDocument,
     PropertySpecification,
     PutDocument,
-    PutOptions,
     Services,
-    SpecialPropertyNames
+    SpecialPropertyNames,
+    Type
 } from './type'
 // endregion
+/*
+    Token to provide to "bulkDocs" method call to indicate id determination
+    skip or not (depends on "skipLatestRevisionDetermining" configuration).
+*/
+export const TOGGLE_LATEST_REVISION_DETERMINING =
+    Symbol('toggleLatestRevisionDetermining')
 // region functions
 /**
  * Converts internal declarative database connector configuration object
@@ -282,6 +295,133 @@ export const ensureValidationDocumentPresence = async (
     }
 }
 /**
+ * Generates function to apply "latest/upsert" and ignore "NoChange" error
+ * plugin for couchdb "bulkDocs" operations.
+ * @param nativeBulkDocs - Original bulkDocs function to wrap.
+ * @param configuration - Couchdb configuration object.
+ * @returns Whatever bulkDocs returns.
+ */
+export const bulkDocsFactory = (
+    nativeBulkDocs: Connection['bulkDocs'], configuration: CoreConfiguration
+) => {
+    const idName: SpecialPropertyNames['id'] =
+        configuration.model.property.name.special.id
+    const revisionName: SpecialPropertyNames['revision'] =
+        configuration.model.property.name.special.revision
+
+    return async function(
+        this: Connection,
+        firstParameter: unknown,
+        ...parameters: Array<unknown>
+    ): Promise<Array<DatabaseError | DatabaseResponse>> {
+        // TODO does not work
+        console.log()
+        console.log('TODO', firstParameter)
+        console.log()
+
+        const toggleLatestRevisionDetermining: boolean = (
+            parameters.length > 0 &&
+            parameters[parameters.length - 1] ===
+            TOGGLE_LATEST_REVISION_DETERMINING
+        )
+        const skipLatestRevisionDetermining: boolean =
+            toggleLatestRevisionDetermining ?
+                !configuration.skipLatestRevisionDetermining :
+                configuration.skipLatestRevisionDetermining
+        if (toggleLatestRevisionDetermining)
+            parameters.pop()
+
+        let data: Array<PartialFullDocument> = (
+            !Array.isArray(firstParameter) &&
+            isObject(firstParameter) &&
+            idName in firstParameter
+        ) ?
+            [firstParameter as PartialFullDocument] :
+            firstParameter as Array<PartialFullDocument>
+        /*
+            NOTE: "bulkDocs()" does not get constructor given options if
+            none were provided for a single function call.
+        */
+
+        const chunkSize =
+            configuration.maximumNumberOfEntitiesInBulkOperation
+        const result: Array<DatabaseError | DatabaseResponse> = []
+        for (let index = 0; index < data.length; index += chunkSize) {
+            const chunk = data.slice(index, index + chunkSize)
+            result.concat(
+                await nativeBulkDocs.call(
+                    this,
+                    chunk as FirstParameter<Connection['bulkDocs']>,
+                    ...parameters as
+                        [SecondParameter<Connection['bulkDocs']>]
+                )
+            )
+        }
+
+        const conflictingIndexes: Array<number> = []
+        const conflicts: Array<PartialFullDocument> = []
+        let index = 0
+        for (const item of result) {
+            if (typeof data[index] === 'object')
+                if (
+                    revisionName in data[index] &&
+                    (item as DatabaseError).name === 'conflict' &&
+                    ['0-latest', '0-upsert'].includes(
+                        data[index][revisionName] as string
+                    )
+                ) {
+                    conflicts.push(data[index])
+                    conflictingIndexes.push(index)
+                } else if (
+                    idName in data[index] &&
+                    configuration.ignoreNoChangeError &&
+                    'name' in item &&
+                    item.name === 'forbidden' &&
+                    'message' in item &&
+                    (item.message as string).startsWith('NoChange:')
+                ) {
+                    result[index] = {
+                        id: data[index][idName], ok: true
+                    }
+                    if (!skipLatestRevisionDetermining)
+                        result[index].rev =
+                            revisionName in data[index] &&
+                            !['0-latest', '0-upsert'].includes(
+                                data[index][revisionName] as string
+                            ) ?
+                                data[index][revisionName] :
+                                ((
+                                    await this.get(
+                                        result[index].id as string
+                                    )
+                                ) as unknown as FullDocument)[revisionName]
+                }
+
+            index += 1
+        }
+
+        if (conflicts.length) {
+            data = conflicts
+            if (toggleLatestRevisionDetermining)
+                parameters.push(TOGGLE_LATEST_REVISION_DETERMINING)
+
+            const retriedResults: Array<
+                DatabaseError | DatabaseResponse
+            > = await this.bulkDocs(
+                data as Array<PutDocument<Mapping<unknown>>>,
+                ...parameters as [SecondParameter<Connection['bulkDocs']>]
+            ) as
+                unknown as
+                Array<DatabaseError | DatabaseResponse>
+            for (const retriedResult of retriedResults)
+                result[conflictingIndexes.shift() as number] =
+                    retriedResult
+        }
+
+        return result
+    } as unknown as DatabasePlugin
+}
+/**
  * Initializes a database connection instance.
  * @param services - An object with stored service instances.
  * @param configuration - Mutable by plugins extended configuration object.
@@ -300,69 +440,36 @@ export const initializeConnection = async (
         new services.couchdb.connector(url, getConnectorOptions(configuration))
     const {connection} = services.couchdb
     connection.setMaxListeners(Infinity)
-
-    const idName = config.model.property.name.special.id
-    const revisionName = config.model.property.name.special.revision
-    // region apply "latest/upsert" and ignore "NoChange" error feature
+    // region apply "bulkDocs" interceptor to put method
     /*
-        NOTE: A "bulkDocs" plugin does not get called for every "put" and
-        "post" call so we have to wrap runtime generated methods.
+        NOTE: A "bulkDocs" plugin does not get called for every "put" call so
+        we have to wrap runtime generated method.
     */
-    type Put = <Type extends Mapping<unknown>>(
-        document: PutDocument<Type>, ...parameters: Array<unknown>
-    ) => Promise<DatabaseResponse>
+    connection.bulkDocs = bulkDocsFactory(
+        services.couchdb.connector.prototype.bulkDocs as
+            Connection['bulkDocs'],
+        configuration.couchdb
+    )
+    connection.put = async function(
+        this: Connection,
+        document: PutDocument<Type & Model>,
+        options?: PouchDB.Core.PutOptions | null
+    ): Promise<DatabaseResponse> {
+        const result =
+            (await connection.bulkDocs([document], options))[0]
 
-    for (const pluginName of ['post', 'put'] as const) {
-        const nativeMethod = connection[pluginName].bind(connection) as Put
+        if ((result as DatabaseError).name)
+            /*
+                eslint-disable
+                @typescript-eslint/only-throw-error,no-throw-literal
+            */
+            throw result as DatabaseError
+            /*
+                eslint-enable
+                @typescript-eslint/only-throw-error,no-throw-literal
+            */
 
-        ;(connection[pluginName] as Put) = async function<
-            Type extends Mapping<unknown> = Mapping<unknown>
-        >(
-            this: Connection,
-            document: PutDocument<Type>,
-            ...parameters: Array<unknown>
-        ) {
-            const options: PutOptions =
-                parameters.length && typeof parameters[0] === 'object' ?
-                    parameters[0] as PutOptions :
-                    {}
-
-            try {
-                return await nativeMethod(document, ...parameters)
-            } catch (givenError) {
-                const id = document[idName]
-                const error = givenError as Error
-
-                if (
-                    id &&
-                    config.ignoreNoChangeError &&
-                    'name' in error &&
-                    error.name === 'forbidden' &&
-                    'message' in error &&
-                    error.message.startsWith('NoChange:')
-                ) {
-                    const revision = revisionName in options ?
-                        options[revisionName] :
-                        document[revisionName]
-
-                    return {
-                        id,
-                        rev: (
-                            revisionName in document &&
-                            !['0-latest', '0-upsert'].includes(
-                                revision as string
-                            )
-                        ) ?
-                            revision as string :
-                            (await this.get(id))[revisionName],
-
-                        ok: true
-                    }
-                }
-
-                throw error
-            }
-        }
+        return result as DatabaseResponse
     }
     // endregion
     // region ensure database presence

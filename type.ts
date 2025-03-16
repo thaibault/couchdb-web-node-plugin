@@ -514,7 +514,6 @@ export interface CoreConfiguration<
     local: boolean
 
     maximumNumberOfEntitiesInBulkOperation: number
-    waitingDelayBetweenTwoRelatedBulkOperationsInSeconds: number
 
     maximumRepresentationLength: number
     maximumRepresentationTryLength: number
