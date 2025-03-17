@@ -333,30 +333,31 @@ export const bulkDocsFactory = (
         ) ?
             [firstParameter as PartialFullDocument] :
             firstParameter as Array<PartialFullDocument>
-        /*
-            NOTE: "bulkDocs()" does not get constructor given options if
-            none were provided for a single function call.
-        */
 
         const chunkSize =
             configuration.maximumNumberOfEntitiesInBulkOperation
-        const result: Array<DatabaseError | DatabaseResponse> = []
+        const results: Array<DatabaseError | DatabaseResponse> = []
         for (let index = 0; index < data.length; index += chunkSize) {
             const chunk = data.slice(index, index + chunkSize)
-            result.concat(
-                await nativeBulkDocs.call(
-                    this,
-                    chunk as FirstParameter<Connection['bulkDocs']>,
-                    ...parameters as
-                        [SecondParameter<Connection['bulkDocs']>]
-                )
+            console.log()
+            console.log('TODO before bulkDocs', chunk)
+            console.log()
+            const result = await nativeBulkDocs.call(
+                this,
+                chunk as FirstParameter<Connection['bulkDocs']>,
+                ...parameters as
+                    [SecondParameter<Connection['bulkDocs']>]
             )
+            console.log()
+            console.log('TODO After bulkDocs', result)
+            console.log()
+            results.concat(result)
         }
 
         const conflictingIndexes: Array<number> = []
         const conflicts: Array<PartialFullDocument> = []
         let index = 0
-        for (const item of result) {
+        for (const item of results) {
             if (typeof data[index] === 'object')
                 if (
                     revisionName in data[index] &&
@@ -375,11 +376,11 @@ export const bulkDocsFactory = (
                     'message' in item &&
                     (item.message as string).startsWith('NoChange:')
                 ) {
-                    result[index] = {
+                    results[index] = {
                         id: data[index][idName], ok: true
                     }
                     if (!skipLatestRevisionDetermining)
-                        result[index].rev =
+                        results[index].rev =
                             revisionName in data[index] &&
                             !['0-latest', '0-upsert'].includes(
                                 data[index][revisionName] as string
@@ -387,7 +388,7 @@ export const bulkDocsFactory = (
                                 data[index][revisionName] :
                                 ((
                                     await this.get(
-                                        result[index].id as string
+                                        results[index].id as string
                                     )
                                 ) as unknown as FullDocument)[revisionName]
                 }
@@ -409,11 +410,11 @@ export const bulkDocsFactory = (
                 unknown as
                 Array<DatabaseError | DatabaseResponse>
             for (const retriedResult of retriedResults)
-                result[conflictingIndexes.shift() as number] =
+                results[conflictingIndexes.shift() as number] =
                     retriedResult
         }
 
-        return result
+        return results
     } as unknown as DatabasePlugin
 }
 /**

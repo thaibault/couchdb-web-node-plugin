@@ -4665,7 +4665,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"clientnode@npm:3.0.1273, clientnode@npm:^3.0.1273":
+"clientnode@npm:3.0.1273":
   version: 3.0.1273
   resolution: "clientnode@npm:3.0.1273"
   peerDependencies:
@@ -4686,6 +4686,30 @@ __metadata:
     prop-types:
       optional: true
   checksum: 10c0/1136d9f34e3cdbeda14347ff587fa28d1576f0a99e23edb941b9723e2bf2a8e6da229434cb8bd042584db4894e20c827f8fecd012c811fc288987cd2a35c8b40
+  languageName: node
+  linkType: hard
+
+"clientnode@npm:^3.0.1274":
+  version: 3.0.1274
+  resolution: "clientnode@npm:3.0.1274"
+  peerDependencies:
+    "@babel/runtime": "*"
+    "@types/prop-types": "*"
+    jquery: "*"
+    node-fetch: "*"
+    prop-types: "*"
+  peerDependenciesMeta:
+    "@babel/runtime":
+      optional: true
+    "@types/prop-types":
+      optional: true
+    jquery:
+      optional: true
+    node-fetch:
+      optional: true
+    prop-types:
+      optional: true
+  checksum: 10c0/d0aaa97d6467316efd5e8b56b67294474f7570b93a2c9c9353cfe0ae79dcfee8a38a2a2af7ed0d428ecf72e7b9040f566e6ca9268e9419d086ddd1b2f0942733
   languageName: node
   linkType: hard
 
@@ -5060,11 +5084,11 @@ __metadata:
     "@types/pouchdb-node": "npm:^6.1.7"
     "@typescript-eslint/eslint-plugin": "npm:^8.26.1"
     "@typescript-eslint/parser": "npm:^8.26.1"
-    clientnode: "npm:^3.0.1273"
+    clientnode: "npm:^3.0.1274"
     documentation-website: "npm:^1.0.345"
     eslint: "npm:^9.22.0"
     eslint-config-google: "npm:^0.14.0"
-    eslint-plugin-jsdoc: "npm:^50.6.6"
+    eslint-plugin-jsdoc: "npm:^50.6.7"
     jest: "npm:^29.7.0"
     jsdoc: "npm:^4.0.4"
     node-fetch: "npm:^3.3.2"
@@ -5749,9 +5773,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-jsdoc@npm:^50.6.6":
-  version: 50.6.6
-  resolution: "eslint-plugin-jsdoc@npm:50.6.6"
+"eslint-plugin-jsdoc@npm:^50.6.7":
+  version: 50.6.7
+  resolution: "eslint-plugin-jsdoc@npm:50.6.7"
   dependencies:
     "@es-joy/jsdoccomment": "npm:~0.49.0"
     are-docs-informative: "npm:^0.0.2"
@@ -5766,7 +5790,7 @@ __metadata:
     synckit: "npm:^0.9.1"
   peerDependencies:
     eslint: ^7.0.0 || ^8.0.0 || ^9.0.0
-  checksum: 10c0/0c978b560a6f4d527a09a272ac20f60abc713258a6ea64a39a941b95cdc52428a769b4f6206edeaf73b7f0e4f9d8f96bcf0bffd7ca1b3f17351144f1af10e79b
+  checksum: 10c0/72bbcbe9a66ad03c4bf9c87319b3f8512b1714f8cbdc6c238be2122ddaa8c626b3dec0b8e97845217248b90f600356a53655817ac713bd7d5fef4730c895006a
   languageName: node
   linkType: hard
 
