@@ -19,7 +19,6 @@
 // region imports
 import {
     copy,
-    debounce,
     File,
     format,
     globalContext,
@@ -1025,37 +1024,6 @@ export const postLoadService = (state: State): Promise<void> => {
         waiting times.
     */
     let numberOfErrorsThrough = 0
-    let periodToClearNumberOfErrorsInSeconds =
-        configuration.changesStreamReinitializer.retries *
-        31
-    for (
-        let count = 0;
-        count <= configuration.changesStreamReinitializer.retries;
-        count += 1
-    )
-        periodToClearNumberOfErrorsInSeconds += Math.min(
-            configuration.changesStreamReinitializer
-                .retryWaitingFactorInSeconds **
-            count,
-            configuration.changesStreamReinitializer
-                .maxmumRetryWaitingTimeInSeconds
-        )
-
-    setInterval(
-        () => {
-            if (numberOfErrorsThrough > 0) {
-                console.info(
-                    'No additional errors (initially got',
-                    `${String(numberOfErrorsThrough)} errors through)`,
-                    'occurred during observing changes stream for',
-                    String(periodToClearNumberOfErrorsInSeconds),
-                    'seconds. Clearing saved number of errors through.'
-                )
-                numberOfErrorsThrough = 0
-            }
-        },
-        periodToClearNumberOfErrorsInSeconds * 1000
-    )
     /*
         NOTE: Use this code to test changes stream reinitialisation and
         database server restarts. Play with length of interval to trigger error
@@ -1069,7 +1037,10 @@ export const postLoadService = (state: State): Promise<void> => {
         6 * 1000
     )
     */
-    const initialize = debounce(async (): Promise<void> => {
+    const changesRunnerSemaphore = new Semaphore(
+        configuration.numberOfParallelChangesRunner
+    )
+    const initialize = async (): Promise<void> => {
         if (couchdb.changesStream as unknown as boolean)
             couchdb.changesStream.cancel()
 
@@ -1140,16 +1111,13 @@ export const postLoadService = (state: State): Promise<void> => {
 
         console.info('Changes stream initialized.')
 
-        const semaphore = new Semaphore(
-            configuration.numberOfParallelChangesRunner
-        )
         void couchdb.changesStream.on(
             'change',
             async (changes: ChangesResponseChange) => {
                 numberOfErrorsThrough = 0
 
                 try {
-                    await semaphore.acquire()
+                    await changesRunnerSemaphore.acquire()
                     await pluginAPI.callStack<State<ChangesResponseChange>>({
                         ...state, data: changes, hook: 'couchdbChange'
                     })
@@ -1160,11 +1128,11 @@ export const postLoadService = (state: State): Promise<void> => {
                         error
                     )
                 } finally {
-                    semaphore.release()
+                    changesRunnerSemaphore.release()
                 }
             }
         )
-    })
+    }
 
     if (configuration.attachAutoRestarter)
         void initialize()
