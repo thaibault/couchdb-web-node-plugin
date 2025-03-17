@@ -1074,7 +1074,7 @@ export const postLoadService = (state: State): Promise<void> => {
             couchdb.changesStream.cancel()
 
         const changesConfiguration = configuration.changesStream
-        if (services.couchdbLastChangesSequenceIdentifier !== undefined)
+        if (couchdb.lastChangesSequenceIdentifier !== undefined)
             changesConfiguration.since = couchdb.lastChangesSequenceIdentifier
 
         console.info(
@@ -1145,15 +1145,15 @@ export const postLoadService = (state: State): Promise<void> => {
         )
         void couchdb.changesStream.on(
             'change',
-            async (change: ChangesResponseChange) => {
+            async (changes: ChangesResponseChange) => {
                 numberOfErrorsThrough = 0
 
                 try {
                     await semaphore.acquire()
                     await pluginAPI.callStack<State<ChangesResponseChange>>({
-                        ...state, data: change, hook: 'couchdbChange'
+                        ...state, data: changes, hook: 'couchdbChange'
                     })
-                    services.couchdbLastChangesSequenceIdentifier = change.seq
+                    couchdb.lastChangesSequenceIdentifier = changes.seq
                 } catch (error) {
                     console.error(
                         'An error occurred during on change database hook:',
