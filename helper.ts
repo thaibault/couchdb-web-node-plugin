@@ -337,10 +337,13 @@ export const bulkDocsFactory = (
         const chunkSize =
             configuration.maximumNumberOfEntitiesInBulkOperation
         const results: Array<DatabaseError | DatabaseResponse> = []
+
+        const id = Math.random()
+
         for (let index = 0; index < data.length; index += chunkSize) {
             const chunk = data.slice(index, index + chunkSize)
             console.log()
-            console.log('TODO before bulkDocs', chunk)
+            console.log('TODO before bulkDocs', id, index, chunk.length, data.length)
             console.log()
             const result = await nativeBulkDocs.call(
                 this,
@@ -349,7 +352,7 @@ export const bulkDocsFactory = (
                     [SecondParameter<Connection['bulkDocs']>]
             )
             console.log()
-            console.log('TODO After bulkDocs', result)
+            console.log('TODO After bulkDocs', id)
             console.log()
             results.concat(result)
         }
