@@ -342,18 +342,14 @@ export const bulkDocsFactory = (
 
         for (let index = 0; index < data.length; index += chunkSize) {
             const chunk = data.slice(index, index + chunkSize)
-            console.log()
-            console.log('TODO before bulkDocs', id, index, chunk.length, data.length)
-            console.log()
+
             const result = await nativeBulkDocs.call(
                 this,
                 chunk as FirstParameter<Connection['bulkDocs']>,
                 ...parameters as
                     [SecondParameter<Connection['bulkDocs']>]
             )
-            console.log()
-            console.log('TODO After bulkDocs', id)
-            console.log()
+
             results.concat(result)
         }
 
