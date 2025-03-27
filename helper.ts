@@ -37,7 +37,7 @@ import {
     AllowedRoles,
     BaseModel,
     Configuration,
-    Connection,
+    Connection, ConnectorConfiguration,
     CoreConfiguration,
     DatabaseConnectorConfiguration,
     DatabaseError,
@@ -68,20 +68,20 @@ export const TOGGLE_LATEST_REVISION_DETERMINING =
 /**
  * Converts internal declarative database connector configuration object
  * into a database compatible one.
- * @param configuration - Mutable by plugins extended configuration object.
+ * @param configuration - Connector configuration object.
  * @returns Database compatible configuration object.
  */
 export const getConnectorOptions = (
-    configuration: Configuration
+    configuration: ConnectorConfiguration
 ): DatabaseConnectorConfiguration => {
     /*
         NOTE: We convert given fetch options into a fetch function wrapper
         which is than accepted by pouchdb's api.
     */
-    const getOptions = configuration.couchdb.connector.fetch ?
+    const getOptions = configuration.fetch ?
         (options?: RequestInit) => extend(
             true,
-            copy(configuration.couchdb.connector.fetch),
+            copy(configuration.fetch),
             options || {}
         ) :
         identity
@@ -104,7 +104,7 @@ export const getConnectorOptions = (
                 retryIntervalInSeconds,
                 exponentialBackoff,
                 maximumRetryIntervallInSeconds
-            } = configuration.couchdb.connector.fetchInterceptor
+            } = configuration.fetchInterceptor
 
             // Provides a retry mechanism with configurable delay mechanism.
             const $result = fromFetch(url, getOptions(options)).pipe(
@@ -429,8 +429,9 @@ export const initializeConnection = async (
         format(config.url, `${config.admin.name}:${config.admin.password}@`) +
         `/${config.databaseName}`
 
-    services.couchdb.connection =
-        new services.couchdb.connector(url, getConnectorOptions(configuration))
+    services.couchdb.connection = new services.couchdb.connector(
+        url, getConnectorOptions(configuration.couchdb.connector)
+    )
     const {connection} = services.couchdb
     connection.setMaxListeners(Infinity)
     // region apply "bulkDocs" interceptor to put method

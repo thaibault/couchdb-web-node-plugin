@@ -278,7 +278,8 @@ export const loadService = async (
     if (configuration.couchdb.ensureAdminPresence) {
         const unauthenticatedUserDatabaseConnection: Connection =
             new couchdb.connector(
-                `${urlPrefix}/_users`, getConnectorOptions(configuration)
+                `${urlPrefix}/_users`,
+                getConnectorOptions(configuration.couchdb.connector)
             )
 
         try {
@@ -305,7 +306,9 @@ export const loadService = async (
                     new couchdb.connector(
                         `${urlPrefix}/_users`,
                         {
-                            ...getConnectorOptions(configuration),
+                            ...getConnectorOptions(
+                                configuration.couchdb.connector
+                            ),
                             auth: {
                                 username: configuration.couchdb.admin.name,
                                 password: configuration.couchdb.admin.password
@@ -340,7 +343,7 @@ export const loadService = async (
             new couchdb.connector(
                 `${urlPrefix}/_users`,
                 {
-                    ...getConnectorOptions(configuration),
+                    ...getConnectorOptions(configuration.couchdb.connector),
                     auth: {
                         username: configuration.couchdb.admin.name,
                         password: configuration.couchdb.admin.password
