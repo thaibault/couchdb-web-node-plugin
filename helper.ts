@@ -338,8 +338,6 @@ export const bulkDocsFactory = (
             configuration.maximumNumberOfEntitiesInBulkOperation
         const results: Array<DatabaseError | DatabaseResponse> = []
 
-        const id = Math.random()
-
         for (let index = 0; index < data.length; index += chunkSize) {
             const chunk = data.slice(index, index + chunkSize)
 

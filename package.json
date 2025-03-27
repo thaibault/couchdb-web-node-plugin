@@ -62,30 +62,30 @@
   "dependencies": {
     "pouchdb-find": "^9.0.0",
     "pouchdb-node": "^9.0.0",
-    "pouchdb-server": "^4.2.0",
-    "rxjs": "^7.8.2"
+    "pouchdb-server": "^4.2.0"
   },
   "devDependencies": {
-    "@babel/eslint-parser": "^7.26.10",
-    "@babel/runtime": "^7.26.10",
+    "@babel/eslint-parser": "^7.27.0",
+    "@babel/runtime": "^7.27.0",
     "@stylistic/eslint-plugin-ts": "^4.2.0",
     "@types/ejs": "^3.1.5",
-    "@types/node": "^22.13.10",
+    "@types/node": "^22.13.14",
     "@types/pouchdb-node": "^6.1.7",
-    "@typescript-eslint/eslint-plugin": "^8.26.1",
-    "@typescript-eslint/parser": "^8.26.1",
+    "@typescript-eslint/eslint-plugin": "^8.28.0",
+    "@typescript-eslint/parser": "^8.28.0",
     "clientnode": "^3.0.1274",
     "documentation-website": "^1.0.345",
-    "eslint": "^9.22.0",
+    "eslint": "^9.23.0",
     "eslint-config-google": "^0.14.0",
-    "eslint-plugin-jsdoc": "^50.6.7",
+    "eslint-plugin-jsdoc": "^50.6.9",
     "jest": "^29.7.0",
     "jsdoc": "^4.0.4",
     "node-fetch": "^3.3.2",
     "rimraf": "^6.0.1",
-    "typescript-eslint": "^8.26.1",
+    "rxjs": "^7.8.2",
+    "typescript-eslint": "^8.28.0",
     "web-node": "^1.0.545",
-    "weboptimizer": "^2.0.1572"
+    "weboptimizer": "^2.0.1573"
   },
   "peerDependencies": {
     "@babel/runtime": "*",
