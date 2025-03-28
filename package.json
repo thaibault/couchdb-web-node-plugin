@@ -62,7 +62,8 @@
   "dependencies": {
     "pouchdb-find": "^9.0.0",
     "pouchdb-node": "^9.0.0",
-    "pouchdb-server": "^4.2.0"
+    "pouchdb-server": "^4.2.0",
+    "rxjs": "^7.8.2"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.27.0",
@@ -82,7 +83,6 @@
     "jsdoc": "^4.0.4",
     "node-fetch": "^3.3.2",
     "rimraf": "^6.0.1",
-    "rxjs": "^7.8.2",
     "typescript-eslint": "^8.28.0",
     "web-node": "^1.0.545",
     "weboptimizer": "^2.0.1573"
