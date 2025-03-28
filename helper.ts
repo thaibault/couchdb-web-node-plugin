@@ -54,8 +54,7 @@ import {
     PropertySpecification,
     PutDocument,
     Services,
-    SpecialPropertyNames,
-    Type
+    SpecialPropertyNames
 } from './type'
 // endregion
 /*
@@ -444,9 +443,9 @@ export const initializeConnection = async (
         connection.bulkDocs,
         configuration.couchdb
     )
-    connection.put = async function(
+    connection.put = async function<Type extends Mapping<unknown>>(
         this: Connection,
-        document: PutDocument<Type & Model>,
+        document: PutDocument<Type>,
         options?: PouchDB.Core.PutOptions | null
     ): Promise<DatabaseResponse> {
         const result =
