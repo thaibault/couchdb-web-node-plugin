@@ -658,9 +658,21 @@ export interface BasicScope<
             null,
         parentNames: Array<string>
     ) => CheckedDocumentResult<Type, AdditionalPropertiesType>
+    getEffectiveValue: (
+        newDocument: PartialFullDocument<Type, AdditionalPropertiesType>,
+        oldDocument: (
+            null | PartialFullDocument<Type, AdditionalPropertiesType>
+            ),
+        name: string
+    ) => unknown
     getFileNameByPrefix: (
         prefix?: string, attachments?: Mapping<AttachmentType>
     ) => null | string
+    isDefinedPropertyValue: (
+        document: PartialFullDocument<Type, AdditionalPropertiesType>,
+        name: string
+    ) => boolean
+    require: null | typeof require
     serialize: (value: unknown) => string
 
     id: string
@@ -719,18 +731,6 @@ export interface CommonScope<
 
     parentNames: Array<string>
     pathDescription: string
-
-    isDefinedPropertyValue: (
-        document: PartialFullDocument<ObjectType, AdditionalPropertiesType>,
-        name: string
-    ) => boolean
-    getEffectiveValue: (
-        newDocument: PartialFullDocument<ObjectType, AdditionalPropertiesType>,
-        oldDocument: (
-            null | PartialFullDocument<ObjectType, AdditionalPropertiesType>
-        ),
-        name: string
-    ) => unknown
 }
 export interface PropertyScope<
     ObjectType extends object,

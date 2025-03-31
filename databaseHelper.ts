@@ -14,7 +14,9 @@
     endregion
 */
 // region imports
-import {Mapping, Primitive, PlainObject, ValueOf} from 'clientnode'
+import {
+    Mapping, Primitive, PlainObject, currentRequire, ValueOf
+} from 'clientnode'
 
 import {
     AllowedModelRolesMapping,
@@ -727,8 +729,6 @@ export const validateDocumentUpdate = <
                             type.endsWith('Expression'),
                             {
                                 checkPropertyContent,
-                                getEffectiveValue,
-                                isDefinedPropertyValue,
 
                                 model,
                                 modelName,
@@ -1262,8 +1262,6 @@ export const validateDocumentUpdate = <
                                     attachmentsTarget,
 
                                     checkPropertyContent,
-                                    getEffectiveValue,
-                                    isDefinedPropertyValue,
 
                                     model,
                                     modelName,
@@ -1389,8 +1387,6 @@ export const validateDocumentUpdate = <
                                 attachmentsTarget,
 
                                 checkPropertyContent,
-                                getEffectiveValue,
-                                isDefinedPropertyValue,
 
                                 model,
                                 modelName,
@@ -1499,8 +1495,6 @@ export const validateDocumentUpdate = <
                             type.endsWith('Expression'),
                             {
                                 checkPropertyContent,
-                                getEffectiveValue,
-                                isDefinedPropertyValue,
 
                                 model,
                                 modelName,
@@ -1579,8 +1573,6 @@ export const validateDocumentUpdate = <
                         type.endsWith('Expression'),
                         {
                             checkPropertyContent,
-                            getEffectiveValue,
-                            isDefinedPropertyValue,
 
                             model,
                             modelName,
@@ -2264,8 +2256,6 @@ export const validateDocumentUpdate = <
                             specialNames.constraint.expression,
                             {
                                 checkPropertyContent,
-                                getEffectiveValue,
-                                isDefinedPropertyValue,
 
                                 model,
                                 modelName,
@@ -2766,7 +2756,10 @@ export const validateDocumentUpdate = <
     > = {
         attachmentWithPrefixExists,
         checkDocument,
+        getEffectiveValue,
         getFileNameByPrefix,
+        isDefinedPropertyValue,
+        require: currentRequire,
         serialize,
 
         id,
