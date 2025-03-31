@@ -606,6 +606,8 @@ export const validateDocumentUpdate = <
             ) ?
                 oldDocument[name] :
                 null
+    const getDateTime = (value: number | string) =>
+        typeof value === 'number' ? new Date(value * 1000) : new Date(value)
     const checkDocument = (
         newDocument: PartialFullDocumentType,
         oldDocument: null | PartialFullDocumentType,
@@ -2756,6 +2758,7 @@ export const validateDocumentUpdate = <
     > = {
         attachmentWithPrefixExists,
         checkDocument,
+        getDateTime,
         getEffectiveValue,
         getFileNameByPrefix,
         isDefinedPropertyValue,
