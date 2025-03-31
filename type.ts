@@ -658,6 +658,7 @@ export interface BasicScope<
             null,
         parentNames: Array<string>
     ) => CheckedDocumentResult<Type, AdditionalPropertiesType>
+    getDateTime: (value: number | string) => Date
     getEffectiveValue: (
         newDocument: PartialFullDocument<Type, AdditionalPropertiesType>,
         oldDocument: (
