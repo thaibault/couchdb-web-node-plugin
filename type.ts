@@ -164,7 +164,12 @@ export interface BasePropertySpecification<
     Type, AdditionalSpecifications extends object
 > {
     allowedRoles?: AllowedRoles
-    computed?: boolean
+    /*
+        Properties annotated with "ignoreFillUp" and when update strategy is
+        set to "fillUp" will not be filled up with old documents data when
+        processing an update.
+    */
+    ignoreFillUp?: boolean
     // region expression
     arrayConstraintExecution?: Constraint
     arrayConstraintExpression?: Constraint

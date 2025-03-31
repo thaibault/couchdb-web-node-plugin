@@ -588,7 +588,7 @@ export const validateDocumentUpdate = <
         newDocument: PartialFullDocumentType,
         oldDocument: null | PartialFullDocumentType,
         parentNames: Array<string> = [],
-        computed = false
+        ignoreFillUp = false
     ): CheckedDocumentResult<ObjectType, AdditionalPropertiesType> => {
         const pathDescription =
             parentNames.length ? ` in ${parentNames.join(' -> ')}` : ''
@@ -800,7 +800,7 @@ export const validateDocumentUpdate = <
                 Type, AdditionalSpecifications
             >,
             oldValue?: Type,
-            computed = false
+            ignoreFillUp = false
         ): CheckedPropertyResult<Type> => {
             let changedPath: Array<string> = []
             // region type
@@ -855,7 +855,7 @@ export const validateDocumentUpdate = <
                             newValue as PartialFullDocumentType,
                             oldValue as null | PartialFullDocumentType,
                             parentNames.concat(String(name)),
-                            computed || propertySpecification.computed
+                            ignoreFillUp || propertySpecification.ignoreFillUp
                         )
                         if (result.changedPath.length)
                             changedPath = result.changedPath
@@ -1815,7 +1815,7 @@ export const validateDocumentUpdate = <
                         )
 
                     if (
-                        !(computed || propertySpecification.computed) &&
+                        !(ignoreFillUp || propertySpecification.ignoreFillUp) &&
                         (
                             !Object.prototype.hasOwnProperty.call(
                                 newDocument, name
@@ -1837,7 +1837,10 @@ export const validateDocumentUpdate = <
                 )
                     if (oldDocument) {
                         if (
-                            !(computed || propertySpecification.computed) &&
+                            !(
+                                ignoreFillUp ||
+                                propertySpecification.ignoreFillUp
+                            ) &&
                             newDocument[name] !== null &&
                             updateStrategy === 'fillUp'
                         )
@@ -2121,7 +2124,8 @@ export const validateDocumentUpdate = <
                             `${String(index + 1)}. value in ${String(name)}`,
                             propertySpecificationCopy,
                             undefined,
-                            computed || propertySpecificationCopy.computed
+                            ignoreFillUp ||
+                            propertySpecificationCopy.ignoreFillUp
                         ).newValue as DocumentContent
                         if ([null, undefined].includes(
                             newProperty[index] as null
@@ -2166,7 +2170,7 @@ export const validateDocumentUpdate = <
                                 ValueOf<ObjectType>, AdditionalSpecifications
                             >,
                             oldValue as ValueOf<ObjectType>,
-                            computed || propertySpecification.computed
+                            ignoreFillUp || propertySpecification.ignoreFillUp
                         )
 
                     newDocument[name] = result.newValue as
