@@ -519,8 +519,10 @@ export const validateDocumentUpdate = <
         {code: string} &
         Scope
     > => {
-        type CurrentScope = typeof BASIC_SCOPE & {code: string} & Scope
-        const scope = {...BASIC_SCOPE, code: '', ...givenScope}
+        type CurrentScope =
+            typeof BASIC_SCOPE & {code: string} & Scope & {scope: CurrentScope}
+        const scope = {...BASIC_SCOPE, code: '', ...givenScope} as CurrentScope
+        scope.scope = scope
 
         const expression = determineTrimmedString(givenExpression)
         if (expression) {
@@ -584,6 +586,24 @@ export const validateDocumentUpdate = <
         return {code: scope.code, result: undefined, scope}
     }
     /// endregion
+    const isDefinedPropertyValue = (
+        document: PartialFullDocumentType, name: string
+    ) =>
+        Object.prototype.hasOwnProperty.call(document, name) &&
+        ![undefined, null].includes(document[name] as null)
+    const getEffectiveValue = (
+        newDocument: PartialFullDocumentType,
+        oldDocument: null | PartialFullDocumentType,
+        name: string
+    ) =>
+        Object.prototype.hasOwnProperty.call(newDocument, name) ?
+            newDocument[name] :
+            (
+                oldDocument &&
+                Object.prototype.hasOwnProperty.call(oldDocument, name)
+            ) ?
+                oldDocument[name] :
+                null
     const checkDocument = (
         newDocument: PartialFullDocumentType,
         oldDocument: null | PartialFullDocumentType,
@@ -707,6 +727,8 @@ export const validateDocumentUpdate = <
                             type.endsWith('Expression'),
                             {
                                 checkPropertyContent,
+                                getEffectiveValue,
+                                isDefinedPropertyValue,
 
                                 model,
                                 modelName,
@@ -1240,6 +1262,8 @@ export const validateDocumentUpdate = <
                                     attachmentsTarget,
 
                                     checkPropertyContent,
+                                    getEffectiveValue,
+                                    isDefinedPropertyValue,
 
                                     model,
                                     modelName,
@@ -1365,6 +1389,8 @@ export const validateDocumentUpdate = <
                                 attachmentsTarget,
 
                                 checkPropertyContent,
+                                getEffectiveValue,
+                                isDefinedPropertyValue,
 
                                 model,
                                 modelName,
@@ -1473,6 +1499,8 @@ export const validateDocumentUpdate = <
                             type.endsWith('Expression'),
                             {
                                 checkPropertyContent,
+                                getEffectiveValue,
+                                isDefinedPropertyValue,
 
                                 model,
                                 modelName,
@@ -1551,6 +1579,8 @@ export const validateDocumentUpdate = <
                         type.endsWith('Expression'),
                         {
                             checkPropertyContent,
+                            getEffectiveValue,
+                            isDefinedPropertyValue,
 
                             model,
                             modelName,
@@ -2234,6 +2264,8 @@ export const validateDocumentUpdate = <
                             specialNames.constraint.expression,
                             {
                                 checkPropertyContent,
+                                getEffectiveValue,
+                                isDefinedPropertyValue,
 
                                 model,
                                 modelName,

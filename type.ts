@@ -719,6 +719,18 @@ export interface CommonScope<
 
     parentNames: Array<string>
     pathDescription: string
+
+    isDefinedPropertyValue: (
+        document: PartialFullDocument<ObjectType, AdditionalPropertiesType>,
+        name: string
+    ) => boolean
+    getEffectiveValue: (
+        newDocument: PartialFullDocument<ObjectType, AdditionalPropertiesType>,
+        oldDocument: (
+            null | PartialFullDocument<ObjectType, AdditionalPropertiesType>
+        ),
+        name: string
+    ) => unknown
 }
 export interface PropertyScope<
     ObjectType extends object,
