@@ -1569,7 +1569,7 @@ export const validateDocumentUpdate = <
                             AdditionalPropertiesType
                         >
                     >(
-                        model[type as '_createExpression'],
+                        model[type as '_onUpdateExpression'],
                         type.endsWith('Expression'),
                         {
                             checkPropertyContent,
