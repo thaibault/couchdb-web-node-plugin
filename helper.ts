@@ -335,7 +335,7 @@ export const bulkDocsFactory = (
 
         const chunkSize =
             configuration.maximumNumberOfEntitiesInBulkOperation
-        const results: Array<DatabaseError | DatabaseResponse> = []
+        let results: Array<DatabaseError | DatabaseResponse> = []
 
         for (let index = 0; index < data.length; index += chunkSize) {
             const chunk = data.slice(index, index + chunkSize)
@@ -343,11 +343,10 @@ export const bulkDocsFactory = (
             const result = await nativeBulkDocs.call(
                 this,
                 chunk as FirstParameter<Connection['bulkDocs']>,
-                ...parameters as
-                    [SecondParameter<Connection['bulkDocs']>]
+                ...parameters as [SecondParameter<Connection['bulkDocs']>]
             )
 
-            results.concat(result)
+            results = results.concat(result)
         }
 
         const conflictingIndexes: Array<number> = []
@@ -443,27 +442,28 @@ export const initializeConnection = async (
         connection.bulkDocs,
         configuration.couchdb
     )
-    connection.put = async function<Type extends Mapping<unknown>>(
-        this: Connection,
-        document: PutDocument<Type>,
-        options?: PouchDB.Core.PutOptions | null
-    ): Promise<DatabaseResponse> {
-        const result =
-            (await connection.bulkDocs.call(this, [document], options))[0]
+    connection.post = connection.put =
+        async function<Type extends Mapping<unknown>>(
+            this: Connection,
+            document: PutDocument<Type>,
+            options?: PouchDB.Core.PutOptions | null
+        ): Promise<DatabaseResponse> {
+            const result =
+                (await connection.bulkDocs.call(this, [document], options))[0]
 
-        if ((result as DatabaseError | undefined)?.name)
-            /*
-                eslint-disable
-                @typescript-eslint/only-throw-error,no-throw-literal
-            */
-            throw result as DatabaseError
-            /*
-                eslint-enable
-                @typescript-eslint/only-throw-error,no-throw-literal
-            */
+            if ((result as DatabaseError | undefined)?.name)
+                /*
+                    eslint-disable
+                    @typescript-eslint/only-throw-error,no-throw-literal
+                */
+                throw result as DatabaseError
+                /*
+                    eslint-enable
+                    @typescript-eslint/only-throw-error,no-throw-literal
+                */
 
-        return result as DatabaseResponse
-    }
+            return result as DatabaseResponse
+        }
     // endregion
     // region ensure database presence
     try {
