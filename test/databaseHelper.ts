@@ -1953,7 +1953,7 @@ describe('databaseHelper', () => {
                     }
                     return true
                 })
-                .filter((test, index, tests) =>
+                .filter((_test, index, tests) =>
                     !only || index === tests.length - 1
                 )
                 .map((test: Array<unknown>) =>

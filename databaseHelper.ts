@@ -391,119 +391,11 @@ export const validateDocumentUpdate = <
     ]
     // region functions
     /// region generic functions
-    const serialize = (value: unknown): string =>
-        value instanceof Error ? String(value) : serializeData(value)
-
     const determineTrimmedString = (value?: null | string): string => {
         if (typeof value === 'string')
             return value.trim()
 
         return ''
-    }
-
-    const normalizeDateTime = (
-        value: DateRepresentationType
-    ): null | number | string => {
-        if (saveDateTimeAsNumber) {
-            if (value !== null && typeof value !== 'number') {
-                value = new Date(value)
-                value =
-                    Date.UTC(
-                        value.getUTCFullYear(),
-                        value.getUTCMonth(),
-                        value.getUTCDate(),
-                        value.getUTCHours(),
-                        value.getUTCMinutes(),
-                        value.getUTCSeconds(),
-                        value.getUTCMilliseconds()
-                    ) /
-                    1000
-            }
-        } else if (value !== null) {
-            value = new Date(
-                typeof value === 'number' && !isNaN(value) ?
-                    value * 1000 :
-                    value as Date | string
-            )
-            try {
-                // Use ISO 8601 format to save date as string.
-                value = value.toISOString()
-            } catch {
-                // Ignore exception.
-            }
-        }
-
-        return value as null | number | string
-    }
-
-    const fileNameMatchesModelType = (
-        typeName: string,
-        fileName: string,
-        fileType: FileSpecification<
-            AttachmentType, AdditionalSpecifications
-        >
-    ): boolean => {
-        if (fileType.fileName) {
-            if (fileType.fileName.value)
-                return fileType.fileName.value === fileName
-
-            if (fileType.fileName.pattern)
-                return ([] as Array<RegExp | string>)
-                    .concat(fileType.fileName.pattern)
-                    .some((pattern) =>
-                        new RegExp(pattern).test(fileName)
-                    )
-        }
-
-        return typeName === fileName
-    }
-
-    const getFileNameByPrefix = (
-        prefix?: string, attachments?: Attachments
-    ): null | string => {
-        if (!attachments)
-            attachments =
-                newDocument[specialNames.attachment] as Attachments
-
-        if (prefix) {
-            for (const name of Object.keys(attachments))
-                if (name.startsWith(prefix))
-                    return name
-        } else {
-            const keys: Array<string> = Object.keys(attachments)
-            if (keys.length)
-                return keys[0]
-        }
-
-        return null
-    }
-
-    const attachmentWithPrefixExists = (namePrefix: string): boolean => {
-        if (Object.prototype.hasOwnProperty.call(
-            newDocument, specialNames.attachment
-        )) {
-            const attachments =
-                newDocument[specialNames.attachment] as Attachments
-            const name: null | string = getFileNameByPrefix(namePrefix)
-
-            if (name)
-                return (
-                    Object.prototype.hasOwnProperty.call(
-                        attachments[name], 'stub'
-                    ) &&
-                    (attachments[name] as Partial<StubAttachment>).stub ||
-                    Object.prototype.hasOwnProperty.call(
-                        attachments[name], 'data'
-                    ) &&
-                    ![null, undefined].includes(
-                        (attachments[name] as FullAttachment).data as
-                            unknown as
-                            null
-                    )
-                )
-        }
-
-        return false
     }
 
     const evaluate = <Type, Scope>(
@@ -536,7 +428,7 @@ export const validateDocumentUpdate = <
             // region compile
             let templateFunction:(
                 Evaluate<Type | undefined, Array<unknown>> | undefined
-            )
+                )
 
             try {
                 /* eslint-disable @typescript-eslint/no-implied-eval */
@@ -587,30 +479,143 @@ export const validateDocumentUpdate = <
 
         return {code: scope.code, result: undefined, scope}
     }
-    /// endregion
-    const isDefinedPropertyValue = (
-        document: PartialFullDocumentType, name: string
-    ) =>
-        Object.prototype.hasOwnProperty.call(document, name) &&
-        ![undefined, null].includes(document[name] as null)
-    const getEffectiveValue = (
-        newDocument: PartialFullDocumentType,
-        oldDocument: null | PartialFullDocumentType,
-        name: string
-    ) =>
-        Object.prototype.hasOwnProperty.call(newDocument, name) ?
-            newDocument[name] :
-            (
-                oldDocument &&
-                Object.prototype.hasOwnProperty.call(oldDocument, name)
-            ) ?
-                oldDocument[name] :
-                null
+
+    const fileNameMatchesModelType = (
+        typeName: string,
+        fileName: string,
+        fileType: FileSpecification<
+            AttachmentType, AdditionalSpecifications
+        >
+    ): boolean => {
+        if (fileType.fileName) {
+            if (fileType.fileName.value)
+                return fileType.fileName.value === fileName
+
+            if (fileType.fileName.pattern)
+                return ([] as Array<RegExp | string>)
+                    .concat(fileType.fileName.pattern)
+                    .some((pattern) =>
+                        new RegExp(pattern).test(fileName)
+                    )
+        }
+
+        return typeName === fileName
+    }
+
     const getDateTime = (value: number | string) =>
         typeof value === 'number' ? new Date(value * 1000) : new Date(value)
+
+    const getFileNameByPrefix = (
+        prefix?: string, attachments?: Attachments
+    ): null | string => {
+        if (!attachments)
+            attachments =
+                newDocument[specialNames.attachment] as Attachments
+
+        if (prefix) {
+            for (const name of Object.keys(attachments))
+                if (name.startsWith(prefix))
+                    return name
+        } else {
+            const keys: Array<string> = Object.keys(attachments)
+            if (keys.length)
+                return keys[0]
+        }
+
+        return null
+    }
+
+    const normalizeDateTime = (
+        value: DateRepresentationType
+    ): null | number | string => {
+        if (saveDateTimeAsNumber) {
+            if (value !== null && typeof value !== 'number') {
+                value = new Date(value)
+                value =
+                    Date.UTC(
+                        value.getUTCFullYear(),
+                        value.getUTCMonth(),
+                        value.getUTCDate(),
+                        value.getUTCHours(),
+                        value.getUTCMinutes(),
+                        value.getUTCSeconds(),
+                        value.getUTCMilliseconds()
+                    ) /
+                    1000
+            }
+        } else if (value !== null) {
+            value = new Date(
+                typeof value === 'number' && !isNaN(value) ?
+                    value * 1000 :
+                    value as Date | string
+            )
+            try {
+                // Use ISO 8601 format to save date as string.
+                value = value.toISOString()
+            } catch {
+                // Ignore exception.
+            }
+        }
+
+        return value as null | number | string
+    }
+
+    const serialize = (value: unknown): string =>
+        value instanceof Error ? String(value) : serializeData(value)
+    /// endregion
+    const isDefinedPropertyValue = (
+        name: keyof ObjectType, document: PartialFullDocumentType = newDocument
+    ) =>
+        Object.prototype.hasOwnProperty.call(document, name) &&
+        ![null, undefined].includes(document[name] as null)
+
+    const getEffectiveValue = (
+        name: string,
+        localNewDocument: PartialFullDocumentType = newDocument,
+        localOldDocument: null | PartialFullDocumentType = oldDocument
+    ) =>
+        Object.prototype.hasOwnProperty.call(localNewDocument, name) ?
+            localNewDocument[name] :
+            (
+                localOldDocument &&
+                Object.prototype.hasOwnProperty.call(localOldDocument, name)
+            ) ?
+                localOldDocument[name] :
+                null
+
+    const attachmentWithPrefixExists = (
+        namePrefix: string, localNewDocument = newDocument
+    ): boolean => {
+        if (Object.prototype.hasOwnProperty.call(
+            localNewDocument, specialNames.attachment
+        )) {
+            const attachments =
+                localNewDocument[specialNames.attachment] as Attachments
+            const name: null | string = getFileNameByPrefix(namePrefix)
+
+            if (name)
+                return (
+                    Object.prototype.hasOwnProperty.call(
+                        attachments[name], 'stub'
+                    ) &&
+                    (attachments[name] as Partial<StubAttachment>).stub ||
+                    Object.prototype.hasOwnProperty.call(
+                        attachments[name], 'data'
+                    ) &&
+                    ![null, undefined].includes(
+                        (attachments[name] as FullAttachment).data as
+                            unknown as
+                            null
+                    )
+                )
+        }
+
+        return false
+    }
+
     const checkDocument = (
-        newDocument: PartialFullDocumentType,
-        oldDocument: null | PartialFullDocumentType,
+        localNewDocument: PartialFullDocumentType = newDocument,
+        localOldDocument: null | PartialFullDocumentType = null,
         parentNames: Array<string> = [],
         ignoreFillUp = false
     ): CheckedDocumentResult<ObjectType, AdditionalPropertiesType> => {
@@ -621,16 +626,16 @@ export const validateDocumentUpdate = <
         const checkModelType = () => {
             // region check for model type (optionally migrate them)
             if (!Object.prototype.hasOwnProperty.call(
-                newDocument, typeName
+                localNewDocument, typeName
             ))
                 if (
-                    oldDocument &&
+                    localOldDocument &&
                     Object.prototype.hasOwnProperty.call(
-                        oldDocument, typeName
+                        localOldDocument, typeName
                     ) &&
                     ['fillUp', 'migrate'].includes(updateStrategy)
                 )
-                    newDocument[typeName] = oldDocument[typeName]
+                    localNewDocument[typeName] = localOldDocument[typeName]
                 else
                     throwError(
                         'Type: You have to specify a model type via ' +
@@ -642,7 +647,7 @@ export const validateDocumentUpdate = <
                     parentNames.length ||
                     (new RegExp(
                         modelConfiguration.property.name.typePattern.public
-                    )).test(newDocument[typeName] as string)
+                    )).test(localNewDocument[typeName] as string)
                 )
             )
                 throwError(
@@ -650,28 +655,28 @@ export const validateDocumentUpdate = <
                     'matches "' +
                     modelConfiguration.property.name.typePattern.public +
                     `" as public type (given "` +
-                    `${newDocument[typeName] as string}")` +
+                    `${localNewDocument[typeName] as string}")` +
                     `${pathDescription}.`
                 )
             if (!Object.prototype.hasOwnProperty.call(
-                models, newDocument[typeName] as string
+                models, localNewDocument[typeName] as string
             ))
                 if (Object.prototype.hasOwnProperty.call(
-                    oldModelMapping, newDocument[typeName] as string
+                    oldModelMapping, localNewDocument[typeName] as string
                 ))
-                    newDocument[typeName] =
-                        oldModelMapping[newDocument[typeName] as string]
+                    localNewDocument[typeName] =
+                        oldModelMapping[localNewDocument[typeName] as string]
                 else
                     throwError(
                         'Model: Given model "' +
-                        `${newDocument[typeName] as string}" is not ` +
+                        `${localNewDocument[typeName] as string}" is not ` +
                         `specified${pathDescription}.`
                     )
             // endregion
         }
         checkModelType()
 
-        let modelName = newDocument[typeName] as string
+        let modelName = localNewDocument[typeName] as string
         const model: ModelType = models[modelName]
         let additionalPropertySpecification:(
             PropertySpecification<
@@ -737,9 +742,9 @@ export const validateDocumentUpdate = <
                                 name,
                                 type,
 
-                                newDocument,
+                                newDocument: localNewDocument,
                                 newValue,
-                                oldDocument,
+                                oldDocument: localOldDocument,
                                 oldValue,
 
                                 parentNames,
@@ -1185,9 +1190,9 @@ export const validateDocumentUpdate = <
                     return true
                 } else if (updateStrategy !== 'migrate')
                     throwError(
-                        `Immutable: Property "${String(name)}"` +
-                        `is not writable (old document "` +
-                        `${serialize(oldDocument)}")${pathDescription}.`
+                        `Immutable: Property "${String(name)}" is not ` +
+                        `writable (old document "${serialize(oldDocument)}")` +
+                        `${pathDescription}.`
                     )
             // endregion
             // region nullable
@@ -1469,14 +1474,14 @@ export const validateDocumentUpdate = <
                         model[name].oldName as Array<keyof ObjectType>
                     ))
                         if (Object.prototype.hasOwnProperty.call(
-                            newDocument, oldName
+                            localNewDocument, oldName
                         )) {
-                            newDocument[name] = newDocument[oldName]
-                            delete newDocument[oldName]
+                            localNewDocument[name] = localNewDocument[oldName]
+                            delete localNewDocument[oldName]
                         }
         // endregion
         // region run create document hook
-        if (!oldDocument)
+        if (!localOldDocument)
             for (const type of [
                 specialNames.create.execution, specialNames.create.expression
             ])
@@ -1502,8 +1507,8 @@ export const validateDocumentUpdate = <
                                 modelName,
                                 type,
 
-                                newDocument,
-                                oldDocument,
+                                newDocument: localNewDocument,
+                                oldDocument: localOldDocument,
 
                                 parentNames,
                                 pathDescription
@@ -1544,11 +1549,11 @@ export const validateDocumentUpdate = <
 
                     if (![null, undefined].includes(result as null))
                         // @ts-expect-error Typescript cannot determine.
-                        newDocument = result
+                        localNewDocument = result
 
                     checkModelType()
 
-                    modelName = newDocument[typeName] as string
+                    modelName = localNewDocument[typeName] as string
 
                     if (parentNames.length === 0)
                         setDocumentEnvironment()
@@ -1580,8 +1585,8 @@ export const validateDocumentUpdate = <
                             modelName,
                             type,
 
-                            newDocument,
-                            oldDocument,
+                            newDocument: localNewDocument,
+                            oldDocument: localOldDocument,
 
                             parentNames,
                             pathDescription
@@ -1620,18 +1625,18 @@ export const validateDocumentUpdate = <
 
                 if (![undefined, null].includes(result as null))
                     // @ts-expect-error Typescript cannot determine.
-                    newDocument = result
+                    localNewDocument = result
 
                 checkModelType()
 
-                modelName = newDocument[typeName] as string
+                modelName = localNewDocument[typeName] as string
 
                 if (parentNames.length === 0)
                     setDocumentEnvironment()
             }
         // endregion
         const additionalPropertyNames = additionalPropertySpecification ?
-            (Object.keys(newDocument) as Array<keyof ObjectType>).filter(
+            (Object.keys(localNewDocument) as Array<keyof ObjectType>).filter(
                 (name: keyof ObjectType): boolean =>
                     !specifiedPropertyNames.includes(name)
             ) :
@@ -1648,19 +1653,19 @@ export const validateDocumentUpdate = <
                             AttachmentType, AdditionalSpecifications
                         >
                 )) {
-                    if (!newDocument[specialNames.attachment])
-                        newDocument[specialNames.attachment] = {}
+                    if (!localNewDocument[specialNames.attachment])
+                        localNewDocument[specialNames.attachment] = {}
 
                     if (
-                        oldDocument &&
+                        localOldDocument &&
                         !Object.prototype.hasOwnProperty.call(
-                            oldDocument, name
+                            localOldDocument, name
                         )
                     )
-                        oldDocument[specialNames.attachment] = {}
+                        localOldDocument[specialNames.attachment] = {}
 
                     const newAttachments =
-                        newDocument[specialNames.attachment] as Attachments
+                        localNewDocument[specialNames.attachment] as Attachments
 
                     const newFileNames: Array<keyof Attachments> =
                         Object.keys(newAttachments)
@@ -1679,9 +1684,9 @@ export const validateDocumentUpdate = <
                             )
 
                     let oldFileNames: Array<string> = []
-                    if (oldDocument) {
+                    if (localOldDocument) {
                         const oldAttachments =
-                            oldDocument[name] as Attachments
+                            localOldDocument[name] as Attachments
                         oldFileNames = Object.keys(oldAttachments)
                             .filter((fileName: string): boolean =>
                                 !(
@@ -1730,9 +1735,10 @@ export const validateDocumentUpdate = <
                     for (const fileName of newFileNames)
                         runCreatePropertyHook<AttachmentType>(
                             propertySpecification,
-                            newDocument,
-                            oldDocument && oldDocument[name] ?
-                                oldDocument[name] as PartialFullDocumentType :
+                            localNewDocument,
+                            localOldDocument && localOldDocument[name] ?
+                                localOldDocument[name] as
+                                    PartialFullDocumentType :
                                 null,
                             fileName,
                             newAttachments
@@ -1741,9 +1747,10 @@ export const validateDocumentUpdate = <
                     for (const fileName of newFileNames)
                         runUpdatePropertyHook<AttachmentType>(
                             propertySpecification,
-                            newDocument,
-                            oldDocument && oldDocument[name] ?
-                                oldDocument[name] as PartialFullDocumentType :
+                            localNewDocument,
+                            localOldDocument && localOldDocument[name] ?
+                                localOldDocument[name] as
+                                    PartialFullDocumentType :
                                 null,
                             fileName,
                             newAttachments
@@ -1773,7 +1780,7 @@ export const validateDocumentUpdate = <
                                 else
                                     // @ts-expect-error Existing old file name
                                     newAttachments[fileName] = ((
-                                        oldDocument
+                                        localOldDocument
                                     )[name] as Attachments)[fileName]
                     } else if (newFileNames.length === 0)
                         if (oldFileNames.length === 0) {
@@ -1796,7 +1803,7 @@ export const validateDocumentUpdate = <
                             for (const fileName of oldFileNames)
                                 // @ts-expect-error Existing old file name
                                 newAttachments[fileName] = ((
-                                    oldDocument
+                                    localOldDocument
                                 )[name] as Attachments)[fileName]
                 }
                 // endregion
@@ -1810,10 +1817,16 @@ export const validateDocumentUpdate = <
                 >
 
                 runCreatePropertyHook<ValueOf<ObjectType>>(
-                    propertySpecification, newDocument, oldDocument, name
+                    propertySpecification,
+                    localNewDocument,
+                    localOldDocument,
+                    name
                 )
                 runUpdatePropertyHook<ValueOf<ObjectType>>(
-                    propertySpecification, newDocument, oldDocument, name
+                    propertySpecification,
+                    localNewDocument,
+                    localOldDocument,
+                    name
                 )
 
                 if ([null, undefined].includes(
@@ -1823,12 +1836,12 @@ export const validateDocumentUpdate = <
                         propertySpecification.nullable ||
                         (
                             Object.prototype.hasOwnProperty.call(
-                                newDocument, name
+                                localNewDocument, name
                             ) &&
-                            newDocument[name] !== undefined ||
-                            oldDocument &&
+                            localNewDocument[name] !== undefined ||
+                            localOldDocument &&
                             Object.prototype.hasOwnProperty.call(
-                                oldDocument, name
+                                localOldDocument, name
                             ) &&
                             updateStrategy !== 'replace'
                         )
@@ -1842,45 +1855,44 @@ export const validateDocumentUpdate = <
                         !(ignoreFillUp || propertySpecification.ignoreFillUp) &&
                         (
                             !Object.prototype.hasOwnProperty.call(
-                                newDocument, name
+                                localNewDocument, name
                             ) ||
-                            newDocument[name] === undefined
+                            localNewDocument[name] === undefined
                         ) &&
-                        oldDocument &&
-                        Object.prototype.hasOwnProperty.call(oldDocument, name)
+                        localOldDocument &&
+                        Object.prototype.hasOwnProperty.call(
+                            localOldDocument, name
+                        )
                     )
                         if (updateStrategy === 'fillUp')
-                            newDocument[name] = oldDocument[name]
+                            localNewDocument[name] = localOldDocument[name]
                         else if (updateStrategy === 'replace')
                             changedPath = parentNames.concat(
                                 String(name), 'property removed'
                             )
-                } else if (
-                    !Object.prototype.hasOwnProperty.call(newDocument, name) ||
-                    [null, undefined].includes(newDocument[name] as null)
-                )
-                    if (oldDocument) {
+                } else if (!isDefinedPropertyValue(name, localNewDocument))
+                    if (localOldDocument) {
                         if (
                             !(
                                 ignoreFillUp ||
                                 propertySpecification.ignoreFillUp
                             ) &&
-                            newDocument[name] !== null &&
+                            localNewDocument[name] !== null &&
                             updateStrategy === 'fillUp'
                         )
-                            newDocument[name] = oldDocument[name]
+                            localNewDocument[name] = localOldDocument[name]
                         else if (updateStrategy === 'migrate') {
-                            newDocument[name] =
+                            localNewDocument[name] =
                                 propertySpecification.default as
-                                    typeof newDocument[keyof ObjectType]
+                                    typeof localNewDocument[keyof ObjectType]
                             changedPath = parentNames.concat(
                                 String(name), 'migrate default value'
                             )
                         }
                     } else {
-                        newDocument[name] =
+                        localNewDocument[name] =
                             propertySpecification.default as
-                                typeof newDocument[keyof ObjectType]
+                                typeof localNewDocument[keyof ObjectType]
                         changedPath = changedPath.concat(
                             String(name), 'add default value'
                         )
@@ -1889,11 +1901,11 @@ export const validateDocumentUpdate = <
             // endregion
         // region check given data
         /// region remove new data which already exists
-        if (oldDocument && updateStrategy === 'incremental')
-            for (const [name, value] of Object.entries(newDocument))
+        if (localOldDocument && updateStrategy === 'incremental')
+            for (const [name, value] of Object.entries(localNewDocument))
                 if (
                     Object.prototype.hasOwnProperty.call(
-                        oldDocument, name
+                        localOldDocument, name
                     ) &&
                     !modelConfiguration.property.name.reserved.concat(
                         idName,
@@ -1907,14 +1919,14 @@ export const validateDocumentUpdate = <
                         typeName
                     ).includes(name) &&
                     (
-                        oldDocument[name] === value ||
-                        serialize(oldDocument[name]) === serialize(value)
+                        localOldDocument[name] === value ||
+                        serialize(localOldDocument[name]) === serialize(value)
                     )
                 )
-                    delete newDocument[name]
+                    delete localNewDocument[name]
         /// endregion
         for (const [name, newValue] of (
-            Object.entries(newDocument) as
+            Object.entries(localNewDocument) as
                 Array<[keyof ObjectType, ValueOf<ObjectType>]>
         ))
             if (
@@ -1943,7 +1955,7 @@ export const validateDocumentUpdate = <
                         AdditionalPropertiesType, AdditionalSpecifications
                     >) = additionalPropertySpecification
                 else if (updateStrategy === 'migrate') {
-                    delete newDocument[name]
+                    delete localNewDocument[name]
 
                     changedPath = parentNames.concat(
                         String(name), 'migrate removed property'
@@ -1982,8 +1994,8 @@ export const validateDocumentUpdate = <
                                         AttachmentType | null
                                     >(
                                         file,
-                                        newDocument,
-                                        oldDocument,
+                                        localNewDocument,
+                                        localOldDocument,
                                         fileName,
                                         pathDescription
                                     )
@@ -1999,8 +2011,8 @@ export const validateDocumentUpdate = <
                     propertySpecification as PropertySpecification<
                         AdditionalPropertiesType, AdditionalSpecifications
                     >,
-                    newDocument,
-                    oldDocument,
+                    localNewDocument,
+                    localOldDocument,
                     name,
                     pathDescription
                 ))
@@ -2067,11 +2079,11 @@ export const validateDocumentUpdate = <
                         propertySpecification as PropertySpecification<
                             AdditionalPropertiesType, AdditionalSpecifications
                         >,
-                        oldDocument &&
+                        localOldDocument &&
                         Object.prototype.hasOwnProperty.call(
-                            oldDocument, name
+                            localOldDocument, name
                         ) &&
-                        oldDocument[name] ||
+                        localOldDocument[name] ||
                         undefined,
                         [
                             'arrayConstraintExecution',
@@ -2160,15 +2172,16 @@ export const validateDocumentUpdate = <
                     }
                     //// endregion
                     if (!(
-                        oldDocument &&
+                        localOldDocument &&
                         Object.prototype.hasOwnProperty.call(
-                            oldDocument, name
+                            localOldDocument, name
                         ) &&
-                        Array.isArray(oldDocument[name]) &&
+                        Array.isArray(localOldDocument[name]) &&
                         (
-                            oldDocument[name] as Array<DocumentContent>
+                            localOldDocument[name] as Array<DocumentContent>
                         ).length === newProperty.length &&
-                        serialize(oldDocument[name]) === serialize(newProperty)
+                        serialize(localOldDocument[name]) ===
+                            serialize(newProperty)
                     ))
                         changedPath =
                             parentNames.concat(String(name), 'array updated')
@@ -2177,12 +2190,12 @@ export const validateDocumentUpdate = <
                 } else {
                     const oldValue: unknown =
                         (
-                            oldDocument &&
+                            localOldDocument &&
                             Object.prototype.hasOwnProperty.call(
-                                oldDocument, name
+                                localOldDocument, name
                             )
                         ) ?
-                            oldDocument[name] :
+                            localOldDocument[name] :
                             undefined
 
                     const result = isArrayType ?
@@ -2197,27 +2210,27 @@ export const validateDocumentUpdate = <
                             ignoreFillUp || propertySpecification.ignoreFillUp
                         )
 
-                    newDocument[name] = result.newValue as
+                    localNewDocument[name] = result.newValue as
                         PartialFullDocumentType[keyof ObjectType]
 
                     if (result.changedPath.length)
                         changedPath = result.changedPath
 
                     // NOTE: Do not use "newValue" here anymore.
-                    if (newDocument[name] === null)
+                    if (localNewDocument[name] === null)
                         if (oldValue === undefined) {
                             if (updateStrategy === 'fillUp')
-                                delete newDocument[name]
+                                delete localNewDocument[name]
                         } else
                             changedPath = parentNames.concat(
                                 String(name), 'property removed'
                             )
 
                     if (
-                        newDocument[name] === undefined &&
+                        localNewDocument[name] === undefined &&
                         updateStrategy === 'incremental'
                     )
-                        delete newDocument[name]
+                        delete localNewDocument[name]
                 }
             }
         /// region constraint
@@ -2263,8 +2276,8 @@ export const validateDocumentUpdate = <
                                 modelName,
                                 type: constraintName,
 
-                                newDocument,
-                                oldDocument,
+                                newDocument: localNewDocument,
+                                oldDocument: localOldDocument,
 
                                 parentNames,
                                 pathDescription
@@ -2325,7 +2338,7 @@ export const validateDocumentUpdate = <
                                     ) as string :
                                     `Model "${modelName}" should satisfy ` +
                                     `constraint "${result.code}" (given ` +
-                                    `"${serialize(newDocument)}")` +
+                                    `"${serialize(localNewDocument)}")` +
                                     `${pathDescription}.`
                                 /*
                                     eslint-enable
@@ -2341,10 +2354,10 @@ export const validateDocumentUpdate = <
         /// endregion
         /// region attachment
         if (Object.prototype.hasOwnProperty.call(
-            newDocument, specialNames.attachment
+            localNewDocument, specialNames.attachment
         )) {
             const newAttachments =
-                newDocument[specialNames.attachment] as Attachments
+                localNewDocument[specialNames.attachment] as Attachments
 
             if (
                 typeof newAttachments !== 'object' ||
@@ -2358,13 +2371,13 @@ export const validateDocumentUpdate = <
             // region migrate old attachments
             let oldAttachments: Attachments | null = null
             if (
-                oldDocument &&
+                localOldDocument &&
                 Object.prototype.hasOwnProperty.call(
-                    oldDocument, specialNames.attachment
+                    localOldDocument, specialNames.attachment
                 )
             ) {
-                oldAttachments =
-                    oldDocument[specialNames.attachment] as Attachments | null
+                oldAttachments = localOldDocument[specialNames.attachment] as
+                    Attachments | null
                 if (
                     oldAttachments !== null &&
                     typeof oldAttachments === 'object'
@@ -2461,7 +2474,7 @@ export const validateDocumentUpdate = <
             }
             // endregion
             if (Object.keys(newAttachments).length === 0)
-                delete newDocument[specialNames.attachment]
+                delete localNewDocument[specialNames.attachment]
 
             const attachmentModel =
                 model[specialNames.attachment] as Mapping<
@@ -2724,30 +2737,30 @@ export const validateDocumentUpdate = <
         /// endregion
         // endregion
         if (
-            oldDocument &&
+            localOldDocument &&
             Object.prototype.hasOwnProperty.call(
-                oldDocument, specialNames.attachment
+                localOldDocument, specialNames.attachment
             ) &&
             Object.keys(
-                oldDocument[specialNames.attachment] as Attachments
+                localOldDocument[specialNames.attachment] as Attachments
             ).length === 0
         )
-            delete oldDocument[specialNames.attachment]
+            delete localOldDocument[specialNames.attachment]
 
         if (
             changedPath.length === 0 &&
-            oldDocument &&
+            localOldDocument &&
             updateStrategy === 'migrate'
         )
-            for (const name of Object.keys(oldDocument))
+            for (const name of Object.keys(localOldDocument))
                 if (!Object.prototype.hasOwnProperty.call(
-                    newDocument, name
+                    localNewDocument, name
                 ))
                     changedPath = parentNames.concat(
                         name, 'migrate removed property'
                     )
 
-        return {changedPath, newDocument}
+        return {changedPath, newDocument: localNewDocument}
     }
     // endregion
     const BASIC_SCOPE: BasicScope<
