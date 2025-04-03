@@ -584,30 +584,27 @@ export const validateDocumentUpdate = <
                 null
 
     const attachmentWithPrefixExists = (
-        namePrefix: string, localNewDocument = newDocument
+        namePrefix: string, document = newDocument
     ): boolean => {
         if (Object.prototype.hasOwnProperty.call(
-            localNewDocument, specialNames.attachment
+            document, specialNames.attachment
         )) {
             const attachments =
-                localNewDocument[specialNames.attachment] as Attachments
+                document[specialNames.attachment] as Attachments
             const name: null | string = getFileNameByPrefix(namePrefix)
 
-            if (name)
+            if (name) {
+                const attachment = attachments[name]
+
                 return (
-                    Object.prototype.hasOwnProperty.call(
-                        attachments[name], 'stub'
-                    ) &&
-                    (attachments[name] as Partial<StubAttachment>).stub ||
-                    Object.prototype.hasOwnProperty.call(
-                        attachments[name], 'data'
-                    ) &&
+                    Object.prototype.hasOwnProperty.call(attachment, 'stub') &&
+                    (attachment as Partial<StubAttachment>).stub ||
+                    Object.prototype.hasOwnProperty.call(attachment, 'data') &&
                     ![null, undefined].includes(
-                        (attachments[name] as FullAttachment).data as
-                            unknown as
-                            null
+                        (attachment as FullAttachment).data as unknown as null
                     )
                 )
+            }
         }
 
         return false
