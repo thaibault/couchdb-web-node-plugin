@@ -660,18 +660,18 @@ export interface BasicScope<
     ) => CheckedDocumentResult<Type, AdditionalPropertiesType>
     getDateTime: (value: number | string) => Date
     getEffectiveValue: (
+        name: string,
         newDocument: PartialFullDocument<Type, AdditionalPropertiesType>,
         oldDocument: (
             null | PartialFullDocument<Type, AdditionalPropertiesType>
-            ),
-        name: string
+        )
     ) => unknown
     getFileNameByPrefix: (
         prefix?: string, attachments?: Mapping<AttachmentType>
     ) => null | string
     isDefinedPropertyValue: (
-        document: PartialFullDocument<Type, AdditionalPropertiesType>,
-        name: string
+        name: keyof object,
+        document: PartialFullDocument<Type, AdditionalPropertiesType>
     ) => boolean
     require: null | typeof require
     serialize: (value: unknown) => string
