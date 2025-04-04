@@ -15,12 +15,11 @@
 */
 // region imports
 import {describe, expect, test} from '@jest/globals'
-import path from 'path'
 import {pluginAPI} from 'web-node'
 
 import {loadService, preLoadService, shouldExit} from '../index'
 import packageConfiguration from '../package.json'
-import {Configuration, Runner, ServicePromises, Services} from '../type'
+import {Configuration, ServicePromises, Services} from '../type'
 // endregion
 describe('index', (): void => {
     // region prepare environment
@@ -30,10 +29,6 @@ describe('index', (): void => {
     // endregion
     // region tests
     test('preLoadService', async (): Promise<void> => {
-        const runner: Runner = configuration.couchdb.binary.runner[
-            configuration.couchdb.binary.runner.length - 1
-        ]
-
         const services: Services = {} as Services
 
         await expect(preLoadService({
@@ -46,10 +41,7 @@ describe('index', (): void => {
         }))
             .resolves
             .toBeUndefined()
-        expect(services).toHaveProperty(
-            'couchdb.server.runner.binaryFilePath',
-            path.resolve(runner.location[0], runner.name as string)
-        )
+        expect(services).toHaveProperty('couchdb.validateDocument')
     })
     test('loadService', (): Promise<void> =>
         expect(loadService({

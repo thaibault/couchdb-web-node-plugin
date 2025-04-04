@@ -149,9 +149,9 @@ export const preLoadService = async ({
         }
 
         if (!Object.prototype.hasOwnProperty.call(couchdb.server, 'runner'))
-            throw new Error(
+            console.info(
                 'No binary file in one of the following locations found:' +
-                ` "${triedPaths.join('", "')}".`
+                ` "${triedPaths.join('", "')}". Initialize pouchdb in-place.`
             )
         // endregion
     }

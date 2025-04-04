@@ -421,16 +421,27 @@ export const bulkDocsFactory = (
 export const initializeConnection = async (
     services: Services, configuration: Configuration
 ): Promise<Services> => {
+    const {couchdb} = services
     const config = configuration.couchdb
 
     const url: string =
         format(config.url, `${config.admin.name}:${config.admin.password}@`) +
         `/${config.databaseName}`
 
-    services.couchdb.connection = new services.couchdb.connector(
-        url, getConnectorOptions(configuration.couchdb.connector)
-    )
-    const {connection} = services.couchdb
+    if (Object.prototype.hasOwnProperty.call(couchdb.server, 'runner'))
+        couchdb.connection = new couchdb.connector(
+            url, getConnectorOptions(configuration.couchdb.connector)
+        )
+    else
+        couchdb.connection = new couchdb.connector(
+            config.databaseName,
+            {
+                ...getConnectorOptions(configuration.couchdb.connector),
+                adapter: 'leveldb'
+            }
+        )
+
+    const {connection} = couchdb
     connection.setMaxListeners(Infinity)
     // region apply "bulkDocs" interceptor to put method
     /*
@@ -466,16 +477,18 @@ export const initializeConnection = async (
         }
     // endregion
     // region ensure database presence
-    try {
-        await checkReachability(url)
-    } catch {
-        console.info('Database could not be retrieved yet: Creating it.')
+    // NOTE: A local instance create databases (if not existing) automatically.
+    if (Object.prototype.hasOwnProperty.call(couchdb.server, 'runner'))
+        try {
+            await checkReachability(url)
+        } catch {
+            console.info('Database could not be retrieved yet: Creating it.')
 
-        if (!globalContext.fetch)
-            throw new Error('Missing fetch implementation.')
+            if (!globalContext.fetch)
+                throw new Error('Missing fetch implementation.')
 
-        await globalContext.fetch(url, {method: 'PUT'})
-    }
+            await globalContext.fetch(url, {method: 'PUT'})
+        }
     // endregion
     return services
 }

@@ -50,7 +50,7 @@ export const start = async (
     const {runner} = server
     const {binary} = configuration.couchdb
 
-    // region  create configuration file if needed
+    // region create configuration file if needed
     if (runner.configurationFile) {
         try {
             await fileSystem.mkdir(
@@ -118,13 +118,15 @@ export const start = async (
              */
             (value: ProcessCloseReason) => {
                 if ((
-                    services.couchdb as {server?: CouchDB['server']} | undefined
+                    services.couchdb as
+                        {server?: CouchDB['server']} | undefined
                 )?.server?.resolve)
                     services.couchdb.server.resolve.call(this, value)
             },
             (reason: unknown) => {
                 if ((
-                    services.couchdb as {server?: CouchDB['server']} | undefined
+                    services.couchdb as
+                        {server?: CouchDB['server']} | undefined
                 )?.server?.reject)
                     services.couchdb.server.reject.call(
                         this, reason as ProcessCloseReason

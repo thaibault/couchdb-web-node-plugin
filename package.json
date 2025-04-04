@@ -62,7 +62,6 @@
   "dependencies": {
     "pouchdb-find": "^9.0.0",
     "pouchdb-node": "^9.0.0",
-    "pouchdb-server": "^4.2.0",
     "rxjs": "^7.8.2"
   },
   "devDependencies": {
@@ -91,11 +90,15 @@
     "@babel/runtime": "*",
     "clientnode": "*",
     "node-fetch": "*",
+    "pouchdb-server": "*",
     "request": "*",
     "web-node": "*"
   },
   "peerDependenciesMeta": {
     "@babel/runtime": {
+      "optional": true
+    },
+    "pouchdb-server": {
       "optional": true
     }
   },
