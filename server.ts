@@ -80,6 +80,8 @@ export const start = async (
     // endregion
 
     if ((runner as InPlaceRunner).packages) {
+        console.info(`Couchdb runner is in-place with: "express-pouchdb".`)
+
         const {default: express} = await import('express')
         const {default: expressPouchDB} = await import('express-pouchdb')
 
@@ -113,6 +115,11 @@ export const start = async (
         })
     } else {
         const binaryRunner = runner as BinaryRunner
+
+        console.info(
+            `Couchdb runner is: "${binaryRunner.binaryFilePath as string}".`
+        )
+
         server.process = spawnChildProcess(
             (
                 runnerConfiguration.memoryInMegaByte === 'default' ?
