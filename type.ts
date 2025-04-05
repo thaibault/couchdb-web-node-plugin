@@ -453,7 +453,7 @@ export interface Runner {
             content: string
             path: string
         }
-    name: string
+    names: Array<string> | string
 }
 export interface BinaryRunner extends Runner{
     arguments?: Array<string> | null | string

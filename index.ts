@@ -97,9 +97,6 @@ export const preLoadService = async ({
         couchdb.connector =
             PouchDB.defaults({prefix: configuration.path}) as typeof PouchDB
 
-        if (configuration.debug)
-            couchdb.connector.debug.enable('*')
-
         couchdb.connector = couchdb.connector
             .plugin({
                 bulkDocs: bulkDocsFactory(
@@ -111,6 +108,9 @@ export const preLoadService = async ({
             .plugin(PouchDBAuthenticationPlugin)
             .plugin(PouchDBFindPlugin)
             .plugin(PouchDBValidationPlugin)
+
+        if (configuration.debug)
+            couchdb.connector.debug.enable('*')
     }
 
     if (!Object.prototype.hasOwnProperty.call(couchdb, 'server')) {
@@ -119,6 +119,7 @@ export const preLoadService = async ({
         // region search for binary file to start database server
         const triedPaths: Array<string> = []
         let runnerFound = false
+        console.log('AA')
         for (const runner of (
             [] as Array<BinaryRunner | InPlaceRunner>
         ).concat(configuration.runner.variants)) {
@@ -140,6 +141,7 @@ export const preLoadService = async ({
 
                 continue
             }
+            console.log('B', runner)
 
             const binaryRunner = runner as BinaryRunner
 
@@ -147,7 +149,7 @@ export const preLoadService = async ({
                 ([] as Array<string>).concat(binaryRunner.locations)
             )) {
                 for (const name of (
-                    ([] as Array<string>).concat(binaryRunner.name)
+                    ([] as Array<string>).concat(binaryRunner.names)
                 )) {
                     const binaryFilePath: string =
                         resolve(directoryPath, name)
@@ -169,6 +171,7 @@ export const preLoadService = async ({
             if (runnerFound)
                 break
         }
+        console.log('BB')
 
         if (!runnerFound)
             console.info(

@@ -182,8 +182,8 @@
                 "__evaluate__": "`-couch_ini /usr/lib/couchdb/etc/default.ini /usr/lib/couchdb/etc/datadirs.ini /etc/couchdb/local.ini ${path.resolve(self.couchdb.path, 'local.ini')}`"
               }
             },
-            "location": "/usr/lib/couchdb/bin/",
-            "name": "couchdb"
+            "locations": "/usr/lib/couchdb/bin/",
+            "names": "couchdb"
           },
           {
             "adminUserConfigurationPath": "_config/admins",
@@ -206,11 +206,11 @@
                 "__evaluate__": "`${self.couchdb.backend.configuration['httpd/port']}`"
               }
             ],
-            "location": [
+            "locations": [
               "node_modules/.bin/",
               "../.bin/"
             ],
-            "name": "pouchdb-server"
+            "names": "pouchdb-server"
           },
           {
             "adminUserConfigurationPath": "_config/admins",

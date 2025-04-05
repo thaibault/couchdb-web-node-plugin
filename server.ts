@@ -79,7 +79,8 @@ export const start = async (
     // endregion
 
     if ((runner as InPlaceRunner).packages) {
-        console.info(`Couchdb runner is in-place with: "${runner.name}".`)
+        const name = ([] as Array<string>).concat(runner.names)[0]
+        console.info(`Couchdb runner is in-place with: "${name}".`)
 
         const {default: express} =
             await eval(`import('express')`) as
@@ -113,9 +114,10 @@ export const start = async (
             })
         })
     } else {
-        const binaryRunner = runner as BinaryRunner
+        const name = ([] as Array<string>).concat(runner.names)[0]
+        console.info(`Couchdb runner is: "${name}".`)
 
-        console.info(`Couchdb runner is: "${binaryRunner.name}".`)
+        const binaryRunner = runner as BinaryRunner
 
         server.process = spawnChildProcess(
             (
