@@ -97,9 +97,6 @@ export const preLoadService = async ({
         couchdb.connector =
             PouchDB.defaults({prefix: configuration.path}) as typeof PouchDB
 
-        if (configuration.debug)
-            couchdb.connector.debug.enable('*')
-
         couchdb.connector = couchdb.connector
             .plugin({
                 bulkDocs: bulkDocsFactory(
@@ -111,6 +108,9 @@ export const preLoadService = async ({
             .plugin(PouchDBAuthenticationPlugin)
             .plugin(PouchDBFindPlugin)
             .plugin(PouchDBValidationPlugin)
+
+        if (configuration.debug)
+            couchdb.connector.debug.enable('*')
     }
 
     if (!Object.prototype.hasOwnProperty.call(couchdb, 'server')) {
@@ -147,7 +147,7 @@ export const preLoadService = async ({
                 ([] as Array<string>).concat(binaryRunner.locations)
             )) {
                 for (const name of (
-                    ([] as Array<string>).concat(binaryRunner.name)
+                    ([] as Array<string>).concat(binaryRunner.names)
                 )) {
                     const binaryFilePath: string =
                         resolve(directoryPath, name)
