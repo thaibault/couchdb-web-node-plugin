@@ -503,6 +503,8 @@ export const loadService = async (
     // endregion
     await initializeConnection(services, configuration)
 
+    // TODO be able to configure pouchdb without rest api when running locally.
+
     // region ensure presence of database security settings
     if (configuration.couchdb.ensureSecuritySettingsPresence) {
         const securityConfigurations = configuration.couchdb.security
@@ -573,8 +575,8 @@ export const loadService = async (
                     throw new Error(response.statusText)
             } catch (error) {
                 console.error(
-                    `Security object for database "${databaseName}" couldn't` +
-                    ` be applied:`,
+                    `Security object for database "${databaseName}" couldn't`,
+                    `be applied:`,
                     represent(error)
                 )
             }
@@ -1021,8 +1023,6 @@ export const loadService = async (
         }
     }
     // endregion
-    // TODO check conflicting constraints and mark them if necessary (check
-    // how couchdb deals with "id" conflicts)
     // region initial compaction
     if (configuration.couchdb.model.triggerInitialCompaction)
         try {
