@@ -433,14 +433,18 @@ export const initializeConnection = async (
         Object.prototype.hasOwnProperty.call(couchdb.server, 'runner') &&
         (couchdb.server.runner as BinaryRunner).binaryFilePath
     )
+        // @ts-expect-error "pouchdb-validation" does not have a typings yet.
         couchdb.connection = new couchdb.connector(
             url, getConnectorOptions(configuration.couchdb.connector)
         )
     else
+        // @ts-expect-error "pouchdb-validation" does not have a typings yet.
         couchdb.connection = new couchdb.connector(
             resolve(config.path, config.databaseName),
             getConnectorOptions(configuration.couchdb.connector)
         )
+
+    couchdb.connection.installValidationMethods()
 
     const {connection} = couchdb
     connection.setMaxListeners(Infinity)

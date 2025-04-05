@@ -96,6 +96,7 @@ export const preLoadService = async ({
     if (!Object.prototype.hasOwnProperty.call(couchdb, 'connector')) {
         couchdb.connector =
             PouchDB.defaults({prefix: configuration.path}) as typeof PouchDB
+
         if (configuration.debug)
             couchdb.connector.debug.enable('*')
 
@@ -298,11 +299,11 @@ export const loadService = async (
     }
     // region ensure presence of global admin user
     if (configuration.couchdb.ensureAdminPresence) {
-        const unauthenticatedUserDatabaseConnection: Connection =
+        const unauthenticatedUserDatabaseConnection =
             new couchdb.connector(
                 `${urlPrefix}/_users`,
                 getConnectorOptions(configuration.couchdb.connector)
-            )
+            ) as Connection
 
         try {
             // NOTE: We check if we are in admin party mode.
@@ -324,7 +325,7 @@ export const loadService = async (
             )
         } catch (error) {
             if ((error as DatabaseError).name === 'unauthorized') {
-                const authenticatedUserDatabaseConnection: Connection =
+                const authenticatedUserDatabaseConnection =
                     new couchdb.connector(
                         `${urlPrefix}/_users`,
                         {
@@ -336,7 +337,7 @@ export const loadService = async (
                                 password: configuration.couchdb.admin.password
                             }
                         }
-                    )
+                    ) as Connection
 
                 try {
                     await authenticatedUserDatabaseConnection.allDocs()
@@ -361,17 +362,16 @@ export const loadService = async (
     // endregion
     // region ensure presence of regular users
     if (configuration.couchdb.ensureUserPresence) {
-        const userDatabaseConnection: Connection =
-            new couchdb.connector(
-                `${urlPrefix}/_users`,
-                {
-                    ...getConnectorOptions(configuration.couchdb.connector),
-                    auth: {
-                        username: configuration.couchdb.admin.name,
-                        password: configuration.couchdb.admin.password
-                    }
+        const userDatabaseConnection = new couchdb.connector(
+            `${urlPrefix}/_users`,
+            {
+                ...getConnectorOptions(configuration.couchdb.connector),
+                auth: {
+                    username: configuration.couchdb.admin.name,
+                    password: configuration.couchdb.admin.password
                 }
-            )
+            }
+        ) as Connection
 
         for (const [name, userConfiguration] of Object.entries(
             configuration.couchdb.users

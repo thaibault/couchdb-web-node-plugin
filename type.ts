@@ -58,6 +58,9 @@ export type ChangesStreamOptions = PouchDB.Core.ChangesOptions
 export interface Connection<Type extends object = Mapping<unknown>>
     extends
 PouchDB.Database<Type> {
+    // NOTE: "pouchdb-validation" does not have a typings yet.
+    installValidationMethods: () => void
+
     bulkDocs<Model>(
         docs: Array<PutDocument<Type & Model>>,
         options?: PouchDB.Core.BulkDocsOptions | null,

@@ -2811,11 +2811,7 @@ export const validateDocumentUpdate = <
             }
     // endregion
     const result = checkDocument(newDocument, oldDocument)
-    console.log()
-    console.log('B', specialNames.strategy, Object.prototype.hasOwnProperty.call(
-        newDocument, specialNames.strategy
-    ))
-    console.log()
+
     // region check if changes happened
     if (
         result.newDocument._deleted &&
@@ -2848,7 +2844,7 @@ export const validateDocumentUpdate = <
         ] as Set<string>) = new Set([`${id}-${revision}`])
     // endregion
 
-    console.debug('Determined new document:', result.newDocument)
+    // console.debug('Determined new document:', result.newDocument)
 
     return result.newDocument
 }
