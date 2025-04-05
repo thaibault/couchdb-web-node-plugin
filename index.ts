@@ -119,7 +119,6 @@ export const preLoadService = async ({
         // region search for binary file to start database server
         const triedPaths: Array<string> = []
         let runnerFound = false
-        console.log('AA')
         for (const runner of (
             [] as Array<BinaryRunner | InPlaceRunner>
         ).concat(configuration.runner.variants)) {
@@ -141,7 +140,6 @@ export const preLoadService = async ({
 
                 continue
             }
-            console.log('B', runner)
 
             const binaryRunner = runner as BinaryRunner
 
@@ -171,7 +169,6 @@ export const preLoadService = async ({
             if (runnerFound)
                 break
         }
-        console.log('BB')
 
         if (!runnerFound)
             console.info(
