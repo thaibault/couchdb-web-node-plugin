@@ -28,7 +28,6 @@ import {
     SecondParameter,
     ValueOf
 } from 'clientnode'
-import {resolve} from 'path'
 import {lastValueFrom, map, retry, timer} from 'rxjs'
 import {fromFetch} from 'rxjs/fetch'
 
@@ -440,7 +439,7 @@ export const initializeConnection = async (
     else
         // @ts-expect-error "pouchdb-validation" does not have a typings yet.
         couchdb.connection = new couchdb.connector(
-            resolve(config.path, config.databaseName),
+            config.databaseName,
             getConnectorOptions(configuration.couchdb.connector)
         )
 

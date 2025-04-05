@@ -25,6 +25,8 @@ describe('index', (): void => {
     // region prepare environment
     const configuration: Configuration =
         packageConfiguration.webNode as unknown as Configuration
+    configuration.couchdb.backend.configuration['couchdb/database_dir'] =
+        './dummy-location'
     configuration.couchdb.url = 'http://dummy-url'
     // endregion
     // region tests

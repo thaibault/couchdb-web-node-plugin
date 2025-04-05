@@ -94,20 +94,23 @@ export const preLoadService = async ({
     const {couchdb} = services
 
     if (!Object.prototype.hasOwnProperty.call(couchdb, 'connector')) {
-        couchdb.connector =
-            PouchDB.defaults({prefix: configuration.path}) as typeof PouchDB
-
-        couchdb.connector = couchdb.connector
+        couchdb.connector = PouchDB
             .plugin({
                 bulkDocs: bulkDocsFactory(
-                    couchdb.connector.prototype.bulkDocs as
-                        Connection['bulkDocs'],
+                    PouchDB.prototype.bulkDocs as Connection['bulkDocs'],
                     configuration
                 )
             })
             .plugin(PouchDBAuthenticationPlugin)
             .plugin(PouchDBFindPlugin)
             .plugin(PouchDBValidationPlugin)
+            .defaults({
+                prefix: resolve(configuration.backend.configuration[
+                    'couchdb/database_dir'
+                ] as string) +
+                '/',
+                ...getConnectorOptions(configuration.connector)
+            }) as typeof PouchDB
 
         if (configuration.debug)
             couchdb.connector.debug.enable('*')
