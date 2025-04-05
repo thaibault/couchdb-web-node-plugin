@@ -38,7 +38,9 @@ import {
 import {promises as fileSystem} from 'fs'
 import {basename, extname, resolve} from 'path'
 import PouchDB from 'pouchdb-node'
+import PouchDBAuthenticationPlugin from 'pouchdb-authentication'
 import PouchDBFindPlugin from 'pouchdb-find'
+import PouchDBValidationPlugin from 'pouchdb-validation'
 import {PluginHandler, PluginPromises} from 'web-node/type'
 
 import databaseHelper, {validateDocumentUpdate} from './databaseHelper'
@@ -92,27 +94,27 @@ export const preLoadService = async ({
     const {couchdb} = services
 
     if (!Object.prototype.hasOwnProperty.call(couchdb, 'connector')) {
-        couchdb.connector = PouchDB
-        // region
-        /**
-         * Retry conflicting document updates which where marked with revision
-         * "upsert" as long as they go through.
-         */
-        couchdb.connector.plugin({
-            bulkDocs: bulkDocsFactory(
-                couchdb.connector.prototype.bulkDocs as Connection['bulkDocs'],
-                configuration
-            )
-        })
-        // endregion
+        couchdb.connector =
+            PouchDB.defaults({prefix: configuration.path}) as typeof PouchDB
         if (configuration.debug)
             couchdb.connector.debug.enable('*')
 
-        couchdb.connector = couchdb.connector.plugin(PouchDBFindPlugin)
+        couchdb.connector = couchdb.connector
+            .plugin({
+                bulkDocs: bulkDocsFactory(
+                    couchdb.connector.prototype.bulkDocs as
+                        Connection['bulkDocs'],
+                    configuration
+                )
+            })
+            .plugin(PouchDBAuthenticationPlugin)
+            .plugin(PouchDBFindPlugin)
+            .plugin(PouchDBValidationPlugin)
     }
 
     if (!Object.prototype.hasOwnProperty.call(couchdb, 'server')) {
         couchdb.server = {} as Services['couchdb']['server']
+
         // region search for binary file to start database server
         const triedPaths: Array<string> = []
         let runnerFound = false
@@ -124,14 +126,16 @@ export const preLoadService = async ({
                 runnerFound = true
                 for (const name of inPlaceRunner.packages)
                     try {
-                        await import(name)
+                        await eval(`import('${name}')`)
                     } catch (_error) {
                         runnerFound = false
                         break
                     }
 
-                if (runnerFound)
+                if (runnerFound) {
+                    couchdb.server.runner = inPlaceRunner
                     break
+                }
 
                 continue
             }
@@ -139,7 +143,7 @@ export const preLoadService = async ({
             const binaryRunner = runner as BinaryRunner
 
             for (const directoryPath of (
-                ([] as Array<string>).concat(binaryRunner.location)
+                ([] as Array<string>).concat(binaryRunner.locations)
             )) {
                 for (const name of (
                     ([] as Array<string>).concat(binaryRunner.name)
@@ -914,7 +918,6 @@ export const loadService = async (
                         )
                     else
                         throw result
-
                 try {
                     await couchdb.connection.put(newDocument)
                 } catch (error) {

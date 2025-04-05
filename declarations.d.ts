@@ -13,3 +13,4 @@ declare module 'express-pouchdb' {
 
     export = main
 }
+ declare module 'pouchdb-validation'

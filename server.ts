@@ -80,22 +80,22 @@ export const start = async (
     // endregion
 
     if ((runner as InPlaceRunner).packages) {
-        console.info(`Couchdb runner is in-place with: "express-pouchdb".`)
+        console.info(`Couchdb runner is in-place with: "${runner.name}".`)
 
-        const {default: express} = await import('express')
-        const {default: expressPouchDB} = await import('express-pouchdb')
+        const {default: express} =
+            await eval(`import('express')`) as
+                {default: typeof import('express')}
+        const {default: expressPouchDB} =
+            await eval(`import('express-pouchdb')`) as
+                {default: typeof import('express-pouchdb')}
 
         const {configuration: backendConfiguration} =
             configuration.couchdb.backend
 
         const expressServer = express()
 
-        const CustomPouchDB = PouchDB.defaults({
-            prefix: backendConfiguration['couchdb/database_dir'] as string
-        })
-
         expressServer.use('/', expressPouchDB(
-            CustomPouchDB,
+            services.couchdb.connector,
             {
                 configPath: `./${configuration.couchdb.path}/database.json`,
                 logPath: backendConfiguration['log/file']
@@ -116,9 +116,7 @@ export const start = async (
     } else {
         const binaryRunner = runner as BinaryRunner
 
-        console.info(
-            `Couchdb runner is: "${binaryRunner.binaryFilePath as string}".`
-        )
+        console.info(`Couchdb runner is: "${binaryRunner.name}".`)
 
         server.process = spawnChildProcess(
             (
