@@ -31,6 +31,7 @@ import {
     ServicePromisesState as BaseServicePromisesState,
     ServicesState as BaseServicesState
 } from 'web-node/type'
+import {Server as HTTPServer} from 'http'
 // endregion
 // region exports
 /// region database implementation
@@ -440,20 +441,27 @@ export interface DatabaseUserConfiguration {
     names?: Array<string>
     roles?: Array<string>
 }
+
 export interface Runner {
     adminUserConfigurationPath: string
-    arguments?: Array<string> | null | string
-    binaryFilePath?: null | string
     configurationFile?:
         null |
         {
             content: string
             path: string
         }
-    environment?: null | Mapping
-    location: Array<string> | string
     name: Array<string> | string
 }
+export interface BinaryRunner extends Runner{
+    arguments?: Array<string> | null | string
+    binaryFilePath?: null | string
+    environment?: null | Mapping
+    location: Array<string> | string
+}
+export interface InPlaceRunner extends Runner {
+    packages: Array<string> | string
+}
+
 export interface SecuritySettings {
     admins?: DatabaseUserConfiguration
     members?: DatabaseUserConfiguration
@@ -486,17 +494,17 @@ export interface CoreConfiguration<
         prefixes: Array<string>
     }
 
-    binary: {
+    runner: {
         memoryInMegaByte: string
         nodePath: string
-        runner: Array<Runner>
+        variants: Array<BinaryRunner | InPlaceRunner>
     }
 
     changesStream: ChangesStreamOptions
     changesStreamReinitializer: {
         retries: number
         retryWaitingFactorInSeconds: number
-        maxmumRetryWaitingTimeInSeconds: number
+        maximumRetryWaitingTimeInSeconds: number
     }
     numberOfParallelChangesRunner: number
 
@@ -558,10 +566,10 @@ export interface CouchDB<Type extends object = Mapping<unknown>> {
     connector: Connector
 
     server: {
-        process?: ChildProcess
+        process?: ChildProcess | HTTPServer
 
-        reject: (value: ProcessCloseReason) => void
-        resolve: (reason: ProcessCloseReason) => void
+        reject: (value: Error | ProcessCloseReason) => void
+        resolve: (reason?: ProcessCloseReason) => void
 
         restart: (state: State) => Promise<void>
         start: (services: Services, configuration: Configuration) =>
@@ -569,7 +577,7 @@ export interface CouchDB<Type extends object = Mapping<unknown>> {
         stop: (services: Services, configuration: Configuration) =>
             Promise<void>
 
-        runner: Runner
+        runner: BinaryRunner | InPlaceRunner
     }
 
     validateDocument: (
