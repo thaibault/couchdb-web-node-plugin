@@ -30,7 +30,7 @@ import {
 import {Server as HTTPServer} from 'http'
 import nodeFetch from 'node-fetch'
 import {promises as fileSystem} from 'fs'
-import {dirname} from 'path'
+import {dirname, resolve} from 'path'
 
 import {initializeConnection} from './helper'
 import {
@@ -93,14 +93,29 @@ export const start = async (
             configuration.couchdb.backend
 
         const expressServer = express()
-
-        expressServer.use('/', expressPouchDB(
+        /*
+            eslint-disable
+            @typescript-eslint/no-unsafe-call,
+            @typescript-eslint/no-unsafe-argument
+        */
+        const expressPouchDBInstance = expressPouchDB(
             services.couchdb.connector,
             {
-                configPath: `./${configuration.couchdb.path}/database.json`,
-                logPath: backendConfiguration['log/file']
+                configPath: resolve(
+                    configuration.couchdb.path, 'database.json'
+                ),
+                logPath: resolve(
+                    configuration.couchdb.path,
+                    backendConfiguration['log/file'] as string
+                )
             }
-        ))
+        )
+        expressServer.use('/', expressPouchDBInstance)
+        /*
+            eslint-enable
+            @typescript-eslint/no-unsafe-call,
+            @typescript-eslint/no-unsafe-argument
+        */
 
         await new Promise((resolve) => {
             server.process = expressServer.listen(
