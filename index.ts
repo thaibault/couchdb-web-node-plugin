@@ -168,8 +168,8 @@ export const preLoadService = async ({
         if (!runnerFound)
             console.info(
                 'No couchdb runner found via files in one of the following',
-                `locations: "${triedPaths.join('", "')}". Only running`,
-                'pouchdb locally.'
+                `locations: "${triedPaths.join('", "')}". Running pouchdb`,
+                'locally.'
             )
         // endregion
     }

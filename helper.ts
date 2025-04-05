@@ -28,6 +28,7 @@ import {
     SecondParameter,
     ValueOf
 } from 'clientnode'
+import {resolve} from 'path'
 import {lastValueFrom, map, retry, timer} from 'rxjs'
 import {fromFetch} from 'rxjs/fetch'
 
@@ -433,12 +434,11 @@ export const initializeConnection = async (
         (couchdb.server.runner as BinaryRunner).binaryFilePath
     )
         couchdb.connection = new couchdb.connector(
-            config.databaseName,
-            getConnectorOptions(configuration.couchdb.connector)
+            url, getConnectorOptions(configuration.couchdb.connector)
         )
     else
         couchdb.connection = new couchdb.connector(
-            config.databaseName,
+            resolve(config.path, config.databaseName),
             getConnectorOptions(configuration.couchdb.connector)
         )
 
