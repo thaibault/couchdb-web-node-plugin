@@ -41,7 +41,6 @@ import {
     Services,
     State
 } from './type'
-import PouchDB from 'pouchdb-node'
 // endregion
 globalContext.fetch = nodeFetch as unknown as typeof fetch
 // region functions
