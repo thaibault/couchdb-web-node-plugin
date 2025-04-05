@@ -14,7 +14,7 @@
     endregion
 */
 // region imports
-import {spawn as spawnChildProcess} from 'child_process'
+import {ChildProcess, spawn as spawnChildProcess} from 'child_process'
 import {
     checkReachability,
     checkUnreachability,
@@ -27,12 +27,21 @@ import {
     ProcessCloseReason,
     ProcessErrorCallback
 } from 'clientnode'
+import {Server as HTTPServer} from 'http'
 import nodeFetch from 'node-fetch'
 import {promises as fileSystem} from 'fs'
 import {dirname} from 'path'
 
 import {initializeConnection} from './helper'
-import {Configuration, CouchDB, Services, State} from './type'
+import {
+    BinaryRunner,
+    Configuration,
+    CouchDB,
+    InPlaceRunner,
+    Services,
+    State
+} from './type'
+import PouchDB from 'pouchdb-node'
 // endregion
 globalContext.fetch = nodeFetch as unknown as typeof fetch
 // region functions
@@ -48,13 +57,14 @@ export const start = async (
 ): Promise<void> => {
     const {server} = services.couchdb
     const {runner} = server
-    const {binary} = configuration.couchdb
+    const {runner: runnerConfiguration} = configuration.couchdb
 
     // region create configuration file if needed
     if (runner.configurationFile) {
         try {
             await fileSystem.mkdir(
-                dirname(runner.configurationFile.path), {recursive: true}
+                dirname(runner.configurationFile.path),
+                {recursive: true}
             )
         } catch (error) {
             if ((error as NodeJS.ErrnoException).code !== 'EEXIST')
@@ -68,71 +78,111 @@ export const start = async (
         )
     }
     // endregion
-    server.process = spawnChildProcess(
-        (
-            binary.memoryInMegaByte === 'default' ?
-                runner.binaryFilePath as string :
-                binary.nodePath
-        ),
-        (
-            binary.memoryInMegaByte === 'default' ?
-                [] :
-                [
-                    `--max-old-space-size=${binary.memoryInMegaByte}`,
-                    runner.binaryFilePath as string
-                ]
-        )
-            .concat(runner.arguments ? runner.arguments : []),
-        {
-            cwd: (eval('process') as typeof process).cwd(),
-            env: (
-                Object.prototype.hasOwnProperty.call(runner, 'environment') ?
-                    {
-                        ...(eval('process') as typeof process).env,
-                        ...runner.environment
-                    } :
-                    (eval('process') as typeof process).env
-            ),
-            shell: true,
-            stdio: 'inherit'
-        }
-    )
 
-    ;(new Promise((
-        resolve: ProcessCloseCallback, reject: ProcessErrorCallback
-    ): void => {
-        for (const closeEventName of CLOSE_EVENT_NAMES)
-            server.process?.on(
-                closeEventName,
-                getProcessCloseHandler(
-                    resolve,
-                    reject,
-                    {process: server.process, reason: closeEventName}
-                )
+    if ((runner as InPlaceRunner).packages) {
+        const {default: express} = await import('express')
+        const {default: expressPouchDB} = await import('express-pouchdb')
+
+        const {configuration: backendConfiguration} =
+            configuration.couchdb.backend
+
+        const expressServer = express()
+
+        const CustomPouchDB = PouchDB.defaults({
+            prefix: backendConfiguration['couchdb/database_dir'] as string
+        })
+
+        expressServer.use('/', expressPouchDB(
+            CustomPouchDB,
+            {
+                configPath: `./${configuration.couchdb.path}/database.json`,
+                logPath: backendConfiguration['log/file']
+            }
+        ))
+
+        await new Promise((resolve) => {
+            server.process = expressServer.listen(
+                backendConfiguration['httpd/port'], resolve
             )
-    }))
-        .then(
-            /*
-                NOTE: Please be aware of newly set server instances when
-                resolving happens here.
-             */
-            (value: ProcessCloseReason) => {
-                if ((
-                    services.couchdb as
-                        {server?: CouchDB['server']} | undefined
-                )?.server?.resolve)
-                    services.couchdb.server.resolve.call(this, value)
-            },
-            (reason: unknown) => {
-                if ((
-                    services.couchdb as
-                        {server?: CouchDB['server']} | undefined
-                )?.server?.reject)
-                    services.couchdb.server.reject.call(
-                        this, reason as ProcessCloseReason
-                    )
+            server.process.on('close', () => {
+                services.couchdb.server.resolve.call(this)
+            })
+            server.process.on('error', (error: Error) => {
+                services.couchdb.server.reject.call(this, error)
+            })
+        })
+    } else {
+        const binaryRunner = runner as BinaryRunner
+        server.process = spawnChildProcess(
+            (
+                runnerConfiguration.memoryInMegaByte === 'default' ?
+                    binaryRunner.binaryFilePath as string :
+                    runnerConfiguration.nodePath
+            ),
+            (
+                runnerConfiguration.memoryInMegaByte === 'default' ?
+                    [] :
+                    [
+                        '--max-old-space-size=' +
+                        runnerConfiguration.memoryInMegaByte,
+                        binaryRunner.binaryFilePath as string
+                    ]
+            )
+                .concat(binaryRunner.arguments ? binaryRunner.arguments : []),
+            {
+                cwd: (eval('process') as typeof process).cwd(),
+                env: (
+                    Object.prototype.hasOwnProperty.call(
+                        runner, 'environment'
+                    ) ?
+                        {
+                            ...(eval('process') as typeof process).env,
+                            ...binaryRunner.environment
+                        } :
+                        (eval('process') as typeof process).env
+                ),
+                shell: true,
+                stdio: 'inherit'
             }
         )
+
+        // Forward process events to service promise.
+        ;(new Promise((
+            resolve: ProcessCloseCallback, reject: ProcessErrorCallback
+        ): void => {
+            for (const closeEventName of CLOSE_EVENT_NAMES)
+                server.process?.on(
+                    closeEventName,
+                    getProcessCloseHandler(
+                        resolve,
+                        reject,
+                        {process: server.process, reason: closeEventName}
+                    )
+                )
+        }))
+            .then(
+                /*
+                    NOTE: Please be aware of newly set server instances when
+                    resolving happens here.
+                 */
+                (value: ProcessCloseReason) => {
+                    if ((
+                        services.couchdb as
+                            { server?: CouchDB['server'] } | undefined
+                    )?.server?.resolve)
+                        services.couchdb.server.resolve.call(this, value)
+                },
+                (reason: unknown) => {
+                    if ((
+                        services.couchdb as
+                            { server?: CouchDB['server'] } | undefined
+                    )?.server?.reject)
+                        services.couchdb.server.reject.call(
+                            this, reason as ProcessCloseReason
+                        )
+                }
+            )
+    }
 
     await checkReachability(
         format(configuration.couchdb.url, ''), {wait: true}
@@ -149,10 +199,8 @@ export const restart = async (state: State): Promise<void> => {
     const {configuration, pluginAPI, services} = state
     const {couchdb: {server}} = services
 
-    const resolveServerProcessBackup: (value: ProcessCloseReason) => void =
-        server.resolve
-    const rejectServerProcessBackup: (reason: ProcessCloseReason) => void =
-        server.reject
+    const resolveServerProcessBackup = server.resolve
+    const rejectServerProcessBackup = server.reject
 
     // Avoid to notify web node about server process stop.
     server.resolve = server.reject = NOOP
@@ -185,7 +233,10 @@ export const stop = async (
     void couchdb.connection.close()
 
     if (couchdb.server.process)
-        couchdb.server.process.kill('SIGINT')
+        if ((couchdb.server.runner as InPlaceRunner).packages)
+            (couchdb.server.process as HTTPServer).close()
+        else
+            (couchdb.server.process as ChildProcess).kill('SIGINT')
 
     await checkUnreachability(
         format(configuration.url, ''), {wait: true}

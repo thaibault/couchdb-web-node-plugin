@@ -64,11 +64,14 @@ describe('index', (): void => {
                 connection: {close: () => {
                     testValue += 1
                 }},
-                server: {process: {kill: (): boolean => {
-                    testValue += 1
-
-                    return true
-                }}}
+                server: {
+                    process: {close: () => {
+                        testValue += 1
+                    }},
+                    runner: {
+                        packages: [] as Array<string>
+                    }
+                }
             } as Services['couchdb']}
 
             await expect(shouldExit({

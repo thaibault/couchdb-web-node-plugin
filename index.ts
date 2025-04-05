@@ -66,10 +66,10 @@ import {
     Migrator,
     Models,
     PropertySpecification,
-    Runner,
+    BinaryRunner,
     Services,
     ServicesState,
-    State
+    State, InPlaceRunner
 } from './type'
 // endregion
 /**
@@ -115,43 +115,61 @@ export const preLoadService = async ({
         couchdb.server = {} as Services['couchdb']['server']
         // region search for binary file to start database server
         const triedPaths: Array<string> = []
-        for (const runner of ([] as Array<Runner>).concat(
-            configuration.binary.runner
-        )) {
+        let runnerFound = false
+        for (const runner of (
+            [] as Array<BinaryRunner | InPlaceRunner>
+        ).concat(configuration.runner.variants)) {
+            if ((runner as InPlaceRunner).packages) {
+                const inPlaceRunner = runner as InPlaceRunner
+                runnerFound = true
+                for (const name of inPlaceRunner.packages)
+                    try {
+                        await import(name)
+                    } catch (_error) {
+                        runnerFound = false
+                        break
+                    }
+
+                if (runnerFound)
+                    break
+
+                continue
+            }
+
+            const binaryRunner = runner as BinaryRunner
+
             for (const directoryPath of (
-                ([] as Array<string>).concat(runner.location)
+                ([] as Array<string>).concat(binaryRunner.location)
             )) {
                 for (const name of (
-                    ([] as Array<string>).concat(runner.name)
+                    ([] as Array<string>).concat(binaryRunner.name)
                 )) {
                     const binaryFilePath: string =
                         resolve(directoryPath, name)
                     triedPaths.push(binaryFilePath)
 
                     if (await isFile(binaryFilePath)) {
-                        runner.binaryFilePath = binaryFilePath
-                        couchdb.server.runner = runner
+                        binaryRunner.binaryFilePath = binaryFilePath
+                        couchdb.server.runner = binaryRunner
+                        runnerFound = true
 
                         break
                     }
                 }
 
-                if (Object.prototype.hasOwnProperty.call(
-                    couchdb.server, 'runner'
-                ))
+                if (runnerFound)
                     break
             }
 
-            if (Object.prototype.hasOwnProperty.call(
-                couchdb.server, 'runner'
-            ))
+            if (runnerFound)
                 break
         }
 
-        if (!Object.prototype.hasOwnProperty.call(couchdb.server, 'runner'))
+        if (!runnerFound)
             console.info(
-                'No binary file in one of the following locations found:' +
-                ` "${triedPaths.join('", "')}". Initialize pouchdb in-place.`
+                'No couchdb runner found via files in one of the following',
+                `locations: "${triedPaths.join('", "')}". Only running`,
+                'pouchdb locally.'
             )
         // endregion
     }
@@ -237,7 +255,7 @@ export const loadService = async (
     if (!globalContext.fetch)
         throw new Error('Missing fetch implementation.')
 
-    let promise: null | Promise<ProcessCloseReason> = null
+    let promise: null | Promise<ProcessCloseReason | undefined> = null
     const {couchdb} = services
 
     if (Object.prototype.hasOwnProperty.call(couchdb.server, 'runner')) {
@@ -247,9 +265,9 @@ export const loadService = async (
         couchdb.server.start = start
         couchdb.server.stop = stop
 
-        promise = new Promise<ProcessCloseReason>((
-            resolve: (value: ProcessCloseReason) => void,
-            reject: (reason: ProcessCloseReason) => void
+        promise = new Promise<ProcessCloseReason | undefined>((
+            resolve: (value?: ProcessCloseReason) => void,
+            reject: (reason: Error | ProcessCloseReason) => void
         ): void => {
             // NOTE: These callbacks can be reassigned during server restart.
             couchdb.server.resolve = resolve
@@ -1085,7 +1103,7 @@ export const postLoadService = (state: State): Promise<void> => {
                                 .retryWaitingFactorInSeconds **
                             numberOfErrorsThrough,
                             configuration.changesStreamReinitializer
-                                .maxmumRetryWaitingTimeInSeconds
+                                .maximumRetryWaitingTimeInSeconds
                         )
 
                     console.warn(

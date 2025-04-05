@@ -35,7 +35,7 @@ import packageConfiguration from './package.json'
 import {
     AllowedModelRolesMapping,
     AllowedRoles,
-    BaseModel,
+    BaseModel, BinaryRunner,
     Configuration,
     Connection, ConnectorConfiguration,
     CoreConfiguration,
@@ -428,17 +428,18 @@ export const initializeConnection = async (
         format(config.url, `${config.admin.name}:${config.admin.password}@`) +
         `/${config.databaseName}`
 
-    if (Object.prototype.hasOwnProperty.call(couchdb.server, 'runner'))
+    if (
+        Object.prototype.hasOwnProperty.call(couchdb.server, 'runner') &&
+        (couchdb.server.runner as BinaryRunner).binaryFilePath
+    )
         couchdb.connection = new couchdb.connector(
-            url, getConnectorOptions(configuration.couchdb.connector)
+            config.databaseName,
+            getConnectorOptions(configuration.couchdb.connector)
         )
     else
         couchdb.connection = new couchdb.connector(
             config.databaseName,
-            {
-                ...getConnectorOptions(configuration.couchdb.connector),
-                adapter: 'leveldb'
-            }
+            getConnectorOptions(configuration.couchdb.connector)
         )
 
     const {connection} = couchdb
