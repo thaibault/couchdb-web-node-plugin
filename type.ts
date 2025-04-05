@@ -450,13 +450,13 @@ export interface Runner {
             content: string
             path: string
         }
-    name: Array<string> | string
+    name: string
 }
 export interface BinaryRunner extends Runner{
     arguments?: Array<string> | null | string
     binaryFilePath?: null | string
     environment?: null | Mapping
-    location: Array<string> | string
+    locations: Array<string> | string
 }
 export interface InPlaceRunner extends Runner {
     packages: Array<string> | string
