@@ -511,6 +511,8 @@ export interface CoreConfiguration<
     }
     numberOfParallelChangesRunner: number
 
+    updateViewsChangesStream: ChangesStreamOptions
+
     connector: ConnectorConfiguration
     security: {
         _default: SecuritySettings
@@ -556,6 +558,12 @@ export interface CoreConfiguration<
         password: string
         roles: Array<string>
     }>
+
+    views: Mapping<Mapping<{
+        query: PouchDB.Find.FindRequest<object>
+        initialMapperExpression?: string
+        updateExpression?: string
+    }>>
 }
 export type Configuration<ConfigurationType = Mapping<unknown>> =
     BaseConfiguration<{couchdb: CoreConfiguration}> &
@@ -564,6 +572,9 @@ export type Configuration<ConfigurationType = Mapping<unknown>> =
 export interface CouchDB<Type extends object = Mapping<unknown>> {
     changesStream: ChangesStream
     lastChangesSequenceIdentifier?: number | string
+
+    updateViewsChangesStream?: ChangesStream
+    lastUpdateViewsChangesSequenceIdentifier?: number | string
 
     connection: Connection<Type>
     connector: Connector
@@ -860,10 +871,13 @@ export type Migrator<
 
 export type DateRepresentationType = Date | null | number | string
 /// region pre-defined models
-export type User = BaseDocument & {
-    password: string
-    roles: Array<string>
-}
+export type User =
+    BaseDocument &
+    {
+        password: string
+        roles: Array<string>
+    }
+export type ViewDocument = BaseDocument & Record<string, unknown>
 /*
     Start and end time can be represented as number (of seconds) or an iso
     based datetime string.

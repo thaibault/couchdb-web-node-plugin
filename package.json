@@ -225,7 +225,16 @@
       "changesStream": {
         "include_docs": false,
         "live": true,
+        "return_docs": false,
         "since": "now",
+        "timeout": false
+      },
+      "updateViewsChangesStream": {
+        "include_docs": true,
+        "live": true,
+        "return_docs": false,
+        "since": "now",
+        "style": "all_docs",
         "timeout": false
       },
       "changesStreamReinitializer": {
@@ -372,6 +381,13 @@
                 "__evaluate__": "`userContext.name || '${self.couchdb.admin.name}'`"
               }
             }
+          },
+          "View": {
+            "_additional": {
+              "declaration": "Data",
+              "description": "Computed data.",
+              "type": "any"
+            }
           }
         },
         "property": {
@@ -476,7 +492,8 @@
         "name": "admin",
         "password": "admin"
       },
-      "users": {}
+      "users": {},
+      "views": {}
     }
   },
   "webOptimizer": {

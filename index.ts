@@ -18,7 +18,7 @@
 */
 // region imports
 import {
-    copy,
+    copy, evaluate,
     File,
     format,
     globalContext,
@@ -71,7 +71,7 @@ import {
     BinaryRunner,
     Services,
     ServicesState,
-    State, InPlaceRunner
+    State, InPlaceRunner, ViewDocument
 } from './type'
 // endregion
 /**
@@ -1023,6 +1023,30 @@ export const loadService = async (
         }
     }
     // endregion
+    // region create views
+    for (const [id, viewConfiguration] of Object.entries(
+        configuration.couchdb.views
+    )) {
+        const viewDocument: ViewDocument = {
+            [specialNames.type]: 'View',
+            [specialNames.id]: id,
+            [specialNames.revision]: '0-latest'
+        }
+        for (const [name, viewDataConfiguration] of Object.entries(
+            viewConfiguration
+        )) {
+            const rawData =
+                await couchdb.connection.find(viewDataConfiguration.query)
+            viewDocument[name] = viewDataConfiguration.initialMapperExpression ?
+                evaluate(
+                    viewDataConfiguration.initialMapperExpression,
+                    {...rawData, data: rawData}
+                ) :
+                rawData
+        }
+        await couchdb.connection.put(viewDocument)
+    }
+    // endregion
     // region initial compaction
     if (configuration.couchdb.model.triggerInitialCompaction)
         try {
@@ -1045,6 +1069,7 @@ export const postLoadService = (state: State): Promise<void> => {
     const {configuration: {couchdb: configuration}, pluginAPI, services} =
         state
     const {couchdb} = services
+    const specialNames = configuration.model.property.name.special
     // region register database changes stream
     /*
         Maximum time one request could take + number of retries plus there
@@ -1080,59 +1105,104 @@ export const postLoadService = (state: State): Promise<void> => {
             `"${String(changesConfiguration.since)}".`
         )
 
+        if (Object.keys(configuration.views).length) {
+            const updateViewsChangesConfiguration =
+                configuration.updateViewsChangesStream
+            if (couchdb.lastUpdateViewsChangesSequenceIdentifier !== undefined)
+                updateViewsChangesConfiguration.since =
+                    couchdb.lastUpdateViewsChangesSequenceIdentifier
+
+            const updateViewsChangesConfigurationSelector =
+                {$and: [] as Array<PouchDB.Find.Selector>}
+            for (const [id, viewConfiguration] of Object.entries(
+                configuration.views
+            )) {
+                updateViewsChangesConfigurationSelector.$and.push(
+                    {[specialNames.id]: {$ne: id}}
+                )
+                for (const viewDataConfiguration of Object.values(
+                    viewConfiguration
+                ))
+                    updateViewsChangesConfigurationSelector.$and.push(
+                        viewDataConfiguration.query.selector
+                    )
+            }
+            updateViewsChangesConfiguration.selector =
+                updateViewsChangesConfigurationSelector
+
+            console.info(
+                'Initialize changes stream for views since',
+                `"${String(updateViewsChangesConfiguration.since)}".`
+            )
+
+            couchdb.updateViewsChangesStream =
+                couchdb.connection.changes(updateViewsChangesConfiguration)
+        }
+
         couchdb.changesStream =
             couchdb.connection.changes(changesConfiguration)
 
-        void couchdb.changesStream.on(
-            'error',
-            async (error: DatabaseError): Promise<void> => {
-                numberOfErrorsThrough += 1
-                if (
-                    numberOfErrorsThrough >
-                    configuration.changesStreamReinitializer.retries
-                ) {
-                    console.warn(
-                        'Observing changes feed throws an error for',
-                        `${String(numberOfErrorsThrough)} times through:`,
-                        `${represent(error)} Restarting database server and`,
-                        'reinitialize changes stream...'
+        const changesErrorHandler = async (
+            error: DatabaseError
+        ): Promise<void> => {
+            numberOfErrorsThrough += 1
+            if (
+                numberOfErrorsThrough >
+                configuration.changesStreamReinitializer.retries
+            ) {
+                console.warn(
+                    'Observing changes feed throws an error for',
+                    `${String(numberOfErrorsThrough)} times through:`,
+                    `${represent(error)} Restarting database server and`,
+                    'reinitialize changes stream...'
+                )
+
+                numberOfErrorsThrough = 0
+                couchdb.changesStream.cancel()
+
+                await couchdb.server.restart(state)
+            } else {
+                const waitingTimeInSeconds =
+                    Math.min(
+                        configuration.changesStreamReinitializer
+                            .retryWaitingFactorInSeconds **
+                        numberOfErrorsThrough,
+                        configuration.changesStreamReinitializer
+                            .maximumRetryWaitingTimeInSeconds
                     )
 
-                    numberOfErrorsThrough = 0
-                    couchdb.changesStream.cancel()
+                console.warn(
+                    'Observing changes feed throws an error for',
+                    `${String(numberOfErrorsThrough)} of`,
+                    String(
+                        configuration.changesStreamReinitializer.retries
+                    ),
+                    `allowed times through: ${represent(error)}`,
+                    'Reinitializing changes stream in',
+                    `${String(waitingTimeInSeconds)} seconds...`
+                )
 
-                    await couchdb.server.restart(state)
-                } else {
-                    const waitingTimeInSeconds =
-                        Math.min(
-                            configuration.changesStreamReinitializer
-                                .retryWaitingFactorInSeconds **
-                            numberOfErrorsThrough,
-                            configuration.changesStreamReinitializer
-                                .maximumRetryWaitingTimeInSeconds
-                        )
-
-                    console.warn(
-                        'Observing changes feed throws an error for',
-                        `${String(numberOfErrorsThrough)} of`,
-                        String(
-                            configuration.changesStreamReinitializer.retries
-                        ),
-                        `allowed times through: ${represent(error)}`,
-                        'Reinitializing changes stream in',
-                        `${String(waitingTimeInSeconds)} seconds...`
-                    )
-
-                    await timeout(1000 * waitingTimeInSeconds)
-                }
-
-                void initialize()
+                await timeout(1000 * waitingTimeInSeconds)
             }
-        )
 
-        await pluginAPI.callStack<State<ChangesStream>>({
+            void initialize()
+        }
+
+        void couchdb.changesStream.on('error', changesErrorHandler)
+        if (couchdb.updateViewsChangesStream)
+            void couchdb.updateViewsChangesStream.on(
+                'error', changesErrorHandler
+            )
+
+        await pluginAPI.callStack<State<{
+            changesStream: ChangesStream
+            updateViewsChangesStream?: ChangesStream
+        }>>({
             ...state,
-            data: couchdb.changesStream,
+            data: {
+                changesStream: couchdb.changesStream,
+                updateViewsChangesStream: couchdb.updateViewsChangesStream
+            },
             hook: 'couchdbInitializeChangesStream'
         })
 
@@ -1156,6 +1226,34 @@ export const postLoadService = (state: State): Promise<void> => {
                     )
                 } finally {
                     changesRunnerSemaphore.release()
+                }
+            }
+        )
+        void couchdb.updateViewsChangesStream?.on(
+            'change',
+            async (changes: ChangesResponseChange) => {
+                numberOfErrorsThrough = 0
+
+                for (const [id, viewConfiguration] of Object.entries(
+                    configuration.views
+                )) {
+                    const viewDocument: Partial<ViewDocument> = {
+                        [specialNames.id]: id,
+                        [specialNames.revision]: '0-latest'
+                    }
+                    for (const [name, viewDataConfiguration] of Object.entries(
+                        viewConfiguration
+                    ))
+                        if (viewDataConfiguration.updateExpression)
+                            viewDocument[name] = evaluate(
+                                viewDataConfiguration.updateExpression,
+                                {
+                                    ...changes.doc,
+                                    data:
+                                        (changes.doc as Mapping<unknown>)[name]
+                                }
+                            )
+                    await couchdb.connection.put(viewDocument)
                 }
             }
         )
