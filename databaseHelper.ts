@@ -62,8 +62,8 @@ import {
  * WebNode plugin interface with all provided hooks.
  */
 /**
- * Authenticates given document update against given mapping of allowed roles
- * for writing into corresponding model instances.
+ * Authorizes given document update against given mapping of allowed roles for
+ * writing into corresponding model instances.
  * @param newDocument - Updated document.
  * @param oldDocument - If an existing document should be updated its given
  * here.
@@ -80,7 +80,7 @@ import {
  * @returns Throws an exception if authorisation is not accepted and "true"
  * otherwise.
  */
-export const authenticate = (
+export const authorize = (
     newDocument: Partial<Document>,
     oldDocument: null | Partial<Document> = null,
     userContext: Partial<UserContext> = {},
@@ -915,7 +915,7 @@ export const validateDocumentUpdate = <
                         if (types.length === 1)
                             throwError(
                                 `PropertyType: Property "${String(name)}" ` +
-                                `isn't of (valid) type "DateTime" (given"` +
+                                `isn't of (valid) type "DateTime" (given "` +
                                 (
                                     serialize(initialNewValue)
                                         .replace(/^"/, '')
@@ -933,8 +933,7 @@ export const validateDocumentUpdate = <
                     ['boolean', 'integer', 'number', 'string'].includes(type)
                 )
                     if (
-                        typeof newValue === 'number' &&
-                        isNaN(newValue) ||
+                        typeof newValue === 'number' && isNaN(newValue) ||
                         !(type === 'integer' || typeof newValue === type) ||
                         type === 'integer' &&
                         parseInt(newValue as string, 10) !== newValue
@@ -943,8 +942,8 @@ export const validateDocumentUpdate = <
                             throwError(
                                 `PropertyType: Property "${String(name)}" ` +
                                 `isn't of (valid) type "${type}" (given ` +
-                                `"${serialize(newValue)}" of type "` +
-                                `${typeof newValue}")${pathDescription}.`
+                                `"${serialize(newValue)}" of type ` +
+                                `"${typeof newValue}")${pathDescription}.`
                             )
                     } else {
                         typeMatched = true

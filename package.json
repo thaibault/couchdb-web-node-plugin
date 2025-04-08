@@ -72,13 +72,13 @@
     "@stylistic/eslint-plugin-ts": "^4.2.0",
     "@types/ejs": "^3.1.5",
     "@types/express": "^5.0.1",
-    "@types/node": "^22.13.14",
+    "@types/node": "^22.14.0",
     "@types/pouchdb-node": "^6.1.7",
-    "@typescript-eslint/eslint-plugin": "^8.29.0",
-    "@typescript-eslint/parser": "^8.29.0",
+    "@typescript-eslint/eslint-plugin": "^8.29.1",
+    "@typescript-eslint/parser": "^8.29.1",
     "clientnode": "^3.0.1274",
     "documentation-website": "^1.0.345",
-    "eslint": "^9.23.0",
+    "eslint": "^9.24.0",
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-jsdoc": "^50.6.9",
     "express": "^5.1.0",
@@ -87,9 +87,9 @@
     "jsdoc": "^4.0.4",
     "node-fetch": "^3.3.2",
     "rimraf": "^6.0.1",
-    "typescript-eslint": "^8.29.0",
+    "typescript-eslint": "^8.29.1",
     "web-node": "^1.0.545",
-    "weboptimizer": "^2.0.1575"
+    "weboptimizer": "^2.0.1576"
   },
   "peerDependencies": {
     "@babel/runtime": "*",
@@ -383,11 +383,7 @@
             }
           },
           "View": {
-            "_additional": {
-              "declaration": "Data",
-              "description": "Computed data.",
-              "type": "any"
-            }
+            "_allowedRoles": []
           }
         },
         "property": {

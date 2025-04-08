@@ -18,13 +18,15 @@
 */
 // region imports
 import {
-    copy, evaluate,
+    copy,
+    evaluate,
     File,
     format,
     globalContext,
     isDirectory,
     isFile,
     isObject,
+    Lock,
     Mapping,
     NOOP,
     PlainObject,
@@ -612,9 +614,9 @@ export const loadService = async (
                     JSON.stringify(models)
             },
             {
-                description: 'Authorisation',
-                methodName: 'authenticate',
-                name: 'authentication',
+                description: 'Authorization',
+                methodName: 'authorize',
+                name: 'authorization',
                 serializedParameter:
                     JSON.stringify(determineAllowedModelRolesMapping(
                         configuration.couchdb.model
@@ -1027,23 +1029,36 @@ export const loadService = async (
     for (const [id, viewConfiguration] of Object.entries(
         configuration.couchdb.views
     )) {
-        const viewDocument: ViewDocument = {
+        const viewDocument: Partial<ViewDocument> = {
             [specialNames.type]: 'View',
-            [specialNames.id]: id,
-            [specialNames.revision]: '0-latest'
+            [specialNames.id]: id
         }
         for (const [name, viewDataConfiguration] of Object.entries(
             viewConfiguration
         )) {
             const rawData =
                 await couchdb.connection.find(viewDataConfiguration.query)
-            viewDocument[name] = viewDataConfiguration.initialMapperExpression ?
-                evaluate(
+
+            if (viewDataConfiguration.initialMapperExpression) {
+                const result = evaluate(
                     viewDataConfiguration.initialMapperExpression,
-                    {...rawData, data: rawData}
-                ) :
-                rawData
+                    {data: rawData.docs}
+                )
+
+                if (result.error)
+                    console.warn(
+                        'Could not execute initial expression',
+                        `"${viewDataConfiguration.initialMapperExpression}"`,
+                        `for property "${name}" in view document "${id}":`,
+                        result.error
+                    )
+                else
+                    viewDocument[name] = result.result
+            } else
+                viewDocument[name] = rawData.docs
         }
+
+        console.info(`Initialize view ${id}:`, viewDocument)
         await couchdb.connection.put(viewDocument)
     }
     // endregion
@@ -1117,15 +1132,15 @@ export const postLoadService = (state: State): Promise<void> => {
             for (const [id, viewConfiguration] of Object.entries(
                 configuration.views
             )) {
+                const orOperands: Array<PouchDB.Find.Selector> = []
                 updateViewsChangesConfigurationSelector.$and.push(
-                    {[specialNames.id]: {$ne: id}}
+                    {[specialNames.id]: {$ne: id}},
+                    {$or: orOperands}
                 )
                 for (const viewDataConfiguration of Object.values(
                     viewConfiguration
                 ))
-                    updateViewsChangesConfigurationSelector.$and.push(
-                        viewDataConfiguration.query.selector
-                    )
+                    orOperands.push(viewDataConfiguration.query.selector)
             }
             updateViewsChangesConfiguration.selector =
                 updateViewsChangesConfigurationSelector
@@ -1210,15 +1225,15 @@ export const postLoadService = (state: State): Promise<void> => {
 
         void couchdb.changesStream.on(
             'change',
-            async (changes: ChangesResponseChange) => {
+            async (change: ChangesResponseChange) => {
                 numberOfErrorsThrough = 0
 
                 try {
                     await changesRunnerSemaphore.acquire()
                     await pluginAPI.callStack<State<ChangesResponseChange>>({
-                        ...state, data: changes, hook: 'couchdbChange'
+                        ...state, data: change, hook: 'couchdbChange'
                     })
-                    couchdb.lastChangesSequenceIdentifier = changes.seq
+                    couchdb.lastChangesSequenceIdentifier = change.seq
                 } catch (error) {
                     console.error(
                         'An error occurred during on change database hook:',
@@ -1229,31 +1244,51 @@ export const postLoadService = (state: State): Promise<void> => {
                 }
             }
         )
+
+        const updateViewLock = new Lock()
         void couchdb.updateViewsChangesStream?.on(
             'change',
-            async (changes: ChangesResponseChange) => {
+            async (change: ChangesResponseChange) => {
                 numberOfErrorsThrough = 0
 
                 for (const [id, viewConfiguration] of Object.entries(
                     configuration.views
                 )) {
                     const viewDocument: Partial<ViewDocument> = {
-                        [specialNames.id]: id,
-                        [specialNames.revision]: '0-latest'
+                        [specialNames.id]: id
                     }
-                    for (const [name, viewDataConfiguration] of Object.entries(
-                        viewConfiguration
-                    ))
-                        if (viewDataConfiguration.updateExpression)
-                            viewDocument[name] = evaluate(
-                                viewDataConfiguration.updateExpression,
-                                {
-                                    ...changes.doc,
-                                    data:
-                                        (changes.doc as Mapping<unknown>)[name]
-                                }
-                            )
-                    await couchdb.connection.put(viewDocument)
+                    try {
+                        await updateViewLock.acquire(id)
+
+                        for (const [
+                            name, viewDataConfiguration
+                        ] of Object.entries(viewConfiguration))
+                            if (viewDataConfiguration.updateExpression) {
+                                const result = evaluate(
+                                    viewDataConfiguration.updateExpression,
+                                    {...change, document: change.doc}
+                                )
+
+                                if (result.error)
+                                    console.warn(
+                                        'Could not execute update ' +
+                                        'expression"' +
+                                        viewDataConfiguration
+                                            .updateExpression +
+                                        `"for property "${name}" in view`,
+                                        `document "${id}":`,
+                                        result.error
+                                    )
+                                else
+                                    viewDocument[name] = result.result
+                            }
+
+                        await couchdb.connection.put(viewDocument)
+                    } catch (error) {
+                        console.warn('Updateing view failed:', error)
+                    } finally {
+                        void updateViewLock.release(id)
+                    }
                 }
             }
         )
