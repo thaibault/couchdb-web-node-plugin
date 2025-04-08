@@ -27,7 +27,7 @@ import {
     TEST_THROW_SYMBOL, testEachAgainstSameExpectation
 } from 'clientnode/test-helper'
 
-import {authenticate, validateDocumentUpdate} from '../databaseHelper'
+import {authorize, validateDocumentUpdate} from '../databaseHelper'
 import {extendModels} from '../helper'
 import packageConfiguration from '../package.json'
 import {
@@ -60,9 +60,9 @@ describe('databaseHelper', () => {
         {[idName]: '', [revisionName]: '', [typeName]: 'base'}
     // endregion
     // region tests
-    testEachAgainstSameExpectation<typeof authenticate>(
-        'authenticate',
-        authenticate,
+    testEachAgainstSameExpectation<typeof authorize>(
+        'authorize',
+        authorize,
         TEST_THROW_SYMBOL,
 
         [
@@ -84,9 +84,9 @@ describe('databaseHelper', () => {
             'type'
         ]
     )
-    testEachAgainstSameExpectation<typeof authenticate>(
-        'authenticate',
-        authenticate,
+    testEachAgainstSameExpectation<typeof authorize>(
+        'authorize',
+        authorize,
         true,
 
         [{}],
