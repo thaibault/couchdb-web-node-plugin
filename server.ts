@@ -36,27 +36,26 @@ import {initializeConnection} from './helper'
 import {
     BinaryRunner,
     Configuration,
-    CouchDB,
     InPlaceRunner,
     Services,
     State
 } from './type'
+import {Express} from 'express-serve-static-core'
 // endregion
 globalContext.fetch = nodeFetch as unknown as typeof fetch
 // region functions
 /**
  * Starts server process.
- * @param services - An object with stored service instances.
- * @param configuration - Mutable by plugins extended configuration object.
+ * @param state - Application state.
  * @returns A promise representing the server process wrapped in a promise
  * which resolves after server is reachable.
  */
-export const start = async (
-    services: Services, configuration: Configuration
-): Promise<void> => {
-    const {server} = services.couchdb
+export const start = async (state: State): Promise<void> => {
+    const {
+        configuration, pluginAPI, services: {couchdb: {connector, server}}
+    } = state
+    const {couchdb: {runner: runnerConfiguration}} = configuration
     const {runner} = server
-    const {runner: runnerConfiguration} = configuration.couchdb
 
     // region create configuration file if needed
     if (runner.configurationFile) {
@@ -91,43 +90,43 @@ export const start = async (
         const {configuration: backendConfiguration} =
             configuration.couchdb.backend
 
-        const expressServer = express()
-        server.express = expressServer
-        /*
-            eslint-disable
-            @typescript-eslint/no-unsafe-call,
-            @typescript-eslint/no-unsafe-argument
-        */
-        const expressPouchDBInstance = expressPouchDB(
-            services.couchdb.connector,
-            {
-                configPath: resolve(
-                    configuration.couchdb.path, 'database.json'
-                ),
-                logPath: resolve(
-                    configuration.couchdb.path,
-                    backendConfiguration['log/file'] as string
-                )
+        const expressInstance: Express = server.expressInstance = express()
+        const expressPouchDBInstance: Express =
+            server.expressPouchDBInstance =
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+            expressPouchDB(
+                connector,
+                {
+                    configPath: resolve(
+                        configuration.couchdb.path, 'database.json'
+                    ),
+                    logPath: resolve(
+                        configuration.couchdb.path,
+                        backendConfiguration['log/file'] as string
+                    )
+                }
+            )
+        await pluginAPI.callStack<State<{
+            expressInstance: Express, expressPouchDBInstance: Express
+        }>>({
+            ...state,
+            hook: 'initializeExpressPouchDB',
+            data: {
+                expressInstance,
+                expressPouchDBInstance
             }
-        )
-        expressServer.use('/', expressPouchDBInstance)
-        server.expressPouchDB = expressPouchDBInstance
-
-        /*
-            eslint-enable
-            @typescript-eslint/no-unsafe-call,
-            @typescript-eslint/no-unsafe-argument
-        */
+        })
+        server.expressInstance.use('/', expressPouchDBInstance)
 
         await new Promise((resolve) => {
-            server.process = expressServer.listen(
+            server.process = expressInstance.listen(
                 backendConfiguration['httpd/port'], resolve
             )
             server.process.on('close', () => {
-                services.couchdb.server.resolve.call(this)
+                server.resolve.call(this)
             })
             server.process.on('error', (error: Error) => {
-                services.couchdb.server.reject.call(this, error)
+                server.reject.call(this, error)
             })
         })
     } else {
@@ -189,20 +188,10 @@ export const start = async (
                     resolving happens here.
                  */
                 (value: ProcessCloseReason) => {
-                    if ((
-                        services.couchdb as
-                            { server?: CouchDB['server'] } | undefined
-                    )?.server?.resolve)
-                        services.couchdb.server.resolve.call(this, value)
+                    server.resolve.call(this, value)
                 },
                 (reason: unknown) => {
-                    if ((
-                        services.couchdb as
-                            { server?: CouchDB['server'] } | undefined
-                    )?.server?.reject)
-                        services.couchdb.server.reject.call(
-                            this, reason as ProcessCloseReason
-                        )
+                    server.reject.call(this, reason as ProcessCloseReason)
                 }
             )
     }
@@ -234,7 +223,7 @@ export const restart = async (state: State): Promise<void> => {
     server.resolve = resolveServerProcessBackup
     server.reject = rejectServerProcessBackup
 
-    await start(services, configuration)
+    await start(state)
 
     void initializeConnection(services, configuration)
 
