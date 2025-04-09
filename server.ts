@@ -93,6 +93,7 @@ export const start = async (
             configuration.couchdb.backend
 
         const expressServer = express()
+        server.express = expressServer
         /*
             eslint-disable
             @typescript-eslint/no-unsafe-call,
