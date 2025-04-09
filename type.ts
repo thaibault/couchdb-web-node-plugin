@@ -581,8 +581,8 @@ export interface CouchDB<Type extends object = Mapping<unknown>> {
     connector: Connector
 
     server: {
-        express?: Express
-        expressPouchDB?: Express
+        expressInstance?: Express
+        expressPouchDBInstance?: Express
 
         process?: ChildProcess | HTTPServer
 
@@ -590,8 +590,7 @@ export interface CouchDB<Type extends object = Mapping<unknown>> {
         resolve: (reason?: ProcessCloseReason) => void
 
         restart: (state: State) => Promise<void>
-        start: (services: Services, configuration: Configuration) =>
-            Promise<void>
+        start: (state: State) => Promise<void>
         stop: (services: Services, configuration: Configuration) =>
             Promise<void>
 
@@ -647,6 +646,18 @@ export interface PluginHandler extends BasePluginHandler {
      * @returns Promise resolving to nothing.
      */
     restartCouchdb?(state: State): Promise<void>
+
+    /**
+     * Hook before registering pouchdb routes into the express server
+     * instance.
+     * @param state - Application state.
+     * @returns Promise resolving to nothing.
+     */
+    initializeExpressPouchDB?(
+        state: State<
+            {expressInstance: Express, expressPouchDBInstance: Express}
+        >
+    ): Promise<void>
 }
 /// endregion
 /// region evaluation

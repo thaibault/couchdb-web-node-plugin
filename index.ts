@@ -260,8 +260,10 @@ export const preLoadService = async ({
  * continues services.
  */
 export const loadService = async (
-    {configuration, services}: State
+    state: State
 ): Promise<PluginPromises> => {
+    const {configuration, services} = state
+
     if (!globalContext.fetch)
         throw new Error('Missing fetch implementation.')
 
@@ -269,7 +271,7 @@ export const loadService = async (
     const {couchdb} = services
 
     if (Object.prototype.hasOwnProperty.call(couchdb.server, 'runner')) {
-        await start(services, configuration)
+        await start(state)
 
         couchdb.server.restart = restart
         couchdb.server.start = start
