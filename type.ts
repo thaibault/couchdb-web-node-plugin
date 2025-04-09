@@ -32,6 +32,7 @@ import {
     ServicesState as BaseServicesState
 } from 'web-node/type'
 import {Server as HTTPServer} from 'http'
+import {Express} from 'express-serve-static-core'
 // endregion
 // region exports
 /// region database implementation
@@ -580,6 +581,7 @@ export interface CouchDB<Type extends object = Mapping<unknown>> {
     connector: Connector
 
     server: {
+        express?: Express
         process?: ChildProcess | HTTPServer
 
         reject: (value: Error | ProcessCloseReason) => void
