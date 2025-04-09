@@ -62,8 +62,7 @@ export const start = async (
     if (runner.configurationFile) {
         try {
             await fileSystem.mkdir(
-                dirname(runner.configurationFile.path),
-                {recursive: true}
+                dirname(runner.configurationFile.path), {recursive: true}
             )
         } catch (error) {
             if ((error as NodeJS.ErrnoException).code !== 'EEXIST')
@@ -112,6 +111,8 @@ export const start = async (
             }
         )
         expressServer.use('/', expressPouchDBInstance)
+        server.expressPouchDB = expressPouchDBInstance
+
         /*
             eslint-enable
             @typescript-eslint/no-unsafe-call,

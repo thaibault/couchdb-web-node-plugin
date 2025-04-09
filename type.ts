@@ -582,6 +582,8 @@ export interface CouchDB<Type extends object = Mapping<unknown>> {
 
     server: {
         express?: Express
+        expressPouchDB?: Express
+
         process?: ChildProcess | HTTPServer
 
         reject: (value: Error | ProcessCloseReason) => void
