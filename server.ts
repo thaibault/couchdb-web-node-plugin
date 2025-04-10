@@ -113,87 +113,97 @@ export const start = async (state: State): Promise<void> => {
             'routes/attachments',
             'routes/documents',
         */
-        const routesPath = 'express-pouchdb/lib/routes/'
         const routesToPostpone = [
             [
                 [
                     'routes/bulk-get',
-                    (await import((`${routesPath}bulk-get`))).default
+                    (await import('express-pouchdb/lib/routes/bulk-get'))
+                        .default
                 ],
                 [
                     'routes/all-docs',
-                    (await import(`${routesPath}all-docs`)).default
+                    (await import('express-pouchdb/lib/routes/all-docs'))
+                        .default
                 ],
                 [
                     'routes/changes',
-                    (await import(`${routesPath}changes`)).default
+                    (await import('express-pouchdb/lib/routes/changes'))
+                        .default
                 ],
                 [
                     'routes/compact',
-                    (await import(`${routesPath}compact`)).default
+                    (await import('express-pouchdb/lib/routes/compact'))
+                        .default
                 ],
                 [
                     'routes/revs-diff',
-                    (await import(`${routesPath}revs-diff`)).default
+                    (await import('express-pouchdb/lib/routes/revs-diff'))
+                        .default
                 ],
                 [
                     'routes/security',
-                    (await import(`${routesPath}security`)).default
+                    (await import('express-pouchdb/lib/routes/security'))
+                        .default
                 ],
                 [
                     'routes/view-cleanup',
-                    (await import(`${routesPath}view-cleanup`)).default
+                    (await import('express-pouchdb/lib/routes/view-cleanup'))
+                        .default
                 ],
                 [
                     'routes/temp-views',
-                    (await import(`${routesPath}temp-views`)).default
+                    (await import('express-pouchdb/lib/routes/temp-views'))
+                        .default
                 ]
             ],
             [
                 [
                     'routes/find',
-                    (await import(`${routesPath}find`)).default
+                    (await import('express-pouchdb/lib/routes/find')).default
                 ],
                 [
                     'routes/views',
-                    (await import(`${routesPath}views`)).default
+                    (await import('express-pouchdb/lib/routes/views')).default
                 ],
                 [
                     'routes/ddoc-info',
-                    (await import(`${routesPath}ddoc-info`)).default
+                    (await import('express-pouchdb/lib/routes/ddoc-info'))
+                        .default
                 ],
                 [
                     'routes/show',
-                    (await import(`${routesPath}show`)).default
+                    (await import('express-pouchdb/lib/routes/show')).default
                 ],
                 [
                     'routes/list',
-                    (await import(`${routesPath}list`)).default
+                    (await import('express-pouchdb/lib/routes/list')).default
                 ],
                 [
                     'routes/update',
-                    (await import(`${routesPath}update`)).default
+                    (await import('express-pouchdb/lib/routes/update')).default
                 ]
             ],
             [
                 [
                     'routes/attachments',
-                    (await import(`${routesPath}attachments`)).default
+                    (await import('express-pouchdb/lib/routes/attachments'))
+                        .default
                 ],
                 [
                     'routes/documents',
-                    (await import(`${routesPath}documents`)).default
+                    (await import('express-pouchdb/lib/routes/documents'))
+                        .default
                 ],
                 [
                     'validation',
-                    (await import(`express-pouchdb/lib/validation`)).default
+                    (await import('express-pouchdb/lib/validation')).default
                 ],
                 [
                     'routes/404',
-                    (await import(`${routesPath}404`)).default
+                    (await import('express-pouchdb/lib/routes/404')).default
                 ]
             ]
-        ] as const
+        ]
         const expressPouchDBInstance: Express =
             server.expressPouchDBInstance =
             // eslint-disable-next-line @typescript-eslint/no-unsafe-call
@@ -208,9 +218,9 @@ export const start = async (state: State): Promise<void> => {
                         backendConfiguration['log/file'] as string
                     ),
                     overrideMode: {
-                        exclude: ([] as Array<[string, unknown]>)
+                        exclude: ([] as typeof routesToPostpone[0])
                             .concat(...routesToPostpone)
-                            .map(([name]) => name)
+                            .map(([name]) => name as string)
                     }
                 }
             )
@@ -240,13 +250,16 @@ export const start = async (state: State): Promise<void> => {
                         .db.find(request.body)
 
                 try {
-                    const resultFromHook = await pluginAPI.callStack<State<{
-                        request:
-                            IncomingHTTPMessage &
-                            {body: FindRequest<PlainObject>},
-                        response: HTTP1ServerResponse,
-                        result: FindResponse<object>
-                    }>>({
+                    const resultFromHook = await pluginAPI.callStack<
+                        State<{
+                            request:
+                                IncomingHTTPMessage &
+                                {body: FindRequest<PlainObject>},
+                            response: HTTP1ServerResponse,
+                            result: FindResponse<object>
+                        }>,
+                        FindResponse<object> | undefined
+                    >({
                         ...state,
                         hook: 'onPouchDBFind',
                         data: {request, response, result}
@@ -270,6 +283,15 @@ export const start = async (state: State): Promise<void> => {
         for (const [_name, module] of routesToPostpone[2])
             // eslint-disable-next-line @typescript-eslint/no-unsafe-call
             module(expressPouchDBInstance)
+
+        await pluginAPI.callStack<
+            State<{expressInstance: Express, expressPouchDBInstance: Express}>,
+            FindResponse<object> | undefined
+        >({
+            ...state,
+            hook: 'initializeExpressPouchDB',
+            data: {expressInstance, expressPouchDBInstance}
+        })
 
         server.expressInstance.use('/', expressPouchDBInstance)
 

@@ -5,6 +5,14 @@
  only needed for intellij only.
 */
 declare module 'express-pouchdb'
+declare module 'express-pouchdb/lib/routes/bulk-get'
+declare module 'express-pouchdb/lib/routes/all-docs'
+declare module 'express-pouchdb/lib/routes/changes'
+declare module 'express-pouchdb/lib/routes/compact'
+declare module 'express-pouchdb/lib/routes/revs-diff'
+declare module 'express-pouchdb/lib/routes/security'
+declare module 'express-pouchdb/lib/routes/view-cleanup'
+declare module 'express-pouchdb/lib/routes/temp-views'
 declare module 'express-pouchdb/lib/routes/find'
 declare module 'express-pouchdb/lib/routes/documents'
 declare module 'express-pouchdb/lib/routes/404'
