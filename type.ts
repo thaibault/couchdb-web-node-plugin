@@ -23,6 +23,11 @@ import {
     ProcessCloseReason,
     UTILITY_SCOPE
 } from 'clientnode'
+import {Express} from 'express-serve-static-core'
+import {
+    IncomingMessage as IncomingHTTPMessage,
+    Server as HTTPServer, ServerResponse as HTTP1ServerResponse
+} from 'http'
 import {
     Configuration as BaseConfiguration,
     PluginHandler as BasePluginHandler,
@@ -31,8 +36,6 @@ import {
     ServicePromisesState as BaseServicePromisesState,
     ServicesState as BaseServicesState
 } from 'web-node/type'
-import {Server as HTTPServer} from 'http'
-import {Express} from 'express-serve-static-core'
 // endregion
 // region exports
 /// region database implementation
@@ -94,6 +97,8 @@ export type DocumentIDMeta = PouchDB.Core.IdMeta
 export type DocumentRevisionIDMeta = PouchDB.Core.RevisionIdMeta
 
 export type FindRequest<Type extends object> = PouchDB.Find.FindRequest<Type>
+export type FindResponse<Type extends object> = PouchDB.Find.FindResponse<Type>
+
 export type DeleteIndexOptions = PouchDB.Find.DeleteIndexOptions
 export type GetOptions = PouchDB.Core.GetOptions
 export type PutOptions = PouchDB.Core.Options;
@@ -651,12 +656,26 @@ export interface PluginHandler extends BasePluginHandler {
      * Hook before registering pouchdb routes into the express server
      * instance.
      * @param state - Application state.
+     * @returns Promise resolving to find result.
+     */
+    onPouchDBFind?(
+        state: State<{
+            request: IncomingHTTPMessage & {body: FindRequest<PlainObject>},
+            response: HTTP1ServerResponse,
+            result: FindResponse<object>
+        }>
+    ): Promise<FindResponse<object> | undefined>
+
+    /**
+     * Hook before registering pouchdb routes into the express server
+     * instance.
+     * @param state - Application state.
      * @returns Promise resolving to nothing.
      */
     initializeExpressPouchDB?(
-        state: State<
-            {expressInstance: Express, expressPouchDBInstance: Express}
-        >
+        state: State<{
+            expressInstance: Express, expressPouchDBInstance: Express
+        }>
     ): Promise<void>
 }
 /// endregion
