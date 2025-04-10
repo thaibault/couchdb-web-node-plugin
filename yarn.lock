@@ -5015,6 +5015,7 @@ __metadata:
     express-pouchdb: "npm:^4.2.0"
     jest: "npm:^29.7.0"
     jsdoc: "npm:^4.0.4"
+    mkdirp: "npm:^3.0.1"
     node-fetch: "npm:^3.3.2"
     pouchdb-authentication: "npm:^1.1.3"
     pouchdb-find: "npm:^9.0.0"
