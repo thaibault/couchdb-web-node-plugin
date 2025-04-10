@@ -382,7 +382,7 @@
               }
             }
           },
-          "View": {
+          "_view": {
             "_allowedRoles": []
           }
         },

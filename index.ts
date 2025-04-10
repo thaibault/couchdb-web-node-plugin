@@ -1032,7 +1032,7 @@ export const loadService = async (
         configuration.couchdb.views
     )) {
         const viewDocument: Partial<ViewDocument> = {
-            [specialNames.type]: 'View',
+            [specialNames.type]: id,
             [specialNames.id]: id
         }
         for (const [name, viewDataConfiguration] of Object.entries(
@@ -1261,6 +1261,7 @@ export const postLoadService = (state: State): Promise<void> => {
                     }
                     try {
                         await updateViewLock.acquire(id)
+                        let hasChanges = false
 
                         for (const [
                             name, viewDataConfiguration
@@ -1277,7 +1278,7 @@ export const postLoadService = (state: State): Promise<void> => {
 
                                 if (result.error)
                                     console.warn(
-                                        'Could not execute update ' +
+                                        'Could not execute update',
                                         'expression"' +
                                         viewDataConfiguration
                                             .updateExpression +
@@ -1285,13 +1286,16 @@ export const postLoadService = (state: State): Promise<void> => {
                                         `document "${id}":`,
                                         result.error
                                     )
-                                else
+                                else if (result.result !== undefined) {
+                                    hasChanges = true
                                     viewDocument[name] = result.result
+                                }
                             }
 
-                        await couchdb.connection.put(viewDocument)
+                        if (hasChanges)
+                            await couchdb.connection.put(viewDocument)
                     } catch (error) {
-                        console.warn('Updateing view failed:', error)
+                        console.warn('Updating view failed:', error)
                     } finally {
                         void updateViewLock.release(id)
                     }
