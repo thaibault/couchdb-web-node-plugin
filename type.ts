@@ -94,6 +94,8 @@ export type DocumentIDMeta = PouchDB.Core.IdMeta
 export type DocumentRevisionIDMeta = PouchDB.Core.RevisionIdMeta
 
 export type FindRequest<Type extends object> = PouchDB.Find.FindRequest<Type>
+export type FindResponse<Type extends object> = PouchDB.Find.FindResponse<Type>
+
 export type DeleteIndexOptions = PouchDB.Find.DeleteIndexOptions
 export type GetOptions = PouchDB.Core.GetOptions
 export type PutOptions = PouchDB.Core.Options;
