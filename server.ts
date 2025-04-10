@@ -34,6 +34,7 @@ import {
     Server as HTTPServer,
     ServerResponse as HTTP1ServerResponse
 } from 'http'
+import {mkdirp as makeDirectorPath} from 'mkdirp'
 import nodeFetch from 'node-fetch'
 import {promises as fileSystem} from 'fs'
 import {dirname, resolve} from 'path'
@@ -62,7 +63,12 @@ export const start = async (state: State): Promise<void> => {
     const {
         configuration, pluginAPI, services: {couchdb: {connector, server}}
     } = state
-    const {couchdb: {runner: runnerConfiguration}} = configuration
+    const {
+        couchdb: {
+            backend: {configuration: backendConfiguration},
+            runner: runnerConfiguration
+        }
+    } = configuration
     const {runner} = server
 
     // region create configuration file if needed
@@ -94,9 +100,6 @@ export const start = async (state: State): Promise<void> => {
         const {default: expressPouchDB} =
             await eval(`import('express-pouchdb')`) as
                 {default: typeof import('express-pouchdb')}
-
-        const {configuration: backendConfiguration} =
-            configuration.couchdb.backend
 
         const expressInstance: Express = server.expressInstance = express()
         /*
@@ -294,6 +297,10 @@ export const start = async (state: State): Promise<void> => {
         })
 
         server.expressInstance.use('/', expressPouchDBInstance)
+
+        await makeDirectorPath(resolve(
+            backendConfiguration['couchdb/database_dir'] as string
+        ))
 
         await new Promise((resolve) => {
             server.process = expressInstance.listen(
