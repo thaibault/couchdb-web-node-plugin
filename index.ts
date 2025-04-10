@@ -1268,7 +1268,11 @@ export const postLoadService = (state: State): Promise<void> => {
                             if (viewDataConfiguration.updateExpression) {
                                 const result = evaluate(
                                     viewDataConfiguration.updateExpression,
-                                    {...change, document: change.doc}
+                                    {
+                                        deleted: false,
+                                        ...change,
+                                        document: change.doc
+                                    }
                                 )
 
                                 if (result.error)
