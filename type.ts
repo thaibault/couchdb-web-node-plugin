@@ -661,8 +661,7 @@ export interface PluginHandler extends BasePluginHandler {
     onPouchDBFind?(
         state: State<{
             request: IncomingHTTPMessage & {body: FindRequest<PlainObject>},
-            response: HTTP1ServerResponse,
-            result: FindResponse<object>
+            response: HTTP1ServerResponse
         }>
     ): Promise<FindResponse<object> | undefined>
 
