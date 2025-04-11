@@ -248,27 +248,27 @@ export const start = async (state: State): Promise<void> => {
             ) => {
                 // TODO apply security related stuff
 
-                const result: FindResponse<object> =
-                    await (request as unknown as {db: PouchDB.Database})
-                        .db.find(request.body)
-
                 try {
-                    const resultFromHook = await pluginAPI.callStack<
+                    let result = await pluginAPI.callStack<
                         State<{
                             request:
                                 IncomingHTTPMessage &
                                 {body: FindRequest<PlainObject>},
-                            response: HTTP1ServerResponse,
-                            result: FindResponse<object>
+                            response: HTTP1ServerResponse
                         }>,
                         FindResponse<object> | undefined
                     >({
                         ...state,
                         hook: 'onPouchDBFind',
-                        data: {request, response, result}
+                        data: {request, response}
                     })
 
-                    sendJSON(response, 200, resultFromHook ?? result)
+                    if (!result)
+                        result = await (
+                            request as unknown as {db: PouchDB.Database}
+                        ).db.find(request.body)
+
+                    sendJSON(response, 200, result)
                 } catch (error) {
                     sendError(response, error, 400)
                 }
