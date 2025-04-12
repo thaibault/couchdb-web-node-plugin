@@ -230,7 +230,7 @@
         "since": "now",
         "timeout": false
       },
-      "updateViewsChangesStream": {
+      "updateMaterializedViewsChangesStream": {
         "include_docs": true,
         "live": true,
         "return_docs": false,
@@ -347,6 +347,9 @@
               ]
             }
           },
+          "_materializedView": {
+            "_allowedRoles": []
+          },
           "_stringMapping": {
             "_additional": {
               "declaration": "Templatedata",
@@ -382,9 +385,6 @@
                 "__evaluate__": "`userContext.name || '${self.couchdb.admin.name}'`"
               }
             }
-          },
-          "_view": {
-            "_allowedRoles": []
           }
         },
         "property": {
@@ -490,7 +490,7 @@
         "password": "admin"
       },
       "users": {},
-      "views": {}
+      "materializedViews": {}
     }
   },
   "webOptimizer": {
