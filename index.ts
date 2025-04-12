@@ -67,13 +67,15 @@ import {
     Document,
     FullDocument,
     Index,
+    InPlaceRunner,
     Migrator,
     Models,
     PropertySpecification,
     BinaryRunner,
     Services,
     ServicesState,
-    State, InPlaceRunner, ViewDocument
+    State,
+    MaterializedViewDocument
 } from './type'
 // endregion
 /**
@@ -1031,7 +1033,7 @@ export const loadService = async (
     for (const [id, viewConfiguration] of Object.entries(
         configuration.couchdb.views
     )) {
-        const viewDocument: Partial<ViewDocument> = {
+        const viewDocument: Partial<MaterializedViewDocument> = {
             [specialNames.type]: id,
             [specialNames.id]: id
         }
@@ -1123,19 +1125,24 @@ export const postLoadService = (state: State): Promise<void> => {
         )
 
         if (Object.keys(configuration.views).length) {
-            const updateViewsChangesConfiguration =
-                configuration.updateViewsChangesStream
-            if (couchdb.lastUpdateViewsChangesSequenceIdentifier !== undefined)
-                updateViewsChangesConfiguration.since =
-                    couchdb.lastUpdateViewsChangesSequenceIdentifier
+            const updateMaterializedViewsChangesConfiguration =
+                configuration.updateMaterializedViewsChangesStream
+            if (
+                couchdb
+                    .lastUpdateMaterializedViewsChangesSequenceIdentifier !==
+                undefined
+            )
+                updateMaterializedViewsChangesConfiguration.since =
+                    couchdb
+                        .lastUpdateMaterializedViewsChangesSequenceIdentifier
 
-            const updateViewsChangesConfigurationSelector =
+            const updateMaterializedViewsChangesConfigurationSelector =
                 {$and: [] as Array<PouchDB.Find.Selector>}
             for (const [id, viewConfiguration] of Object.entries(
                 configuration.views
             )) {
                 const orOperands: Array<PouchDB.Find.Selector> = []
-                updateViewsChangesConfigurationSelector.$and.push(
+                updateMaterializedViewsChangesConfigurationSelector.$and.push(
                     {[specialNames.id]: {$ne: id}},
                     {$or: orOperands}
                 )
@@ -1144,16 +1151,19 @@ export const postLoadService = (state: State): Promise<void> => {
                 ))
                     orOperands.push(viewDataConfiguration.query.selector)
             }
-            updateViewsChangesConfiguration.selector =
-                updateViewsChangesConfigurationSelector
+            updateMaterializedViewsChangesConfiguration.selector =
+                updateMaterializedViewsChangesConfigurationSelector
 
             console.info(
-                'Initialize changes stream for views since',
-                `"${String(updateViewsChangesConfiguration.since)}".`
+                'Initialize changes stream for views since "' +
+                String(updateMaterializedViewsChangesConfiguration.since) +
+                '".'
             )
 
-            couchdb.updateViewsChangesStream =
-                couchdb.connection.changes(updateViewsChangesConfiguration)
+            couchdb.updateMaterializedViewsChangesStream =
+                couchdb.connection.changes(
+                    updateMaterializedViewsChangesConfiguration
+                )
         }
 
         couchdb.changesStream =
@@ -1206,19 +1216,20 @@ export const postLoadService = (state: State): Promise<void> => {
         }
 
         void couchdb.changesStream.on('error', changesErrorHandler)
-        if (couchdb.updateViewsChangesStream)
-            void couchdb.updateViewsChangesStream.on(
+        if (couchdb.updateMaterializedViewsChangesStream)
+            void couchdb.updateMaterializedViewsChangesStream.on(
                 'error', changesErrorHandler
             )
 
         await pluginAPI.callStack<State<{
             changesStream: ChangesStream
-            updateViewsChangesStream?: ChangesStream
+            updateMaterializedViewsChangesStream?: ChangesStream
         }>>({
             ...state,
             data: {
                 changesStream: couchdb.changesStream,
-                updateViewsChangesStream: couchdb.updateViewsChangesStream
+                updateMaterializedViewsChangesStream:
+                    couchdb.updateMaterializedViewsChangesStream
             },
             hook: 'couchdbInitializeChangesStream'
         })
@@ -1247,8 +1258,8 @@ export const postLoadService = (state: State): Promise<void> => {
             }
         )
 
-        const updateViewLock = new Lock()
-        void couchdb.updateViewsChangesStream?.on(
+        const updateMaterializedViewsLock = new Lock()
+        void couchdb.updateMaterializedViewsChangesStream?.on(
             'change',
             async (change: ChangesResponseChange) => {
                 numberOfErrorsThrough = 0
@@ -1256,11 +1267,11 @@ export const postLoadService = (state: State): Promise<void> => {
                 for (const [id, viewConfiguration] of Object.entries(
                     configuration.views
                 )) {
-                    const viewDocument: Partial<ViewDocument> = {
+                    const viewDocument: Partial<MaterializedViewDocument> = {
                         [specialNames.id]: id
                     }
                     try {
-                        await updateViewLock.acquire(id)
+                        await updateMaterializedViewsLock.acquire(id)
                         let hasChanges = false
 
                         for (const [
@@ -1297,7 +1308,7 @@ export const postLoadService = (state: State): Promise<void> => {
                     } catch (error) {
                         console.warn('Updating view failed:', error)
                     } finally {
-                        void updateViewLock.release(id)
+                        void updateMaterializedViewsLock.release(id)
                     }
                 }
             }

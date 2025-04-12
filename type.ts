@@ -517,7 +517,7 @@ export interface CoreConfiguration<
     }
     numberOfParallelChangesRunner: number
 
-    updateViewsChangesStream: ChangesStreamOptions
+    updateMaterializedViewsChangesStream: ChangesStreamOptions
 
     connector: ConnectorConfiguration
     security: {
@@ -579,8 +579,8 @@ export interface CouchDB<Type extends object = Mapping<unknown>> {
     changesStream: ChangesStream
     lastChangesSequenceIdentifier?: number | string
 
-    updateViewsChangesStream?: ChangesStream
-    lastUpdateViewsChangesSequenceIdentifier?: number | string
+    updateMaterializedViewsChangesStream?: ChangesStream
+    lastUpdateMaterializedViewsChangesSequenceIdentifier?: number | string
 
     connection: Connection<Type>
     connector: Connector
@@ -910,7 +910,7 @@ export type User =
         password: string
         roles: Array<string>
     }
-export type ViewDocument = BaseDocument & Record<string, unknown>
+export type MaterializedViewDocument = BaseDocument & Record<string, unknown>
 /*
     Start and end time can be represented as number (of seconds) or an iso
     based datetime string.
