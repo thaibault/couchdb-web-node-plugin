@@ -565,7 +565,7 @@ export interface CoreConfiguration<
         roles: Array<string>
     }>
 
-    views: Mapping<Mapping<{
+    materializedViews: Mapping<Mapping<{
         query: PouchDB.Find.FindRequest<object>
         initialMapperExpression?: string
         updateExpression?: string
