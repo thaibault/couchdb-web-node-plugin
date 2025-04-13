@@ -35,17 +35,21 @@ import packageConfiguration from './package.json'
 import {
     AllowedModelRolesMapping,
     AllowedRoles,
-    BaseModel, BinaryRunner,
+    BaseModel,
+    BinaryRunner,
     Configuration,
-    Connection, ConnectorConfiguration,
+    Connection,
+    ConnectorConfiguration,
     CoreConfiguration,
     DatabaseConnectorConfiguration,
     DatabaseError,
     DatabasePlugin,
     DatabaseResponse,
+    DeleteIndexOptions,
     Document,
     FileSpecification,
     FullDocument,
+    Index,
     Model,
     ModelConfiguration,
     Models,
@@ -64,6 +68,40 @@ import {
 export const TOGGLE_LATEST_REVISION_DETERMINING =
     Symbol('toggleLatestRevisionDetermining')
 // region functions
+export const removeDeprecatedIndexes = async (
+    connection: Connection<object>,
+    models: Models,
+    modelConfiguration: ModelConfiguration
+) => {
+    const genericIndexes: Array<Index> =
+        (await connection.getIndexes()).indexes
+            .filter((index) =>
+                index.name.endsWith('-GenericIndex')
+            )
+
+    for (const index of genericIndexes) {
+        let exists = false
+        for (const [modelName, model] of Object.entries(models))
+            if (index.name.startsWith(`${modelName}-`)) {
+                for (
+                    const name of
+                    determineGenericIndexablePropertyNames(
+                        modelConfiguration, model
+                    )
+                )
+                    if ([
+                        `${modelName}-${name}-GenericIndex`,
+                        `${modelName}-GenericIndex`
+                    ].includes(index.name))
+                        exists = true
+
+                break
+            }
+
+        if (!exists)
+            await connection.deleteIndex(index as DeleteIndexOptions)
+    }
+}
 /**
  * Converts internal declarative database connector configuration object
  * into a database compatible one.
