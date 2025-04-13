@@ -960,6 +960,7 @@ export const loadService = async (
             genericIndexes.length === 0
         )
     ) {
+        // region create type & type + indexable property indexes
         for (const [modelName, model] of Object.entries(models))
             if ((new RegExp(
                 configuration.couchdb.model.property.name.typePattern.public
@@ -1002,7 +1003,8 @@ export const loadService = async (
                         genericIndexes.slice(position, 1)
                 }
             }
-
+        // endregion
+        // region remove deprecated indexes
         for (const index of genericIndexes) {
             let exists = false
             for (const [modelName, model] of Object.entries(models))
@@ -1027,11 +1029,12 @@ export const loadService = async (
                     index as DeleteIndexOptions
                 )
         }
+        // endregion
     }
     // endregion
-    // region create views
+    // region create materialized views
     for (const [id, viewConfiguration] of Object.entries(
-        configuration.couchdb.views
+        configuration.couchdb.materializedViews
     )) {
         const viewDocument: Partial<MaterializedViewDocument> = {
             [specialNames.type]: id,
@@ -1124,7 +1127,7 @@ export const postLoadService = (state: State): Promise<void> => {
             `"${String(changesConfiguration.since)}".`
         )
 
-        if (Object.keys(configuration.views).length) {
+        if (Object.keys(configuration.materializedViews).length) {
             const updateMaterializedViewsChangesConfiguration =
                 configuration.updateMaterializedViewsChangesStream
             if (
@@ -1139,7 +1142,7 @@ export const postLoadService = (state: State): Promise<void> => {
             const updateMaterializedViewsChangesConfigurationSelector =
                 {$and: [] as Array<PouchDB.Find.Selector>}
             for (const [id, viewConfiguration] of Object.entries(
-                configuration.views
+                configuration.materializedViews
             )) {
                 const orOperands: Array<PouchDB.Find.Selector> = []
                 updateMaterializedViewsChangesConfigurationSelector.$and.push(
@@ -1265,7 +1268,7 @@ export const postLoadService = (state: State): Promise<void> => {
                 numberOfErrorsThrough = 0
 
                 for (const [id, viewConfiguration] of Object.entries(
-                    configuration.views
+                    configuration.materializedViews
                 )) {
                     const viewDocument: Partial<MaterializedViewDocument> = {
                         [specialNames.id]: id
