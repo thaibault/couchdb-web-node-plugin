@@ -54,7 +54,7 @@ import {
     extendModels,
     getConnectorOptions,
     initializeConnection,
-    mayStripRepresentation
+    mayStripRepresentation, removeDeprecatedIndexes
 } from './helper'
 import {restart, start, stop} from './server'
 import {
@@ -63,7 +63,6 @@ import {
     Connection,
     Constraint,
     DatabaseError,
-    DeleteIndexOptions,
     Document,
     FullDocument,
     Index,
@@ -948,6 +947,10 @@ export const loadService = async (
     }
     // endregion
     // region create/remove needed/unneeded generic indexes
+    await removeDeprecatedIndexes(
+        couchdb.connection, models, configuration.couchdb.model
+    )
+
     const genericIndexes: Array<Index> = (
         await couchdb.connection.getIndexes()
     ).indexes
@@ -959,7 +962,7 @@ export const loadService = async (
             configuration.couchdb.model.autoMigrationPath ||
             genericIndexes.length === 0
         )
-    ) {
+    )
         // region create type & type + indexable property indexes
         for (const [modelName, model] of Object.entries(models))
             if ((new RegExp(
@@ -978,20 +981,16 @@ export const loadService = async (
                     )
                 ) {
                     const name = `${modelName}-${propertyName}-GenericIndex`
-                    let foundPosition = -1
-                    let position = 0
+                    let found = false
 
-                    for (const index of genericIndexes) {
+                    for (const index of genericIndexes)
                         if (index.name === name) {
-                            foundPosition = position
+                            found = true
 
                             break
                         }
 
-                        position += 1
-                    }
-
-                    if (foundPosition === -1)
+                    if (found)
                         await couchdb.connection.createIndex({
                             index: {
                                 ddoc: name,
@@ -999,38 +998,9 @@ export const loadService = async (
                                 name
                             }
                         })
-                    else
-                        genericIndexes.slice(position, 1)
                 }
             }
         // endregion
-        // region remove deprecated indexes
-        for (const index of genericIndexes) {
-            let exists = false
-            for (const [modelName, model] of Object.entries(models))
-                if (index.name.startsWith(`${modelName}-`)) {
-                    for (
-                        const name of
-                        determineGenericIndexablePropertyNames(
-                            configuration.couchdb.model, model
-                        )
-                    )
-                        if ([
-                            `${modelName}-${name}-GenericIndex`,
-                            `${modelName}-GenericIndex`
-                        ].includes(index.name))
-                            exists = true
-
-                    break
-                }
-
-            if (!exists)
-                await couchdb.connection.deleteIndex(
-                    index as DeleteIndexOptions
-                )
-        }
-        // endregion
-    }
     // endregion
     // region create materialized views
     for (const [id, viewConfiguration] of Object.entries(
