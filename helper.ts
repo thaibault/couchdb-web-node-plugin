@@ -20,7 +20,6 @@ import {
     extend,
     FirstParameter,
     format,
-    identity,
     isObject,
     globalContext,
     Mapping,
@@ -106,22 +105,33 @@ export const removeDeprecatedIndexes = async (
  * Converts internal declarative database connector configuration object
  * into a database compatible one.
  * @param configuration - Connector configuration object.
+ * @param abortSignalMapper - Maps request options to an abort controller to
+ * use for fetching.
  * @returns Database compatible configuration object.
  */
 export const getConnectorOptions = (
-    configuration: ConnectorConfiguration
+    configuration: ConnectorConfiguration,
+    abortSignalMapper?: Map<RequestInit, AbortSignal>
 ): DatabaseConnectorConfiguration => {
     /*
         NOTE: We convert given fetch options into a fetch function wrapper
         which is than accepted by pouchdb's api.
     */
-    const getOptions = configuration.fetch ?
-        (options?: RequestInit) => extend(
-            true,
-            copy(configuration.fetch),
-            options || {}
-        ) :
-        identity
+    const getOptions = (options: RequestInit = {}) => {
+        if (configuration.fetch)
+            options = extend(
+                true,
+                copy(configuration.fetch),
+                options
+            )
+
+        if (abortSignalMapper?.has(options)) {
+            options.signal = abortSignalMapper.get(options)
+            abortSignalMapper.delete(options)
+        }
+
+        return options
+    }
 
     const KNOWN_ERRORS = new Map([
         [408, 'Request Timeout'],
