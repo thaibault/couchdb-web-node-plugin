@@ -105,13 +105,13 @@ export const removeDeprecatedIndexes = async (
  * Converts internal declarative database connector configuration object
  * into a database compatible one.
  * @param configuration - Connector configuration object.
- * @param abortSignalMapper - Maps request options to an abort controller to
- * use for fetching.
+ * @param abortSignalStack - Stack to put abort signals to. They will be
+ * shifted and used for fetch calls.
  * @returns Database compatible configuration object.
  */
 export const getConnectorOptions = (
     configuration: ConnectorConfiguration,
-    abortSignalMapper?: Map<RequestInit, AbortSignal>
+    abortSignalStack?: Array<AbortSignal>
 ): DatabaseConnectorConfiguration => {
     /*
         NOTE: We convert given fetch options into a fetch function wrapper
@@ -125,10 +125,8 @@ export const getConnectorOptions = (
                 options
             )
 
-        if (abortSignalMapper?.has(options)) {
-            options.signal = abortSignalMapper.get(options)
-            abortSignalMapper.delete(options)
-        }
+        if (Array.isArray(abortSignalStack) && abortSignalStack.length > 0)
+            options.signal = abortSignalStack.shift()
 
         return options
     }
