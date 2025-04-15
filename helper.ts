@@ -126,7 +126,7 @@ export const getConnectorOptions = (
             )
 
         if (Array.isArray(abortSignalStack) && abortSignalStack.length > 0)
-            options.signal = abortSignalStack.shift()
+            options.signal = abortSignalStack.pop()
 
         return options
     }
