@@ -111,7 +111,7 @@ export const removeDeprecatedIndexes = async (
  */
 export const getConnectorOptions = (
     configuration: ConnectorConfiguration,
-    abortSignalStack?: Array<AbortSignal>
+    abortSignalStack?: Array<AbortController>
 ): DatabaseConnectorConfiguration => {
     /*
         NOTE: We convert given fetch options into a fetch function wrapper
@@ -126,7 +126,7 @@ export const getConnectorOptions = (
             )
 
         if (Array.isArray(abortSignalStack) && abortSignalStack.length > 0)
-            options.signal = abortSignalStack.shift()
+            options.signal = abortSignalStack.shift()?.signal
 
         return options
     }
