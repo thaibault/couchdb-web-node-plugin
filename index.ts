@@ -990,7 +990,7 @@ export const loadService = async (
                             break
                         }
 
-                    if (found)
+                    if (!found)
                         await couchdb.connection.createIndex({
                             index: {
                                 ddoc: name,
