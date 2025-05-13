@@ -782,6 +782,8 @@ export interface CommonScope<
 
     parentNames: Array<string>
     pathDescription: string
+
+    updateStrategy: UpdateStrategy
 }
 export interface PropertyScope<
     ObjectType extends object,
@@ -807,8 +809,6 @@ export interface PropertyScope<
     >,
 
     attachmentsTarget?: Mapping<AttachmentType | null>
-
-    updateStrategy: UpdateStrategy
 }
 //// endregion
 export interface EvaluationResult<

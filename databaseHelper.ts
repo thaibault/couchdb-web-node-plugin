@@ -1542,7 +1542,9 @@ export const validateDocumentUpdate = <
                                 oldDocument: localOldDocument,
 
                                 parentNames,
-                                pathDescription
+                                pathDescription,
+
+                                updateStrategy
                             }
                         ).result
                     } catch (error) {
@@ -1620,7 +1622,9 @@ export const validateDocumentUpdate = <
                             oldDocument: localOldDocument,
 
                             parentNames,
-                            pathDescription
+                            pathDescription,
+
+                            updateStrategy
                         }
                     ).result
                 } catch (error) {
@@ -2308,7 +2312,9 @@ export const validateDocumentUpdate = <
                                 oldDocument: localOldDocument,
 
                                 parentNames,
-                                pathDescription
+                                pathDescription,
+
+                                updateStrategy
                             }
                         )
                     } catch (error) {
