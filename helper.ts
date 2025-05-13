@@ -643,7 +643,9 @@ export const determineGenericIndexablePropertyNames = (
                         specialNames.revisions,
                         specialNames.revisionsInformation,
 
-                        specialNames.type
+                        specialNames.type,
+
+                        specialNames.updateStrategy
                     ).includes(name) ||
                     specification.type &&
                     (
