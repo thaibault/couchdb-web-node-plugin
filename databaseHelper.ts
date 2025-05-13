@@ -370,17 +370,26 @@ export const validateDocumentUpdate = <
 
     const specialPropertyNames: Array<keyof BaseModelType> = [
         specialNames.additional,
+
         specialNames.allowedRole,
+
         specialNames.constraint.execution,
         specialNames.constraint.expression,
+
         specialNames.create.execution,
         specialNames.create.expression,
+
         specialNames.extend,
+
         specialNames.maximumAggregatedSize,
         specialNames.minimumAggregatedSize,
+
         specialNames.oldType,
+
         specialNames.update.execution,
-        specialNames.update.expression
+        specialNames.update.expression,
+
+        specialNames.updateStrategy
     ]
     // region functions
     /// region generic functions
@@ -670,16 +679,16 @@ export const validateDocumentUpdate = <
         const model: ModelType = models[modelName]
 
         if (Object.prototype.hasOwnProperty.call(
-            model, specialNames.strategy
+            model, specialNames.updateStrategy
         ))
             updateStrategy =
-                model[specialNames.strategy] as UpdateStrategy
+                model[specialNames.updateStrategy] as UpdateStrategy
         if (Object.prototype.hasOwnProperty.call(
-            newDocument, specialNames.strategy
+            newDocument, specialNames.updateStrategy
         )) {
             updateStrategy =
-                localNewDocument[specialNames.strategy] as UpdateStrategy
-            delete localNewDocument[specialNames.strategy]
+                localNewDocument[specialNames.updateStrategy] as UpdateStrategy
+            delete localNewDocument[specialNames.updateStrategy]
         }
 
         let additionalPropertySpecification:(
@@ -1960,7 +1969,7 @@ export const validateDocumentUpdate = <
                     specialNames.localSequence,
                     specialNames.revisions,
                     specialNames.revisionsInformation,
-                    specialNames.strategy
+                    specialNames.updateStrategy
                 ).includes(name as keyof BaseModelType)
             ) {
                 let propertySpecification:(
@@ -2766,18 +2775,33 @@ export const validateDocumentUpdate = <
         )
             delete localOldDocument[specialNames.attachment]
 
-        if (
-            changedPath.length === 0 &&
-            localOldDocument &&
-            updateStrategy === 'migrate'
-        )
-            for (const name of Object.keys(localOldDocument))
-                if (!Object.prototype.hasOwnProperty.call(
-                    localNewDocument, name
-                ))
-                    changedPath = parentNames.concat(
-                        name, 'migrate removed property'
-                    )
+        if (localOldDocument) {
+            // region fill up old additional properties if desired
+            if (
+                additionalPropertySpecification &&
+                (
+                    additionalPropertySpecification.updateStrategy ||
+                    updateStrategy
+                ) === 'fillUp'
+            )
+                for (const name of Object.keys(localOldDocument))
+                    if (!Object.prototype.hasOwnProperty.call(
+                        localNewDocument, name
+                    ))
+                        (
+                            localNewDocument as
+                                Mapping<AdditionalPropertiesType>
+                        )[name] = localOldDocument[name]
+            // endregion
+            if (changedPath.length === 0 && updateStrategy === 'migrate')
+                for (const name of Object.keys(localOldDocument))
+                    if (!Object.prototype.hasOwnProperty.call(
+                        localNewDocument, name
+                    ))
+                        changedPath = parentNames.concat(
+                            name, 'migrate removed property'
+                        )
+        }
 
         return {changedPath, newDocument: localNewDocument}
     }

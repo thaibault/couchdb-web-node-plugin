@@ -371,7 +371,7 @@ export interface SpecialPropertyNames {
     revision: '_rev'
     revisions: '_revisions'
     revisionsInformation: '_revs_info'
-    strategy: '_updateStrategy'
+    updateStrategy: '_updateStrategy'
     type: '-type'
 
     constraint: {

@@ -119,7 +119,7 @@ describe('databaseHelper', () => {
         let only = false
         let skip = false
         const defaultModelConfiguration: ModelConfiguration = {
-            // Numbers are date cross implementation save.
+            // Numbers are safe across different implementations.
             ...copy(configuration.couchdb.model),
             dateTimeFormat: 'number',
             updateStrategy
@@ -233,7 +233,7 @@ describe('databaseHelper', () => {
                 [
                     {
                         [typeName]: 'Test',
-                        [specialNames.strategy]: 'migrate'
+                        [specialNames.updateStrategy]: 'migrate'
                     },
                     {[typeName]: 'Test'}
                 ],
@@ -248,7 +248,7 @@ describe('databaseHelper', () => {
                 [
                     {
                         [typeName]: 'Test',
-                        [specialNames.strategy]: 'migrate',
+                        [specialNames.updateStrategy]: 'migrate',
                         a: ''
                     },
                     {[typeName]: 'Test', a: ''}
@@ -260,7 +260,7 @@ describe('databaseHelper', () => {
                 [
                     {
                         [typeName]: 'Test',
-                        [specialNames.strategy]: 'migrate',
+                        [specialNames.updateStrategy]: 'migrate',
                         a: ''
                     },
                     {[typeName]: 'Test'}
@@ -271,7 +271,7 @@ describe('databaseHelper', () => {
             [
                 [
                     {
-                        [specialNames.strategy]: 'migrate',
+                        [specialNames.updateStrategy]: 'migrate',
                         [typeName]: 'Test'
                     },
                     {[typeName]: 'Test'}
@@ -1934,7 +1934,7 @@ describe('databaseHelper', () => {
                 ],
                 modelConfiguration,
                 models
-            )).toStrictEqual((expected)[updateStrategy])
+            )).toStrictEqual(expected[updateStrategy])
         }
         const adaptTests = (tests: Array<AllowedTest>): Array<AllowedTest> =>
             /*
@@ -2023,7 +2023,7 @@ describe('databaseHelper', () => {
                 [{
                     a: 2,
                     [typeName]: 'Test',
-                    [specialNames.strategy]: 'migrate'
+                    [specialNames.updateStrategy]: 'migrate'
                 }],
                 {entities: {Test: {}}},
                 {
@@ -2147,13 +2147,14 @@ describe('databaseHelper', () => {
                 {
                     entities: {
                         Test: {
+                            _updateStrategy: 'replace',
                             [specialNames.additional]: {type: 'any'}
                         }
                     }
                 },
                 {
                     fillUp: {[typeName]: 'Test', a: 1},
-                    incremental: {a: 1},
+                    incremental: {[typeName]: 'Test', a: 1},
                     replace: {[typeName]: 'Test', a: 1}
                 }
             ],
@@ -2173,8 +2174,8 @@ describe('databaseHelper', () => {
                 },
                 {
                     fillUp: {[typeName]: 'Test', a: 1, b: 2},
-                    incremental: {a: 1},
-                    replace: {[typeName]: 'Test', a: 1}
+                    incremental: {[typeName]: 'Test', a: 1, b: 2},
+                    replace: {[typeName]: 'Test', a: 1, b: 2}
                 }
             ]
         ]))(

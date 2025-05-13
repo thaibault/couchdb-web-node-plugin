@@ -204,7 +204,7 @@ export const preLoadService = async ({
         const checkPublicModelType = Boolean(options.checkPublicModelType)
         document = copy(document)
 
-        document[configuration.model.property.name.special.strategy] =
+        document[configuration.model.property.name.special.updateStrategy] =
             'migrate'
 
         if (options.type)
@@ -840,7 +840,8 @@ export const loadService = async (
                 const document = retrievedDocument.doc as FullDocument
                 let newDocument: FullDocument = copy(document)
                 newDocument[
-                    configuration.couchdb.model.property.name.special.strategy
+                    configuration.couchdb.model.property.name.special
+                        .updateStrategy
                 ] = 'migrate'
 
                 for (const name of Object.keys(migrators).sort()) {
