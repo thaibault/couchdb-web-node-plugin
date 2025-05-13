@@ -119,7 +119,7 @@ describe('databaseHelper', () => {
         let only = false
         let skip = false
         const defaultModelConfiguration: ModelConfiguration = {
-            // Numbers are date cross implementation save.
+            // Numbers are safe across different implementations.
             ...copy(configuration.couchdb.model),
             dateTimeFormat: 'number',
             updateStrategy
@@ -233,7 +233,7 @@ describe('databaseHelper', () => {
                 [
                     {
                         [typeName]: 'Test',
-                        [specialNames.strategy]: 'migrate'
+                        [specialNames.updateStrategy]: 'migrate'
                     },
                     {[typeName]: 'Test'}
                 ],
@@ -248,7 +248,7 @@ describe('databaseHelper', () => {
                 [
                     {
                         [typeName]: 'Test',
-                        [specialNames.strategy]: 'migrate',
+                        [specialNames.updateStrategy]: 'migrate',
                         a: ''
                     },
                     {[typeName]: 'Test', a: ''}
@@ -260,7 +260,7 @@ describe('databaseHelper', () => {
                 [
                     {
                         [typeName]: 'Test',
-                        [specialNames.strategy]: 'migrate',
+                        [specialNames.updateStrategy]: 'migrate',
                         a: ''
                     },
                     {[typeName]: 'Test'}
@@ -271,7 +271,7 @@ describe('databaseHelper', () => {
             [
                 [
                     {
-                        [specialNames.strategy]: 'migrate',
+                        [specialNames.updateStrategy]: 'migrate',
                         [typeName]: 'Test'
                     },
                     {[typeName]: 'Test'}
@@ -1934,7 +1934,7 @@ describe('databaseHelper', () => {
                 ],
                 modelConfiguration,
                 models
-            )).toStrictEqual((expected)[updateStrategy])
+            )).toStrictEqual(expected[updateStrategy])
         }
         const adaptTests = (tests: Array<AllowedTest>): Array<AllowedTest> =>
             /*
@@ -2023,7 +2023,7 @@ describe('databaseHelper', () => {
                 [{
                     a: 2,
                     [typeName]: 'Test',
-                    [specialNames.strategy]: 'migrate'
+                    [specialNames.updateStrategy]: 'migrate'
                 }],
                 {entities: {Test: {}}},
                 {
@@ -2147,16 +2147,35 @@ describe('databaseHelper', () => {
                 {
                     entities: {
                         Test: {
-                            [specialNames.additional]: {
-                                type: 'any'
-                            }
+                            _updateStrategy: 'replace',
+                            [specialNames.additional]: {type: 'any'}
                         }
                     }
                 },
                 {
                     fillUp: {[typeName]: 'Test', a: 1},
-                    incremental: {a: 1},
+                    incremental: {[typeName]: 'Test', a: 1},
                     replace: {[typeName]: 'Test', a: 1}
+                }
+            ],
+            /*
+                Only explicitly specified properties should be automatically
+                filled up from old documents except we defined it differently.
+            */
+            [
+                [{[typeName]: 'Test', a: 1}, {[typeName]: 'Test', b: 2}],
+                {
+                    entities: {
+                        Test: {
+                            _updateStrategy: 'fillUp',
+                            [specialNames.additional]: {type: 'any'}
+                        }
+                    }
+                },
+                {
+                    fillUp: {[typeName]: 'Test', a: 1, b: 2},
+                    incremental: {[typeName]: 'Test', a: 1, b: 2},
+                    replace: {[typeName]: 'Test', a: 1, b: 2}
                 }
             ]
         ]))(

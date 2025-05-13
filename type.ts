@@ -174,12 +174,7 @@ export interface BasePropertySpecification<
     Type, AdditionalSpecifications extends object
 > {
     allowedRoles?: AllowedRoles
-    /*
-        Properties annotated with "ignoreFillUp" and when update strategy is
-        set to "fillUp" will not be filled up with old documents data when
-        processing an update.
-    */
-    ignoreFillUp?: boolean
+    updateStrategy?: UpdateStrategy
     // region expression
     arrayConstraintExecution?: Constraint
     arrayConstraintExpression?: Constraint
@@ -290,6 +285,8 @@ export interface BaseModel<
 
     _id: PropertySpecification<string, AdditionalSpecifications>
     _rev: PropertySpecification<string, AdditionalSpecifications>
+
+    _updateStrategy?: UpdateStrategy
 }
 export type Model<
     Type extends object | undefined = object,
@@ -374,7 +371,7 @@ export interface SpecialPropertyNames {
     revision: '_rev'
     revisions: '_revisions'
     revisionsInformation: '_revs_info'
-    strategy: '_updateStrategy'
+    updateStrategy: '_updateStrategy'
     type: '-type'
 
     constraint: {
@@ -752,8 +749,6 @@ export interface BasicScope<
 
     securitySettings: Partial<SecuritySettings>
 
-    updateStrategy: UpdateStrategy
-
     userContext: Partial<UserContext>
 }
 export interface CommonScope<
@@ -812,6 +807,8 @@ export interface PropertyScope<
     >,
 
     attachmentsTarget?: Mapping<AttachmentType | null>
+
+    updateStrategy: UpdateStrategy
 }
 //// endregion
 export interface EvaluationResult<
