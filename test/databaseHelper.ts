@@ -2147,14 +2147,32 @@ describe('databaseHelper', () => {
                 {
                     entities: {
                         Test: {
-                            [specialNames.additional]: {
-                                type: 'any'
-                            }
+                            [specialNames.additional]: {type: 'any'}
                         }
                     }
                 },
                 {
                     fillUp: {[typeName]: 'Test', a: 1},
+                    incremental: {a: 1},
+                    replace: {[typeName]: 'Test', a: 1}
+                }
+            ],
+            /*
+                Only explicitly specified properties should be automatically
+                filled up from old documents except we defined it differently.
+            */
+            [
+                [{[typeName]: 'Test', a: 1}, {[typeName]: 'Test', b: 2}],
+                {
+                    entities: {
+                        Test: {
+                            _updateStrategy: 'fillUp',
+                            [specialNames.additional]: {type: 'any'}
+                        }
+                    }
+                },
+                {
+                    fillUp: {[typeName]: 'Test', a: 1, b: 2},
                     incremental: {a: 1},
                     replace: {[typeName]: 'Test', a: 1}
                 }

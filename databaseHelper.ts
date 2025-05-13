@@ -340,17 +340,9 @@ export const validateDocumentUpdate = <
         else
             delete (newDocument as Partial<Document>)[revisionName]
 
-    let updateStrategy = modelConfiguration.updateStrategy
-    if (Object.prototype.hasOwnProperty.call(
-        newDocument, specialNames.strategy
-    )) {
-        updateStrategy = newDocument[specialNames.strategy] as UpdateStrategy
-        delete newDocument[specialNames.strategy]
-    }
-
     /// region collect old model types to migrate.
     const oldModelMapping: Mapping = {}
-    if (updateStrategy === 'migrate')
+    if (modelConfiguration.updateStrategy === 'migrate')
         for (const [name, model] of Object.entries(models))
             if (
                 Object.prototype.hasOwnProperty.call(
@@ -615,7 +607,7 @@ export const validateDocumentUpdate = <
         localNewDocument: PartialFullDocumentType = newDocument,
         localOldDocument: null | PartialFullDocumentType = null,
         parentNames: Array<string> = [],
-        ignoreFillUp = false
+        updateStrategy: UpdateStrategy = modelConfiguration.updateStrategy
     ): CheckedDocumentResult<ObjectType, AdditionalPropertiesType> => {
         const pathDescription =
             parentNames.length ? ` in ${parentNames.join(' -> ')}` : ''
@@ -676,6 +668,20 @@ export const validateDocumentUpdate = <
 
         let modelName = localNewDocument[typeName] as string
         const model: ModelType = models[modelName]
+
+        if (Object.prototype.hasOwnProperty.call(
+            model, specialNames.strategy
+        ))
+            updateStrategy =
+                model[specialNames.strategy] as UpdateStrategy
+        if (Object.prototype.hasOwnProperty.call(
+            newDocument, specialNames.strategy
+        )) {
+            updateStrategy =
+                localNewDocument[specialNames.strategy] as UpdateStrategy
+            delete localNewDocument[specialNames.strategy]
+        }
+
         let additionalPropertySpecification:(
             PropertySpecification<
                 AdditionalPropertiesType, AdditionalSpecifications
@@ -702,6 +708,9 @@ export const validateDocumentUpdate = <
                 'constraintExecution', 'constraintExpression'
             ]
         ) => {
+            const localUpdateStrategy: UpdateStrategy =
+                propertySpecification.updateStrategy || updateStrategy
+
             for (const type of types)
                 if (Object.prototype.hasOwnProperty.call(
                     propertySpecification, type
@@ -748,7 +757,9 @@ export const validateDocumentUpdate = <
                                 parentNames,
                                 pathDescription,
 
-                                propertySpecification
+                                propertySpecification,
+
+                                updateStrategy: localUpdateStrategy
                             }
                         )
                     } catch (error) {
@@ -826,9 +837,11 @@ export const validateDocumentUpdate = <
             propertySpecification: PropertySpecification<
                 Type, AdditionalSpecifications
             >,
-            oldValue?: Type,
-            ignoreFillUp = false
+            oldValue?: Type
         ): CheckedPropertyResult<Type> => {
+            const localUpdateStrategy: UpdateStrategy =
+                propertySpecification.updateStrategy || updateStrategy
+
             let changedPath: Array<string> = []
             // region type
             const types = ([] as Array<TypeSpecification>).concat(
@@ -858,7 +871,7 @@ export const validateDocumentUpdate = <
                         ) &&
                         (newValue as PartialFullDocumentType)[typeName] !==
                             type &&
-                        updateStrategy === 'migrate' &&
+                        localUpdateStrategy === 'migrate' &&
                         types.length === 1
                     ) {
                         /*
@@ -882,7 +895,7 @@ export const validateDocumentUpdate = <
                             newValue as PartialFullDocumentType,
                             oldValue as null | PartialFullDocumentType,
                             parentNames.concat(String(name)),
-                            ignoreFillUp || propertySpecification.ignoreFillUp
+                            localUpdateStrategy
                         )
                         if (result.changedPath.length)
                             changedPath = result.changedPath
@@ -1141,6 +1154,8 @@ export const validateDocumentUpdate = <
                 name: PropertyName,
                 pathDescription: string
             ): boolean => {
+            const localUpdateStrategy: UpdateStrategy =
+                propertySpecification.updateStrategy || updateStrategy
             const value = newDocument[name] as Type
             // region writable
             if (!propertySpecification.writable)
@@ -1152,7 +1167,8 @@ export const validateDocumentUpdate = <
                         serialize(value) === serialize(oldDocument[name])
                     ) {
                         if (
-                            name !== idName && updateStrategy === 'incremental'
+                            name !== idName &&
+                            localUpdateStrategy === 'incremental'
                         )
                             delete newDocument[name]
 
@@ -1177,7 +1193,7 @@ export const validateDocumentUpdate = <
             )
                 if (serialize(value) === serialize(oldDocument[name])) {
                     if (
-                        updateStrategy === 'incremental' &&
+                        localUpdateStrategy === 'incremental' &&
                         !modelConfiguration.property.name.reserved.concat(
                             specialNames.deleted, idName, revisionName
                         ).includes(String(name))
@@ -1185,7 +1201,7 @@ export const validateDocumentUpdate = <
                         delete newDocument[name]
 
                     return true
-                } else if (updateStrategy !== 'migrate')
+                } else if (localUpdateStrategy !== 'migrate')
                     throwError(
                         `Immutable: Property "${String(name)}" is not ` +
                         `writable (old document "${serialize(oldDocument)}")` +
@@ -1196,7 +1212,7 @@ export const validateDocumentUpdate = <
             if (value === null)
                 if (propertySpecification.nullable) {
                     if (
-                        updateStrategy !== 'incremental' ||
+                        localUpdateStrategy !== 'incremental' ||
                         !oldDocument ||
                         oldDocument[name] === undefined
                     )
@@ -1229,6 +1245,8 @@ export const validateDocumentUpdate = <
             name: (keyof Attachments) | (keyof PartialFullDocumentType),
             attachmentsTarget?: Attachments
         ) => {
+            const localUpdateStrategy =
+                propertySpecification.updateStrategy || updateStrategy
             if (!oldDocument)
                 for (const type of [
                     'onCreateExecution', 'onCreateExpression'
@@ -1281,7 +1299,9 @@ export const validateDocumentUpdate = <
                                     parentNames,
                                     pathDescription,
 
-                                    propertySpecification
+                                    propertySpecification,
+
+                                    updateStrategy: localUpdateStrategy
                                 }
                             )
                         } catch (error) {
@@ -1340,6 +1360,9 @@ export const validateDocumentUpdate = <
             name: (keyof Attachments) | (keyof PartialFullDocumentType),
             attachmentsTarget?: Attachments
         ) => {
+            const localUpdateStrategy =
+                propertySpecification.updateStrategy || updateStrategy
+
             if (!attachmentsTarget) {
                 if (!Object.prototype.hasOwnProperty.call(newDocument, name))
                     return
@@ -1409,7 +1432,9 @@ export const validateDocumentUpdate = <
                                 parentNames,
                                 pathDescription,
 
-                                propertySpecification
+                                propertySpecification,
+
+                                updateStrategy: localUpdateStrategy
                             }
                         )
 
@@ -1728,6 +1753,9 @@ export const validateDocumentUpdate = <
                         PropertySpecification<
                             AttachmentType, AdditionalSpecifications
                         >
+                    updateStrategy =
+                        propertySpecification.updateStrategy ||
+                        updateStrategy
 
                     for (const fileName of newFileNames)
                         runCreatePropertyHook<AttachmentType>(
@@ -1812,6 +1840,8 @@ export const validateDocumentUpdate = <
                 ) as PropertySpecification<
                     ValueOf<ObjectType>, AdditionalSpecifications
                 >
+                updateStrategy =
+                    propertySpecification.updateStrategy || updateStrategy
 
                 runCreatePropertyHook<ValueOf<ObjectType>>(
                     propertySpecification,
@@ -1849,7 +1879,6 @@ export const validateDocumentUpdate = <
                         )
 
                     if (
-                        !(ignoreFillUp || propertySpecification.ignoreFillUp) &&
                         (
                             !Object.prototype.hasOwnProperty.call(
                                 localNewDocument, name
@@ -1870,10 +1899,6 @@ export const validateDocumentUpdate = <
                 } else if (!isDefinedPropertyValue(name, localNewDocument))
                     if (localOldDocument) {
                         if (
-                            !(
-                                ignoreFillUp ||
-                                propertySpecification.ignoreFillUp
-                            ) &&
                             localNewDocument[name] !== null &&
                             updateStrategy === 'fillUp'
                         )
@@ -2156,9 +2181,7 @@ export const validateDocumentUpdate = <
                             value as ValueOf<ObjectType>,
                             `${String(index + 1)}. value in ${String(name)}`,
                             propertySpecificationCopy,
-                            undefined,
-                            ignoreFillUp ||
-                            propertySpecificationCopy.ignoreFillUp
+                            undefined
                         ).newValue as DocumentContent
                         if ([null, undefined].includes(
                             newProperty[index] as null
@@ -2203,8 +2226,7 @@ export const validateDocumentUpdate = <
                             propertySpecification as PropertySpecification<
                                 ValueOf<ObjectType>, AdditionalSpecifications
                             >,
-                            oldValue as ValueOf<ObjectType>,
-                            ignoreFillUp || propertySpecification.ignoreFillUp
+                            oldValue as ValueOf<ObjectType>
                         )
 
                     localNewDocument[name] = result.newValue as
@@ -2790,8 +2812,6 @@ export const validateDocumentUpdate = <
         nowUTCTimestamp,
 
         securitySettings,
-
-        updateStrategy,
 
         userContext
     }
