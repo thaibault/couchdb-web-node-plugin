@@ -1826,8 +1826,7 @@ export const validateDocumentUpdate = <
                                 const fileName in propertySpecification.default
                             )
                                 if (Object.prototype.hasOwnProperty.call(
-                                    propertySpecification.default,
-                                    fileName
+                                    propertySpecification.default, fileName
                                 )) {
                                     newAttachments[fileName] =
                                         propertySpecification.default[
@@ -1928,12 +1927,14 @@ export const validateDocumentUpdate = <
                         localNewDocument[name] =
                             propertySpecification.default as
                                 typeof localNewDocument[keyof ObjectType]
+
                         changedPath = changedPath.concat(
                             String(name), 'add default value'
                         )
                     }
             }
             // endregion
+
         // region check given data
         /// region remove new data which already exists
         if (localOldDocument && updateStrategy === 'incremental')
