@@ -708,7 +708,7 @@ export const loadService = async (
                         'constraintExecution'
                     ] as const)
                         if (isObject(specification)) {
-                            const constraint:(Constraint | null | undefined) =
+                            const constraint: (Constraint | null | undefined) =
                                 (specification as PropertySpecification)[
                                     type
                                 ]
