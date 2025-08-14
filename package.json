@@ -149,11 +149,11 @@
             "__evaluate__": "60 ** 2 * 24 * 14"
           },
           "chttpd/require_valid_user": true,
-          "httpd/allow_jsonp": true,
+          "httpd/allow_jsonp": false,
           "httpd/bind_address": {
             "__evaluate__": "self.couchdb.backend.configuration['httpd/host']"
           },
-          "httpd/enable_cors": true,
+          "httpd/enable_cors": false,
           "httpd/host": "0.0.0.0",
           "httpd/port": 5984,
           "log/file": "/dev/stdout",
