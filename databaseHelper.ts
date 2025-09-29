@@ -826,10 +826,9 @@ export const validateDocumentUpdate = <
                                 )(...Object.values(result.scope) as
                                     Array<unknown>
                                 ) as string :
-                                `Property "${String(name)}" should ` +
-                                `satisfy constraint "${result.code}" (` +
-                                `given "${serialize(newValue)}")` +
-                                `${pathDescription}.`
+                                `Property "${name}" should satisfy ` +
+                                `constraint "${result.code}" (given ` +
+                                `"${serialize(newValue)}")${pathDescription}.`
                                 /*
                                     eslint-enable
                                     @typescript-eslint/no-implied-eval,
@@ -889,7 +888,8 @@ export const validateDocumentUpdate = <
                         */
                         (newValue as PartialFullDocumentType)[typeName] = type
                         changedPath = parentNames.concat(
-                            String(name), 'migrate nested object type')
+                            name, 'migrate nested object type'
+                        )
                     }
                     if (
                         typeof newValue === 'object' &&
@@ -903,7 +903,7 @@ export const validateDocumentUpdate = <
                         const result = checkDocument(
                             newValue as PartialFullDocumentType,
                             oldValue as null | PartialFullDocumentType,
-                            parentNames.concat(String(name)),
+                            parentNames.concat(name),
                             localUpdateStrategy
                         )
                         if (result.changedPath.length)
@@ -916,10 +916,9 @@ export const validateDocumentUpdate = <
                         break
                     } else if (types.length === 1)
                         throwError(
-                            `NestedType: Under key "${String(name)}" isn't ` +
-                            `of type "${type}" (given ` +
-                            `"${serialize(newValue)}" of type ` +
-                            `${typeof newValue})${pathDescription}.`
+                            `NestedType: Under key "${name}" isn't of type ` +
+                            `"${type}" (given "${serialize(newValue)}" of ` +
+                            `type ${typeof newValue})${pathDescription}.`
                         )
                 } else if (type === 'DateTime') {
                     const initialNewValue: unknown = newValue
@@ -936,8 +935,8 @@ export const validateDocumentUpdate = <
                     ) {
                         if (types.length === 1)
                             throwError(
-                                `PropertyType: Property "${String(name)}" ` +
-                                `isn't of (valid) type "DateTime" (given "` +
+                                `PropertyType: Property "${name}" isn't of ` +
+                                `(valid) type "DateTime" (given "` +
                                 (
                                     serialize(initialNewValue)
                                         .replace(/^"/, '')
@@ -962,8 +961,8 @@ export const validateDocumentUpdate = <
                     ) {
                         if (types.length === 1)
                             throwError(
-                                `PropertyType: Property "${String(name)}" ` +
-                                `isn't of (valid) type "${type}" (given ` +
+                                `PropertyType: Property "${name}" isn't of ` +
+                                `(valid) type "${type}" (given ` +
                                 `"${serialize(newValue)}" of type ` +
                                 `"${typeof newValue}")${pathDescription}.`
                             )
@@ -982,9 +981,8 @@ export const validateDocumentUpdate = <
                         break
                     } else if (types.length === 1)
                         throwError(
-                            `PropertyType: Foreign key property ` +
-                            `"${String(name)}" isn't of type ` +
-                            `"${foreignKeyType}" (given ` +
+                            `PropertyType: Foreign key property "${name}" ` +
+                            `isn't of type "${foreignKeyType}" (given ` +
                             `"${serialize(newValue)}" of type ` +
                             `"${typeof newValue}")${pathDescription}.`
                         )
@@ -995,9 +993,8 @@ export const validateDocumentUpdate = <
                     break
                 } else if (types.length === 1)
                     throwError(
-                        'PropertyType: Property ' +
-                        `"${String(name)}" isn't value "${String(type)}" ` +
-                        `(given "` +
+                        `PropertyType: Property "${name}" isn't value ` +
+                        `"${String(type)}" (given "` +
                         serialize(newValue)
                             .replace(/^"/, '')
                             .replace(/"$/, '') +
@@ -1006,7 +1003,7 @@ export const validateDocumentUpdate = <
             if (!typeMatched)
                 throwError(
                     'PropertyType: None of the specified types "' +
-                    `${types.join('", "')}" for property "${String(name)}" ` +
+                    `${types.join('", "')}" for property "${name}" ` +
                     `matches value "` +
                     serialize(newValue)
                         .replace(/^"/, '')
@@ -1022,8 +1019,8 @@ export const validateDocumentUpdate = <
                     newValue.length < propertySpecification.minimumLength
                 )
                     throwError(
-                        `MinimalLength: Property "${String(name)}" ` +
-                        'must have minimal length ' +
+                        `MinimalLength: Property "${name}" must have ` +
+                        'minimal length ' +
                         (propertySpecification.minimumLength as
                             unknown as
                             string
@@ -1037,8 +1034,8 @@ export const validateDocumentUpdate = <
                     newValue.length > propertySpecification.maximumLength
                 )
                     throwError(
-                        `MaximalLength: Property "${String(name)}" must ` +
-                        'have maximal length ' +
+                        `MaximalLength: Property "${name}" must have ` +
+                        'maximal length ' +
                         (
                             propertySpecification.maximumLength as
                                 unknown as
@@ -1055,7 +1052,7 @@ export const validateDocumentUpdate = <
                     newValue < propertySpecification.minimum
                 )
                     throwError(
-                        `Minimum: Property "${String(name)}" (type ` +
+                        `Minimum: Property "${name}" (type ` +
                         `${propertySpecification.type as string}) must ` +
                         'satisfy a minimum of ' +
                         (
@@ -1071,7 +1068,7 @@ export const validateDocumentUpdate = <
                     newValue > propertySpecification.maximum
                 )
                     throwError(
-                        `Maximum: Property "${String(name)}" (type ` +
+                        `Maximum: Property "${name}" (type ` +
                         `${propertySpecification.type as string}) must ` +
                         `satisfy a maximum of ` +
                         (
@@ -1105,7 +1102,7 @@ export const validateDocumentUpdate = <
 
                 if (!selection.includes(newValue))
                     throwError(
-                        `Selection: Property "${String(name)}" (type ` +
+                        `Selection: Property "${name}" (type ` +
                         `${propertySpecification.type as string}) should be ` +
                         `one of "${selection.join('", "')}". But is ` +
                         `"${newValue as string}"${pathDescription}.`
@@ -1125,7 +1122,7 @@ export const validateDocumentUpdate = <
                     }
                 if (!matched)
                     throwError(
-                        `PatternMatch: Property "${String(name)}" should ` +
+                        `PatternMatch: Property "${name}" should ` +
                         'match regular expression pattern ' +
                         `"${patterns.join('", "')}" (given ` +
                         `"${newValue as string}")${pathDescription}.`
@@ -1137,10 +1134,10 @@ export const validateDocumentUpdate = <
                 ).concat(propertySpecification.invertedPattern))
                     if (new RegExp(pattern).test(newValue as string))
                         throwError(
-                            'InvertedPatternMatch: Property ' +
-                            `"${String(name)}" should not match regular ` +
-                            `expression pattern ${String(pattern)} (given ` +
-                            `"${newValue as string}")${pathDescription}.`
+                            `InvertedPatternMatch: Property "${name}" ` +
+                            'should not match regular expression pattern ' +
+                            `${String(pattern)} (given ` +
+                            `"${String(newValue)}")${pathDescription}.`
                         )
             // endregion
             checkPropertyConstraints<Type>(
@@ -1148,7 +1145,7 @@ export const validateDocumentUpdate = <
             )
 
             if (serialize(newValue) !== serialize(oldValue))
-                changedPath = parentNames.concat(String(name), 'value updated')
+                changedPath = parentNames.concat(name, 'value updated')
 
             return {newValue, changedPath}
         }
@@ -1751,14 +1748,14 @@ export const validateDocumentUpdate = <
                                         StubAttachment
                                     ).digest)
                                 ) &&
-                                Boolean(fileNameMatchesModelType(
+                                fileNameMatchesModelType(
                                     type,
                                     fileName,
                                     property as FileSpecification<
                                         AttachmentType,
                                         AdditionalSpecifications
                                     >
-                                ))
+                                )
                             )
                     }
 
