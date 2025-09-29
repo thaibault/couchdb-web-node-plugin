@@ -50,7 +50,7 @@ import {
     PropertySpecification,
     RuntimeErrorData,
     SecuritySettings,
-    SelectionMapping,
+    SelectionOption,
     SpecialPropertyNames,
     StubAttachment,
     TypeSpecification,
@@ -1091,10 +1091,10 @@ export const validateDocumentUpdate = <
                         propertySpecification.selection.map(
                             (value: unknown): unknown =>
                                 (
-                                    value as SelectionMapping | undefined
+                                    value as SelectionOption | undefined
                                 )?.value === undefined ?
                                     value :
-                                    (value as SelectionMapping).value
+                                    (value as SelectionOption).value
                         ) :
                         Object.keys(propertySpecification.selection)
 

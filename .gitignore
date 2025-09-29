@@ -107,10 +107,12 @@ nosetests.xml
 .viminfo
 *.swp
 
-# JetBrain's idea, PHPStorm and other IDE Files
+# IntelliJ other IDE Files
 .externalToolBuilders
 
 .idea/**/*.iws
+.idea/copilot.data.migration.*.xml
+**/.idea/copilot.data.migration.*.xml
 
 .project
 .pydevproject
