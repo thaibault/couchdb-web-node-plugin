@@ -165,10 +165,12 @@ export type ConstraintKey =
     'conflictingConstraintExpression' |
     'constraintExecution' |
     'constraintExpression'
-export interface SelectionMapping {
+export interface SelectionOption {
     label: string
-    value: unknown
+    value: Primitive
 }
+export type NormalizedSelection = Array<SelectionOption>
+export type Selection = Array<SelectionOption> | Array<Primitive> | Mapping
 export type Pattern = Array<RegExp | string> | RegExp | string
 export interface BasePropertySpecification<
     Type, AdditionalSpecifications extends object
@@ -216,7 +218,7 @@ export interface BasePropertySpecification<
     nullable?: boolean
     writable?: boolean
 
-    selection?: Array<SelectionMapping> | Array<unknown> | Mapping<unknown>
+    selection?: Selection
 
     type?: TypeSpecification
     // endregion
