@@ -15,7 +15,7 @@
 */
 // region imports
 import {
-    Mapping, Primitive, PlainObject, currentRequire, ValueOf
+    Mapping, Primitive, PlainObject, currentRequire, ValueOf, FirstParameter
 } from 'clientnode'
 
 import {
@@ -2681,7 +2681,9 @@ export const validateDocumentUpdate = <
                             length = Buffer.byteLength(
                                 (newAttachments[fileName] as
                                     FullAttachment
-                                ).data as Buffer,
+                                ).data as FirstParameter<
+                                    typeof Buffer['byteLength']
+                                >,
                                 'base64'
                             )
                         else
