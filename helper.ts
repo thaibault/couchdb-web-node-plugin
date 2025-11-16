@@ -20,8 +20,9 @@ import {
     extend,
     FirstParameter,
     format,
-    isObject,
     globalContext,
+    isObject,
+    Logger,
     Mapping,
     represent,
     SecondParameter,
@@ -29,7 +30,6 @@ import {
 } from 'clientnode'
 import {lastValueFrom, map, retry, timer} from 'rxjs'
 import {fromFetch} from 'rxjs/fetch'
-import {log} from 'web-node'
 
 import packageConfiguration from './package.json'
 import {
@@ -67,6 +67,8 @@ import {
 */
 export const TOGGLE_LATEST_REVISION_DETERMINING =
     Symbol('toggleLatestRevisionDetermining')
+
+export const log = new Logger({name: 'web-node.couchdb'})
 // region functions
 export const removeDeprecatedIndexes = async (
     connection: Connection<object>,

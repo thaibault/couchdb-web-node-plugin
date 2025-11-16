@@ -15,7 +15,13 @@
 */
 // region imports
 import {
-    Mapping, Primitive, PlainObject, currentRequire, ValueOf, FirstParameter
+    currentRequire,
+    FirstParameter,
+    Logger,
+    Mapping,
+    PlainObject,
+    Primitive,
+    ValueOf
 } from 'clientnode'
 
 import {
@@ -61,6 +67,7 @@ import {
 /**
  * WebNode plugin interface with all provided hooks.
  */
+export const log = new Logger({name: 'web-node.couchdb.database'})
 /**
  * Authorizes given document update against given mapping of allowed roles for
  * writing into corresponding model instances.
@@ -219,7 +226,7 @@ export const validateDocumentUpdate = <
         checkPublicModelType = true,
         toJSON?: (value: unknown) => string
     ): PartialFullDocument<ObjectType, AdditionalPropertiesType> => {
-    // console.debug(`Got new document`, newDocument, 'to update', oldDocument)
+    // log.debug(`Got new document`, newDocument, 'to update', oldDocument)
 
     type Attachments = Mapping<AttachmentType | null>
 
@@ -2893,7 +2900,7 @@ export const validateDocumentUpdate = <
         ] as Set<string>) = new Set([`${id}-${revision}`])
     // endregion
 
-    // console.debug('Determined new document:', result.newDocument)
+    // log.debug('Determined new document:', result.newDocument)
 
     return result.newDocument
 }
