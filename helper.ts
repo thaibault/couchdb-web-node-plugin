@@ -29,6 +29,7 @@ import {
 } from 'clientnode'
 import {lastValueFrom, map, retry, timer} from 'rxjs'
 import {fromFetch} from 'rxjs/fetch'
+import {log} from 'web-node'
 
 import packageConfiguration from './package.json'
 import {
@@ -176,7 +177,7 @@ export const getConnectorOptions = (
                             if (typeof retryValue === 'string') {
                                 const intervallInSeconds = parseInt(retryValue)
                                 if (String(intervallInSeconds) === retryValue) {
-                                    console.info(
+                                    log.info(
                                         `Retry in ${retryValue} seconds`,
                                         'according to given retry value.'
                                     )
@@ -196,7 +197,7 @@ export const getConnectorOptions = (
                                             ) /
                                             1000
                                         ) {
-                                            console.info(
+                                            log.info(
                                                 'Retry at',
                                                 futureRetryMoment
                                                     .toUTCString(),
@@ -207,7 +208,7 @@ export const getConnectorOptions = (
                                             return timer(futureRetryMoment)
                                         }
 
-                                        console.warn(
+                                        log.warn(
                                             'The recommended retry attempt is',
                                             futureRetryMoment.toUTCString(),
                                             'further in the future than the',
@@ -216,7 +217,7 @@ export const getConnectorOptions = (
                                             'seconds.'
                                         )
                                     } else
-                                        console.warn(
+                                        log.warn(
                                             'Given retry time recommendation',
                                             'from server is in the past and',
                                             'has to be ignored therefore.'
@@ -280,7 +281,7 @@ export const mayStripRepresentation = (
  * @param documentName - Design document name.
  * @param documentData - Design document data.
  * @param description - Used to produce semantic logging messages.
- * @param log - Enables logging.
+ * @param doLogging - Enables logging.
  * @param idName - Property name for ids.
  * @param revisionName - Property name for revisions.
  * @param designDocumentNamePrefix - Document name prefix indicating deign
@@ -293,7 +294,7 @@ export const ensureValidationDocumentPresence = async (
     documentName: string,
     documentData: Mapping,
     description: string,
-    log = true,
+    doLogging = true,
     idName: SpecialPropertyNames['id'] = '_id',
     revisionName: SpecialPropertyNames['revision'] = '_rev',
     designDocumentNamePrefix = '_design/'
@@ -313,28 +314,28 @@ export const ensureValidationDocumentPresence = async (
 
         await databaseConnection.put(newDocument)
 
-        if (log)
-            console.info(`${description} updated.`)
+        if (doLogging)
+            log.info(`${description} updated.`)
     } catch (error) {
-        if (log)
+        if (doLogging)
             if ((error as {error: string}).error === 'not_found')
-                console.info(
+                log.info(
                     `${description} not available: create new one.`
                 )
             else
-                console.info(
-                    `${description} couldn't be updated: "` +
-                    `${represent(error)}" create new one.`
+                log.info(
+                    `${description} couldn't be updated:`,
+                    `"${represent(error)}" create new one.`
                 )
         try {
             await databaseConnection.put(newDocument)
 
-            if (log)
-                console.info(`${description} installed/updated.`)
+            if (doLogging)
+                log.info(`${description} installed/updated.`)
         } catch (error) {
             throw new Error(
-                `${description} couldn't be installed/updated: "` +
-                `${represent(error)}".`
+                `${description} couldn't be installed/updated: ` +
+                `"${represent(error)}".`
             )
         }
     }
@@ -532,7 +533,7 @@ export const initializeConnection = async (
         try {
             await checkReachability(url)
         } catch {
-            console.info('Database could not be retrieved yet: Creating it.')
+            log.info('Database could not be retrieved yet: Creating it.')
 
             if (!globalContext.fetch)
                 throw new Error('Missing fetch implementation.')

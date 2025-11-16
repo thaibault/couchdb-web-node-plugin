@@ -89,7 +89,7 @@
     "node-fetch": "^3.3.2",
     "rimraf": "^6.1.0",
     "typescript-eslint": "^8.46.4",
-    "web-node": "^1.0.552",
+    "web-node": "^1.0.553",
     "weboptimizer": "^2.0.1620"
   },
   "peerDependencies": {
@@ -157,7 +157,7 @@
           "httpd/host": "0.0.0.0",
           "httpd/port": 5984,
           "log/file": "/dev/stdout",
-          "log/level": "error"
+          "log/level": "warning"
         },
         "prefixes": [
           "_node/_local/_config",

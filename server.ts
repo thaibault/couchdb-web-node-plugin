@@ -38,6 +38,7 @@ import {mkdirp as makeDirectorPath} from 'mkdirp'
 import nodeFetch from 'node-fetch'
 import {promises as fileSystem} from 'fs'
 import {dirname, resolve} from 'path'
+import {log} from 'web-node'
 
 import {initializeConnection} from './helper'
 import {
@@ -92,7 +93,7 @@ export const start = async (state: State): Promise<void> => {
 
     if ((runner as InPlaceRunner).packages) {
         const name = ([] as Array<string>).concat(runner.names)[0]
-        console.info(`Couchdb runner is in-place with: "${name}".`)
+        log.info(`Couchdb runner is in-place with: "${name}".`)
 
         const {default: express} =
             await eval(`import('express')`) as
@@ -315,7 +316,7 @@ export const start = async (state: State): Promise<void> => {
         })
     } else {
         const name = ([] as Array<string>).concat(runner.names)[0]
-        console.info(`Couchdb runner is: "${name}".`)
+        log.info(`Couchdb runner is: "${name}".`)
 
         const binaryRunner = runner as BinaryRunner
 
