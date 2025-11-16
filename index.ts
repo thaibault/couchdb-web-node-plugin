@@ -43,6 +43,7 @@ import PouchDB from 'pouchdb-node'
 import PouchDBAuthenticationPlugin from 'pouchdb-authentication'
 import PouchDBFindPlugin from 'pouchdb-find'
 import PouchDBValidationPlugin from 'pouchdb-validation'
+import {log} from 'web-node'
 import {PluginHandler, PluginPromises} from 'web-node/type'
 
 import databaseHelper, {validateDocumentUpdate} from './databaseHelper'
@@ -177,7 +178,7 @@ export const preLoadService = async ({
         }
 
         if (!runnerFound)
-            console.info(
+            log.info(
                 'No couchdb runner found via files in one of the following',
                 `locations: "${triedPaths.join('", "')}". Running pouchdb`,
                 'locally.'
@@ -317,8 +318,8 @@ export const loadService = async (
             // NOTE: We check if we are in admin party mode.
             await unauthenticatedUserDatabaseConnection.allDocs()
 
-            console.info(
-                'No admin user available. Automatically creating admin user ' +
+            log.info(
+                'No admin user available. Automatically creating admin user',
                 `"${configuration.couchdb.admin.name}".`
             )
 
@@ -350,8 +351,8 @@ export const loadService = async (
                 try {
                     await authenticatedUserDatabaseConnection.allDocs()
                 } catch (error) {
-                    console.error(
-                        `Can't login as existing admin user ` +
+                    log.error(
+                        `Can't login as existing admin user`,
                         `"${configuration.couchdb.admin.name}": ` +
                         represent(error)
                     )
@@ -359,9 +360,9 @@ export const loadService = async (
                     void authenticatedUserDatabaseConnection.close()
                 }
             } else
-                console.error(
-                    `Can't create new admin user "` +
-                    `${configuration.couchdb.admin.name}": ${represent(error)}`
+                log.error(
+                    `Can't create new admin user`,
+                    `"${configuration.couchdb.admin.name}": ${represent(error)}`
                 )
         } finally {
             void unauthenticatedUserDatabaseConnection.close()
@@ -388,7 +389,7 @@ export const loadService = async (
                 await userDatabaseConnection.get(`org.couchdb.user:${name}`)
             } catch (error) {
                 if ((error as { error: string }).error === 'not_found') {
-                    console.info(`Create missing database user "${name}".`)
+                    log.info(`Create missing database user "${name}".`)
 
                     try {
                         await userDatabaseConnection.put({
@@ -439,9 +440,9 @@ export const loadService = async (
                             url, {headers: authorizationHeader}
                         )
                     } catch (error) {
-                        console.warn(
-                            `Configuration "${fullPath}" (with desired ` +
-                            `value [${represent(value)}]) couldn't be ` +
+                        log.warn(
+                            `Configuration "${fullPath}" (with desired`,
+                            `value [${represent(value)}]) couldn't be`,
                             `determined: ${represent(error)}`
                         )
                     }
@@ -459,10 +460,10 @@ export const loadService = async (
                                         ]()
                                     )
                                 } catch (error) {
-                                    console.warn(
-                                        'Error checking curent value of ' +
-                                        `"${fullPath}" to be ` +
-                                        `[${represent(value)}]: ` +
+                                    log.warn(
+                                        'Error checking curent value of',
+                                        `"${fullPath}" to be`,
+                                        `[${represent(value)}]:`,
                                         represent(error)
                                     )
                                 }
@@ -484,24 +485,24 @@ export const loadService = async (
                                         }
                                     )
                                 } catch (error) {
-                                    console.error(
-                                        `Configuration "${fullPath}" ` +
-                                        `couldn't be applied to ` +
-                                        `[${represent(value)}]: ` +
+                                    log.error(
+                                        `Configuration "${fullPath}"`,
+                                        `couldn't be applied to`,
+                                        `[${represent(value)}]:`,
                                         represent(error)
                                     )
                                 }
                             else
-                                console.info(
-                                    `Configuration "${fullPath}" is ` +
-                                    'already set to desired value ' +
+                                log.info(
+                                    `Configuration "${fullPath}" is`,
+                                    'already set to desired value',
                                     `[${represent(value)}].`
                                 )
                         } else
-                            console.info(
-                                `Configuration "${fullPath}" does not ` +
-                                `exist (desired value ` +
-                                `[${represent(value)}]). Response code is ` +
+                            log.info(
+                                `Configuration "${fullPath}" does not`,
+                                `exist (desired value`,
+                                `[${represent(value)}]). Response code is`,
                                 `${String(response.status)}.`
                             )
                 }
@@ -552,7 +553,7 @@ export const loadService = async (
                 }
             }
 
-            console.info(
+            log.info(
                 `Apply security settings for database "${databaseName}":`,
                 represent(fullSecurityObject)
             )
@@ -579,7 +580,7 @@ export const loadService = async (
                 if (!response.ok)
                     throw new Error(response.statusText)
             } catch (error) {
-                console.error(
+                log.error(
                     `Security object for database "${databaseName}" couldn't`,
                     `be applied:`,
                     represent(error)
@@ -651,7 +652,7 @@ export const loadService = async (
             }
 
             if (configuration.core.debug)
-                console.debug(`${type.name} code: \n\n"${code}" integrated.`)
+                log.debug(`${type.name} code: \n\n"${code}" integrated.`)
 
             await ensureValidationDocumentPresence(
                 couchdb.connection,
@@ -788,7 +789,7 @@ export const loadService = async (
                             if ((
                                 error as {forbidden?: string}
                             ).forbidden?.startsWith('NoChange:'))
-                                console.info(
+                                log.info(
                                     `Including document "${document[idName]}"`,
                                     'of type',
                                     `"${document[typeName] as string}" hasn't`,
@@ -802,7 +803,7 @@ export const loadService = async (
                             )
                         }
 
-                        console.info(
+                        log.info(
                             `Including document "${document[idName]}" of`,
                             `type "${document[typeName] as string}" was`,
                             'successful.'
@@ -885,7 +886,7 @@ export const loadService = async (
                     if (result) {
                         newDocument = result as FullDocument
 
-                        console.info(
+                        log.info(
                             `Running migrater "${name}" for document`,
                             `"${newDocument[idName]}" (of type`,
                             `"${newDocument[typeName]}") was successful.`
@@ -915,7 +916,7 @@ export const loadService = async (
                     if (Object.prototype.hasOwnProperty.call(
                         result, 'forbidden'
                     ))
-                        console.warn(
+                        log.warn(
                             `Document "` +
                             mayStripRepresentation(
                                 document,
@@ -939,7 +940,7 @@ export const loadService = async (
                     )
                 }
 
-                console.info(
+                log.info(
                     `Auto migrating document "${newDocument[idName]}" was`,
                     'successful.'
                 )
@@ -1024,7 +1025,7 @@ export const loadService = async (
                 )
 
                 if (result.error)
-                    console.warn(
+                    log.warn(
                         'Could not execute initial expression',
                         `"${viewDataConfiguration.initialMapperExpression}"`,
                         `for property "${name}" in view document "${id}":`,
@@ -1036,7 +1037,7 @@ export const loadService = async (
                 viewDocument[name] = rawData.docs
         }
 
-        console.info(`Initialize view ${id}:`, viewDocument)
+        log.info(`Initialize view ${id}:`, viewDocument)
         await couchdb.connection.put(viewDocument)
     }
     // endregion
@@ -1045,7 +1046,7 @@ export const loadService = async (
         try {
             await couchdb.connection.compact()
         } catch (error) {
-            console.warn(
+            log.warn(
                 `Initial database compaction has failed: ${represent(error)}`
             )
         }
@@ -1093,7 +1094,7 @@ export const postLoadService = (state: State): Promise<void> => {
         if (couchdb.lastChangesSequenceIdentifier !== undefined)
             changesConfiguration.since = couchdb.lastChangesSequenceIdentifier
 
-        console.info(
+        log.info(
             'Initialize changes stream since',
             `"${String(changesConfiguration.since)}".`
         )
@@ -1128,7 +1129,7 @@ export const postLoadService = (state: State): Promise<void> => {
             updateMaterializedViewsChangesConfiguration.selector =
                 updateMaterializedViewsChangesConfigurationSelector
 
-            console.info(
+            log.info(
                 'Initialize changes stream for views since "' +
                 String(updateMaterializedViewsChangesConfiguration.since) +
                 '".'
@@ -1151,7 +1152,7 @@ export const postLoadService = (state: State): Promise<void> => {
                 numberOfErrorsThrough >
                 configuration.changesStreamReinitializer.retries
             ) {
-                console.warn(
+                log.warn(
                     'Observing changes feed throws an error for',
                     `${String(numberOfErrorsThrough)} times through:`,
                     `${represent(error)} Restarting database server and`,
@@ -1172,7 +1173,7 @@ export const postLoadService = (state: State): Promise<void> => {
                             .maximumRetryWaitingTimeInSeconds
                     )
 
-                console.warn(
+                log.warn(
                     'Observing changes feed throws an error for',
                     `${String(numberOfErrorsThrough)} of`,
                     String(
@@ -1208,7 +1209,7 @@ export const postLoadService = (state: State): Promise<void> => {
             hook: 'couchdbInitializeChangesStream'
         })
 
-        console.info('Changes stream initialized.')
+        log.info('Changes stream initialized.')
 
         void couchdb.changesStream.on(
             'change',
@@ -1222,7 +1223,7 @@ export const postLoadService = (state: State): Promise<void> => {
                     })
                     couchdb.lastChangesSequenceIdentifier = change.seq
                 } catch (error) {
-                    console.error(
+                    log.error(
                         'An error occurred during on change database hook:',
                         error
                     )
@@ -1262,7 +1263,7 @@ export const postLoadService = (state: State): Promise<void> => {
                                 )
 
                                 if (result.error)
-                                    console.warn(
+                                    log.warn(
                                         'Could not execute update',
                                         'expression"' +
                                         viewDataConfiguration
@@ -1280,7 +1281,7 @@ export const postLoadService = (state: State): Promise<void> => {
                         if (hasChanges)
                             await couchdb.connection.put(viewDocument)
                     } catch (error) {
-                        console.warn('Updating view failed:', error)
+                        log.warn('Updating view failed:', error)
                     } finally {
                         void updateMaterializedViewsLock.release(id)
                     }
