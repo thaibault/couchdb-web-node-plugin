@@ -22,6 +22,7 @@ import {
     format,
     getProcessCloseHandler,
     globalContext,
+    Logger,
     NOOP,
     PlainObject,
     ProcessCloseCallback,
@@ -38,7 +39,6 @@ import {mkdirp as makeDirectorPath} from 'mkdirp'
 import nodeFetch from 'node-fetch'
 import {promises as fileSystem} from 'fs'
 import {dirname, resolve} from 'path'
-import {log} from 'web-node'
 
 import {initializeConnection} from './helper'
 import {
@@ -53,6 +53,8 @@ import {
 import {Express} from 'express-serve-static-core'
 // endregion
 globalContext.fetch = nodeFetch as unknown as typeof fetch
+
+export const log = new Logger({name: 'web-node.couchdb.server'})
 // region functions
 /**
  * Starts server process.
