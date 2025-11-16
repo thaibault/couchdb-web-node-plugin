@@ -43,7 +43,6 @@ import PouchDB from 'pouchdb-node'
 import PouchDBAuthenticationPlugin from 'pouchdb-authentication'
 import PouchDBFindPlugin from 'pouchdb-find'
 import PouchDBValidationPlugin from 'pouchdb-validation'
-import {log} from 'web-node'
 import {PluginHandler, PluginPromises} from 'web-node/type'
 
 import databaseHelper, {validateDocumentUpdate} from './databaseHelper'
@@ -55,7 +54,9 @@ import {
     extendModels,
     getConnectorOptions,
     initializeConnection,
-    mayStripRepresentation, removeDeprecatedIndexes
+    log,
+    mayStripRepresentation,
+    removeDeprecatedIndexes
 } from './helper'
 import {restart, start, stop} from './server'
 import {
