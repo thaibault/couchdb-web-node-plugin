@@ -5569,9 +5569,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"clientnode@npm:3.0.1314":
-  version: 3.0.1314
-  resolution: "clientnode@npm:3.0.1314"
+"clientnode@npm:3.0.1323, clientnode@npm:^3.0.1323":
+  version: 3.0.1323
+  resolution: "clientnode@npm:3.0.1323"
   peerDependencies:
     "@babel/runtime": "*"
     "@types/prop-types": "*"
@@ -5589,31 +5589,7 @@ __metadata:
       optional: true
     prop-types:
       optional: true
-  checksum: 10c0/edb6ef4e8d9e874110aa044a1ded8d300ae79d01b51fd0ecfce73ddcd472865544268650f22e38fea26568fafee0669d3438c8a608153178617664eb85c65944
-  languageName: node
-  linkType: hard
-
-"clientnode@npm:^3.0.1318":
-  version: 3.0.1318
-  resolution: "clientnode@npm:3.0.1318"
-  peerDependencies:
-    "@babel/runtime": "*"
-    "@types/prop-types": "*"
-    jquery: "*"
-    node-fetch: "*"
-    prop-types: "*"
-  peerDependenciesMeta:
-    "@babel/runtime":
-      optional: true
-    "@types/prop-types":
-      optional: true
-    jquery:
-      optional: true
-    node-fetch:
-      optional: true
-    prop-types:
-      optional: true
-  checksum: 10c0/96472110cae6a8fadedd434d319fd3b4879fc4e74615f059b78271393cff6c0e7a9fd45b39f0cbb3967af3af024b4c1018c0727005392a3c382bae1cb4121a3c
+  checksum: 10c0/6ce178355241be8162a655cf1465c7699bcec90738479213f0d267e0e7e2e78be167b6aa8a85c26351ab8e295f4567338ee72e7ab72b82a5c1c67b017c57bad0
   languageName: node
   linkType: hard
 
@@ -5991,7 +5967,7 @@ __metadata:
     "@types/pouchdb-node": "npm:^6.1.7"
     "@typescript-eslint/eslint-plugin": "npm:^8.46.4"
     "@typescript-eslint/parser": "npm:^8.46.4"
-    clientnode: "npm:^3.0.1318"
+    clientnode: "npm:^3.0.1323"
     documentation-website: "npm:^1.0.395"
     eslint: "npm:^9.39.1"
     eslint-config-google: "npm:^0.14.0"
@@ -6009,8 +5985,8 @@ __metadata:
     rimraf: "npm:^6.1.0"
     rxjs: "npm:^7.8.2"
     typescript-eslint: "npm:^8.46.4"
-    web-node: "npm:^1.0.554"
-    weboptimizer: "npm:^2.0.1620"
+    web-node: "npm:^1.0.559"
+    weboptimizer: "npm:^2.0.1622"
   peerDependencies:
     "@babel/runtime": "*"
     clientnode: "*"
@@ -7607,22 +7583,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"glob@npm:^11.0.0":
-  version: 11.0.1
-  resolution: "glob@npm:11.0.1"
-  dependencies:
-    foreground-child: "npm:^3.1.0"
-    jackspeak: "npm:^4.0.1"
-    minimatch: "npm:^10.0.0"
-    minipass: "npm:^7.1.2"
-    package-json-from-dist: "npm:^1.0.0"
-    path-scurry: "npm:^2.0.0"
-  bin:
-    glob: dist/esm/bin.mjs
-  checksum: 10c0/2b32588be52e9e90f914c7d8dec32f3144b81b84054b0f70e9adfebf37cd7014570489f2a79d21f7801b9a4bd4cca94f426966bfd00fb64a5b705cfe10da3a03
-  languageName: node
-  linkType: hard
-
 "glob@npm:^11.0.3":
   version: 11.0.3
   resolution: "glob@npm:11.0.3"
@@ -8562,15 +8522,6 @@ __metadata:
     "@pkgjs/parseargs":
       optional: true
   checksum: 10c0/6acc10d139eaefdbe04d2f679e6191b3abf073f111edf10b1de5302c97ec93fffeb2fdd8681ed17f16268aa9dd4f8c588ed9d1d3bffbbfa6e8bf897cbb3149b9
-  languageName: node
-  linkType: hard
-
-"jackspeak@npm:^4.0.1":
-  version: 4.1.0
-  resolution: "jackspeak@npm:4.1.0"
-  dependencies:
-    "@isaacs/cliui": "npm:^8.0.2"
-  checksum: 10c0/08a6a24a366c90b83aef3ad6ec41dcaaa65428ffab8d80bc7172add0fbb8b134a34f415ad288b2a6fbd406526e9a62abdb40ed4f399fbe00cb45c44056d4dce0
   languageName: node
   linkType: hard
 
@@ -9935,15 +9886,6 @@ __metadata:
   dependencies:
     brace-expansion: "npm:^1.1.7"
   checksum: 10c0/0262810a8fc2e72cca45d6fd86bd349eee435eb95ac6aa45c9ea2180e7ee875ef44c32b55b5973ceabe95ea12682f6e3725cbb63d7a2d1da3ae1163c8b210311
-  languageName: node
-  linkType: hard
-
-"minimatch@npm:^10.0.0":
-  version: 10.0.1
-  resolution: "minimatch@npm:10.0.1"
-  dependencies:
-    brace-expansion: "npm:^2.0.1"
-  checksum: 10c0/e6c29a81fe83e1877ad51348306be2e8aeca18c88fdee7a99df44322314279e15799e41d7cb274e4e8bb0b451a3bc622d6182e157dfa1717d6cda75e9cd8cd5d
   languageName: node
   linkType: hard
 
@@ -11981,18 +11923,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rimraf@npm:^6.0.1":
-  version: 6.0.1
-  resolution: "rimraf@npm:6.0.1"
-  dependencies:
-    glob: "npm:^11.0.0"
-    package-json-from-dist: "npm:^1.0.0"
-  bin:
-    rimraf: dist/esm/bin.mjs
-  checksum: 10c0/b30b6b072771f0d1e73b4ca5f37bb2944ee09375be9db5f558fcd3310000d29dfcfa93cf7734d75295ad5a7486dc8e40f63089ced1722a664539ffc0c3ece8c6
-  languageName: node
-  linkType: hard
-
 "rimraf@npm:^6.1.0":
   version: 6.1.0
   resolution: "rimraf@npm:6.1.0"
@@ -13630,9 +13560,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"web-node@npm:^1.0.554":
-  version: 1.0.554
-  resolution: "web-node@npm:1.0.554"
+"web-node@npm:^1.0.559":
+  version: 1.0.559
+  resolution: "web-node@npm:1.0.559"
   peerDependencies:
     "@babel/runtime": "*"
     clientnode: "*"
@@ -13641,7 +13571,7 @@ __metadata:
       optional: true
   bin:
     web-node: index.js
-  checksum: 10c0/3d8324e7acbb298f3f2848d049414acc7f9633255798fac84d3a9b3daac4fc411e05ddd27f44cfd4f874c36623d5d552727c76008e0eea17ead3358cf8badc3a
+  checksum: 10c0/77687b2df1684f915329fcf459169ac53b1462cf530ad5820737ba1b58cc7ac63cbd4ab18eee32b45501343e150d53bdf37feaa0a932bf0a905badcb86926d30
   languageName: node
   linkType: hard
 
@@ -13666,9 +13596,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"weboptimizer@npm:^2.0.1620":
-  version: 2.0.1620
-  resolution: "weboptimizer@npm:2.0.1620"
+"weboptimizer@npm:^2.0.1622":
+  version: 2.0.1622
+  resolution: "weboptimizer@npm:2.0.1622"
   dependencies:
     "@babel/core": "npm:^7.28.5"
     "@babel/plugin-proposal-class-properties": "npm:^7.18.6"
@@ -13682,7 +13612,7 @@ __metadata:
     babel-loader: "npm:^10.0.0"
     babel-plugin-transform-modern-regexp: "npm:^0.0.6"
     babel-preset-minify: "npm:^0.5.2"
-    clientnode: "npm:3.0.1314"
+    clientnode: "npm:3.0.1323"
     ejs: "npm:^3.1.10"
     exports-loader: "npm:^5.0.0"
     extract-loader: "npm:^5.1.0"
@@ -13692,7 +13622,7 @@ __metadata:
     html-webpack-plugin: "npm:^5.6.4"
     imports-loader: "npm:^5.0.0"
     jest-environment-jsdom: "npm:^30.2.0"
-    rimraf: "npm:^6.0.1"
+    rimraf: "npm:^6.1.0"
     script-loader: "npm:^0.7.2"
     typescript: "npm:^5.9.3"
     webpack: "npm:^5.102.1"
@@ -13808,7 +13738,7 @@ __metadata:
       optional: true
   bin:
     weboptimizer: index.js
-  checksum: 10c0/afc7ece35734401c0bf9fc68603c42bd1d0e36217af890038245ac957cac3a999c571244ec003b7dd619b9a0c13df32f85a9f724b09635db842a979992de72b7
+  checksum: 10c0/0ec4ffce5a329e35e718a22895841a80d1255964a726e05a92bf2a0a5921c84bd99aaa5e19b5b7e32a6c9746238bfdb5a06d74dc7abc0be1578125916967b236
   languageName: node
   linkType: hard
 

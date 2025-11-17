@@ -76,7 +76,7 @@
     "@types/pouchdb-node": "^6.1.7",
     "@typescript-eslint/eslint-plugin": "^8.46.4",
     "@typescript-eslint/parser": "^8.46.4",
-    "clientnode": "^3.0.1318",
+    "clientnode": "^3.0.1323",
     "documentation-website": "^1.0.395",
     "eslint": "^9.39.1",
     "eslint-config-google": "^0.14.0",
@@ -89,8 +89,8 @@
     "node-fetch": "^3.3.2",
     "rimraf": "^6.1.0",
     "typescript-eslint": "^8.46.4",
-    "web-node": "^1.0.554",
-    "weboptimizer": "^2.0.1620"
+    "web-node": "^1.0.559",
+    "weboptimizer": "^2.0.1622"
   },
   "peerDependencies": {
     "@babel/runtime": "*",
