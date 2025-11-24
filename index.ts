@@ -1217,8 +1217,9 @@ export const postLoadService = (state: State): Promise<void> => {
             async (change: ChangesResponseChange) => {
                 numberOfErrorsThrough = 0
 
+                await changesRunnerSemaphore.acquire()
+
                 try {
-                    await changesRunnerSemaphore.acquire()
                     await pluginAPI.callStack<State<ChangesResponseChange>>({
                         ...state, data: change, hook: 'couchdbChange'
                     })
