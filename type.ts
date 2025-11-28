@@ -578,6 +578,7 @@ export interface CouchDB<Type extends object = Mapping<unknown>> {
     changesStream: ChangesStream
     lastChangesSequenceIdentifier?: number | string
 
+    reinitializeMaterializedViews?: () => Promise<void>
     updateMaterializedViewsChangesStream?: ChangesStream
     lastUpdateMaterializedViewsChangesSequenceIdentifier?: number | string
 

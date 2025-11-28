@@ -5548,31 +5548,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"clientnode@npm:3.0.1331":
-  version: 3.0.1331
-  resolution: "clientnode@npm:3.0.1331"
-  peerDependencies:
-    "@babel/runtime": "*"
-    "@types/prop-types": "*"
-    jquery: "*"
-    node-fetch: "*"
-    prop-types: "*"
-  peerDependenciesMeta:
-    "@babel/runtime":
-      optional: true
-    "@types/prop-types":
-      optional: true
-    jquery:
-      optional: true
-    node-fetch:
-      optional: true
-    prop-types:
-      optional: true
-  checksum: 10c0/fedea511771fdb9e187e731a40775be9000573e024f5af298ec8a184f697534fe91a163f7889b4f43f11c3ec348abe0e5529b8ada6dcd44b07d9a5b4e068da38
-  languageName: node
-  linkType: hard
-
-"clientnode@npm:^3.0.1332":
+"clientnode@npm:3.0.1332, clientnode@npm:^3.0.1332":
   version: 3.0.1332
   resolution: "clientnode@npm:3.0.1332"
   peerDependencies:
@@ -5989,7 +5965,7 @@ __metadata:
     rxjs: "npm:^7.8.2"
     typescript-eslint: "npm:^8.48.0"
     web-node: "npm:^1.0.562"
-    weboptimizer: "npm:^2.0.1625"
+    weboptimizer: "npm:^2.0.1627"
   peerDependencies:
     "@babel/runtime": "*"
     clientnode: "*"
@@ -13553,9 +13529,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"weboptimizer@npm:^2.0.1625":
-  version: 2.0.1625
-  resolution: "weboptimizer@npm:2.0.1625"
+"weboptimizer@npm:^2.0.1627":
+  version: 2.0.1627
+  resolution: "weboptimizer@npm:2.0.1627"
   dependencies:
     "@babel/core": "npm:^7.28.5"
     "@babel/plugin-proposal-class-properties": "npm:^7.18.6"
@@ -13569,7 +13545,7 @@ __metadata:
     babel-loader: "npm:^10.0.0"
     babel-plugin-transform-modern-regexp: "npm:^0.0.6"
     babel-preset-minify: "npm:^0.5.2"
-    clientnode: "npm:3.0.1331"
+    clientnode: "npm:3.0.1332"
     ejs: "npm:^3.1.10"
     exports-loader: "npm:^5.0.0"
     extract-loader: "npm:^5.1.0"
@@ -13631,6 +13607,8 @@ __metadata:
       optional: true
     "@types/html-minifier":
       optional: true
+    "@types/imagemin":
+      optional: true
     "@types/node":
       optional: true
     "@types/webpack-env":
@@ -13654,6 +13632,8 @@ __metadata:
     identity-obj-proxy:
       optional: true
     image-minimizer-webpack-plugin:
+      optional: true
+    imagemin:
       optional: true
     jest:
       optional: true
@@ -13695,7 +13675,7 @@ __metadata:
       optional: true
   bin:
     weboptimizer: index.js
-  checksum: 10c0/eeea94c2b88e4921f48e881be87f4cfbe47ee812f9588674a870b3948a993e8fbfd7c12a801ff5aa25ce5675d90eb76aa99aa82fe68fda291248b2d6235f91f1
+  checksum: 10c0/9aa1a8014672bc45bf0006c1e0fef881b31732b3d2fbd04a1585c998306d48cff048aaff3be5a7e1e8aa8a62fbda382f27fe8b239d206411eac21de98c92f232
   languageName: node
   linkType: hard
 

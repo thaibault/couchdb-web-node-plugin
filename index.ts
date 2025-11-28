@@ -265,13 +265,58 @@ export const preLoadService = async ({
 export const loadService = async (
     state: State
 ): Promise<PluginPromises> => {
-    const {configuration, services} = state
-
     if (!globalContext.fetch)
         throw new Error('Missing fetch implementation.')
 
+    const {configuration, services} = state
+
+    const specialNames = configuration.couchdb.model.property.name.special
+    const {id: idName, revision: revisionName, type: typeName} =
+        specialNames
+
     let promise: null | Promise<ProcessCloseReason | undefined> = null
     const {couchdb} = services
+
+    // region create/reinitialize materialized views
+    couchdb.reinitializeMaterializedViews = async () => {
+        for (const [id, viewConfiguration] of Object.entries(
+            configuration.couchdb.materializedViews
+        )) {
+            const viewDocument: Partial<MaterializedViewDocument> = {
+                [specialNames.type]: id,
+                [specialNames.id]: id
+            }
+            for (const [name, viewDataConfiguration] of Object.entries(
+                viewConfiguration
+            )) {
+                const rawData =
+                    await couchdb.connection.find(viewDataConfiguration.query)
+
+                if (viewDataConfiguration.initialMapperExpression) {
+                    const result = evaluate(
+                        viewDataConfiguration.initialMapperExpression,
+                        {data: rawData.docs}
+                    )
+
+                    if (result.error)
+                        log.warn(
+                            'Could not execute initial expression "' +
+                            viewDataConfiguration.initialMapperExpression +
+                            `" for property "${name}" in view document`,
+                            `"${id}":`,
+                            result.error
+                        )
+                    else
+                        viewDocument[name] = result.result
+                } else
+                    viewDocument[name] = rawData.docs
+            }
+
+            log.info(`Initialize view ${id}:`, viewDocument)
+            await couchdb.connection.put(viewDocument)
+        }
+    }
+    // endregion
 
     if (Object.prototype.hasOwnProperty.call(couchdb.server, 'runner')) {
         await start(state)
@@ -596,10 +641,6 @@ export const loadService = async (
         {defaultSpecification?: PropertySpecification}
     ).defaultSpecification
     delete (modelConfiguration as {entities?: Models}).entities
-
-    const specialNames = modelConfiguration.property.name.special
-    const {id: idName, revision: revisionName, type: typeName} =
-        specialNames
 
     const models = extendModels(configuration.couchdb.model)
     if (configuration.couchdb.model.updateValidation) {
@@ -1005,43 +1046,7 @@ export const loadService = async (
             }
         // endregion
     // endregion
-    // region create materialized views
-    for (const [id, viewConfiguration] of Object.entries(
-        configuration.couchdb.materializedViews
-    )) {
-        const viewDocument: Partial<MaterializedViewDocument> = {
-            [specialNames.type]: id,
-            [specialNames.id]: id
-        }
-        for (const [name, viewDataConfiguration] of Object.entries(
-            viewConfiguration
-        )) {
-            const rawData =
-                await couchdb.connection.find(viewDataConfiguration.query)
-
-            if (viewDataConfiguration.initialMapperExpression) {
-                const result = evaluate(
-                    viewDataConfiguration.initialMapperExpression,
-                    {data: rawData.docs}
-                )
-
-                if (result.error)
-                    log.warn(
-                        'Could not execute initial expression',
-                        `"${viewDataConfiguration.initialMapperExpression}"`,
-                        `for property "${name}" in view document "${id}":`,
-                        result.error
-                    )
-                else
-                    viewDocument[name] = result.result
-            } else
-                viewDocument[name] = rawData.docs
-        }
-
-        log.info(`Initialize view ${id}:`, viewDocument)
-        await couchdb.connection.put(viewDocument)
-    }
-    // endregion
+    await couchdb.reinitializeMaterializedViews()
     // region initial compaction
     if (configuration.couchdb.model.triggerInitialCompaction)
         try {
@@ -1267,10 +1272,10 @@ export const postLoadService = (state: State): Promise<void> => {
                                 if (result.error)
                                     log.warn(
                                         'Could not execute update',
-                                        'expression"' +
+                                        'expression "' +
                                         viewDataConfiguration
                                             .updateExpression +
-                                        `"for property "${name}" in view`,
+                                        `" for property "${name}" in view`,
                                         `document "${id}":`,
                                         result.error
                                     )

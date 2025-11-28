@@ -90,7 +90,7 @@
     "rimraf": "^6.1.2",
     "typescript-eslint": "^8.48.0",
     "web-node": "^1.0.562",
-    "weboptimizer": "^2.0.1625"
+    "weboptimizer": "^2.0.1627"
   },
   "peerDependencies": {
     "@babel/runtime": "*",
