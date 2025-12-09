@@ -292,6 +292,19 @@ export const start = async (state: State): Promise<void> => {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-call
             module(expressPouchDBInstance)
 
+        /*
+            NOTE: Currently needed to use synchronized folder creation to avoid
+            having the folder not yet persisted in following execution when
+            working on not mounted locations. Seems to be an issue within
+            a container environment.
+        */
+        makeDirectorPathSync(resolve(
+            backendConfiguration['couchdb/database_dir'] as string
+        ))
+        await makeDirectorPath(resolve(
+            backendConfiguration['couchdb/database_dir'] as string
+        ))
+
         await pluginAPI.callStack<
             State<{expressInstance: Express, expressPouchDBInstance: Express}>,
             FindResponse<object> | undefined
@@ -300,17 +313,6 @@ export const start = async (state: State): Promise<void> => {
             hook: 'initializeExpressPouchDB',
             data: {expressInstance, expressPouchDBInstance}
         })
-
-        await makeDirectorPath(resolve(
-            backendConfiguration['couchdb/database_dir'] as string
-        ))
-        /*
-            NOTE: Currently needed to avoid having the folder not yet persisted
-            in following execution when working on not mounted locations.
-        */
-        makeDirectorPathSync(resolve(
-            backendConfiguration['couchdb/database_dir'] as string
-        ))
 
         server.expressInstance.use('/', expressPouchDBInstance)
 
