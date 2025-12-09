@@ -320,10 +320,13 @@ export const ensureValidationDocumentPresence = async (
             log.info(`${description} updated.`)
     } catch (error) {
         if (doLogging)
-            if ((error as {error: string}).error === 'not_found')
-                log.info(
-                    `${description} not available: create new one.`
-                )
+            if (
+                (error as {error: string}).error === 'not_found' ||
+                (error as {name: string}).name === 'not_found' ||
+                (error as {message: string}).message === 'missing' ||
+                (error as {reason: string}).reason === 'missing'
+            )
+                log.info(`${description} not available: create new one.`)
             else
                 log.info(
                     `${description} couldn't be updated:`,
