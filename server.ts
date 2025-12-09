@@ -299,11 +299,11 @@ export const start = async (state: State): Promise<void> => {
             data: {expressInstance, expressPouchDBInstance}
         })
 
-        server.expressInstance.use('/', expressPouchDBInstance)
-
         await makeDirectorPath(resolve(
             backendConfiguration['couchdb/database_dir'] as string
         ))
+
+        server.expressInstance.use('/', expressPouchDBInstance)
 
         await new Promise((resolve) => {
             server.process = expressInstance.listen(
