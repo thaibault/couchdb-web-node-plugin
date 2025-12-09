@@ -326,7 +326,7 @@ export const ensureValidationDocumentPresence = async (
                 (error as {message: string}).message === 'missing' ||
                 (error as {reason: string}).reason === 'missing'
             )
-                log.info(`${description} not available: create new one.`)
+                log.info(`${description} not available. Create new one.`)
             else
                 log.info(
                     `${description} couldn't be updated:`,
