@@ -35,7 +35,9 @@ import {
     Server as HTTPServer,
     ServerResponse as HTTP1ServerResponse
 } from 'http'
-import {mkdirp as makeDirectorPath} from 'mkdirp'
+import {
+    mkdirp as makeDirectorPath, mkdirpSync as makeDirectorPathSync
+} from 'mkdirp'
 import nodeFetch from 'node-fetch'
 import {promises as fileSystem} from 'fs'
 import {dirname, resolve} from 'path'
@@ -300,6 +302,13 @@ export const start = async (state: State): Promise<void> => {
         })
 
         await makeDirectorPath(resolve(
+            backendConfiguration['couchdb/database_dir'] as string
+        ))
+        /*
+            NOTE: Currently needed to avoid having the folder not yet persisted
+            in following execution when working on not mounted locations.
+        */
+        makeDirectorPathSync(resolve(
             backendConfiguration['couchdb/database_dir'] as string
         ))
 
