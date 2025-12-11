@@ -1,6 +1,3 @@
 {
-    "compilerOptions": {
-        "moduleResolution": "node"
-    },
     "extends": "./node_modules/weboptimizer/tsconfig.library.json"
 }
