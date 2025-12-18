@@ -200,6 +200,7 @@ export const authorize = (
  * @param models - Models specification object.
  * @param checkPublicModelType - Indicates whether to public model types only.
  * @param toJSON - JSON stringifier.
+ * @param fromJSON - JSON parser.
  * @returns Modified given new document.
  */
 export const validateDocumentUpdate = <
@@ -224,7 +225,8 @@ export const validateDocumentUpdate = <
             AdditionalPropertiesType
         > = {},
         checkPublicModelType = true,
-        toJSON?: (value: unknown) => string
+        toJSON?: (value: unknown) => string,
+        fromJSON?: (value: string) => unknown
     ): PartialFullDocument<ObjectType, AdditionalPropertiesType> => {
     // log.debug(`Got new document`, newDocument, 'to update', oldDocument)
 
@@ -362,7 +364,7 @@ export const validateDocumentUpdate = <
                 ))
                     oldModelMapping[oldName] = name
     /// endregion
-    // endregion
+
     let serializeData: (value: unknown) => string
     if (toJSON)
         serializeData = toJSON
@@ -373,7 +375,20 @@ export const validateDocumentUpdate = <
         serializeData =
             (object: unknown): string => JSON.stringify(object, null, 4)
     else
-        throwError('Needed "serializer" is not available.')
+        throwError('Needed json serializer is not available.')
+
+    let parseJSON: (value: string) => unknown
+    if (fromJSON)
+        parseJSON = fromJSON
+    else if (
+        typeof JSON !== 'undefined' &&
+        Object.prototype.hasOwnProperty.call(JSON, 'parse')
+    )
+        parseJSON =
+            (object: string): unknown => JSON.parse(object)
+    else
+        throwError('Needed json parser is not available.')
+    // endregion
 
     const specialPropertyNames: Array<keyof BaseModelType> = [
         specialNames.additional,
@@ -400,6 +415,9 @@ export const validateDocumentUpdate = <
     ]
     // region functions
     /// region generic functions
+    const deepCopy =
+        <Type>(data: Type): Type => parseJSON(serializeData(data)) as Type
+
     const determineTrimmedString = (value?: null | string): string => {
         if (typeof value === 'string')
             return value.trim()
@@ -580,7 +598,7 @@ export const validateDocumentUpdate = <
 
     const getEffectiveValue = (
         name: string,
-        localNewDocument: PartialFullDocumentType = newDocument,
+        localNewDocument: PartialFullDocumentType = deepCopy(newDocument),
         localOldDocument: null | PartialFullDocumentType = oldDocument
     ) =>
         Object.prototype.hasOwnProperty.call(localNewDocument, name) ?
@@ -2857,9 +2875,7 @@ export const validateDocumentUpdate = <
         newDocument[specialNames.attachment] as Attachments
     // region migrate attachment content types
     if (newDocument[specialNames.attachment])
-        for (const attachment of Object.values(
-            newAttachments
-        ))
+        for (const attachment of Object.values(newAttachments))
             if (attachment?.contentType) {
                 // eslint-disable-next-line camelcase
                 attachment.content_type = attachment.contentType
