@@ -418,6 +418,8 @@ export const validateDocumentUpdate = <
     const deepCopy =
         <Type>(data: Type): Type => parseJSON(serializeData(data)) as Type
 
+    const originalNewDocument = deepCopy(newDocument)
+
     const determineTrimmedString = (value?: null | string): string => {
         if (typeof value === 'string')
             return value.trim()
@@ -455,7 +457,7 @@ export const validateDocumentUpdate = <
             // region compile
             let templateFunction:(
                 Evaluate<Type | undefined, Array<unknown>> | undefined
-                )
+            )
 
             try {
                 /* eslint-disable @typescript-eslint/no-implied-eval */
@@ -598,7 +600,7 @@ export const validateDocumentUpdate = <
 
     const getEffectiveValue = (
         name: string,
-        localNewDocument: PartialFullDocumentType = deepCopy(newDocument),
+        localNewDocument: PartialFullDocumentType = originalNewDocument,
         localOldDocument: null | PartialFullDocumentType = oldDocument
     ) =>
         Object.prototype.hasOwnProperty.call(localNewDocument, name) ?
@@ -2845,6 +2847,7 @@ export const validateDocumentUpdate = <
     > = {
         attachmentWithPrefixExists,
         checkDocument,
+        deepCopy,
         getDateTime,
         getEffectiveValue,
         getFileNameByPrefix,
@@ -2868,7 +2871,9 @@ export const validateDocumentUpdate = <
 
         securitySettings,
 
-        userContext
+        userContext,
+
+        originalNewDocument
     }
 
     const newAttachments =

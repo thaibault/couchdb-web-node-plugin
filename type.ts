@@ -713,6 +713,7 @@ export interface BasicScope<
             null,
         parentNames: Array<string>
     ) => CheckedDocumentResult<Type, AdditionalPropertiesType>
+    deepCopy: <T>(data: T) => T
     getDateTime: (value: number | string) => Date
     getEffectiveValue: (
         name: string,
@@ -753,6 +754,8 @@ export interface BasicScope<
     securitySettings: Partial<SecuritySettings>
 
     userContext: Partial<UserContext>
+
+    originalNewDocument?: PartialFullDocument<Type, AdditionalPropertiesType>
 }
 export interface CommonScope<
     ObjectType extends object,
