@@ -66,22 +66,54 @@ describe('databaseHelper', () => {
         TEST_THROW_SYMBOL,
 
         [
-            {...baseDocument, type: 'Test'},
+            {...baseDocument, [typeName]: 'Test'},
             null,
             {roles: []},
             {},
-            {Test: {properties: {}, read: ['users'], write: []}},
-            'id',
-            'type'
+            {Test: {properties: {}, read: ['users'], write: []}}
         ],
         [
-            {...baseDocument, type: 'Test'},
+            {...baseDocument, [typeName]: 'Test'},
             null,
             {roles: ['users']},
             {},
+            {}
+        ],
+        [
+            {...baseDocument, [typeName]: 'Test', a: 'a'},
+            null,
+            {roles: ['users']},
             {},
-            'id',
-            'type'
+            {Test: {
+                properties: {a: {read: [], write: []}},
+                read: [],
+                write: ['users']
+            }}
+        ],
+        [
+            {
+                ...baseDocument,
+                [typeName]: 'Test',
+                subTest: {
+                    [typeName]: 'SubTest',
+                    a: 2
+                }
+            },
+            null,
+            {roles: ['users']},
+            {},
+            {
+                Test: {
+                    properties: {},
+                    read: [],
+                    write: ['users']
+                },
+                SubTest: {
+                    properties: {a: {read: ['users'], write: []}},
+                    read: [],
+                    write: ['users']
+                }
+            }
         ]
     )
     testEachAgainstSameExpectation<typeof authorize>(
@@ -111,6 +143,64 @@ describe('databaseHelper', () => {
             {roles: ['users']},
             {},
             {Test: {properties: {}, read: [], write: ['users']}}
+        ],
+        [
+            {
+                ...baseDocument,
+                [typeName]: 'Test',
+                subTest: {
+                    [typeName]: 'SubTest',
+                    a: 2
+                }
+            },
+            null,
+            {roles: ['users']},
+            {},
+            {
+                Test: {
+                    properties: {},
+                    read: [],
+                    write: ['users']
+                },
+                SubTest: {
+                    properties: {a: {read: [], write: ['users']}},
+                    read: [],
+                    write: ['users']
+                }
+            }
+        ],
+        [
+            {
+                ...baseDocument,
+                [typeName]: 'Test',
+                subTest: {
+                    [typeName]: 'SubTest',
+                    subSubTest: {
+                        [typeName]: 'SubSubTest',
+                        a: 2
+                    }
+                }
+            },
+            null,
+            {roles: ['users']},
+            {},
+            {
+                Test: {
+                    properties: {},
+                    read: [],
+                    write: ['users']
+                },
+                SubTest: {
+                    properties: {},
+                    read: [],
+                    write: ['users']
+                },
+                SubSubTest: {
+                    properties: {a: {read: [], write: ['users']}},
+                    read: [],
+                    write: ['users']
+                }
+            }
         ]
     )
     for (const updateStrategy of [

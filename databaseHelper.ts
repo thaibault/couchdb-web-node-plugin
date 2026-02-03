@@ -75,7 +75,7 @@ export const log = new Logger({name: 'web-node.couchdb.database'})
  * @param oldDocument - If an existing document should be updated its given
  * here.
  * @param userContext - Contains meta information about currently acting user.
- * @param _securitySettings - Database security settings.
+ * @param securitySettings - Database security settings.
  * @param allowedModelRolesMapping - Allowed roles for given models.
  * @param idPropertyName - Property name indicating the id field name.
  * @param typePropertyName - Property name indicating to which model a document
@@ -84,6 +84,7 @@ export const log = new Logger({name: 'web-node.couchdb.database'})
  * document.
  * @param read - Indicates whether a read or write of given document should be
  * authorized or not.
+ * @param contextPath - Path of properties leading to current document.
  * @returns Throws an exception if authorisation is not accepted and "true"
  * otherwise.
  */
@@ -91,15 +92,15 @@ export const authorize = (
     newDocument: Partial<Document>,
     oldDocument: null | Partial<Document> = null,
     userContext: Partial<UserContext> = {},
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _securitySettings: Partial<SecuritySettings> = {
+    securitySettings: Partial<SecuritySettings> = {
         admins: {names: [], roles: []}, members: {names: [], roles: []}
     },
     allowedModelRolesMapping?: AllowedModelRolesMapping,
     idPropertyName = '_id',
     typePropertyName = '-type',
     designDocumentNamePrefix = '_design/',
-    read = false
+    read = false,
+    contextPath: Array<string> = []
 ): true => {
     const type: string | undefined =
         newDocument[typePropertyName] as string | undefined ??
@@ -134,13 +135,16 @@ export const authorize = (
     )
         allowedRoles.read.push('readonlymember')
 
-    let userRolesDescription = `Current user doesn't own any role`
-
-
     if (!('name' in userContext))
         userContext.name = '"unknown"'
 
+    let userRolesDescription: string
+    let relevantRoles: Array<string> = []
+    let relatedContextPathDescription =
+        `You are trying to ${operationType} object of type ${type}.`
+
     if (userContext.roles?.length) {
+        const userRoles = userContext.roles
         // region determine model specific allowed roles
         if (
             allowedModelRolesMapping &&
@@ -161,11 +165,58 @@ export const authorize = (
                 (allowedModelRoles as NormalizedAllowedModelRoles).properties
         }
         // endregion
-        // TODO check for each property recursively
-        const relevantRoles: Array<string> = allowedRoles[operationType]
-        for (const userRole of userContext.roles)
-            if (relevantRoles.includes(userRole))
-                return true
+        const baseRelevantRoles: Array<string> = allowedRoles[operationType]
+
+        let authorized = true
+        for (const [name, value] of Object.entries(newDocument)) {
+            const localContextPath = contextPath.concat(name)
+            relatedContextPathDescription =
+                `You are trying to ${operationType} property ` +
+                `"${localContextPath.join('.')}".`
+            authorized = false
+
+            if (
+                value !== null &&
+                typeof value === 'object' &&
+                Object.prototype.hasOwnProperty.call(value, typePropertyName)
+            ) {
+                authorize(
+                    value as Partial<Document>,
+                    (
+                        oldDocument &&
+                        oldDocument[name] as null | Partial<Document> ||
+                        null
+                    ),
+                    userContext,
+                    securitySettings,
+                    allowedModelRolesMapping,
+                    idPropertyName,
+                    typePropertyName,
+                    designDocumentNamePrefix,
+                    read,
+                    localContextPath
+                )
+                authorized = true
+            } else {
+                relevantRoles = Object.prototype.hasOwnProperty.call(
+                    allowedRoles.properties, name
+                ) ?
+                    allowedRoles.properties[name][operationType] :
+                    baseRelevantRoles
+
+                for (const userRole of userRoles)
+                    if (relevantRoles.includes(userRole)) {
+                        authorized = true
+                        break
+                    }
+            }
+
+            if (!authorized)
+                break
+        }
+
+        if (authorized)
+            return true
 
         userRolesDescription =
             `Current user "${userContext.name ?? 'unknown'}" owns the ` +
@@ -179,10 +230,11 @@ export const authorize = (
     /* eslint-disable @typescript-eslint/only-throw-error,no-throw-literal */
     throw {
         unauthorized:
-            'Only users with a least on of these roles are allowed to ' +
+            relatedContextPathDescription +
+            ' Only users with a least one of these roles are allowed to ' +
             `perform requested ${operationType} action: "` +
             ([] as Array<string>)
-                .concat(allowedRoles[operationType])
+                .concat(relevantRoles)
                 .join('", "') +
             `". ${userRolesDescription}.`
     }
