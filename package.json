@@ -89,7 +89,7 @@
     "node-fetch": "^3.3.2",
     "rimraf": "^6.1.2",
     "typescript-eslint": "^8.54.0",
-    "web-node": "^1.0.568",
+    "web-node": "^1.0.569",
     "weboptimizer": "^2.0.1642"
   },
   "peerDependencies": {
