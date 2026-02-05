@@ -487,17 +487,13 @@ export const initializeConnection = async (
     )
         // @ts-expect-error "pouchdb-validation" does not have a typings yet.
         couchdb.connection = new couchdb.connector(
-            url, getConnectorOptions(configuration.couchdb.connector)
+            url, getConnectorOptions(config.connector)
         )
-    else {
-        console.log('AAAA', config.databaseName)
-
+    else
         // @ts-expect-error "pouchdb-validation" does not have a typings yet.
         couchdb.connection = new couchdb.connector(
-            config.databaseName,
-            getConnectorOptions(configuration.couchdb.connector)
+            config.databaseName, getConnectorOptions(config.connector)
         )
-    }
 
     couchdb.connection.installValidationMethods()
 
@@ -511,7 +507,7 @@ export const initializeConnection = async (
     connection.bulkDocs = bulkDocsFactory(
         // eslint-disable-next-line @typescript-eslint/unbound-method
         connection.bulkDocs,
-        configuration.couchdb
+        config
     )
     connection.post = connection.put =
         async function<Type extends Mapping<unknown>>(

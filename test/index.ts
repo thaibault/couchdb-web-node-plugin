@@ -36,6 +36,8 @@ describe('index', (): void => {
     configuration.couchdb.url = 'dummy-url'
     configuration.couchdb.connector.adapter = 'memory'
     configuration.couchdb.attachAutoRestarter = false
+    configuration.couchdb.backend.configuration['couchdb/database_dir'] =
+        'index-test-database-dummy-path/'
     // endregion
     // region tests
     test('preLoadService', async (): Promise<void> => {

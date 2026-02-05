@@ -15,6 +15,7 @@
 */
 // region imports
 import {copy, timeout} from 'clientnode'
+import {resolve} from 'path'
 import PouchDBMemoryPlugin from 'pouchdb-adapter-memory'
 import PouchDBFindPlugin from 'pouchdb-find'
 import PouchDB from 'pouchdb-node'
@@ -23,6 +24,7 @@ import {pluginAPI} from 'web-node'
 
 import {describe, expect, test} from '@jest/globals'
 
+import {getConnectorOptions} from '../helper'
 import expressUtilities from '../loadExpress'
 import packageConfiguration from '../package.json'
 import {restart, start, stop} from '../server'
@@ -37,6 +39,8 @@ describe('server', (): void => {
     configuration.couchdb.databaseName = 'server-test'
     configuration.couchdb.url = 'dummy-url'
     configuration.couchdb.connector.adapter = 'memory'
+    configuration.couchdb.backend.configuration['couchdb/database_dir'] =
+        'server-test-database-dummy-path/'
     // endregion
     // region tests
     test('start/restart/stop', (done): void => {
@@ -45,6 +49,12 @@ describe('server', (): void => {
                 .plugin(PouchDBMemoryPlugin)
                 .plugin(PouchDBFindPlugin)
                 .plugin(PouchDBValidationPlugin)
+                .defaults({
+                    prefix: resolve(configuration.couchdb.backend
+                        .configuration['couchdb/database_dir'] as string) +
+                    '/',
+                    ...getConnectorOptions(configuration.couchdb.connector)
+                }) as typeof PouchDB
             const service = {
                 connection: new connector(
                     configuration.couchdb.databaseName,
@@ -55,7 +65,7 @@ describe('server', (): void => {
                     runner: {packages: ['express', 'express-pouchdb']} as
                         InPlaceRunner,
                     resolve: () => {
-                        console.log('RESOLLVE')
+                        console.log('TODO RESOLVE called')
                         done()
                     }
                 }
@@ -70,15 +80,18 @@ describe('server', (): void => {
             await expect(start(state, expressUtilities))
                 .resolves.toBeUndefined()
 
-            await restart(state, expressUtilities)
+            // NOTE: Pouchdb needs some time finished further microtasks.
+            await timeout(100)
+
+            await expect(restart(state, expressUtilities))
+                .resolves.toBeUndefined()
 
             // NOTE: Pouchdb needs some time finished further microtasks.
             await timeout(100)
 
-            console.log('AAAA')
-
             await expect(stop({couchdb: service}, configuration, true))
                 .resolves.toBeUndefined()
+
             console.log('BBBB')
         })()
     })

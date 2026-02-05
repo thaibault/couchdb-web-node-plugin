@@ -78,6 +78,7 @@ export const start = async (
     } = state
     const {
         couchdb: {
+            connector: connectorConfiguration,
             backend: {configuration: backendConfiguration},
             runner: runnerConfiguration
         }
@@ -274,18 +275,20 @@ export const start = async (
             // eslint-disable-next-line @typescript-eslint/no-unsafe-call
             module(expressPouchDBInstance)
 
-        /*
-            NOTE: Currently needed to use synchronized folder creation to avoid
-            having the folder not yet persisted in following execution when
-            working on not mounted locations. Seems to be an issue within
-            a container environment.
-        */
-        makeDirectorPathSync(resolve(
-            backendConfiguration['couchdb/database_dir'] as string
-        ))
-        await makeDirectorPath(resolve(
-            backendConfiguration['couchdb/database_dir'] as string
-        ))
+        if (connectorConfiguration.adapter !== 'memory') {
+            /*
+                NOTE: Currently needed to use synchronized folder creation to
+                avoid having the folder not yet persisted in following
+                execution when working on not mounted locations. Seems to be an
+                issue within a container environment.
+            */
+            makeDirectorPathSync(resolve(
+                backendConfiguration['couchdb/database_dir'] as string
+            ))
+            await makeDirectorPath(resolve(
+                backendConfiguration['couchdb/database_dir'] as string
+            ))
+        }
 
         await pluginAPI.callStack<
             State<{
@@ -438,9 +441,20 @@ export const stop = async (
 ): Promise<void> => {
     if (destroy)
         await couchdb.connection.destroy()
-    else
-        // NOTE: Waiting for close promise to resolved often takes endless time.
-        void couchdb.connection.close()
+    else {
+        const promise = couchdb.connection.close() as Promise<void> | undefined
+        if (promise?.catch)
+            /*
+                NOTE: Waiting for close promise to resolved often takes endless
+                time.
+            */
+            promise.catch((error: unknown) => {
+                log.error(
+                    'Couchdb connection could not be gracefully closed:',
+                    error
+                )
+            })
+    }
 
     if (couchdb.server.process)
         if ((couchdb.server.runner as InPlaceRunner).packages)
