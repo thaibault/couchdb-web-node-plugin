@@ -30,6 +30,7 @@ import {
     ProcessErrorCallback
 } from 'clientnode'
 import {jsonParser, sendError, sendJSON} from 'express-pouchdb/lib/utils'
+import {Express} from 'express-serve-static-core'
 import {
     IncomingMessage as IncomingHTTPMessage,
     Server as HTTPServer,
@@ -42,7 +43,11 @@ import nodeFetch from 'node-fetch'
 import {promises as fileSystem} from 'fs'
 import {dirname, resolve} from 'path'
 
-import {initializeConnection} from './helper'
+import {authorize} from './databaseHelper'
+import {
+    determineAllowedModelRolesMapping,
+    initializeConnection
+} from './helper'
 import {
     BinaryRunner,
     Configuration,
@@ -52,7 +57,6 @@ import {
     Services,
     State
 } from './type'
-import {Express} from 'express-serve-static-core'
 // endregion
 globalContext.fetch = nodeFetch as unknown as typeof fetch
 
@@ -251,8 +255,6 @@ export const start = async (state: State): Promise<void> => {
                     {body: FindRequest<PlainObject>},
                 response: HTTP1ServerResponse
             ) => {
-                // TODO apply security related stuff
-
                 try {
                     let result = await pluginAPI.callStack<
                         State<{
@@ -266,13 +268,35 @@ export const start = async (state: State): Promise<void> => {
                         ...state,
                         hook: 'onPouchDBFind',
                         data: {request, response}
-                    })
+                    }) as FindResponse<object> | undefined
 
                     if (!result)
                         result = await (
                             request as unknown as {db: PouchDB.Database}
                         ).db.find(request.body)
+                    // authorize documents
+                    const modelRolesMapping =
+                        determineAllowedModelRolesMapping(
+                            configuration.couchdb.model
+                        )
+                    const specialNames =
+                        configuration.couchdb.model.property.name.special
 
+                    console.log('TODO extract user context', request)
+
+                    for (const document of result.docs)
+                        authorize(
+                            document,
+                            null,
+                            modelRolesMapping,
+                            {}, // TODO determine user context
+                            configuration.couchdb.security, // TODO determine security object
+                            specialNames.id,
+                            specialNames.type,
+                            specialNames.designDocumentNamePrefix,
+                            true
+                        )
+                    // endregion
                     sendJSON(response, 200, result)
                 } catch (error) {
                     sendError(response, error, 400)

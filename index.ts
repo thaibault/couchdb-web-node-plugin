@@ -943,12 +943,13 @@ export const loadService = async (
                       specified.
                     - Trim existing strings if newly specified.
                     - Remove property values if there values equals to an empty
-                      instance and the "emptyEqualsNull" property is specified
-                      as positive.
-                    - Rename custom type properties if new specified model
-                      provided is a super set of existing properties.
-                    - TODO: Renames property names if "oldPropertyName" is
-                      provided in model specification.
+                      instance and the "emptyEqualsNull" property is set.
+                    - Migrate types if old type "_oldType" is mentioned and
+                      given data matches newly specified schema (you can also
+                      provide a list of old types).
+                    - Renames property names if "oldName" is provided in
+                      property specification (you can also provide a list of
+                      old names).
                 */
                 const result = couchdb.validateDocument(
                     newDocument,

@@ -14,11 +14,12 @@
     endregion
 */
 // region imports
-import {describe, expect, test} from '@jest/globals'
 import {copy, extend, timeout} from 'clientnode'
 import {
     testEach, testEachPromiseAgainstSameExpectation, TEST_UNDEFINED_SYMBOL
 } from 'clientnode/test-helper'
+
+import {describe, expect, test} from '@jest/globals'
 
 import {
     determineAllowedModelRolesMapping,

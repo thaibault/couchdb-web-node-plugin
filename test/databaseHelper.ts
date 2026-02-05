@@ -14,7 +14,6 @@
     endregion
 */
 // region imports
-import {describe, expect, test} from '@jest/globals'
 import {
     copy,
     extend,
@@ -26,6 +25,8 @@ import {
 import {
     TEST_THROW_SYMBOL, testEachAgainstSameExpectation
 } from 'clientnode/test-helper'
+
+import {describe, expect, test} from '@jest/globals'
 
 import {authorize, validateDocumentUpdate} from '../databaseHelper'
 import {extendModels} from '../helper'

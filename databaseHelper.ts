@@ -436,8 +436,7 @@ export const validateDocumentUpdate = <
         typeof JSON !== 'undefined' &&
         Object.prototype.hasOwnProperty.call(JSON, 'parse')
     )
-        parseJSON =
-            (object: string): unknown => JSON.parse(object)
+        parseJSON = (object: string): unknown => JSON.parse(object)
     else
         throwError('Needed json parser is not available.')
     // endregion
@@ -2952,7 +2951,7 @@ export const validateDocumentUpdate = <
         )
     )
         throwError(
-            'NoChange: No new data given. new document: ' +
+            'NoChange: No new data given. New document: ' +
             `${serialize(newDocument)}; old document: ` +
             `${serialize(oldDocument)}.`
         )

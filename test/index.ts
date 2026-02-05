@@ -14,10 +14,16 @@
     endregion
 */
 // region imports
-import {describe, expect, test} from '@jest/globals'
 import {pluginAPI} from 'web-node'
 
-import {loadService, preLoadService, shouldExit} from '../index'
+import {describe, expect, test} from '@jest/globals'
+
+import {
+    loadService,
+    postLoadService,
+    preLoadService,
+    shouldExit
+} from '../index'
 import packageConfiguration from '../package.json'
 import {Configuration, ServicePromises, Services} from '../type'
 // endregion
@@ -28,6 +34,7 @@ describe('index', (): void => {
     configuration.couchdb.backend.configuration['couchdb/database_dir'] =
         './dummy-location'
     configuration.couchdb.url = 'http://dummy-url'
+    configuration.couchdb.attachAutoRestarter = false
     // endregion
     // region tests
     test('preLoadService', async (): Promise<void> => {
@@ -57,6 +64,19 @@ describe('index', (): void => {
                 connection: null, server: {}
             } as unknown as Services['couchdb']}
         })).resolves.toStrictEqual({couchdb: null})
+    )
+    test('postLoadService', (): Promise<void> =>
+        expect(postLoadService({
+            configuration,
+            data: undefined,
+            hook: 'postLoadService',
+            pluginAPI,
+            plugins: [],
+            servicePromises: {} as ServicePromises,
+            services: {couchdb: {
+                connection: null, server: {}
+            } as unknown as Services['couchdb']}
+        })).resolves.toBeUndefined()
     )
     test(
         'shouldExit',
