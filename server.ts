@@ -106,6 +106,10 @@ export const start = async (
 
     const name = ([] as Array<string>).concat(runner.names)[0]
     if ((runner as InPlaceRunner).packages) {
+        /*
+            We run into memory leaks and ongoing background tasks if we try to
+            fully reinitialize express with pouchdb here.
+        */
         if (!server.expressInstance) {
             log.info(`Couchdb runner is in-place with: "${name}".`)
 
