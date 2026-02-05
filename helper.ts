@@ -144,6 +144,7 @@ export const getConnectorOptions = (
     ])
 
     return {
+        ...configuration,
         fetch: ((
             url: RequestInfo, options?: RequestInit
         ): Promise<Response> => {
@@ -488,12 +489,15 @@ export const initializeConnection = async (
         couchdb.connection = new couchdb.connector(
             url, getConnectorOptions(configuration.couchdb.connector)
         )
-    else
+    else {
+        console.log('AAAA', config.databaseName)
+
         // @ts-expect-error "pouchdb-validation" does not have a typings yet.
         couchdb.connection = new couchdb.connector(
             config.databaseName,
             getConnectorOptions(configuration.couchdb.connector)
         )
+    }
 
     couchdb.connection.installValidationMethods()
 
@@ -533,8 +537,14 @@ export const initializeConnection = async (
         }
     // endregion
     // region ensure database presence
-    // NOTE: A local instance create databases (if not existing) automatically.
-    if (Object.prototype.hasOwnProperty.call(couchdb.server, 'runner'))
+    /*
+        NOTE: A local pouchdb instance creates the database (if not exists)
+        automatically.
+    */
+    if (
+        /^https?:\/\//.test(url) &&
+        Object.prototype.hasOwnProperty.call(couchdb.server, 'runner')
+    )
         try {
             await checkReachability(url)
         } catch {

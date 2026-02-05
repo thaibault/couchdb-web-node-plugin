@@ -39,6 +39,7 @@ import {
 } from 'clientnode'
 import {promises as fileSystem} from 'fs'
 import {basename, extname, resolve} from 'path'
+import PouchDBMemoryPlugin from 'pouchdb-adapter-memory'
 import PouchDB from 'pouchdb-node'
 import PouchDBAuthenticationPlugin from 'pouchdb-authentication'
 import PouchDBFindPlugin from 'pouchdb-find'
@@ -100,6 +101,7 @@ export const preLoadService = async ({
 
     if (!Object.prototype.hasOwnProperty.call(couchdb, 'connector')) {
         couchdb.connector = PouchDB
+            .plugin(PouchDBMemoryPlugin)
             .plugin({
                 bulkDocs: bulkDocsFactory(
                     PouchDB.prototype.bulkDocs as Connection['bulkDocs'],

@@ -27,7 +27,7 @@ import {
     PlainObject,
     ProcessCloseCallback,
     ProcessCloseReason,
-    ProcessErrorCallback
+    ProcessErrorCallback, timeout
 } from 'clientnode'
 import {jsonParser, sendError, sendJSON} from 'express-pouchdb/lib/utils'
 import {Express} from 'express-serve-static-core'
@@ -65,10 +65,14 @@ export const log = new Logger({name: 'web-node.couchdb.server'})
 /**
  * Starts server process.
  * @param state - Application state.
+ * @param expressUtilities - Optional express related utilities.
  * @returns A promise representing the server process wrapped in a promise
  * which resolves after server is reachable.
  */
-export const start = async (state: State): Promise<void> => {
+export const start = async (
+    state: State,
+    expressUtilities?: (typeof import('./loadExpress'))['default']
+): Promise<void> => {
     const {
         configuration, pluginAPI, services: {couchdb: {connector, server}}
     } = state
@@ -103,12 +107,30 @@ export const start = async (state: State): Promise<void> => {
         const name = ([] as Array<string>).concat(runner.names)[0]
         log.info(`Couchdb runner is in-place with: "${name}".`)
 
-        const {default: express} =
-            await eval(`import('express')`) as
-                {default: typeof import('express')}
-        const {default: expressPouchDB} =
-            await eval(`import('express-pouchdb')`) as
-                {default: typeof import('express-pouchdb')}
+        const {
+            express,
+            expressPouchDB,
+            bulkGet,
+            allDocs,
+            changes,
+            compact,
+            revsDiff,
+            security,
+            viewCleanup,
+            tempViews,
+            find,
+            views,
+            ddocInfo,
+            show,
+            list,
+            update,
+            attachments,
+            documents,
+            validation,
+            notFoundError
+        } = expressUtilities ??
+            (await eval(`import('./loadExpress')`)).default as
+                (typeof import('./loadExpress'))['default']
 
         const expressInstance: Express = server.expressInstance = express()
         /*
@@ -127,93 +149,28 @@ export const start = async (state: State): Promise<void> => {
         */
         const routesToPostpone = [
             [
-                [
-                    'routes/bulk-get',
-                    (await import('express-pouchdb/lib/routes/bulk-get'))
-                        .default
-                ],
-                [
-                    'routes/all-docs',
-                    (await import('express-pouchdb/lib/routes/all-docs'))
-                        .default
-                ],
-                [
-                    'routes/changes',
-                    (await import('express-pouchdb/lib/routes/changes'))
-                        .default
-                ],
-                [
-                    'routes/compact',
-                    (await import('express-pouchdb/lib/routes/compact'))
-                        .default
-                ],
-                [
-                    'routes/revs-diff',
-                    (await import('express-pouchdb/lib/routes/revs-diff'))
-                        .default
-                ],
-                [
-                    'routes/security',
-                    (await import('express-pouchdb/lib/routes/security'))
-                        .default
-                ],
-                [
-                    'routes/view-cleanup',
-                    (await import('express-pouchdb/lib/routes/view-cleanup'))
-                        .default
-                ],
-                [
-                    'routes/temp-views',
-                    (await import('express-pouchdb/lib/routes/temp-views'))
-                        .default
-                ]
+                ['routes/bulk-get', bulkGet],
+                ['routes/all-docs', allDocs],
+                ['routes/changes', changes],
+                ['routes/compact', compact],
+                ['routes/revs-diff', revsDiff],
+                ['routes/security', security],
+                ['routes/view-cleanup', viewCleanup],
+                ['routes/temp-views', tempViews]
             ],
             [
-                [
-                    'routes/find',
-                    (await import('express-pouchdb/lib/routes/find')).default
-                ],
-                [
-                    'routes/views',
-                    (await import('express-pouchdb/lib/routes/views')).default
-                ],
-                [
-                    'routes/ddoc-info',
-                    (await import('express-pouchdb/lib/routes/ddoc-info'))
-                        .default
-                ],
-                [
-                    'routes/show',
-                    (await import('express-pouchdb/lib/routes/show')).default
-                ],
-                [
-                    'routes/list',
-                    (await import('express-pouchdb/lib/routes/list')).default
-                ],
-                [
-                    'routes/update',
-                    (await import('express-pouchdb/lib/routes/update')).default
-                ]
+                ['routes/find', find],
+                ['routes/views', views],
+                ['routes/ddoc-info', ddocInfo],
+                ['routes/show', show],
+                ['routes/list', list],
+                ['routes/update', update]
             ],
             [
-                [
-                    'routes/attachments',
-                    (await import('express-pouchdb/lib/routes/attachments'))
-                        .default
-                ],
-                [
-                    'routes/documents',
-                    (await import('express-pouchdb/lib/routes/documents'))
-                        .default
-                ],
-                [
-                    'validation',
-                    (await import('express-pouchdb/lib/validation')).default
-                ],
-                [
-                    'routes/404',
-                    (await import('express-pouchdb/lib/routes/404')).default
-                ]
+                ['routes/attachments', attachments],
+                ['routes/documents', documents],
+                ['validation', validation],
+                ['routes/404', notFoundError]
             ]
         ]
         const expressPouchDBInstance: Express =
@@ -290,7 +247,8 @@ export const start = async (state: State): Promise<void> => {
                             null,
                             modelRolesMapping,
                             {}, // TODO determine user context
-                            configuration.couchdb.security, // TODO determine security object
+                            // TODO determine security object
+                            configuration.couchdb.security,
                             specialNames.id,
                             specialNames.type,
                             specialNames.designDocumentNamePrefix,
@@ -330,7 +288,10 @@ export const start = async (state: State): Promise<void> => {
         ))
 
         await pluginAPI.callStack<
-            State<{expressInstance: Express, expressPouchDBInstance: Express}>,
+            State<{
+                expressInstance: Express,
+                expressPouchDBInstance: Express
+            }>,
             FindResponse<object> | undefined
         >({
             ...state,
@@ -418,18 +379,22 @@ export const start = async (state: State): Promise<void> => {
             )
     }
 
-    await checkReachability(
-        format(configuration.couchdb.url, ''), {wait: true}
-    )
+    const url = format(configuration.couchdb.url, '')
+    if (/^https?:\/\//.test(url))
+        await checkReachability(url, {wait: true})
 }
 /**
  * Stops open database connection if exists, stops server process, restarts
  * server process and re-initializes server connection.
  * @param state - Application state.
+ * @param expressUtilities - Optional express related utilities.
  * @returns Given object of services wrapped in a promise resolving after
  * finish.
  */
-export const restart = async (state: State): Promise<void> => {
+export const restart = async (
+    state: State,
+    expressUtilities?: (typeof import('./loadExpress'))['default']
+): Promise<void> => {
     const {configuration, pluginAPI, services} = state
     const {couchdb: {server}} = services
 
@@ -441,11 +406,14 @@ export const restart = async (state: State): Promise<void> => {
 
     await stop(services, configuration)
 
+    // NOTE: Pouchdb needs some time finished further microtasks.
+    await timeout(100)
+
     // Reattach server process to web nodes process pool.
     server.resolve = resolveServerProcessBackup
     server.reject = rejectServerProcessBackup
 
-    await start(state)
+    await start(state, expressUtilities)
 
     void initializeConnection(services, configuration)
 
@@ -458,13 +426,21 @@ export const restart = async (state: State): Promise<void> => {
  * @param configuration - Mutable by plugins extended configuration object.
  * @param configuration.couchdb - Mutable by plugins extended configuration
  * object.
+ * @param destroy - Defined whether the database should be destroyed or just
+ * closed.
  * @returns Given object of services wrapped in a promise resolving after
  * finish.
  */
 export const stop = async (
-    {couchdb}: Services, {couchdb: configuration}: Configuration
+    {couchdb}: Services,
+    {couchdb: configuration}: Configuration,
+    destroy = false
 ): Promise<void> => {
-    void couchdb.connection.close()
+    if (destroy)
+        await couchdb.connection.destroy()
+    else
+        // NOTE: Waiting for close promise to resolved often takes endless time.
+        void couchdb.connection.close()
 
     if (couchdb.server.process)
         if ((couchdb.server.runner as InPlaceRunner).packages)
@@ -472,7 +448,7 @@ export const stop = async (
         else
             (couchdb.server.process as ChildProcess).kill('SIGINT')
 
-    await checkUnreachability(
-        format(configuration.url, ''), {wait: true}
-    )
+    const url = format(configuration.url, '')
+    if (/^https?:\/\//.test(url))
+        await checkUnreachability(url, {wait: true})
 }

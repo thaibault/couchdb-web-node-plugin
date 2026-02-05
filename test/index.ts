@@ -14,6 +14,7 @@
     endregion
 */
 // region imports
+import {copy} from 'clientnode'
 import {pluginAPI} from 'web-node'
 
 import {describe, expect, test} from '@jest/globals'
@@ -30,10 +31,10 @@ import {Configuration, ServicePromises, Services} from '../type'
 describe('index', (): void => {
     // region prepare environment
     const configuration: Configuration =
-        packageConfiguration.webNode as unknown as Configuration
-    configuration.couchdb.backend.configuration['couchdb/database_dir'] =
-        './dummy-location'
-    configuration.couchdb.url = 'http://dummy-url'
+        copy(packageConfiguration.webNode) as unknown as Configuration
+    configuration.couchdb.databaseName = 'index-test'
+    configuration.couchdb.url = 'dummy-url'
+    configuration.couchdb.connector.adapter = 'memory'
     configuration.couchdb.attachAutoRestarter = false
     // endregion
     // region tests
