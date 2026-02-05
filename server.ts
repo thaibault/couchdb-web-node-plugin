@@ -104,219 +104,220 @@ export const start = async (
     }
     // endregion
 
+    const name = ([] as Array<string>).concat(runner.names)[0]
     if ((runner as InPlaceRunner).packages) {
-        const name = ([] as Array<string>).concat(runner.names)[0]
-        log.info(`Couchdb runner is in-place with: "${name}".`)
+        if (!server.expressInstance) {
+            log.info(`Couchdb runner is in-place with: "${name}".`)
 
-        const {
-            express,
-            expressPouchDB,
-            bulkGet,
-            allDocs,
-            changes,
-            compact,
-            revsDiff,
-            security,
-            viewCleanup,
-            tempViews,
-            find,
-            views,
-            ddocInfo,
-            show,
-            list,
-            update,
-            attachments,
-            documents,
-            validation,
-            notFoundError
-        } = expressUtilities ??
+            const {
+                express,
+                expressPouchDB,
+                bulkGet,
+                allDocs,
+                changes,
+                compact,
+                revsDiff,
+                security,
+                viewCleanup,
+                tempViews,
+                find,
+                views,
+                ddocInfo,
+                show,
+                list,
+                update,
+                attachments,
+                documents,
+                validation,
+                notFoundError
+            } = expressUtilities ??
             (await eval(`import('./loadExpress')`)).default as
                 (typeof import('./loadExpress'))['default']
 
-        const expressInstance: Express = server.expressInstance = express()
-        /*
-            These routes take many remaining paths (fallback). We will add
-            these manually after custom routes could be added.
-        */
+            const expressInstance: Express = server.expressInstance = express()
+            /*
+                These routes take many remaining paths (fallback). We will add
+                these manually after custom routes could be added.
+            */
 
-        /*
-            We have to overwrite to apply read right authorization on property
-            level:
+            /*
+                We have to overwrite to apply read right authorization on
+                property level:
 
-            'routes/bulk-get',
-            'routes/all-docs',
-            'routes/attachments',
-            'routes/documents',
-        */
-        const routesToPostpone = [
-            [
-                ['routes/bulk-get', bulkGet],
-                ['routes/all-docs', allDocs],
-                ['routes/changes', changes],
-                ['routes/compact', compact],
-                ['routes/revs-diff', revsDiff],
-                ['routes/security', security],
-                ['routes/view-cleanup', viewCleanup],
-                ['routes/temp-views', tempViews]
-            ],
-            [
-                ['routes/find', find],
-                ['routes/views', views],
-                ['routes/ddoc-info', ddocInfo],
-                ['routes/show', show],
-                ['routes/list', list],
-                ['routes/update', update]
-            ],
-            [
-                ['routes/attachments', attachments],
-                ['routes/documents', documents],
-                ['validation', validation],
-                ['routes/404', notFoundError]
+                'routes/bulk-get',
+                'routes/all-docs',
+                'routes/attachments',
+                'routes/documents',
+            */
+            const routesToPostpone = [
+                [
+                    ['routes/bulk-get', bulkGet],
+                    ['routes/all-docs', allDocs],
+                    ['routes/changes', changes],
+                    ['routes/compact', compact],
+                    ['routes/revs-diff', revsDiff],
+                    ['routes/security', security],
+                    ['routes/view-cleanup', viewCleanup],
+                    ['routes/temp-views', tempViews]
+                ],
+                [
+                    ['routes/find', find],
+                    ['routes/views', views],
+                    ['routes/ddoc-info', ddocInfo],
+                    ['routes/show', show],
+                    ['routes/list', list],
+                    ['routes/update', update]
+                ],
+                [
+                    ['routes/attachments', attachments],
+                    ['routes/documents', documents],
+                    ['validation', validation],
+                    ['routes/404', notFoundError]
+                ]
             ]
-        ]
-        const expressPouchDBInstance: Express =
-            server.expressPouchDBInstance =
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-            expressPouchDB(
-                connector,
-                {
-                    configPath: resolve(
-                        configuration.couchdb.path, 'database.json'
-                    ),
-                    logPath: resolve(
-                        configuration.couchdb.path,
-                        backendConfiguration['log/file'] as string
-                    ),
-                    overrideMode: {
-                        exclude: ([] as typeof routesToPostpone[0])
-                            .concat(...routesToPostpone)
-                            .map(([name]) => name as string)
+            const expressPouchDBInstance: Express =
+                server.expressPouchDBInstance =
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+                expressPouchDB(
+                    connector,
+                    {
+                        configPath: resolve(
+                            configuration.couchdb.path, 'database.json'
+                        ),
+                        logPath: resolve(
+                            configuration.couchdb.path,
+                            backendConfiguration['log/file'] as string
+                        ),
+                        overrideMode: {
+                            exclude: ([] as typeof routesToPostpone[0])
+                                .concat(...routesToPostpone)
+                                .map(([name]) => name as string)
+                        }
+                    }
+                )
+
+            // TODO overwrite security related apis
+            // 'routes/bulk-get'
+            // 'routes/all-docs'
+            // 'routes/changes'
+
+            for (const [_name, module] of routesToPostpone[0])
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+                module(expressPouchDBInstance)
+
+            expressPouchDBInstance.post(
+                '/:db/_find',
+                jsonParser,
+                async (
+                    request:
+                        IncomingHTTPMessage &
+                        { body: FindRequest<PlainObject> },
+                    response: HTTP1ServerResponse
+                ) => {
+                    try {
+                        let result = await pluginAPI.callStack<
+                            State<{
+                                request:
+                                    IncomingHTTPMessage &
+                                    { body: FindRequest<PlainObject> },
+                                response: HTTP1ServerResponse
+                            }>,
+                            FindResponse<object> | undefined
+                        >({
+                            ...state,
+                            hook: 'onPouchDBFind',
+                            data: {request, response}
+                        }) as FindResponse<object> | undefined
+
+                        if (!result)
+                            result = await (
+                                request as unknown as { db: PouchDB.Database }
+                            ).db.find(request.body)
+                        // authorize documents
+                        const modelRolesMapping =
+                            determineAllowedModelRolesMapping(
+                                configuration.couchdb.model
+                            )
+                        const specialNames =
+                            configuration.couchdb.model.property.name.special
+
+                        console.log('TODO extract user context', request)
+
+                        for (const document of result.docs)
+                            authorize(
+                                document,
+                                null,
+                                modelRolesMapping,
+                                {}, // TODO determine user context
+                                // TODO determine security object
+                                configuration.couchdb.security,
+                                specialNames.id,
+                                specialNames.type,
+                                specialNames.designDocumentNamePrefix,
+                                true
+                            )
+                        // endregion
+                        sendJSON(response, 200, result)
+                    } catch (error) {
+                        sendError(response, error, 400)
                     }
                 }
             )
 
-        // TODO overwrite security related apis
-        // 'routes/bulk-get'
-        // 'routes/all-docs'
-        // 'routes/changes'
+            for (const [_name, module] of routesToPostpone[1])
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+                module(expressPouchDBInstance)
 
-        for (const [_name, module] of routesToPostpone[0])
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-            module(expressPouchDBInstance)
+            // TODO overwrite security related apis
+            // 'routes/attachments'
+            // 'routes/documents'
 
-        expressPouchDBInstance.post(
-            '/:db/_find',
-            jsonParser,
-            async (
-                request:
-                    IncomingHTTPMessage &
-                    {body: FindRequest<PlainObject>},
-                response: HTTP1ServerResponse
-            ) => {
-                try {
-                    let result = await pluginAPI.callStack<
-                        State<{
-                            request:
-                                IncomingHTTPMessage &
-                                {body: FindRequest<PlainObject>},
-                            response: HTTP1ServerResponse
-                        }>,
-                        FindResponse<object> | undefined
-                    >({
-                        ...state,
-                        hook: 'onPouchDBFind',
-                        data: {request, response}
-                    }) as FindResponse<object> | undefined
+            for (const [_name, module] of routesToPostpone[2])
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+                module(expressPouchDBInstance)
 
-                    if (!result)
-                        result = await (
-                            request as unknown as {db: PouchDB.Database}
-                        ).db.find(request.body)
-                    // authorize documents
-                    const modelRolesMapping =
-                        determineAllowedModelRolesMapping(
-                            configuration.couchdb.model
-                        )
-                    const specialNames =
-                        configuration.couchdb.model.property.name.special
-
-                    console.log('TODO extract user context', request)
-
-                    for (const document of result.docs)
-                        authorize(
-                            document,
-                            null,
-                            modelRolesMapping,
-                            {}, // TODO determine user context
-                            // TODO determine security object
-                            configuration.couchdb.security,
-                            specialNames.id,
-                            specialNames.type,
-                            specialNames.designDocumentNamePrefix,
-                            true
-                        )
-                    // endregion
-                    sendJSON(response, 200, result)
-                } catch (error) {
-                    sendError(response, error, 400)
-                }
+            if (connectorConfiguration.adapter !== 'memory') {
+                /*
+                    NOTE: Currently needed to use synchronized folder creation
+                    to avoid having the folder not yet persisted in following
+                    execution when working on not mounted locations. Seems to
+                    be an issue within a container environment.
+                */
+                makeDirectorPathSync(resolve(
+                    backendConfiguration['couchdb/database_dir'] as string
+                ))
+                await makeDirectorPath(resolve(
+                    backendConfiguration['couchdb/database_dir'] as string
+                ))
             }
-        )
 
-        for (const [_name, module] of routesToPostpone[1])
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-            module(expressPouchDBInstance)
+            await pluginAPI.callStack<
+                State<{
+                    expressInstance: Express,
+                    expressPouchDBInstance: Express
+                }>,
+                FindResponse<object> | undefined
+            >({
+                ...state,
+                hook: 'initializeExpressPouchDB',
+                data: {expressInstance, expressPouchDBInstance}
+            })
 
-        // TODO overwrite security related apis
-        // 'routes/attachments'
-        // 'routes/documents'
-
-        for (const [_name, module] of routesToPostpone[2])
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-            module(expressPouchDBInstance)
-
-        if (connectorConfiguration.adapter !== 'memory') {
-            /*
-                NOTE: Currently needed to use synchronized folder creation to
-                avoid having the folder not yet persisted in following
-                execution when working on not mounted locations. Seems to be an
-                issue within a container environment.
-            */
-            makeDirectorPathSync(resolve(
-                backendConfiguration['couchdb/database_dir'] as string
-            ))
-            await makeDirectorPath(resolve(
-                backendConfiguration['couchdb/database_dir'] as string
-            ))
+            server.expressInstance.use('/', expressPouchDBInstance)
         }
 
-        await pluginAPI.callStack<
-            State<{
-                expressInstance: Express,
-                expressPouchDBInstance: Express
-            }>,
-            FindResponse<object> | undefined
-        >({
-            ...state,
-            hook: 'initializeExpressPouchDB',
-            data: {expressInstance, expressPouchDBInstance}
-        })
-
-        server.expressInstance.use('/', expressPouchDBInstance)
-
         await new Promise((resolve) => {
-            server.process = expressInstance.listen(
+            server.process = server.expressInstance?.listen(
                 backendConfiguration['httpd/port'], resolve
             )
-            server.process.on('close', () => {
+            server.process?.on('close', () => {
                 server.resolve.call(this)
             })
-            server.process.on('error', (error: Error) => {
+            server.process?.on('error', (error: Error) => {
                 server.reject.call(this, error)
             })
         })
     } else {
-        const name = ([] as Array<string>).concat(runner.names)[0]
         log.info(`Couchdb runner is: "${name}".`)
 
         const binaryRunner = runner as BinaryRunner
@@ -390,12 +391,15 @@ export const start = async (
  * Stops open database connection if exists, stops server process, restarts
  * server process and re-initializes server connection.
  * @param state - Application state.
+ * @param destroy - Defined whether the database should be destroyed or just
+ * closed.
  * @param expressUtilities - Optional express related utilities.
  * @returns Given object of services wrapped in a promise resolving after
  * finish.
  */
 export const restart = async (
     state: State,
+    destroy = false,
     expressUtilities?: (typeof import('./loadExpress'))['default']
 ): Promise<void> => {
     const {configuration, pluginAPI, services} = state
@@ -405,20 +409,22 @@ export const restart = async (
     const rejectServerProcessBackup = server.reject
 
     // Avoid to notify web node about server process stop.
-    server.resolve = server.reject = NOOP
-
-    await stop(services, configuration)
+    const temporaryServerPromise = new Promise((resolve, reject) => {
+        server.resolve = resolve
+        server.reject = reject
+    })
+    await stop(services, configuration, destroy)
 
     // NOTE: Pouchdb needs some time finished further microtasks.
-    await timeout(100)
+    await Promise.race([temporaryServerPromise, timeout(100)])
 
     // Reattach server process to web nodes process pool.
     server.resolve = resolveServerProcessBackup
     server.reject = rejectServerProcessBackup
 
-    await start(state, expressUtilities)
+    await initializeConnection(services, configuration, false)
 
-    void initializeConnection(services, configuration)
+    await start(state, expressUtilities)
 
     await pluginAPI.callStack<State>({...state, hook: 'restartCouchdb'})
 }

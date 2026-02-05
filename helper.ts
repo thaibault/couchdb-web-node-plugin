@@ -469,10 +469,15 @@ export const bulkDocsFactory = (
  * Initializes a database connection instance.
  * @param services - An object with stored service instances.
  * @param configuration - Mutable by plugins extended configuration object.
+ * @param createRemoteDatabaseIfNotExists - Indicates whether database should
+ * be created if it does not exist yet. This is only relevant for remote
+ * databases, because local ones get created automatically by pouchdb.
  * @returns Given and extended object of services.
  */
 export const initializeConnection = async (
-    services: Services, configuration: Configuration
+    services: Services,
+    configuration: Configuration,
+    createRemoteDatabaseIfNotExists = true
 ): Promise<Services> => {
     const {couchdb} = services
     const config = configuration.couchdb
@@ -533,11 +538,9 @@ export const initializeConnection = async (
         }
     // endregion
     // region ensure database presence
-    /*
-        NOTE: A local pouchdb instance creates the database (if not exists)
-        automatically.
-    */
+    // NOTE: A request to database creates it (if not exists) automatically.
     if (
+        createRemoteDatabaseIfNotExists &&
         /^https?:\/\//.test(url) &&
         Object.prototype.hasOwnProperty.call(couchdb.server, 'runner')
     )
