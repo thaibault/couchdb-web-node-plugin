@@ -497,6 +497,8 @@ export interface CoreConfiguration<
 > {
     attachAutoRestarter: boolean
 
+    closeTimeoutInSeconds: number
+
     backend: {
         configuration: PlainObject
         prefixes: Array<string>

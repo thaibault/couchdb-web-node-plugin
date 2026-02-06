@@ -140,6 +140,7 @@
   "webNode": {
     "couchdb": {
       "attachAutoRestarter": true,
+      "closeTimeoutInSeconds": 30,
       "backend": {
         "configuration": {
           "couchdb/database_dir": {

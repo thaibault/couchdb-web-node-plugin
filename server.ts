@@ -19,13 +19,13 @@ import {
     checkReachability,
     checkUnreachability,
     CLOSE_EVENT_NAMES,
-    format,
     getProcessCloseHandler,
     globalContext,
     Logger,
     ProcessCloseCallback,
     ProcessCloseReason,
-    ProcessErrorCallback
+    ProcessErrorCallback,
+    timeout
 } from 'clientnode'
 import {Server as HTTPServer} from 'http'
 import nodeFetch from 'node-fetch'
@@ -249,7 +249,7 @@ export const stop = async (
         await couchdb.connection.destroy()
     else {
         const promise = couchdb.connection.close() as Promise<void> | undefined
-        if (promise?.catch)
+        if (promise?.catch) {
             /*
                 NOTE: Waiting for close promise to resolved often takes endless
                 time.
@@ -260,6 +260,10 @@ export const stop = async (
                     error
                 )
             })
+            await Promise.race([
+                promise, timeout(configuration.closeTimeoutInSeconds * 1000)
+            ])
+        }
     }
 
     if (couchdb.server.process)

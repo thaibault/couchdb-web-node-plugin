@@ -14,7 +14,7 @@
     endregion
 */
 // region imports
-import {copy, format, NOOP} from 'clientnode'
+import {copy, NOOP} from 'clientnode'
 import {resolve} from 'path'
 import PouchDBMemoryPlugin from 'pouchdb-adapter-memory'
 import PouchDBFindPlugin from 'pouchdb-find'
@@ -22,7 +22,7 @@ import PouchDB from 'pouchdb-node'
 import PouchDBValidationPlugin from 'pouchdb-validation'
 import {pluginAPI} from 'web-node'
 
-import {describe, expect, test} from '@jest/globals'
+import {describe, expect, jest, test} from '@jest/globals'
 
 import {getConnectorOptions, getEffectiveURL} from '../helper'
 import expressUtilities from '../loadExpress'
@@ -30,6 +30,10 @@ import packageConfiguration from '../package.json'
 import {restart, start, stop} from '../server'
 import {Configuration, CouchDB, InPlaceRunner, State} from '../type'
 // endregion
+jest.setTimeout(
+    packageConfiguration.webNode.couchdb.closeTimeoutInSeconds * 1000
+)
+
 describe('server', (): void => {
     // region prepare environment
     const configuration = {
@@ -119,11 +123,11 @@ describe('server', (): void => {
 
         const client = new connector(getEffectiveURL(config))
 
-        const {id} = await client.post({data: 2})
         // TODO
+        const {id} = await client.post({data: 2})
         console.log('FIND', await client.find({selector: {_id: id}}))
 
-        await expect(stop({couchdb: service}, configuration, true))
+        await expect(stop({couchdb: service}, configuration))
             .resolves.toBeUndefined()
     })
     // endregion
