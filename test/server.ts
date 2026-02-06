@@ -88,7 +88,7 @@ describe('server', (): void => {
         await expect(stop({couchdb: service}, configuration, true))
             .resolves.toBeUndefined()
     })
-    test('test rest', async (): Promise<void> => {
+    test.only('test rest', async (): Promise<void> => {
         const connector = PouchDB
             .plugin(PouchDBMemoryPlugin)
             .plugin(PouchDBFindPlugin)
@@ -121,11 +121,20 @@ describe('server', (): void => {
         await expect(start(state, expressUtilities))
             .resolves.toBeUndefined()
 
-        const client = new connector(getEffectiveURL(config))
-
+        const client = new (PouchDB.plugin(PouchDBFindPlugin))(
+            getEffectiveURL(config)
+        )
         // TODO
         const {id} = await client.post({data: 2})
-        console.log('FIND', await client.find({selector: {_id: id}}))
+        console.log(
+            'FIND',
+            await client.find({
+                selector: {
+                    [configuration.couchdb.model.property.name.special.id]: id
+                }
+            })
+        )
+        void client.close()
 
         await expect(stop({couchdb: service}, configuration))
             .resolves.toBeUndefined()

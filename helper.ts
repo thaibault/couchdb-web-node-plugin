@@ -74,7 +74,7 @@ import {
     PutDocument,
     State,
     Services,
-    SpecialPropertyNames
+    SpecialPropertyNames, UserContext, SecuritySettings
 } from './type'
 // endregion
 /*
@@ -570,6 +570,12 @@ export const initializeConnection = async (
     // endregion
     return services
 }
+/**
+ * Determines the effective database URL to connect to based on given
+ * configuration.
+ * @param configuration - Couchdb configuration object.
+ * @returns The effective URL.
+ */
 export const getEffectiveURL = (configuration: CoreConfiguration) => {
     const urlTemplate = /^https?:\/\//.test(configuration.url) ?
         configuration.url :
@@ -711,25 +717,33 @@ export const initializeExpress = async (
         '/:db/_find',
         jsonParser,
         async (
-            request: IncomingHTTPMessage & { body: FindRequest<PlainObject> },
+            givenRequest:
+                IncomingHTTPMessage & {body: FindRequest<PlainObject>},
             response: HTTP1ServerResponse
         ) => {
+            const request = givenRequest as (
+                IncomingHTTPMessage &
+                {
+                    body: FindRequest<PlainObject>
+                    couchSession: {userCtx: Partial<UserContext>}
+                    couchSecurityObj: Partial<SecuritySettings>
+                }
+            )
             try {
+                const hookData = {request, response}
                 let result = await pluginAPI.callStack<
                     State<{
-                        request:
-                            IncomingHTTPMessage &
-                            { body: FindRequest<PlainObject> },
+                        request: typeof request
                         response: HTTP1ServerResponse
                     }>,
                     FindResponse<object> | undefined
                 >({
                     ...state,
                     hook: 'onPouchDBFind',
-                    data: {request, response}
+                    data: hookData
                 }) as FindResponse<object> | undefined
 
-                if (!result)
+                if (!result?.docs)
                     result = await (
                         request as unknown as { db: PouchDB.Database }
                     ).db.find(request.body)
@@ -738,21 +752,31 @@ export const initializeExpress = async (
                     determineAllowedModelRolesMapping(configuration.model)
                 const specialNames = configuration.model.property.name.special
 
-                console.log('TODO extract user context', request)
+                console.log(
+                    'TODO user context',
+                    request.couchSession.userCtx
+                )
+                console.log(
+                    'TODO security object',
+                    request.couchSecurityObj
+                )
 
                 for (const document of result.docs)
-                    authorize(
-                        document,
-                        null,
-                        modelRolesMapping,
-                        {}, // TODO determine user context
-                        // TODO determine security object
-                        configuration.security,
-                        specialNames.id,
-                        specialNames.type,
-                        specialNames.designDocumentNamePrefix,
-                        true
-                    )
+                    try {
+                        authorize(
+                            document,
+                            null,
+                            request.couchSession.userCtx,
+                            request.couchSecurityObj,
+                            modelRolesMapping,
+                            specialNames.id,
+                            specialNames.type,
+                            specialNames.designDocumentNamePrefix,
+                            true
+                        )
+                    } catch (error) {
+                        sendError(response, error, 403)
+                    }
                 // endregion
                 sendJSON(response, 200, result)
             } catch (error) {
