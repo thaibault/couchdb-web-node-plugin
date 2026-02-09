@@ -15,7 +15,6 @@
 */
 // region imports
 import {copy, NOOP} from 'clientnode'
-import {resolve} from 'path'
 import PouchDBMemoryPlugin from 'pouchdb-adapter-memory'
 import PouchDBFindPlugin from 'pouchdb-find'
 import PouchDB from 'pouchdb-node'
@@ -43,11 +42,12 @@ describe('server', (): void => {
     const config = configuration.couchdb
 
     config.closeTimeoutInSeconds = 3
+    config.connector.fetch.timeout = config.closeTimeoutInSeconds * 1000
     config.databaseName = 'server-test'
     config.url = 'dummy-url'
-    config.connector.adapter = 'memory'
-    config.backend.configuration['couchdb/database_dir'] =
-        'server-test-database-dummy-path/'
+    config.runner.variants[2].configuration = {
+        adapter: 'memory'
+    }
     // endregion
     // region tests
     test('start/restart/stop', async (): Promise<void> => {
@@ -55,15 +55,7 @@ describe('server', (): void => {
             .plugin(PouchDBMemoryPlugin)
             .plugin(PouchDBFindPlugin)
             .plugin(PouchDBValidationPlugin)
-            .defaults({
-                prefix:
-                    resolve(
-                        config.backend.configuration['couchdb/database_dir'] as
-                            string
-                    ) +
-                    '/',
-                ...getConnectorOptions(config.connector)
-            }) as typeof PouchDB
+            .defaults(getConnectorOptions(config.connector)) as typeof PouchDB
         const service = {
             connection: new connector(config.databaseName, config.connector),
             connector,

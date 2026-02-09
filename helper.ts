@@ -72,9 +72,11 @@ import {
     PartialFullDocument,
     PropertySpecification,
     PutDocument,
+    SecuritySettings,
     State,
     Services,
-    SpecialPropertyNames, UserContext, SecuritySettings
+    SpecialPropertyNames,
+    UserContext
 } from './type'
 // endregion
 /*
@@ -588,12 +590,8 @@ export const getEffectiveURL = (
 ) => {
     const urlTemplate = /^https?:\/\//.test(configuration.url) ?
         configuration.url :
-        'http://{1}' +
-        `${configuration.backend.configuration['httpd/host'] as string}:` +
-        String(
-            configuration.backend.configuration['httpd/port'] as
-                number | string
-        )
+        `http://{1}${configuration.runner.host}:` +
+        String(configuration.runner.port)
 
     return (
         format(
@@ -702,10 +700,7 @@ export const initializeExpress = async (
             connector,
             {
                 configPath: resolve(configuration.path, 'database.json'),
-                logPath: resolve(
-                    configuration.path,
-                    configuration.backend.configuration['log/file'] as string
-                ),
+                logPath: '/dev/stdout',
                 overrideMode: {
                     exclude: ([] as typeof routesToPostpone[0])
                         .concat(...routesToPostpone)
@@ -814,14 +809,8 @@ export const initializeExpress = async (
             working on not mounted locations. Seems to be an issue within a
             container environment.
         */
-        makeDirectorPathSync(resolve(
-            configuration.backend.configuration['couchdb/database_dir'] as
-                string
-        ))
-        await makeDirectorPath(resolve(
-            configuration.backend.configuration['couchdb/database_dir'] as
-                string
-        ))
+        makeDirectorPathSync(resolve(configuration.path))
+        await makeDirectorPath(resolve(configuration.path))
     }
 
     await pluginAPI.callStack<

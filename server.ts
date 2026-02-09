@@ -57,12 +57,7 @@ export const start = async (
     const {
         configuration, pluginAPI, services: {couchdb: {connector, server}}
     } = state
-    const {
-        couchdb: {
-            backend: {configuration: backendConfiguration},
-            runner: runnerConfiguration
-        }
-    } = configuration
+    const {couchdb: {runner: runnerConfiguration}} = configuration
     const {runner} = server
 
     // region create configuration file if needed
@@ -106,7 +101,7 @@ export const start = async (
 
         await new Promise((resolve) => {
             server.process = server.expressInstance?.listen(
-                backendConfiguration['httpd/port'], resolve
+                configuration.couchdb.runner.port, resolve
             )
             server.process?.on('close', () => {
                 server.resolve.call(this)

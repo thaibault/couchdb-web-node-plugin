@@ -99,30 +99,6 @@ export const preLoadService = async ({
         services.couchdb = {} as Services['couchdb']
     const {couchdb} = services
 
-    if (!Object.prototype.hasOwnProperty.call(couchdb, 'connector')) {
-        couchdb.connector = PouchDB
-            .plugin(PouchDBMemoryPlugin)
-            .plugin({
-                bulkDocs: bulkDocsFactory(
-                    PouchDB.prototype.bulkDocs as Connection['bulkDocs'],
-                    configuration
-                )
-            })
-            .plugin(PouchDBAuthenticationPlugin)
-            .plugin(PouchDBFindPlugin)
-            .plugin(PouchDBValidationPlugin)
-            .defaults({
-                prefix: resolve(configuration.backend.configuration[
-                    'couchdb/database_dir'
-                ] as string) +
-                '/',
-                ...getConnectorOptions(configuration.connector)
-            }) as typeof PouchDB
-
-        if (configuration.debug)
-            couchdb.connector.debug.enable('*')
-    }
-
     if (!Object.prototype.hasOwnProperty.call(couchdb, 'server')) {
         couchdb.server = {} as Services['couchdb']['server']
 
@@ -159,8 +135,7 @@ export const preLoadService = async ({
                 for (const name of (
                     ([] as Array<string>).concat(binaryRunner.names)
                 )) {
-                    const binaryFilePath: string =
-                        resolve(directoryPath, name)
+                    const binaryFilePath: string = resolve(directoryPath, name)
                     triedPaths.push(binaryFilePath)
 
                     if (await isFile(binaryFilePath)) {
@@ -187,6 +162,47 @@ export const preLoadService = async ({
                 'locally.'
             )
         // endregion
+    }
+
+    if (!Object.prototype.hasOwnProperty.call(couchdb, 'connector')) {
+        couchdb.connector = PouchDB
+            .plugin(PouchDBMemoryPlugin)
+            .plugin({
+                bulkDocs: bulkDocsFactory(
+                    PouchDB.prototype.bulkDocs as Connection['bulkDocs'],
+                    configuration
+                )
+            })
+            .plugin(PouchDBAuthenticationPlugin)
+            .plugin(PouchDBFindPlugin)
+            .plugin(PouchDBValidationPlugin)
+            .defaults({
+                ...((
+                    (couchdb.server.runner.configuration as
+                        Partial<BinaryRunner['configuration']>
+                    ).values &&
+                    (couchdb.server.runner.configuration as
+                        BinaryRunner['configuration']
+                    ).values['couchdb/database_dir']
+                ) ?
+                    {
+                        prefix:
+                            resolve(String(
+                                (couchdb.server.runner.configuration as
+                                    BinaryRunner['configuration']
+                                ).values['couchdb/database_dir'] as
+                                    number | string
+                            )) +
+                            '/'
+                    } :
+                    couchdb.server.runner.configuration as
+                        Partial<InPlaceRunner['configuration']>
+                ),
+                ...getConnectorOptions(configuration.connector)
+            }) as typeof PouchDB
+
+        if (configuration.debug)
+            couchdb.connector.debug.enable('*')
     }
 
     const modelConfiguration = copy(configuration.model)
@@ -357,6 +373,7 @@ export const loadService = async (
         Accept: 'application/json',
         'Content-Type': 'application/json'
     }
+
     // region ensure presence of global admin user
     if (configuration.couchdb.ensureAdminPresence) {
         const unauthenticatedUserDatabaseConnection =
@@ -483,101 +500,107 @@ export const loadService = async (
             }
     }
     // endregion
+
     // region apply database/rest api configuration
-    if (configuration.couchdb.model.updateConfiguration)
-        for (const prefix of configuration.couchdb.backend.prefixes)
-            for (
-                const subPath in configuration.couchdb.backend.configuration
-            )
-                if (Object.prototype.hasOwnProperty.call(
-                    configuration.couchdb.backend.configuration, subPath
-                )) {
-                    const fullPath =
-                        `/${prefix}${prefix.trim() ? '/' : ''}${subPath}`
-                    const url = `${urlPrefix}${fullPath}`
+    if (
+        configuration.couchdb.model.updateConfiguration &&
+        !(Object.prototype.hasOwnProperty.call(
+            couchdb.server.runner, 'packages'
+        ))
+    ) {
+        const runner = couchdb.server.runner as BinaryRunner
+        for (const prefix of runner.configuration.prefixes)
+            for (const [subPath, value] of Object.entries(
+                runner.configuration.values
+            )) {
+                const fullPath =
+                    `/${prefix}${prefix.trim() ? '/' : ''}${subPath}`
+                const url = `${urlPrefix}${fullPath}`
 
-                    const value: unknown =
-                        configuration.couchdb.backend.configuration[subPath]
-
-                    let response: Response | undefined
-                    try {
-                        response = await globalContext.fetch(
-                            url, {headers: authorizationHeader}
-                        )
-                    } catch (error) {
-                        log.warn(
-                            `Configuration "${fullPath}" (with desired`,
-                            `value [${represent(value)}]) couldn't be`,
-                            `determined: ${represent(error)}`
-                        )
-                    }
-
-                    if (response)
-                        if (response.ok) {
-                            let changeNeeded = true
-                            if (typeof response.text === 'function')
-                                try {
-                                    changeNeeded = (
-                                        value === await response[
-                                            typeof value === 'string' ?
-                                                'text' :
-                                                'json'
-                                        ]()
-                                    )
-                                } catch (error) {
-                                    log.warn(
-                                        'Error checking curent value of',
-                                        `"${fullPath}" to be`,
-                                        `[${represent(value)}]:`,
-                                        represent(error)
-                                    )
-                                }
-
-                            if (changeNeeded)
-                                try {
-                                    await globalContext.fetch(
-                                        url,
-                                        {
-                                            body:
-                                                '"' +
-                                                (configuration.couchdb
-                                                    .backend.configuration[
-                                                        subPath
-                                                    ] as string
-                                                ) +
-                                                '"',
-                                            method: 'PUT'
-                                        }
-                                    )
-                                } catch (error) {
-                                    log.error(
-                                        `Configuration "${fullPath}"`,
-                                        `couldn't be applied to`,
-                                        `[${represent(value)}]:`,
-                                        represent(error)
-                                    )
-                                }
-                            else
-                                log.info(
-                                    `Configuration "${fullPath}" is`,
-                                    'already set to desired value',
-                                    `[${represent(value)}].`
-                                )
-                        } else
-                            log.info(
-                                `Configuration "${fullPath}" does not`,
-                                `exist (desired value`,
-                                `[${represent(value)}]). Response code is`,
-                                `${String(response.status)}.`
-                            )
+                let response: Response | undefined
+                try {
+                    response = await globalContext.fetch(
+                        url, {headers: authorizationHeader}
+                    )
+                } catch (error) {
+                    log.warn(
+                        `Configuration "${fullPath}" (with desired value`,
+                        `[${represent(value)}]) couldn't be determined:`,
+                        represent(error)
+                    )
                 }
+
+                if (response)
+                    if (response.ok) {
+                        let changeNeeded = true
+                        if (typeof response.text === 'function')
+                            try {
+                                changeNeeded = (
+                                    value === await response[
+                                        typeof value === 'string' ?
+                                            'text' :
+                                            'json'
+                                    ]()
+                                )
+                            } catch (error) {
+                                log.warn(
+                                    'Error checking current value of',
+                                    `"${fullPath}" to be`,
+                                    `[${represent(value)}]:`,
+                                    represent(error)
+                                )
+                            }
+
+                        if (changeNeeded)
+                            try {
+                                await globalContext.fetch(
+                                    url,
+                                    {
+                                        body: `"${value as string}"`,
+                                        headers: authorizationHeader,
+                                        method: 'PUT'
+                                    }
+                                )
+                            } catch (error) {
+                                log.error(
+                                    `Configuration "${fullPath}" couldn't be`,
+                                    `applied to [${represent(value)}]:`,
+                                    represent(error)
+                                )
+                            }
+                        else
+                            log.info(
+                                `Configuration "${fullPath}" is already set`,
+                                `to desired value [${represent(value)}].`
+                            )
+                    } else
+                        log.info(
+                            `Configuration "${fullPath}" does not exist`,
+                            `(desired value [${represent(value)}]). Response`,
+                            `code is ${String(response.status)}.`
+                        )
+            }
+    }
     // endregion
     await initializeConnection(services, configuration)
 
-    // TODO be able to configure pouchdb without rest api when running locally.
-
     // region ensure presence of database security settings
     if (configuration.couchdb.ensureSecuritySettingsPresence) {
+        const {headers: givenAuthorizationHeaders} = await globalContext.fetch(
+            `${urlPrefix}/_session`,
+            {
+                body: JSON.stringify({
+                    name: configuration.couchdb.admin.name,
+                    password: configuration.couchdb.admin.password
+                }),
+                headers: {...headers},
+                method: 'POST'
+            }
+        )
+        const authorizationHeader = {
+            Cookie: givenAuthorizationHeaders.get('set-cookie') as string
+        }
+
         const securityConfigurations = configuration.couchdb.security
         for (const [databaseName, securityObject] of Object.entries(
             securityConfigurations
@@ -633,11 +656,6 @@ export const loadService = async (
                             .validatedDocumentsCache
                     ]".
                 */
-                console.log('A', {
-                    body: JSON.stringify(fullSecurityObject),
-                    headers: {...headers, ...authorizationHeader},
-                    method: 'PUT'
-                })
                 const response = await globalContext.fetch(
                     `${urlPrefix}/${databaseName}/_security`,
                     {
@@ -668,7 +686,7 @@ export const loadService = async (
 
     const models = extendModels(configuration.couchdb.model)
     if (configuration.couchdb.model.updateValidation) {
-        // NOTE: We import pre-transpiled javascript code here.
+        // NOTE: We import pre-transpiled JavaScript code here.
         const databaseHelperCode: string = await fileSystem.readFile(
             eval(`require.resolve('./databaseHelper')`) as string,
             {encoding: configuration.core.encoding, flag: 'r'}
@@ -1089,6 +1107,7 @@ export const loadService = async (
             )
         }
     // endregion
+
     return {couchdb: promise}
 }
 /**
@@ -1109,7 +1128,7 @@ export const postLoadService = (state: State): Promise<void> => {
     */
     let numberOfErrorsThrough = 0
     /*
-        NOTE: Use this code to test changes stream reinitialisation and
+        NOTE: Use this code to test changes stream reinitialization and
         database server restarts. Play with length of interval to trigger error
         events.
     */

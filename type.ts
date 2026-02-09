@@ -26,7 +26,8 @@ import {
 import {Express} from 'express-serve-static-core'
 import {
     IncomingMessage as IncomingHTTPMessage,
-    Server as HTTPServer, ServerResponse as HTTP1ServerResponse
+    Server as HTTPServer,
+    ServerResponse as HTTP1ServerResponse
 } from 'http'
 import {
     Configuration as BaseConfiguration,
@@ -83,6 +84,8 @@ PouchDB.Database<Type> {
 export type Connector = PouchDB.Static
 export type DatabaseConnectorConfiguration =
     PouchDB.Configuration.RemoteDatabaseConfiguration
+export type LocalDatabaseConfiguration =
+    PouchDB.Configuration.LocalDatabaseConfiguration
 
 export type DatabaseError = PouchDB.Core.Error
 export type DatabaseFetch = PouchDB.Core.Options['fetch']
@@ -460,13 +463,19 @@ export interface Runner {
         }
     names: Array<string> | string
 }
-export interface BinaryRunner extends Runner{
+export interface BinaryRunner extends Runner {
+    configuration: {
+        values: PlainObject
+        prefixes: Array<string>
+    }
+
     arguments?: Array<string> | null | string
     binaryFilePath?: null | string
     environment?: null | Mapping
     locations: Array<string> | string
 }
 export interface InPlaceRunner extends Runner {
+    configuration: LocalDatabaseConfiguration
     packages: Array<string> | string
 }
 
@@ -481,7 +490,7 @@ export type ConnectorConfiguration =
     DatabaseConnectorConfiguration &
     {
         // NOTE: "pouchdb`s" version supports timeout parameter.
-        fetch?: AdvancedFetchOptions | null,
+        fetch: AdvancedFetchOptions | null,
         fetchInterceptor: {
             numberOfRetries: number
             retryIntervalInSeconds: number
@@ -499,14 +508,11 @@ export interface CoreConfiguration<
 
     closeTimeoutInSeconds: number
 
-    backend: {
-        configuration: PlainObject
-        prefixes: Array<string>
-    }
-
     runner: {
         memoryInMegaByte: string
         nodePath: string
+        host: string
+        port: number
         variants: Array<BinaryRunner | InPlaceRunner>
     }
 

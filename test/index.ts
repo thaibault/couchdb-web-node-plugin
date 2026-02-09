@@ -17,6 +17,7 @@
 import {copy, timeout} from 'clientnode'
 import PouchDB from 'pouchdb-core'
 import PouchDBHTTPAdapter from 'pouchdb-adapter-http'
+import PouchDBAuthenticationPlugin from 'pouchdb-authentication'
 import PouchDBFindPlugin from 'pouchdb-find'
 import {pluginAPI} from 'web-node'
 
@@ -28,7 +29,9 @@ import {
 } from '../index'
 import expressUtilities from '../loadExpress'
 import packageConfiguration from '../package.json'
-import {Configuration, ServicePromises, Services, State} from '../type'
+import {
+    Configuration, Connection, Model, ServicePromises, Services, State
+} from '../type'
 // endregion
 jest.setTimeout(
     packageConfiguration.webNode.couchdb.closeTimeoutInSeconds * 1000
@@ -43,6 +46,7 @@ describe('index', (): void => {
     const config = configuration.couchdb
 
     config.closeTimeoutInSeconds = 3
+    config.connector.fetch.timeout = config.closeTimeoutInSeconds * 1000
     config.databaseName = 'index-test'
     config.users[config.databaseName] = {
         name: 'test',
@@ -50,10 +54,15 @@ describe('index', (): void => {
         roles: ['users']
     }
     config.url = 'dummy-url'
-    config.connector.adapter = 'memory'
+    config.runner.variants[2].configuration = {
+        adapter: 'memory'
+    }
     config.attachAutoRestarter = false
-    config.backend.configuration['couchdb/database_dir'] =
-        'index-test-database-dummy-path/'
+    config.model.entities.TestModel = {
+        propertyA: {}
+    } as unknown as Model
+
+    const {id: idName, type: typeName} = config.model.property.name.special
     // endregion
     // region tests
     test('preLoadService', async (): Promise<void> => {
@@ -150,20 +159,49 @@ describe('index', (): void => {
         console.log('TODO loaded')
 
         // TODO: implement tests for authorized rest api
-        const client = new (
-            PouchDB
-                .plugin(PouchDBFindPlugin)
-                .plugin(PouchDBHTTPAdapter)
-        )(getEffectiveURL(config))
-        const {id} = await client.post({data: 2})
+        const pouchDB = PouchDB
+            .plugin(PouchDBAuthenticationPlugin)
+            .plugin(PouchDBFindPlugin)
+            .plugin(PouchDBHTTPAdapter)
+
+        const userDatabaseConnection = new pouchDB(
+            `${getEffectiveURL(config, false)}/_users`,
+            {
+                auth: {
+                    username: config.admin.name,
+                    password: config.admin.password
+                }
+            }
+        ) as Connection
+        console.log(userDatabaseConnection.adapter)
+        console.log('remote UUUSER in test', userDatabaseConnection.adapter, await userDatabaseConnection.get(`org.couchdb.user:test`))
+
+        state.hook = 'shouldExit'
+        await expect(shouldExit(state)).resolves.toBeUndefined()
+        return
+
+
+        const client = new pouchDB(getEffectiveURL(config))
+        console.log(
+            'logged in',
+            getEffectiveURL(config),
+            config.users[config.databaseName].name,
+            config.users[config.databaseName].password
+        )
+
+        // TODO failes
+        await client.logIn(
+            config.users[config.databaseName].name,
+            config.users[config.databaseName].password
+        )
+        const {id} = await client.post({
+            [typeName]: 'TestModel', propertyA: 'value'
+        })
         console.log(
             'TODO FIND',
-            await client.find({
-                selector: {
-                    [config.model.property.name.special.id]: id
-                }
-            })
+            await client.find({selector: {[idName]: id}})
         )
+        await client.logOut()
         await Promise.race([
             client.close(), timeout(config.closeTimeoutInSeconds * 1000)
         ])

@@ -143,41 +143,43 @@
     "couchdb": {
       "attachAutoRestarter": true,
       "closeTimeoutInSeconds": 30,
-      "backend": {
-        "configuration": {
-          "couchdb/database_dir": {
-            "__evaluate__": "path.resolve(self.couchdb.path)"
-          },
-          "couchdb/max_attachment_chunk_size": "4294967296",
-          "couchdb/os_process_timeout": "25000",
-          "couchdb/view_index_dir": {
-            "__evaluate__": "path.resolve(self.couchdb.path)"
-          },
-          "couch_httpd_auth/timeout": {
-            "__evaluate__": "60 ** 2 * 24 * 14"
-          },
-          "chttpd/require_valid_user": true,
-          "httpd/allow_jsonp": false,
-          "httpd/bind_address": {
-            "__evaluate__": "self.couchdb.backend.configuration['httpd/host']"
-          },
-          "httpd/enable_cors": false,
-          "httpd/host": "0.0.0.0",
-          "httpd/port": 5984,
-          "log/file": "/dev/stdout",
-          "log/level": "warning"
-        },
-        "prefixes": [
-          "_node/_local/_config",
-          "_config"
-        ]
-      },
       "runner": {
         "memoryInMegaByte": "default",
         "nodePath": "/usr/bin/node",
+        "host": "0.0.0.0",
+        "port": 5984,
         "variants": [
           {
             "adminUserConfigurationPath": "_node/couchdb@127.0.0.1/_config/admins",
+            "configuration": {
+              "values": {
+                "couchdb/database_dir": {
+                  "__evaluate__": "path.resolve(self.couchdb.path)"
+                },
+                "couchdb/max_attachment_chunk_size": "4294967296",
+                "couchdb/os_process_timeout": "25000",
+                "couchdb/view_index_dir": {
+                  "__evaluate__": "path.resolve(self.couchdb.path)"
+                },
+                "couch_httpd_auth/timeout": {
+                  "__evaluate__": "60 ** 2 * 24 * 14"
+                },
+                "chttpd/require_valid_user": true,
+                "httpd/allow_jsonp": false,
+                "httpd/bind_address": {
+                  "__evaluate__": "self.couchdb.runner.host"
+                },
+                "httpd/enable_cors": false,
+                "httpd/host": {"__evaluate__": "self.couchdb.runner.host"},
+                "httpd/port": {"__evaluate__": "self.couchdb.runner.port"},
+                "log/file": "/dev/stdout",
+                "log/level": "warning"
+              },
+              "prefixes": [
+                "_node/_local/_config",
+                "_config"
+              ]
+            },
             "configurationFile": {
               "content": {
                 "__evaluate__": "`[couchdb]\\ndatabase_dir = ${path.resolve(self.couchdb.path)}\\nview_index_dir = ${path.resolve(self.couchdb.path)}`"
@@ -196,6 +198,9 @@
           },
           {
             "adminUserConfigurationPath": "_config/admins",
+            "configuration": {
+              "__evaluate__": "self.couchdb.runner.variants[0].configuration"
+            },
             "arguments": [
               "--config",
               {
@@ -203,16 +208,16 @@
               },
               "--dir",
               {
-                "__evaluate__": "self.couchdb.backend.configuration['couchdb/database_dir']"
+                "__evaluate__": "self.couchdb.runner.variants[0].configuration.values['couchdb/database_dir']"
               },
               "#: NOTE: This redundancy seems to be needed to forward ports in docker containers.",
               "--host",
               {
-                "__evaluate__": "self.couchdb.backend.configuration['httpd/host']"
+                "__evaluate__": "self.couchdb.runner.variants[0].configuration.values['httpd/host']"
               },
               "--port",
               {
-                "__evaluate__": "`${self.couchdb.backend.configuration['httpd/port']}`"
+                "__evaluate__": "`${self.couchdb.runner.variants[0].configuration.values['httpd/port']}`"
               }
             ],
             "locations": [
@@ -223,6 +228,11 @@
           },
           {
             "adminUserConfigurationPath": "_config/admins",
+            "configuration": {
+              "prefix": {
+                "__evaluate__": "path.resolve(self.couchdb.path) + '/'"
+              }
+            },
             "packages": [
               "express",
               "express-pouchdb"
@@ -493,7 +503,7 @@
       },
       "skipLatestRevisionDetermining": true,
       "url": {
-        "__evaluate__": "`http://{1}${self.couchdb.backend.configuration['httpd/host']}:${self.couchdb.backend.configuration['httpd/port']}`"
+        "__evaluate__": "`http://{1}${self.couchdb.runner.variants[0].configuration.values['httpd/host']}:${self.couchdb.runner.variants[0].configuration.values['httpd/port']}`"
       },
       "admin": {
         "name": "admin",
@@ -514,6 +524,9 @@
     "exportFormat": {
       "external": "commonjs2",
       "self": "commonjs2"
+    },
+    "generic": {
+      "testCommandLine": "NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" jest --config node_modules/weboptimizer/jest.json --noStackTrace --test-regex"
     },
     "injection": {
       "entry": {
