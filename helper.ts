@@ -65,6 +65,7 @@ import {
     FindRequest,
     FullDocument,
     Index,
+    InPlaceRunner,
     Model,
     ModelConfiguration,
     Models,
@@ -139,12 +140,11 @@ export const getConnectorOptions = (
         which is than accepted by pouchdb's api.
     */
     const getOptions = (options: RequestInit = {}) => {
-        if (configuration.fetch)
-            options = extend(
-                true,
-                copy(configuration.fetch),
-                options
-            )
+        options = extend(
+            true,
+            copy(configuration.fetch),
+            options
+        )
 
         if (Array.isArray(abortSignalStack) && abortSignalStack.length > 0)
             options.signal = abortSignalStack.pop()
@@ -610,6 +610,7 @@ export const getEffectiveURL = (
  * @param state - Application state.
  * @param connector - Database connector instance.
  * @param configuration - Couchdb configuration object.
+ * @param inPlaceRunnerConfiguration - In-place runner configuration object.
  * @param pluginAPI - Plugin API to call plugin hooks.
  * @param expressUtilities - Optional express related utilities.
  * @returns A promise resolving to the wrapping express instance and pouchdb's
@@ -620,6 +621,7 @@ export const initializeExpress = async (
     state: State,
     connector: Connector,
     configuration: CoreConfiguration,
+    inPlaceRunnerConfiguration: InPlaceRunner['configuration'],
     pluginAPI: State['pluginAPI'],
     expressUtilities?: (typeof import('./loadExpress'))['default']
 ): Promise<{
@@ -699,13 +701,12 @@ export const initializeExpress = async (
         expressPouchDB(
             connector,
             {
-                configPath: resolve(configuration.path, 'database.json'),
-                logPath: '/dev/stdout',
                 overrideMode: {
                     exclude: ([] as typeof routesToPostpone[0])
                         .concat(...routesToPostpone)
                         .map(([name]) => name as string)
-                }
+                },
+                ...inPlaceRunnerConfiguration
             }
         )
 

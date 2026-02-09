@@ -229,6 +229,10 @@
           {
             "adminUserConfigurationPath": "_config/admins",
             "configuration": {
+              "configPath": {
+                "__evaluate__": "path.resolve(self.couchdb.path, 'database.json')"
+              },
+              "logPath": "/dev/stdout",
               "prefix": {
                 "__evaluate__": "path.resolve(self.couchdb.path) + '/'"
               }

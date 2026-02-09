@@ -174,7 +174,11 @@ describe('index', (): void => {
             }
         ) as Connection
         console.log(userDatabaseConnection.adapter)
-        console.log('remote UUUSER in test', userDatabaseConnection.adapter, await userDatabaseConnection.get(`org.couchdb.user:test`))
+        try {
+            console.log('remote UUUSER in test', await userDatabaseConnection.get(`org.couchdb.user:test`))
+        } catch (e) {
+            console.log(e)
+        }
 
         state.hook = 'shouldExit'
         await expect(shouldExit(state)).resolves.toBeUndefined()

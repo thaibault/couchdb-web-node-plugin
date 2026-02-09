@@ -92,6 +92,7 @@ export const start = async (
                     state,
                     connector,
                     configuration.couchdb,
+                    (runner as InPlaceRunner).configuration,
                     pluginAPI,
                     expressUtilities
                 )

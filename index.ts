@@ -177,6 +177,10 @@ export const preLoadService = async ({
             .plugin(PouchDBFindPlugin)
             .plugin(PouchDBValidationPlugin)
             .defaults({
+                /*
+                    NOTE: Only if we have a binary based database server, we
+                    need to configure the path prefix remotely.
+                */
                 ...((
                     (couchdb.server.runner.configuration as
                         Partial<BinaryRunner['configuration']>
@@ -195,8 +199,7 @@ export const preLoadService = async ({
                             )) +
                             '/'
                     } :
-                    couchdb.server.runner.configuration as
-                        Partial<InPlaceRunner['configuration']>
+                    {}
                 ),
                 ...getConnectorOptions(configuration.connector)
             }) as typeof PouchDB
@@ -382,6 +385,7 @@ export const loadService = async (
                 getConnectorOptions(configuration.couchdb.connector)
             ) as Connection
 
+        console.log('ADAPTER', unauthenticatedUserDatabaseConnection.adapter)
         try {
             // NOTE: We check if we are in admin party mode.
             await unauthenticatedUserDatabaseConnection.allDocs()
