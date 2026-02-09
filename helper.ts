@@ -357,7 +357,8 @@ export const ensureValidationDocumentPresence = async (
         } catch (error) {
             throw new Error(
                 `${description} couldn't be installed/updated: ` +
-                `"${represent(error)}".`
+                `"${represent(error)}".`,
+                {cause: error}
             )
         }
     }

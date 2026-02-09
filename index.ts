@@ -465,13 +465,15 @@ export const loadService = async (
                     } catch (error) {
                         throw new Error(
                             `Couldn't create missing user "${name}": ` +
-                            represent(error)
+                            represent(error),
+                            {cause: error}
                         )
                     }
                 } else
                     throw new Error(
                         `Couldn't check for presence of user "${name}": ` +
-                        represent(error)
+                        represent(error),
+                        {cause: error}
                     )
             } finally {
                 await Promise.race([
@@ -631,6 +633,11 @@ export const loadService = async (
                             .validatedDocumentsCache
                     ]".
                 */
+                console.log('A', {
+                    body: JSON.stringify(fullSecurityObject),
+                    headers: {...headers, ...authorizationHeader},
+                    method: 'PUT'
+                })
                 const response = await globalContext.fetch(
                     `${urlPrefix}/${databaseName}/_security`,
                     {
@@ -706,7 +713,8 @@ export const loadService = async (
             } catch (error) {
                 throw new Error(
                     `Generated ${type.name} code "${code}" doesn't compile:` +
-                    ` ${represent(error)}`
+                    ` ${represent(error)}`,
+                    {cause: error}
                 )
             }
 
@@ -753,7 +761,8 @@ export const loadService = async (
                                     `Specified constraint description "` +
                                     `${constraint.description}" for model ` +
                                     `"${modelName}" doesn't compile: ` +
-                                    represent(error)
+                                    represent(error),
+                                    {cause: error}
                                 )
                             }
                             /*
@@ -788,7 +797,8 @@ export const loadService = async (
                                         `" for model "${modelName}" in ` +
                                         `property "${name}" as "${type}"` +
                                         ' doesn\'t compile: ' +
-                                        represent(error)
+                                        represent(error),
+                                        {cause: error}
                                     )
                                 }
                             /*
@@ -830,7 +840,8 @@ export const loadService = async (
                         throw new Error(
                             `Parsing document "${file.path}" to include ` +
                             'by automigration of has failed: ' +
-                            represent(error)
+                            represent(error),
+                            {cause: error}
                         )
                     }
 
@@ -858,7 +869,8 @@ export const loadService = async (
                                 `Migrating document ` +
                                 `"${document[idName]}" of type ` +
                                 `"${document[typeName] as string}" has ` +
-                                `failed: ${represent(error)}`
+                                `failed: ${represent(error)}`,
+                                {cause: error}
                             )
                         }
 
@@ -905,7 +917,7 @@ export const loadService = async (
                 ] = 'migrate'
 
                 for (const name of Object.keys(migrators).sort()) {
-                    let result: Document | null = null
+                    let result: Document | null
                     try {
                         result = migrators[name](
                             newDocument as Document,
@@ -938,7 +950,8 @@ export const loadService = async (
                                 configuration.couchdb
                                     .maximumRepresentationLength
                             ) +
-                            `" failed: ${represent(error)}`
+                            `" failed: ${represent(error)}`,
+                            {cause: error}
                         )
                     }
 
@@ -996,7 +1009,8 @@ export const loadService = async (
                     throw new Error(
                         `Replacing auto migrated document ` +
                         `"${newDocument[idName]}" has failed: ` +
-                        represent(error)
+                        represent(error),
+                        {cause: error}
                     )
                 }
 
