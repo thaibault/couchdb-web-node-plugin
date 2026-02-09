@@ -48,7 +48,6 @@ import {
     AllowedModelRolesMapping,
     AllowedRoles,
     BaseModel,
-    BinaryRunner,
     Configuration,
     Connection,
     Connector,
@@ -503,19 +502,20 @@ export const initializeConnection = async (
 
     const url = getEffectiveURL(config)
 
-    if (
-        Object.prototype.hasOwnProperty.call(couchdb.server, 'runner') &&
-        (couchdb.server.runner as BinaryRunner).binaryFilePath
-    )
+    if (services.couchdb.server.expressPouchDBInstance)
         // @ts-expect-error "pouchdb-validation" does not have a typings yet.
         couchdb.connection = new couchdb.connector(
-            url, getConnectorOptions(config.connector)
+            config.databaseName,
+            couchdb.server.runner.configuration as
+                InPlaceRunner['configuration']
         )
     else
         // @ts-expect-error "pouchdb-validation" does not have a typings yet.
         couchdb.connection = new couchdb.connector(
-            config.databaseName, getConnectorOptions(config.connector)
+            url, getConnectorOptions(config.connector)
         )
+
+    console.log('ADAPTER', couchdb.connection.adapter)
 
     couchdb.connection.installValidationMethods()
 

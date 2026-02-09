@@ -385,7 +385,6 @@ export const loadService = async (
                 getConnectorOptions(configuration.couchdb.connector)
             ) as Connection
 
-        console.log('ADAPTER', unauthenticatedUserDatabaseConnection.adapter)
         try {
             // NOTE: We check if we are in admin party mode.
             await unauthenticatedUserDatabaseConnection.allDocs()
