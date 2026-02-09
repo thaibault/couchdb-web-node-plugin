@@ -182,7 +182,7 @@ export const start = async (
     }
 
     await checkReachability(
-        getEffectiveURL(configuration.couchdb), {wait: true}
+        getEffectiveURL(configuration.couchdb, false, false), {wait: true}
     )
 }
 /**

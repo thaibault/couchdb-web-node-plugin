@@ -21,7 +21,6 @@ import {
     copy,
     evaluate,
     File,
-    format,
     globalContext,
     isDirectory,
     isFile,
@@ -54,6 +53,7 @@ import {
     ensureValidationDocumentPresence,
     extendModels,
     getConnectorOptions,
+    getEffectiveURL,
     initializeConnection,
     log,
     mayStripRepresentation,
@@ -343,7 +343,7 @@ export const loadService = async (
     if (Object.prototype.hasOwnProperty.call(couchdb, 'connection'))
         return {couchdb: promise}
 
-    const urlPrefix = format(configuration.couchdb.url, '')
+    const urlPrefix = getEffectiveURL(configuration.couchdb, false)
     const authorizationHeader = {
         Authorization:
             'Basic ' +
@@ -384,39 +384,48 @@ export const loadService = async (
                 }
             )
         } catch (error) {
-            if ((error as DatabaseError).name === 'unauthorized') {
-                const authenticatedUserDatabaseConnection =
-                    new couchdb.connector(
-                        `${urlPrefix}/_users`,
-                        {
-                            ...getConnectorOptions(
-                                configuration.couchdb.connector
-                            ),
-                            auth: {
-                                username: configuration.couchdb.admin.name,
-                                password: configuration.couchdb.admin.password
-                            }
-                        }
-                    ) as Connection
-
-                try {
-                    await authenticatedUserDatabaseConnection.allDocs()
-                } catch (error) {
-                    log.error(
-                        `Can't login as existing admin user`,
-                        `"${configuration.couchdb.admin.name}": ` +
-                        represent(error)
-                    )
-                } finally {
-                    void authenticatedUserDatabaseConnection.close()
-                }
-            } else
+            /*
+                If we get an "unauthorized" error, an admin user is already
+                present.
+            */
+            if ((error as DatabaseError).name !== 'unauthorized')
                 log.error(
                     `Can't create new admin user`,
-                    `"${configuration.couchdb.admin.name}": ${represent(error)}`
+                    `"${configuration.couchdb.admin.name}":`,
+                    represent(error)
                 )
         } finally {
-            void unauthenticatedUserDatabaseConnection.close()
+            await Promise.race([
+                unauthenticatedUserDatabaseConnection.close(),
+                timeout(configuration.couchdb.closeTimeoutInSeconds * 1000)
+            ])
+        }
+
+        // NOTE: Check if newly created admin user is able to login.
+        const authenticatedUserDatabaseConnection = new couchdb.connector(
+            `${urlPrefix}/_users`,
+            {
+                ...getConnectorOptions(configuration.couchdb.connector),
+                auth: {
+                    username: configuration.couchdb.admin.name,
+                    password: configuration.couchdb.admin.password
+                }
+            }
+        ) as Connection
+
+        try {
+            await authenticatedUserDatabaseConnection.allDocs()
+        } catch (error) {
+            log.error(
+                `Can't login as admin user`,
+                `"${configuration.couchdb.admin.name}":`,
+                represent(error)
+            )
+        } finally {
+            await Promise.race([
+                authenticatedUserDatabaseConnection.close(),
+                timeout(configuration.couchdb.closeTimeoutInSeconds * 1000)
+            ])
         }
     }
     // endregion
@@ -433,13 +442,13 @@ export const loadService = async (
             }
         ) as Connection
 
-        for (const [name, userConfiguration] of Object.entries(
+        for (const [_databaseName, {name, password, roles}] of Object.entries(
             configuration.couchdb.users
         ))
             try {
                 await userDatabaseConnection.get(`org.couchdb.user:${name}`)
             } catch (error) {
-                if ((error as { error: string }).error === 'not_found') {
+                if ((error as { name: string }).name === 'not_found') {
                     log.info(`Create missing database user "${name}".`)
 
                     try {
@@ -449,23 +458,26 @@ export const loadService = async (
                                 .special.id
                             ]: `org.couchdb.user:${name}`,
                             name,
-                            password: userConfiguration.password,
-                            roles: userConfiguration.roles,
+                            password,
+                            roles,
                             type: 'user'
                         })
                     } catch (error) {
                         throw new Error(
-                            `Couldn't create missing user "${name}":` +
-                            ` ${represent(error)}`
+                            `Couldn't create missing user "${name}": ` +
+                            represent(error)
                         )
                     }
                 } else
                     throw new Error(
-                        `Couldn't check for presence of user ` +
-                        `"${name}": ${represent(error)}`
+                        `Couldn't check for presence of user "${name}": ` +
+                        represent(error)
                     )
             } finally {
-                void userDatabaseConnection.close()
+                await Promise.race([
+                    userDatabaseConnection.close(),
+                    timeout(configuration.couchdb.closeTimeoutInSeconds * 1000)
+                ])
             }
     }
     // endregion

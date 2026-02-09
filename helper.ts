@@ -574,12 +574,20 @@ export const initializeConnection = async (
  * Determines the effective database URL to connect to based on given
  * configuration.
  * @param configuration - Couchdb configuration object.
+ * @param withDatabase - Indicates whether the URL should contain the database
+ * name or not.
+ * @param withCredentials - Indicates whether the URL should contain the
+ * credentials or not.
  * @returns The effective URL.
  */
-export const getEffectiveURL = (configuration: CoreConfiguration) => {
+export const getEffectiveURL = (
+    configuration: CoreConfiguration,
+    withDatabase = true,
+    withCredentials = false
+) => {
     const urlTemplate = /^https?:\/\//.test(configuration.url) ?
         configuration.url :
-        'http://' +
+        'http://{1}' +
         `${configuration.backend.configuration['httpd/host'] as string}:` +
         String(
             configuration.backend.configuration['httpd/port'] as
@@ -589,9 +597,12 @@ export const getEffectiveURL = (configuration: CoreConfiguration) => {
     return (
         format(
             urlTemplate,
-            `${configuration.admin.name}:${configuration.admin.password}@`
+            withCredentials ?
+                `${configuration.admin.name}:` +
+                `${configuration.admin.password}@` :
+                ''
         ) +
-        `/${configuration.databaseName}`
+        (withDatabase ? `/${configuration.databaseName}` : '')
     )
 }
 /**
@@ -689,9 +700,7 @@ export const initializeExpress = async (
         expressPouchDB(
             connector,
             {
-                configPath: resolve(
-                    configuration.path, 'database.json'
-                ),
+                configPath: resolve(configuration.path, 'database.json'),
                 logPath: resolve(
                     configuration.path,
                     configuration.backend.configuration['log/file'] as string

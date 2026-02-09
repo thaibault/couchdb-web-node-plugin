@@ -42,6 +42,7 @@ describe('server', (): void => {
     } as unknown as Configuration
     const config = configuration.couchdb
 
+    config.closeTimeoutInSeconds = 3
     config.databaseName = 'server-test'
     config.url = 'dummy-url'
     config.connector.adapter = 'memory'

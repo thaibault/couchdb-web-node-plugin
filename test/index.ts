@@ -14,11 +14,13 @@
     endregion
 */
 // region imports
-import {copy} from 'clientnode'
+import {copy, timeout} from 'clientnode'
+import PouchDB from 'pouchdb-core'
+import PouchDBHTTPAdapter from 'pouchdb-adapter-http'
 import PouchDBFindPlugin from 'pouchdb-find'
 import {pluginAPI} from 'web-node'
 
-import {describe, expect, test} from '@jest/globals'
+import {describe, expect, jest, test} from '@jest/globals'
 
 import {getEffectiveURL} from '../helper'
 import {
@@ -28,13 +30,25 @@ import expressUtilities from '../loadExpress'
 import packageConfiguration from '../package.json'
 import {Configuration, ServicePromises, Services, State} from '../type'
 // endregion
+jest.setTimeout(
+    packageConfiguration.webNode.couchdb.closeTimeoutInSeconds * 1000
+)
+
 describe('index', (): void => {
     // region prepare environment
-    const configuration: Configuration =
-        copy(packageConfiguration.webNode) as unknown as Configuration
+    const configuration = {
+        ...copy(packageConfiguration.webNode),
+        core: {plugin: {hotReloading: false}}
+    } as unknown as Configuration
     const config = configuration.couchdb
 
+    config.closeTimeoutInSeconds = 3
     config.databaseName = 'index-test'
+    config.users[config.databaseName] = {
+        name: 'test',
+        password: 'test',
+        roles: ['users']
+    }
     config.url = 'dummy-url'
     config.connector.adapter = 'memory'
     config.attachAutoRestarter = false
@@ -131,22 +145,28 @@ describe('index', (): void => {
 
         state.hook = 'loadService'
         await expect(loadService(state, expressUtilities))
-            .resolves.toStrictEqual({})
+            .resolves.toHaveProperty('couchdb')
+
+        console.log('TODO loaded')
 
         // TODO: implement tests for authorized rest api
-        const client = new (PouchDB.plugin(PouchDBFindPlugin))(
-            getEffectiveURL(config)
-        )
+        const client = new (
+            PouchDB
+                .plugin(PouchDBFindPlugin)
+                .plugin(PouchDBHTTPAdapter)
+        )(getEffectiveURL(config))
         const {id} = await client.post({data: 2})
         console.log(
-            'FIND',
+            'TODO FIND',
             await client.find({
                 selector: {
                     [config.model.property.name.special.id]: id
                 }
             })
         )
-        void client.close()
+        await Promise.race([
+            client.close(), timeout(config.closeTimeoutInSeconds * 1000)
+        ])
 
         state.hook = 'shouldExit'
         await expect(shouldExit(state)).resolves.toBeUndefined()

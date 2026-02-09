@@ -90,6 +90,7 @@
     "jsdoc": "^4.0.5",
     "mkdirp": "^3.0.1",
     "node-fetch": "^3.3.2",
+    "pouchdb-adapter-http": "^9.0.0",
     "pouchdb-adapter-memory": "^9.0.0",
     "rimraf": "^6.1.2",
     "typescript-eslint": "^8.54.0",
