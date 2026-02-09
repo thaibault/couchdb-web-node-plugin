@@ -40,8 +40,8 @@ import {
 import {promises as fileSystem} from 'fs'
 import {basename, extname, resolve} from 'path'
 import PouchDBMemoryPlugin from 'pouchdb-adapter-memory'
-import PouchDB from 'pouchdb-node'
 import PouchDBAuthenticationPlugin from 'pouchdb-authentication'
+import PouchDB from 'pouchdb-node'
 import PouchDBFindPlugin from 'pouchdb-find'
 import PouchDBValidationPlugin from 'pouchdb-validation'
 import {PluginHandler, PluginPromises} from 'web-node/type'
@@ -126,7 +126,7 @@ export const preLoadService = async ({
     if (!Object.prototype.hasOwnProperty.call(couchdb, 'server')) {
         couchdb.server = {} as Services['couchdb']['server']
 
-        // region search for binary file to start database server
+        // region search for an available database server variant
         const triedPaths: Array<string> = []
         let runnerFound = false
         for (const runner of (
@@ -196,6 +196,7 @@ export const preLoadService = async ({
     delete (modelConfiguration as {entities?: Models}).entities
     const models = extendModels(configuration.model)
 
+    // Export validate document function to be used by other plugins.
     couchdb.validateDocument = (
         document: FullDocument,
         options: {
@@ -261,11 +262,13 @@ export const preLoadService = async ({
  * @param state - Application state.
  * @param state.configuration - Applications configuration.
  * @param state.services - Applications services.
+ * @param expressUtilities - Optional express related utilities.
  * @returns A mapping to promises which correspond to the plugin specific
  * continues services.
  */
 export const loadService = async (
-    state: State
+    state: State,
+    expressUtilities?: (typeof import('./loadExpress'))['default']
 ): Promise<PluginPromises> => {
     if (!globalContext.fetch)
         throw new Error('Missing fetch implementation.')
@@ -321,7 +324,7 @@ export const loadService = async (
     // endregion
 
     if (Object.prototype.hasOwnProperty.call(couchdb.server, 'runner')) {
-        await start(state)
+        await start(state, expressUtilities)
 
         couchdb.server.restart = restart
         couchdb.server.start = start

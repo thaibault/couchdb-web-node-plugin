@@ -15,28 +15,30 @@
 */
 // region imports
 import {copy} from 'clientnode'
+import PouchDBFindPlugin from 'pouchdb-find'
 import {pluginAPI} from 'web-node'
 
 import {describe, expect, test} from '@jest/globals'
 
+import {getEffectiveURL} from '../helper'
 import {
-    loadService,
-    postLoadService,
-    preLoadService,
-    shouldExit
+    loadService, postLoadService, preLoadService, shouldExit
 } from '../index'
+import expressUtilities from '../loadExpress'
 import packageConfiguration from '../package.json'
-import {Configuration, ServicePromises, Services} from '../type'
+import {Configuration, ServicePromises, Services, State} from '../type'
 // endregion
 describe('index', (): void => {
     // region prepare environment
     const configuration: Configuration =
         copy(packageConfiguration.webNode) as unknown as Configuration
-    configuration.couchdb.databaseName = 'index-test'
-    configuration.couchdb.url = 'dummy-url'
-    configuration.couchdb.connector.adapter = 'memory'
-    configuration.couchdb.attachAutoRestarter = false
-    configuration.couchdb.backend.configuration['couchdb/database_dir'] =
+    const config = configuration.couchdb
+
+    config.databaseName = 'index-test'
+    config.url = 'dummy-url'
+    config.connector.adapter = 'memory'
+    config.attachAutoRestarter = false
+    config.backend.configuration['couchdb/database_dir'] =
         'index-test-database-dummy-path/'
     // endregion
     // region tests
@@ -113,5 +115,41 @@ describe('index', (): void => {
         },
         60 * 1000
     )
+    test.only('authorized rest api', async (): Promise<void> => {
+        const services: Services = {} as Services
+
+        const state = {
+            configuration,
+            data: undefined,
+            pluginAPI,
+            plugins: [],
+            services
+        } as unknown as State
+
+        state.hook = 'preLoadService'
+        await expect(preLoadService(state)).resolves.toBeUndefined()
+
+        state.hook = 'loadService'
+        await expect(loadService(state, expressUtilities))
+            .resolves.toStrictEqual({})
+
+        // TODO: implement tests for authorized rest api
+        const client = new (PouchDB.plugin(PouchDBFindPlugin))(
+            getEffectiveURL(config)
+        )
+        const {id} = await client.post({data: 2})
+        console.log(
+            'FIND',
+            await client.find({
+                selector: {
+                    [config.model.property.name.special.id]: id
+                }
+            })
+        )
+        void client.close()
+
+        state.hook = 'shouldExit'
+        await expect(shouldExit(state)).resolves.toBeUndefined()
+    })
     // endregion
 })

@@ -24,7 +24,7 @@ import {pluginAPI} from 'web-node'
 
 import {describe, expect, jest, test} from '@jest/globals'
 
-import {getConnectorOptions, getEffectiveURL} from '../helper'
+import {getConnectorOptions} from '../helper'
 import expressUtilities from '../loadExpress'
 import packageConfiguration from '../package.json'
 import {restart, start, stop} from '../server'
@@ -40,13 +40,13 @@ describe('server', (): void => {
         ...copy(packageConfiguration.webNode),
         core: {plugin: {hotReloading: false}}
     } as unknown as Configuration
-    configuration.couchdb.databaseName = 'server-test'
-    configuration.couchdb.url = 'dummy-url'
-    configuration.couchdb.connector.adapter = 'memory'
-    configuration.couchdb.backend.configuration['couchdb/database_dir'] =
-        'server-test-database-dummy-path/'
-
     const config = configuration.couchdb
+
+    config.databaseName = 'server-test'
+    config.url = 'dummy-url'
+    config.connector.adapter = 'memory'
+    config.backend.configuration['couchdb/database_dir'] =
+        'server-test-database-dummy-path/'
     // endregion
     // region tests
     test('start/restart/stop', async (): Promise<void> => {
@@ -86,57 +86,6 @@ describe('server', (): void => {
             .resolves.toBeUndefined()
 
         await expect(stop({couchdb: service}, configuration, true))
-            .resolves.toBeUndefined()
-    })
-    test.only('test rest', async (): Promise<void> => {
-        const connector = PouchDB
-            .plugin(PouchDBMemoryPlugin)
-            .plugin(PouchDBFindPlugin)
-            .plugin(PouchDBValidationPlugin)
-            .defaults({
-                prefix:
-                    resolve(
-                        config.backend.configuration['couchdb/database_dir'] as
-                            string
-                    ) +
-                    '/',
-                ...getConnectorOptions(configuration.couchdb.connector)
-            }) as typeof PouchDB
-        const service = {
-            connection: new connector(config.databaseName, config.connector),
-            connector,
-            server: {
-                runner: {packages: ['express', 'express-pouchdb']} as
-                    InPlaceRunner,
-                resolve: NOOP
-            }
-        } as CouchDB
-        const state = {
-            configuration,
-            pluginAPI,
-            plugins: [],
-            services: {couchdb: service}
-        } as unknown as State
-
-        await expect(start(state, expressUtilities))
-            .resolves.toBeUndefined()
-
-        const client = new (PouchDB.plugin(PouchDBFindPlugin))(
-            getEffectiveURL(config)
-        )
-        // TODO
-        const {id} = await client.post({data: 2})
-        console.log(
-            'FIND',
-            await client.find({
-                selector: {
-                    [configuration.couchdb.model.property.name.special.id]: id
-                }
-            })
-        )
-        void client.close()
-
-        await expect(stop({couchdb: service}, configuration))
             .resolves.toBeUndefined()
     })
     // endregion

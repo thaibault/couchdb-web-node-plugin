@@ -33,9 +33,7 @@ import {promises as fileSystem} from 'fs'
 import {dirname} from 'path'
 
 import {
-    getEffectiveURL,
-    initializeConnection,
-    initializeExpress
+    getEffectiveURL, initializeConnection, initializeExpress
 } from './helper'
 import {
     BinaryRunner, Configuration, InPlaceRunner, Services, State
