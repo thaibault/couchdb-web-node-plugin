@@ -76,8 +76,9 @@ import {
     State,
     Services,
     SpecialPropertyNames,
-    UserContext
+    UserContext, BinaryRunner
 } from './type'
+import PouchDB from 'pouchdb-node'
 // endregion
 /*
     Token to provide to "bulkDocs" method call to indicate id determination
@@ -515,8 +516,6 @@ export const initializeConnection = async (
             url, getConnectorOptions(config.connector)
         )
 
-    console.log('ADAPTER', couchdb.connection.adapter)
-
     couchdb.connection.installValidationMethods()
 
     const {connection} = couchdb
@@ -699,7 +698,11 @@ export const initializeExpress = async (
     const expressPouchDBInstance: Express =
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         expressPouchDB(
-            connector,
+            /*
+                NOTE: We have to use "defaults" to apply our custom
+                configuration early enough.
+            */
+            connector.defaults(inPlaceRunnerConfiguration) as typeof PouchDB,
             {
                 overrideMode: {
                     exclude: ([] as typeof routesToPostpone[0])

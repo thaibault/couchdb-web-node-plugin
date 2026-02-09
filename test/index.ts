@@ -29,9 +29,7 @@ import {
 } from '../index'
 import expressUtilities from '../loadExpress'
 import packageConfiguration from '../package.json'
-import {
-    Configuration, Connection, Model, ServicePromises, Services, State
-} from '../type'
+import {Configuration, Model, ServicePromises, Services, State} from '../type'
 // endregion
 jest.setTimeout(
     packageConfiguration.webNode.couchdb.closeTimeoutInSeconds * 1000
@@ -156,48 +154,19 @@ describe('index', (): void => {
         await expect(loadService(state, expressUtilities))
             .resolves.toHaveProperty('couchdb')
 
-        console.log('TODO loaded')
-
         // TODO: implement tests for authorized rest api
         const pouchDB = PouchDB
             .plugin(PouchDBAuthenticationPlugin)
             .plugin(PouchDBFindPlugin)
             .plugin(PouchDBHTTPAdapter)
-
-        const userDatabaseConnection = new pouchDB(
-            `${getEffectiveURL(config, false)}/_users`,
-            {
-                auth: {
-                    username: config.admin.name,
-                    password: config.admin.password
-                }
-            }
-        ) as Connection
-        console.log(userDatabaseConnection.adapter)
-        try {
-            console.log('remote UUUSER in test', await userDatabaseConnection.get(`org.couchdb.user:test`))
-        } catch (e) {
-            console.log(e)
-        }
-
-        state.hook = 'shouldExit'
-        await expect(shouldExit(state)).resolves.toBeUndefined()
-        return
-
-
         const client = new pouchDB(getEffectiveURL(config))
-        console.log(
-            'logged in',
-            getEffectiveURL(config),
-            config.users[config.databaseName].name,
-            config.users[config.databaseName].password
-        )
-
         // TODO failes
-        await client.logIn(
+        console.log('TODO', await client.logIn(
             config.users[config.databaseName].name,
             config.users[config.databaseName].password
-        )
+        ))
+        /*
+        TODO
         const {id} = await client.post({
             [typeName]: 'TestModel', propertyA: 'value'
         })
@@ -205,6 +174,7 @@ describe('index', (): void => {
             'TODO FIND',
             await client.find({selector: {[idName]: id}})
         )
+        */
         await client.logOut()
         await Promise.race([
             client.close(), timeout(config.closeTimeoutInSeconds * 1000)
