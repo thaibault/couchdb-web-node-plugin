@@ -105,7 +105,6 @@
     "express-pouchdb": "*",
     "mkdirp": "*",
     "node-fetch": "*",
-    "pouchdb-server": "*",
     "request": "*",
     "web-node": "*"
   },
@@ -273,6 +272,7 @@
       "numberOfParallelChangesRunner": 1,
       "connector": {
         "fetch": {
+          "credentials": "include",
           "timeout": {
             "__evaluate__": "5 * 60 * 1000"
           }

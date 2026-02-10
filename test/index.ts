@@ -14,7 +14,7 @@
     endregion
 */
 // region imports
-import {copy, timeout} from 'clientnode'
+import {copy, Mapping, timeout} from 'clientnode'
 import PouchDB from 'pouchdb-core'
 import PouchDBHTTPAdapter from 'pouchdb-adapter-http'
 import PouchDBAuthenticationPlugin from 'pouchdb-authentication'
@@ -24,7 +24,7 @@ import webNodePackageConfiguration from 'web-node/package.json'
 
 import {describe, expect, jest, test} from '@jest/globals'
 
-import {getEffectiveURL} from '../helper'
+import {getConnectorOptions, getEffectiveURL} from '../helper'
 import {
     loadService, postLoadService, preLoadService, shouldExit
 } from '../index'
@@ -49,18 +49,40 @@ describe('index', (): void => {
     config.closeTimeoutInSeconds = 3
     config.connector.fetch.timeout = config.closeTimeoutInSeconds * 1000
     config.databaseName = 'index-test'
+    config.security[config.databaseName] = {
+        members: {
+            names: ['test'],
+            roles: ['users']
+        }
+    }
     config.users[config.databaseName] = {
         name: 'test',
         password: 'test',
         roles: ['users']
     }
-    config.url = 'dummy-url'
-    config.runner.variants[2].configuration = {
-        adapter: 'memory'
-    }
+    config.runner.variants[2].configuration = {adapter: 'memory'}
     config.attachAutoRestarter = false
-    config.model.entities.TestModel = {
-        propertyA: {}
+    ;(config.model.entities.TestModel as Model) = {
+        readonlyProperty: {
+            allowedRoles: {
+                read: ['users'],
+                write: []
+            },
+            default: 'readonlyValue'
+        },
+        secureProperty: {
+            allowedRoles: {
+                read: ['admin'],
+                write: []
+            },
+            default: 'secureValue'
+        },
+        writableProperty: {
+            allowedRoles: {
+                read: ['users'],
+                write: ['users']
+            }
+        }
     } as unknown as Model
 
     const {id: idName, type: typeName} = config.model.property.name.special
@@ -139,7 +161,7 @@ describe('index', (): void => {
         },
         60 * 1000
     )
-    test.only('authorized rest api', async (): Promise<void> => {
+    test('authorized rest api', async (): Promise<void> => {
         const services: Services = {} as Services
 
         const state = {
@@ -157,33 +179,39 @@ describe('index', (): void => {
         await expect(loadService(state, expressUtilities))
             .resolves.toHaveProperty('couchdb')
 
-        // TODO: implement tests for authorized rest api
         const pouchDB = PouchDB
             .plugin(PouchDBAuthenticationPlugin)
             .plugin(PouchDBFindPlugin)
             .plugin(PouchDBHTTPAdapter)
-        const client = new pouchDB(getEffectiveURL(config))
-
-        await client.logIn(
-            config.users[config.databaseName].name,
-            config.users[config.databaseName].password
+        const client = new pouchDB(
+            getEffectiveURL(config),
+            {
+                ...getConnectorOptions(config.connector),
+                auth: {
+                    username: config.users[config.databaseName].name,
+                    password: config.users[config.databaseName].password
+                }
+            }
         )
-        try {
-            console.log('Create', {
-                [typeName]: 'TestModel', propertyA: 'value'
-            })
-            const {id} = await client.post({
-                [typeName]: 'TestModel', propertyA: 'value'
-            })
-            console.log('Rewad', {selector: {[idName]: id}})
-            console.log(
-                'TODO FIND',
-                await client.find({selector: {[idName]: id}})
-            )
-        } catch (e) {
-            console.error('Error', e)
-        }
-        await client.logOut()
+
+        const data: Mapping =
+            {[typeName]: 'TestModel', writableProperty: 'test'}
+        const {id} = await client.post(data)
+        expect(typeof id).toStrictEqual('string')
+        const fetchResult = (await client.find({
+            fields: ['readonlyProperty', 'writableProperty'],
+            selector: {[idName]: id}
+        })).docs[0]
+        expect(fetchResult)
+            .toHaveProperty('readonlyProperty', 'readonlyValue')
+        expect(fetchResult)
+            .toHaveProperty('writableProperty', 'test')
+        data.readonlyProperty = 'notAllowedChangedValue'
+        await expect(client.post(data)).rejects.toBeDefined()
+        await expect(client.find({
+            fields: ['secureProperty'], selector: {[idName]: id}
+        })).rejects.toBeDefined()
+
         await Promise.race([
             client.close(), timeout(config.closeTimeoutInSeconds * 1000)
         ])

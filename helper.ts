@@ -163,7 +163,7 @@ export const getConnectorOptions = (
 
     return {
         ...configuration,
-        fetch: ((
+        fetch: (async (
             url: RequestInfo, options?: RequestInit
         ): Promise<Response> => {
             const {
@@ -503,63 +503,65 @@ export const initializeConnection = async (
 
     const url = getEffectiveURL(config)
 
-    if (services.couchdb.server.expressPouchDBInstance)
+    /*
+        NOTE: We have to connect remotely for a memory based database to avoid
+        having multiple ones created per connector instance.
+    */
+    if (services.couchdb.server.expressPouchDBInstance) {
         // @ts-expect-error "pouchdb-validation" does not have a typings yet.
         couchdb.connection = new couchdb.connector(
             config.databaseName,
             couchdb.server.runner.configuration as
                 InPlaceRunner['configuration']
         )
-    else
-        // @ts-expect-error "pouchdb-validation" does not have a typings yet.
-        couchdb.connection = new couchdb.connector(
-            url, getConnectorOptions(config.connector)
+        const {connection} = couchdb
+
+        connection.installValidationMethods()
+
+        connection.setMaxListeners(Infinity)
+        // region apply "bulkDocs" interceptor to put method
+        /*
+            NOTE: A "bulkDocs" plugin does not get called for every "put" call
+            so we have to wrap runtime generated method.
+        */
+        connection.bulkDocs = bulkDocsFactory(
+            // eslint-disable-next-line @typescript-eslint/unbound-method
+            connection.bulkDocs,
+            config
         )
+        connection.post = connection.put =
+            async function<Type extends Mapping<unknown>>(
+                this: Connection,
+                document: PutDocument<Type>,
+                options?: PouchDB.Core.PutOptions | null
+            ): Promise<DatabaseResponse> {
+                const result =
+                    (await connection.bulkDocs.call(
+                        this, [document], options
+                    ))[0]
 
-    couchdb.connection.installSecurityMethods()
-    couchdb.connection.installValidationMethods()
-
-    const {connection} = couchdb
-    connection.setMaxListeners(Infinity)
-    // region apply "bulkDocs" interceptor to put method
-    /*
-        NOTE: A "bulkDocs" plugin does not get called for every "put" call so
-        we have to wrap runtime generated method.
-    */
-    connection.bulkDocs = bulkDocsFactory(
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        connection.bulkDocs,
-        config
-    )
-    connection.post = connection.put =
-        async function<Type extends Mapping<unknown>>(
-            this: Connection,
-            document: PutDocument<Type>,
-            options?: PouchDB.Core.PutOptions | null
-        ): Promise<DatabaseResponse> {
-            const result =
-                (await connection.bulkDocs.call(this, [document], options))[0]
-
-            if ((result as DatabaseError | undefined)?.name)
-                /*
-                    eslint-disable
-                    @typescript-eslint/only-throw-error,no-throw-literal
-                */
-                throw result as DatabaseError
+                if ((result as DatabaseError | undefined)?.name)
+                    /*
+                        eslint-disable
+                        @typescript-eslint/only-throw-error,no-throw-literal
+                    */
+                    throw result as DatabaseError
                 /*
                     eslint-enable
                     @typescript-eslint/only-throw-error,no-throw-literal
                 */
 
-            return result as DatabaseResponse
-        }
-    // endregion
+                return result as DatabaseResponse
+            }
+        // endregion
+    } else
+        // @ts-expect-error "pouchdb-validation" does not have a typings yet.
+        couchdb.connection = new couchdb.connector(
+            url, getConnectorOptions(config.connector)
+        )
     // region ensure database presence
     // NOTE: A request to database creates it (if not exists) automatically.
-    if (
-        createRemoteDatabaseIfNotExists &&
-        Object.prototype.hasOwnProperty.call(couchdb.server, 'runner')
-    )
+    if (createRemoteDatabaseIfNotExists)
         try {
             await checkReachability(url)
         } catch {
@@ -610,7 +612,6 @@ export const getEffectiveURL = (
  * @param state - Application state.
  * @param connector - Database connector instance.
  * @param configuration - Couchdb configuration object.
- * @param inPlaceRunnerConfiguration - In-place runner configuration object.
  * @param pluginAPI - Plugin API to call plugin hooks.
  * @param expressUtilities - Optional express related utilities.
  * @returns A promise resolving to the wrapping express instance and pouchdb's
@@ -621,7 +622,6 @@ export const initializeExpress = async (
     state: State,
     connector: Connector,
     configuration: CoreConfiguration,
-    inPlaceRunnerConfiguration: InPlaceRunner['configuration'],
     pluginAPI: State['pluginAPI'],
     expressUtilities?: (typeof import('./loadExpress'))['default']
 ): Promise<{
@@ -629,6 +629,12 @@ export const initializeExpress = async (
     expressPouchDBInstance: Express
 }> => {
     log.info(`Couchdb runner is in-place with: "${name}".`)
+
+    // eslint-disable-next-line camelcase
+    const testConnector = new connector('', {skip_setup: true})
+    const isInMemory =
+        (testConnector as unknown as {adapter: string}).adapter === 'memory'
+    await testConnector.close()
 
     const {
         express,
@@ -699,18 +705,14 @@ export const initializeExpress = async (
     const expressPouchDBInstance: Express =
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         expressPouchDB(
-            /*
-                NOTE: We have to use "defaults" to apply our custom
-                configuration early enough.
-            */
-            connector.defaults(inPlaceRunnerConfiguration) as typeof PouchDB,
+            connector,
             {
                 overrideMode: {
                     exclude: ([] as typeof routesToPostpone[0])
                         .concat(...routesToPostpone)
                         .map(([name]) => name as string)
                 },
-                ...inPlaceRunnerConfiguration
+                inMemoryConfig: isInMemory
             }
         )
 
@@ -723,6 +725,7 @@ export const initializeExpress = async (
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         module(expressPouchDBInstance)
 
+    const specialNames = configuration.model.property.name.special
     expressPouchDBInstance.post(
         '/:db/_find',
         jsonParser,
@@ -739,6 +742,18 @@ export const initializeExpress = async (
                     couchSecurityObj: Partial<SecuritySettings>
                 }
             )
+            /*
+                NOTE: We always have to determine type to be able to evaluate
+                type based authorization rules.
+            */
+            let addedType = false
+            if (
+                Array.isArray(request.body.fields) &&
+                !request.body.fields.includes(specialNames.type)
+            ) {
+                request.body.fields.push(specialNames.type)
+                addedType = true
+            }
             try {
                 const hookData = {request, response}
                 let result = await pluginAPI.callStack<
@@ -755,21 +770,11 @@ export const initializeExpress = async (
 
                 if (!result?.docs)
                     result = await (
-                        request as unknown as { db: PouchDB.Database }
+                        request as unknown as {db: PouchDB.Database}
                     ).db.find(request.body)
                 // authorize documents
                 const modelRolesMapping =
                     determineAllowedModelRolesMapping(configuration.model)
-                const specialNames = configuration.model.property.name.special
-
-                console.log(
-                    'TODO user context',
-                    request.couchSession.userCtx
-                )
-                console.log(
-                    'TODO security object',
-                    request.couchSecurityObj
-                )
 
                 for (const document of result.docs)
                     try {
@@ -784,8 +789,11 @@ export const initializeExpress = async (
                             specialNames.designDocumentNamePrefix,
                             true
                         )
+                        if (addedType)
+                            delete (document as Mapping)[specialNames.type]
                     } catch (error) {
                         sendError(response, error, 403)
+                        return
                     }
                 // endregion
                 sendJSON(response, 200, result)
@@ -807,7 +815,7 @@ export const initializeExpress = async (
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         module(expressPouchDBInstance)
 
-    if (configuration.connector.adapter !== 'memory') {
+    if (!isInMemory) {
         /*
             NOTE: Currently needed to use synchronized folder creation to avoid
             having the folder not yet persisted in following execution when

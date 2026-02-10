@@ -55,7 +55,9 @@ export const start = async (
     expressUtilities?: (typeof import('./loadExpress'))['default']
 ): Promise<void> => {
     const {
-        configuration, pluginAPI, services: {couchdb: {connector, server}}
+        configuration, pluginAPI, services: {couchdb: {
+            backendConnector, server
+        }}
     } = state
     const {couchdb: {runner: runnerConfiguration}} = configuration
     const {runner} = server
@@ -90,9 +92,8 @@ export const start = async (
                 await initializeExpress(
                     name,
                     state,
-                    connector,
+                    backendConnector,
                     configuration.couchdb,
-                    (runner as InPlaceRunner).configuration,
                     pluginAPI,
                     expressUtilities
                 )

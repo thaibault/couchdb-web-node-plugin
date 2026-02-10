@@ -592,6 +592,7 @@ export interface CouchDB<Type extends object = Mapping<unknown>> {
     updateMaterializedViewsChangesStream?: ChangesStream
     lastUpdateMaterializedViewsChangesSequenceIdentifier?: number | string
 
+    backendConnector: Connector
     connection: Connection<Type>
     connector: Connector
 

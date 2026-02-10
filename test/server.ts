@@ -18,7 +18,6 @@ import {copy, NOOP} from 'clientnode'
 import PouchDBMemoryPlugin from 'pouchdb-adapter-memory'
 import PouchDBFindPlugin from 'pouchdb-find'
 import PouchDB from 'pouchdb-node'
-import PouchDBValidationPlugin from 'pouchdb-validation'
 import {pluginAPI} from 'web-node'
 import webNodePackageConfiguration from 'web-node/package.json'
 
@@ -47,21 +46,18 @@ describe('server', (): void => {
     config.closeTimeoutInSeconds = 3
     config.connector.fetch.timeout = config.closeTimeoutInSeconds * 1000
     config.databaseName = 'server-test'
-    config.url = 'dummy-url'
-    config.runner.variants[2].configuration = {
-        adapter: 'memory'
-    }
+    config.runner.variants[2].configuration = {adapter: 'memory'}
     // endregion
     // region tests
     test('start/restart/stop', async (): Promise<void> => {
         const connector = PouchDB
             .plugin(PouchDBMemoryPlugin)
             .plugin(PouchDBFindPlugin)
-            .plugin(PouchDBValidationPlugin)
-            .defaults(getConnectorOptions(config.connector)) as typeof PouchDB
+            .defaults({adapter: 'memory'}) as typeof PouchDB
         const service = {
-            connection: new connector(config.databaseName, config.connector),
+            backendConnector: connector,
             connector,
+            connection: new connector(config.databaseName),
             server: {
                 runner: {packages: ['express', 'express-pouchdb']} as
                     InPlaceRunner,
@@ -75,8 +71,7 @@ describe('server', (): void => {
             services: {couchdb: service}
         } as unknown as State
 
-        await expect(start(state, expressUtilities))
-            .resolves.toBeUndefined()
+        await expect(start(state, expressUtilities)).resolves.toBeUndefined()
 
         await expect(restart(state, true, expressUtilities))
             .resolves.toBeUndefined()

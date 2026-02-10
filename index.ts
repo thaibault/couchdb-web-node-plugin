@@ -42,7 +42,6 @@ import PouchDBMemoryPlugin from 'pouchdb-adapter-memory'
 import PouchDBAuthenticationPlugin from 'pouchdb-authentication'
 import PouchDBFindPlugin from 'pouchdb-find'
 import PouchDB from 'pouchdb-node'
-import PouchDBSecurity from 'pouchdb-security'
 import PouchDBValidationPlugin from 'pouchdb-validation'
 import {PluginHandler, PluginPromises} from 'web-node/type'
 
@@ -78,7 +77,7 @@ import {
     Services,
     ServicesState,
     State,
-    MaterializedViewDocument
+    MaterializedViewDocument, LocalDatabaseConfiguration
 } from './type'
 // endregion
 /**
@@ -166,7 +165,31 @@ export const preLoadService = async ({
     }
 
     if (!Object.prototype.hasOwnProperty.call(couchdb, 'connector')) {
-        couchdb.connector = PouchDB
+        const backendConnectorConfiguration: LocalDatabaseConfiguration = (
+            (couchdb.server.runner.configuration as
+                Partial<BinaryRunner['configuration']>
+            ).values &&
+            (couchdb.server.runner.configuration as
+                BinaryRunner['configuration']
+            ).values['couchdb/database_dir']
+        ) ?
+            /*
+                NOTE: Only if we have a binary based database server, we need
+                to configure the path prefix remotely.
+            */
+            {
+                prefix:
+                    resolve(String(
+                        (couchdb.server.runner.configuration as
+                                BinaryRunner['configuration']
+                        ).values['couchdb/database_dir'] as
+                            number | string
+                    )) +
+                    '/'
+            } :
+            couchdb.server.runner.configuration as
+                InPlaceRunner['configuration']
+        couchdb.backendConnector = PouchDB
             .plugin(PouchDBMemoryPlugin)
             .plugin({
                 bulkDocs: bulkDocsFactory(
@@ -174,37 +197,15 @@ export const preLoadService = async ({
                     configuration
                 )
             })
-            .plugin(PouchDBAuthenticationPlugin)
-            .plugin(PouchDBSecurity)
             .plugin(PouchDBFindPlugin)
             .plugin(PouchDBValidationPlugin)
-            .defaults({
-                /*
-                    NOTE: Only if we have a binary based database server, we
-                    need to configure the path prefix remotely.
-                */
-                ...((
-                    (couchdb.server.runner.configuration as
-                        Partial<BinaryRunner['configuration']>
-                    ).values &&
-                    (couchdb.server.runner.configuration as
-                        BinaryRunner['configuration']
-                    ).values['couchdb/database_dir']
-                ) ?
-                    {
-                        prefix:
-                            resolve(String(
-                                (couchdb.server.runner.configuration as
-                                    BinaryRunner['configuration']
-                                ).values['couchdb/database_dir'] as
-                                    number | string
-                            )) +
-                            '/'
-                    } :
-                    {}
-                ),
-                ...getConnectorOptions(configuration.connector)
-            }) as typeof PouchDB
+            .defaults(backendConnectorConfiguration) as typeof PouchDB
+        couchdb.connector = PouchDB
+            .plugin(PouchDBMemoryPlugin)
+            .plugin(PouchDBFindPlugin)
+            .plugin(PouchDBAuthenticationPlugin)
+            .defaults(getConnectorOptions(configuration.connector)) as
+                typeof PouchDB
 
         if (configuration.debug)
             couchdb.connector.debug.enable('*')

@@ -125,14 +125,14 @@ export const authorize = (
     }
 
     // A "readonlymember" is allowed to read all but design documents.
-    if (
+    if (!(
         Object.prototype.hasOwnProperty.call(
             newDocument, idPropertyName
         ) &&
         (newDocument[idPropertyName] as string).startsWith(
             designDocumentNamePrefix
         )
-    )
+    ))
         allowedRoles.read.push('readonlymember')
 
     if (!('name' in userContext))
@@ -141,7 +141,7 @@ export const authorize = (
     let userRolesDescription: string
     let relevantRoles: Array<string> = []
     let relatedContextPathDescription =
-        `You are trying to ${operationType} object of type ${type}.`
+        `You are trying to ${operationType} object of type "${type}".`
 
     if (userContext.roles?.length) {
         const userRoles = userContext.roles
