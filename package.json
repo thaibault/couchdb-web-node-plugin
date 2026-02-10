@@ -87,7 +87,7 @@
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-jsdoc": "^62.5.4",
     "express": "^5.2.1",
-    "express-pouchdb": "^4.2.0",
+    "express-pouchdb": "patch:express-pouchdb@npm%3A4.2.0#~/.yarn/patches/express-pouchdb-npm-4.2.0-969036264e.patch",
     "jest": "^30.2.0",
     "jsdoc": "^4.0.5",
     "mkdirp": "^3.0.1",

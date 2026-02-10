@@ -1,0 +1,36 @@
+diff --git a/lib/routes/db.js b/lib/routes/db.js
+index 60a9eb6b569eaab763002c0dd1bdfc38ee318a5b..727df9c410e09a25480c793563ac247b595dba32 100644
+--- a/lib/routes/db.js
++++ b/lib/routes/db.js
+@@ -28,7 +28,7 @@ module.exports = function (app) {
+       // PouchDB.new() instead of new PouchDB() because that adds
+       // authorisation logic
+       var db = req.PouchDB.new(name, utils.makeOpts(req));
+-      db.info(function (err) {
++      var run = () => db.info(function (err) {
+         if (err) {
+           // temoperary workaround for leveldb adapter, see
+           // https://github.com/pouchdb/pouchdb/issues/5668
+@@ -59,6 +59,10 @@ module.exports = function (app) {
+         }
+         utils.setLocation(res, name);
+         utils.sendJSON(res, 201, {ok: true});
++        if ('then' in db)
++          db.then(run).catch((e) => utils.sendError(res, e, 401))
++        else
++          run()
+       });
+     });
+   });
+@@ -97,6 +101,11 @@ module.exports = function (app) {
+       if (err) {
+         return utils.sendError(res, err);
+       }
++      if (!info)
++        return utils.sendJSON(res, 401, {
++          error: 'unauthorized',
++          reason: 'database info not set.'
++        });
+       info.instance_start_time = startTime.toString();
+       // TODO: data_size?
+       utils.sendJSON(res, 200, info);
