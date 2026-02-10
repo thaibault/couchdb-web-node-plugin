@@ -63,6 +63,8 @@ export type ChangesStreamOptions = PouchDB.Core.ChangesOptions
 export interface Connection<Type extends object = Mapping<unknown>>
     extends
 PouchDB.Database<Type> {
+    // NOTE: "pouchdb-security" does not have a typings yet.
+    installSecurityMethods: () => void
     // NOTE: "pouchdb-validation" does not have a typings yet.
     installValidationMethods: () => void
 

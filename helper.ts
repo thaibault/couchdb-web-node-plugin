@@ -76,7 +76,7 @@ import {
     State,
     Services,
     SpecialPropertyNames,
-    UserContext, BinaryRunner
+    UserContext
 } from './type'
 import PouchDB from 'pouchdb-node'
 // endregion
@@ -516,6 +516,7 @@ export const initializeConnection = async (
             url, getConnectorOptions(config.connector)
         )
 
+    couchdb.connection.installSecurityMethods()
     couchdb.connection.installValidationMethods()
 
     const {connection} = couchdb

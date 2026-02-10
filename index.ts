@@ -40,8 +40,9 @@ import {promises as fileSystem} from 'fs'
 import {basename, extname, resolve} from 'path'
 import PouchDBMemoryPlugin from 'pouchdb-adapter-memory'
 import PouchDBAuthenticationPlugin from 'pouchdb-authentication'
-import PouchDB from 'pouchdb-node'
 import PouchDBFindPlugin from 'pouchdb-find'
+import PouchDB from 'pouchdb-node'
+import PouchDBSecurity from 'pouchdb-security'
 import PouchDBValidationPlugin from 'pouchdb-validation'
 import {PluginHandler, PluginPromises} from 'web-node/type'
 
@@ -174,6 +175,7 @@ export const preLoadService = async ({
                 )
             })
             .plugin(PouchDBAuthenticationPlugin)
+            .plugin(PouchDBSecurity)
             .plugin(PouchDBFindPlugin)
             .plugin(PouchDBValidationPlugin)
             .defaults({
@@ -410,7 +412,7 @@ export const loadService = async (
             */
             if ((error as DatabaseError).name !== 'unauthorized')
                 log.error(
-                    `Can't create new admin user`,
+                    `Can't check for admin user or create a new one:`,
                     `"${configuration.couchdb.admin.name}":`,
                     represent(error)
                 )
@@ -421,7 +423,7 @@ export const loadService = async (
             ])
         }
 
-        // NOTE: Check if newly created admin user is able to login.
+        // NOTE: Check if newly created admin user is able to log in.
         const authenticatedUserDatabaseConnection = new couchdb.connector(
             `${urlPrefix}/_users`,
             {
@@ -680,6 +682,7 @@ export const loadService = async (
         }
     }
     // endregion
+
     const modelConfiguration = copy(configuration.couchdb.model)
 
     delete (modelConfiguration.property as

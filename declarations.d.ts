@@ -40,4 +40,5 @@ declare module 'express-pouchdb/lib/utils' {
     ): void
 }
 
+declare module 'pouchdb-security'
 declare module 'pouchdb-validation'

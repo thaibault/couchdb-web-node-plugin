@@ -160,21 +160,26 @@ describe('index', (): void => {
             .plugin(PouchDBFindPlugin)
             .plugin(PouchDBHTTPAdapter)
         const client = new pouchDB(getEffectiveURL(config))
-        // TODO failes
-        console.log('TODO', await client.logIn(
+
+        await client.logIn(
             config.users[config.databaseName].name,
             config.users[config.databaseName].password
-        ))
-        /*
-        TODO
-        const {id} = await client.post({
-            [typeName]: 'TestModel', propertyA: 'value'
-        })
-        console.log(
-            'TODO FIND',
-            await client.find({selector: {[idName]: id}})
         )
-        */
+        try {
+            console.log('Create', {
+                [typeName]: 'TestModel', propertyA: 'value'
+            })
+            const {id} = await client.post({
+                [typeName]: 'TestModel', propertyA: 'value'
+            })
+            console.log('Rewad', {selector: {[idName]: id}})
+            console.log(
+                'TODO FIND',
+                await client.find({selector: {[idName]: id}})
+            )
+        } catch (e) {
+            console.error('Error', e)
+        }
         await client.logOut()
         await Promise.race([
             client.close(), timeout(config.closeTimeoutInSeconds * 1000)

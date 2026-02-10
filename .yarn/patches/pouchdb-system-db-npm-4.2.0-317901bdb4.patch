@@ -1,0 +1,14 @@
+diff --git a/lib/index.js b/lib/index.js
+index 2140eb6fd337be8166332906fb047e878ab23604..42e4772c0b67b3f4338ca9d87b27bd889ed84503 100644
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -37,7 +37,8 @@ function adminOnlyWrapper(error, orig, args) {
+     name: null,
+     roles: ["_admin"]
+   };
+-  if (userCtx.roles.indexOf("_admin") !== -1) {
++  // NOTE: Edited because db seems to be undefined if we are in admin party mode.
++  if (userCtx.roles.indexOf("_admin") !== -1 || !args.db) {
+     //server admin can do everything
+     return orig();
+   }
