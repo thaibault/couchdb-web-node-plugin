@@ -387,16 +387,16 @@ export const loadService = async (
                 getConnectorOptions(configuration.couchdb.connector)
             ) as Connection
 
-        try {
-            // NOTE: We check if we are in admin party mode.
-            await unauthenticatedUserDatabaseConnection.allDocs()
-
+        const createAdminUser = () => {
             log.info(
                 'No admin user available. Automatically creating admin user',
                 `"${configuration.couchdb.admin.name}".`
             )
 
-            await globalContext.fetch(
+            if (!globalContext.fetch)
+                throw new Error('Missing fetch implementation.')
+
+            return globalContext.fetch(
                 `${urlPrefix}/` +
                 `${couchdb.server.runner.adminUserConfigurationPath}/` +
                 configuration.couchdb.admin.name,
@@ -405,17 +405,26 @@ export const loadService = async (
                     method: 'PUT'
                 }
             )
+        }
+
+        try {
+            // NOTE: We check if we are in admin party mode.
+            await unauthenticatedUserDatabaseConnection.allDocs()
+            await createAdminUser()
         } catch (error) {
             /*
                 If we get an "unauthorized" error, an admin user is already
                 present.
             */
             if ((error as DatabaseError).name !== 'unauthorized')
-                log.error(
-                    `Can't check for admin user or create a new one:`,
-                    `"${configuration.couchdb.admin.name}":`,
-                    represent(error)
-                )
+                if ((error as DatabaseError).name === 'not_found')
+                    await createAdminUser()
+                else
+                    log.error(
+                        `Can't check for admin user or create a new one:`,
+                        `"${configuration.couchdb.admin.name}":`,
+                        represent(error)
+                    )
         } finally {
             await Promise.race([
                 unauthenticatedUserDatabaseConnection.close(),

@@ -224,8 +224,8 @@ export const authorize = (
         //
     } else
         userRolesDescription =
-            `Current user "${userContext.name ?? 'unknown'}" doesn't own any` +
-            'role'
+            `Current user "${userContext.name ?? 'unknown'}" doesn't own ` +
+            'any role'
 
     /* eslint-disable @typescript-eslint/only-throw-error,no-throw-literal */
     throw {

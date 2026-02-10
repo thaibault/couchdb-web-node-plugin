@@ -20,6 +20,7 @@ import PouchDBHTTPAdapter from 'pouchdb-adapter-http'
 import PouchDBAuthenticationPlugin from 'pouchdb-authentication'
 import PouchDBFindPlugin from 'pouchdb-find'
 import {pluginAPI} from 'web-node'
+import webNodePackageConfiguration from 'web-node/package.json'
 
 import {describe, expect, jest, test} from '@jest/globals'
 
@@ -38,9 +39,11 @@ jest.setTimeout(
 describe('index', (): void => {
     // region prepare environment
     const configuration = {
-        ...copy(packageConfiguration.webNode),
-        core: {plugin: {hotReloading: false}}
-    } as unknown as Configuration
+        ...copy(webNodePackageConfiguration.webNode),
+        ...copy(packageConfiguration.webNode)
+    } as
+        unknown as
+        Configuration
     const config = configuration.couchdb
 
     config.closeTimeoutInSeconds = 3

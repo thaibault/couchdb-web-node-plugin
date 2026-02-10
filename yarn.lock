@@ -11350,13 +11350,13 @@ __metadata:
 
 "pouchdb-system-db@patch:pouchdb-system-db@npm%3A4.2.0#~/.yarn/patches/pouchdb-system-db-npm-4.2.0-317901bdb4.patch":
   version: 4.2.0
-  resolution: "pouchdb-system-db@patch:pouchdb-system-db@npm%3A4.2.0#~/.yarn/patches/pouchdb-system-db-npm-4.2.0-317901bdb4.patch::version=4.2.0&hash=dc9dd9"
+  resolution: "pouchdb-system-db@patch:pouchdb-system-db@npm%3A4.2.0#~/.yarn/patches/pouchdb-system-db-npm-4.2.0-317901bdb4.patch::version=4.2.0&hash=97d1fe"
   dependencies:
     pouchdb-changeslike-wrapper: "npm:4.2.0"
     pouchdb-plugin-error: "npm:4.2.0"
     pouchdb-security: "npm:4.2.0"
     pouchdb-wrappers: "npm:4.2.0"
-  checksum: 10c0/b58d835362c9c01b28b47c52bba1de1de6b20aa27e0200b971d64a7d9a5b2bfc9973242e2c3c7c9b7f5a62684c189c2b051377a14ed773ec9aec7b1f57e081de
+  checksum: 10c0/0b23f86a7db77182c3960d6b67607527a05ac3a987a141a5103fc40f4060d8a2a0557611769a11ab76d6b2d46d7b364fba1f921451d97a5ba3376c469815ac96
   languageName: node
   linkType: hard
 
