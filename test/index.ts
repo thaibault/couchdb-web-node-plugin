@@ -14,7 +14,7 @@
     endregion
 */
 // region imports
-import {copy, Mapping, timeout} from 'clientnode'
+import {copy, Mapping} from 'clientnode'
 import PouchDB from 'pouchdb-core'
 import PouchDBHTTPAdapter from 'pouchdb-adapter-http'
 import PouchDBAuthenticationPlugin from 'pouchdb-authentication'
@@ -34,6 +34,7 @@ import {
     Configuration,
     LocalDatabaseConfiguration, Model, ServicePromises, Services, State
 } from '../type'
+import {Express} from 'express-serve-static-core'
 // endregion
 jest.setTimeout(
     packageConfiguration.webNode.couchdb.closeTimeoutInSeconds * 1000
@@ -93,7 +94,8 @@ describe('index', (): void => {
         }
     } as unknown as Model
 
-    const {id: idName, type: typeName} = config.model.property.name.special
+    const {id: idName, revision: revisionName, type: typeName} =
+        config.model.property.name.special
     // endregion
     // region tests
     test('preLoadService', async (): Promise<void> => {
@@ -169,7 +171,7 @@ describe('index', (): void => {
         },
         60 * 1000
     )
-    test('authorized rest api', async (): Promise<void> => {
+    test.only('authorized rest api', async (): Promise<void> => {
         const services: Services = {} as Services
 
         const state = {
@@ -183,10 +185,25 @@ describe('index', (): void => {
         state.hook = 'preLoadService'
         await expect(preLoadService(state)).resolves.toBeUndefined()
 
+        if (global.COUCHDB_WEBNODE_PLUGIN_EXPRESS_INSTANCES) {
+            state.services.couchdb.server.expressInstance =
+                global.COUCHDB_WEBNODE_PLUGIN_EXPRESS_INSTANCES.express as
+                    Express
+            state.services.couchdb.server.expressPouchDBInstance =
+                global.COUCHDB_WEBNODE_PLUGIN_EXPRESS_INSTANCES.pouchDB as
+                    Express
+        }
+
         state.hook = 'loadService'
         await expect(loadService(state, expressUtilities))
             .resolves.toHaveProperty('couchdb')
 
+        global.COUCHDB_WEBNODE_PLUGIN_EXPRESS_INSTANCES = {
+            express: state.services.couchdb.server.expressInstance,
+            pouchDB: state.services.couchdb.server.expressPouchDBInstance
+        }
+
+        // region initialize test client connection
         const pouchDB = PouchDB
             .plugin(PouchDBAuthenticationPlugin)
             .plugin(PouchDBFindPlugin)
@@ -201,33 +218,57 @@ describe('index', (): void => {
                 }
             }
         )
+        // endregion
+        try {
+            const data: Mapping =
+                {[typeName]: 'TestModel', writableProperty: 'test'}
+            const {id, rev: revision} = await client.post(data)
+            // region test reading properties
+            const fetchResult = (await client.find({
+                fields: ['readonlyProperty', 'writableProperty'],
+                selector: {[idName]: id}
+            })).docs[0]
+            expect(fetchResult)
+                .toHaveProperty('readonlyProperty', 'readonlyValue')
+            expect(fetchResult)
+                .toHaveProperty('writableProperty', 'test')
 
-        const data: Mapping =
-            {[typeName]: 'TestModel', writableProperty: 'test'}
-        const {id} = await client.post(data)
-        expect(typeof id).toStrictEqual('string')
-        const fetchResult = (await client.find({
-            fields: ['readonlyProperty', 'writableProperty'],
-            selector: {[idName]: id}
-        })).docs[0]
-        expect(fetchResult)
-            .toHaveProperty('readonlyProperty', 'readonlyValue')
-        expect(fetchResult)
-            .toHaveProperty('writableProperty', 'test')
-        data.readonlyProperty = 'notAllowedChangedValue'
-        await expect(client.post(data)).rejects.toBeDefined()
-        await expect(client.find({
-            fields: ['secureProperty'], selector: {[idName]: id}
-        })).rejects.toBeDefined()
+            await expect(client.find({
+                fields: ['secureProperty'], selector: {[idName]: id}
+            })).rejects.toHaveProperty('unauthorized')
 
-        await waitWithTimeout(
-            client.close(),
-            config.closeTimeoutInSeconds,
-            'test client connection to close'
-        )
+            // TODO await expect(client.allDocs()).resolves.toBeDefined()
+            // eslint-disable-next-line camelcase
+            await expect(client.allDocs({include_docs: true}))
+                .rejects.toHaveProperty('error', 'unauthorized')
+            // endregion
+            // region test writing properties
+            data.readonlyProperty = 'notAllowedChangedValue'
 
-        state.hook = 'shouldExit'
-        await expect(shouldExit(state)).resolves.toBeUndefined()
+            await expect(client.post(data))
+                .rejects.toHaveProperty('error', 'unauthorized')
+
+            data[idName] = id
+            data[revisionName] = revision
+
+            await expect(client.put(data))
+                .rejects.toHaveProperty('error', 'unauthorized')
+
+            expect((await client.bulkDocs([data]))[0])
+                .toHaveProperty('error', 'unauthorized')
+            // endregion
+        // eslint-disable-next-line no-useless-catch
+        } catch (error) {
+            throw error
+        } finally {
+            await waitWithTimeout(
+                client.close(),
+                config.closeTimeoutInSeconds,
+                'test client connection to close'
+            )
+            state.hook = 'shouldExit'
+            await expect(shouldExit(state)).resolves.toBeUndefined()
+        }
     })
     // endregion
 })

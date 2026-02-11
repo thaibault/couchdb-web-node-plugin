@@ -630,6 +630,8 @@ export const initializeExpress = async (
 }> => {
     log.info(`Couchdb runner is in-place with: "${name}".`)
 
+    const specialNames = configuration.model.property.name.special
+
     // eslint-disable-next-line camelcase
     const testConnector = new connector('', {skip_setup: true})
     const isInMemory =
@@ -720,20 +722,67 @@ export const initializeExpress = async (
     // TODO overwrite security related apis
     // 'routes/bulk-get'
     // 'routes/all-docs'
+    expressPouchDBInstance.all(
+        '/:db/_all_docs',
+        jsonParser,
+        async (
+            givenRequest: IncomingHTTPMessage, response: HTTP1ServerResponse
+        ) => {
+            const request = givenRequest as (
+                IncomingHTTPMessage &
+                {
+                    body: PlainObject
+                    couchSession: {userCtx: Partial<UserContext>}
+                    couchSecurityObj: Partial<SecuritySettings>
+                    query: Mapping
+                }
+            )
+            const options = {...request.body, ...request.query}
+            try {
+                const result = await (
+                    request as unknown as {db: PouchDB.Database}
+                ).db.allDocs(options)
+                if (options.include_docs) {
+                    // authorize documents
+                    const modelRolesMapping =
+                        determineAllowedModelRolesMapping(configuration.model)
+
+                    for (const row of result.rows)
+                        try {
+                            authorize(
+                                row.doc as unknown as Partial<Document>,
+                                null,
+                                request.couchSession.userCtx,
+                                request.couchSecurityObj,
+                                modelRolesMapping,
+                                specialNames.id,
+                                specialNames.type,
+                                specialNames.designDocumentNamePrefix,
+                                true
+                            )
+                        } catch (error) {
+                            sendError(response, error, 403)
+                            return
+                        }
+                    // endregion
+                }
+                sendJSON(response, 200, result)
+            } catch (error) {
+                sendError(response, error, 400)
+            }
+        }
+    )
     // 'routes/changes'
 
     for (const [_name, module] of routesToPostpone[0])
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         module(expressPouchDBInstance)
 
-    const specialNames = configuration.model.property.name.special
     expressPouchDBInstance.post(
         '/:db/_find',
         jsonParser,
         async (
-            givenRequest:
-                IncomingHTTPMessage & {body: FindRequest<PlainObject>},
-            response: HTTP1ServerResponse
+            givenRequest: IncomingHTTPMessage, response: HTTP1ServerResponse
         ) => {
             const request = givenRequest as (
                 IncomingHTTPMessage &

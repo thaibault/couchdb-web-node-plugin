@@ -1,9 +1,5 @@
  // -*- coding: utf-8 -*-
 /** @module declarations */
-/*
- NOTE: Already defined in weboptimizer's generic declaration. but currently
- only needed for intellij only.
-*/
 declare module 'express-pouchdb'
 declare module 'express-pouchdb/lib/routes/bulk-get'
 declare module 'express-pouchdb/lib/routes/all-docs'
@@ -42,3 +38,8 @@ declare module 'express-pouchdb/lib/utils' {
 
 declare module 'pouchdb-security'
 declare module 'pouchdb-validation'
+
+// eslint-disable-next-line no-var
+declare var COUCHDB_WEBNODE_PLUGIN_EXPRESS_INSTANCES: (
+    Record<string, unknown> | undefined
+)

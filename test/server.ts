@@ -27,9 +27,9 @@ import expressUtilities from '../loadExpress'
 import packageConfiguration from '../package.json'
 import {restart, start, stop} from '../server'
 import {
-    Configuration, CouchDB, InPlaceRunner,
-    LocalDatabaseConfiguration, State
+    Configuration, CouchDB, InPlaceRunner, LocalDatabaseConfiguration, State
 } from '../type'
+import {Express} from 'express-serve-static-core'
 // endregion
 jest.setTimeout(
     packageConfiguration.webNode.couchdb.closeTimeoutInSeconds * 1000
@@ -77,7 +77,21 @@ describe('server', (): void => {
             services: {couchdb: service}
         } as unknown as State
 
+        if (global.COUCHDB_WEBNODE_PLUGIN_EXPRESS_INSTANCES) {
+            state.services.couchdb.server.expressInstance =
+                global.COUCHDB_WEBNODE_PLUGIN_EXPRESS_INSTANCES.express as
+                    Express
+            state.services.couchdb.server.expressPouchDBInstance =
+                global.COUCHDB_WEBNODE_PLUGIN_EXPRESS_INSTANCES.pouchDB as
+                    Express
+        }
+
         await expect(start(state, expressUtilities)).resolves.toBeUndefined()
+
+        global.COUCHDB_WEBNODE_PLUGIN_EXPRESS_INSTANCES = {
+            express: state.services.couchdb.server.expressInstance,
+            pouchDB: state.services.couchdb.server.expressPouchDBInstance
+        }
 
         await expect(restart(state, true, expressUtilities))
             .resolves.toBeUndefined()

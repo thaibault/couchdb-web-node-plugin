@@ -227,16 +227,21 @@ export const authorize = (
             `Current user "${userContext.name ?? 'unknown'}" doesn't own ` +
             'any role'
 
+    const message =
+        relatedContextPathDescription +
+        ' Only users with a least one of these roles are allowed to ' +
+        `perform requested ${operationType} action: "` +
+        ([] as Array<string>)
+            .concat(relevantRoles)
+            .join('", "') +
+        `". ${userRolesDescription}.`
     /* eslint-disable @typescript-eslint/only-throw-error,no-throw-literal */
     throw {
-        unauthorized:
-            relatedContextPathDescription +
-            ' Only users with a least one of these roles are allowed to ' +
-            `perform requested ${operationType} action: "` +
-            ([] as Array<string>)
-                .concat(relevantRoles)
-                .join('", "') +
-            `". ${userRolesDescription}.`
+        unauthorized: message,
+
+        error: 'unauthorized',
+        message,
+        name: 'unauthorized'
     }
     /* eslint-enable @typescript-eslint/only-throw-error,no-throw-literal */
 }
@@ -313,6 +318,7 @@ export const validateDocumentUpdate = <
         */
         throw {
             [type]: message,
+            error: type,
             message,
             name: type,
             ...additionalErrorData
