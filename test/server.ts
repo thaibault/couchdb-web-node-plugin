@@ -23,11 +23,13 @@ import webNodePackageConfiguration from 'web-node/package.json'
 
 import {describe, expect, jest, test} from '@jest/globals'
 
-import {getConnectorOptions} from '../helper'
 import expressUtilities from '../loadExpress'
 import packageConfiguration from '../package.json'
 import {restart, start, stop} from '../server'
-import {Configuration, CouchDB, InPlaceRunner, State} from '../type'
+import {
+    Configuration, CouchDB, InPlaceRunner,
+    LocalDatabaseConfiguration, State
+} from '../type'
 // endregion
 jest.setTimeout(
     packageConfiguration.webNode.couchdb.closeTimeoutInSeconds * 1000
@@ -43,17 +45,21 @@ describe('server', (): void => {
         Configuration
     const config = configuration.couchdb
 
-    config.closeTimeoutInSeconds = 3
+    config.closeTimeoutInSeconds = 10
     config.connector.fetch.timeout = config.closeTimeoutInSeconds * 1000
     config.databaseName = 'server-test'
-    config.runner.variants[2].configuration = {adapter: 'memory'}
     // endregion
     // region tests
     test('start/restart/stop', async (): Promise<void> => {
         const connector = PouchDB
             .plugin(PouchDBMemoryPlugin)
             .plugin(PouchDBFindPlugin)
-            .defaults({adapter: 'memory'}) as typeof PouchDB
+            .defaults({
+                adapter: 'memory',
+                logPath: '/dev/null',
+                // eslint-disable-next-line camelcase
+                skip_setup: true
+            } as LocalDatabaseConfiguration) as typeof PouchDB
         const service = {
             backendConnector: connector,
             connector,

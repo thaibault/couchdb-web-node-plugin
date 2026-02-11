@@ -57,7 +57,8 @@ import {
     initializeConnection,
     log,
     mayStripRepresentation,
-    removeDeprecatedIndexes
+    removeDeprecatedIndexes,
+    waitWithTimeout
 } from './helper'
 import {restart, start, stop} from './server'
 import {
@@ -427,10 +428,11 @@ export const loadService = async (
                         represent(error)
                     )
         } finally {
-            await Promise.race([
+            await waitWithTimeout(
                 unauthenticatedUserDatabaseConnection.close(),
-                timeout(configuration.couchdb.closeTimeoutInSeconds * 1000)
-            ])
+                configuration.couchdb.closeTimeoutInSeconds,
+                'unauthenticated user database client connection to close'
+            )
         }
 
         // NOTE: Check if newly created admin user is able to log in.
@@ -454,10 +456,11 @@ export const loadService = async (
                 represent(error)
             )
         } finally {
-            await Promise.race([
+            await waitWithTimeout(
                 authenticatedUserDatabaseConnection.close(),
-                timeout(configuration.couchdb.closeTimeoutInSeconds * 1000)
-            ])
+                configuration.couchdb.closeTimeoutInSeconds,
+                'authenticated user database client connection to close'
+            )
         }
     }
     // endregion
@@ -508,10 +511,11 @@ export const loadService = async (
                         {cause: error}
                     )
             } finally {
-                await Promise.race([
+                await waitWithTimeout(
                     userDatabaseConnection.close(),
-                    timeout(configuration.couchdb.closeTimeoutInSeconds * 1000)
-                ])
+                    configuration.couchdb.closeTimeoutInSeconds,
+                    'user database client connection to close'
+                )
             }
     }
     // endregion

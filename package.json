@@ -239,7 +239,8 @@
               "logPath": "/dev/stdout",
               "prefix": {
                 "__evaluate__": "path.resolve(self.couchdb.path) + '/'"
-              }
+              },
+              "skip_setup": true
             },
             "packages": [
               "express",
@@ -282,7 +283,8 @@
           "retryIntervalInSeconds": 0.2,
           "exponentialBackoff": true,
           "maximumRetryIntervallInSeconds": 30
-        }
+        },
+        "skip_setup": true
       },
       "createGenericFlatIndex": true,
       "databaseName": "main",
@@ -535,7 +537,7 @@
       "self": "commonjs2"
     },
     "generic": {
-      "testCommandLine": "NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" jest --config node_modules/weboptimizer/jest.json --noStackTrace --test-regex"
+      "testCommandLine": "NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" jest --config node_modules/weboptimizer/jest.json --noStackTrace --runInBand --test-regex"
     },
     "injection": {
       "entry": {

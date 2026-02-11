@@ -24,13 +24,16 @@ import webNodePackageConfiguration from 'web-node/package.json'
 
 import {describe, expect, jest, test} from '@jest/globals'
 
-import {getConnectorOptions, getEffectiveURL} from '../helper'
+import {getConnectorOptions, getEffectiveURL, waitWithTimeout} from '../helper'
 import {
     loadService, postLoadService, preLoadService, shouldExit
 } from '../index'
 import expressUtilities from '../loadExpress'
 import packageConfiguration from '../package.json'
-import {Configuration, Model, ServicePromises, Services, State} from '../type'
+import {
+    Configuration,
+    LocalDatabaseConfiguration, Model, ServicePromises, Services, State
+} from '../type'
 // endregion
 jest.setTimeout(
     packageConfiguration.webNode.couchdb.closeTimeoutInSeconds * 1000
@@ -46,7 +49,7 @@ describe('index', (): void => {
         Configuration
     const config = configuration.couchdb
 
-    config.closeTimeoutInSeconds = 3
+    config.closeTimeoutInSeconds = 10
     config.connector.fetch.timeout = config.closeTimeoutInSeconds * 1000
     config.databaseName = 'index-test'
     config.security[config.databaseName] = {
@@ -60,7 +63,12 @@ describe('index', (): void => {
         password: 'test',
         roles: ['users']
     }
-    config.runner.variants[2].configuration = {adapter: 'memory'}
+    config.runner.variants[2].configuration = {
+        adapter: 'memory',
+        logPath: '/dev/null',
+        // eslint-disable-next-line camelcase
+        skip_setup: true
+    } as LocalDatabaseConfiguration
     config.attachAutoRestarter = false
     ;(config.model.entities.TestModel as Model) = {
         readonlyProperty: {
@@ -212,9 +220,11 @@ describe('index', (): void => {
             fields: ['secureProperty'], selector: {[idName]: id}
         })).rejects.toBeDefined()
 
-        await Promise.race([
-            client.close(), timeout(config.closeTimeoutInSeconds * 1000)
-        ])
+        await waitWithTimeout(
+            client.close(),
+            config.closeTimeoutInSeconds,
+            'test client connection to close'
+        )
 
         state.hook = 'shouldExit'
         await expect(shouldExit(state)).resolves.toBeUndefined()

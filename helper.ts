@@ -26,7 +26,7 @@ import {
     Mapping,
     PlainObject,
     represent,
-    SecondParameter,
+    SecondParameter, timeout,
     ValueOf
 } from 'clientnode'
 import {jsonParser, sendError, sendJSON} from 'express-pouchdb/lib/utils'
@@ -712,7 +712,8 @@ export const initializeExpress = async (
                         .concat(...routesToPostpone)
                         .map(([name]) => name as string)
                 },
-                inMemoryConfig: isInMemory
+                inMemoryConfig: isInMemory,
+                logPath: '/dev/null'
             }
         )
 
@@ -841,6 +842,32 @@ export const initializeExpress = async (
     expressInstance.use('/', expressPouchDBInstance)
 
     return {expressInstance, expressPouchDBInstance}
+}
+/**
+ * Waits for given promise to be resolved or given timeout has been exceeded.
+ * @param promise - Promise to wait for.
+ * @param timeoutInSeconds - Timeout in seconds.
+ * @param description - Used to produce semantic logging messages.
+ * @returns A promise which will be resolved after given promise is resolved or
+ * given timeout has been exceeded.
+ */
+export const waitWithTimeout = (
+    promise: Promise<unknown>, timeoutInSeconds: number, description: string
+): Promise<void> => {
+    let timeoutExceeded = true
+    return Promise.race([
+        promise.then(() => {
+            timeoutExceeded = false
+        }),
+        timeout(timeoutInSeconds * 1000).then(() => {
+            if (timeoutExceeded)
+                log.warn(
+                    'Timeout of',
+                    `${String(timeoutInSeconds)}.`,
+                    `seconds reached while waiting for ${description}.`
+                )
+        })
+    ])
 }
 // region model
 /**

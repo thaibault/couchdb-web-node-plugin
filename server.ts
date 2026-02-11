@@ -24,8 +24,7 @@ import {
     Logger,
     ProcessCloseCallback,
     ProcessCloseReason,
-    ProcessErrorCallback,
-    timeout
+    ProcessErrorCallback
 } from 'clientnode'
 import {Server as HTTPServer} from 'http'
 import nodeFetch from 'node-fetch'
@@ -33,7 +32,7 @@ import {promises as fileSystem} from 'fs'
 import {dirname} from 'path'
 
 import {
-    getEffectiveURL, initializeConnection, initializeExpress
+    getEffectiveURL, initializeConnection, initializeExpress, waitWithTimeout
 } from './helper'
 import {
     BinaryRunner, Configuration, InPlaceRunner, Services, State
@@ -255,9 +254,11 @@ export const stop = async (
                     error
                 )
             })
-            await Promise.race([
-                promise, timeout(configuration.closeTimeoutInSeconds * 1000)
-            ])
+            await waitWithTimeout(
+                promise,
+                configuration.closeTimeoutInSeconds,
+                'couchdb connection to close'
+            )
         }
     }
 
