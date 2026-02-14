@@ -235,12 +235,40 @@ describe('index', (): void => {
 
             await expect(client.find({
                 fields: ['secureProperty'], selector: {[idName]: id}
-            })).rejects.toHaveProperty('unauthorized')
+            })).rejects.toHaveProperty('error', 'unauthorized')
 
-            // TODO await expect(client.allDocs()).resolves.toBeDefined()
+            await expect(client.allDocs()).resolves.toBeDefined()
+
             // eslint-disable-next-line camelcase
             await expect(client.allDocs({include_docs: true}))
                 .rejects.toHaveProperty('error', 'unauthorized')
+
+            const {results: validResults} = await client.changes({since: 0})
+            expect(validResults[validResults.length - 1])
+                .not.toHaveProperty('error')
+
+            const {results: invalidResults} =
+                // eslint-disable-next-line camelcase
+                await client.changes({include_docs: true, since: 0})
+            expect(invalidResults[invalidResults.length - 1])
+                .toHaveProperty('error.error', 'unauthorized')
+
+            const validChangesStream = client.changes({live: true, since: 0})
+            await validChangesStream.on('change', (change): void => {
+                if (change.id === id) {
+                    expect(change).not.toHaveProperty('error')
+                    validChangesStream.cancel()
+                }
+            })
+            const invalidChangesStream =
+                // eslint-disable-next-line camelcase
+                client.changes({include_docs: true, live: true, since: 0})
+            await invalidChangesStream.on('change', (change): void => {
+                if (change.id === id) {
+                    expect(change).toHaveProperty('error')
+                    invalidChangesStream.cancel()
+                }
+            })
             // endregion
             // region test writing properties
             data.readonlyProperty = 'notAllowedChangedValue'

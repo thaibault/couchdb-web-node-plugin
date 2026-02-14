@@ -53,7 +53,10 @@ export type FullAttachment =
     {data?: null | PouchDB.Core.FullAttachment['data']}
 export type StubAttachment = PouchDB.Core.StubAttachment
 
+export type Changes = PouchDB.Core.Changes<Mapping<unknown>>
+
 export type ChangesMeta = PouchDB.Core.ChangesMeta
+export type ChangesResponse = PouchDB.Core.ChangesResponse<Mapping<unknown>>
 export type ChangesResponseChange<Type extends object = Mapping<unknown>> =
     PouchDB.Core.ChangesResponseChange<Type>
 export type ChangesStream<Type extends object = Mapping<unknown>> =

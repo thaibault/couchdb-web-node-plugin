@@ -126,9 +126,7 @@ export const authorize = (
 
     // A "readonlymember" is allowed to read all but design documents.
     if (!(
-        Object.prototype.hasOwnProperty.call(
-            newDocument, idPropertyName
-        ) &&
+        Object.prototype.hasOwnProperty.call(newDocument, idPropertyName) &&
         (newDocument[idPropertyName] as string).startsWith(
             designDocumentNamePrefix
         )
@@ -172,7 +170,8 @@ export const authorize = (
             const localContextPath = contextPath.concat(name)
             relatedContextPathDescription =
                 `You are trying to ${operationType} property ` +
-                `"${localContextPath.join('.')}".`
+                `"${localContextPath.join('.')}" of object having type ` +
+                `"${type}".`
             authorized = false
 
             if (
@@ -235,6 +234,7 @@ export const authorize = (
             .concat(relevantRoles)
             .join('", "') +
         `". ${userRolesDescription}.`
+
     /* eslint-disable @typescript-eslint/only-throw-error,no-throw-literal */
     throw {
         unauthorized: message,

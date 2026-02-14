@@ -26,7 +26,8 @@ import {
     Mapping,
     PlainObject,
     represent,
-    SecondParameter, timeout,
+    SecondParameter,
+    timeout,
     ValueOf
 } from 'clientnode'
 import {jsonParser, sendError, sendJSON} from 'express-pouchdb/lib/utils'
@@ -48,6 +49,8 @@ import {
     AllowedModelRolesMapping,
     AllowedRoles,
     BaseModel,
+    ChangesResponse,
+    ChangesResponseChange,
     Configuration,
     Connection,
     Connector,
@@ -78,7 +81,6 @@ import {
     SpecialPropertyNames,
     UserContext
 } from './type'
-import PouchDB from 'pouchdb-node'
 // endregion
 /*
     Token to provide to "bulkDocs" method call to indicate id determination
@@ -641,7 +643,6 @@ export const initializeExpress = async (
     const {
         express,
         expressPouchDB,
-        bulkGet,
         allDocs,
         changes,
         compact,
@@ -666,21 +667,20 @@ export const initializeExpress = async (
     const expressInstance: Express = express()
     /*
         These routes take many remaining paths (fallback). We will add
-        these manually after custom routes could be added.
+        these manually after custom routes have been added.
     */
 
     /*
         We have to overwrite to apply read right authorization on
         property level:
 
-        'routes/bulk-get',
         'routes/all-docs',
+        'routes/changes',
         'routes/attachments',
         'routes/documents',
     */
     const routesToPostpone = [
         [
-            ['routes/bulk-get', bulkGet],
             ['routes/all-docs', allDocs],
             ['routes/changes', changes],
             ['routes/compact', compact],
@@ -719,14 +719,13 @@ export const initializeExpress = async (
             }
         )
 
-    // TODO overwrite security related apis
-    // 'routes/bulk-get'
-    // 'routes/all-docs'
     expressPouchDBInstance.all(
         '/:db/_all_docs',
         jsonParser,
         async (
-            givenRequest: IncomingHTTPMessage, response: HTTP1ServerResponse
+            givenRequest: IncomingHTTPMessage,
+            response: HTTP1ServerResponse,
+            next
         ) => {
             const request = givenRequest as (
                 IncomingHTTPMessage &
@@ -738,41 +737,151 @@ export const initializeExpress = async (
                 }
             )
             const options = {...request.body, ...request.query}
+
+            if (!options.include_docs) {
+                next()
+                return
+            }
+
             try {
                 const result = await (
                     request as unknown as {db: PouchDB.Database}
                 ).db.allDocs(options)
-                if (options.include_docs) {
-                    // authorize documents
-                    const modelRolesMapping =
-                        determineAllowedModelRolesMapping(configuration.model)
+                // authorize documents
+                const modelRolesMapping =
+                    determineAllowedModelRolesMapping(configuration.model)
 
-                    for (const row of result.rows)
-                        try {
-                            authorize(
-                                row.doc as unknown as Partial<Document>,
-                                null,
-                                request.couchSession.userCtx,
-                                request.couchSecurityObj,
-                                modelRolesMapping,
-                                specialNames.id,
-                                specialNames.type,
-                                specialNames.designDocumentNamePrefix,
-                                true
-                            )
-                        } catch (error) {
-                            sendError(response, error, 403)
-                            return
-                        }
-                    // endregion
-                }
+                for (const row of result.rows)
+                    try {
+                        authorize(
+                            row.doc as unknown as Partial<Document>,
+                            null,
+                            request.couchSession.userCtx,
+                            request.couchSecurityObj,
+                            modelRolesMapping,
+                            specialNames.id,
+                            specialNames.type,
+                            specialNames.designDocumentNamePrefix,
+                            true
+                        )
+                    } catch (error) {
+                        sendError(response, error, 403)
+                        return
+                    }
+                // endregion
                 sendJSON(response, 200, result)
             } catch (error) {
                 sendError(response, error, 400)
             }
         }
     )
-    // 'routes/changes'
+
+    const authorizedChanges = ((
+        givenRequest: IncomingHTTPMessage,
+        response: HTTP1ServerResponse,
+        next
+    ) => {
+        const request = givenRequest as (
+            IncomingHTTPMessage &
+            {
+                body: PlainObject
+                couchSession: {userCtx: Partial<UserContext>}
+                couchSecurityObj: Partial<SecuritySettings>
+                db: Connection
+                query: Mapping
+            }
+        )
+        const options = {...request.body, ...request.query}
+
+        /*
+            NOTE: Needed workaround to allow changes implementation to set query
+            params on its own.
+        */
+        Object.defineProperty(request, 'query', {
+            value: {...request.query},
+            writable: true,
+            configurable: true,
+            enumerable: true
+        })
+
+        if (!options.include_docs) {
+            next()
+            return
+        }
+
+        const modelRolesMapping =
+            determineAllowedModelRolesMapping(configuration.model)
+
+        const authorizeChange = (document: ChangesResponseChange['doc']) =>
+            authorize(
+                document as Document,
+                null,
+                request.couchSession.userCtx,
+                request.couchSecurityObj,
+                modelRolesMapping,
+                specialNames.id,
+                specialNames.type,
+                specialNames.designDocumentNamePrefix,
+                true
+            )
+
+        const nativeChanges = request.db.changes.bind(request.db)
+        request.db.changes = ((...parameters) => {
+            const result = (
+                nativeChanges as
+                    (...parameter: Array<unknown>) =>
+                        EventEmitter | Promise<ChangesResponse> | undefined
+            )(...parameters)
+            if (result)
+                if ((result as Partial<EventEmitter>).on)
+                    (result as EventEmitter).on(
+                        'change',
+                        (change: ChangesResponseChange) => {
+                            if (change.doc)
+                                try {
+                                    authorizeChange(change.doc)
+                                } catch (error) {
+                                    try {
+                                        delete change.doc
+                                        ;(
+                                            change as
+                                                unknown as
+                                                {error: unknown}
+                                        ).error = error
+                                    } catch (e) {
+                                        console.error(e)
+                                    }
+                                }
+                        }
+                    )
+                else if ((result as Partial<Promise<ChangesResponse>>).then)
+                    void (result as Promise<ChangesResponse>).then(
+                        (results) => {
+                            for (const change of results.results)
+                                if (change.doc)
+                                    try {
+                                        authorizeChange(change.doc)
+                                    } catch (error) {
+                                        try {
+                                            delete change.doc
+                                            ;(
+                                                change as
+                                                    unknown as
+                                                    {error: unknown}
+                                            ).error = error
+                                        } catch (e) {
+                                            console.error(e)
+                                        }
+                                    }
+                        }
+                    )
+            return result
+        }) as Connection['changes']
+        next()
+        request.db.changes = nativeChanges
+    }) as SecondParameter<typeof expressPouchDBInstance.get>
+    expressPouchDBInstance.get('/:db/_changes', authorizedChanges)
+    expressPouchDBInstance.post('/:db/_changes', jsonParser, authorizedChanges)
 
     for (const [_name, module] of routesToPostpone[0])
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
@@ -790,6 +899,7 @@ export const initializeExpress = async (
                     body: FindRequest<PlainObject>
                     couchSession: {userCtx: Partial<UserContext>}
                     couchSecurityObj: Partial<SecuritySettings>
+                    db: Connection
                 }
             )
             /*
@@ -819,9 +929,7 @@ export const initializeExpress = async (
                 }) as FindResponse<object> | undefined
 
                 if (!result?.docs)
-                    result = await (
-                        request as unknown as {db: PouchDB.Database}
-                    ).db.find(request.body)
+                    result = await request.db.find(request.body)
                 // authorize documents
                 const modelRolesMapping =
                     determineAllowedModelRolesMapping(configuration.model)
@@ -859,7 +967,15 @@ export const initializeExpress = async (
 
     // TODO overwrite security related apis
     // 'routes/attachments'
+        // app.put('/:db/:id/:attachment(*)', function (req, res, next) {
+        // app.get('/:db/:id/:attachment(*)', function (req, res, next) {
+        // Maybe we can do delete voa bulkPUT
+            // app.delete('/:db/:id/:attachment(*)', function (req, res, next) {
     // 'routes/documents'
+        // app.get('/:db/:id(*)', function (req, res) {
+        // Maybe we can do delete voa bulkPUT
+            // app.delete('/:db/:id(*)', function (req, res) {
+            // app.copy('/:db/:id', function (req, res) {
 
     for (const [_name, module] of routesToPostpone[2])
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
@@ -880,8 +996,7 @@ export const initializeExpress = async (
         State<{
             expressInstance: Express,
             expressPouchDBInstance: Express
-        }>,
-        FindResponse<object> | undefined
+        }>
     >({
         ...state,
         hook: 'initializeExpressPouchDB',
