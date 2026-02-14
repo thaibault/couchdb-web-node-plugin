@@ -972,7 +972,7 @@ export const initializeExpress = async (
     // 'routes/attachments'
         // app.put('/:db/:id/:attachment(*)', function (req, res, next) {
         // app.get('/:db/:id/:attachment(*)', function (req, res, next) {
-        // Maybe we can do delete voa bulkPUT
+        // Maybe we can do delete via bulkPUT
             // app.delete('/:db/:id/:attachment(*)', function (req, res, next) {
     // routes/documents
     expressPouchDBInstance.get(
