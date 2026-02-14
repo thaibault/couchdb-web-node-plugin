@@ -676,6 +676,7 @@ export const initializeExpress = async (
 
         'routes/all-docs',
         'routes/changes',
+        'routes/find',
         'routes/attachments',
         'routes/documents',
     */
@@ -719,6 +720,7 @@ export const initializeExpress = async (
             }
         )
 
+    // routes/all-docs
     expressPouchDBInstance.all(
         '/:db/_all_docs',
         jsonParser,
@@ -775,7 +777,7 @@ export const initializeExpress = async (
             }
         }
     )
-
+    // routes/changes
     const authorizedChanges = ((
         givenRequest: IncomingHTTPMessage,
         response: HTTP1ServerResponse,
@@ -886,7 +888,7 @@ export const initializeExpress = async (
     for (const [_name, module] of routesToPostpone[0])
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         module(expressPouchDBInstance)
-
+    // routes/find
     expressPouchDBInstance.post(
         '/:db/_find',
         jsonParser,
@@ -965,16 +967,63 @@ export const initializeExpress = async (
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         module(expressPouchDBInstance)
 
+    // routes/attachments
     // TODO overwrite security related apis
     // 'routes/attachments'
         // app.put('/:db/:id/:attachment(*)', function (req, res, next) {
         // app.get('/:db/:id/:attachment(*)', function (req, res, next) {
         // Maybe we can do delete voa bulkPUT
             // app.delete('/:db/:id/:attachment(*)', function (req, res, next) {
-    // 'routes/documents'
-        // app.get('/:db/:id(*)', function (req, res) {
-        // Maybe we can do delete voa bulkPUT
-            // app.delete('/:db/:id(*)', function (req, res) {
+    // routes/documents
+    expressPouchDBInstance.get(
+        '/:db/:id(*)',
+        (givenRequest: IncomingHTTPMessage, response: HTTP1ServerResponse)=> {
+            const request = givenRequest as (
+                IncomingHTTPMessage &
+                {
+                    couchSession: {userCtx: Partial<UserContext>}
+                    couchSecurityObj: Partial<SecuritySettings>
+                    db: Connection
+                    params: Mapping
+                    query: Mapping
+                }
+            )
+
+            const modelRolesMapping =
+                determineAllowedModelRolesMapping(configuration.model)
+
+            request.db.get(
+                request.params.id,
+                request.query,
+                (error, document) => {
+                    if (error) {
+                        sendError(response, error, 500)
+                        return
+                    }
+
+                    try {
+                        authorize(
+                            document as Document,
+                            null,
+                            request.couchSession.userCtx,
+                            request.couchSecurityObj,
+                            modelRolesMapping,
+                            specialNames.id,
+                            specialNames.type,
+                            specialNames.designDocumentNamePrefix,
+                            true
+                        )
+                    } catch (error) {
+                        sendError(response, error, 403)
+                        return
+                    }
+
+                    sendJSON(response, 200, document)
+                }
+            )
+        }
+    )
+        // Maybe we already cover delete via bulkDocs operation
             // app.copy('/:db/:id', function (req, res) {
 
     for (const [_name, module] of routesToPostpone[2])

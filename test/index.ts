@@ -72,6 +72,14 @@ describe('index', (): void => {
     } as LocalDatabaseConfiguration
     config.attachAutoRestarter = false
     ;(config.model.entities.TestModel as Model) = {
+        writableProperty: {
+            allowedRoles: {
+                read: ['users'],
+                write: ['users']
+            }
+        }
+    } as unknown as Model
+    ;(config.model.entities.SensibelTestModel as Model) = {
         readonlyProperty: {
             allowedRoles: {
                 read: ['users'],
@@ -223,10 +231,22 @@ describe('index', (): void => {
             const data: Mapping =
                 {[typeName]: 'TestModel', writableProperty: 'test'}
             const {id, rev: revision} = await client.post(data)
+            // const {id, rev: revision} = await client.post(sensibelData)
+            const sensibelData: Mapping =
+                {[typeName]: 'SensibelTestModel', writableProperty: 'test'}
+            const {id: sensibelID, rev: sensibelRevision} =
+                await client.post(sensibelData)
             // region test reading properties
+            /// region id
+            await expect(client.get(id))
+                .resolves.toHaveProperty('writableProperty')
+            await expect(client.get(sensibelID))
+                .rejects.toHaveProperty('error', 'unauthorized')
+            /// endregion
+            /// region find
             const fetchResult = (await client.find({
                 fields: ['readonlyProperty', 'writableProperty'],
-                selector: {[idName]: id}
+                selector: {[idName]: sensibelID}
             })).docs[0]
             expect(fetchResult)
                 .toHaveProperty('readonlyProperty', 'readonlyValue')
@@ -234,15 +254,17 @@ describe('index', (): void => {
                 .toHaveProperty('writableProperty', 'test')
 
             await expect(client.find({
-                fields: ['secureProperty'], selector: {[idName]: id}
+                fields: ['secureProperty'], selector: {[idName]: sensibelID}
             })).rejects.toHaveProperty('error', 'unauthorized')
-
+            /// endregion
+            /// region allDocs
             await expect(client.allDocs()).resolves.toBeDefined()
 
             // eslint-disable-next-line camelcase
             await expect(client.allDocs({include_docs: true}))
                 .rejects.toHaveProperty('error', 'unauthorized')
-
+            /// endregion
+            /// region changes
             const {results: validResults} = await client.changes({since: 0})
             expect(validResults[validResults.length - 1])
                 .not.toHaveProperty('error')
@@ -255,7 +277,7 @@ describe('index', (): void => {
 
             const validChangesStream = client.changes({live: true, since: 0})
             await validChangesStream.on('change', (change): void => {
-                if (change.id === id) {
+                if (change.id === sensibelID) {
                     expect(change).not.toHaveProperty('error')
                     validChangesStream.cancel()
                 }
@@ -264,26 +286,40 @@ describe('index', (): void => {
                 // eslint-disable-next-line camelcase
                 client.changes({include_docs: true, live: true, since: 0})
             await invalidChangesStream.on('change', (change): void => {
-                if (change.id === id) {
+                if (change.id === sensibelID) {
                     expect(change).toHaveProperty('error')
                     invalidChangesStream.cancel()
                 }
             })
+            /// endregion
             // endregion
             // region test writing properties
-            data.readonlyProperty = 'notAllowedChangedValue'
+            /// region post
+            sensibelData.readonlyProperty = 'notAllowedChangedValue'
 
-            await expect(client.post(data))
+            await expect(client.post(sensibelData))
                 .rejects.toHaveProperty('error', 'unauthorized')
+            /// endregion
+            /// region put
+            sensibelData[idName] = sensibelID
+            sensibelData[revisionName] = sensibelRevision
 
-            data[idName] = id
-            data[revisionName] = revision
-
-            await expect(client.put(data))
+            await expect(client.put(sensibelData))
                 .rejects.toHaveProperty('error', 'unauthorized')
-
-            expect((await client.bulkDocs([data]))[0])
+            /// endregion
+            /// region bulkDocs
+            expect((await client.bulkDocs([sensibelData]))[0])
                 .toHaveProperty('error', 'unauthorized')
+            /// endregion
+            /// region delete
+            await expect(client.remove(id, revision))
+                .resolves.toHaveProperty('ok', true)
+            await expect(client.remove(sensibelID, sensibelRevision))
+                .rejects.toHaveProperty('error', 'unauthorized')
+            /// endregion
+            /// region copy
+            // TODO
+            /// endregion
             // endregion
         // eslint-disable-next-line no-useless-catch
         } catch (error) {
