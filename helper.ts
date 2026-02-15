@@ -780,7 +780,7 @@ export const initializeExpress = async (
     // routes/changes
     const authorizedChanges = ((
         givenRequest: IncomingHTTPMessage,
-        response: HTTP1ServerResponse,
+        _response: HTTP1ServerResponse,
         next
     ) => {
         const request = givenRequest as (
@@ -968,11 +968,10 @@ export const initializeExpress = async (
         module(expressPouchDBInstance)
 
     // routes/attachments
-    // TODO overwrite security related apis
-    // 'routes/attachments'
-        // app.put('/:db/:id/:attachment(*)', function (req, res, next) {
+    // TODO overwrite security related apis! have to be placed before id since it catches all otherwise!
         // app.get('/:db/:id/:attachment(*)', function (req, res, next) {
-        // Maybe we can do delete via bulkPUT
+        // app.put('/:db/:id/:attachment(*)', function (req, res, next) {
+        // Maybe we can do delete via bulkDocs
             // app.delete('/:db/:id/:attachment(*)', function (req, res, next) {
     // routes/documents
     expressPouchDBInstance.get(
@@ -1023,8 +1022,8 @@ export const initializeExpress = async (
             )
         }
     )
-        // Maybe we already cover delete via bulkDocs operation
-            // app.copy('/:db/:id', function (req, res) {
+
+    // We already cover delete and copy via "get" and "bulkDocs" operation.
 
     for (const [_name, module] of routesToPostpone[2])
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call

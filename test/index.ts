@@ -72,33 +72,54 @@ describe('index', (): void => {
     } as LocalDatabaseConfiguration
     config.attachAutoRestarter = false
     ;(config.model.entities.TestModel as Model) = {
-        writableProperty: {
-            allowedRoles: {
-                read: ['users'],
-                write: ['users']
+        _attachments: {
+            'file.txt': {
+                allowedRoles: 'users',
+                default: {
+                    'file.txt': {
+                        // eslint-disable-next-line camelcase
+                        content_type: 'text/plain',
+                        data:
+                            Buffer.from('Is there life on Mars?', 'binary')
+                                .toString('base64')
+                    }
+                },
+                maximumNumber: 1
             }
+        },
+        writableProperty: {
+            allowedRoles: 'users'
         }
     } as unknown as Model
     ;(config.model.entities.SensibelTestModel as Model) = {
+        _attachments: {
+            'secureFile.txt': {
+                allowedRoles: 'admin',
+                default: {
+                    'secureFile.txt': {
+                        // eslint-disable-next-line camelcase
+                        content_type: 'text/plain',
+                        data:
+                            Buffer.from('There is!', 'binary')
+                                .toString('base64')
+                    }
+                },
+                maximumNumber: 1
+            }
+        },
         readonlyProperty: {
             allowedRoles: {
-                read: ['users'],
+                read: 'users',
                 write: []
             },
             default: 'readonlyValue'
         },
         secureProperty: {
-            allowedRoles: {
-                read: ['admin'],
-                write: []
-            },
+            allowedRoles: 'admin',
             default: 'secureValue'
         },
         writableProperty: {
-            allowedRoles: {
-                read: ['users'],
-                write: ['users']
-            }
+            allowedRoles: 'users'
         }
     } as unknown as Model
 
@@ -231,7 +252,6 @@ describe('index', (): void => {
             const data: Mapping =
                 {[typeName]: 'TestModel', writableProperty: 'test'}
             const {id, rev: revision} = await client.post(data)
-            // const {id, rev: revision} = await client.post(sensibelData)
             const sensibelData: Mapping =
                 {[typeName]: 'SensibelTestModel', writableProperty: 'test'}
             const {id: sensibelID, rev: sensibelRevision} =
@@ -292,6 +312,17 @@ describe('index', (): void => {
                 }
             })
             /// endregion
+            /// region attachments
+            console.log(
+                'B',
+                await client.getAttachment(id, 'file.txt')
+            )
+            try {
+                console.log('C', await client.getAttachment(sensibelID, 'secureFile.txt'))
+            } catch (error) {
+                console.error(error)
+            }
+            /// endregion
             // endregion
             // region test writing properties
             /// region post
@@ -316,14 +347,6 @@ describe('index', (): void => {
                 .resolves.toHaveProperty('ok', true)
             await expect(client.remove(sensibelID, sensibelRevision))
                 .rejects.toHaveProperty('error', 'unauthorized')
-            /// endregion
-            /// region copy
-            /* TODO
-            await expect(client.copy(id, revision))
-                .resolves.toHaveProperty('ok', true)
-            await expect(client.copy(sensibelID, sensibelRevision))
-                .rejects.toHaveProperty('error', 'unauthorized')
-            */
             /// endregion
             // endregion
         // eslint-disable-next-line no-useless-catch
