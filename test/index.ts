@@ -318,7 +318,12 @@ describe('index', (): void => {
                 .rejects.toHaveProperty('error', 'unauthorized')
             /// endregion
             /// region copy
-            // TODO
+            /* TODO
+            await expect(client.copy(id, revision))
+                .resolves.toHaveProperty('ok', true)
+            await expect(client.copy(sensibelID, sensibelRevision))
+                .rejects.toHaveProperty('error', 'unauthorized')
+            */
             /// endregion
             // endregion
         // eslint-disable-next-line no-useless-catch
