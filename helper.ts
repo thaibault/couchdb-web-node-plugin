@@ -387,6 +387,15 @@ export const bulkDocsFactory = (
         firstParameter: unknown,
         ...parameters: Array<unknown>
     ): Promise<Array<DatabaseError | DatabaseResponse>> {
+        // Normalize parameter to an array of documents.
+        if (
+            isObject(firstParameter) &&
+            Object.keys(firstParameter).length === 1 &&
+            'docs' in firstParameter &&
+            Array.isArray(firstParameter.docs)
+        )
+            firstParameter = firstParameter.docs
+
         const toggleLatestRevisionDetermining: boolean = (
             parameters.length > 0 &&
             parameters[parameters.length - 1] ===
@@ -523,7 +532,7 @@ export const initializeConnection = async (
         connection.setMaxListeners(Infinity)
         // region apply "bulkDocs" interceptor to put method
         /*
-            NOTE: A "bulkDocs" plugin does not get called for every "put" call
+            NOTE: A "bulkDocs" plugin does not get called for every write call
             so we have to wrap runtime generated method.
         */
         connection.bulkDocs = bulkDocsFactory(
@@ -531,30 +540,6 @@ export const initializeConnection = async (
             connection.bulkDocs,
             config
         )
-        connection.post = connection.put =
-            async function<Type extends Mapping<unknown>>(
-                this: Connection,
-                document: PutDocument<Type>,
-                options?: PouchDB.Core.PutOptions | null
-            ): Promise<DatabaseResponse> {
-                const result =
-                    (await connection.bulkDocs.call(
-                        this, [document], options
-                    ))[0]
-
-                if ((result as DatabaseError | undefined)?.name)
-                    /*
-                        eslint-disable
-                        @typescript-eslint/only-throw-error,no-throw-literal
-                    */
-                    throw result as DatabaseError
-                /*
-                    eslint-enable
-                    @typescript-eslint/only-throw-error,no-throw-literal
-                */
-
-                return result as DatabaseResponse
-            }
         // endregion
     } else
         // @ts-expect-error "pouchdb-validation" does not have a typings yet.
@@ -1029,10 +1014,7 @@ export const initializeExpress = async (
             next()
         }
     )
-    // TODO overwrite security related apis! have to be placed before id since it catches all otherwise!
-        // app.put('/:db/:id/:attachment(*)', function (req, res, next) {
-        // Maybe we can do delete via bulkDocs
-            // app.delete('/:db/:id/:attachment(*)', function (req, res, next) {
+    // We already cover put and delete attachment via "bulkDocs" operation.
 
     for (const [_name, module] of routesToPostpone[2])
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call

@@ -105,7 +105,7 @@ export const authorize = (
     read = false,
     contextPath: Array<string> = []
 ): true => {
-    const type: string | undefined =
+    const modelType: string | undefined =
         newDocument[typePropertyName] as string | undefined ??
         (oldDocument && oldDocument[typePropertyName]) as string
     /*
@@ -114,19 +114,17 @@ export const authorize = (
         If no special document given but missing type property further
         validation will complain.
     */
-    if (!type)
+    if (!modelType)
         return true
 
     const operationType = read ? 'read': 'write'
 
     // Define roles who are allowed to read and write everything.
-    const allowedRoles: NormalizedAllowedModelRoles = {
+    const allowedBaseRoles: NormalizedAllowedModelRoles = {
         properties: {},
-
         read: ['_admin', 'readonlyadmin'],
         write: ['_admin']
     }
-
     // A "readonlymember" is allowed to read all but design documents.
     if (!(
         Object.prototype.hasOwnProperty.call(newDocument, idPropertyName) &&
@@ -134,7 +132,7 @@ export const authorize = (
             designDocumentNamePrefix
         )
     ))
-        allowedRoles.read.push('readonlymember')
+        allowedBaseRoles.read.push('readonlymember')
 
     if (!('name' in userContext))
         userContext.name = '"unknown"'
@@ -142,33 +140,45 @@ export const authorize = (
     let userRolesDescription: string
     let relevantRoles: Array<string> = []
     let relatedContextPathDescription =
-        `You are trying to ${operationType} object of type "${type}".`
+        `You are trying to ${operationType} object of type "${modelType}".`
 
     if (userContext.roles?.length) {
+        let allowedModelRoles: NormalizedAllowedModelRoles =
+            {...allowedBaseRoles}
+
         const userRoles = userContext.roles
         // region determine model specific allowed roles
         if (
             allowedModelRolesMapping &&
-            type &&
+            modelType &&
             Object.prototype.hasOwnProperty.call(
-                allowedModelRolesMapping, type
+                allowedModelRolesMapping, modelType
             )
         ) {
-            const allowedModelRoles: Partial<NormalizedAllowedModelRoles> =
-                allowedModelRolesMapping[type]
+            const extendWithBasicRoles = <T extends NormalizedAllowedRoles>(
+                roles: T
+            ): T => {
+                for (const operation of ['read', 'write'] as const)
+                    roles[operation] =
+                        roles[operation].concat(allowedBaseRoles[operation])
 
-            for (const operation of ['read', 'write'] as const)
-                allowedRoles[operation] = allowedRoles[operation].concat(
-                    allowedModelRoles[operation] || []
-                )
+                return roles
+            }
 
-            allowedRoles.attachments =
-                (allowedModelRoles as NormalizedAllowedModelRoles).attachments
-            allowedRoles.properties =
-                (allowedModelRoles as NormalizedAllowedModelRoles).properties
+            allowedModelRoles =
+                extendWithBasicRoles(allowedModelRolesMapping[modelType])
+
+            if (allowedModelRoles.attachments)
+                for (const roles of Object.values(
+                    allowedModelRoles.attachments
+                ))
+                    extendWithBasicRoles(roles)
+            for (const roles of Object.values(allowedModelRoles.properties))
+                extendWithBasicRoles(roles)
         }
         // endregion
-        const baseRelevantRoles: Array<string> = allowedRoles[operationType]
+        const baseRelevantRoles: Array<string> =
+            allowedModelRoles[operationType]
 
         const checkProperty = (
             name: string,
@@ -193,18 +203,33 @@ export const authorize = (
             relatedContextPathDescription =
                 `You are trying to ${operationType} property ` +
                 `"${localContextPath.join('.')}" of object having type ` +
-                `"${type}".`
+                `"${modelType}".`
             authorized = false
 
-            if (name === attachmentsPropertyName)
+            if (name === attachmentsPropertyName) {
+                console.log(
+                    'TODO Check',
+                    operationType,
+                    value,
+                    allowedModelRoles.attachments
+                )
+
+                authorized = true
                 for (const fileDescription of Object.keys(value as object)) {
+                    const contextPath =
+                        localContextPath.concat(fileDescription)
+                    relatedContextPathDescription =
+                        `You are trying to ${operationType} file on ` +
+                        `property "${contextPath.join('.')}" of object ` +
+                        `having type "${modelType}".`
+
                     authorized = checkProperty(
-                        fileDescription, allowedRoles.attachments
+                        fileDescription, allowedModelRoles.attachments
                     )
                     if (!authorized)
                         break
                 }
-            else if (
+            } else if (
                 value !== null &&
                 typeof value === 'object' &&
                 Object.prototype.hasOwnProperty.call(value, typePropertyName)
@@ -227,7 +252,7 @@ export const authorize = (
                     localContextPath
                 )
                 authorized = true
-            } else if (checkProperty(name, allowedRoles.properties))
+            } else if (checkProperty(name, allowedModelRoles.properties))
                 authorized = true
 
             if (!authorized)

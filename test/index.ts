@@ -73,6 +73,19 @@ describe('index', (): void => {
     config.attachAutoRestarter = false
     ;(config.model.entities.TestModel as Model) = {
         _attachments: {
+            'anotherFile.txt': {
+                allowedRoles: 'users',
+                default: {
+                    'anotherFile.txt': {
+                        // eslint-disable-next-line camelcase
+                        content_type: 'text/plain',
+                        data:
+                            Buffer.from('Is there life on Mars?', 'binary')
+                                .toString('base64')
+                    }
+                },
+                maximumNumber: 1
+            },
             'file.txt': {
                 allowedRoles: 'users',
                 default: {
@@ -251,7 +264,7 @@ describe('index', (): void => {
         try {
             const data: Mapping =
                 {[typeName]: 'TestModel', writableProperty: 'test'}
-            const {id, rev: revision} = await client.post(data)
+            let {id, rev: revision} = await client.post(data)
             const sensibelData: Mapping =
                 {[typeName]: 'SensibelTestModel', writableProperty: 'test'}
             const {id: sensibelID, rev: sensibelRevision} =
@@ -322,7 +335,6 @@ describe('index', (): void => {
             // region test writing properties
             /// region post
             sensibelData.readonlyProperty = 'notAllowedChangedValue'
-
             await expect(client.post(sensibelData))
                 .rejects.toHaveProperty('error', 'unauthorized')
             /// endregion
@@ -334,31 +346,43 @@ describe('index', (): void => {
                 .rejects.toHaveProperty('error', 'unauthorized')
             /// endregion
             /// region putAttachment
-            // TODO
+            const putAttachmentResult = await client.putAttachment(
+                id,
+                'file.txt',
+                revision,
+                Buffer.from('Is there life outside Earth?', 'binary')
+                    .toString('base64'),
+                'text/plain'
+            )
+            expect(putAttachmentResult).toHaveProperty('ok', true)
+            revision = putAttachmentResult.rev
+            await expect(client.putAttachment(
+                sensibelID,
+                'secureFile.txt',
+                sensibelRevision,
+                Buffer.from('No!', 'binary').toString('base64'),
+                'text/plain'
+            )).rejects.toHaveProperty('error', 'unauthorized')
+            /// endregion
+            /// region removeAttachment
             try {
                 console.log(
-                    'A',
-                    await client.putAttachment(
-                        id,
-                        'file.txt',
-                        revision,
-                        Buffer.from('Is there life outside Earth?', 'binary')
-                            .toString('base64'),
-                        'text/plain'
-                    )
+                    'Current state of document before removing att:',
+                    await client.get(id)
                 )
-                console.log(
-                    'B',
-                    await client.putAttachment(
-                        sensibelID,
-                        'secureFile.txt',
-                        sensibelRevision,
-                        Buffer.from('No!', 'binary').toString('base64'),
-                        'text/plain'
-                    )
-                )
+                console.log('Start removing file ---------------')
+                const removeAttachmentResult =
+                    await client.removeAttachment(id, 'file.txt', revision)
+                expect(removeAttachmentResult).toHaveProperty('ok', true)
+                revision = removeAttachmentResult.rev
+                console.log('-----------------------------')
+                /*
+                await expect(client.removeAttachment(
+                    sensibelID, 'secureFile.txt', sensibelRevision
+                )).rejects.toHaveProperty('error', 'unauthorized')
+                */
             } catch (error) {
-                console.error('TODO putAttachment error:', error)
+                console.log(error)
             }
             /// endregion
             /// region bulkDocs

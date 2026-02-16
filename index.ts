@@ -850,6 +850,7 @@ export const loadService = async (
                         }
         // endregion
     }
+
     // region run auto-migration
     if (configuration.couchdb.model.autoMigrationPath) {
         const migrators: Mapping<Migrator> = {}
