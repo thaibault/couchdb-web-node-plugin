@@ -313,15 +313,10 @@ describe('index', (): void => {
             })
             /// endregion
             /// region attachments
-            console.log(
-                'B',
-                await client.getAttachment(id, 'file.txt')
-            )
-            try {
-                console.log('C', await client.getAttachment(sensibelID, 'secureFile.txt'))
-            } catch (error) {
-                console.error(error)
-            }
+            await expect(client.getAttachment(id, 'file.txt'))
+                .resolves.toHaveProperty('type')
+            await expect(client.getAttachment(sensibelID, 'secureFile.txt'))
+                .rejects.toBeDefined()
             /// endregion
             // endregion
             // region test writing properties
@@ -337,6 +332,34 @@ describe('index', (): void => {
 
             await expect(client.put(sensibelData))
                 .rejects.toHaveProperty('error', 'unauthorized')
+            /// endregion
+            /// region putAttachment
+            // TODO
+            try {
+                console.log(
+                    'A',
+                    await client.putAttachment(
+                        id,
+                        'file.txt',
+                        revision,
+                        Buffer.from('Is there life outside Earth?', 'binary')
+                            .toString('base64'),
+                        'text/plain'
+                    )
+                )
+                console.log(
+                    'B',
+                    await client.putAttachment(
+                        sensibelID,
+                        'secureFile.txt',
+                        sensibelRevision,
+                        Buffer.from('No!', 'binary').toString('base64'),
+                        'text/plain'
+                    )
+                )
+            } catch (error) {
+                console.error('TODO putAttachment error:', error)
+            }
             /// endregion
             /// region bulkDocs
             expect((await client.bulkDocs([sensibelData]))[0])

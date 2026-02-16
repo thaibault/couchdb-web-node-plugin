@@ -299,8 +299,12 @@ export const loadService = async (
     const {configuration, services} = state
 
     const specialNames = configuration.couchdb.model.property.name.special
-    const {id: idName, revision: revisionName, type: typeName} =
-        specialNames
+    const {
+        id: idName,
+        revision: revisionName,
+        type: typeName,
+        attachment: attachmentsName
+    } = specialNames
 
     let promise: null | Promise<ProcessCloseReason | undefined> = null
     const {couchdb} = services
@@ -729,7 +733,7 @@ export const loadService = async (
                     JSON.stringify(determineAllowedModelRolesMapping(
                         configuration.couchdb.model
                     )) +
-                    `, '${idName}', '${typeName}', '` +
+                    `, '${idName}', '${typeName}', '${attachmentsName}', '` +
                     specialNames.designDocumentNamePrefix +
                     `'`
             }

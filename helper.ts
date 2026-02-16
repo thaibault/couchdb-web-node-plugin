@@ -699,7 +699,9 @@ export const initializeExpress = async (
             ['routes/update', update]
         ],
         [
-            ['routes/attachments', attachments],
+            ['routes/attachments', attachments]
+        ],
+        [
             ['routes/documents', documents],
             ['validation', validation],
             ['routes/404', notFoundError]
@@ -763,6 +765,7 @@ export const initializeExpress = async (
                             modelRolesMapping,
                             specialNames.id,
                             specialNames.type,
+                            specialNames.attachment,
                             specialNames.designDocumentNamePrefix,
                             true
                         )
@@ -823,6 +826,7 @@ export const initializeExpress = async (
                 modelRolesMapping,
                 specialNames.id,
                 specialNames.type,
+                specialNames.attachment,
                 specialNames.designDocumentNamePrefix,
                 true
             )
@@ -946,6 +950,7 @@ export const initializeExpress = async (
                             modelRolesMapping,
                             specialNames.id,
                             specialNames.type,
+                            specialNames.attachment,
                             specialNames.designDocumentNamePrefix,
                             true
                         )
@@ -968,15 +973,13 @@ export const initializeExpress = async (
         module(expressPouchDBInstance)
 
     // routes/attachments
-    // TODO overwrite security related apis! have to be placed before id since it catches all otherwise!
-        // app.get('/:db/:id/:attachment(*)', function (req, res, next) {
-        // app.put('/:db/:id/:attachment(*)', function (req, res, next) {
-        // Maybe we can do delete via bulkDocs
-            // app.delete('/:db/:id/:attachment(*)', function (req, res, next) {
-    // routes/documents
     expressPouchDBInstance.get(
-        '/:db/:id(*)',
-        (givenRequest: IncomingHTTPMessage, response: HTTP1ServerResponse)=> {
+        '/:db/:id/:attachment(*)',
+        async (
+            givenRequest: IncomingHTTPMessage,
+            response: HTTP1ServerResponse,
+            next
+        )=> {
             const request = givenRequest as (
                 IncomingHTTPMessage &
                 {
@@ -988,44 +991,104 @@ export const initializeExpress = async (
                 }
             )
 
-            const modelRolesMapping =
-                determineAllowedModelRolesMapping(configuration.model)
+            try {
+                const modelRolesMapping =
+                    determineAllowedModelRolesMapping(configuration.model)
 
-            request.db.get(
-                request.params.id,
-                request.query,
-                (error, document) => {
-                    if (error) {
-                        sendError(response, error, 500)
-                        return
-                    }
+                const {docs: [document]} = await request.db.find({
+                    fields: [specialNames.type],
+                    selector: {[specialNames.id]: request.query.id}
+                })
 
-                    try {
-                        authorize(
-                            document as Document,
-                            null,
-                            request.couchSession.userCtx,
-                            request.couchSecurityObj,
-                            modelRolesMapping,
-                            specialNames.id,
-                            specialNames.type,
-                            specialNames.designDocumentNamePrefix,
-                            true
-                        )
-                    } catch (error) {
-                        sendError(response, error, 403)
-                        return
-                    }
+                try {
+                    authorize(
+                        {
+                            [specialNames.type]: document[specialNames.type],
+                            [specialNames.attachment]: {
+                                [request.params.attachment]: {}
+                            }
+                        } as unknown as Partial<Document>,
+                        null,
+                        request.couchSession.userCtx,
+                        request.couchSecurityObj,
+                        modelRolesMapping,
+                        specialNames.id,
+                        specialNames.type,
+                        specialNames.attachment,
+                        specialNames.designDocumentNamePrefix,
+                        true
+                    )
+                } catch (error) {
+                    sendError(response, error, 403)
+                    return
+                }
+            } catch (error) {
+                sendError(response, error, 400)
+                return
+            }
+            next()
+        }
+    )
+    // TODO overwrite security related apis! have to be placed before id since it catches all otherwise!
+        // app.put('/:db/:id/:attachment(*)', function (req, res, next) {
+        // Maybe we can do delete via bulkDocs
+            // app.delete('/:db/:id/:attachment(*)', function (req, res, next) {
 
-                    sendJSON(response, 200, document)
+    for (const [_name, module] of routesToPostpone[2])
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        module(expressPouchDBInstance)
+
+    // routes/documents
+    expressPouchDBInstance.get(
+        '/:db/:id(*)',
+        async (
+            givenRequest: IncomingHTTPMessage, response: HTTP1ServerResponse
+        )=> {
+            const request = givenRequest as (
+                IncomingHTTPMessage &
+                {
+                    couchSession: { userCtx: Partial<UserContext> }
+                    couchSecurityObj: Partial<SecuritySettings>
+                    db: Connection
+                    params: Mapping
+                    query: Mapping
                 }
             )
+
+            try {
+                const modelRolesMapping =
+                    determineAllowedModelRolesMapping(configuration.model)
+
+                const document =
+                    await request.db.get(request.params.id, request.query)
+
+                try {
+                    authorize(
+                        document as Document,
+                        null,
+                        request.couchSession.userCtx,
+                        request.couchSecurityObj,
+                        modelRolesMapping,
+                        specialNames.id,
+                        specialNames.type,
+                        specialNames.attachment,
+                        specialNames.designDocumentNamePrefix,
+                        true
+                    )
+                } catch (error) {
+                    sendError(response, error, 403)
+                    return
+                }
+                sendJSON(response, 200, document)
+            } catch (error) {
+                sendError(response, error, 400)
+            }
         }
     )
 
     // We already cover delete and copy via "get" and "bulkDocs" operation.
 
-    for (const [_name, module] of routesToPostpone[2])
+    for (const [_name, module] of routesToPostpone[3])
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         module(expressPouchDBInstance)
 
@@ -1091,7 +1154,7 @@ export const waitWithTimeout = (
 export const determineAllowedModelRolesMapping = (
     modelConfiguration: ModelConfiguration
 ): AllowedModelRolesMapping => {
-    const {allowedRole: allowedRoleName} =
+    const {allowedRole: allowedRoleName, attachment: attachmentsPropertyName} =
         modelConfiguration.property.name.special
     const allowedModelRolesMapping: AllowedModelRolesMapping = {}
     const models: Models = extendModels(modelConfiguration)
@@ -1105,11 +1168,23 @@ export const determineAllowedModelRolesMapping = (
             }
 
             for (const [name, property] of Object.entries(model))
-                if (isObject(property) && property.allowedRoles)
-                    allowedModelRolesMapping[modelName].properties[name] =
-                        normalizeAllowedRoles(
-                            property.allowedRoles as AllowedRoles
-                        )
+                if (isObject(property))
+                    if (name === attachmentsPropertyName) {
+                        allowedModelRolesMapping[modelName].attachments = {}
+                        for (const [
+                            fileDescription, fileSpecification
+                        ] of Object.entries(property))
+                            allowedModelRolesMapping[modelName].attachments[
+                                fileDescription
+                            ] = normalizeAllowedRoles(
+                                (fileSpecification as PropertySpecification)
+                                    .allowedRoles as AllowedRoles
+                            )
+                    } else if (property.allowedRoles)
+                        allowedModelRolesMapping[modelName].properties[name] =
+                            normalizeAllowedRoles(
+                                property.allowedRoles as AllowedRoles
+                            )
         } else
             allowedModelRolesMapping[modelName] = {
                 properties: {},

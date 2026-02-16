@@ -140,10 +140,11 @@ export interface NormalizedAllowedRoles {
     roles.
 */
 export interface NormalizedAllowedModelRoles extends NormalizedAllowedRoles {
+    attachments?: Mapping<NormalizedAllowedRoles>
     properties: Mapping<NormalizedAllowedRoles>
 }
 /*
-    Maps an artefact (usually type or property) to corresponding operations
+    Maps an artifact (usually type or property) to corresponding operations
     mapped to their allowed roles.
 */
 export type AllowedModelRolesMapping = Mapping<NormalizedAllowedModelRoles>

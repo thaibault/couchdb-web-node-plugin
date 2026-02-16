@@ -50,7 +50,7 @@ import {
     FullAttachment,
     Model,
     Models,
-    NormalizedAllowedModelRoles,
+    NormalizedAllowedModelRoles, NormalizedAllowedRoles,
     PartialFullDocument,
     PropertyScope,
     PropertySpecification,
@@ -80,6 +80,8 @@ export const log = new Logger({name: 'web-node.couchdb.database'})
  * @param idPropertyName - Property name indicating the id field name.
  * @param typePropertyName - Property name indicating to which model a document
  * belongs to.
+ * @param attachmentsPropertyName - Property name indicating the attachments
+ * field name.
  * @param designDocumentNamePrefix - Document name prefix indicating a design
  * document.
  * @param read - Indicates whether a read or write of given document should be
@@ -98,6 +100,7 @@ export const authorize = (
     allowedModelRolesMapping?: AllowedModelRolesMapping,
     idPropertyName = '_id',
     typePropertyName = '-type',
+    attachmentsPropertyName = '_attachments',
     designDocumentNamePrefix = '_design/',
     read = false,
     contextPath: Array<string> = []
@@ -159,11 +162,30 @@ export const authorize = (
                     allowedModelRoles[operation] || []
                 )
 
+            allowedRoles.attachments =
+                (allowedModelRoles as NormalizedAllowedModelRoles).attachments
             allowedRoles.properties =
                 (allowedModelRoles as NormalizedAllowedModelRoles).properties
         }
         // endregion
         const baseRelevantRoles: Array<string> = allowedRoles[operationType]
+
+        const checkProperty = (
+            name: string,
+            allowedPropertyRoles: Mapping<NormalizedAllowedRoles> = {}
+        ) => {
+            relevantRoles = Object.prototype.hasOwnProperty.call(
+                allowedPropertyRoles, name
+            ) ?
+                allowedPropertyRoles[name][operationType] :
+                baseRelevantRoles
+
+            for (const userRole of userRoles)
+                if (relevantRoles.includes(userRole))
+                    return true
+
+            return false
+        }
 
         let authorized = true
         for (const [name, value] of Object.entries(newDocument)) {
@@ -174,7 +196,15 @@ export const authorize = (
                 `"${type}".`
             authorized = false
 
-            if (
+            if (name === attachmentsPropertyName)
+                for (const fileDescription of Object.keys(value as object)) {
+                    authorized = checkProperty(
+                        fileDescription, allowedRoles.attachments
+                    )
+                    if (!authorized)
+                        break
+                }
+            else if (
                 value !== null &&
                 typeof value === 'object' &&
                 Object.prototype.hasOwnProperty.call(value, typePropertyName)
@@ -191,24 +221,14 @@ export const authorize = (
                     allowedModelRolesMapping,
                     idPropertyName,
                     typePropertyName,
+                    attachmentsPropertyName,
                     designDocumentNamePrefix,
                     read,
                     localContextPath
                 )
                 authorized = true
-            } else {
-                relevantRoles = Object.prototype.hasOwnProperty.call(
-                    allowedRoles.properties, name
-                ) ?
-                    allowedRoles.properties[name][operationType] :
-                    baseRelevantRoles
-
-                for (const userRole of userRoles)
-                    if (relevantRoles.includes(userRole)) {
-                        authorized = true
-                        break
-                    }
-            }
+            } else if (checkProperty(name, allowedRoles.properties))
+                authorized = true
 
             if (!authorized)
                 break
