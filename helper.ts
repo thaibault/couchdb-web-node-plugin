@@ -48,6 +48,7 @@ import packageConfiguration from './package.json'
 import {
     AllowedModelRolesMapping,
     AllowedRoles,
+    Attachment,
     BaseModel,
     ChangesResponse,
     ChangesResponseChange,
@@ -372,10 +373,14 @@ export const ensureValidationDocumentPresence = async (
  * plugin for couchdb "bulkDocs" operations.
  * @param nativeBulkDocs - Original bulkDocs function to wrap.
  * @param configuration - Couchdb configuration object.
+ * @param description - Connection description used to produce semantic logging
+ * messages.
  * @returns Whatever bulkDocs returns.
  */
 export const bulkDocsFactory = (
-    nativeBulkDocs: Connection['bulkDocs'], configuration: CoreConfiguration
+    nativeBulkDocs: Connection['bulkDocs'],
+    configuration: CoreConfiguration,
+    description: string
 ) => {
     const idName: SpecialPropertyNames['id'] =
         configuration.model.property.name.special.id
@@ -387,6 +392,8 @@ export const bulkDocsFactory = (
         firstParameter: unknown,
         ...parameters: Array<unknown>
     ): Promise<Array<DatabaseError | DatabaseResponse>> {
+        log.debug('BulkDocs called from:', description)
+
         // Normalize parameter to an array of documents.
         if (
             isObject(firstParameter) &&
@@ -496,6 +503,34 @@ export const bulkDocsFactory = (
     } as unknown as DatabasePlugin
 }
 /**
+ * Generates function to apply remove attachment operations.
+ * @param configuration - Couchdb configuration object.
+ * @param description - Connection description used to produce semantic logging
+ * messages.
+ * @returns Whatever removeAttachment returns.
+ */
+export const removeAttachmentFactory = (
+    configuration: CoreConfiguration, description: string
+) => {
+    const {
+        id: idName, revision: revisionName, attachment: attachmentsPropertyName
+    } = configuration.model.property.name.special
+
+    return async function(
+        this: Connection, id: string, attachmentName: string, revision: string
+    ): Promise<DatabaseResponse> {
+        log.debug('RemoveAttachments called from:', description)
+
+        return this.put({
+            [idName]: id,
+            [revisionName]: revision,
+            [attachmentsPropertyName]: {
+                [attachmentName]: {data: null} as unknown as Attachment
+            }
+        })
+    } as unknown as DatabasePlugin
+}
+/**
  * Initializes a database connection instance.
  * @param services - An object with stored service instances.
  * @param configuration - Mutable by plugins extended configuration object.
@@ -538,8 +573,34 @@ export const initializeConnection = async (
         connection.bulkDocs = bulkDocsFactory(
             // eslint-disable-next-line @typescript-eslint/unbound-method
             connection.bulkDocs,
-            config
+            config,
+            'application connection'
         )
+        // TODO check delete and other write methods
+        connection.post = connection.put =
+            async function<Type extends Mapping<unknown>>(
+                this: Connection,
+                document: PutDocument<Type>,
+                options?: PouchDB.Core.PutOptions | null
+            ): Promise<DatabaseResponse> {
+                const result =
+                    (await connection.bulkDocs.call(
+                        this, [document], options
+                    ))[0]
+
+                if ((result as DatabaseError | undefined)?.name)
+                    /*
+                        eslint-disable
+                        @typescript-eslint/only-throw-error,no-throw-literal
+                    */
+                    throw result as DatabaseError
+                /*
+                    eslint-enable
+                    @typescript-eslint/only-throw-error,no-throw-literal
+                */
+
+                return result as DatabaseResponse
+            }
         // endregion
     } else
         // @ts-expect-error "pouchdb-validation" does not have a typings yet.

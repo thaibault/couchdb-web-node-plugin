@@ -15,16 +15,20 @@
 */
 // region imports
 import {copy, Mapping} from 'clientnode'
+import {Express} from 'express-serve-static-core'
 import PouchDB from 'pouchdb-core'
 import PouchDBHTTPAdapter from 'pouchdb-adapter-http'
-import PouchDBAuthenticationPlugin from 'pouchdb-authentication'
 import PouchDBFindPlugin from 'pouchdb-find'
 import {pluginAPI} from 'web-node'
 import webNodePackageConfiguration from 'web-node/package.json'
 
 import {describe, expect, jest, test} from '@jest/globals'
 
-import {getConnectorOptions, getEffectiveURL, waitWithTimeout} from '../helper'
+import {
+    getConnectorOptions,
+    getEffectiveURL, removeAttachmentFactory,
+    waitWithTimeout
+} from '../helper'
 import {
     loadService, postLoadService, preLoadService, shouldExit
 } from '../index'
@@ -32,9 +36,12 @@ import expressUtilities from '../loadExpress'
 import packageConfiguration from '../package.json'
 import {
     Configuration,
-    LocalDatabaseConfiguration, Model, ServicePromises, Services, State
+    LocalDatabaseConfiguration,
+    Model,
+    ServicePromises,
+    Services,
+    State
 } from '../type'
-import {Express} from 'express-serve-static-core'
 // endregion
 jest.setTimeout(
     packageConfiguration.webNode.couchdb.closeTimeoutInSeconds * 1000
@@ -73,19 +80,6 @@ describe('index', (): void => {
     config.attachAutoRestarter = false
     ;(config.model.entities.TestModel as Model) = {
         _attachments: {
-            'anotherFile.txt': {
-                allowedRoles: 'users',
-                default: {
-                    'anotherFile.txt': {
-                        // eslint-disable-next-line camelcase
-                        content_type: 'text/plain',
-                        data:
-                            Buffer.from('Is there life on Mars?', 'binary')
-                                .toString('base64')
-                    }
-                },
-                maximumNumber: 1
-            },
             'file.txt': {
                 allowedRoles: 'users',
                 default: {
@@ -213,7 +207,7 @@ describe('index', (): void => {
         },
         60 * 1000
     )
-    test.only('authorized rest api', async (): Promise<void> => {
+    test('authorized rest api', async (): Promise<void> => {
         const services: Services = {} as Services
 
         const state = {
@@ -247,9 +241,8 @@ describe('index', (): void => {
 
         // region initialize test client connection
         const pouchDB = PouchDB
-            .plugin(PouchDBAuthenticationPlugin)
-            .plugin(PouchDBFindPlugin)
             .plugin(PouchDBHTTPAdapter)
+            .plugin(PouchDBFindPlugin)
         const client = new pouchDB(
             getEffectiveURL(config),
             {
@@ -260,6 +253,9 @@ describe('index', (): void => {
                 }
             }
         )
+        client.removeAttachment = removeAttachmentFactory(
+            state.configuration.couchdb, 'test connection'
+        ).bind(client)
         // endregion
         try {
             const data: Mapping =
@@ -365,25 +361,13 @@ describe('index', (): void => {
             )).rejects.toHaveProperty('error', 'unauthorized')
             /// endregion
             /// region removeAttachment
-            try {
-                console.log(
-                    'Current state of document before removing att:',
-                    await client.get(id)
-                )
-                console.log('Start removing file ---------------')
-                const removeAttachmentResult =
-                    await client.removeAttachment(id, 'file.txt', revision)
-                expect(removeAttachmentResult).toHaveProperty('ok', true)
-                revision = removeAttachmentResult.rev
-                console.log('-----------------------------')
-                /*
-                await expect(client.removeAttachment(
-                    sensibelID, 'secureFile.txt', sensibelRevision
-                )).rejects.toHaveProperty('error', 'unauthorized')
-                */
-            } catch (error) {
-                console.log(error)
-            }
+            const removeAttachmentResult =
+                await client.removeAttachment(id, 'file.txt', revision)
+            expect(removeAttachmentResult).toHaveProperty('ok', true)
+            revision = removeAttachmentResult.rev
+            await expect(client.removeAttachment(
+                sensibelID, 'secureFile.txt', sensibelRevision
+            )).rejects.toHaveProperty('error', 'unauthorized')
             /// endregion
             /// region bulkDocs
             expect((await client.bulkDocs([sensibelData]))[0])

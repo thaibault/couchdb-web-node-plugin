@@ -207,13 +207,6 @@ export const authorize = (
             authorized = false
 
             if (name === attachmentsPropertyName) {
-                console.log(
-                    'TODO Check',
-                    operationType,
-                    value,
-                    allowedModelRoles.attachments
-                )
-
                 authorized = true
                 for (const fileDescription of Object.keys(value as object)) {
                     const contextPath =

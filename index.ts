@@ -39,7 +39,6 @@ import {
 import {promises as fileSystem} from 'fs'
 import {basename, extname, resolve} from 'path'
 import PouchDBMemoryPlugin from 'pouchdb-adapter-memory'
-import PouchDBAuthenticationPlugin from 'pouchdb-authentication'
 import PouchDBFindPlugin from 'pouchdb-find'
 import PouchDB from 'pouchdb-node'
 import PouchDBValidationPlugin from 'pouchdb-validation'
@@ -57,6 +56,7 @@ import {
     initializeConnection,
     log,
     mayStripRepresentation,
+    removeAttachmentFactory,
     removeDeprecatedIndexes,
     waitWithTimeout
 } from './helper'
@@ -192,19 +192,32 @@ export const preLoadService = async ({
                 InPlaceRunner['configuration']
         couchdb.backendConnector = PouchDB
             .plugin(PouchDBMemoryPlugin)
+            .plugin(PouchDBFindPlugin)
+            .plugin(PouchDBValidationPlugin)
             .plugin({
                 bulkDocs: bulkDocsFactory(
                     PouchDB.prototype.bulkDocs as Connection['bulkDocs'],
-                    configuration
+                    configuration,
+                    'backend connector'
+                ),
+                removeAttachment: removeAttachmentFactory(
+                    configuration, 'backend connector'
                 )
             })
-            .plugin(PouchDBFindPlugin)
-            .plugin(PouchDBValidationPlugin)
             .defaults(backendConnectorConfiguration) as typeof PouchDB
         couchdb.connector = PouchDB
             .plugin(PouchDBMemoryPlugin)
             .plugin(PouchDBFindPlugin)
-            .plugin(PouchDBAuthenticationPlugin)
+            .plugin({
+                bulkDocs: bulkDocsFactory(
+                    PouchDB.prototype.bulkDocs as Connection['bulkDocs'],
+                    configuration,
+                    'application connector'
+                ),
+                removeAttachment: removeAttachmentFactory(
+                    configuration, 'backend connector'
+                )
+            })
             .defaults(getConnectorOptions(configuration.connector)) as
                 typeof PouchDB
 
