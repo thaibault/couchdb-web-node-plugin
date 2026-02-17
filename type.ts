@@ -78,6 +78,10 @@ PouchDB.Database<Type> {
         options?: PouchDB.Core.BulkDocsOptions | null,
     ): Promise<Array<PouchDB.Core.Response | PouchDB.Core.Error>>
 
+    remove(
+        id: string, revision: string
+    ): Promise<PouchDB.Core.Response | PouchDB.Core.Error>
+
     post<Model>(
         doc: PostDocument<Type & Model>,
         options?: PouchDB.Core.Options | null
