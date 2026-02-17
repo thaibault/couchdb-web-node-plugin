@@ -26,7 +26,8 @@ import {
 import {Express} from 'express-serve-static-core'
 import {
     IncomingMessage as IncomingHTTPMessage,
-    Server as HTTPServer, ServerResponse as HTTP1ServerResponse
+    Server as HTTPServer,
+    ServerResponse as HTTP1ServerResponse
 } from 'http'
 import {
     Configuration as BaseConfiguration,
@@ -45,6 +46,7 @@ export type Attachment =
         content_type?: PouchDB.Core.Attachment['content_type']
         contentType?: PouchDB.Core.Attachment['content_type']
     }
+export type AttachmentData = PouchDB.Core.AttachmentData
 export type Attachments = Record<string, Attachment | null>
 
 export type FullAttachment =
@@ -52,7 +54,10 @@ export type FullAttachment =
     {data?: null | PouchDB.Core.FullAttachment['data']}
 export type StubAttachment = PouchDB.Core.StubAttachment
 
+export type Changes = PouchDB.Core.Changes<Mapping<unknown>>
+
 export type ChangesMeta = PouchDB.Core.ChangesMeta
+export type ChangesResponse = PouchDB.Core.ChangesResponse<Mapping<unknown>>
 export type ChangesResponseChange<Type extends object = Mapping<unknown>> =
     PouchDB.Core.ChangesResponseChange<Type>
 export type ChangesStream<Type extends object = Mapping<unknown>> =
@@ -62,27 +67,53 @@ export type ChangesStreamOptions = PouchDB.Core.ChangesOptions
 export interface Connection<Type extends object = Mapping<unknown>>
     extends
 PouchDB.Database<Type> {
+    // NOTE: "pouchdb-security" does not have a typings yet.
+    installSecurityMethods: () => void
     // NOTE: "pouchdb-validation" does not have a typings yet.
     installValidationMethods: () => void
+
+    installCouchDBWebNodePlugin: (description: string) => void
 
     bulkDocs<Model>(
         docs: Array<PutDocument<Type & Model>>,
         options?: PouchDB.Core.BulkDocsOptions | null,
     ): Promise<Array<PouchDB.Core.Response | PouchDB.Core.Error>>
 
+    remove(
+        id: string | (DocumentIDMeta & DocumentRevisionIDMeta),
+        ...parameters: Array<unknown>
+    ): Promise<PouchDB.Core.Response>
+
     post<Model>(
         doc: PostDocument<Type & Model>,
         options?: PouchDB.Core.Options | null
-    ): Promise<PouchDB.Core.Response>;
+    ): Promise<PouchDB.Core.Response>
 
     put<Model>(
         doc: PutDocument<Type & Model>,
         options?: PouchDB.Core.PutOptions | null
-    ): Promise<PouchDB.Core.Response>;
+    ): Promise<PouchDB.Core.Response>
+
+    putAttachment(
+        id: string,
+        attachmentName: string,
+        attachment: AttachmentData,
+        type: string
+    ): Promise<PouchDB.Core.Response>
+
+    putAttachment(
+        id: string,
+        attachmentName: string,
+        revision: string,
+        attachment: AttachmentData,
+        type: string
+    ): Promise<PouchDB.Core.Response>
 }
 export type Connector = PouchDB.Static
 export type DatabaseConnectorConfiguration =
     PouchDB.Configuration.RemoteDatabaseConfiguration
+export type LocalDatabaseConfiguration =
+    PouchDB.Configuration.LocalDatabaseConfiguration
 
 export type DatabaseError = PouchDB.Core.Error
 export type DatabaseFetch = PouchDB.Core.Options['fetch']
@@ -132,10 +163,11 @@ export interface NormalizedAllowedRoles {
     roles.
 */
 export interface NormalizedAllowedModelRoles extends NormalizedAllowedRoles {
+    attachments?: Mapping<NormalizedAllowedRoles>
     properties: Mapping<NormalizedAllowedRoles>
 }
 /*
-    Maps an artefact (usually type or property) to corresponding operations
+    Maps an artifact (usually type or property) to corresponding operations
     mapped to their allowed roles.
 */
 export type AllowedModelRolesMapping = Mapping<NormalizedAllowedModelRoles>
@@ -460,13 +492,19 @@ export interface Runner {
         }
     names: Array<string> | string
 }
-export interface BinaryRunner extends Runner{
+export interface BinaryRunner extends Runner {
+    configuration: {
+        values: PlainObject
+        prefixes: Array<string>
+    }
+
     arguments?: Array<string> | null | string
     binaryFilePath?: null | string
     environment?: null | Mapping
     locations: Array<string> | string
 }
 export interface InPlaceRunner extends Runner {
+    configuration: LocalDatabaseConfiguration
     packages: Array<string> | string
 }
 
@@ -481,7 +519,7 @@ export type ConnectorConfiguration =
     DatabaseConnectorConfiguration &
     {
         // NOTE: "pouchdb`s" version supports timeout parameter.
-        fetch?: AdvancedFetchOptions | null,
+        fetch: AdvancedFetchOptions | null,
         fetchInterceptor: {
             numberOfRetries: number
             retryIntervalInSeconds: number
@@ -497,14 +535,13 @@ export interface CoreConfiguration<
 > {
     attachAutoRestarter: boolean
 
-    backend: {
-        configuration: PlainObject
-        prefixes: Array<string>
-    }
+    closeTimeoutInSeconds: number
 
     runner: {
         memoryInMegaByte: string
         nodePath: string
+        host: string
+        port: number
         variants: Array<BinaryRunner | InPlaceRunner>
     }
 
@@ -582,6 +619,7 @@ export interface CouchDB<Type extends object = Mapping<unknown>> {
     updateMaterializedViewsChangesStream?: ChangesStream
     lastUpdateMaterializedViewsChangesSequenceIdentifier?: number | string
 
+    backendConnector: Connector
     connection: Connection<Type>
     connector: Connector
 

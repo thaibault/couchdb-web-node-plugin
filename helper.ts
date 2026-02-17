@@ -24,32 +24,50 @@ import {
     isObject,
     Logger,
     Mapping,
+    PlainObject,
     represent,
     SecondParameter,
+    timeout,
     ValueOf
 } from 'clientnode'
+import {jsonParser, sendError, sendJSON} from 'express-pouchdb/lib/utils'
+import {Express} from 'express-serve-static-core'
+import {
+    IncomingMessage as IncomingHTTPMessage,
+    ServerResponse as HTTP1ServerResponse
+} from 'http'
+import {
+    mkdirp as makeDirectorPath, mkdirpSync as makeDirectorPathSync
+} from 'mkdirp'
+import {resolve} from 'path'
 import {lastValueFrom, map, retry, timer} from 'rxjs'
 import {fromFetch} from 'rxjs/fetch'
 
+import {authorize} from './databaseHelper'
 import packageConfiguration from './package.json'
 import {
     AllowedModelRolesMapping,
     AllowedRoles,
+    AttachmentData,
     BaseModel,
-    BinaryRunner,
+    ChangesResponse,
+    ChangesResponseChange,
     Configuration,
     Connection,
+    Connector,
     ConnectorConfiguration,
     CoreConfiguration,
     DatabaseConnectorConfiguration,
     DatabaseError,
-    DatabasePlugin,
     DatabaseResponse,
     DeleteIndexOptions,
     Document,
     FileSpecification,
+    FindResponse,
+    FindRequest,
     FullDocument,
     Index,
+    InPlaceRunner,
     Model,
     ModelConfiguration,
     Models,
@@ -57,8 +75,11 @@ import {
     PartialFullDocument,
     PropertySpecification,
     PutDocument,
+    SecuritySettings,
+    State,
     Services,
-    SpecialPropertyNames
+    SpecialPropertyNames,
+    UserContext
 } from './type'
 // endregion
 /*
@@ -69,7 +90,233 @@ export const TOGGLE_LATEST_REVISION_DETERMINING =
     Symbol('toggleLatestRevisionDetermining')
 
 export const log = new Logger({name: 'web-node.couchdb'})
-// region functions
+/**
+ * Determines plugin to hook into any write operations.
+ * @param configuration - This's plugin configuration object.
+ * @returns A pouchdb plugin in object style.
+ */
+export const getPouchDBPlugin = (configuration: CoreConfiguration) => {
+    const {
+        id: idName,
+        revision: revisionName,
+        attachment: attachmentsPropertyName,
+        deleted: deletedName
+    } = configuration.model.property.name.special
+
+    return {installCouchDBWebNodePlugin: function(
+        this: Connection, description: string
+    ) {
+        if ((this as Partial<Connection>).bulkDocs) {
+            const nativeBulkDocs =
+                this.bulkDocs.bind(this)
+
+            this.bulkDocs = async (
+                firstParameter: unknown,
+                ...parameters: Array<unknown>
+            ): Promise<Array<DatabaseError | DatabaseResponse>> => {
+                log.debug('BulkDocs called from:', description)
+
+                // Normalize parameter to an array of documents.
+                if (
+                    isObject(firstParameter) &&
+                    Object.keys(firstParameter).length === 1 &&
+                    'docs' in firstParameter &&
+                    Array.isArray(firstParameter.docs)
+                )
+                    firstParameter = firstParameter.docs
+
+                const toggleLatestRevisionDetermining: boolean = (
+                    parameters.length > 0 &&
+                    parameters[parameters.length - 1] ===
+                    TOGGLE_LATEST_REVISION_DETERMINING
+                )
+                const skipLatestRevisionDetermining: boolean =
+                    toggleLatestRevisionDetermining ?
+                        !configuration.skipLatestRevisionDetermining :
+                        configuration.skipLatestRevisionDetermining
+                if (toggleLatestRevisionDetermining)
+                    parameters.pop()
+
+                let data: Array<PartialFullDocument> = (
+                    !Array.isArray(firstParameter) &&
+                    isObject(firstParameter) &&
+                    idName in firstParameter
+                ) ?
+                    [firstParameter as PartialFullDocument] :
+                    firstParameter as Array<PartialFullDocument>
+
+                const chunkSize =
+                    configuration.maximumNumberOfEntitiesInBulkOperation
+                let results: Array<DatabaseError | DatabaseResponse> = []
+
+                for (let index = 0; index < data.length; index += chunkSize) {
+                    const chunk = data.slice(index, index + chunkSize)
+
+                    const result = await nativeBulkDocs.call(
+                        this,
+                        chunk as FirstParameter<Connection['bulkDocs']>,
+                        ...parameters as
+                            [SecondParameter<Connection['bulkDocs']>]
+                    )
+
+                    results = results.concat(result)
+                }
+
+                const conflictingIndexes: Array<number> = []
+                const conflicts: Array<PartialFullDocument> = []
+                let index = 0
+                for (const item of results) {
+                    if (typeof data[index] === 'object')
+                        if (
+                            revisionName in data[index] &&
+                            (item as DatabaseError).name === 'conflict' &&
+                            ['0-latest', '0-upsert'].includes(
+                                data[index][revisionName] as string
+                            )
+                        ) {
+                            conflicts.push(data[index])
+                            conflictingIndexes.push(index)
+                        } else if (
+                            idName in data[index] &&
+                            configuration.ignoreNoChangeError &&
+                            'name' in item &&
+                            item.name === 'forbidden' &&
+                            'message' in item &&
+                            (item.message as string).startsWith('NoChange:')
+                        ) {
+                            results[index] = {
+                                id: data[index][idName], ok: true
+                            }
+                            if (!skipLatestRevisionDetermining)
+                                results[index].rev =
+                                    revisionName in data[index] &&
+                                    !['0-latest', '0-upsert'].includes(
+                                        data[index][revisionName] as string
+                                    ) ?
+                                        data[index][revisionName] :
+                                        ((
+                                                await this.get(
+                                                    results[index].id as string
+                                                )
+                                            ) as
+                                                unknown as
+                                                FullDocument
+                                        )[revisionName]
+                        }
+
+                    index += 1
+                }
+
+                if (conflicts.length) {
+                    data = conflicts
+                    if (toggleLatestRevisionDetermining)
+                        parameters.push(TOGGLE_LATEST_REVISION_DETERMINING)
+
+                    const retriedResults: Array<
+                        DatabaseError | DatabaseResponse
+                    > = await this.bulkDocs(
+                        data as Array<PutDocument<Mapping<unknown>>>,
+                        ...parameters as
+                            [SecondParameter<Connection['bulkDocs']>]
+                    ) as
+                        unknown as
+                        Array<DatabaseError | DatabaseResponse>
+                    for (const retriedResult of retriedResults)
+                        results[conflictingIndexes.shift() as number] =
+                            retriedResult
+                }
+
+                return results
+            }
+        }
+        this.post = this.put = async <Type extends Mapping<unknown>>(
+            document: PutDocument<Type>,
+            options?: PouchDB.Core.PutOptions | null
+        ): Promise<DatabaseResponse> => {
+            const result =
+                (await this.bulkDocs([document], options))[0]
+
+            if ((result as DatabaseError | undefined)?.name)
+                /*
+                    eslint-disable
+                    @typescript-eslint/only-throw-error,no-throw-literal
+                */
+                throw result as DatabaseError
+            /*
+                eslint-enable
+                @typescript-eslint/only-throw-error,no-throw-literal
+            */
+
+            return result as DatabaseResponse
+        }
+        this.remove = async (id: string, revision: string): Promise<
+            DatabaseResponse
+        > => this.put({
+            [idName]: id,
+            [revisionName]: revision,
+            [deletedName]: true
+        })
+        if ((this as Partial<Connection>).putAttachment)
+            this.putAttachment = async (
+                id: string,
+                attachmentName: string,
+                revisionOrAttachment: AttachmentData | string,
+                attachmentOrType: AttachmentData | string,
+                type?: string
+            ): Promise<DatabaseResponse> => {
+                let attachment: AttachmentData
+                let revision: string
+                if (typeof revisionOrAttachment === 'string') {
+                    attachment = attachmentOrType
+                    revision = revisionOrAttachment
+                } else {
+                    attachment = revisionOrAttachment
+                    revision = '0-latest'
+                }
+
+                return this.put({
+                    [idName]: id,
+                    [revisionName]: revision,
+                    [attachmentsPropertyName]: {
+                        [attachmentName]: {
+                            /*
+                                NOTE: We only need to set a content type to
+                                avoid getting a warning.
+                            */
+                            // eslint-disable-next-line camelcase
+                            content_type:
+                                (attachment as Partial<Blob>).type ??
+                                type ??
+                                'application/octet-stream',
+                            data: attachment
+                        }
+                    }
+                })
+            }
+        if ((this as Partial<Connection>).removeAttachment)
+            this.removeAttachment = async (
+                id: string,
+                attachmentName: string,
+                revision: string
+            ): Promise<DatabaseResponse> =>
+                this.put({
+                    [idName]: id,
+                    [revisionName]: revision,
+                    [attachmentsPropertyName]: {
+                        [attachmentName]: {
+                            /*
+                                NOTE: We only need to set a content type to
+                                avoid getting a warning.
+                            */
+                            // eslint-disable-next-line camelcase
+                            content_type: 'application/octet-stream',
+                            data: null as unknown as AttachmentData
+                        }
+                    }
+                })
+    }}
+}
+// region utility functions
 export const removeDeprecatedIndexes = async (
     connection: Connection<object>,
     models: Models,
@@ -121,12 +368,11 @@ export const getConnectorOptions = (
         which is than accepted by pouchdb's api.
     */
     const getOptions = (options: RequestInit = {}) => {
-        if (configuration.fetch)
-            options = extend(
-                true,
-                copy(configuration.fetch),
-                options
-            )
+        options = extend(
+            true,
+            copy(configuration.fetch),
+            options
+        )
 
         if (Array.isArray(abortSignalStack) && abortSignalStack.length > 0)
             options.signal = abortSignalStack.pop()
@@ -144,7 +390,8 @@ export const getConnectorOptions = (
     ])
 
     return {
-        fetch: ((
+        ...configuration,
+        fetch: (async (
             url: RequestInfo, options?: RequestInit
         ): Promise<Response> => {
             const {
@@ -340,201 +587,56 @@ export const ensureValidationDocumentPresence = async (
         } catch (error) {
             throw new Error(
                 `${description} couldn't be installed/updated: ` +
-                `"${represent(error)}".`
+                `"${represent(error)}".`,
+                {cause: error}
             )
         }
     }
 }
 /**
- * Generates function to apply "latest/upsert" and ignore "NoChange" error
- * plugin for couchdb "bulkDocs" operations.
- * @param nativeBulkDocs - Original bulkDocs function to wrap.
- * @param configuration - Couchdb configuration object.
- * @returns Whatever bulkDocs returns.
- */
-export const bulkDocsFactory = (
-    nativeBulkDocs: Connection['bulkDocs'], configuration: CoreConfiguration
-) => {
-    const idName: SpecialPropertyNames['id'] =
-        configuration.model.property.name.special.id
-    const revisionName: SpecialPropertyNames['revision'] =
-        configuration.model.property.name.special.revision
-
-    return async function(
-        this: Connection,
-        firstParameter: unknown,
-        ...parameters: Array<unknown>
-    ): Promise<Array<DatabaseError | DatabaseResponse>> {
-        const toggleLatestRevisionDetermining: boolean = (
-            parameters.length > 0 &&
-            parameters[parameters.length - 1] ===
-            TOGGLE_LATEST_REVISION_DETERMINING
-        )
-        const skipLatestRevisionDetermining: boolean =
-            toggleLatestRevisionDetermining ?
-                !configuration.skipLatestRevisionDetermining :
-                configuration.skipLatestRevisionDetermining
-        if (toggleLatestRevisionDetermining)
-            parameters.pop()
-
-        let data: Array<PartialFullDocument> = (
-            !Array.isArray(firstParameter) &&
-            isObject(firstParameter) &&
-            idName in firstParameter
-        ) ?
-            [firstParameter as PartialFullDocument] :
-            firstParameter as Array<PartialFullDocument>
-
-        const chunkSize =
-            configuration.maximumNumberOfEntitiesInBulkOperation
-        let results: Array<DatabaseError | DatabaseResponse> = []
-
-        for (let index = 0; index < data.length; index += chunkSize) {
-            const chunk = data.slice(index, index + chunkSize)
-
-            const result = await nativeBulkDocs.call(
-                this,
-                chunk as FirstParameter<Connection['bulkDocs']>,
-                ...parameters as [SecondParameter<Connection['bulkDocs']>]
-            )
-
-            results = results.concat(result)
-        }
-
-        const conflictingIndexes: Array<number> = []
-        const conflicts: Array<PartialFullDocument> = []
-        let index = 0
-        for (const item of results) {
-            if (typeof data[index] === 'object')
-                if (
-                    revisionName in data[index] &&
-                    (item as DatabaseError).name === 'conflict' &&
-                    ['0-latest', '0-upsert'].includes(
-                        data[index][revisionName] as string
-                    )
-                ) {
-                    conflicts.push(data[index])
-                    conflictingIndexes.push(index)
-                } else if (
-                    idName in data[index] &&
-                    configuration.ignoreNoChangeError &&
-                    'name' in item &&
-                    item.name === 'forbidden' &&
-                    'message' in item &&
-                    (item.message as string).startsWith('NoChange:')
-                ) {
-                    results[index] = {
-                        id: data[index][idName], ok: true
-                    }
-                    if (!skipLatestRevisionDetermining)
-                        results[index].rev =
-                            revisionName in data[index] &&
-                            !['0-latest', '0-upsert'].includes(
-                                data[index][revisionName] as string
-                            ) ?
-                                data[index][revisionName] :
-                                ((
-                                    await this.get(
-                                        results[index].id as string
-                                    )
-                                ) as unknown as FullDocument)[revisionName]
-                }
-
-            index += 1
-        }
-
-        if (conflicts.length) {
-            data = conflicts
-            if (toggleLatestRevisionDetermining)
-                parameters.push(TOGGLE_LATEST_REVISION_DETERMINING)
-
-            const retriedResults: Array<
-                DatabaseError | DatabaseResponse
-            > = await this.bulkDocs(
-                data as Array<PutDocument<Mapping<unknown>>>,
-                ...parameters as [SecondParameter<Connection['bulkDocs']>]
-            ) as
-                unknown as
-                Array<DatabaseError | DatabaseResponse>
-            for (const retriedResult of retriedResults)
-                results[conflictingIndexes.shift() as number] =
-                    retriedResult
-        }
-
-        return results
-    } as unknown as DatabasePlugin
-}
-/**
  * Initializes a database connection instance.
  * @param services - An object with stored service instances.
  * @param configuration - Mutable by plugins extended configuration object.
+ * @param createRemoteDatabaseIfNotExists - Indicates whether database should
+ * be created if it does not exist yet. This is only relevant for remote
+ * databases, because local ones get created automatically by pouchdb.
  * @returns Given and extended object of services.
  */
 export const initializeConnection = async (
-    services: Services, configuration: Configuration
+    services: Services,
+    configuration: Configuration,
+    createRemoteDatabaseIfNotExists = true
 ): Promise<Services> => {
     const {couchdb} = services
     const config = configuration.couchdb
 
-    const url: string =
-        format(config.url, `${config.admin.name}:${config.admin.password}@`) +
-        `/${config.databaseName}`
+    const url = getEffectiveURL(config)
 
-    if (
-        Object.prototype.hasOwnProperty.call(couchdb.server, 'runner') &&
-        (couchdb.server.runner as BinaryRunner).binaryFilePath
-    )
-        // @ts-expect-error "pouchdb-validation" does not have a typings yet.
-        couchdb.connection = new couchdb.connector(
-            url, getConnectorOptions(configuration.couchdb.connector)
-        )
-    else
+    /*
+        NOTE: We have to connect remotely for a memory based database to avoid
+        having multiple ones created per connector instance.
+    */
+    if (services.couchdb.server.expressPouchDBInstance) {
         // @ts-expect-error "pouchdb-validation" does not have a typings yet.
         couchdb.connection = new couchdb.connector(
             config.databaseName,
-            getConnectorOptions(configuration.couchdb.connector)
+            couchdb.server.runner.configuration as
+                InPlaceRunner['configuration']
         )
+        const {connection} = couchdb
 
-    couchdb.connection.installValidationMethods()
+        connection.installValidationMethods()
+        connection.installCouchDBWebNodePlugin('backend')
 
-    const {connection} = couchdb
-    connection.setMaxListeners(Infinity)
-    // region apply "bulkDocs" interceptor to put method
-    /*
-        NOTE: A "bulkDocs" plugin does not get called for every "put" call so
-        we have to wrap runtime generated method.
-    */
-    connection.bulkDocs = bulkDocsFactory(
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        connection.bulkDocs,
-        configuration.couchdb
-    )
-    connection.post = connection.put =
-        async function<Type extends Mapping<unknown>>(
-            this: Connection,
-            document: PutDocument<Type>,
-            options?: PouchDB.Core.PutOptions | null
-        ): Promise<DatabaseResponse> {
-            const result =
-                (await connection.bulkDocs.call(this, [document], options))[0]
-
-            if ((result as DatabaseError | undefined)?.name)
-                /*
-                    eslint-disable
-                    @typescript-eslint/only-throw-error,no-throw-literal
-                */
-                throw result as DatabaseError
-                /*
-                    eslint-enable
-                    @typescript-eslint/only-throw-error,no-throw-literal
-                */
-
-            return result as DatabaseResponse
-        }
-    // endregion
+        connection.setMaxListeners(Infinity)
+    } else
+        // @ts-expect-error "pouchdb-validation" does not have a typings yet.
+        couchdb.connection = new couchdb.connector(
+            url, getConnectorOptions(config.connector)
+        )
     // region ensure database presence
-    // NOTE: A local instance create databases (if not existing) automatically.
-    if (Object.prototype.hasOwnProperty.call(couchdb.server, 'runner'))
+    // NOTE: A request to database creates it (if not exists) automatically.
+    if (createRemoteDatabaseIfNotExists)
         try {
             await checkReachability(url)
         } catch {
@@ -548,6 +650,556 @@ export const initializeConnection = async (
     // endregion
     return services
 }
+/**
+ * Determines the effective database URL to connect to based on given
+ * configuration.
+ * @param configuration - Couchdb configuration object.
+ * @param withDatabase - Indicates whether the URL should contain the database
+ * name or not.
+ * @param withCredentials - Indicates whether the URL should contain the
+ * credentials or not.
+ * @returns The effective URL.
+ */
+export const getEffectiveURL = (
+    configuration: CoreConfiguration,
+    withDatabase = true,
+    withCredentials = false
+) => {
+    const urlTemplate = /^https?:\/\//.test(configuration.url) ?
+        configuration.url :
+        `http://{1}${configuration.runner.host}:` +
+        String(configuration.runner.port)
+
+    return (
+        format(
+            urlTemplate,
+            withCredentials ?
+                `${configuration.admin.name}:` +
+                `${configuration.admin.password}@` :
+                ''
+        ) +
+        (withDatabase ? `/${configuration.databaseName}` : '')
+    )
+}
+/**
+ * Initializes an express instance connected with pouchdb.
+ * @param name - Instance name.
+ * @param state - Application state.
+ * @param connector - Database connector instance.
+ * @param configuration - Couchdb configuration object.
+ * @param pluginAPI - Plugin API to call plugin hooks.
+ * @param expressUtilities - Optional express related utilities.
+ * @returns A promise resolving to the wrapping express instance and pouchdb's
+ * express instance.
+ */
+export const initializeExpress = async (
+    name: string,
+    state: State,
+    connector: Connector,
+    configuration: CoreConfiguration,
+    pluginAPI: State['pluginAPI'],
+    expressUtilities?: (typeof import('./loadExpress'))['default']
+): Promise<{
+    expressInstance: Express
+    expressPouchDBInstance: Express
+}> => {
+    log.info(`Couchdb runner is in-place with: "${name}".`)
+
+    const specialNames = configuration.model.property.name.special
+
+    // eslint-disable-next-line camelcase
+    const testConnector = new connector('', {skip_setup: true})
+    const isInMemory =
+        (testConnector as unknown as {adapter: string}).adapter === 'memory'
+    await testConnector.close()
+
+    const {
+        express,
+        expressPouchDB,
+        allDocs,
+        changes,
+        compact,
+        revsDiff,
+        security,
+        viewCleanup,
+        tempViews,
+        find,
+        views,
+        ddocInfo,
+        show,
+        list,
+        update,
+        attachments,
+        documents,
+        validation,
+        notFoundError
+    } = expressUtilities ??
+    (await eval(`import('./loadExpress')`)).default as
+        (typeof import('./loadExpress'))['default']
+
+    const expressInstance: Express = express()
+    /*
+        These routes take many remaining paths (fallback). We will add
+        these manually after custom routes have been added.
+    */
+
+    /*
+        We have to overwrite to apply read right authorization on
+        property level:
+
+        'routes/all-docs',
+        'routes/changes',
+        'routes/find',
+        'routes/attachments',
+        'routes/documents',
+    */
+    const routesToPostpone = [
+        [
+            ['routes/all-docs', allDocs],
+            ['routes/changes', changes],
+            ['routes/compact', compact],
+            ['routes/revs-diff', revsDiff],
+            ['routes/security', security],
+            ['routes/view-cleanup', viewCleanup],
+            ['routes/temp-views', tempViews]
+        ],
+        [
+            ['routes/find', find],
+            ['routes/views', views],
+            ['routes/ddoc-info', ddocInfo],
+            ['routes/show', show],
+            ['routes/list', list],
+            ['routes/update', update]
+        ],
+        [
+            ['routes/attachments', attachments]
+        ],
+        [
+            ['routes/documents', documents],
+            ['validation', validation],
+            ['routes/404', notFoundError]
+        ]
+    ]
+    const expressPouchDBInstance: Express =
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        expressPouchDB(
+            connector,
+            {
+                overrideMode: {
+                    exclude: ([] as typeof routesToPostpone[0])
+                        .concat(...routesToPostpone)
+                        .map(([name]) => name as string)
+                },
+                inMemoryConfig: isInMemory,
+                logPath: '/dev/null'
+            }
+        )
+
+    // routes/all-docs
+    expressPouchDBInstance.all(
+        '/:db/_all_docs',
+        jsonParser,
+        async (
+            givenRequest: IncomingHTTPMessage,
+            response: HTTP1ServerResponse,
+            next
+        ) => {
+            const request = givenRequest as (
+                IncomingHTTPMessage &
+                {
+                    body: PlainObject
+                    couchSession: {userCtx: Partial<UserContext>}
+                    couchSecurityObj: Partial<SecuritySettings>
+                    query: Mapping
+                }
+            )
+            const options = {...request.body, ...request.query}
+
+            if (!options.include_docs) {
+                next()
+                return
+            }
+
+            try {
+                const result = await (
+                    request as unknown as {db: PouchDB.Database}
+                ).db.allDocs(options)
+                // authorize documents
+                const modelRolesMapping =
+                    determineAllowedModelRolesMapping(configuration.model)
+
+                for (const row of result.rows)
+                    try {
+                        authorize(
+                            row.doc as unknown as Partial<Document>,
+                            null,
+                            request.couchSession.userCtx,
+                            request.couchSecurityObj,
+                            modelRolesMapping,
+                            true,
+                            specialNames
+                        )
+                    } catch (error) {
+                        sendError(response, error, 403)
+                        return
+                    }
+                // endregion
+                sendJSON(response, 200, result)
+            } catch (error) {
+                sendError(response, error, 400)
+            }
+        }
+    )
+    // routes/changes
+    const authorizedChanges = ((
+        givenRequest: IncomingHTTPMessage,
+        _response: HTTP1ServerResponse,
+        next
+    ) => {
+        const request = givenRequest as (
+            IncomingHTTPMessage &
+            {
+                body: PlainObject
+                couchSession: {userCtx: Partial<UserContext>}
+                couchSecurityObj: Partial<SecuritySettings>
+                db: Connection
+                query: Mapping
+            }
+        )
+        const options = {...request.body, ...request.query}
+
+        /*
+            NOTE: Needed workaround to allow changes implementation to set query
+            params on its own.
+        */
+        Object.defineProperty(request, 'query', {
+            value: {...request.query},
+            writable: true,
+            configurable: true,
+            enumerable: true
+        })
+
+        if (!options.include_docs) {
+            next()
+            return
+        }
+
+        const modelRolesMapping =
+            determineAllowedModelRolesMapping(configuration.model)
+
+        const authorizeChange = (document: ChangesResponseChange['doc']) =>
+            authorize(
+                document as Document,
+                null,
+                request.couchSession.userCtx,
+                request.couchSecurityObj,
+                modelRolesMapping,
+                true,
+                specialNames
+            )
+
+        const nativeChanges = request.db.changes.bind(request.db)
+        request.db.changes = ((...parameters) => {
+            const result = (
+                nativeChanges as
+                    (...parameter: Array<unknown>) =>
+                        EventEmitter | Promise<ChangesResponse> | undefined
+            )(...parameters)
+            if (result)
+                if ((result as Partial<EventEmitter>).on)
+                    (result as EventEmitter).on(
+                        'change',
+                        (change: ChangesResponseChange) => {
+                            if (change.doc)
+                                try {
+                                    authorizeChange(change.doc)
+                                } catch (error) {
+                                    try {
+                                        delete change.doc
+                                        ;(
+                                            change as
+                                                unknown as
+                                                {error: unknown}
+                                        ).error = error
+                                    } catch (e) {
+                                        console.error(e)
+                                    }
+                                }
+                        }
+                    )
+                else if ((result as Partial<Promise<ChangesResponse>>).then)
+                    void (result as Promise<ChangesResponse>).then(
+                        (results) => {
+                            for (const change of results.results)
+                                if (change.doc)
+                                    try {
+                                        authorizeChange(change.doc)
+                                    } catch (error) {
+                                        try {
+                                            delete change.doc
+                                            ;(
+                                                change as
+                                                    unknown as
+                                                    {error: unknown}
+                                            ).error = error
+                                        } catch (e) {
+                                            console.error(e)
+                                        }
+                                    }
+                        }
+                    )
+            return result
+        }) as Connection['changes']
+        next()
+        request.db.changes = nativeChanges
+    }) as SecondParameter<typeof expressPouchDBInstance.get>
+    expressPouchDBInstance.get('/:db/_changes', authorizedChanges)
+    expressPouchDBInstance.post('/:db/_changes', jsonParser, authorizedChanges)
+
+    for (const [_name, module] of routesToPostpone[0])
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        module(expressPouchDBInstance)
+    // routes/find
+    expressPouchDBInstance.post(
+        '/:db/_find',
+        jsonParser,
+        async (
+            givenRequest: IncomingHTTPMessage, response: HTTP1ServerResponse
+        ) => {
+            const request = givenRequest as (
+                IncomingHTTPMessage &
+                {
+                    body: FindRequest<PlainObject>
+                    couchSession: {userCtx: Partial<UserContext>}
+                    couchSecurityObj: Partial<SecuritySettings>
+                    db: Connection
+                }
+            )
+            /*
+                NOTE: We always have to determine type to be able to evaluate
+                type based authorization rules.
+            */
+            let addedType = false
+            if (
+                Array.isArray(request.body.fields) &&
+                !request.body.fields.includes(specialNames.type)
+            ) {
+                request.body.fields.push(specialNames.type)
+                addedType = true
+            }
+            try {
+                const hookData = {request, response}
+                let result = await pluginAPI.callStack<
+                    State<{
+                        request: typeof request
+                        response: HTTP1ServerResponse
+                    }>,
+                    FindResponse<object> | undefined
+                >({
+                    ...state,
+                    hook: 'onPouchDBFind',
+                    data: hookData
+                }) as FindResponse<object> | undefined
+
+                if (!result?.docs)
+                    result = await request.db.find(request.body)
+                // authorize documents
+                const modelRolesMapping =
+                    determineAllowedModelRolesMapping(configuration.model)
+
+                for (const document of result.docs)
+                    try {
+                        authorize(
+                            document,
+                            null,
+                            request.couchSession.userCtx,
+                            request.couchSecurityObj,
+                            modelRolesMapping,
+                            true,
+                            specialNames
+                        )
+                        if (addedType)
+                            delete (document as Mapping)[specialNames.type]
+                    } catch (error) {
+                        sendError(response, error, 403)
+                        return
+                    }
+                // endregion
+                sendJSON(response, 200, result)
+            } catch (error) {
+                sendError(response, error, 400)
+            }
+        }
+    )
+
+    for (const [_name, module] of routesToPostpone[1])
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        module(expressPouchDBInstance)
+
+    // routes/attachments
+    expressPouchDBInstance.get(
+        '/:db/:id/:attachment(*)',
+        async (
+            givenRequest: IncomingHTTPMessage,
+            response: HTTP1ServerResponse,
+            next
+        )=> {
+            const request = givenRequest as (
+                IncomingHTTPMessage &
+                {
+                    couchSession: {userCtx: Partial<UserContext>}
+                    couchSecurityObj: Partial<SecuritySettings>
+                    db: Connection
+                    params: Mapping
+                    query: Mapping
+                }
+            )
+
+            try {
+                const modelRolesMapping =
+                    determineAllowedModelRolesMapping(configuration.model)
+
+                const {docs: [document]} = await request.db.find({
+                    fields: [specialNames.type],
+                    selector: {[specialNames.id]: request.query.id}
+                })
+
+                try {
+                    authorize(
+                        {
+                            [specialNames.type]: document[specialNames.type],
+                            [specialNames.attachment]: {
+                                [request.params.attachment]: {}
+                            }
+                        } as unknown as Partial<Document>,
+                        null,
+                        request.couchSession.userCtx,
+                        request.couchSecurityObj,
+                        modelRolesMapping,
+                        true,
+                        specialNames
+                    )
+                } catch (error) {
+                    sendError(response, error, 403)
+                    return
+                }
+            } catch (error) {
+                sendError(response, error, 400)
+                return
+            }
+            next()
+        }
+    )
+    // We already cover put and delete attachment via "bulkDocs" operation.
+
+    for (const [_name, module] of routesToPostpone[2])
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        module(expressPouchDBInstance)
+
+    // routes/documents
+    expressPouchDBInstance.get(
+        '/:db/:id(*)',
+        async (
+            givenRequest: IncomingHTTPMessage, response: HTTP1ServerResponse
+        )=> {
+            const request = givenRequest as (
+                IncomingHTTPMessage &
+                {
+                    couchSession: { userCtx: Partial<UserContext> }
+                    couchSecurityObj: Partial<SecuritySettings>
+                    db: Connection
+                    params: Mapping
+                    query: Mapping
+                }
+            )
+
+            try {
+                const modelRolesMapping =
+                    determineAllowedModelRolesMapping(configuration.model)
+
+                const document =
+                    await request.db.get(request.params.id, request.query)
+
+                try {
+                    authorize(
+                        document as Document,
+                        null,
+                        request.couchSession.userCtx,
+                        request.couchSecurityObj,
+                        modelRolesMapping,
+                        true,
+                        specialNames
+                    )
+                } catch (error) {
+                    sendError(response, error, 403)
+                    return
+                }
+                sendJSON(response, 200, document)
+            } catch (error) {
+                sendError(response, error, 400)
+            }
+        }
+    )
+
+    // We already cover delete and copy via "get" and "bulkDocs" operation.
+
+    for (const [_name, module] of routesToPostpone[3])
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        module(expressPouchDBInstance)
+
+    if (!isInMemory) {
+        /*
+            NOTE: Currently needed to use synchronized folder creation to avoid
+            having the folder not yet persisted in following execution when
+            working on not mounted locations. Seems to be an issue within a
+            container environment.
+        */
+        makeDirectorPathSync(resolve(configuration.path))
+        await makeDirectorPath(resolve(configuration.path))
+    }
+
+    await pluginAPI.callStack<
+        State<{
+            expressInstance: Express,
+            expressPouchDBInstance: Express
+        }>
+    >({
+        ...state,
+        hook: 'initializeExpressPouchDB',
+        data: {expressInstance, expressPouchDBInstance}
+    })
+
+    expressInstance.use('/', expressPouchDBInstance)
+
+    return {expressInstance, expressPouchDBInstance}
+}
+/**
+ * Waits for given promise to be resolved or given timeout has been exceeded.
+ * @param promise - Promise to wait for.
+ * @param timeoutInSeconds - Timeout in seconds.
+ * @param description - Used to produce semantic logging messages.
+ * @returns A promise which will be resolved after given promise is resolved or
+ * given timeout has been exceeded.
+ */
+export const waitWithTimeout = (
+    promise: Promise<unknown>, timeoutInSeconds: number, description: string
+): Promise<void> => {
+    let timeoutExceeded = true
+    return Promise.race([
+        promise.then(() => {
+            timeoutExceeded = false
+        }),
+        timeout(timeoutInSeconds * 1000).then(() => {
+            if (timeoutExceeded)
+                log.warn(
+                    'Timeout of',
+                    `${String(timeoutInSeconds)}.`,
+                    `seconds reached while waiting for ${description}.`
+                )
+        })
+    ])
+}
+// endregion
 // region model
 /**
  * Determines a mapping of all models to roles who are allowed to edit
@@ -558,7 +1210,7 @@ export const initializeConnection = async (
 export const determineAllowedModelRolesMapping = (
     modelConfiguration: ModelConfiguration
 ): AllowedModelRolesMapping => {
-    const {allowedRole: allowedRoleName} =
+    const {allowedRole: allowedRoleName, attachment: attachmentsPropertyName} =
         modelConfiguration.property.name.special
     const allowedModelRolesMapping: AllowedModelRolesMapping = {}
     const models: Models = extendModels(modelConfiguration)
@@ -572,11 +1224,23 @@ export const determineAllowedModelRolesMapping = (
             }
 
             for (const [name, property] of Object.entries(model))
-                if (isObject(property) && property.allowedRoles)
-                    allowedModelRolesMapping[modelName].properties[name] =
-                        normalizeAllowedRoles(
-                            property.allowedRoles as AllowedRoles
-                        )
+                if (isObject(property))
+                    if (name === attachmentsPropertyName) {
+                        allowedModelRolesMapping[modelName].attachments = {}
+                        for (const [
+                            fileDescription, fileSpecification
+                        ] of Object.entries(property))
+                            allowedModelRolesMapping[modelName].attachments[
+                                fileDescription
+                            ] = normalizeAllowedRoles(
+                                (fileSpecification as PropertySpecification)
+                                    .allowedRoles as AllowedRoles
+                            )
+                    } else if (property.allowedRoles)
+                        allowedModelRolesMapping[modelName].properties[name] =
+                            normalizeAllowedRoles(
+                                property.allowedRoles as AllowedRoles
+                            )
         } else
             allowedModelRolesMapping[modelName] = {
                 properties: {},

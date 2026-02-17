@@ -24,6 +24,7 @@ import {
     ValueOf
 } from 'clientnode'
 
+import packageConfiguration from './package.json'
 import {
     AllowedModelRolesMapping,
     Attachment,
@@ -50,7 +51,7 @@ import {
     FullAttachment,
     Model,
     Models,
-    NormalizedAllowedModelRoles,
+    NormalizedAllowedModelRoles, NormalizedAllowedRoles,
     PartialFullDocument,
     PropertyScope,
     PropertySpecification,
@@ -77,13 +78,9 @@ export const log = new Logger({name: 'web-node.couchdb.database'})
  * @param userContext - Contains meta information about currently acting user.
  * @param securitySettings - Database security settings.
  * @param allowedModelRolesMapping - Allowed roles for given models.
- * @param idPropertyName - Property name indicating the id field name.
- * @param typePropertyName - Property name indicating to which model a document
- * belongs to.
- * @param designDocumentNamePrefix - Document name prefix indicating a design
- * document.
  * @param read - Indicates whether a read or write of given document should be
  * authorized or not.
+ * @param specialNames - Special names configuration.
  * @param contextPath - Path of properties leading to current document.
  * @returns Throws an exception if authorisation is not accepted and "true"
  * otherwise.
@@ -96,13 +93,21 @@ export const authorize = (
         admins: {names: [], roles: []}, members: {names: [], roles: []}
     },
     allowedModelRolesMapping?: AllowedModelRolesMapping,
-    idPropertyName = '_id',
-    typePropertyName = '-type',
-    designDocumentNamePrefix = '_design/',
     read = false,
+    specialNames =
+        packageConfiguration.webNode.couchdb.model.property.name.special as
+            SpecialPropertyNames,
     contextPath: Array<string> = []
 ): true => {
-    const type: string | undefined =
+    const {
+        id: idPropertyName,
+        type: typePropertyName,
+        attachment: attachmentsPropertyName,
+        designDocumentNamePrefix,
+        deleted: deletedPropertyName
+    } = specialNames
+
+    const modelType: string | undefined =
         newDocument[typePropertyName] as string | undefined ??
         (oldDocument && oldDocument[typePropertyName]) as string
     /*
@@ -111,29 +116,25 @@ export const authorize = (
         If no special document given but missing type property further
         validation will complain.
     */
-    if (!type)
+    if (!modelType)
         return true
 
     const operationType = read ? 'read': 'write'
 
     // Define roles who are allowed to read and write everything.
-    const allowedRoles: NormalizedAllowedModelRoles = {
+    const allowedBaseRoles: NormalizedAllowedModelRoles = {
         properties: {},
-
         read: ['_admin', 'readonlyadmin'],
         write: ['_admin']
     }
-
     // A "readonlymember" is allowed to read all but design documents.
-    if (
-        Object.prototype.hasOwnProperty.call(
-            newDocument, idPropertyName
-        ) &&
+    if (!(
+        Object.prototype.hasOwnProperty.call(newDocument, idPropertyName) &&
         (newDocument[idPropertyName] as string).startsWith(
             designDocumentNamePrefix
         )
-    )
-        allowedRoles.read.push('readonlymember')
+    ))
+        allowedBaseRoles.read.push('readonlymember')
 
     if (!('name' in userContext))
         userContext.name = '"unknown"'
@@ -141,41 +142,92 @@ export const authorize = (
     let userRolesDescription: string
     let relevantRoles: Array<string> = []
     let relatedContextPathDescription =
-        `You are trying to ${operationType} object of type ${type}.`
+        `You are trying to ${operationType} object of type "${modelType}".`
 
     if (userContext.roles?.length) {
+        let allowedModelRoles: NormalizedAllowedModelRoles =
+            {...allowedBaseRoles}
+
         const userRoles = userContext.roles
         // region determine model specific allowed roles
         if (
             allowedModelRolesMapping &&
-            type &&
+            modelType &&
             Object.prototype.hasOwnProperty.call(
-                allowedModelRolesMapping, type
+                allowedModelRolesMapping, modelType
             )
         ) {
-            const allowedModelRoles: Partial<NormalizedAllowedModelRoles> =
-                allowedModelRolesMapping[type]
+            const extendWithBasicRoles = <T extends NormalizedAllowedRoles>(
+                roles: T
+            ): T => {
+                for (const operation of ['read', 'write'] as const)
+                    roles[operation] =
+                        roles[operation].concat(allowedBaseRoles[operation])
 
-            for (const operation of ['read', 'write'] as const)
-                allowedRoles[operation] = allowedRoles[operation].concat(
-                    allowedModelRoles[operation] || []
-                )
+                return roles
+            }
 
-            allowedRoles.properties =
-                (allowedModelRoles as NormalizedAllowedModelRoles).properties
+            allowedModelRoles =
+                extendWithBasicRoles(allowedModelRolesMapping[modelType])
+
+            if (allowedModelRoles.attachments)
+                for (const roles of Object.values(
+                    allowedModelRoles.attachments
+                ))
+                    extendWithBasicRoles(roles)
+            for (const roles of Object.values(allowedModelRoles.properties))
+                extendWithBasicRoles(roles)
         }
         // endregion
-        const baseRelevantRoles: Array<string> = allowedRoles[operationType]
+        const baseRelevantRoles: Array<string> =
+            allowedModelRoles[operationType]
 
+        const checkProperty = (
+            name: string,
+            allowedPropertyRoles: Mapping<NormalizedAllowedRoles> = {}
+        ) => {
+            relevantRoles = Object.prototype.hasOwnProperty.call(
+                allowedPropertyRoles, name
+            ) ?
+                allowedPropertyRoles[name][operationType] :
+                baseRelevantRoles
+
+            for (const userRole of userRoles)
+                if (relevantRoles.includes(userRole))
+                    return true
+
+            return false
+        }
+
+        const documentToAnalyze = newDocument[deletedPropertyName] ?
+            oldDocument ?? {} :
+            newDocument
         let authorized = true
-        for (const [name, value] of Object.entries(newDocument)) {
+        for (const [name, value] of Object.entries(documentToAnalyze)) {
             const localContextPath = contextPath.concat(name)
             relatedContextPathDescription =
                 `You are trying to ${operationType} property ` +
-                `"${localContextPath.join('.')}".`
+                `"${localContextPath.join('.')}" of object having type ` +
+                `"${modelType}".`
             authorized = false
 
-            if (
+            if (name === attachmentsPropertyName) {
+                authorized = true
+                for (const fileDescription of Object.keys(value as object)) {
+                    const contextPath =
+                        localContextPath.concat(fileDescription)
+                    relatedContextPathDescription =
+                        `You are trying to ${operationType} file on ` +
+                        `property "${contextPath.join('.')}" of object ` +
+                        `having type "${modelType}".`
+
+                    authorized = checkProperty(
+                        fileDescription, allowedModelRoles.attachments
+                    )
+                    if (!authorized)
+                        break
+                }
+            } else if (
                 value !== null &&
                 typeof value === 'object' &&
                 Object.prototype.hasOwnProperty.call(value, typePropertyName)
@@ -190,26 +242,13 @@ export const authorize = (
                     userContext,
                     securitySettings,
                     allowedModelRolesMapping,
-                    idPropertyName,
-                    typePropertyName,
-                    designDocumentNamePrefix,
                     read,
+                    specialNames,
                     localContextPath
                 )
                 authorized = true
-            } else {
-                relevantRoles = Object.prototype.hasOwnProperty.call(
-                    allowedRoles.properties, name
-                ) ?
-                    allowedRoles.properties[name][operationType] :
-                    baseRelevantRoles
-
-                for (const userRole of userRoles)
-                    if (relevantRoles.includes(userRole)) {
-                        authorized = true
-                        break
-                    }
-            }
+            } else if (checkProperty(name, allowedModelRoles.properties))
+                authorized = true
 
             if (!authorized)
                 break
@@ -224,19 +263,25 @@ export const authorize = (
         //
     } else
         userRolesDescription =
-            `Current user "${userContext.name ?? 'unknown'}" doesn't own any` +
-            'role'
+            `Current user "${userContext.name ?? 'unknown'}" doesn't own ` +
+            'any role'
+
+    const message =
+        relatedContextPathDescription +
+        ' Only users with a least one of these roles are allowed to ' +
+        `perform requested ${operationType} action: "` +
+        ([] as Array<string>)
+            .concat(relevantRoles)
+            .join('", "') +
+        `". ${userRolesDescription}.`
 
     /* eslint-disable @typescript-eslint/only-throw-error,no-throw-literal */
     throw {
-        unauthorized:
-            relatedContextPathDescription +
-            ' Only users with a least one of these roles are allowed to ' +
-            `perform requested ${operationType} action: "` +
-            ([] as Array<string>)
-                .concat(relevantRoles)
-                .join('", "') +
-            `". ${userRolesDescription}.`
+        unauthorized: message,
+
+        error: 'unauthorized',
+        message,
+        name: 'unauthorized'
     }
     /* eslint-enable @typescript-eslint/only-throw-error,no-throw-literal */
 }
@@ -313,6 +358,7 @@ export const validateDocumentUpdate = <
         */
         throw {
             [type]: message,
+            error: type,
             message,
             name: type,
             ...additionalErrorData
@@ -436,8 +482,7 @@ export const validateDocumentUpdate = <
         typeof JSON !== 'undefined' &&
         Object.prototype.hasOwnProperty.call(JSON, 'parse')
     )
-        parseJSON =
-            (object: string): unknown => JSON.parse(object)
+        parseJSON = (object: string): unknown => JSON.parse(object)
     else
         throwError('Needed json parser is not available.')
     // endregion
@@ -2952,7 +2997,7 @@ export const validateDocumentUpdate = <
         )
     )
         throwError(
-            'NoChange: No new data given. new document: ' +
+            'NoChange: No new data given. New document: ' +
             `${serialize(newDocument)}; old document: ` +
             `${serialize(oldDocument)}.`
         )

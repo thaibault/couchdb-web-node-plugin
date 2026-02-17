@@ -21,7 +21,6 @@ import {
     copy,
     evaluate,
     File,
-    format,
     globalContext,
     isDirectory,
     isFile,
@@ -39,24 +38,25 @@ import {
 } from 'clientnode'
 import {promises as fileSystem} from 'fs'
 import {basename, extname, resolve} from 'path'
-import PouchDB from 'pouchdb-node'
-import PouchDBAuthenticationPlugin from 'pouchdb-authentication'
+import PouchDBMemoryPlugin from 'pouchdb-adapter-memory'
 import PouchDBFindPlugin from 'pouchdb-find'
+import PouchDB from 'pouchdb-node'
 import PouchDBValidationPlugin from 'pouchdb-validation'
 import {PluginHandler, PluginPromises} from 'web-node/type'
 
 import databaseHelper, {validateDocumentUpdate} from './databaseHelper'
 import {
-    bulkDocsFactory,
     determineAllowedModelRolesMapping,
     determineGenericIndexablePropertyNames,
     ensureValidationDocumentPresence,
     extendModels,
     getConnectorOptions,
+    getEffectiveURL, getPouchDBPlugin,
     initializeConnection,
     log,
     mayStripRepresentation,
-    removeDeprecatedIndexes
+    removeDeprecatedIndexes,
+    waitWithTimeout
 } from './helper'
 import {restart, start, stop} from './server'
 import {
@@ -76,7 +76,7 @@ import {
     Services,
     ServicesState,
     State,
-    MaterializedViewDocument
+    MaterializedViewDocument, LocalDatabaseConfiguration
 } from './type'
 // endregion
 /**
@@ -98,33 +98,10 @@ export const preLoadService = async ({
         services.couchdb = {} as Services['couchdb']
     const {couchdb} = services
 
-    if (!Object.prototype.hasOwnProperty.call(couchdb, 'connector')) {
-        couchdb.connector = PouchDB
-            .plugin({
-                bulkDocs: bulkDocsFactory(
-                    PouchDB.prototype.bulkDocs as Connection['bulkDocs'],
-                    configuration
-                )
-            })
-            .plugin(PouchDBAuthenticationPlugin)
-            .plugin(PouchDBFindPlugin)
-            .plugin(PouchDBValidationPlugin)
-            .defaults({
-                prefix: resolve(configuration.backend.configuration[
-                    'couchdb/database_dir'
-                ] as string) +
-                '/',
-                ...getConnectorOptions(configuration.connector)
-            }) as typeof PouchDB
-
-        if (configuration.debug)
-            couchdb.connector.debug.enable('*')
-    }
-
     if (!Object.prototype.hasOwnProperty.call(couchdb, 'server')) {
         couchdb.server = {} as Services['couchdb']['server']
 
-        // region search for binary file to start database server
+        // region search for an available database server variant
         const triedPaths: Array<string> = []
         let runnerFound = false
         for (const runner of (
@@ -157,8 +134,7 @@ export const preLoadService = async ({
                 for (const name of (
                     ([] as Array<string>).concat(binaryRunner.names)
                 )) {
-                    const binaryFilePath: string =
-                        resolve(directoryPath, name)
+                    const binaryFilePath: string = resolve(directoryPath, name)
                     triedPaths.push(binaryFilePath)
 
                     if (await isFile(binaryFilePath)) {
@@ -187,6 +163,46 @@ export const preLoadService = async ({
         // endregion
     }
 
+    if (!Object.prototype.hasOwnProperty.call(couchdb, 'connector')) {
+        const backendConnectorConfiguration: LocalDatabaseConfiguration = (
+            (couchdb.server.runner.configuration as
+                Partial<BinaryRunner['configuration']>
+            ).values &&
+            (couchdb.server.runner.configuration as
+                BinaryRunner['configuration']
+            ).values['couchdb/database_dir']
+        ) ?
+            /*
+                NOTE: Only if we have a binary based database server, we need
+                to configure the path prefix remotely.
+            */
+            {
+                prefix:
+                    resolve(String(
+                        (couchdb.server.runner.configuration as
+                                BinaryRunner['configuration']
+                        ).values['couchdb/database_dir'] as
+                            number | string
+                    )) +
+                    '/'
+            } :
+            couchdb.server.runner.configuration as
+                InPlaceRunner['configuration']
+        couchdb.backendConnector = PouchDB
+            .plugin(PouchDBMemoryPlugin)
+            .plugin(PouchDBFindPlugin)
+            .plugin(PouchDBValidationPlugin)
+            .plugin(getPouchDBPlugin(configuration))
+            .defaults(backendConnectorConfiguration) as typeof PouchDB
+        // Plugins are already applied via backend connector via prototype.
+        couchdb.connector = PouchDB
+            .defaults(getConnectorOptions(configuration.connector)) as
+                typeof PouchDB
+
+        if (configuration.debug)
+            couchdb.connector.debug.enable('*')
+    }
+
     const modelConfiguration = copy(configuration.model)
     delete (modelConfiguration.property as
         {defaultSpecification?: PropertySpecification}
@@ -194,6 +210,7 @@ export const preLoadService = async ({
     delete (modelConfiguration as {entities?: Models}).entities
     const models = extendModels(configuration.model)
 
+    // Export validate document function to be used by other plugins.
     couchdb.validateDocument = (
         document: FullDocument,
         options: {
@@ -259,11 +276,13 @@ export const preLoadService = async ({
  * @param state - Application state.
  * @param state.configuration - Applications configuration.
  * @param state.services - Applications services.
+ * @param expressUtilities - Optional express related utilities.
  * @returns A mapping to promises which correspond to the plugin specific
  * continues services.
  */
 export const loadService = async (
-    state: State
+    state: State,
+    expressUtilities?: (typeof import('./loadExpress'))['default']
 ): Promise<PluginPromises> => {
     if (!globalContext.fetch)
         throw new Error('Missing fetch implementation.')
@@ -271,8 +290,7 @@ export const loadService = async (
     const {configuration, services} = state
 
     const specialNames = configuration.couchdb.model.property.name.special
-    const {id: idName, revision: revisionName, type: typeName} =
-        specialNames
+    const {id: idName, revision: revisionName, type: typeName} = specialNames
 
     let promise: null | Promise<ProcessCloseReason | undefined> = null
     const {couchdb} = services
@@ -319,7 +337,7 @@ export const loadService = async (
     // endregion
 
     if (Object.prototype.hasOwnProperty.call(couchdb.server, 'runner')) {
-        await start(state)
+        await start(state, expressUtilities)
 
         couchdb.server.restart = restart
         couchdb.server.start = start
@@ -338,7 +356,7 @@ export const loadService = async (
     if (Object.prototype.hasOwnProperty.call(couchdb, 'connection'))
         return {couchdb: promise}
 
-    const urlPrefix = format(configuration.couchdb.url, '')
+    const urlPrefix = getEffectiveURL(configuration.couchdb, false)
     const authorizationHeader = {
         Authorization:
             'Basic ' +
@@ -352,6 +370,7 @@ export const loadService = async (
         Accept: 'application/json',
         'Content-Type': 'application/json'
     }
+
     // region ensure presence of global admin user
     if (configuration.couchdb.ensureAdminPresence) {
         const unauthenticatedUserDatabaseConnection =
@@ -360,16 +379,16 @@ export const loadService = async (
                 getConnectorOptions(configuration.couchdb.connector)
             ) as Connection
 
-        try {
-            // NOTE: We check if we are in admin party mode.
-            await unauthenticatedUserDatabaseConnection.allDocs()
-
+        const createAdminUser = () => {
             log.info(
                 'No admin user available. Automatically creating admin user',
                 `"${configuration.couchdb.admin.name}".`
             )
 
-            await globalContext.fetch(
+            if (!globalContext.fetch)
+                throw new Error('Missing fetch implementation.')
+
+            return globalContext.fetch(
                 `${urlPrefix}/` +
                 `${couchdb.server.runner.adminUserConfigurationPath}/` +
                 configuration.couchdb.admin.name,
@@ -378,40 +397,60 @@ export const loadService = async (
                     method: 'PUT'
                 }
             )
-        } catch (error) {
-            if ((error as DatabaseError).name === 'unauthorized') {
-                const authenticatedUserDatabaseConnection =
-                    new couchdb.connector(
-                        `${urlPrefix}/_users`,
-                        {
-                            ...getConnectorOptions(
-                                configuration.couchdb.connector
-                            ),
-                            auth: {
-                                username: configuration.couchdb.admin.name,
-                                password: configuration.couchdb.admin.password
-                            }
-                        }
-                    ) as Connection
+        }
 
-                try {
-                    await authenticatedUserDatabaseConnection.allDocs()
-                } catch (error) {
+        try {
+            // NOTE: We check if we are in admin party mode.
+            await unauthenticatedUserDatabaseConnection.allDocs()
+            await createAdminUser()
+        } catch (error) {
+            /*
+                If we get an "unauthorized" error, an admin user is already
+                present.
+            */
+            if ((error as DatabaseError).name !== 'unauthorized')
+                if ((error as DatabaseError).name === 'not_found')
+                    await createAdminUser()
+                else
                     log.error(
-                        `Can't login as existing admin user`,
-                        `"${configuration.couchdb.admin.name}": ` +
+                        `Can't check for admin user or create a new one:`,
+                        `"${configuration.couchdb.admin.name}":`,
                         represent(error)
                     )
-                } finally {
-                    void authenticatedUserDatabaseConnection.close()
-                }
-            } else
-                log.error(
-                    `Can't create new admin user`,
-                    `"${configuration.couchdb.admin.name}": ${represent(error)}`
-                )
         } finally {
-            void unauthenticatedUserDatabaseConnection.close()
+            await waitWithTimeout(
+                unauthenticatedUserDatabaseConnection.close(),
+                configuration.couchdb.closeTimeoutInSeconds,
+                'unauthenticated user database client connection to close'
+            )
+        }
+
+        // NOTE: Check if newly created admin user is able to log in.
+        const authenticatedUserDatabaseConnection = new couchdb.connector(
+            `${urlPrefix}/_users`,
+            {
+                ...getConnectorOptions(configuration.couchdb.connector),
+                auth: {
+                    username: configuration.couchdb.admin.name,
+                    password: configuration.couchdb.admin.password
+                }
+            }
+        ) as Connection
+
+        try {
+            await authenticatedUserDatabaseConnection.allDocs()
+        } catch (error) {
+            log.error(
+                `Can't login as admin user`,
+                `"${configuration.couchdb.admin.name}":`,
+                represent(error)
+            )
+        } finally {
+            await waitWithTimeout(
+                authenticatedUserDatabaseConnection.close(),
+                configuration.couchdb.closeTimeoutInSeconds,
+                'authenticated user database client connection to close'
+            )
         }
     }
     // endregion
@@ -428,13 +467,13 @@ export const loadService = async (
             }
         ) as Connection
 
-        for (const [name, userConfiguration] of Object.entries(
+        for (const [_databaseName, {name, password, roles}] of Object.entries(
             configuration.couchdb.users
         ))
             try {
                 await userDatabaseConnection.get(`org.couchdb.user:${name}`)
             } catch (error) {
-                if ((error as { error: string }).error === 'not_found') {
+                if ((error as { name: string }).name === 'not_found') {
                     log.info(`Create missing database user "${name}".`)
 
                     try {
@@ -444,121 +483,133 @@ export const loadService = async (
                                 .special.id
                             ]: `org.couchdb.user:${name}`,
                             name,
-                            password: userConfiguration.password,
-                            roles: userConfiguration.roles,
+                            password,
+                            roles,
                             type: 'user'
                         })
                     } catch (error) {
                         throw new Error(
-                            `Couldn't create missing user "${name}":` +
-                            ` ${represent(error)}`
+                            `Couldn't create missing user "${name}": ` +
+                            represent(error),
+                            {cause: error}
                         )
                     }
                 } else
                     throw new Error(
-                        `Couldn't check for presence of user ` +
-                        `"${name}": ${represent(error)}`
+                        `Couldn't check for presence of user "${name}": ` +
+                        represent(error),
+                        {cause: error}
                     )
             } finally {
-                void userDatabaseConnection.close()
+                await waitWithTimeout(
+                    userDatabaseConnection.close(),
+                    configuration.couchdb.closeTimeoutInSeconds,
+                    'user database client connection to close'
+                )
             }
     }
     // endregion
+
     // region apply database/rest api configuration
-    if (configuration.couchdb.model.updateConfiguration)
-        for (const prefix of configuration.couchdb.backend.prefixes)
-            for (
-                const subPath in configuration.couchdb.backend.configuration
-            )
-                if (Object.prototype.hasOwnProperty.call(
-                    configuration.couchdb.backend.configuration, subPath
-                )) {
-                    const fullPath =
-                        `/${prefix}${prefix.trim() ? '/' : ''}${subPath}`
-                    const url = `${urlPrefix}${fullPath}`
+    if (
+        configuration.couchdb.model.updateConfiguration &&
+        !(Object.prototype.hasOwnProperty.call(
+            couchdb.server.runner, 'packages'
+        ))
+    ) {
+        const runner = couchdb.server.runner as BinaryRunner
+        for (const prefix of runner.configuration.prefixes)
+            for (const [subPath, value] of Object.entries(
+                runner.configuration.values
+            )) {
+                const fullPath =
+                    `/${prefix}${prefix.trim() ? '/' : ''}${subPath}`
+                const url = `${urlPrefix}${fullPath}`
 
-                    const value: unknown =
-                        configuration.couchdb.backend.configuration[subPath]
-
-                    let response: Response | undefined
-                    try {
-                        response = await globalContext.fetch(
-                            url, {headers: authorizationHeader}
-                        )
-                    } catch (error) {
-                        log.warn(
-                            `Configuration "${fullPath}" (with desired`,
-                            `value [${represent(value)}]) couldn't be`,
-                            `determined: ${represent(error)}`
-                        )
-                    }
-
-                    if (response)
-                        if (response.ok) {
-                            let changeNeeded = true
-                            if (typeof response.text === 'function')
-                                try {
-                                    changeNeeded = (
-                                        value === await response[
-                                            typeof value === 'string' ?
-                                                'text' :
-                                                'json'
-                                        ]()
-                                    )
-                                } catch (error) {
-                                    log.warn(
-                                        'Error checking curent value of',
-                                        `"${fullPath}" to be`,
-                                        `[${represent(value)}]:`,
-                                        represent(error)
-                                    )
-                                }
-
-                            if (changeNeeded)
-                                try {
-                                    await globalContext.fetch(
-                                        url,
-                                        {
-                                            body:
-                                                '"' +
-                                                (configuration.couchdb
-                                                    .backend.configuration[
-                                                        subPath
-                                                    ] as string
-                                                ) +
-                                                '"',
-                                            method: 'PUT'
-                                        }
-                                    )
-                                } catch (error) {
-                                    log.error(
-                                        `Configuration "${fullPath}"`,
-                                        `couldn't be applied to`,
-                                        `[${represent(value)}]:`,
-                                        represent(error)
-                                    )
-                                }
-                            else
-                                log.info(
-                                    `Configuration "${fullPath}" is`,
-                                    'already set to desired value',
-                                    `[${represent(value)}].`
-                                )
-                        } else
-                            log.info(
-                                `Configuration "${fullPath}" does not`,
-                                `exist (desired value`,
-                                `[${represent(value)}]). Response code is`,
-                                `${String(response.status)}.`
-                            )
+                let response: Response | undefined
+                try {
+                    response = await globalContext.fetch(
+                        url, {headers: authorizationHeader}
+                    )
+                } catch (error) {
+                    log.warn(
+                        `Configuration "${fullPath}" (with desired value`,
+                        `[${represent(value)}]) couldn't be determined:`,
+                        represent(error)
+                    )
                 }
+
+                if (response)
+                    if (response.ok) {
+                        let changeNeeded = true
+                        if (typeof response.text === 'function')
+                            try {
+                                changeNeeded = (
+                                    value === await response[
+                                        typeof value === 'string' ?
+                                            'text' :
+                                            'json'
+                                    ]()
+                                )
+                            } catch (error) {
+                                log.warn(
+                                    'Error checking current value of',
+                                    `"${fullPath}" to be`,
+                                    `[${represent(value)}]:`,
+                                    represent(error)
+                                )
+                            }
+
+                        if (changeNeeded)
+                            try {
+                                await globalContext.fetch(
+                                    url,
+                                    {
+                                        body: `"${value as string}"`,
+                                        headers: authorizationHeader,
+                                        method: 'PUT'
+                                    }
+                                )
+                            } catch (error) {
+                                log.error(
+                                    `Configuration "${fullPath}" couldn't be`,
+                                    `applied to [${represent(value)}]:`,
+                                    represent(error)
+                                )
+                            }
+                        else
+                            log.info(
+                                `Configuration "${fullPath}" is already set`,
+                                `to desired value [${represent(value)}].`
+                            )
+                    } else
+                        log.info(
+                            `Configuration "${fullPath}" does not exist`,
+                            `(desired value [${represent(value)}]). Response`,
+                            `code is ${String(response.status)}.`
+                        )
+            }
+    }
     // endregion
     await initializeConnection(services, configuration)
 
-    // TODO be able to configure pouchdb without rest api when running locally.
-
     // region ensure presence of database security settings
     if (configuration.couchdb.ensureSecuritySettingsPresence) {
+        const {headers: givenAuthorizationHeaders} = await globalContext.fetch(
+            `${urlPrefix}/_session`,
+            {
+                body: JSON.stringify({
+                    name: configuration.couchdb.admin.name,
+                    password: configuration.couchdb.admin.password
+                }),
+                headers: {...headers},
+                method: 'POST'
+            }
+        )
+        const authorizationHeader = {
+            Cookie: givenAuthorizationHeaders.get('set-cookie') as string
+        }
+
         const securityConfigurations = configuration.couchdb.security
         for (const [databaseName, securityObject] of Object.entries(
             securityConfigurations
@@ -635,6 +686,7 @@ export const loadService = async (
         }
     }
     // endregion
+
     const modelConfiguration = copy(configuration.couchdb.model)
 
     delete (modelConfiguration.property as
@@ -644,7 +696,7 @@ export const loadService = async (
 
     const models = extendModels(configuration.couchdb.model)
     if (configuration.couchdb.model.updateValidation) {
-        // NOTE: We import pre-transpiled javascript code here.
+        // NOTE: We import pre-transpiled JavaScript code here.
         const databaseHelperCode: string = await fileSystem.readFile(
             eval(`require.resolve('./databaseHelper')`) as string,
             {encoding: configuration.core.encoding, flag: 'r'}
@@ -667,9 +719,10 @@ export const loadService = async (
                     JSON.stringify(determineAllowedModelRolesMapping(
                         configuration.couchdb.model
                     )) +
-                    `, '${idName}', '${typeName}', '` +
-                    specialNames.designDocumentNamePrefix +
-                    `'`
+                    ', false, ' +
+                    JSON.stringify(
+                        configuration.couchdb.model.property.name.special
+                    )
             }
         ] as const) {
             /*
@@ -689,7 +742,8 @@ export const loadService = async (
             } catch (error) {
                 throw new Error(
                     `Generated ${type.name} code "${code}" doesn't compile:` +
-                    ` ${represent(error)}`
+                    ` ${represent(error)}`,
+                    {cause: error}
                 )
             }
 
@@ -736,7 +790,8 @@ export const loadService = async (
                                     `Specified constraint description "` +
                                     `${constraint.description}" for model ` +
                                     `"${modelName}" doesn't compile: ` +
-                                    represent(error)
+                                    represent(error),
+                                    {cause: error}
                                 )
                             }
                             /*
@@ -771,7 +826,8 @@ export const loadService = async (
                                         `" for model "${modelName}" in ` +
                                         `property "${name}" as "${type}"` +
                                         ' doesn\'t compile: ' +
-                                        represent(error)
+                                        represent(error),
+                                        {cause: error}
                                     )
                                 }
                             /*
@@ -781,6 +837,7 @@ export const loadService = async (
                         }
         // endregion
     }
+
     // region run auto-migration
     if (configuration.couchdb.model.autoMigrationPath) {
         const migrators: Mapping<Migrator> = {}
@@ -813,7 +870,8 @@ export const loadService = async (
                         throw new Error(
                             `Parsing document "${file.path}" to include ` +
                             'by automigration of has failed: ' +
-                            represent(error)
+                            represent(error),
+                            {cause: error}
                         )
                     }
 
@@ -841,7 +899,8 @@ export const loadService = async (
                                 `Migrating document ` +
                                 `"${document[idName]}" of type ` +
                                 `"${document[typeName] as string}" has ` +
-                                `failed: ${represent(error)}`
+                                `failed: ${represent(error)}`,
+                                {cause: error}
                             )
                         }
 
@@ -888,7 +947,7 @@ export const loadService = async (
                 ] = 'migrate'
 
                 for (const name of Object.keys(migrators).sort()) {
-                    let result: Document | null = null
+                    let result: Document | null
                     try {
                         result = migrators[name](
                             newDocument as Document,
@@ -921,7 +980,8 @@ export const loadService = async (
                                 configuration.couchdb
                                     .maximumRepresentationLength
                             ) +
-                            `" failed: ${represent(error)}`
+                            `" failed: ${represent(error)}`,
+                            {cause: error}
                         )
                     }
 
@@ -943,12 +1003,13 @@ export const loadService = async (
                       specified.
                     - Trim existing strings if newly specified.
                     - Remove property values if there values equals to an empty
-                      instance and the "emptyEqualsNull" property is specified
-                      as positive.
-                    - Rename custom type properties if new specified model
-                      provided is a super set of existing properties.
-                    - TODO: Renames property names if "oldPropertyName" is
-                      provided in model specification.
+                      instance and the "emptyEqualsNull" property is set.
+                    - Migrate types if old type "_oldType" is mentioned and
+                      given data matches newly specified schema (you can also
+                      provide a list of old types).
+                    - Renames property names if "oldName" is provided in
+                      property specification (you can also provide a list of
+                      old names).
                 */
                 const result = couchdb.validateDocument(
                     newDocument,
@@ -978,7 +1039,8 @@ export const loadService = async (
                     throw new Error(
                         `Replacing auto migrated document ` +
                         `"${newDocument[idName]}" has failed: ` +
-                        represent(error)
+                        represent(error),
+                        {cause: error}
                     )
                 }
 
@@ -1057,6 +1119,7 @@ export const loadService = async (
             )
         }
     // endregion
+
     return {couchdb: promise}
 }
 /**
@@ -1077,7 +1140,7 @@ export const postLoadService = (state: State): Promise<void> => {
     */
     let numberOfErrorsThrough = 0
     /*
-        NOTE: Use this code to test changes stream reinitialisation and
+        NOTE: Use this code to test changes stream reinitialization and
         database server restarts. Play with length of interval to trigger error
         events.
     */

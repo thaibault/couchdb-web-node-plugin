@@ -34,6 +34,8 @@
     "helper.d.ts",
     "index.d.ts",
     "index.js",
+    "loadExpress.d.ts",
+    "loadExpress.js",
     "helper.js",
     "type.d.ts",
     "type.js"
@@ -53,13 +55,14 @@
     "report:coverage": "nyc report --reporter=text-lcov | coveralls",
     "serve": "yarn build && yarn start",
     "start": "web-node '{plugin: {hotReloading: true}}'",
-    "test": "weboptimizer test",
+    "test": "yarn build:databaseHelper && weboptimizer test",
     "test:coverage": "weboptimizer test:coverage",
     "test:coverage:report": "weboptimizer test:coverage:report",
     "update:documentation": "documentation-website",
     "watch": "weboptimizer build --watch"
   },
   "dependencies": {
+    "pouchdb-adapter-http": "^9.0.0",
     "pouchdb-authentication": "^1.1.3",
     "pouchdb-find": "^9.0.0",
     "pouchdb-node": "^9.0.0",
@@ -69,28 +72,31 @@
   "devDependencies": {
     "@babel/eslint-parser": "^7.28.6",
     "@babel/runtime": "^7.28.6",
-    "@stylistic/eslint-plugin": "^5.7.1",
+    "@eslint/js": "^10.0.1",
+    "@stylistic/eslint-plugin": "^5.8.0",
     "@types/ejs": "^3.1.5",
     "@types/express": "^5.0.6",
-    "@types/node": "^25.2.0",
+    "@types/node": "^25.2.3",
+    "@types/pouchdb-adapter-memory": "^6.1.6",
     "@types/pouchdb-node": "^6.1.7",
-    "@typescript-eslint/eslint-plugin": "^8.54.0",
-    "@typescript-eslint/parser": "^8.54.0",
-    "clientnode": "^3.0.1343",
+    "@typescript-eslint/eslint-plugin": "^8.55.0",
+    "@typescript-eslint/parser": "^8.55.0",
+    "clientnode": "^3.0.1346",
     "documentation-website": "^1.0.398",
-    "eslint": "^9.39.2",
+    "eslint": "^10.0.0",
     "eslint-config-google": "^0.14.0",
-    "eslint-plugin-jsdoc": "^62.5.0",
+    "eslint-plugin-jsdoc": "^62.5.4",
     "express": "^5.2.1",
-    "express-pouchdb": "^4.2.0",
+    "express-pouchdb": "patch:express-pouchdb@npm%3A4.2.0#~/.yarn/patches/express-pouchdb-npm-4.2.0-969036264e.patch",
     "jest": "^30.2.0",
     "jsdoc": "^4.0.5",
     "mkdirp": "^3.0.1",
     "node-fetch": "^3.3.2",
+    "pouchdb-adapter-memory": "^9.0.0",
     "rimraf": "^6.1.2",
-    "typescript-eslint": "^8.54.0",
+    "typescript-eslint": "^8.55.0",
     "web-node": "^1.0.569",
-    "weboptimizer": "^2.0.1642"
+    "weboptimizer": "^2.0.1647"
   },
   "peerDependencies": {
     "@babel/runtime": "*",
@@ -99,7 +105,6 @@
     "express-pouchdb": "*",
     "mkdirp": "*",
     "node-fetch": "*",
-    "pouchdb-server": "*",
     "request": "*",
     "web-node": "*"
   },
@@ -126,7 +131,8 @@
     "colors": "1.4.0",
     "globals@npm:^9.18.0": "patch:globals@npm%3A11.12.0#~/.yarn/patches/globals-npm-11.12.0-1fa7f41a6c.patch",
     "globals@npm:^11.1.0": "patch:globals@npm%3A11.12.0#~/.yarn/patches/globals-npm-11.12.0-1fa7f41a6c.patch",
-    "globals@npm:^14.0.0": "patch:globals@npm%3A11.12.0#~/.yarn/patches/globals-npm-11.12.0-1fa7f41a6c.patch"
+    "globals@npm:^14.0.0": "patch:globals@npm%3A11.12.0#~/.yarn/patches/globals-npm-11.12.0-1fa7f41a6c.patch",
+    "pouchdb-system-db@npm:4.2.0": "patch:pouchdb-system-db@npm%3A4.2.0#~/.yarn/patches/pouchdb-system-db-npm-4.2.0-317901bdb4.patch"
   },
   "sideEffects": false,
   "documentationWebsite": {
@@ -136,41 +142,48 @@
   "webNode": {
     "couchdb": {
       "attachAutoRestarter": true,
-      "backend": {
-        "configuration": {
-          "couchdb/database_dir": {
-            "__evaluate__": "path.resolve(self.couchdb.path)"
-          },
-          "couchdb/max_attachment_chunk_size": "4294967296",
-          "couchdb/os_process_timeout": "25000",
-          "couchdb/view_index_dir": {
-            "__evaluate__": "path.resolve(self.couchdb.path)"
-          },
-          "couch_httpd_auth/timeout": {
-            "__evaluate__": "60 ** 2 * 24 * 14"
-          },
-          "chttpd/require_valid_user": true,
-          "httpd/allow_jsonp": false,
-          "httpd/bind_address": {
-            "__evaluate__": "self.couchdb.backend.configuration['httpd/host']"
-          },
-          "httpd/enable_cors": false,
-          "httpd/host": "0.0.0.0",
-          "httpd/port": 5984,
-          "log/file": "/dev/stdout",
-          "log/level": "warning"
-        },
-        "prefixes": [
-          "_node/_local/_config",
-          "_config"
-        ]
-      },
+      "closeTimeoutInSeconds": 30,
       "runner": {
         "memoryInMegaByte": "default",
         "nodePath": "/usr/bin/node",
+        "host": "0.0.0.0",
+        "port": 5984,
         "variants": [
           {
             "adminUserConfigurationPath": "_node/couchdb@127.0.0.1/_config/admins",
+            "configuration": {
+              "values": {
+                "couchdb/database_dir": {
+                  "__evaluate__": "path.resolve(self.couchdb.path)"
+                },
+                "couchdb/max_attachment_chunk_size": "4294967296",
+                "couchdb/os_process_timeout": "25000",
+                "couchdb/view_index_dir": {
+                  "__evaluate__": "path.resolve(self.couchdb.path)"
+                },
+                "couch_httpd_auth/timeout": {
+                  "__evaluate__": "60 ** 2 * 24 * 14"
+                },
+                "chttpd/require_valid_user": true,
+                "httpd/allow_jsonp": false,
+                "httpd/bind_address": {
+                  "__evaluate__": "self.couchdb.runner.host"
+                },
+                "httpd/enable_cors": false,
+                "httpd/host": {
+                  "__evaluate__": "self.couchdb.runner.host"
+                },
+                "httpd/port": {
+                  "__evaluate__": "self.couchdb.runner.port"
+                },
+                "log/file": "/dev/stdout",
+                "log/level": "warning"
+              },
+              "prefixes": [
+                "_node/_local/_config",
+                "_config"
+              ]
+            },
             "configurationFile": {
               "content": {
                 "__evaluate__": "`[couchdb]\\ndatabase_dir = ${path.resolve(self.couchdb.path)}\\nview_index_dir = ${path.resolve(self.couchdb.path)}`"
@@ -189,6 +202,9 @@
           },
           {
             "adminUserConfigurationPath": "_config/admins",
+            "configuration": {
+              "__evaluate__": "self.couchdb.runner.variants[0].configuration"
+            },
             "arguments": [
               "--config",
               {
@@ -196,16 +212,16 @@
               },
               "--dir",
               {
-                "__evaluate__": "self.couchdb.backend.configuration['couchdb/database_dir']"
+                "__evaluate__": "self.couchdb.runner.variants[0].configuration.values['couchdb/database_dir']"
               },
               "#: NOTE: This redundancy seems to be needed to forward ports in docker containers.",
               "--host",
               {
-                "__evaluate__": "self.couchdb.backend.configuration['httpd/host']"
+                "__evaluate__": "self.couchdb.runner.host"
               },
               "--port",
               {
-                "__evaluate__": "`${self.couchdb.backend.configuration['httpd/port']}`"
+                "__evaluate__": "`${self.couchdb.runner.port}`"
               }
             ],
             "locations": [
@@ -216,6 +232,16 @@
           },
           {
             "adminUserConfigurationPath": "_config/admins",
+            "configuration": {
+              "configPath": {
+                "__evaluate__": "path.resolve(self.couchdb.path, 'database.json')"
+              },
+              "logPath": "/dev/stdout",
+              "prefix": {
+                "__evaluate__": "path.resolve(self.couchdb.path) + '/'"
+              },
+              "skip_setup": true
+            },
             "packages": [
               "express",
               "express-pouchdb"
@@ -247,6 +273,7 @@
       "numberOfParallelChangesRunner": 1,
       "connector": {
         "fetch": {
+          "credentials": "include",
           "timeout": {
             "__evaluate__": "5 * 60 * 1000"
           }
@@ -256,7 +283,8 @@
           "retryIntervalInSeconds": 0.2,
           "exponentialBackoff": true,
           "maximumRetryIntervallInSeconds": 30
-        }
+        },
+        "skip_setup": true
       },
       "createGenericFlatIndex": true,
       "databaseName": "main",
@@ -486,7 +514,7 @@
       },
       "skipLatestRevisionDetermining": true,
       "url": {
-        "__evaluate__": "`http://{1}${self.couchdb.backend.configuration['httpd/host']}:${self.couchdb.backend.configuration['httpd/port']}`"
+        "__evaluate__": "`http://{1}${self.couchdb.runner.host}:${self.couchdb.runner.port}`"
       },
       "admin": {
         "name": "admin",
@@ -508,9 +536,12 @@
       "external": "commonjs2",
       "self": "commonjs2"
     },
+    "generic": {
+      "testCommandLine": "NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" jest --config node_modules/weboptimizer/jest.json --noStackTrace --runInBand --test-regex"
+    },
     "injection": {
       "entry": {
-        "__evaluate__": "2 < self.givenCommandLineArguments.length && self.givenCommandLineArguments[2].startsWith('test') ? {testBundle: 'test'} : {helper: './helper', index: './index', type: './type'}"
+        "__evaluate__": "2 < self.givenCommandLineArguments.length && self.givenCommandLineArguments[2].startsWith('test') ? {testBundle: 'test'} : {helper: './helper', index: './index', loadExpress: './loadExpress', type: './type'}"
       }
     },
     "module": {
