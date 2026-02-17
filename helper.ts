@@ -48,7 +48,7 @@ import packageConfiguration from './package.json'
 import {
     AllowedModelRolesMapping,
     AllowedRoles,
-    Attachment,
+    AttachmentData,
     BaseModel,
     ChangesResponse,
     ChangesResponseChange,
@@ -109,6 +109,7 @@ export const getPouchDBPlugin = (configuration: CoreConfiguration) => {
         if ((this as Partial<Connection>).bulkDocs) {
             const nativeBulkDocs =
                 this.bulkDocs.bind(this)
+
             this.bulkDocs = async (
                 firstParameter: unknown,
                 ...parameters: Array<unknown>
@@ -255,6 +256,43 @@ export const getPouchDBPlugin = (configuration: CoreConfiguration) => {
             [revisionName]: revision,
             [deletedName]: true
         })
+        if ((this as Partial<Connection>).putAttachment)
+            this.putAttachment = async (
+                id: string,
+                attachmentName: string,
+                revisionOrAttachment: AttachmentData | string,
+                attachmentOrType: AttachmentData | string,
+                type?: string
+            ): Promise<DatabaseResponse> => {
+                let attachment: AttachmentData
+                let revision: string
+                if (typeof revisionOrAttachment === 'string') {
+                    attachment = attachmentOrType
+                    revision = revisionOrAttachment
+                } else {
+                    attachment = revisionOrAttachment
+                    revision = '0-latest'
+                }
+
+                return this.put({
+                    [idName]: id,
+                    [revisionName]: revision,
+                    [attachmentsPropertyName]: {
+                        [attachmentName]: {
+                            /*
+                                NOTE: We only need to set a content type to
+                                avoid getting a warning.
+                            */
+                            // eslint-disable-next-line camelcase
+                            content_type:
+                                (attachment as Partial<Blob>).type ??
+                                type ??
+                                'application/octet-stream',
+                            data: attachment
+                        }
+                    }
+                })
+            }
         if ((this as Partial<Connection>).removeAttachment)
             this.removeAttachment = async (
                 id: string,
@@ -265,10 +303,17 @@ export const getPouchDBPlugin = (configuration: CoreConfiguration) => {
                     [idName]: id,
                     [revisionName]: revision,
                     [attachmentsPropertyName]: {
-                        [attachmentName]: {data: null} as unknown as Attachment
+                        [attachmentName]: {
+                            /*
+                                NOTE: We only need to set a content type to
+                                avoid getting a warning.
+                            */
+                            // eslint-disable-next-line camelcase
+                            content_type: 'application/octet-stream',
+                            data: null as unknown as AttachmentData
+                        }
                     }
                 })
-        // TODO add putAttachment
     }}
 }
 // region utility functions
@@ -791,11 +836,8 @@ export const initializeExpress = async (
                             request.couchSession.userCtx,
                             request.couchSecurityObj,
                             modelRolesMapping,
-                            specialNames.id,
-                            specialNames.type,
-                            specialNames.attachment,
-                            specialNames.designDocumentNamePrefix,
-                            true
+                            true,
+                            specialNames
                         )
                     } catch (error) {
                         sendError(response, error, 403)
@@ -852,11 +894,8 @@ export const initializeExpress = async (
                 request.couchSession.userCtx,
                 request.couchSecurityObj,
                 modelRolesMapping,
-                specialNames.id,
-                specialNames.type,
-                specialNames.attachment,
-                specialNames.designDocumentNamePrefix,
-                true
+                true,
+                specialNames
             )
 
         const nativeChanges = request.db.changes.bind(request.db)
@@ -976,11 +1015,8 @@ export const initializeExpress = async (
                             request.couchSession.userCtx,
                             request.couchSecurityObj,
                             modelRolesMapping,
-                            specialNames.id,
-                            specialNames.type,
-                            specialNames.attachment,
-                            specialNames.designDocumentNamePrefix,
-                            true
+                            true,
+                            specialNames
                         )
                         if (addedType)
                             delete (document as Mapping)[specialNames.type]
@@ -1040,11 +1076,8 @@ export const initializeExpress = async (
                         request.couchSession.userCtx,
                         request.couchSecurityObj,
                         modelRolesMapping,
-                        specialNames.id,
-                        specialNames.type,
-                        specialNames.attachment,
-                        specialNames.designDocumentNamePrefix,
-                        true
+                        true,
+                        specialNames
                     )
                 } catch (error) {
                     sendError(response, error, 403)
@@ -1094,11 +1127,8 @@ export const initializeExpress = async (
                         request.couchSession.userCtx,
                         request.couchSecurityObj,
                         modelRolesMapping,
-                        specialNames.id,
-                        specialNames.type,
-                        specialNames.attachment,
-                        specialNames.designDocumentNamePrefix,
-                        true
+                        true,
+                        specialNames
                     )
                 } catch (error) {
                     sendError(response, error, 403)

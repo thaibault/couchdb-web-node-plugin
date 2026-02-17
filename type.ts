@@ -46,6 +46,7 @@ export type Attachment =
         content_type?: PouchDB.Core.Attachment['content_type']
         contentType?: PouchDB.Core.Attachment['content_type']
     }
+export type AttachmentData = PouchDB.Core.AttachmentData
 export type Attachments = Record<string, Attachment | null>
 
 export type FullAttachment =
@@ -79,18 +80,34 @@ PouchDB.Database<Type> {
     ): Promise<Array<PouchDB.Core.Response | PouchDB.Core.Error>>
 
     remove(
-        id: string, revision: string
-    ): Promise<PouchDB.Core.Response | PouchDB.Core.Error>
+        id: string | (DocumentIDMeta & DocumentRevisionIDMeta),
+        ...parameters: Array<unknown>
+    ): Promise<PouchDB.Core.Response>
 
     post<Model>(
         doc: PostDocument<Type & Model>,
         options?: PouchDB.Core.Options | null
-    ): Promise<PouchDB.Core.Response>;
+    ): Promise<PouchDB.Core.Response>
 
     put<Model>(
         doc: PutDocument<Type & Model>,
         options?: PouchDB.Core.PutOptions | null
-    ): Promise<PouchDB.Core.Response>;
+    ): Promise<PouchDB.Core.Response>
+
+    putAttachment(
+        id: string,
+        attachmentName: string,
+        attachment: AttachmentData,
+        type: string
+    ): Promise<PouchDB.Core.Response>
+
+    putAttachment(
+        id: string,
+        attachmentName: string,
+        revision: string,
+        attachment: AttachmentData,
+        type: string
+    ): Promise<PouchDB.Core.Response>
 }
 export type Connector = PouchDB.Static
 export type DatabaseConnectorConfiguration =

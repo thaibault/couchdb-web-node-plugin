@@ -371,20 +371,14 @@ describe('index', (): void => {
                 .toHaveProperty('error', 'unauthorized')
             /// endregion
             /// region delete
-            console.log('TODO send client delete ----')
             await expect(client.remove(id, revision))
                 .resolves.toHaveProperty('ok', true)
-            console.log('-------------')
-            /*
-            TODO failes
             await expect(client.remove(sensibelID, sensibelRevision))
                 .rejects.toHaveProperty('error', 'unauthorized')
-            */
             /// endregion
             // endregion
         // eslint-disable-next-line no-useless-catch
         } catch (error) {
-            console.log('TODO', error)
             throw error
         } finally {
             await waitWithTimeout(

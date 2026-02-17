@@ -24,6 +24,7 @@ import {
     ValueOf
 } from 'clientnode'
 
+import packageConfiguration from './package.json'
 import {
     AllowedModelRolesMapping,
     Attachment,
@@ -77,15 +78,9 @@ export const log = new Logger({name: 'web-node.couchdb.database'})
  * @param userContext - Contains meta information about currently acting user.
  * @param securitySettings - Database security settings.
  * @param allowedModelRolesMapping - Allowed roles for given models.
- * @param idPropertyName - Property name indicating the id field name.
- * @param typePropertyName - Property name indicating to which model a document
- * belongs to.
- * @param attachmentsPropertyName - Property name indicating the attachments
- * field name.
- * @param designDocumentNamePrefix - Document name prefix indicating a design
- * document.
  * @param read - Indicates whether a read or write of given document should be
  * authorized or not.
+ * @param specialNames - Special names configuration.
  * @param contextPath - Path of properties leading to current document.
  * @returns Throws an exception if authorisation is not accepted and "true"
  * otherwise.
@@ -98,13 +93,20 @@ export const authorize = (
         admins: {names: [], roles: []}, members: {names: [], roles: []}
     },
     allowedModelRolesMapping?: AllowedModelRolesMapping,
-    idPropertyName = '_id',
-    typePropertyName = '-type',
-    attachmentsPropertyName = '_attachments',
-    designDocumentNamePrefix = '_design/',
     read = false,
+    specialNames =
+        packageConfiguration.webNode.couchdb.model.property.name.special as
+            SpecialPropertyNames,
     contextPath: Array<string> = []
 ): true => {
+    const {
+        id: idPropertyName,
+        type: typePropertyName,
+        attachment: attachmentsPropertyName,
+        designDocumentNamePrefix,
+        deleted: deletedPropertyName
+    } = specialNames
+
     const modelType: string | undefined =
         newDocument[typePropertyName] as string | undefined ??
         (oldDocument && oldDocument[typePropertyName]) as string
@@ -197,8 +199,11 @@ export const authorize = (
             return false
         }
 
+        const documentToAnalyze = newDocument[deletedPropertyName] ?
+            oldDocument ?? {} :
+            newDocument
         let authorized = true
-        for (const [name, value] of Object.entries(newDocument)) {
+        for (const [name, value] of Object.entries(documentToAnalyze)) {
             const localContextPath = contextPath.concat(name)
             relatedContextPathDescription =
                 `You are trying to ${operationType} property ` +
@@ -237,11 +242,8 @@ export const authorize = (
                     userContext,
                     securitySettings,
                     allowedModelRolesMapping,
-                    idPropertyName,
-                    typePropertyName,
-                    attachmentsPropertyName,
-                    designDocumentNamePrefix,
                     read,
+                    specialNames,
                     localContextPath
                 )
                 authorized = true
