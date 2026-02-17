@@ -2029,7 +2029,7 @@ describe('databaseHelper', () => {
         }
         const adaptTests = (tests: Array<AllowedTest>): Array<AllowedTest> =>
             /*
-                Provides test only one or skip all tests from specified one to
+                Provides test only or skip all tests except specified one to
                 support delta debugging when searching for failing test.
             */
             tests
@@ -2123,7 +2123,10 @@ describe('databaseHelper', () => {
                     replace: {[typeName]: 'Test'}
                 }
             ],
-            // TODO document what is really tested.
+            /*
+                Skip test when already marked as tested via validated documents
+                cache.
+            */
             [
                 [
                     {[idName]: '1', [revisionName]: '1'},
@@ -2142,6 +2145,10 @@ describe('databaseHelper', () => {
                     replace: {[idName]: '1', [revisionName]: '1'}
                 }
             ],
+            /*
+                Check if nulled property resolved in correct behavior for all
+                update strategies.
+            */
             [
                 [
                     {
@@ -2170,6 +2177,10 @@ describe('databaseHelper', () => {
                     }
                 }
             ],
+            /*
+                Check if new property value resulted in correct behavior for
+                all update strategies when "latest" is defined as revision.
+            */
             [
                 [
                     {
@@ -2189,6 +2200,10 @@ describe('databaseHelper', () => {
                     replace: {[typeName]: 'Test', [revisionName]: '1', a: 'a'}
                 }
             ],
+            /*
+                Check if new property value resulted in correct behavior for
+                all update strategies when "upsert" is defined as revision.
+            */
             [
                 [
                     {
@@ -2207,6 +2222,10 @@ describe('databaseHelper', () => {
                     replace: {[typeName]: 'Test', [revisionName]: '1', a: 'a'}
                 }
             ],
+            /*
+                Check if non specified property value resulted in correct
+                behavior for all update strategies.
+            */
             [
                 [{[typeName]: 'Test', [revisionName]: '0-upsert'}],
                 {entities: {Test: {}}},
@@ -2216,11 +2235,16 @@ describe('databaseHelper', () => {
                     replace: {[typeName]: 'Test'}
                 }
             ],
+            /*
+                Check if new property value resulted in correct behavior for
+                all updated strategies.
+            */
             [
                 [
                     {[typeName]: 'Test', [revisionName]: '1', a: 'a'},
                     {[typeName]: 'Test', [revisionName]: '1'}
-                ], {entities: {Test: {a: {}}}},
+                ],
+                {entities: {Test: {a: {}}}},
                 {
                     fillUp: {
                         [typeName]: 'Test', [revisionName]: '1', a: 'a'
@@ -2277,7 +2301,10 @@ describe('databaseHelper', () => {
         /// endregion
         /// region model
         test.each(adaptTests([
-            // It specified be possible to created specified documents.
+            /*
+                Check if document without properties but type declaration can
+                be created.
+            */
             [
                 [{[typeName]: 'Test'}],
                 {entities: {Test: {}}},
@@ -2287,15 +2314,7 @@ describe('databaseHelper', () => {
                     replace: {[typeName]: 'Test'}
                 }
             ],
-            [
-                [{[typeName]: 'Test'}],
-                {entities: {Test: {}}},
-                {
-                    fillUp: {[typeName]: 'Test'},
-                    incremental: {[typeName]: 'Test'},
-                    replace: {[typeName]: 'Test'}
-                }
-            ],
+            // Check if reserved can be used as property definition.
             [
                 [{[typeName]: 'Test'}],
                 {entities: {Test: {class: {}}}},
@@ -2305,6 +2324,10 @@ describe('databaseHelper', () => {
                     replace: {[typeName]: 'Test'}
                 }
             ],
+            /*
+                Check if old and new property values are merged according to
+                different update strategies.
+            */
             [
                 [
                     {[typeName]: 'Test', b: 'b'},
@@ -2317,6 +2340,10 @@ describe('databaseHelper', () => {
                     replace: {[typeName]: 'Test', b: 'b'}
                 }
             ],
+            /*
+                Check if existing property value can be update in with all
+                update strategies.
+            */
             [
                 [
                     {[typeName]: 'Test', a: '3'},
@@ -2324,11 +2351,15 @@ describe('databaseHelper', () => {
                 ],
                 {entities: {Test: {a: {}}}},
                 {
-                    fillUp: {a: '3', [typeName]: 'Test'},
+                    fillUp: {[typeName]: 'Test', a: '3'},
                     incremental: {a: '3'},
                     replace: {[typeName]: 'Test', a: '3'}
                 }
             ],
+            /*
+                Check if properties with nested type declaration are merged
+                according to different update strategies.
+            */
             [
                 [{[typeName]: 'Test', a: {[typeName]: '_test'}}],
                 {entities: {Test: {a: {type: '_test'}}, _test: {}}},
