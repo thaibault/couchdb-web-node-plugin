@@ -71,6 +71,8 @@ PouchDB.Database<Type> {
     // NOTE: "pouchdb-validation" does not have a typings yet.
     installValidationMethods: () => void
 
+    installCouchDBWebNodePlugin: (description: string) => void
+
     bulkDocs<Model>(
         docs: Array<PutDocument<Type & Model>>,
         options?: PouchDB.Core.BulkDocsOptions | null,

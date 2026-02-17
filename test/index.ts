@@ -16,7 +16,7 @@
 // region imports
 import {copy, Mapping} from 'clientnode'
 import {Express} from 'express-serve-static-core'
-import PouchDB from 'pouchdb-core'
+import PouchDB from 'pouchdb-node'
 import PouchDBHTTPAdapter from 'pouchdb-adapter-http'
 import PouchDBFindPlugin from 'pouchdb-find'
 import {pluginAPI} from 'web-node'
@@ -25,8 +25,10 @@ import webNodePackageConfiguration from 'web-node/package.json'
 import {describe, expect, jest, test} from '@jest/globals'
 
 import {
+    bulkDocsFactory,
     getConnectorOptions,
-    getEffectiveURL, removeAttachmentFactory,
+    getEffectiveURL, getPouchDBPlugin,
+    removeAttachmentFactory,
     waitWithTimeout
 } from '../helper'
 import {
@@ -35,7 +37,7 @@ import {
 import expressUtilities from '../loadExpress'
 import packageConfiguration from '../package.json'
 import {
-    Configuration,
+    Configuration, Connection,
     LocalDatabaseConfiguration,
     Model,
     ServicePromises,
@@ -243,6 +245,7 @@ describe('index', (): void => {
         const pouchDB = PouchDB
             .plugin(PouchDBHTTPAdapter)
             .plugin(PouchDBFindPlugin)
+            .plugin(getPouchDBPlugin(state.configuration.couchdb))
         const client = new pouchDB(
             getEffectiveURL(config),
             {
@@ -253,9 +256,7 @@ describe('index', (): void => {
                 }
             }
         )
-        client.removeAttachment = removeAttachmentFactory(
-            state.configuration.couchdb, 'test connection'
-        ).bind(client)
+        ;(client as Connection).installCouchDBWebNodePlugin('test')
         // endregion
         try {
             const data: Mapping =
@@ -263,8 +264,10 @@ describe('index', (): void => {
             let {id, rev: revision} = await client.post(data)
             const sensibelData: Mapping =
                 {[typeName]: 'SensibelTestModel', writableProperty: 'test'}
+            console.log('TODO send client post ----')
             const {id: sensibelID, rev: sensibelRevision} =
                 await client.post(sensibelData)
+            console.log('-------------')
             // region test reading properties
             /// region id
             await expect(client.get(id))
@@ -382,6 +385,7 @@ describe('index', (): void => {
             // endregion
         // eslint-disable-next-line no-useless-catch
         } catch (error) {
+            console.log('TODO', error)
             throw error
         } finally {
             await waitWithTimeout(

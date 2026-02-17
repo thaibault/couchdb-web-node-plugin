@@ -46,17 +46,15 @@ import {PluginHandler, PluginPromises} from 'web-node/type'
 
 import databaseHelper, {validateDocumentUpdate} from './databaseHelper'
 import {
-    bulkDocsFactory,
     determineAllowedModelRolesMapping,
     determineGenericIndexablePropertyNames,
     ensureValidationDocumentPresence,
     extendModels,
     getConnectorOptions,
-    getEffectiveURL,
+    getEffectiveURL, getPouchDBPlugin,
     initializeConnection,
     log,
     mayStripRepresentation,
-    removeAttachmentFactory,
     removeDeprecatedIndexes,
     waitWithTimeout
 } from './helper'
@@ -194,30 +192,10 @@ export const preLoadService = async ({
             .plugin(PouchDBMemoryPlugin)
             .plugin(PouchDBFindPlugin)
             .plugin(PouchDBValidationPlugin)
-            .plugin({
-                bulkDocs: bulkDocsFactory(
-                    PouchDB.prototype.bulkDocs as Connection['bulkDocs'],
-                    configuration,
-                    'backend connector'
-                ),
-                removeAttachment: removeAttachmentFactory(
-                    configuration, 'backend connector'
-                )
-            })
+            .plugin(getPouchDBPlugin(configuration))
             .defaults(backendConnectorConfiguration) as typeof PouchDB
+        // Plugins are already applied via backend connector via prototype.
         couchdb.connector = PouchDB
-            .plugin(PouchDBMemoryPlugin)
-            .plugin(PouchDBFindPlugin)
-            .plugin({
-                bulkDocs: bulkDocsFactory(
-                    PouchDB.prototype.bulkDocs as Connection['bulkDocs'],
-                    configuration,
-                    'application connector'
-                ),
-                removeAttachment: removeAttachmentFactory(
-                    configuration, 'backend connector'
-                )
-            })
             .defaults(getConnectorOptions(configuration.connector)) as
                 typeof PouchDB
 

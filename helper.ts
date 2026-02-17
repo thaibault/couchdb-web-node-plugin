@@ -91,7 +91,26 @@ export const TOGGLE_LATEST_REVISION_DETERMINING =
     Symbol('toggleLatestRevisionDetermining')
 
 export const log = new Logger({name: 'web-node.couchdb'})
-// region functions
+/**
+ * Determines plugin to hook into any write operations.
+ * @param configuration - This's plugin configuration object.
+ * @returns A pouchdb plugin in object style.
+ */
+export const getPouchDBPlugin = (configuration: CoreConfiguration) => ({
+    installCouchDBWebNodePlugin: function(
+        this: Partial<Connection>, description: string
+    ) {
+        if (this.bulkDocs)
+            this.bulkDocs = bulkDocsFactory(
+                this.bulkDocs.bind(this), configuration, description
+            ).bind(this)
+        if (this.removeAttachment)
+            this.removeAttachment = removeAttachmentFactory(
+                configuration, description
+            ).bind(this)
+    }
+})
+// region utility functions
 export const removeDeprecatedIndexes = async (
     connection: Connection<object>,
     models: Models,
@@ -387,12 +406,16 @@ export const bulkDocsFactory = (
     const revisionName: SpecialPropertyNames['revision'] =
         configuration.model.property.name.special.revision
 
+    console.log('TODO Initialize', description, nativeBulkDocs)
+
     return async function(
         this: Connection,
         firstParameter: unknown,
         ...parameters: Array<unknown>
     ): Promise<Array<DatabaseError | DatabaseResponse>> {
         log.debug('BulkDocs called from:', description)
+
+        console.log('A TODO BulkDocs called from:', description, nativeBulkDocs)
 
         // Normalize parameter to an array of documents.
         if (
@@ -563,20 +586,11 @@ export const initializeConnection = async (
         const {connection} = couchdb
 
         connection.installValidationMethods()
+        connection.installCouchDBWebNodePlugin('backend')
 
         connection.setMaxListeners(Infinity)
         // region apply "bulkDocs" interceptor to put method
-        /*
-            NOTE: A "bulkDocs" plugin does not get called for every write call
-            so we have to wrap runtime generated method.
-        */
-        connection.bulkDocs = bulkDocsFactory(
-            // eslint-disable-next-line @typescript-eslint/unbound-method
-            connection.bulkDocs,
-            config,
-            'application connection'
-        )
-        // TODO check delete and other write methods
+        // TODO check delete and other write methods and if needed!
         connection.post = connection.put =
             async function<Type extends Mapping<unknown>>(
                 this: Connection,
@@ -600,7 +614,7 @@ export const initializeConnection = async (
                 */
 
                 return result as DatabaseResponse
-            }
+            }.bind(connection)
         // endregion
     } else
         // @ts-expect-error "pouchdb-validation" does not have a typings yet.
@@ -1187,6 +1201,7 @@ export const waitWithTimeout = (
         })
     ])
 }
+// endregion
 // region model
 /**
  * Determines a mapping of all models to roles who are allowed to edit
