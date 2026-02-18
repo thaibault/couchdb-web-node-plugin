@@ -65,7 +65,7 @@ import {
     SecuritySettings,
     Services,
     State,
-    UserContext
+    UserContext, InitializeExpressPouchDBStateData
 } from './type'
 // endregion
 globalContext.fetch = nodeFetch as unknown as typeof fetch
@@ -125,8 +125,22 @@ export const initializeExpress = async (
         validation,
         notFoundError
     } = expressUtilities ??
-    (await eval(`import('./loadExpress')`)).default as
-        (typeof import('./loadExpress'))['default']
+        /*
+            NOTE: Depending on target environment module wrapper might differs
+            and we have to normalize here.
+        */
+        ((
+            module: typeof import('./loadExpress')['default']
+        ): typeof import('./loadExpress')['default'] =>
+            (module as
+                unknown as
+                {default?: typeof import('./loadExpress')['default']}
+            ).default ||
+            module
+        )(
+            (await eval(`import('./loadExpress.js')`)).default as
+                typeof import('./loadExpress')['default']
+        )
 
     const expressInstance: Express = express()
     /*
@@ -549,12 +563,7 @@ export const initializeExpress = async (
         await makeDirectorPath(resolve(configuration.path))
     }
 
-    await pluginAPI.callStack<
-        State<{
-            expressInstance: Express,
-            expressPouchDBInstance: Express
-        }>
-    >({
+    await pluginAPI.callStack<State<InitializeExpressPouchDBStateData>>({
         ...state,
         hook: 'initializeExpressPouchDB',
         data: {expressInstance, expressPouchDBInstance}
