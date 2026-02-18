@@ -20,7 +20,6 @@ import {
     extend,
     FirstParameter,
     format,
-    globalContext,
     isObject,
     Logger,
     Mapping,
@@ -577,15 +576,14 @@ export const ensureValidationDocumentPresence = async (
  * Initializes a database connection instance.
  * @param services - An object with stored service instances.
  * @param configuration - Mutable by plugins extended configuration object.
- * @param createRemoteDatabaseIfNotExists - Indicates whether database should
- * be created if it does not exist yet. This is only relevant for remote
- * databases, because local ones get created automatically by pouchdb.
+ * @param checkForDatabaseReachability - Indicates whether to check for
+ * reachability of newly created database.
  * @returns Given and extended object of services.
  */
 export const initializeConnection = async (
     services: Services,
     configuration: Configuration,
-    createRemoteDatabaseIfNotExists = true
+    checkForDatabaseReachability = true
 ): Promise<Services> => {
     const {couchdb} = services
     const config = configuration.couchdb
@@ -603,29 +601,25 @@ export const initializeConnection = async (
             couchdb.server.runner.configuration as
                 InPlaceRunner['configuration']
         )
-        const {connection} = couchdb
-
-        connection.installValidationMethods()
-        connection.installCouchDBWebNodePlugin('backend')
-
-        connection.setMaxListeners(Infinity)
+        couchdb.connection.installValidationMethods()
     } else
         // @ts-expect-error "pouchdb-validation" does not have a typings yet.
         couchdb.connection = new couchdb.connector(
             url, getConnectorOptions(config.connector)
         )
+
+    couchdb.connection.installCouchDBWebNodePlugin('backend')
+    couchdb.connection.setMaxListeners(Infinity)
+
     // region ensure database presence
-    // NOTE: A request to database creates it (if not exists) automatically.
-    if (createRemoteDatabaseIfNotExists)
+    if (checkForDatabaseReachability)
         try {
             await checkReachability(url)
-        } catch {
-            log.info('Database could not be retrieved yet: Creating it.')
-
-            if (!globalContext.fetch)
-                throw new Error('Missing fetch implementation.')
-
-            await globalContext.fetch(url, {method: 'PUT'})
+        } catch (error) {
+            throw new Error(
+                `Database has not been installed yet: ${represent(error)}`,
+                {cause: error}
+            )
         }
     // endregion
     return services

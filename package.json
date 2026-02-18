@@ -240,7 +240,7 @@
               "prefix": {
                 "__evaluate__": "path.resolve(self.couchdb.path) + '/'"
               },
-              "skip_setup": true
+              "skip_setup": false
             },
             "packages": [
               "express",
@@ -284,7 +284,7 @@
           "exponentialBackoff": true,
           "maximumRetryIntervallInSeconds": 30
         },
-        "skip_setup": true
+        "skip_setup": false
       },
       "createGenericFlatIndex": true,
       "databaseName": "main",
