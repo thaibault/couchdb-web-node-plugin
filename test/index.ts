@@ -210,7 +210,7 @@ describe('index', (): void => {
 
         const state = {
             configuration,
-            data: undefined,
+            data: {couchdbWebNodeExpressUtilities: expressUtilities},
             pluginAPI,
             plugins: [],
             services
@@ -229,7 +229,7 @@ describe('index', (): void => {
         }
 
         state.hook = 'loadService'
-        await expect(loadService(state, expressUtilities))
+        await expect(loadService(state))
             .resolves.toHaveProperty('couchdb')
 
         global.COUCHDB_WEBNODE_PLUGIN_EXPRESS_INSTANCES = {

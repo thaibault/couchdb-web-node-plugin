@@ -276,14 +276,10 @@ export const preLoadService = async ({
  * @param state - Application state.
  * @param state.configuration - Applications configuration.
  * @param state.services - Applications services.
- * @param expressUtilities - Optional express related utilities.
  * @returns A mapping to promises which correspond to the plugin specific
  * continues services.
  */
-export const loadService = async (
-    state: State,
-    expressUtilities?: (typeof import('./loadExpress'))['default']
-): Promise<PluginPromises> => {
+export const loadService = async (state: State): Promise<PluginPromises> => {
     if (!globalContext.fetch)
         throw new Error('Missing fetch implementation.')
 
@@ -337,7 +333,17 @@ export const loadService = async (
     // endregion
 
     if (Object.prototype.hasOwnProperty.call(couchdb.server, 'runner')) {
-        await start(state, expressUtilities)
+        await start(
+            state,
+            (state as unknown as State<
+                {
+                    couchdbWebNodeExpressUtilities?: (
+                        typeof import('./loadExpress')
+                    )['default']
+                } |
+                undefined
+            >).data?.couchdbWebNodeExpressUtilities
+        )
 
         couchdb.server.restart = restart
         couchdb.server.start = start
