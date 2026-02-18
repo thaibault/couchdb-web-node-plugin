@@ -900,6 +900,11 @@ export interface CheckedDocumentResult<
     newDocument: PartialFullDocument<ObjectType, AdditionalPropertiesType>
 }
 /// endregion
+export interface InitializeExpressPouchDBStateData {
+    expressInstance: Express,
+    expressPouchDBInstance: Express
+}
+
 export type Migrator<
     Type extends object = object,
     AttachmentType extends Attachment = Attachment,
