@@ -1494,7 +1494,10 @@ export const validateDocumentUpdate = <
                 propertySpecification.updateStrategy || updateStrategy
 
             if (!attachmentsTarget) {
-                if (!Object.prototype.hasOwnProperty.call(newDocument, name))
+                if (!(
+                    propertySpecification.runUpdateHookAlways ||
+                    Object.prototype.hasOwnProperty.call(newDocument, name)
+                ))
                     return
 
                 if (

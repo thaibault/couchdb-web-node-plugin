@@ -407,7 +407,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
 
         try {
             // NOTE: We check if we are in admin party mode.
-            await unauthenticatedUserDatabaseConnection.allDocs()
+            await unauthenticatedUserDatabaseConnection.allDocs({limit: 1})
             await createAdminUser()
         } catch (error) {
             /*
@@ -444,7 +444,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
         ) as Connection
 
         try {
-            await authenticatedUserDatabaseConnection.allDocs()
+            await authenticatedUserDatabaseConnection.allDocs({limit: 1})
         } catch (error) {
             log.error(
                 `Can't login as admin user`,
