@@ -15,7 +15,6 @@
 */
 // region imports
 import {
-    checkReachability,
     copy,
     extend,
     FirstParameter,
@@ -614,7 +613,7 @@ export const initializeConnection = async (
     // region ensure database presence
     if (checkForDatabaseReachability)
         try {
-            await checkReachability(url)
+            await couchdb.connection.allDocs({limit: 1})
         } catch (error) {
             throw new Error(
                 `Database has not been installed yet: ${represent(error)}`,

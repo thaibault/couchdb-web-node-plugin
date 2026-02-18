@@ -398,15 +398,16 @@
               "type": "DateTime"
             },
             "updateDateTime": {
+              "minimum": 0,
+              "nullable": false,
+              "type": "DateTime",
+              "onUpdateExpression": "modelConfiguration.updateStrategy === 'migrate' && oldDocument ? oldDocument[name] : nowUTCTimestamp",
+              "runUpdateHookAlways": true,
               "constraintExpression": {
                 "evaluate": {
                   "__evaluate__": "`modelConfiguration.updateStrategy === 'migrate' && oldDocument ? true : newValue > ${nowUTCTimestamp}`"
                 }
-              },
-              "minimum": 0,
-              "nullable": false,
-              "onUpdateExpression": "modelConfiguration.updateStrategy === 'migrate' && oldDocument ? oldDocument[name] : nowUTCTimestamp",
-              "type": "DateTime"
+              }
             }
           },
           "_userTrackable": {
@@ -414,7 +415,8 @@
               "nullable": false,
               "onUpdateExpression": {
                 "__evaluate__": "`userContext.name || '${self.couchdb.admin.name}'`"
-              }
+              },
+              "runUpdateHookAlways": true
             }
           }
         },

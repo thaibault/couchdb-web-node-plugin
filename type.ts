@@ -223,6 +223,7 @@ export interface BasePropertySpecification<
     onCreateExpression?: string
     onUpdateExecution?: string
     onUpdateExpression?: string
+    runUpdateHookAlways?: boolean
     // endregion
     // region validation
     pattern?: Pattern
