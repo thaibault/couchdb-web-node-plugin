@@ -379,12 +379,6 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
 
     // region ensure presence of global admin user
     if (configuration.couchdb.ensureAdminPresence) {
-        const unauthenticatedUserDatabaseConnection =
-            new couchdb.connector(
-                `${urlPrefix}/_users`,
-                getConnectorOptions(configuration.couchdb.connector)
-            ) as Connection
-
         const createAdminUser = () => {
             log.info(
                 'No admin user available. Automatically creating admin user',
@@ -404,6 +398,12 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                 }
             )
         }
+
+        const unauthenticatedUserDatabaseConnection =
+            new couchdb.connector(
+                `${urlPrefix}/_users`,
+                getConnectorOptions(configuration.couchdb.connector)
+            ) as Connection
 
         try {
             // NOTE: We check if we are in admin party mode.
