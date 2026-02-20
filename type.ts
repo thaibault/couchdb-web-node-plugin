@@ -901,6 +901,11 @@ export interface CheckedDocumentResult<
     newDocument: PartialFullDocument<ObjectType, AdditionalPropertiesType>
 }
 /// endregion
+export type AbortControllerStack = Array<{
+    name: string
+    id: string
+    controller: AbortController
+}>
 export interface InitializeExpressPouchDBStateData {
     expressInstance: Express,
     expressPouchDBInstance: Express

@@ -32,6 +32,7 @@ import {fromFetch} from 'rxjs/fetch'
 
 import packageConfiguration from './package.json'
 import {
+    AbortControllerStack,
     AllowedModelRolesMapping,
     AllowedRoles,
     AttachmentData,
@@ -333,13 +334,13 @@ export const removeDeprecatedIndexes = async (
  * Converts internal declarative database connector configuration object
  * into a database compatible one.
  * @param configuration - Connector configuration object.
- * @param abortSignalStack - Stack to put abort signals to. They will be
+ * @param abortControllerStack - Stack to put abort signals to. They will be
  * shifted and used for fetch calls.
  * @returns Database compatible configuration object.
  */
 export const getConnectorOptions = (
     configuration: ConnectorConfiguration,
-    abortSignalStack?: Array<AbortSignal>
+    abortControllerStack?: AbortControllerStack
 ): DatabaseConnectorConfiguration => {
     /*
         NOTE: We convert given fetch options into a fetch function wrapper
@@ -352,8 +353,11 @@ export const getConnectorOptions = (
             options
         )
 
-        if (Array.isArray(abortSignalStack) && abortSignalStack.length > 0)
-            options.signal = abortSignalStack.pop()
+        if (
+            Array.isArray(abortControllerStack) &&
+            abortControllerStack.length > 0
+        )
+            options.signal = abortControllerStack.pop()?.controller.signal
 
         return options
     }
@@ -369,7 +373,7 @@ export const getConnectorOptions = (
 
     return {
         ...configuration,
-        fetch: (async (
+        fetch: ((
             url: RequestInfo, options?: RequestInit
         ): Promise<Response> => {
             const {
