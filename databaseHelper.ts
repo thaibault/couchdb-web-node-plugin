@@ -82,7 +82,8 @@ export const log = new Logger({name: 'web-node.couchdb.database'})
  * authorized or not.
  * @param specialNames - Special names configuration.
  * @param contextPath - Path of properties leading to current document.
- * @returns Throws an exception if authorisation is not accepted and "true"
+ * @param allowedBaseRoles - Inherited or base roles to at least require on.
+ * @returns Throws an exception if authorization is not accepted and "true"
  * otherwise.
  */
 export const authorize = (
@@ -97,7 +98,12 @@ export const authorize = (
     specialNames =
         packageConfiguration.webNode.couchdb.model.property.name.special as
             SpecialPropertyNames,
-    contextPath: Array<string> = []
+    contextPath: Array<string> = [],
+    allowedBaseRoles: NormalizedAllowedModelRoles = {
+        properties: {},
+        read: ['_admin', 'readonlyadmin'],
+        write: ['_admin']
+    }
 ): true => {
     const {
         id: idPropertyName,
@@ -121,18 +127,13 @@ export const authorize = (
 
     const operationType = read ? 'read': 'write'
 
-    // Define roles who are allowed to read and write everything.
-    const allowedBaseRoles: NormalizedAllowedModelRoles = {
-        properties: {},
-        read: ['_admin', 'readonlyadmin'],
-        write: ['_admin']
-    }
     // A "readonlymember" is allowed to read all but design documents.
     if (!(
         Object.prototype.hasOwnProperty.call(newDocument, idPropertyName) &&
         (newDocument[idPropertyName] as string).startsWith(
             designDocumentNamePrefix
-        )
+        ) &&
+        !allowedBaseRoles.read.includes('readonlymember')
     ))
         allowedBaseRoles.read.push('readonlymember')
 
@@ -244,7 +245,8 @@ export const authorize = (
                     allowedModelRolesMapping,
                     read,
                     specialNames,
-                    localContextPath
+                    localContextPath,
+                    allowedModelRoles
                 )
                 authorized = true
             } else if (checkProperty(name, allowedModelRoles.properties))
