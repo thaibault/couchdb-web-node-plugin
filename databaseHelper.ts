@@ -26,7 +26,7 @@ import {
 
 import packageConfiguration from './package.json'
 import {
-    AllowedModelRolesMapping,
+    ModelRolesMapping,
     Attachment,
     BaseModel,
     BaseModelConfiguration,
@@ -51,7 +51,7 @@ import {
     FullAttachment,
     Model,
     Models,
-    NormalizedAllowedModelRoles, NormalizedAllowedRoles,
+    NormalizedModelRoles, NormalizedRoles,
     PartialFullDocument,
     PropertyScope,
     PropertySpecification,
@@ -77,12 +77,14 @@ export const log = new Logger({name: 'web-node.couchdb.database'})
  * here.
  * @param userContext - Contains meta information about currently acting user.
  * @param securitySettings - Database security settings.
- * @param allowedModelRolesMapping - Allowed roles for given models.
+ * @param modelRolesMapping - Allowed roles for given models.
  * @param read - Indicates whether a read or write of given document should be
  * authorized or not.
  * @param specialNames - Special names configuration.
  * @param contextPath - Path of properties leading to current document.
- * @param allowedBaseRoles - Inherited or base roles to at least require on.
+ * @param parentRoles - Inherited or base roles to at least require on.
+ * @param toJSON - JSON stringifier.
+ * @param fromJSON - JSON parser.
  * @returns Throws an exception if authorization is not accepted and "true"
  * otherwise.
  */
@@ -93,18 +95,70 @@ export const authorize = (
     securitySettings: Partial<SecuritySettings> = {
         admins: {names: [], roles: []}, members: {names: [], roles: []}
     },
-    allowedModelRolesMapping?: AllowedModelRolesMapping,
+    modelRolesMapping?: ModelRolesMapping,
     read = false,
     specialNames =
         packageConfiguration.webNode.couchdb.model.property.name.special as
             SpecialPropertyNames,
     contextPath: Array<string> = [],
-    allowedBaseRoles: NormalizedAllowedModelRoles = {
+    // Inherited roles from parent model aka parent model property roles.
+    // TODO check if we do need kind of inheritance here.
+    parentRoles: NormalizedModelRoles = {
         properties: {},
-        read: ['_admin', 'readonlyadmin'],
-        write: ['_admin']
-    }
+        read: [],
+        write: []
+    },
+    toJSON?: (value: unknown) => string,
+    fromJSON?: (value: string) => unknown
 ): true => {
+    // region ensure needed environment
+    const throwError = <DataType = Mapping<unknown>>(
+        message: string,
+        type = 'forbidden',
+        additionalErrorData: Partial<DataType> = {} as Partial<DataType>
+    ): never => {
+        /*
+            eslint-disable no-throw-literal,@typescript-eslint/only-throw-error
+        */
+        throw {
+            [type]: message,
+            error: type,
+            message,
+            name: type,
+            ...additionalErrorData
+        }
+        /*
+            eslint-enable no-throw-literal,@typescript-eslint/only-throw-error
+        */
+    }
+    /// region json parser and serializer determination
+    let serializeData: (value: unknown) => string
+    if (toJSON)
+        serializeData = toJSON
+    else if (
+        typeof JSON !== 'undefined' &&
+        Object.prototype.hasOwnProperty.call(JSON, 'stringify')
+    )
+        serializeData =
+            (object: unknown): string => JSON.stringify(object, null, 4)
+    else
+        throwError('Needed json serializer is not available.')
+
+    let parseJSON: (value: string) => unknown
+    if (fromJSON)
+        parseJSON = fromJSON
+    else if (
+        typeof JSON !== 'undefined' &&
+        Object.prototype.hasOwnProperty.call(JSON, 'parse')
+    )
+        parseJSON = (object: string): unknown => JSON.parse(object)
+    else
+        throwError('Needed json parser is not available.')
+    /// endregion
+
+    const deepCopy =
+        <Type>(data: Type): Type => parseJSON(serializeData(data)) as Type
+
     const {
         id: idPropertyName,
         type: typePropertyName,
@@ -116,6 +170,7 @@ export const authorize = (
     const modelType: string | undefined =
         newDocument[typePropertyName] as string | undefined ??
         (oldDocument && oldDocument[typePropertyName]) as string
+    // endregion
     /*
         NOTE: Special documents and change sequences are not checked further
         since there is no specified model.
@@ -127,15 +182,20 @@ export const authorize = (
 
     const operationType = read ? 'read': 'write'
 
+    const baseRoles: NormalizedModelRoles = {
+        properties: {},
+        read: ['_admin', 'readonlyadmin'],
+        write: ['_admin']
+    }
     // A "readonlymember" is allowed to read all but design documents.
     if (!(
         Object.prototype.hasOwnProperty.call(newDocument, idPropertyName) &&
         (newDocument[idPropertyName] as string).startsWith(
             designDocumentNamePrefix
         ) &&
-        !allowedBaseRoles.read.includes('readonlymember')
+        !baseRoles.read.includes('readonlymember')
     ))
-        allowedBaseRoles.read.push('readonlymember')
+        baseRoles.read.push('readonlymember')
 
     if (!('name' in userContext))
         userContext.name = '"unknown"'
@@ -146,51 +206,50 @@ export const authorize = (
         `You are trying to ${operationType} object of type "${modelType}".`
 
     if (userContext.roles?.length) {
-        let allowedModelRoles: NormalizedAllowedModelRoles =
-            {...allowedBaseRoles}
+        let modelRoles: NormalizedModelRoles = deepCopy(baseRoles)
 
         const userRoles = userContext.roles
         // region determine model specific allowed roles
         if (
-            allowedModelRolesMapping &&
+            modelRolesMapping &&
             modelType &&
-            Object.prototype.hasOwnProperty.call(
-                allowedModelRolesMapping, modelType
-            )
+            Object.prototype.hasOwnProperty.call(modelRolesMapping, modelType)
         ) {
-            const extendWithBasicRoles = <T extends NormalizedAllowedRoles>(
+            const extendWithBasicRoles = <T extends NormalizedRoles>(
                 roles: T
             ): T => {
                 for (const operation of ['read', 'write'] as const)
                     roles[operation] =
-                        roles[operation].concat(allowedBaseRoles[operation])
+                        roles[operation].concat(baseRoles[operation])
 
                 return roles
             }
 
-            allowedModelRoles =
-                extendWithBasicRoles(allowedModelRolesMapping[modelType])
+            modelRoles = extendWithBasicRoles(deepCopy(
+                modelRolesMapping[modelType]
+            ))
 
-            if (allowedModelRoles.attachments)
+            if (modelRoles.attachments)
                 for (const roles of Object.values(
-                    allowedModelRoles.attachments
+                    modelRoles.attachments
                 ))
                     extendWithBasicRoles(roles)
-            for (const roles of Object.values(allowedModelRoles.properties))
+            for (const [name, roles] of Object.entries(modelRoles.properties)) {
+                console.log('EXTEND', name, roles, baseRoles)
                 extendWithBasicRoles(roles)
+            }
         }
         // endregion
         const baseRelevantRoles: Array<string> =
-            allowedModelRoles[operationType]
+            modelRoles[operationType]
 
         const checkProperty = (
-            name: string,
-            allowedPropertyRoles: Mapping<NormalizedAllowedRoles> = {}
+            name: string, propertyRoles: Mapping<NormalizedRoles> = {}
         ) => {
             relevantRoles = Object.prototype.hasOwnProperty.call(
-                allowedPropertyRoles, name
+                propertyRoles, name
             ) ?
-                allowedPropertyRoles[name][operationType] :
+                propertyRoles[name][operationType] :
                 baseRelevantRoles
 
             for (const userRole of userRoles)
@@ -223,7 +282,7 @@ export const authorize = (
                         `having type "${modelType}".`
 
                     authorized = checkProperty(
-                        fileDescription, allowedModelRoles.attachments
+                        fileDescription, modelRoles.attachments
                     )
                     if (!authorized)
                         break
@@ -242,14 +301,23 @@ export const authorize = (
                     ),
                     userContext,
                     securitySettings,
-                    allowedModelRolesMapping,
+                    modelRolesMapping,
                     read,
                     specialNames,
                     localContextPath,
-                    allowedModelRoles
+                    deepCopy(
+                        Object.prototype.hasOwnProperty.call(
+                            modelRoles.properties, name
+                        ) ?
+                            {
+                                ...modelRoles.properties[name],
+                                properties: {}
+                            } :
+                            modelRoles
+                    )
                 )
                 authorized = true
-            } else if (checkProperty(name, allowedModelRoles.properties))
+            } else if (checkProperty(name, modelRoles.properties))
                 authorized = true
 
             if (!authorized)
@@ -465,6 +533,7 @@ export const validateDocumentUpdate = <
                     oldModelMapping[oldName] = name
     /// endregion
 
+    /// region json parser and serializer determination
     let serializeData: (value: unknown) => string
     if (toJSON)
         serializeData = toJSON
@@ -487,6 +556,7 @@ export const validateDocumentUpdate = <
         parseJSON = (object: string): unknown => JSON.parse(object)
     else
         throwError('Needed json parser is not available.')
+    /// endregion
     // endregion
 
     const specialPropertyNames: Array<keyof BaseModelType> = [

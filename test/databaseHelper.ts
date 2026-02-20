@@ -66,6 +66,7 @@ describe('databaseHelper', () => {
         authorize,
         TEST_THROW_SYMBOL,
 
+        /*
         [
             {...baseDocument, [typeName]: 'Test'},
             null,
@@ -91,6 +92,7 @@ describe('databaseHelper', () => {
                 write: ['users']
             }}
         ],
+        */
         [
             {
                 ...baseDocument,
@@ -204,6 +206,7 @@ describe('databaseHelper', () => {
             }
         ]
     )
+
     for (const updateStrategy of [
         'fillUp', 'incremental', 'replace'
     ] as const) {

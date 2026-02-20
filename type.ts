@@ -146,7 +146,7 @@ export type DatabasePlugin = AnyFunction
 /// endregion
 /// region model
 // Represents a properties read and write roles.
-export type AllowedRoles = (
+export type Roles = (
     Array<string> |
     string |
     {
@@ -154,7 +154,7 @@ export type AllowedRoles = (
         write?: Array<string> | string
     }
 )
-export interface NormalizedAllowedRoles {
+export interface NormalizedRoles {
     read: Array<string>
     write: Array<string>
 }
@@ -162,15 +162,15 @@ export interface NormalizedAllowedRoles {
     Recursive mapping from model and properties to their allowed read and write
     roles.
 */
-export interface NormalizedAllowedModelRoles extends NormalizedAllowedRoles {
-    attachments?: Mapping<NormalizedAllowedRoles>
-    properties: Mapping<NormalizedAllowedRoles>
+export interface NormalizedModelRoles extends NormalizedRoles {
+    attachments?: Mapping<NormalizedRoles>
+    properties: Mapping<NormalizedRoles>
 }
 /*
     Maps an artifact (usually type or property) to corresponding operations
     mapped to their allowed roles.
 */
-export type AllowedModelRolesMapping = Mapping<NormalizedAllowedModelRoles>
+export type ModelRolesMapping = Mapping<NormalizedModelRoles>
 
 export interface Constraint {
     description?: string
@@ -207,7 +207,7 @@ export type Pattern = Array<RegExp | string> | RegExp | string
 export interface BasePropertySpecification<
     Type, AdditionalSpecifications extends object
 > {
-    allowedRoles?: AllowedRoles
+    allowedRoles?: Roles
     updateStrategy?: UpdateStrategy
     // region expression
     arrayConstraintExecution?: Constraint
@@ -296,7 +296,7 @@ export interface BaseModel<
         AdditionalPropertiesType, AdditionalSpecifications
     >
 
-    _allowedRoles?: AllowedRoles
+    _allowedRoles?: Roles
 
     _attachments?:
         Mapping<FileSpecification<AttachmentType, AdditionalSpecifications>> |

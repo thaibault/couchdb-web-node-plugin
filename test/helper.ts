@@ -32,7 +32,7 @@ import {
 } from '../helper'
 import packageConfiguration from '../package.json'
 import {
-    AllowedModelRolesMapping,
+    ModelRolesMapping,
     Configuration,
     Connection,
     DatabaseResponse,
@@ -150,9 +150,9 @@ describe('helper', (): void => {
                 }
             ]
         ].map(([expected, modelConfiguration]): [
-            AllowedModelRolesMapping, ModelConfiguration
+            ModelRolesMapping, ModelConfiguration
         ] => [
-            expected as AllowedModelRolesMapping,
+            expected as ModelRolesMapping,
             extend(
                 true,
                 copy(mockModelConfiguration),
