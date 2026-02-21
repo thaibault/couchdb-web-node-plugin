@@ -226,10 +226,8 @@ export const authorize = (
                     modelRoles.attachments
                 ))
                     extendWithBasicRoles(roles)
-            for (const [name, roles] of Object.entries(modelRoles.properties)) {
-                console.log('EXTEND', name, roles, baseRoles)
+            for (const [name, roles] of Object.entries(modelRoles.properties))
                 extendWithBasicRoles(roles)
-            }
         }
         // endregion
         const baseRelevantRoles: Array<string> =
