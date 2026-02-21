@@ -66,7 +66,6 @@ describe('databaseHelper', () => {
         authorize,
         TEST_THROW_SYMBOL,
 
-        /*
         [
             {...baseDocument, [typeName]: 'Test'},
             null,
@@ -92,7 +91,6 @@ describe('databaseHelper', () => {
                 write: ['users']
             }}
         ],
-        */
         [
             {
                 ...baseDocument,

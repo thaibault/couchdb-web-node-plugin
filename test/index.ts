@@ -379,6 +379,7 @@ describe('index', (): void => {
             // endregion
         // eslint-disable-next-line no-useless-catch
         } catch (error) {
+            console.log(error)
             throw error
         } finally {
             await waitWithTimeout(

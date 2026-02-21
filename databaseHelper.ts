@@ -82,7 +82,6 @@ export const log = new Logger({name: 'web-node.couchdb.database'})
  * authorized or not.
  * @param specialNames - Special names configuration.
  * @param contextPath - Path of properties leading to current document.
- * @param parentRoles - Inherited or base roles to at least require on.
  * @param toJSON - JSON stringifier.
  * @param fromJSON - JSON parser.
  * @returns Throws an exception if authorization is not accepted and "true"
@@ -101,13 +100,6 @@ export const authorize = (
         packageConfiguration.webNode.couchdb.model.property.name.special as
             SpecialPropertyNames,
     contextPath: Array<string> = [],
-    // Inherited roles from parent model aka parent model property roles.
-    // TODO check if we do need kind of inheritance here.
-    parentRoles: NormalizedModelRoles = {
-        properties: {},
-        read: [],
-        write: []
-    },
     toJSON?: (value: unknown) => string,
     fromJSON?: (value: string) => unknown
 ): true => {
@@ -287,38 +279,30 @@ export const authorize = (
                     if (!authorized)
                         break
                 }
-            } else if (
-                value !== null &&
-                typeof value === 'object' &&
-                Object.prototype.hasOwnProperty.call(value, typePropertyName)
-            ) {
-                authorize(
-                    value as Partial<Document>,
-                    (
-                        oldDocument &&
-                        oldDocument[name] as null | Partial<Document> ||
-                        null
-                    ),
-                    userContext,
-                    securitySettings,
-                    modelRolesMapping,
-                    read,
-                    specialNames,
-                    localContextPath,
-                    deepCopy(
-                        Object.prototype.hasOwnProperty.call(
-                            modelRoles.properties, name
-                        ) ?
-                            {
-                                ...modelRoles.properties[name],
-                                properties: {}
-                            } :
-                            modelRoles
+            } else if (checkProperty(name, modelRoles.properties)) {
+                if (
+                    value !== null &&
+                    typeof value === 'object' &&
+                    Object.prototype.hasOwnProperty.call(
+                        value, typePropertyName
                     )
                 )
+                    authorize(
+                        value as Partial<Document>,
+                        (
+                            oldDocument &&
+                            oldDocument[name] as null | Partial<Document> ||
+                            null
+                        ),
+                        userContext,
+                        securitySettings,
+                        modelRolesMapping,
+                        read,
+                        specialNames,
+                        localContextPath
+                    )
                 authorized = true
-            } else if (checkProperty(name, modelRoles.properties))
-                authorized = true
+            }
 
             if (!authorized)
                 break

@@ -198,7 +198,9 @@ export const preLoadService = async ({
         // Plugins are already applied via backend connector via prototype.
         couchdb.connector = PouchDB
             .defaults({
-                ...backendConnectorConfiguration,
+                // TODO check why it breaks rest api tests
+                // and understand config.json creation better
+                // ...backendConnectorConfiguration,
                 ...getConnectorOptions(configuration.connector)
             }) as typeof PouchDB
 
