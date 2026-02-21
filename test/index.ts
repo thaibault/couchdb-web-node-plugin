@@ -71,9 +71,7 @@ describe('index', (): void => {
     }
     config.runner.variants[2].configuration = {
         adapter: 'memory',
-        logPath: '/dev/null',
-        // eslint-disable-next-line camelcase
-        skip_setup: true
+        logPath: '/dev/null'
     } as LocalDatabaseConfiguration
     config.attachAutoRestarter = false
     ;(config.model.entities.TestModel as Model) = {
@@ -379,7 +377,6 @@ describe('index', (): void => {
             // endregion
         // eslint-disable-next-line no-useless-catch
         } catch (error) {
-            console.log(error)
             throw error
         } finally {
             await waitWithTimeout(

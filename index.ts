@@ -173,9 +173,10 @@ export const preLoadService = async ({
             ).values['couchdb/database_dir']
         ) ?
             /*
-                NOTE: If we have a binary based database server, we need to
-                configure the path prefix only (the connection will be over
-                http than).
+                NOTE: If we have a database server running outside of this
+                process (called via a configured binary), we need to configure
+                the path prefix only. Further configuration will be made via
+                http requests.
             */
             {
                 prefix:
@@ -197,12 +198,15 @@ export const preLoadService = async ({
             .defaults(backendConnectorConfiguration) as typeof PouchDB
         // Plugins are already applied via backend connector via prototype.
         couchdb.connector = PouchDB
-            .defaults({
-                // TODO check why it breaks rest api tests
-                // and understand config.json creation better
-                // ...backendConnectorConfiguration,
-                ...getConnectorOptions(configuration.connector)
-            }) as typeof PouchDB
+            .defaults(getConnectorOptions(configuration.connector)) as
+                typeof PouchDB
+
+        console.log(
+            'TODO',
+            backendConnectorConfiguration,
+            // @ts-ignore
+            couchdb.connector.adapter
+        )
 
         if (configuration.debug)
             couchdb.connector.debug.enable('*')
