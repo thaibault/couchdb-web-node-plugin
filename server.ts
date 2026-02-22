@@ -65,7 +65,7 @@ import {
     SecuritySettings,
     Services,
     State,
-    UserContext, InitializeExpressPouchDBStateData
+    UserContext, InitializeExpressPouchDBStateData, LocalDatabaseConfiguration
 } from './type'
 // endregion
 globalContext.fetch = nodeFetch as unknown as typeof fetch
@@ -78,6 +78,7 @@ export const log = new Logger({name: 'web-node.couchdb.server'})
  * @param state - Application state.
  * @param connector - Database connector instance.
  * @param configuration - Couchdb configuration object.
+ * @param runnerConfiguration - Couchdb runner configuration object.
  * @param pluginAPI - Plugin API to call plugin hooks.
  * @param expressUtilities - Optional express related utilities.
  * @returns A promise resolving to the wrapping express instance and pouchdb's
@@ -88,6 +89,7 @@ export const initializeExpress = async (
     state: State,
     connector: Connector,
     configuration: CoreConfiguration,
+    runnerConfiguration: LocalDatabaseConfiguration,
     pluginAPI: State['pluginAPI'],
     expressUtilities?: (typeof import('./loadExpress'))['default']
 ): Promise<{
@@ -190,13 +192,13 @@ export const initializeExpress = async (
         expressPouchDB(
             connector,
             {
+                ...runnerConfiguration,
                 overrideMode: {
                     exclude: ([] as typeof routesToPostpone[0])
                         .concat(...routesToPostpone)
                         .map(([name]) => name as string)
                 },
-                inMemoryConfig: isInMemory,
-                logPath: '/dev/null'
+                inMemoryConfig: isInMemory
             }
         )
 
@@ -624,6 +626,7 @@ export const start = async (
                     state,
                     backendConnector,
                     configuration.couchdb,
+                    runner.configuration as LocalDatabaseConfiguration,
                     pluginAPI,
                     expressUtilities
                 )

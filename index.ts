@@ -201,13 +201,6 @@ export const preLoadService = async ({
             .defaults(getConnectorOptions(configuration.connector)) as
                 typeof PouchDB
 
-        console.log(
-            'TODO',
-            backendConnectorConfiguration,
-            // @ts-ignore
-            couchdb.connector.adapter
-        )
-
         if (configuration.debug)
             couchdb.connector.debug.enable('*')
     }
