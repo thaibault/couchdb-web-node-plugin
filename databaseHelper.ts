@@ -82,6 +82,7 @@ export const log = new Logger({name: 'web-node.couchdb.database'})
  * authorized or not.
  * @param specialNames - Special names configuration.
  * @param contextPath - Path of properties leading to current document.
+ * @param parentRoles - Roles of parent object when called recursively.
  * @param toJSON - JSON stringifier.
  * @param fromJSON - JSON parser.
  * @returns Throws an exception if authorization is not accepted and "true"
@@ -100,6 +101,7 @@ export const authorize = (
         packageConfiguration.webNode.couchdb.model.property.name.special as
             SpecialPropertyNames,
     contextPath: Array<string> = [],
+    parentRoles: Array<string> = [],
     toJSON?: (value: unknown) => string,
     fromJSON?: (value: string) => unknown
 ): true => {
@@ -201,12 +203,13 @@ export const authorize = (
         let modelRoles: NormalizedModelRoles = deepCopy(baseRoles)
 
         const userRoles = userContext.roles
-        // region determine model specific allowed roles
-        if (
+        // region determine model specific roles
+        let relevantModelRoles: Array<string> = modelRoles[operationType]
+        const modelRolesExists =
             modelRolesMapping &&
             modelType &&
             Object.prototype.hasOwnProperty.call(modelRolesMapping, modelType)
-        ) {
+        if (modelRolesExists) {
             const extendWithBasicRoles = <T extends NormalizedRoles>(
                 roles: T
             ): T => {
@@ -228,11 +231,11 @@ export const authorize = (
                     extendWithBasicRoles(roles)
             for (const roles of Object.values(modelRoles.properties))
                 extendWithBasicRoles(roles)
-        }
-        // endregion
-        const baseRelevantRoles: Array<string> =
-            modelRoles[operationType]
 
+            relevantModelRoles = modelRoles[operationType]
+        } else if (parentRoles.length)
+            relevantModelRoles = parentRoles
+        // endregion
         const checkProperty = (
             name: string, propertyRoles: Mapping<NormalizedRoles> = {}
         ) => {
@@ -240,7 +243,7 @@ export const authorize = (
                 propertyRoles, name
             ) ?
                 propertyRoles[name][operationType] :
-                baseRelevantRoles
+                relevantModelRoles
 
             for (const userRole of userRoles)
                 if (relevantRoles.includes(userRole))
@@ -278,6 +281,14 @@ export const authorize = (
                         break
                 }
             } else if (checkProperty(name, modelRoles.properties)) {
+                if (name === 'emergencyServiceState')
+                    console.log(
+                        'CHECK',
+                        userContext.name,
+                        userRoles,
+                        modelRoles.properties
+                    )
+
                 if (
                     value !== null &&
                     typeof value === 'object' &&
@@ -297,7 +308,12 @@ export const authorize = (
                         modelRolesMapping,
                         read,
                         specialNames,
-                        localContextPath
+                        localContextPath,
+                        Object.prototype.hasOwnProperty.call(
+                            modelRoles.properties, name
+                        ) ?
+                            modelRoles.properties[name][operationType] :
+                            relevantModelRoles
                     )
                 authorized = true
             }
