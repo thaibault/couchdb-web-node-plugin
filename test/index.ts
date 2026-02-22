@@ -71,9 +71,7 @@ describe('index', (): void => {
     }
     config.runner.variants[2].configuration = {
         adapter: 'memory',
-        logPath: '/dev/null',
-        // eslint-disable-next-line camelcase
-        skip_setup: true
+        logPath: '/dev/null'
     } as LocalDatabaseConfiguration
     config.attachAutoRestarter = false
     ;(config.model.entities.TestModel as Model) = {

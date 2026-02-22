@@ -33,8 +33,8 @@ import {fromFetch} from 'rxjs/fetch'
 import packageConfiguration from './package.json'
 import {
     AbortControllerStack,
-    AllowedModelRolesMapping,
-    AllowedRoles,
+    ModelRolesMapping,
+    Roles,
     AttachmentData,
     BaseModel,
     Configuration,
@@ -53,7 +53,7 @@ import {
     Model,
     ModelConfiguration,
     Models,
-    NormalizedAllowedRoles,
+    NormalizedRoles,
     PartialFullDocument,
     PropertySpecification,
     PutDocument,
@@ -694,10 +694,10 @@ export const waitWithTimeout = (
  */
 export const determineAllowedModelRolesMapping = (
     modelConfiguration: ModelConfiguration
-): AllowedModelRolesMapping => {
+): ModelRolesMapping => {
     const {allowedRole: allowedRoleName, attachment: attachmentsPropertyName} =
         modelConfiguration.property.name.special
-    const allowedModelRolesMapping: AllowedModelRolesMapping = {}
+    const allowedModelRolesMapping: ModelRolesMapping = {}
     const models: Models = extendModels(modelConfiguration)
 
     for (const [modelName, model] of Object.entries(models))
@@ -719,12 +719,12 @@ export const determineAllowedModelRolesMapping = (
                                 fileDescription
                             ] = normalizeAllowedRoles(
                                 (fileSpecification as PropertySpecification)
-                                    .allowedRoles as AllowedRoles
+                                    .allowedRoles as Roles
                             )
                     } else if (property.allowedRoles)
                         allowedModelRolesMapping[modelName].properties[name] =
                             normalizeAllowedRoles(
-                                property.allowedRoles as AllowedRoles
+                                property.allowedRoles as Roles
                             )
         } else
             allowedModelRolesMapping[modelName] = {
@@ -946,13 +946,13 @@ export const extendModels = (
  * @returns Normalized roles representation.
  */
 export const normalizeAllowedRoles = (
-    roles: AllowedRoles
-): NormalizedAllowedRoles => {
+    roles: Roles
+): NormalizedRoles => {
     if (Array.isArray(roles))
         return {read: roles, write: roles}
 
     if (typeof roles === 'object') {
-        const result: NormalizedAllowedRoles = {read: [], write: []}
+        const result: NormalizedRoles = {read: [], write: []}
 
         for (const type of Object.keys(result))
             if (Object.prototype.hasOwnProperty.call(roles, type))

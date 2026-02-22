@@ -204,6 +204,7 @@ describe('databaseHelper', () => {
             }
         ]
     )
+
     for (const updateStrategy of [
         'fillUp', 'incremental', 'replace'
     ] as const) {

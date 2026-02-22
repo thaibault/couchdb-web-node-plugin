@@ -173,14 +173,16 @@ export const preLoadService = async ({
             ).values['couchdb/database_dir']
         ) ?
             /*
-                NOTE: Only if we have a binary based database server, we need
-                to configure the path prefix remotely.
+                NOTE: If we have a database server running outside of this
+                process (called via a configured binary), we need to configure
+                the path prefix only. Further configuration will be made via
+                http requests.
             */
             {
                 prefix:
                     resolve(String(
                         (couchdb.server.runner.configuration as
-                                BinaryRunner['configuration']
+                            BinaryRunner['configuration']
                         ).values['couchdb/database_dir'] as
                             number | string
                     )) +
@@ -326,7 +328,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                     viewDocument[name] = rawData.docs
             }
 
-            log.info(`Initialize view ${id}:`, viewDocument)
+            log.info(`Initialize view ${id}:`, represent(viewDocument))
             await couchdb.connection.put(viewDocument)
         }
     }
@@ -710,14 +712,6 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
         // region generate/update authentication/validation code
         for (const type of [
             {
-                description: 'Model specification',
-                methodName: 'validateDocumentUpdate',
-                name: 'validation',
-                serializedParameter:
-                    `${JSON.stringify(modelConfiguration)}, ` +
-                    JSON.stringify(models)
-            },
-            {
                 description: 'Authorization',
                 methodName: 'authorize',
                 name: 'authorization',
@@ -729,6 +723,14 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                     JSON.stringify(
                         configuration.couchdb.model.property.name.special
                     )
+            },
+            {
+                description: 'Model specification',
+                methodName: 'validateDocumentUpdate',
+                name: 'validation',
+                serializedParameter:
+                    `${JSON.stringify(modelConfiguration)}, ` +
+                    JSON.stringify(models)
             }
         ] as const) {
             /*
