@@ -692,48 +692,46 @@ export const waitWithTimeout = (
  * @param modelConfiguration - Model specification object.
  * @returns The mapping object.
  */
-export const determineAllowedModelRolesMapping = (
+export const determineModelRolesMapping = (
     modelConfiguration: ModelConfiguration
 ): ModelRolesMapping => {
-    const {allowedRole: allowedRoleName, attachment: attachmentsPropertyName} =
-        modelConfiguration.property.name.special
-    const allowedModelRolesMapping: ModelRolesMapping = {}
+    const {
+        allowedRole: rolePropertyName, attachment: attachmentsPropertyName
+    } = modelConfiguration.property.name.special
+    const modelRolesMapping: ModelRolesMapping = {}
     const models: Models = extendModels(modelConfiguration)
 
     for (const [modelName, model] of Object.entries(models))
-        if (model[allowedRoleName]) {
-            allowedModelRolesMapping[modelName] = {
+        if (model[rolePropertyName]) {
+            modelRolesMapping[modelName] = {
                 properties: {},
 
-                ...normalizeAllowedRoles(model[allowedRoleName])
+                ...normalizeRoles(model[rolePropertyName])
             }
 
             for (const [name, property] of Object.entries(model))
                 if (isObject(property))
                     if (name === attachmentsPropertyName) {
-                        allowedModelRolesMapping[modelName].attachments = {}
+                        modelRolesMapping[modelName].attachments = {}
                         for (const [
                             fileDescription, fileSpecification
                         ] of Object.entries(property))
-                            allowedModelRolesMapping[modelName].attachments[
-                                fileDescription
-                            ] = normalizeAllowedRoles(
+                            if (
                                 (fileSpecification as PropertySpecification)
-                                    .allowedRoles as Roles
+                                    .allowedRoles
                             )
+                                modelRolesMapping[modelName].attachments[
+                                    fileDescription
+                                ] = normalizeRoles(
+                                    (fileSpecification as PropertySpecification)
+                                        .allowedRoles as Roles
+                                )
                     } else if (property.allowedRoles)
-                        allowedModelRolesMapping[modelName].properties[name] =
-                            normalizeAllowedRoles(
-                                property.allowedRoles as Roles
-                            )
-        } else
-            allowedModelRolesMapping[modelName] = {
-                properties: {},
-                read: [],
-                write: []
-            }
+                        modelRolesMapping[modelName].properties[name] =
+                            normalizeRoles(property.allowedRoles as Roles)
+        }
 
-    return allowedModelRolesMapping
+    return modelRolesMapping
 }
 /**
  * Determines whether given value of a model is a property specification.
@@ -945,7 +943,7 @@ export const extendModels = (
  * @param roles - Unstructured role's description.
  * @returns Normalized roles representation.
  */
-export const normalizeAllowedRoles = (
+export const normalizeRoles = (
     roles: Roles
 ): NormalizedRoles => {
     if (Array.isArray(roles))
@@ -955,13 +953,13 @@ export const normalizeAllowedRoles = (
         const result: NormalizedRoles = {read: [], write: []}
 
         for (const type of Object.keys(result))
-            if (Object.prototype.hasOwnProperty.call(roles, type))
-                if (Array.isArray(roles[type as 'read' | 'write']))
-                    result[type as 'read' | 'write'] =
-                        roles[type as 'read' | 'write'] as Array<string>
-                else
-                    result[type as 'read' | 'write'] =
-                        [roles[type as 'read' | 'write'] as string]
+            if (Object.prototype.hasOwnProperty.call(roles, type)) {
+                const operationRoles = roles[type as 'read' | 'write']
+                if (Array.isArray(operationRoles))
+                    result[type as 'read' | 'write'] = operationRoles
+                else if (typeof operationRoles === 'string')
+                    result[type as 'read' | 'write'] = [operationRoles]
+            }
 
         return result
     }
