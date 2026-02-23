@@ -15,13 +15,7 @@
 */
 // region imports
 import {
-    currentRequire,
-    FirstParameter,
-    Logger,
-    Mapping,
-    PlainObject,
-    Primitive,
-    ValueOf
+    currentRequire, FirstParameter, Logger, Mapping, Primitive, ValueOf
 } from 'clientnode'
 
 import packageConfiguration from './package.json'
@@ -223,12 +217,6 @@ export const authorize = (
             modelRoles = extendWithBasicRoles(deepCopy(
                 modelRolesMapping[modelType]
             ))
-
-            console.log(
-                'TODO check',
-                modelRoles.attachments,
-                modelRolesMapping[modelType].attachments
-            )
 
             if (modelRoles.attachments)
                 for (const roles of Object.values(
@@ -804,71 +792,72 @@ export const validateDocumentUpdate = <
         return false
     }
 
+    const checkModelType = (
+        localNewDocument: PartialFullDocumentType,
+        localOldDocument: null | PartialFullDocumentType = null
+    ) => {
+        // region check for model type (optionally migrate them)
+        if (!Object.prototype.hasOwnProperty.call(
+            localNewDocument, typeName
+        ))
+            if (
+                localOldDocument &&
+                Object.prototype.hasOwnProperty.call(
+                    localOldDocument, typeName
+                ) &&
+                ['fillUp', 'migrate'].includes(
+                    modelConfiguration.updateStrategy
+                )
+            )
+                localNewDocument[typeName] = localOldDocument[typeName]
+            else
+                throwError(
+                    'Type: You have to specify a model type via property ' +
+                    `"${typeName}".`
+                )
+
+        if (
+            checkPublicModelType &&
+            !(new RegExp(
+                modelConfiguration.property.name.typePattern.public
+            )).test(localNewDocument[typeName] as string)
+        )
+            throwError(
+                'TypeName: You have to specify a model type which ' +
+                'matches "' +
+                modelConfiguration.property.name.typePattern.public +
+                `" as public type (given "` +
+                `${localNewDocument[typeName] as string}").`
+            )
+
+        if (!Object.prototype.hasOwnProperty.call(
+            models, localNewDocument[typeName] as string
+        ))
+            if (Object.prototype.hasOwnProperty.call(
+                oldModelMapping, localNewDocument[typeName] as string
+            ))
+                localNewDocument[typeName] =
+                    oldModelMapping[localNewDocument[typeName] as string]
+            else
+                throwError(
+                    'Model: Given model "' +
+                    `${localNewDocument[typeName] as string}" is not ` +
+                    `specified.`
+                )
+        // endregion
+    }
+
     const checkDocument = (
         localNewDocument: PartialFullDocumentType = newDocument,
         localOldDocument: null | PartialFullDocumentType = null,
+        modelName: string,
+        model: ModelType,
         parentNames: Array<string> = [],
         updateStrategy: UpdateStrategy = modelConfiguration.updateStrategy
     ): CheckedDocumentResult<ObjectType, AdditionalPropertiesType> => {
         const pathDescription =
             parentNames.length ? ` in ${parentNames.join(' -> ')}` : ''
         let changedPath: Array<string> = []
-
-        const checkModelType = () => {
-            // region check for model type (optionally migrate them)
-            if (!Object.prototype.hasOwnProperty.call(
-                localNewDocument, typeName
-            ))
-                if (
-                    localOldDocument &&
-                    Object.prototype.hasOwnProperty.call(
-                        localOldDocument, typeName
-                    ) &&
-                    ['fillUp', 'migrate'].includes(updateStrategy)
-                )
-                    localNewDocument[typeName] = localOldDocument[typeName]
-                else
-                    throwError(
-                        'Type: You have to specify a model type via ' +
-                        `property "${typeName}"${pathDescription}.`
-                    )
-            if (
-                checkPublicModelType &&
-                !(
-                    parentNames.length ||
-                    (new RegExp(
-                        modelConfiguration.property.name.typePattern.public
-                    )).test(localNewDocument[typeName] as string)
-                )
-            )
-                throwError(
-                    'TypeName: You have to specify a model type which ' +
-                    'matches "' +
-                    modelConfiguration.property.name.typePattern.public +
-                    `" as public type (given "` +
-                    `${localNewDocument[typeName] as string}")` +
-                    `${pathDescription}.`
-                )
-            if (!Object.prototype.hasOwnProperty.call(
-                models, localNewDocument[typeName] as string
-            ))
-                if (Object.prototype.hasOwnProperty.call(
-                    oldModelMapping, localNewDocument[typeName] as string
-                ))
-                    localNewDocument[typeName] =
-                        oldModelMapping[localNewDocument[typeName] as string]
-                else
-                    throwError(
-                        'Model: Given model "' +
-                        `${localNewDocument[typeName] as string}" is not ` +
-                        `specified${pathDescription}.`
-                    )
-            // endregion
-        }
-        checkModelType()
-
-        let modelName = localNewDocument[typeName] as string
-        const model: ModelType = models[modelName]
 
         if (Object.prototype.hasOwnProperty.call(
             model, specialNames.updateStrategy
@@ -1047,16 +1036,7 @@ export const validateDocumentUpdate = <
             const types = ([] as Array<TypeSpecification>).concat(
                 propertySpecification.type ? propertySpecification.type : []
             )
-            // Derive nested missing explicit type definition if possible.
-            if (
-                typeof newValue === 'object' &&
-                Object.getPrototypeOf(newValue) === Object.prototype &&
-                !Object.prototype.hasOwnProperty.call(newValue, typeName) &&
-                types.length === 1 &&
-                typeof types[0] === 'string' &&
-                Object.prototype.hasOwnProperty.call(models, types[0])
-            )
-                (newValue as PartialFullDocumentType)[typeName] = types[0]
+            // Derive nested type definition if possible.
             let typeMatched = false
             for (const type of types)
                 if (
@@ -1068,44 +1048,67 @@ export const validateDocumentUpdate = <
                         Object.getPrototypeOf(newValue) === Object.prototype &&
                         Object.prototype.hasOwnProperty.call(
                             newValue, typeName
-                        ) &&
-                        (newValue as PartialFullDocumentType)[typeName] !==
-                            type &&
-                        localUpdateStrategy === 'migrate' &&
-                        types.length === 1
+                        )
                     ) {
-                        /*
-                            Derive nested (object based) maybe compatible type
-                            definition. Nested types have to be checked than.
-                        */
-                        (newValue as PartialFullDocumentType)[typeName] = type
+                        delete (newValue as PartialFullDocumentType)[typeName]
                         changedPath = parentNames.concat(
-                            name, 'migrate nested object type'
+                            name, 'remove derivable type declaration'
                         )
                     }
+
                     if (
                         typeof newValue === 'object' &&
-                        Object.getPrototypeOf(newValue) === Object.prototype &&
-                        Object.prototype.hasOwnProperty.call(
-                            newValue, typeName
-                        ) &&
-                        (newValue as PartialFullDocumentType)[typeName] ===
-                            type
+                        Object.getPrototypeOf(newValue) === Object.prototype
                     ) {
-                        const result = checkDocument(
-                            newValue as PartialFullDocumentType,
-                            oldValue as null | PartialFullDocumentType,
-                            parentNames.concat(name),
-                            localUpdateStrategy
+                        let result: (
+                            CheckedDocumentResult<
+                                ObjectType, AdditionalPropertiesType
+                            > |
+                            undefined
                         )
-                        if (result.changedPath.length)
-                            changedPath = result.changedPath
-                        newValue = result.newDocument as Type
-                        if (serialize(newValue) === serialize({}))
-                            return {newValue: undefined, changedPath}
+                        try {
+                            result = checkDocument(
+                                newValue as PartialFullDocumentType,
+                                oldValue as null | PartialFullDocumentType,
+                                // TODO forward in-place model if found.
+                                type,
+                                models[type],
+                                parentNames.concat(name),
+                                localUpdateStrategy
+                            )
+                        } catch (error) {
+                            const errorMessage = (
+                                (
+                                    error as Partial<Error> | undefined
+                                )?.message ??
+                                'unknown'
+                            )
+                            if (types.length === 1)
+                                throwError(
+                                    `NestedType: Under key "${name}" isn't ` +
+                                    `of type "${type}" (given ` +
+                                    `"${serialize(newValue)}" of type ` +
+                                    `${typeof newValue}) Issue is ` +
+                                    `"${errorMessage}".${pathDescription}.`
+                                )
+                            else
+                                log.debug(
+                                    `Tried to match "${serialize(newValue)}"`,
+                                    `with type "${type}". Got error:`,
+                                    `"${errorMessage}"`
+                                )
+                        }
 
-                        typeMatched = true
-                        break
+                        if (result) {
+                            if (result.changedPath.length)
+                                changedPath = result.changedPath
+                            newValue = result.newDocument as Type
+                            if (serialize(newValue) === serialize({}))
+                                return {newValue: undefined, changedPath}
+
+                            typeMatched = true
+                            break
+                        }
                     } else if (types.length === 1)
                         throwError(
                             `NestedType: Under key "${name}" isn't of type ` +
@@ -1192,6 +1195,7 @@ export const validateDocumentUpdate = <
                             .replace(/"$/, '') +
                         `" of type "${typeof newValue}")${pathDescription}.`
                     )
+
             if (!typeMatched)
                 throwError(
                     'PropertyType: None of the specified types "' +
@@ -1776,7 +1780,7 @@ export const validateDocumentUpdate = <
                         // @ts-expect-error Typescript cannot determine.
                         localNewDocument = result
 
-                    checkModelType()
+                    checkModelType(localNewDocument, localOldDocument)
 
                     modelName = localNewDocument[typeName] as string
 
@@ -1854,7 +1858,7 @@ export const validateDocumentUpdate = <
                     // @ts-expect-error Typescript cannot determine.
                     localNewDocument = result
 
-                checkModelType()
+                checkModelType(localNewDocument, localOldDocument)
 
                 modelName = localNewDocument[typeName] as string
 
@@ -2075,7 +2079,9 @@ export const validateDocumentUpdate = <
                                 localOldDocument, name
                             ) &&
                             updateStrategy !== 'replace'
-                        )
+                        ) ||
+                        name === typeName &&
+                        parentNames.length > 0
                     ))
                         throwError(
                             `MissingProperty: Missing property ` +
@@ -2149,7 +2155,9 @@ export const validateDocumentUpdate = <
                     (
                         localOldDocument[name] === value ||
                         serialize(localOldDocument[name]) === serialize(value)
-                    )
+                    ) ||
+                    parentNames.length > 0 &&
+                    name === typeName
                 )
                     delete localNewDocument[name]
         /// endregion
@@ -2351,33 +2359,6 @@ export const validateDocumentUpdate = <
                                         AdditionalSpecifications
                                     >
                                 ] as Primitive
-                    //// region add missing array item types
-                    /*
-                        Derive nested missing explicit type definition if
-                        possible. Objects in arrays without explicit type
-                        definition will receive one.
-                    */
-                    if (
-                        Array.isArray(propertySpecificationCopy.type) &&
-                        propertySpecificationCopy.type.length === 1 &&
-                        typeof propertySpecificationCopy.type[0] ===
-                            'string' &&
-                        Object.prototype.hasOwnProperty.call(
-                            models, propertySpecificationCopy.type[0]
-                        )
-                    )
-                        for (const value of newProperty.slice())
-                            if (
-                                typeof value === 'object' &&
-                                Object.getPrototypeOf(value) ===
-                                    Object.prototype &&
-                                !Object.prototype.hasOwnProperty.call(
-                                    value as PlainObject, typeName
-                                )
-                            )
-                                (value as PlainObject)[typeName] =
-                                    propertySpecificationCopy.type[0]
-                    //// endregion
                     //// region check each array item
                     let index = 0
                     for (const value of newProperty.slice()) {
@@ -2451,10 +2432,7 @@ export const validateDocumentUpdate = <
                                 String(name), 'property removed'
                             )
 
-                    if (
-                        localNewDocument[name] === undefined &&
-                        updateStrategy === 'incremental'
-                    )
+                    if (localNewDocument[name] === undefined)
                         delete localNewDocument[name]
                 }
             }
@@ -3055,7 +3033,14 @@ export const validateDocumentUpdate = <
                 delete attachment.contentType
             }
     // endregion
-    const result = checkDocument(newDocument, oldDocument)
+
+    checkModelType(newDocument, oldDocument)
+
+    const modelName = newDocument[typeName] as string
+    const model: ModelType = models[modelName]
+
+    const result =
+        checkDocument(newDocument, oldDocument, modelName, model)
 
     // region check if changes happened
     if (

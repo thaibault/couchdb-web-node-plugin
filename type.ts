@@ -314,6 +314,7 @@ export interface BaseModel<
     _minimumAggregatedSize?: number
 
     _oldType?: Array<string> | string
+    _type?: Array<string> | string
 
     _onUpdateExecution?: string
     _onUpdateExpression?: string
@@ -750,6 +751,13 @@ export interface BasicScope<
         oldDocument:
             PartialFullDocument<Type, AdditionalPropertiesType> |
             null,
+        modelName: string,
+        model: Model<
+            Type,
+            AttachmentType,
+            AdditionalSpecifications,
+            AdditionalPropertiesType
+        >,
         parentNames: Array<string>
     ) => CheckedDocumentResult<Type, AdditionalPropertiesType>
     deepCopy: <T>(data: T) => T

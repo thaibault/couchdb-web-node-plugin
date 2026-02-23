@@ -286,8 +286,6 @@ describe('index', (): void => {
             // eslint-disable-next-line camelcase
             await expect(client.allDocs({include_docs: true}))
                 .rejects.toHaveProperty('error', 'unauthorized')
-
-            console.log('A')
             /// endregion
             /// region changes
             const {results: validResults} = await client.changes({since: 0})
@@ -378,7 +376,6 @@ describe('index', (): void => {
             // endregion
         // eslint-disable-next-line no-useless-catch
         } catch (error) {
-            console.log(error)
             throw error
         } finally {
             await waitWithTimeout(
