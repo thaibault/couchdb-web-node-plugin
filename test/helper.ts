@@ -22,13 +22,13 @@ import {
 import {describe, expect, test} from '@jest/globals'
 
 import {
-    determineAllowedModelRolesMapping,
+    determineModelRolesMapping,
     determineGenericIndexablePropertyNames,
     ensureValidationDocumentPresence,
     extendModel,
     extendModels,
     mayStripRepresentation,
-    normalizeAllowedRoles
+    normalizeRoles
 } from '../helper'
 import packageConfiguration from '../package.json'
 import {
@@ -94,14 +94,14 @@ describe('helper', (): void => {
         copy(configuration.couchdb.model)
     mockModelConfiguration.entities = {}
 
-    testEach<typeof determineAllowedModelRolesMapping>(
-        'determineAllowedModelRolesMapping',
-        determineAllowedModelRolesMapping,
+    testEach<typeof determineModelRolesMapping>(
+        'determineModelRolesMapping',
+        determineModelRolesMapping,
 
         ...[
             [{}, {property: {}}],
             [
-                {Test: {properties: {}, read: [], write: []}},
+                {},
                 {
                     property: {name: {special: {allowedRole: 'roles'}}},
                     entities: {Test: {}}
@@ -318,9 +318,9 @@ describe('helper', (): void => {
             )
         )).toStrictEqual({a: {}})
     })
-    testEach<typeof normalizeAllowedRoles>(
+    testEach<typeof normalizeRoles>(
         'normalizeAllowedRoles',
-        normalizeAllowedRoles,
+        normalizeRoles,
 
         [{read: ['a'], write: ['a']}, 'a'],
         [{read: [], write: []}, []],

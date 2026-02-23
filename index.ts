@@ -46,7 +46,7 @@ import {PluginHandler, PluginPromises} from 'web-node/type'
 
 import databaseHelper, {validateDocumentUpdate} from './databaseHelper'
 import {
-    determineAllowedModelRolesMapping,
+    determineModelRolesMapping,
     determineGenericIndexablePropertyNames,
     ensureValidationDocumentPresence,
     extendModels,
@@ -716,7 +716,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                 methodName: 'authorize',
                 name: 'authorization',
                 serializedParameter:
-                    JSON.stringify(determineAllowedModelRolesMapping(
+                    JSON.stringify(determineModelRolesMapping(
                         configuration.couchdb.model
                     )) +
                     ', false, ' +

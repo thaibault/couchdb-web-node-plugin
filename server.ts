@@ -45,7 +45,7 @@ import {dirname, resolve} from 'path'
 
 import {authorize} from './databaseHelper'
 import {
-    determineAllowedModelRolesMapping,
+    determineModelRolesMapping,
     getEffectiveURL,
     initializeConnection,
     waitWithTimeout
@@ -233,7 +233,7 @@ export const initializeExpress = async (
                 ).db.allDocs(options)
                 // authorize documents
                 const modelRolesMapping =
-                    determineAllowedModelRolesMapping(configuration.model)
+                    determineModelRolesMapping(configuration.model)
 
                 for (const row of result.rows)
                     try {
@@ -292,7 +292,7 @@ export const initializeExpress = async (
         }
 
         const modelRolesMapping =
-            determineAllowedModelRolesMapping(configuration.model)
+            determineModelRolesMapping(configuration.model)
 
         const authorizeChange = (document: ChangesResponseChange['doc']) =>
             authorize(
@@ -412,7 +412,7 @@ export const initializeExpress = async (
                     result = await request.db.find(request.body)
                 // authorize documents
                 const modelRolesMapping =
-                    determineAllowedModelRolesMapping(configuration.model)
+                    determineModelRolesMapping(configuration.model)
 
                 for (const document of result.docs)
                     try {
@@ -464,7 +464,7 @@ export const initializeExpress = async (
 
             try {
                 const modelRolesMapping =
-                    determineAllowedModelRolesMapping(configuration.model)
+                    determineModelRolesMapping(configuration.model)
 
                 const {docs: [document]} = await request.db.find({
                     fields: [specialNames.type],
@@ -522,7 +522,7 @@ export const initializeExpress = async (
 
             try {
                 const modelRolesMapping =
-                    determineAllowedModelRolesMapping(configuration.model)
+                    determineModelRolesMapping(configuration.model)
 
                 const document =
                     await request.db.get(request.params.id, request.query)

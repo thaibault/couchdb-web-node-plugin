@@ -302,7 +302,6 @@
         "dateTimeFormat": "iso",
         "entities": {
           "_base": {
-            "_allowedRoles": "users",
             "_attachments": {},
             "_deleted": {
               "type": "boolean"

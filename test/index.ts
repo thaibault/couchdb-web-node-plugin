@@ -75,9 +75,9 @@ describe('index', (): void => {
     } as LocalDatabaseConfiguration
     config.attachAutoRestarter = false
     ;(config.model.entities.TestModel as Model) = {
+        _allowedRoles: 'users',
         _attachments: {
             'file.txt': {
-                allowedRoles: 'users',
                 default: {
                     'file.txt': {
                         // eslint-disable-next-line camelcase
@@ -90,11 +90,10 @@ describe('index', (): void => {
                 maximumNumber: 1
             }
         },
-        writableProperty: {
-            allowedRoles: 'users'
-        }
+        writableProperty: {}
     } as unknown as Model
     ;(config.model.entities.SensibelTestModel as Model) = {
+        _allowedRoles: 'users',
         _attachments: {
             'secureFile.txt': {
                 allowedRoles: 'admin',
@@ -287,6 +286,8 @@ describe('index', (): void => {
             // eslint-disable-next-line camelcase
             await expect(client.allDocs({include_docs: true}))
                 .rejects.toHaveProperty('error', 'unauthorized')
+
+            console.log('A')
             /// endregion
             /// region changes
             const {results: validResults} = await client.changes({since: 0})
@@ -377,6 +378,7 @@ describe('index', (): void => {
             // endregion
         // eslint-disable-next-line no-useless-catch
         } catch (error) {
+            console.log(error)
             throw error
         } finally {
             await waitWithTimeout(

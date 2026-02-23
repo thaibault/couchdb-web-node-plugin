@@ -205,11 +205,11 @@ export const authorize = (
         const userRoles = userContext.roles
         // region determine model specific roles
         let relevantModelRoles: Array<string> = modelRoles[operationType]
-        const modelRolesExists =
+        if (
             modelRolesMapping &&
             modelType &&
             Object.prototype.hasOwnProperty.call(modelRolesMapping, modelType)
-        if (modelRolesExists) {
+        ) {
             const extendWithBasicRoles = <T extends NormalizedRoles>(
                 roles: T
             ): T => {
@@ -223,6 +223,12 @@ export const authorize = (
             modelRoles = extendWithBasicRoles(deepCopy(
                 modelRolesMapping[modelType]
             ))
+
+            console.log(
+                'TODO check',
+                modelRoles.attachments,
+                modelRolesMapping[modelType].attachments
+            )
 
             if (modelRoles.attachments)
                 for (const roles of Object.values(
@@ -281,14 +287,6 @@ export const authorize = (
                         break
                 }
             } else if (checkProperty(name, modelRoles.properties)) {
-                if (name === 'emergencyServiceState')
-                    console.log(
-                        'CHECK',
-                        userContext.name,
-                        userRoles,
-                        modelRoles.properties
-                    )
-
                 if (
                     value !== null &&
                     typeof value === 'object' &&
