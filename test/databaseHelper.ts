@@ -271,6 +271,18 @@ describe('databaseHelper', () => {
                     .concat(modelConfiguration, models) as
                     Parameters<typeof validateDocumentUpdate>
 
+            if (Array.isArray(test[2])) {
+                expect((): PartialFullDocument =>
+                    validateDocumentUpdate(...parameters)
+                ).toThrow(new RegExp(
+                    `^${test[2][0] as string}: [\\s\\S]+` +
+                    `"${test[2][1] as string}: [\\s\\S]+[.!]"[.!]$`,
+                    's'
+                ))
+
+                return
+            }
+
             if (typeof test[2] !== 'string') {
                 expect(validateDocumentUpdate(...parameters))
                     .toStrictEqual(test[2])
@@ -376,10 +388,7 @@ describe('databaseHelper', () => {
                 revision.
             */
             [
-                [
-                    {[typeName]: 'Test', a: '2'},
-                    {[typeName]: 'Test', a: '2'}
-                ],
+                [{[typeName]: 'Test', a: '2'}, {[typeName]: 'Test', a: '2'}],
                 {entities: {Test: {a: {}}}},
                 'NoChange'
             ],
@@ -432,7 +441,7 @@ describe('databaseHelper', () => {
             [
                 [
                     {[typeName]: 'Test', a: {[typeName]: '_test', b: 1}},
-                    {[typeName]: 'Test', a: {[typeName]: '_test', b: 1}}
+                    {[typeName]: 'Test', a: {b: 1}}
                 ],
                 {
                     entities: {
@@ -806,35 +815,30 @@ describe('databaseHelper', () => {
             ],
             [
                 [{
-                    [typeName]: 'Test', a: [{[typeName]: 'Custom'}, {
-                        [typeName]: 'Test'
-                    }]
+                    [typeName]: 'Test',
+                    a: [{[typeName]: 'Custom'}, {[typeName]: 'Test'}]
                 }],
                 {entities: {Test: {a: {type: 'Custom[]'}}}},
                 'PropertyType'
             ],
             /// endregion
             [
-                [{[typeName]: 'Test', a: [{[typeName]: 'Test', b: 2}]}],
+                [{[typeName]: 'Test', a: [{b: 2}]}],
                 {entities: {Test: {a: {type: 'Test[]'}}}},
-                'Property'
+                ['NestedType', 'Property']
             ],
             [
                 [{
-                    [typeName]: 'Test', a: [{
-                        [typeName]: 'Test', b: null
-                    }], b: 'a'
+                    [typeName]: 'Test',
+                    a: [{[typeName]: 'Test', b: null}],
+                    b: 'a'
                 }],
                 {
                     entities: {
-                        Test: {
-                            a: {type: 'Test[]'}, b: {
-                                nullable: false
-                            }
-                        }
+                        Test: {a: {type: 'Test[]'}, b: {nullable: false}}
                     }
                 },
-                'NotNull'
+                ['NestedType', 'NotNull']
             ],
             [
                 [
@@ -849,14 +853,13 @@ describe('databaseHelper', () => {
                         Test: {a: {type: 'Test[]', writable: false}, b: {}}
                     }
                 },
-                'Readonly'],
+                'Readonly'
+            ],
             [
                 [{
-                    [typeName]: 'Test', a: [4], b: [{
-                        [typeName]: 'Test', a: [
-                            2
-                        ]
-                    }]
+                    [typeName]: 'Test',
+                    a: [4],
+                    b: [{[typeName]: 'Test', a: [2]}]
                 }],
                 {
                     entities: {
@@ -866,15 +869,13 @@ describe('databaseHelper', () => {
                         }
                     }
                 },
-                'Minimum'
+                ['NestedType', 'Minimum']
             ],
             [
                 [{[typeName]: 'Test', a: [4]}],
                 {
                     entities: {
-                        Test: {
-                            a: {type: 'integer[]', minimumNumber: 2}
-                        }
+                        Test: {a: {type: 'integer[]', minimumNumber: 2}}
                     }
                 },
                 'MinimumArrayLength'
@@ -898,9 +899,7 @@ describe('databaseHelper', () => {
                 [{[typeName]: 'Test', a: [1]}],
                 {
                     entities: {
-                        Test: {
-                            a: {type: 'integer[]', maximumNumber: 0}
-                        }
+                        Test: {a: {type: 'integer[]', maximumNumber: 0}}
                     }
                 },
                 'MaximumArrayLength'
@@ -909,22 +908,14 @@ describe('databaseHelper', () => {
                 [{[typeName]: 'Test', a: [1, 2]}],
                 {
                     entities: {
-                        Test: {
-                            a: {type: 'integer[]', maximumNumber: 1}
-                        }
+                        Test: {a: {type: 'integer[]', maximumNumber: 1}}
                     }
                 },
                 'MaximumArrayLength'
             ],
             [
                 [{[typeName]: 'Test', a: [1, 2, 3]}],
-                {
-                    entities: {
-                        Test: {
-                            a: {type: 'integer[]', maximumNumber: 2}
-                        }
-                    }
-                },
+                {entities: {Test: {a: {type: 'integer[]', maximumNumber: 2}}}},
                 'MaximumArrayLength'
             ],
             [
@@ -949,7 +940,8 @@ describe('databaseHelper', () => {
                     entities: {
                         Test: {
                             a: {
-                                type: 'integer[]', arrayConstraintExpression: {
+                                type: 'integer[]',
+                                arrayConstraintExpression: {
                                     evaluation: 'newValue.length === 2'
                                 }
                             }
@@ -963,7 +955,8 @@ describe('databaseHelper', () => {
             /// region property type
             [
                 [{[typeName]: 'Test', a: 1}],
-                {entities: {Test: {a: {type: 'Test'}}}}, 'NestedType'
+                {entities: {Test: {a: {type: 'Test'}}}},
+                'NestedType'
             ],
             [
                 [{[typeName]: 'Test', a: null}],
@@ -972,117 +965,77 @@ describe('databaseHelper', () => {
             ],
             [
                 [{[typeName]: 'Test', a: {type: 'Test'}}],
-                {entities: {NotTest: {a: {type: 'Test'}}}}, 'Model'
+                {entities: {NotTest: {a: {type: 'Test'}}}},
+                'Model'
             ],
             [
                 [{
                     [typeName]: 'Test',
-                    a: {[typeName]: 'Test', b: 2},
+                    a: {b: 2},
                     b: 'a'
                 }],
                 {entities: {Test: {a: {type: 'Test'}, b: {}}}},
-                'PropertyType'
+                ['NestedType', 'PropertyType']
             ],
             /// endregion
             /// region property existence
             [
-                [{[typeName]: 'Test', a: {[typeName]: 'Test', b: 2}}],
+                [{[typeName]: 'Test', a: {b: 2}}],
                 {entities: {Test: {a: {type: 'Test'}}}},
-                'Property'
+                ['NestedType', 'Property']
             ],
             [
-                [{
-                    [typeName]: 'Test',
-                    a: {[typeName]: 'Test', b: null},
-                    b: 'a'
-                }],
-                {
-                    entities: {
-                        Test: {
-                            a: {type: 'Test'}, b: {
-                                nullable: false
-                            }
-                        }
-                    }
-                },
-                'NotNull'
+                [{[typeName]: 'Test', a: {b: null}, b: 'a'}],
+                {entities: {Test: {a: {type: 'Test'}, b: {nullable: false}}}},
+                ['NestedType', 'NotNull']
             ],
             [
                 [{[typeName]: 'Test', a: {[typeName]: 'Test'}, b: 'a'}],
-                {
-                    entities: {
-                        Test: {
-                            a: {type: 'Test'}, b: {
-                                nullable: false
-                            }
-                        }
-                    }
-                },
-                'MissingProperty'
+                {entities: {Test: {a: {type: 'Test'}, b: {nullable: false}}}},
+                ['NestedType', 'MissingProperty']
             ],
             /// endregion
             /// region property readonly
             [
                 [
-                    {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'a'}},
-                    {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'b'}}
+                    {[typeName]: 'Test', a: {b: 'a'}},
+                    {[typeName]: 'Test', a: {b: 'b'}}
                 ],
-                {
-                    entities: {
-                        Test: {
-                            a: {type: 'Test'}, b: {
-                                writable: false
-                            }
-                        }
-                    }
-                },
-                'Readonly'
+                {entities: {Test: {a: {type: 'Test'}, b: {writable: false}}}},
+                ['NestedType', 'Readonly']
             ],
             [
                 [
-                    {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'a'}},
-                    {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'b'}}
+                    {[typeName]: 'Test', a: {b: 'a'}},
+                    {[typeName]: 'Test', a: {b: 'b'}}
                 ],
-                {
-                    entities: {
-                        Test: {a: {type: 'Test'}, b: {mutable: false}}
-                    }
-                },
-                'Immutable'
+                {entities: {Test: {a: {type: 'Test'}, b: {mutable: false}}}},
+                ['NestedType', 'Immutable']
             ],
             [
                 [
-                    {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'a'}},
-                    {[typeName]: 'Test', a: {[typeName]: 'Test'}}
+                    {[typeName]: 'Test', a: {b: 'a'}},
+                    {[typeName]: 'Test'}
                 ],
-                {
-                    entities: {
-                        Test: {a: {type: 'Test'}, b: {writable: false}}
-                    }
-                },
-                'Readonly'
+                {entities: {Test: {a: {type: 'Test'}, b: {writable: false}}}},
+                ['NestedType', 'Readonly']
             ],
             [
                 [
-                    {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'a'}},
-                    {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'b'}},
-                    {}, {}
+                    {[typeName]: 'Test', a: {b: 'a'}},
+                    {[typeName]: 'Test', a: {b: 'b'}},
+                    {},
+                    {}
                 ],
-                {
-                    entities: {
-                        Test: {a: {type: 'Test', writable: false}, b: {}}
-                    }
+                {entities: {
+                    Test: {a: {type: 'Test', writable: false}, b: {}}}
                 },
                 'Readonly'
             ],
             /// endregion
             /// region property range
             [
-                [{
-                    [typeName]: 'Test',
-                    a: 4,
-                    b: {[typeName]: 'Test', a: 2}
-                }],
+                [{[typeName]: 'Test', a: 4, b: {a: 2}}],
                 {
                     entities: {
                         Test: {
@@ -1091,47 +1044,34 @@ describe('databaseHelper', () => {
                         }
                     }
                 },
-                'Minimum'
+                ['NestedType', 'Minimum']
             ],
             [
-                [{
-                    [typeName]: 'Test',
-                    a: '1',
-                    b: {[typeName]: 'Test', a: '12'}
-                }],
-                {
-                    entities: {
-                        Test: {a: {maximumLength: 1}, b: {type: 'Test'}}
-                    }
-                },
-                'MaximalLength'
+                [{[typeName]: 'Test', a: '1', b: {a: '12'}}],
+                {entities: {Test: {a: {maximumLength: 1}, b: {type: 'Test'}}}},
+                ['NestedType', 'MaximalLength']
             ],
             /// endregion
             /// region property pattern
             [
-                [{[typeName]: 'Test', b: {[typeName]: 'Test', a: 'b'}}],
+                [{[typeName]: 'Test', b: {a: 'b'}}],
                 {entities: {Test: {a: {pattern: 'a'}, b: {type: 'Test'}}}},
-                'PatternMatch'
+                ['NestedType', 'PatternMatch']
+
             ],
             [
-                [{[typeName]: 'Test', b: {[typeName]: 'Test', a: 'a'}}],
+                [{[typeName]: 'Test', b: {a: 'a'}}],
                 {
                     entities: {
-                        Test: {
-                            a: {invertedPattern: 'a'}, b: {type: 'Test'}
-                        }
+                        Test: {a: {invertedPattern: 'a'}, b: {type: 'Test'}}
                     }
                 },
-                'InvertedPatternMatch'
+                ['NestedType', 'InvertedPatternMatch']
             ],
             /// endregion
             /// region property constraint
             [
-                [{
-                    [typeName]: 'Test',
-                    a: 'b',
-                    b: {[typeName]: 'Test', a: 'a'}
-                }],
+                [{[typeName]: 'Test', a: 'b', b: {a: 'a'}}],
                 {
                     entities: {
                         Test: {
@@ -1144,14 +1084,10 @@ describe('databaseHelper', () => {
                         }
                     }
                 },
-                'ConstraintExpression'
+                ['NestedType', 'ConstraintExpression']
             ],
             [
-                [{
-                    [typeName]: 'Test',
-                    a: 'b',
-                    b: {[typeName]: 'Test', a: 'a'}
-                }],
+                [{[typeName]: 'Test', a: 'b', b: {a: 'a'}}],
                 {
                     entities: {
                         Test: {
@@ -1164,7 +1100,7 @@ describe('databaseHelper', () => {
                         }
                     }
                 },
-                'ConstraintExpression'
+                ['NestedType', 'ConstraintExpression']
             ],
             /// endregion
             // endregion
@@ -2365,12 +2301,27 @@ describe('databaseHelper', () => {
                 [{[typeName]: 'Test', a: {[typeName]: '_test'}}],
                 {entities: {Test: {a: {type: '_test'}}, _test: {}}},
                 {
-                    fillUp: {[typeName]: 'Test', a: {[typeName]: '_test'}},
-                    incremental: {
-                        [typeName]: 'Test',
-                        a: {[typeName]: '_test'}
-                    },
-                    replace: {[typeName]: 'Test', a: {[typeName]: '_test'}}
+                    fillUp: {[typeName]: 'Test'},
+                    incremental: {[typeName]: 'Test'},
+                    replace: {[typeName]: 'Test'}
+                }
+            ],
+            /*
+                Check if properties with nested type declaration are merged
+                according to different update strategies.
+            */
+            [
+                [
+                    {[typeName]: 'Test', a: {[typeName]: '_test'}, b: 'b'},
+                    {[typeName]: 'Test', a: {b: 'b'}}
+                ],
+                {entities: {
+                    Test: {a: {type: '_test'}, b: {}}, _test: {b: {}}
+                }},
+                {
+                    fillUp: {[typeName]: 'Test', a: {b: 'b'}, b: 'b'},
+                    incremental: {b: 'b'},
+                    replace: {[typeName]: 'Test', b: 'b'}
                 }
             ]
         ]))(
@@ -3194,17 +3145,9 @@ describe('databaseHelper', () => {
                     }
                 },
                 {
-                    fillUp: {
-                        [typeName]: 'Test',
-                        a: 5 * 60 ** 2 + 2,
-                        b: ''
-                    },
+                    fillUp: {[typeName]: 'Test', a: 5 * 60 ** 2 + 2, b: ''},
                     incremental: {b: ''},
-                    replace: {
-                        [typeName]: 'Test',
-                        a: 5 * 60 ** 2 + 2,
-                        b: ''
-                    }
+                    replace: {[typeName]: 'Test', a: 5 * 60 ** 2 + 2, b: ''}
                 }
             ],
             [
@@ -3487,27 +3430,9 @@ describe('databaseHelper', () => {
                 [{[typeName]: 'Test', a: [{b: 'b'}]}],
                 {entities: {Test: {a: {type: 'Test[]'}, b: {}}}},
                 {
-                    fillUp: {
-                        [typeName]: 'Test',
-                        a: [{
-                            [typeName]: 'Test',
-                            b: 'b'
-                        }]
-                    },
-                    incremental: {
-                        [typeName]: 'Test',
-                        a: [{
-                            [typeName]: 'Test',
-                            b: 'b'
-                        }]
-                    },
-                    replace: {
-                        [typeName]: 'Test',
-                        a: [{
-                            [typeName]: 'Test',
-                            b: 'b'
-                        }]
-                    }
+                    fillUp: {[typeName]: 'Test', a: [{b: 'b'}]},
+                    incremental: {[typeName]: 'Test', a: [{b: 'b'}]},
+                    replace: {[typeName]: 'Test', a: [{b: 'b'}]}
                 }
             ],
             [
@@ -3522,15 +3447,9 @@ describe('databaseHelper', () => {
                     }
                 },
                 {
-                    fillUp: {
-                        [typeName]: 'Test',
-                        a: [{[typeName]: 'Data', b: 'new'}]
-                    },
-                    incremental: {a: [{[typeName]: 'Data', b: 'new'}]},
-                    replace: {
-                        [typeName]: 'Test',
-                        a: [{[typeName]: 'Data', b: 'new'}]
-                    }
+                    fillUp: {[typeName]: 'Test', a: [{b: 'new'}]},
+                    incremental: {a: [{b: 'new'}]},
+                    replace: {[typeName]: 'Test', a: [{b: 'new'}]}
                 }
             ],
             [
@@ -3543,15 +3462,9 @@ describe('databaseHelper', () => {
                     Test: {a: {type: 'Data[]'}}
                 }},
                 {
-                    fillUp: {
-                        [typeName]: 'Test',
-                        a: [{[typeName]: 'Data'}]
-                    },
-                    incremental: {a: [{[typeName]: 'Data'}]},
-                    replace: {
-                        [typeName]: 'Test',
-                        a: [{[typeName]: 'Data'}]
-                    }
+                    fillUp: {[typeName]: 'Test', a: []},
+                    incremental: {a: []},
+                    replace: {[typeName]: 'Test', a: []}
                 }
             ],
             [
@@ -3565,26 +3478,9 @@ describe('databaseHelper', () => {
                     Test: {a: {type: 'Data'}}
                 }},
                 {
-                    fillUp: {
-                        [typeName]: 'Test',
-                        a: {
-                            [typeName]: 'Data',
-                            b: [{[typeName]: 'Item'}]
-                        }
-                    },
-                    incremental: {
-                        a: {
-                            [typeName]: 'Data',
-                            b: [{[typeName]: 'Item'}]
-                        }
-                    },
-                    replace: {
-                        [typeName]: 'Test',
-                        a: {
-                            [typeName]: 'Data',
-                            b: [{[typeName]: 'Item'}]
-                        }
-                    }
+                    fillUp: {[typeName]: 'Test', a: {b: []}},
+                    incremental: {a: {b: []}},
+                    replace: {[typeName]: 'Test', a: {b: []}}
                 }
             ],
             // Delete array
@@ -3599,11 +3495,7 @@ describe('databaseHelper', () => {
             ],
             [
                 [{[typeName]: 'Test', a: undefined}],
-                {
-                    entities: {
-                        Test: {a: {type: 'string[]', default: ['a']}}
-                    }
-                },
+                {entities: {Test: {a: {type: 'string[]', default: ['a']}}}},
                 {
                     fillUp: {[typeName]: 'Test', a: ['a']},
                     incremental: {[typeName]: 'Test', a: ['a']},
@@ -3688,22 +3580,14 @@ describe('databaseHelper', () => {
             /// region property type
             [
                 [
-                    {[typeName]: 'Test', a: {[typeName]: 'Test'}, b: 'b'},
+                    {[typeName]: 'Test', b: 'b'},
                     {[typeName]: 'Test', a: {[typeName]: 'Test'}}
                 ],
                 {entities: {Test: {a: {type: 'Test'}, b: {}}}},
                 {
-                    fillUp: {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test'},
-                        b: 'b'
-                    },
+                    fillUp: {[typeName]: 'Test', b: 'b'},
                     incremental: {b: 'b'},
-                    replace: {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test'},
-                        b: 'b'
-                    }
+                    replace: {[typeName]: 'Test', b: 'b'}
                 }
             ],
             [
@@ -3720,109 +3604,56 @@ describe('databaseHelper', () => {
             ],
             [
                 [
-                    {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: null},
-                        b: 'b'
-                    },
-                    {[typeName]: 'Test', a: {[typeName]: 'Test'}}
+                    {[typeName]: 'Test', a: {b: null}, b: 'b'},
+                    {[typeName]: 'Test'}
                 ],
                 {entities: {Test: {a: {type: 'Test'}, b: {}}}},
                 {
-                    fillUp: {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test'},
-                        b: 'b'
-                    },
+                    fillUp: {[typeName]: 'Test', b: 'b'},
                     incremental: {b: 'b'},
-                    replace: {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test'},
-                        b: 'b'
-                    }
+                    replace: {[typeName]: 'Test', b: 'b'}
                 }
             ],
             [
                 [
-                    {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: '2'},
-                        b: 'b'
-                    },
-                    {[typeName]: 'Test', a: {[typeName]: 'Test', b: '2'}}
+                    {[typeName]: 'Test', a: {b: '2'}, b: 'b'},
+                    {[typeName]: 'Test', a: {b: '2'}}
                 ],
                 {entities: {Test: {a: {type: 'Test'}, b: {}}}},
                 {
-                    fillUp: {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: '2'},
-                        b: 'b'
-                    },
+                    fillUp: {[typeName]: 'Test', a: {b: '2'}, b: 'b'},
                     incremental: {b: 'b'},
-                    replace: {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: '2'},
-                        b: 'b'
-                    }
+                    replace: {[typeName]: 'Test', a: {b: '2'}, b: 'b'}
                 }
             ],
             [
                 [
-                    {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: 'a'},
-                        b: '3'
-                    },
-                    {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: 'a'},
-                        b: '2'
-                    }
+                    {[typeName]: 'Test', a: {b: 'a'}, b: '3'},
+                    {[typeName]: 'Test', a: {b: 'a'}, b: '2'}
                 ],
                 {entities: {Test: {a: {type: 'Test'}, b: {}}}},
                 {
-                    fillUp: {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: 'a'},
-                        b: '3'
-                    },
+                    fillUp: {[typeName]: 'Test', a: {b: 'a'}, b: '3'},
                     incremental: {b: '3'},
-                    replace: {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: 'a'},
-                        b: '3'
-                    }
+                    replace: {[typeName]: 'Test', a: {b: 'a'}, b: '3'}
                 }
             ],
             [
-                [{[typeName]: 'Test', a: {[typeName]: 'Test', b: 2}}],
+                [{[typeName]: 'Test', a: {b: 2}}],
                 {entities: {Test: {a: {type: 'Test'}, b: {type: 'any'}}}},
                 {
-                    fillUp: {
-                        [typeName]: 'Test', a: {[typeName]: 'Test', b: 2}
-                    },
-                    incremental: {
-                        [typeName]: 'Test', a: {[typeName]: 'Test', b: 2}
-                    },
-                    replace: {[typeName]: 'Test', a: {[typeName]: 'Test', b: 2}}
+                    fillUp: {[typeName]: 'Test', a: {b: 2}},
+                    incremental: {[typeName]: 'Test', a: {b: 2}},
+                    replace: {[typeName]: 'Test', a: {b: 2}}
                 }
             ],
             [
                 [{[typeName]: 'Test', a: {b: 'b'}}],
                 {entities: {Test: {a: {type: 'Test'}, b: {}}}},
                 {
-                    fillUp: {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: 'b'}
-                    },
-                    incremental: {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: 'b'}
-                    },
-                    replace: {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: 'b'}
-                    }
+                    fillUp: {[typeName]: 'Test', a: {b: 'b'}},
+                    incremental: {[typeName]: 'Test', a: {b: 'b'}},
+                    replace: {[typeName]: 'Test', a: {b: 'b'}}
                 }
             ],
             /// endregion
@@ -3830,91 +3661,47 @@ describe('databaseHelper', () => {
             [
                 [
                     {[typeName]: 'Test', a: {[typeName]: 'Test'}, b: 'b'},
-                    {[typeName]: 'Test', a: {[typeName]: 'Test'}}
+                    {[typeName]: 'Test'}
                 ],
                 {entities: {Test: {a: {type: 'Test'}, b: {}}}},
                 {
-                    fillUp: {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test'},
-                        b: 'b'
-                    },
+                    fillUp: {[typeName]: 'Test', b: 'b'},
                     incremental: {b: 'b'},
-                    replace: {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test'},
-                        b: 'b'
-                    }
+                    replace: {[typeName]: 'Test', b: 'b'}
                 }
             ],
             [
                 [
-                    {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: null},
-                        b: 'b'
-                    },
-                    {[typeName]: 'Test', a: {[typeName]: 'Test'}, b: 'a'}
+                    {[typeName]: 'Test', a: {b: null}, b: 'b'},
+                    {[typeName]: 'Test', b: 'a'}
                 ],
                 {entities: {Test: {a: {type: 'Test'}, b: {}}}},
                 {
-                    fillUp: {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test'},
-                        b: 'b'
-                    },
+                    fillUp: {[typeName]: 'Test', b: 'b'},
                     incremental: {b: 'b'},
-                    replace: {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test'},
-                        b: 'b'
-                    }
+                    replace: {[typeName]: 'Test', b: 'b'}
                 }
             ],
             [
                 [
-                    {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: '2'},
-                        b: 'b'
-                    },
-                    {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: '2'},
-                        b: 'a'
-                    }
+                    {[typeName]: 'Test', a: {b: '2'}, b: 'b'},
+                    {[typeName]: 'Test', a: {b: '2'}, b: 'a'}
                 ],
                 {
-                    entities: {
-                        Test: {
-                            a: {type: 'Test'}, b: {nullable: false}
-                        }
-                    }
+                    entities: {Test: {a: {type: 'Test'}, b: {nullable: false}}}
                 },
                 {
-                    fillUp: {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: '2'},
-                        b: 'b'
-                    },
+                    fillUp: {[typeName]: 'Test', a: {b: '2'}, b: 'b'},
                     incremental: {b: 'b'},
-                    replace: {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: '2'},
-                        b: 'b'
-                    }
+                    replace: {[typeName]: 'Test', a: {b: '2'}, b: 'b'}
                 }
             ],
             /// endregion
             /// region property readonly
             [
                 [
-                    {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: 'b'},
-                        c: 'c'
-                    },
-                    {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'b'}}
+                    {[typeName]: 'Test', a: {b: 'b'}, c: 'c'},
+                    {[typeName]: 'Test', a: {b: 'b'}}
                 ],
                 {
                     entities: {
@@ -3926,58 +3713,32 @@ describe('databaseHelper', () => {
                     }
                 },
                 {
-                    fillUp: {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: 'b'},
-                        c: 'c'
-                    },
+                    fillUp: {[typeName]: 'Test', a: {b: 'b'}, c: 'c'},
                     incremental: {c: 'c'},
-                    replace: {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: 'b'},
-                        c: 'c'
-                    }
+                    replace: {[typeName]: 'Test', a: {b: 'b'}, c: 'c'}
                 }
             ],
             [
                 [
-                    {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: 'a'},
-                        b: 'b'
-                    },
-                    {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'a'}}
+                    {[typeName]: 'Test', a: {b: 'a'}, b: 'b'},
+                    {[typeName]: 'Test', a: {b: 'a'}}
                 ],
                 {
                     entities: {
-                        Test: {
-                            a: {type: 'Test', writable: false}, b: {}
-                        }
+                        Test: {a: {type: 'Test', writable: false}, b: {}}
                     }
                 },
                 {
-                    fillUp: {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: 'a'},
-                        b: 'b'
-                    },
+                    fillUp: {[typeName]: 'Test', a: {b: 'a'}, b: 'b'},
                     incremental: {b: 'b'},
-                    replace: {
-                        [typeName]: 'Test',
-                        a: {[typeName]: 'Test', b: 'a'},
-                        b: 'b'
-                    }
+                    replace: {[typeName]: 'Test', a: {b: 'a'}, b: 'b'}
                 }
             ],
             /// endregion
             /// region property range
             [
                 [
-                    {
-                        [typeName]: 'Test',
-                        a: 4,
-                        b: {[typeName]: 'Test', a: 3}
-                    },
+                    {[typeName]: 'Test', a: 4, b: {a: 3}},
                     {[typeName]: 'Test'}
                 ],
                 {
@@ -3989,126 +3750,63 @@ describe('databaseHelper', () => {
                     }
                 },
                 {
-                    fillUp: {
-                        [typeName]: 'Test',
-                        a: 4,
-                        b: {[typeName]: 'Test', a: 3}
-                    },
-                    incremental: {a: 4, b: {[typeName]: 'Test', a: 3}},
-                    replace: {
-                        [typeName]: 'Test',
-                        a: 4,
-                        b: {[typeName]: 'Test', a: 3}
-                    }
+                    fillUp: {[typeName]: 'Test', a: 4, b: {a: 3}},
+                    incremental: {a: 4, b: {a: 3}},
+                    replace: {[typeName]: 'Test', a: 4, b: {a: 3}}
                 }
             ],
             [
-                [{
-                    [typeName]: 'Test',
-                    a: '1',
-                    b: {[typeName]: 'Test', a: '1'}
-                }],
+                [{[typeName]: 'Test', a: '1', b: {a: '1'}}],
                 {
                     entities: {
-                        Test: {
-                            a: {maximumLength: 1}, b: {type: 'Test'}
-                        }
+                        Test: {a: {maximumLength: 1}, b: {type: 'Test'}}
                     }
                 },
                 {
-                    fillUp: {
-                        [typeName]: 'Test',
-                        a: '1',
-                        b: {[typeName]: 'Test', a: '1'}
-                    },
-                    incremental: {
-                        [typeName]: 'Test',
-                        a: '1',
-                        b: {[typeName]: 'Test', a: '1'}
-                    },
-                    replace: {
-                        [typeName]: 'Test',
-                        a: '1',
-                        b: {[typeName]: 'Test', a: '1'}
-                    }
+                    fillUp: {[typeName]: 'Test', a: '1', b: {a: '1'}},
+                    incremental: {[typeName]: 'Test', a: '1', b: {a: '1'}},
+                    replace: {[typeName]: 'Test', a: '1', b: {a: '1'}}
                 }
             ],
             /// endregion
             /// region property pattern
             [
-                [{[typeName]: 'Test', b: {[typeName]: 'Test', a: 'a'}}],
+                [{[typeName]: 'Test', b: {a: 'a'}}],
                 {entities: {Test: {a: {pattern: 'a'}, b: {type: 'Test'}}}},
                 {
-                    fillUp: {
-                        [typeName]: 'Test', b: {
-                            [typeName]: 'Test', a: 'a'
-                        }
-                    },
-                    incremental: {
-                        [typeName]: 'Test', b: {
-                            [typeName]: 'Test', a: 'a'
-                        }
-                    },
-                    replace: {
-                        [typeName]: 'Test',
-                        b: {[typeName]: 'Test', a: 'a'}
-                    }
+                    fillUp: {[typeName]: 'Test', b: {a: 'a'}},
+                    incremental: {[typeName]: 'Test', b: {a: 'a'}},
+                    replace: {[typeName]: 'Test', b: {a: 'a'}}
                 }
             ],
             [
-                [{[typeName]: 'Test', b: {[typeName]: 'Test', a: 'a'}}],
+                [{[typeName]: 'Test', b: {a: 'a'}}],
                 {
                     entities: {
-                        Test: {
-                            a: {pattern: ['b', 'a']}, b: {type: 'Test'}
-                        }
+                        Test: {a: {pattern: ['b', 'a']}, b: {type: 'Test'}}
                     }
                 },
                 {
-                    fillUp: {
-                        [typeName]: 'Test', b: {
-                            [typeName]: 'Test', a: 'a'
-                        }
-                    },
-                    incremental: {
-                        [typeName]: 'Test', b: {
-                            [typeName]: 'Test', a: 'a'
-                        }
-                    },
-                    replace: {
-                        [typeName]: 'Test',
-                        b: {[typeName]: 'Test', a: 'a'}
-                    }
+                    fillUp: {[typeName]: 'Test', b: {a: 'a'}},
+                    incremental: {[typeName]: 'Test', b: {a: 'a'}},
+                    replace: {[typeName]: 'Test', b: {a: 'a'}}
                 }
             ],
             [
-                [{[typeName]: 'Test', b: {[typeName]: 'Test', a: 'a'}}],
+                [{[typeName]: 'Test', b: {a: 'a'}}],
                 {
                     entities: {
-                        Test: {
-                            a: {invertedPattern: 'b'}, b: {type: 'Test'}
-                        }
+                        Test: {a: {invertedPattern: 'b'}, b: {type: 'Test'}}
                     }
                 },
                 {
-                    fillUp: {
-                        [typeName]: 'Test', b: {
-                            [typeName]: 'Test', a: 'a'
-                        }
-                    },
-                    incremental: {
-                        [typeName]: 'Test', b: {
-                            [typeName]: 'Test', a: 'a'
-                        }
-                    },
-                    replace: {
-                        [typeName]: 'Test',
-                        b: {[typeName]: 'Test', a: 'a'}
-                    }
+                    fillUp: {[typeName]: 'Test', b: {a: 'a'}},
+                    incremental: {[typeName]: 'Test', b: {a: 'a'}},
+                    replace: {[typeName]: 'Test', b: {a: 'a'}}
                 }
             ],
             [
-                [{[typeName]: 'Test', b: {[typeName]: 'Test', a: 'a'}}],
+                [{[typeName]: 'Test', b: {a: 'a'}}],
                 {
                     entities: {
                         Test: {
@@ -4117,30 +3815,15 @@ describe('databaseHelper', () => {
                     }
                 },
                 {
-                    fillUp: {
-                        [typeName]: 'Test', b: {
-                            [typeName]: 'Test', a: 'a'
-                        }
-                    },
-                    incremental: {
-                        [typeName]: 'Test', b: {
-                            [typeName]: 'Test', a: 'a'
-                        }
-                    },
-                    replace: {
-                        [typeName]: 'Test',
-                        b: {[typeName]: 'Test', a: 'a'}
-                    }
+                    fillUp: {[typeName]: 'Test', b: {a: 'a'}},
+                    incremental: {[typeName]: 'Test', b: {a: 'a'}},
+                    replace: {[typeName]: 'Test', b: {a: 'a'}}
                 }
             ],
             /// endregion
             /// region property constraint
             [
-                [{
-                    [typeName]: 'Test',
-                    a: 'b',
-                    b: {[typeName]: 'Test', a: 'b'}
-                }],
+                [{[typeName]: 'Test', a: 'b', b: {a: 'b'}}],
                 {
                     entities: {
                         Test: {
@@ -4154,21 +3837,9 @@ describe('databaseHelper', () => {
                     }
                 },
                 {
-                    fillUp: {
-                        [typeName]: 'Test',
-                        a: 'b',
-                        b: {[typeName]: 'Test', a: 'b'}
-                    },
-                    incremental: {
-                        [typeName]: 'Test',
-                        a: 'b',
-                        b: {[typeName]: 'Test', a: 'b'}
-                    },
-                    replace: {
-                        [typeName]: 'Test',
-                        a: 'b',
-                        b: {[typeName]: 'Test', a: 'b'}
-                    }
+                    fillUp: {[typeName]: 'Test', a: 'b', b: {a: 'b'}},
+                    incremental: {[typeName]: 'Test', a: 'b', b: {a: 'b'}},
+                    replace: {[typeName]: 'Test', a: 'b', b: {a: 'b'}}
                 }
             ],
             /// endregion
@@ -4286,15 +3957,7 @@ describe('databaseHelper', () => {
             ],
             [
                 [{[typeName]: 'Test', a: 2}],
-                {
-                    entities: {
-                        Test: {
-                            a: {
-                                selection: [1, 2], type: 'number'
-                            }
-                        }
-                    }
-                },
+                {entities: {Test: {a: {selection: [1, 2], type: 'number'}}}},
                 {
                     fillUp: {[typeName]: 'Test', a: 2},
                     incremental: {[typeName]: 'Test', a: 2},
@@ -5174,7 +4837,8 @@ describe('databaseHelper', () => {
                 [
                     {[typeName]: 'Test', a: 'a'},
                     {
-                        [typeName]: 'Test', [attachmentName]: {
+                        [typeName]: 'Test',
+                        [attachmentName]: {
                             a: {
                                 /* eslint-disable camelcase */
                                 content_type: 'image/jpeg',
@@ -5489,8 +5153,8 @@ describe('databaseHelper', () => {
         ],
         // Migrate nested property model type if old one is provided.
         [
-            {[typeName]: 'Test', a: {[typeName]: 'Test', b: 'b'}},
-            {[typeName]: 'Test', a: {[typeName]: 'OldTest', b: 'b'}},
+            {[typeName]: 'Test', a: {b: 'b'}},
+            {[typeName]: 'Test', a: {b: 'b'}},
             {entities: {Test: {
                 a: {type: 'Test'},
                 [specialNames.oldType]: 'OldTest',
@@ -5499,7 +5163,7 @@ describe('databaseHelper', () => {
         ],
         // Migrate nested array model type if old one is provided.
         [
-            {[typeName]: 'Test', a: [{[typeName]: 'Test', b: 'b'}]},
+            {[typeName]: 'Test', a: [{b: 'b'}]},
             {[typeName]: 'Test', a: [{[typeName]: 'OldTest', b: 'b'}]},
             {entities: {Test: {
                 a: {type: 'Test[]'},
@@ -5509,13 +5173,7 @@ describe('databaseHelper', () => {
         ],
         // Migrate nested array property model type if old one is provided.
         [
-            {
-                [typeName]: 'Test',
-                a: [{
-                    [typeName]: 'Test',
-                    a: [{[typeName]: 'Test', b: 'b'}]
-                }]
-            },
+            {[typeName]: 'Test', a: [{a: [{b: 'b'}]}]},
             {
                 [typeName]: 'Test',
                 a: [{

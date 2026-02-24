@@ -15,13 +15,7 @@
 */
 // region imports
 import {
-    currentRequire,
-    FirstParameter,
-    Logger,
-    Mapping,
-    PlainObject,
-    Primitive,
-    ValueOf
+    currentRequire, FirstParameter, Logger, Mapping, Primitive, ValueOf
 } from 'clientnode'
 
 import packageConfiguration from './package.json'
@@ -223,12 +217,6 @@ export const authorize = (
             modelRoles = extendWithBasicRoles(deepCopy(
                 modelRolesMapping[modelType]
             ))
-
-            console.log(
-                'TODO check',
-                modelRoles.attachments,
-                modelRolesMapping[modelType].attachments
-            )
 
             if (modelRoles.attachments)
                 for (const roles of Object.values(
@@ -804,71 +792,72 @@ export const validateDocumentUpdate = <
         return false
     }
 
+    const checkModelType = (
+        localNewDocument: PartialFullDocumentType,
+        localOldDocument: null | PartialFullDocumentType = null
+    ) => {
+        // region check for model type (optionally migrate them)
+        if (!Object.prototype.hasOwnProperty.call(
+            localNewDocument, typeName
+        ))
+            if (
+                localOldDocument &&
+                Object.prototype.hasOwnProperty.call(
+                    localOldDocument, typeName
+                ) &&
+                ['fillUp', 'migrate'].includes(
+                    modelConfiguration.updateStrategy
+                )
+            )
+                localNewDocument[typeName] = localOldDocument[typeName]
+            else
+                throwError(
+                    'Type: You have to specify a model type via property ' +
+                    `"${typeName}".`
+                )
+
+        if (
+            checkPublicModelType &&
+            !(new RegExp(
+                modelConfiguration.property.name.typePattern.public
+            )).test(localNewDocument[typeName] as string)
+        )
+            throwError(
+                'TypeName: You have to specify a model type which ' +
+                'matches "' +
+                modelConfiguration.property.name.typePattern.public +
+                `" as public type (given "` +
+                `${localNewDocument[typeName] as string}").`
+            )
+
+        if (!Object.prototype.hasOwnProperty.call(
+            models, localNewDocument[typeName] as string
+        ))
+            if (Object.prototype.hasOwnProperty.call(
+                oldModelMapping, localNewDocument[typeName] as string
+            ))
+                localNewDocument[typeName] =
+                    oldModelMapping[localNewDocument[typeName] as string]
+            else
+                throwError(
+                    'Model: Given model "' +
+                    `${localNewDocument[typeName] as string}" is not ` +
+                    `specified.`
+                )
+        // endregion
+    }
+
     const checkDocument = (
         localNewDocument: PartialFullDocumentType = newDocument,
         localOldDocument: null | PartialFullDocumentType = null,
+        modelName: string,
+        model: ModelType,
         parentNames: Array<string> = [],
         updateStrategy: UpdateStrategy = modelConfiguration.updateStrategy
     ): CheckedDocumentResult<ObjectType, AdditionalPropertiesType> => {
         const pathDescription =
-            parentNames.length ? ` in ${parentNames.join(' -> ')}` : ''
+            parentNames.length ? ` in "${parentNames.join('" -> "')}"` : ''
         let changedPath: Array<string> = []
-
-        const checkModelType = () => {
-            // region check for model type (optionally migrate them)
-            if (!Object.prototype.hasOwnProperty.call(
-                localNewDocument, typeName
-            ))
-                if (
-                    localOldDocument &&
-                    Object.prototype.hasOwnProperty.call(
-                        localOldDocument, typeName
-                    ) &&
-                    ['fillUp', 'migrate'].includes(updateStrategy)
-                )
-                    localNewDocument[typeName] = localOldDocument[typeName]
-                else
-                    throwError(
-                        'Type: You have to specify a model type via ' +
-                        `property "${typeName}"${pathDescription}.`
-                    )
-            if (
-                checkPublicModelType &&
-                !(
-                    parentNames.length ||
-                    (new RegExp(
-                        modelConfiguration.property.name.typePattern.public
-                    )).test(localNewDocument[typeName] as string)
-                )
-            )
-                throwError(
-                    'TypeName: You have to specify a model type which ' +
-                    'matches "' +
-                    modelConfiguration.property.name.typePattern.public +
-                    `" as public type (given "` +
-                    `${localNewDocument[typeName] as string}")` +
-                    `${pathDescription}.`
-                )
-            if (!Object.prototype.hasOwnProperty.call(
-                models, localNewDocument[typeName] as string
-            ))
-                if (Object.prototype.hasOwnProperty.call(
-                    oldModelMapping, localNewDocument[typeName] as string
-                ))
-                    localNewDocument[typeName] =
-                        oldModelMapping[localNewDocument[typeName] as string]
-                else
-                    throwError(
-                        'Model: Given model "' +
-                        `${localNewDocument[typeName] as string}" is not ` +
-                        `specified${pathDescription}.`
-                    )
-            // endregion
-        }
-        checkModelType()
-
-        let modelName = localNewDocument[typeName] as string
-        const model: ModelType = models[modelName]
 
         if (Object.prototype.hasOwnProperty.call(
             model, specialNames.updateStrategy
@@ -1047,16 +1036,7 @@ export const validateDocumentUpdate = <
             const types = ([] as Array<TypeSpecification>).concat(
                 propertySpecification.type ? propertySpecification.type : []
             )
-            // Derive nested missing explicit type definition if possible.
-            if (
-                typeof newValue === 'object' &&
-                Object.getPrototypeOf(newValue) === Object.prototype &&
-                !Object.prototype.hasOwnProperty.call(newValue, typeName) &&
-                types.length === 1 &&
-                typeof types[0] === 'string' &&
-                Object.prototype.hasOwnProperty.call(models, types[0])
-            )
-                (newValue as PartialFullDocumentType)[typeName] = types[0]
+            // Derive nested type definition if possible.
             let typeMatched = false
             for (const type of types)
                 if (
@@ -1065,47 +1045,57 @@ export const validateDocumentUpdate = <
                 ) {
                     if (
                         typeof newValue === 'object' &&
-                        Object.getPrototypeOf(newValue) === Object.prototype &&
-                        Object.prototype.hasOwnProperty.call(
-                            newValue, typeName
-                        ) &&
-                        (newValue as PartialFullDocumentType)[typeName] !==
-                            type &&
-                        localUpdateStrategy === 'migrate' &&
-                        types.length === 1
+                        Object.getPrototypeOf(newValue) === Object.prototype
                     ) {
-                        /*
-                            Derive nested (object based) maybe compatible type
-                            definition. Nested types have to be checked than.
-                        */
-                        (newValue as PartialFullDocumentType)[typeName] = type
-                        changedPath = parentNames.concat(
-                            name, 'migrate nested object type'
+                        let result: (
+                            CheckedDocumentResult<
+                                ObjectType, AdditionalPropertiesType
+                            > |
+                            undefined
                         )
-                    }
-                    if (
-                        typeof newValue === 'object' &&
-                        Object.getPrototypeOf(newValue) === Object.prototype &&
-                        Object.prototype.hasOwnProperty.call(
-                            newValue, typeName
-                        ) &&
-                        (newValue as PartialFullDocumentType)[typeName] ===
-                            type
-                    ) {
-                        const result = checkDocument(
-                            newValue as PartialFullDocumentType,
-                            oldValue as null | PartialFullDocumentType,
-                            parentNames.concat(name),
-                            localUpdateStrategy
-                        )
-                        if (result.changedPath.length)
-                            changedPath = result.changedPath
-                        newValue = result.newDocument as Type
-                        if (serialize(newValue) === serialize({}))
-                            return {newValue: undefined, changedPath}
+                        try {
+                            result = checkDocument(
+                                newValue as PartialFullDocumentType,
+                                oldValue as null | PartialFullDocumentType,
+                                // TODO forward in-place model if found.
+                                type,
+                                models[type],
+                                parentNames.concat(name),
+                                localUpdateStrategy
+                            )
+                        } catch (error) {
+                            const errorMessage = (
+                                (
+                                    error as Partial<Error> | undefined
+                                )?.message ??
+                                'unknown'
+                            )
+                            if (types.length === 1)
+                                throwError(
+                                    `NestedType: Under key "${name}" isn't ` +
+                                    `of type "${type}" (given ` +
+                                    `"${serialize(newValue)}" of type ` +
+                                    `${typeof newValue}) Issue is ` +
+                                    `"${errorMessage}"${pathDescription}.`
+                                )
+                            else
+                                log.debug(
+                                    `Tried to match "${serialize(newValue)}"`,
+                                    `with type "${type}". Got error:`,
+                                    `"${errorMessage}"`
+                                )
+                        }
 
-                        typeMatched = true
-                        break
+                        if (result) {
+                            if (result.changedPath.length)
+                                changedPath = result.changedPath
+                            newValue = result.newDocument as Type
+                            if (serialize(newValue) === serialize({}))
+                                return {newValue: undefined, changedPath}
+
+                            typeMatched = true
+                            break
+                        }
                     } else if (types.length === 1)
                         throwError(
                             `NestedType: Under key "${name}" isn't of type ` +
@@ -1192,6 +1182,7 @@ export const validateDocumentUpdate = <
                             .replace(/"$/, '') +
                         `" of type "${typeof newValue}")${pathDescription}.`
                     )
+
             if (!typeMatched)
                 throwError(
                     'PropertyType: None of the specified types "' +
@@ -1245,8 +1236,10 @@ export const validateDocumentUpdate = <
                 )
                     throwError(
                         `Minimum: Property "${name}" (type ` +
-                        `${propertySpecification.type as string}) must ` +
-                        'satisfy a minimum of ' +
+                        ([] as Array<string>)
+                            .concat(propertySpecification.type as string)
+                            .join(' or ') +
+                        ') must satisfy a minimum of ' +
                         (
                             propertySpecification.minimum as
                                 unknown as
@@ -1261,8 +1254,10 @@ export const validateDocumentUpdate = <
                 )
                     throwError(
                         `Maximum: Property "${name}" (type ` +
-                        `${propertySpecification.type as string}) must ` +
-                        `satisfy a maximum of ` +
+                        ([] as Array<string>)
+                            .concat(propertySpecification.type as string)
+                            .join(' or ') +
+                        ') must satisfy a maximum of ' +
                         (
                             propertySpecification.maximum as
                                 unknown as
@@ -1295,9 +1290,11 @@ export const validateDocumentUpdate = <
                 if (!selection.includes(newValue))
                     throwError(
                         `Selection: Property "${name}" (type ` +
-                        `${propertySpecification.type as string}) should be ` +
-                        `one of "${selection.join('", "')}". But is ` +
-                        `"${newValue as string}"${pathDescription}.`
+                        ([] as Array<string>)
+                            .concat(propertySpecification.type as string)
+                            .join(' or ') +
+                        `) should be one of "${selection.join('", "')}". ` +
+                        `But is "${newValue as string}"${pathDescription}.`
                     )
             }
             // endregion
@@ -1776,7 +1773,7 @@ export const validateDocumentUpdate = <
                         // @ts-expect-error Typescript cannot determine.
                         localNewDocument = result
 
-                    checkModelType()
+                    checkModelType(localNewDocument, localOldDocument)
 
                     modelName = localNewDocument[typeName] as string
 
@@ -1854,7 +1851,7 @@ export const validateDocumentUpdate = <
                     // @ts-expect-error Typescript cannot determine.
                     localNewDocument = result
 
-                checkModelType()
+                checkModelType(localNewDocument, localOldDocument)
 
                 modelName = localNewDocument[typeName] as string
 
@@ -2075,7 +2072,9 @@ export const validateDocumentUpdate = <
                                 localOldDocument, name
                             ) &&
                             updateStrategy !== 'replace'
-                        )
+                        ) ||
+                        parentNames.length > 0 &&
+                        name === typeName
                     ))
                         throwError(
                             `MissingProperty: Missing property ` +
@@ -2169,6 +2168,11 @@ export const validateDocumentUpdate = <
                     specialNames.updateStrategy
                 ).includes(name as keyof BaseModelType)
             ) {
+                if (parentNames.length > 0 && name === typeName) {
+                    delete localNewDocument[name]
+                    continue
+                }
+
                 let propertySpecification:(
                     typeof model[keyof ObjectType] |
                     PropertySpecification<
@@ -2176,6 +2180,7 @@ export const validateDocumentUpdate = <
                     > |
                     undefined
                 )
+
                 if (Object.prototype.hasOwnProperty.call(model, name))
                     propertySpecification = model[name]
                 else if (additionalPropertySpecification)
@@ -2351,33 +2356,6 @@ export const validateDocumentUpdate = <
                                         AdditionalSpecifications
                                     >
                                 ] as Primitive
-                    //// region add missing array item types
-                    /*
-                        Derive nested missing explicit type definition if
-                        possible. Objects in arrays without explicit type
-                        definition will receive one.
-                    */
-                    if (
-                        Array.isArray(propertySpecificationCopy.type) &&
-                        propertySpecificationCopy.type.length === 1 &&
-                        typeof propertySpecificationCopy.type[0] ===
-                            'string' &&
-                        Object.prototype.hasOwnProperty.call(
-                            models, propertySpecificationCopy.type[0]
-                        )
-                    )
-                        for (const value of newProperty.slice())
-                            if (
-                                typeof value === 'object' &&
-                                Object.getPrototypeOf(value) ===
-                                    Object.prototype &&
-                                !Object.prototype.hasOwnProperty.call(
-                                    value as PlainObject, typeName
-                                )
-                            )
-                                (value as PlainObject)[typeName] =
-                                    propertySpecificationCopy.type[0]
-                    //// endregion
                     //// region check each array item
                     let index = 0
                     for (const value of newProperty.slice()) {
@@ -2385,7 +2363,7 @@ export const validateDocumentUpdate = <
                             ValueOf<ObjectType>
                         >(
                             value as ValueOf<ObjectType>,
-                            `${String(index + 1)}. value in ${String(name)}`,
+                            `${String(index + 1)}. value in "${String(name)}"`,
                             propertySpecificationCopy,
                             undefined
                         ).newValue as DocumentContent
@@ -2451,10 +2429,7 @@ export const validateDocumentUpdate = <
                                 String(name), 'property removed'
                             )
 
-                    if (
-                        localNewDocument[name] === undefined &&
-                        updateStrategy === 'incremental'
-                    )
+                    if (localNewDocument[name] === undefined)
                         delete localNewDocument[name]
                 }
             }
@@ -2894,7 +2869,7 @@ export const validateDocumentUpdate = <
                             'AttachmentMinimumSize: given attachment ' +
                             `size ${String(length)} byte doesn't satisfy ` +
                             'specified minimum of ' +
-                            `${String(specification.minimumSize)} byte ` +
+                            `${String(specification.minimumSize)} byte` +
                             `${pathDescription}.`
                         )
                     else if (
@@ -2905,7 +2880,7 @@ export const validateDocumentUpdate = <
                             'AttachmentMaximumSize: given attachment ' +
                             `size ${String(length)} byte doesn't satisfy ` +
                             'specified maximum of ' +
-                            `${String(specification.maximumSize)} byte ` +
+                            `${String(specification.maximumSize)} byte` +
                             `${pathDescription}.`
                         )
 
@@ -2922,7 +2897,7 @@ export const validateDocumentUpdate = <
                         `"${type}" ${String(aggregatedSize)} byte doesn't ` +
                         'satisfy specified minimum of ' +
                         `${String(specification.minimumAggregatedSize)} byte` +
-                        ` ${pathDescription}.`
+                        `${pathDescription}.`
                     )
                 else if (
                     typeof specification.maximumAggregatedSize === 'number' &&
@@ -2934,7 +2909,7 @@ export const validateDocumentUpdate = <
                         `${String(aggregatedSize)} byte doesn't satisfy ` +
                         `specified maximum of ` +
                         `${String(specification.maximumAggregatedSize)} byte` +
-                        ` ${pathDescription}.`
+                        `${pathDescription}.`
                     )
 
                 sumOfAggregatedSizes += aggregatedSize
@@ -2949,7 +2924,7 @@ export const validateDocumentUpdate = <
                     `${String(sumOfAggregatedSizes)} byte doesn't satisfy ` +
                     'specified minimum of ' +
                     `${String(model[specialNames.minimumAggregatedSize])} ` +
-                    `byte ${pathDescription}.`
+                    `byte${pathDescription}.`
                 )
             else if (
                 (model[specialNames.maximumAggregatedSize] ?? Infinity) <
@@ -2960,7 +2935,7 @@ export const validateDocumentUpdate = <
                     `${String(sumOfAggregatedSizes)} byte doesn't satisfy ` +
                     'specified maximum of ' +
                     `${String(model[specialNames.maximumAggregatedSize])} ` +
-                    `byte ${pathDescription}.`
+                    `byte${pathDescription}.`
                 )
         }
         /// endregion
@@ -3055,7 +3030,14 @@ export const validateDocumentUpdate = <
                 delete attachment.contentType
             }
     // endregion
-    const result = checkDocument(newDocument, oldDocument)
+
+    checkModelType(newDocument, oldDocument)
+
+    const modelName = newDocument[typeName] as string
+    const model: ModelType = models[modelName]
+
+    const result =
+        checkDocument(newDocument, oldDocument, modelName, model)
 
     // region check if changes happened
     if (
