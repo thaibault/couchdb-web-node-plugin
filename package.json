@@ -402,12 +402,14 @@
               "type": "DateTime",
               "minimum": 0,
               "nullable": false,
-              "onUpdateExpression": "modelConfiguration.updateStrategy === 'migrate' && oldDocument ? oldDocument[name] : nowUTCTimestamp",
+              "onUpdateExpression": {
+                "__evaluate__": "`userContext.name === '${self.couchdb.admin.name}' && oldDocument ? oldDocument[name] : nowUTCTimestamp`"
+              },
               "preventVersionCreation": true,
               "runUpdateHookAlways": true,
               "constraintExpression": {
                 "evaluate": {
-                  "__evaluate__": "`modelConfiguration.updateStrategy === 'migrate' && oldDocument ? true : newValue > ${nowUTCTimestamp}`"
+                  "__evaluate__": "`userContext.name === '${self.couchdb.admin.name}' && oldDocument ? true : newValue > ${nowUTCTimestamp}`"
                 }
               }
             }
@@ -416,7 +418,7 @@
             "lastUser": {
               "nullable": false,
               "onUpdateExpression": {
-                "__evaluate__": "`userContext.name || '${self.couchdb.admin.name}'`"
+                "__evaluate__": "`userContext.name === '${self.couchdb.admin.name}' && oldDocument ? oldDocument[name] : (userContext.name || 'unknown')`"
               },
               "preventVersionCreation": true,
               "runUpdateHookAlways": true

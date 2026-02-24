@@ -475,9 +475,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
             }
         ) as Connection
 
-        for (const [_databaseName, {name, password, roles}] of Object.entries(
-            configuration.couchdb.users
-        ))
+        for (const {name, password, roles} of configuration.couchdb.users)
             try {
                 await userDatabaseConnection.get(`org.couchdb.user:${name}`)
             } catch (error) {

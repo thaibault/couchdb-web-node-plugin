@@ -600,7 +600,7 @@ export interface CoreConfiguration<
         name: string
         password: string
     }
-    users: Mapping<{
+    users: Array<{
         name: string
         password: string
         roles: Array<string>
