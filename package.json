@@ -312,7 +312,8 @@
             "_maximumAggregatedSize": 100000000,
             "_minimumAggregatedSize": 0,
             "_rev": {
-              "mutable": false
+              "mutable": false,
+              "preventVersionCreation": true
             },
             "-type": {
               "maximumLength": 999,
@@ -394,13 +395,15 @@
               "mutable": false,
               "nullable": false,
               "onCreateExpression": "nowUTCTimestamp",
+              "preventVersionCreation": true,
               "type": "DateTime"
             },
             "updateDateTime": {
+              "type": "DateTime",
               "minimum": 0,
               "nullable": false,
-              "type": "DateTime",
               "onUpdateExpression": "modelConfiguration.updateStrategy === 'migrate' && oldDocument ? oldDocument[name] : nowUTCTimestamp",
+              "preventVersionCreation": true,
               "runUpdateHookAlways": true,
               "constraintExpression": {
                 "evaluate": {
@@ -415,6 +418,7 @@
               "onUpdateExpression": {
                 "__evaluate__": "`userContext.name || '${self.couchdb.admin.name}'`"
               },
+              "preventVersionCreation": true,
               "runUpdateHookAlways": true
             }
           }

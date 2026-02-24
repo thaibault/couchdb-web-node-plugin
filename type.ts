@@ -208,7 +208,10 @@ export interface BasePropertySpecification<
     Type, AdditionalSpecifications extends object
 > {
     allowedRoles?: Roles
+
     updateStrategy?: UpdateStrategy
+    preventVersionCreation?: boolean
+
     // region expression
     arrayConstraintExecution?: Constraint
     arrayConstraintExpression?: Constraint

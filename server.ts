@@ -328,8 +328,8 @@ export const initializeExpress = async (
                                                 unknown as
                                                 {error: unknown}
                                         ).error = error
-                                    } catch (e) {
-                                        console.error(e)
+                                    } catch (error) {
+                                        log.error(error)
                                     }
                                 }
                         }
