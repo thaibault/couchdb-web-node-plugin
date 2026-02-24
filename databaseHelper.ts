@@ -1773,12 +1773,13 @@ export const validateDocumentUpdate = <
                         // @ts-expect-error Typescript cannot determine.
                         localNewDocument = result
 
-                    checkModelType(localNewDocument, localOldDocument)
+                    if (parentNames.length === 0) {
+                        checkModelType(localNewDocument, localOldDocument)
 
-                    modelName = localNewDocument[typeName] as string
+                        modelName = localNewDocument[typeName] as string
 
-                    if (parentNames.length === 0)
                         setDocumentEnvironment()
+                    }
                 }
         // endregion
         // region run update document hook
@@ -1851,12 +1852,13 @@ export const validateDocumentUpdate = <
                     // @ts-expect-error Typescript cannot determine.
                     localNewDocument = result
 
-                checkModelType(localNewDocument, localOldDocument)
+                if (parentNames.length === 0) {
+                    checkModelType(localNewDocument, localOldDocument)
 
-                modelName = localNewDocument[typeName] as string
+                    modelName = localNewDocument[typeName] as string
 
-                if (parentNames.length === 0)
                     setDocumentEnvironment()
+                }
             }
         // endregion
         const additionalPropertyNames = additionalPropertySpecification ?
