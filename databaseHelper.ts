@@ -1045,19 +1045,6 @@ export const validateDocumentUpdate = <
                 ) {
                     if (
                         typeof newValue === 'object' &&
-                        Object.getPrototypeOf(newValue) === Object.prototype &&
-                        Object.prototype.hasOwnProperty.call(
-                            newValue, typeName
-                        )
-                    ) {
-                        delete (newValue as PartialFullDocumentType)[typeName]
-                        changedPath = parentNames.concat(
-                            name, 'remove derivable type declaration'
-                        )
-                    }
-
-                    if (
-                        typeof newValue === 'object' &&
                         Object.getPrototypeOf(newValue) === Object.prototype
                     ) {
                         let result: (
@@ -2080,8 +2067,8 @@ export const validateDocumentUpdate = <
                             ) &&
                             updateStrategy !== 'replace'
                         ) ||
-                        name === typeName &&
-                        parentNames.length > 0
+                        parentNames.length > 0 &&
+                        name === typeName
                     ))
                         throwError(
                             `MissingProperty: Missing property ` +
@@ -2155,9 +2142,7 @@ export const validateDocumentUpdate = <
                     (
                         localOldDocument[name] === value ||
                         serialize(localOldDocument[name]) === serialize(value)
-                    ) ||
-                    parentNames.length > 0 &&
-                    name === typeName
+                    )
                 )
                     delete localNewDocument[name]
         /// endregion
@@ -2177,6 +2162,11 @@ export const validateDocumentUpdate = <
                     specialNames.updateStrategy
                 ).includes(name as keyof BaseModelType)
             ) {
+                if (parentNames.length > 0 && name === typeName) {
+                    delete localNewDocument[name]
+                    continue
+                }
+
                 let propertySpecification:(
                     typeof model[keyof ObjectType] |
                     PropertySpecification<
@@ -2184,6 +2174,7 @@ export const validateDocumentUpdate = <
                     > |
                     undefined
                 )
+
                 if (Object.prototype.hasOwnProperty.call(model, name))
                     propertySpecification = model[name]
                 else if (additionalPropertySpecification)
@@ -2432,7 +2423,10 @@ export const validateDocumentUpdate = <
                                 String(name), 'property removed'
                             )
 
-                    if (localNewDocument[name] === undefined)
+                    if (
+                        localNewDocument[name] === undefined &&
+                        updateStrategy !== 'incremental'
+                    )
                         delete localNewDocument[name]
                 }
             }
