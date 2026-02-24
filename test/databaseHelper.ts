@@ -271,6 +271,18 @@ describe('databaseHelper', () => {
                     .concat(modelConfiguration, models) as
                     Parameters<typeof validateDocumentUpdate>
 
+            if (Array.isArray(test[2])) {
+                expect((): PartialFullDocument =>
+                    validateDocumentUpdate(...parameters)
+                ).toThrow(new RegExp(
+                    `^${test[2][0] as string}: [\\s\\S]+` +
+                    `"${test[2][1] as string}: [\\s\\S]+[.!]"[.!]$`,
+                    's'
+                ))
+
+                return
+            }
+
             if (typeof test[2] !== 'string') {
                 expect(validateDocumentUpdate(...parameters))
                     .toStrictEqual(test[2])
@@ -700,7 +712,7 @@ describe('databaseHelper', () => {
         )
         /// endregion
         /// region property type
-        test.only.each([
+        test.each([
             // Properties have to be its specified type (string is default).
             [
                 [{[typeName]: 'Test', a: 2}],
@@ -813,7 +825,7 @@ describe('databaseHelper', () => {
             [
                 [{[typeName]: 'Test', a: [{b: 2}]}],
                 {entities: {Test: {a: {type: 'Test[]'}}}},
-                'NestedType'
+                ['NestedType', 'Property']
             ],
             [
                 [{
@@ -826,7 +838,7 @@ describe('databaseHelper', () => {
                         Test: {a: {type: 'Test[]'}, b: {nullable: false}}
                     }
                 },
-                'NestedType'
+                ['NestedType', 'NotNull']
             ],
             [
                 [
@@ -857,7 +869,7 @@ describe('databaseHelper', () => {
                         }
                     }
                 },
-                'NestedType'
+                ['NestedType', 'Minimum']
             ],
             [
                 [{[typeName]: 'Test', a: [4]}],
@@ -963,24 +975,24 @@ describe('databaseHelper', () => {
                     b: 'a'
                 }],
                 {entities: {Test: {a: {type: 'Test'}, b: {}}}},
-                'NestedType'
+                ['NestedType', 'PropertyType']
             ],
             /// endregion
             /// region property existence
             [
                 [{[typeName]: 'Test', a: {b: 2}}],
                 {entities: {Test: {a: {type: 'Test'}}}},
-                'NestedType'
+                ['NestedType', 'Property']
             ],
             [
                 [{[typeName]: 'Test', a: {b: null}, b: 'a'}],
                 {entities: {Test: {a: {type: 'Test'}, b: {nullable: false}}}},
-                'NestedType'
+                ['NestedType', 'NotNull']
             ],
             [
                 [{[typeName]: 'Test', a: {[typeName]: 'Test'}, b: 'a'}],
                 {entities: {Test: {a: {type: 'Test'}, b: {nullable: false}}}},
-                'NestedType'
+                ['NestedType', 'MissingProperty']
             ],
             /// endregion
             /// region property readonly
@@ -990,7 +1002,7 @@ describe('databaseHelper', () => {
                     {[typeName]: 'Test', a: {b: 'b'}}
                 ],
                 {entities: {Test: {a: {type: 'Test'}, b: {writable: false}}}},
-                'NestedType'
+                ['NestedType', 'Readonly']
             ],
             [
                 [
@@ -998,7 +1010,7 @@ describe('databaseHelper', () => {
                     {[typeName]: 'Test', a: {b: 'b'}}
                 ],
                 {entities: {Test: {a: {type: 'Test'}, b: {mutable: false}}}},
-                'NestedType'
+                ['NestedType', 'Immutable']
             ],
             [
                 [
@@ -1006,7 +1018,7 @@ describe('databaseHelper', () => {
                     {[typeName]: 'Test'}
                 ],
                 {entities: {Test: {a: {type: 'Test'}, b: {writable: false}}}},
-                'NestedType'
+                ['NestedType', 'Readonly']
             ],
             [
                 [
@@ -1032,40 +1044,34 @@ describe('databaseHelper', () => {
                         }
                     }
                 },
-                'NestedType'
+                ['NestedType', 'Minimum']
             ],
             [
                 [{[typeName]: 'Test', a: '1', b: {a: '12'}}],
                 {entities: {Test: {a: {maximumLength: 1}, b: {type: 'Test'}}}},
-                'MaximalLength'
+                ['NestedType', 'MaximalLength']
             ],
             /// endregion
-            /*
             /// region property pattern
             [
-                [{[typeName]: 'Test', b: {[typeName]: 'Test', a: 'b'}}],
+                [{[typeName]: 'Test', b: {a: 'b'}}],
                 {entities: {Test: {a: {pattern: 'a'}, b: {type: 'Test'}}}},
-                'PatternMatch'
+                ['NestedType', 'PatternMatch']
+
             ],
             [
-                [{[typeName]: 'Test', b: {[typeName]: 'Test', a: 'a'}}],
+                [{[typeName]: 'Test', b: {a: 'a'}}],
                 {
                     entities: {
-                        Test: {
-                            a: {invertedPattern: 'a'}, b: {type: 'Test'}
-                        }
+                        Test: {a: {invertedPattern: 'a'}, b: {type: 'Test'}}
                     }
                 },
-                'InvertedPatternMatch'
+                ['NestedType', 'InvertedPatternMatch']
             ],
             /// endregion
             /// region property constraint
             [
-                [{
-                    [typeName]: 'Test',
-                    a: 'b',
-                    b: {[typeName]: 'Test', a: 'a'}
-                }],
+                [{[typeName]: 'Test', a: 'b', b: {a: 'a'}}],
                 {
                     entities: {
                         Test: {
@@ -1078,14 +1084,10 @@ describe('databaseHelper', () => {
                         }
                     }
                 },
-                'ConstraintExpression'
+                ['NestedType', 'ConstraintExpression']
             ],
             [
-                [{
-                    [typeName]: 'Test',
-                    a: 'b',
-                    b: {[typeName]: 'Test', a: 'a'}
-                }],
+                [{[typeName]: 'Test', a: 'b', b: {a: 'a'}}],
                 {
                     entities: {
                         Test: {
@@ -1098,7 +1100,7 @@ describe('databaseHelper', () => {
                         }
                     }
                 },
-                'ConstraintExpression'
+                ['NestedType', 'ConstraintExpression']
             ],
             /// endregion
             // endregion
@@ -1117,7 +1119,6 @@ describe('databaseHelper', () => {
                 {entities: {Test: {a: {type: 2}}}},
                 'PropertyType'
             ]
-            */
         ] as Array<ForbiddenTest>)(
             '%#. forbidden property type validateDocumentUpdate ' +
             `(with update strategy "${updateStrategy}")`,
@@ -2300,12 +2301,27 @@ describe('databaseHelper', () => {
                 [{[typeName]: 'Test', a: {[typeName]: '_test'}}],
                 {entities: {Test: {a: {type: '_test'}}, _test: {}}},
                 {
-                    fillUp: {[typeName]: 'Test', a: {}},
-                    incremental: {
-                        [typeName]: 'Test',
-                        a: {}
-                    },
-                    replace: {[typeName]: 'Test', a: {}}
+                    fillUp: {[typeName]: 'Test'},
+                    incremental: {[typeName]: 'Test'},
+                    replace: {[typeName]: 'Test'}
+                }
+            ],
+            /*
+                Check if properties with nested type declaration are merged
+                according to different update strategies.
+            */
+            [
+                [
+                    {[typeName]: 'Test', a: {[typeName]: '_test'}, b: 'b'},
+                    {[typeName]: 'Test', a: {b: 'b'}}
+                ],
+                {entities: {
+                    Test: {a: {type: '_test'}, b: {}}, _test: {b: {}}
+                }},
+                {
+                    fillUp: {[typeName]: 'Test', a: {b: 'b'}, b: 'b'},
+                    incremental: {b: 'b'},
+                    replace: {[typeName]: 'Test', b: 'b'}
                 }
             ]
         ]))(

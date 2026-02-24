@@ -856,7 +856,7 @@ export const validateDocumentUpdate = <
         updateStrategy: UpdateStrategy = modelConfiguration.updateStrategy
     ): CheckedDocumentResult<ObjectType, AdditionalPropertiesType> => {
         const pathDescription =
-            parentNames.length ? ` in ${parentNames.join(' -> ')}` : ''
+            parentNames.length ? ` in "${parentNames.join('" -> "')}"` : ''
         let changedPath: Array<string> = []
 
         if (Object.prototype.hasOwnProperty.call(
@@ -1076,7 +1076,7 @@ export const validateDocumentUpdate = <
                                     `of type "${type}" (given ` +
                                     `"${serialize(newValue)}" of type ` +
                                     `${typeof newValue}) Issue is ` +
-                                    `"${errorMessage}".${pathDescription}.`
+                                    `"${errorMessage}"${pathDescription}.`
                                 )
                             else
                                 log.debug(
@@ -1236,8 +1236,10 @@ export const validateDocumentUpdate = <
                 )
                     throwError(
                         `Minimum: Property "${name}" (type ` +
-                        `${propertySpecification.type as string}) must ` +
-                        'satisfy a minimum of ' +
+                        ([] as Array<string>)
+                            .concat(propertySpecification.type as string)
+                            .join(' or ') +
+                        ') must satisfy a minimum of ' +
                         (
                             propertySpecification.minimum as
                                 unknown as
@@ -1252,8 +1254,10 @@ export const validateDocumentUpdate = <
                 )
                     throwError(
                         `Maximum: Property "${name}" (type ` +
-                        `${propertySpecification.type as string}) must ` +
-                        `satisfy a maximum of ` +
+                        ([] as Array<string>)
+                            .concat(propertySpecification.type as string)
+                            .join(' or ') +
+                        ') must satisfy a maximum of ' +
                         (
                             propertySpecification.maximum as
                                 unknown as
@@ -1286,9 +1290,11 @@ export const validateDocumentUpdate = <
                 if (!selection.includes(newValue))
                     throwError(
                         `Selection: Property "${name}" (type ` +
-                        `${propertySpecification.type as string}) should be ` +
-                        `one of "${selection.join('", "')}". But is ` +
-                        `"${newValue as string}"${pathDescription}.`
+                        ([] as Array<string>)
+                            .concat(propertySpecification.type as string)
+                            .join(' or ') +
+                        `) should be one of "${selection.join('", "')}". ` +
+                        `But is "${newValue as string}"${pathDescription}.`
                     )
             }
             // endregion
@@ -2357,7 +2363,7 @@ export const validateDocumentUpdate = <
                             ValueOf<ObjectType>
                         >(
                             value as ValueOf<ObjectType>,
-                            `${String(index + 1)}. value in ${String(name)}`,
+                            `${String(index + 1)}. value in "${String(name)}"`,
                             propertySpecificationCopy,
                             undefined
                         ).newValue as DocumentContent
@@ -2423,10 +2429,7 @@ export const validateDocumentUpdate = <
                                 String(name), 'property removed'
                             )
 
-                    if (
-                        localNewDocument[name] === undefined &&
-                        updateStrategy !== 'incremental'
-                    )
+                    if (localNewDocument[name] === undefined)
                         delete localNewDocument[name]
                 }
             }
@@ -2866,7 +2869,7 @@ export const validateDocumentUpdate = <
                             'AttachmentMinimumSize: given attachment ' +
                             `size ${String(length)} byte doesn't satisfy ` +
                             'specified minimum of ' +
-                            `${String(specification.minimumSize)} byte ` +
+                            `${String(specification.minimumSize)} byte` +
                             `${pathDescription}.`
                         )
                     else if (
@@ -2877,7 +2880,7 @@ export const validateDocumentUpdate = <
                             'AttachmentMaximumSize: given attachment ' +
                             `size ${String(length)} byte doesn't satisfy ` +
                             'specified maximum of ' +
-                            `${String(specification.maximumSize)} byte ` +
+                            `${String(specification.maximumSize)} byte` +
                             `${pathDescription}.`
                         )
 
@@ -2894,7 +2897,7 @@ export const validateDocumentUpdate = <
                         `"${type}" ${String(aggregatedSize)} byte doesn't ` +
                         'satisfy specified minimum of ' +
                         `${String(specification.minimumAggregatedSize)} byte` +
-                        ` ${pathDescription}.`
+                        `${pathDescription}.`
                     )
                 else if (
                     typeof specification.maximumAggregatedSize === 'number' &&
@@ -2906,7 +2909,7 @@ export const validateDocumentUpdate = <
                         `${String(aggregatedSize)} byte doesn't satisfy ` +
                         `specified maximum of ` +
                         `${String(specification.maximumAggregatedSize)} byte` +
-                        ` ${pathDescription}.`
+                        `${pathDescription}.`
                     )
 
                 sumOfAggregatedSizes += aggregatedSize
@@ -2921,7 +2924,7 @@ export const validateDocumentUpdate = <
                     `${String(sumOfAggregatedSizes)} byte doesn't satisfy ` +
                     'specified minimum of ' +
                     `${String(model[specialNames.minimumAggregatedSize])} ` +
-                    `byte ${pathDescription}.`
+                    `byte${pathDescription}.`
                 )
             else if (
                 (model[specialNames.maximumAggregatedSize] ?? Infinity) <
@@ -2932,7 +2935,7 @@ export const validateDocumentUpdate = <
                     `${String(sumOfAggregatedSizes)} byte doesn't satisfy ` +
                     'specified maximum of ' +
                     `${String(model[specialNames.maximumAggregatedSize])} ` +
-                    `byte ${pathDescription}.`
+                    `byte${pathDescription}.`
                 )
         }
         /// endregion
