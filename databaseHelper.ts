@@ -379,7 +379,7 @@ export const validateDocumentUpdate = <
         toJSON?: (value: unknown) => string,
         fromJSON?: (value: string) => unknown
     ): PartialFullDocument<ObjectType, AdditionalPropertiesType> => {
-    // log.debug(`Got new document`, newDocument, 'to update', oldDocument)
+    log.debug(`Got new document`, newDocument, 'to update', oldDocument)
 
     type Attachments = Mapping<AttachmentType | null>
 
@@ -1333,7 +1333,10 @@ export const validateDocumentUpdate = <
                 newValue, name, propertySpecification, oldValue
             )
 
-            if (serialize(newValue) !== serialize(oldValue))
+            if (
+                !propertySpecification.preventVersionCreation &&
+                serialize(newValue) !== serialize(oldValue)
+            )
                 changedPath = parentNames.concat(name, 'value updated')
 
             return {newValue, changedPath}
@@ -2378,6 +2381,7 @@ export const validateDocumentUpdate = <
                     }
                     //// endregion
                     if (!(
+                        propertySpecification.preventVersionCreation ||
                         localOldDocument &&
                         Object.prototype.hasOwnProperty.call(
                             localOldDocument, name
@@ -2560,6 +2564,11 @@ export const validateDocumentUpdate = <
         if (Object.prototype.hasOwnProperty.call(
             localNewDocument, specialNames.attachment
         )) {
+            const attachmentModel =
+                model[specialNames.attachment] as Mapping<
+                    FileSpecification<AttachmentType, AdditionalSpecifications
+                >>
+
             const newAttachments =
                 localNewDocument[specialNames.attachment] as Attachments
 
@@ -2679,11 +2688,6 @@ export const validateDocumentUpdate = <
             // endregion
             if (Object.keys(newAttachments).length === 0)
                 delete localNewDocument[specialNames.attachment]
-
-            const attachmentModel =
-                model[specialNames.attachment] as Mapping<
-                    FileSpecification<AttachmentType, AdditionalSpecifications
-                >>
 
             const attachmentToTypeMapping: Mapping<Array<string>> = {}
             for (const type of Object.keys(attachmentModel))
@@ -3073,7 +3077,10 @@ export const validateDocumentUpdate = <
         ] as Set<string>) = new Set([`${id}-${revision}`])
     // endregion
 
-    // log.debug('Determined new document:', result.newDocument)
+    log.debug(
+        `Document has changes in "${result.changedPath.join('.')}".`
+    )
+    log.debug('Determined new document:', result.newDocument)
 
     return result.newDocument
 }

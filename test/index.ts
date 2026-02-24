@@ -64,11 +64,11 @@ describe('index', (): void => {
             roles: ['users']
         }
     }
-    config.users[config.databaseName] = {
+    config.users = [{
         name: 'test',
         password: 'test',
         roles: ['users']
-    }
+    }]
     config.runner.variants[2].configuration = {
         adapter: 'memory',
         logPath: '/dev/null'
@@ -244,8 +244,8 @@ describe('index', (): void => {
             {
                 ...getConnectorOptions(config.connector),
                 auth: {
-                    username: config.users[config.databaseName].name,
-                    password: config.users[config.databaseName].password
+                    username: config.users[0].name,
+                    password: config.users[0].password
                 }
             }
         )

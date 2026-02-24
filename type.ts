@@ -208,7 +208,10 @@ export interface BasePropertySpecification<
     Type, AdditionalSpecifications extends object
 > {
     allowedRoles?: Roles
+
     updateStrategy?: UpdateStrategy
+    preventVersionCreation?: boolean
+
     // region expression
     arrayConstraintExecution?: Constraint
     arrayConstraintExpression?: Constraint
@@ -597,7 +600,7 @@ export interface CoreConfiguration<
         name: string
         password: string
     }
-    users: Mapping<{
+    users: Array<{
         name: string
         password: string
         roles: Array<string>

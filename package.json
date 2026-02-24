@@ -312,7 +312,8 @@
             "_maximumAggregatedSize": 100000000,
             "_minimumAggregatedSize": 0,
             "_rev": {
-              "mutable": false
+              "mutable": false,
+              "preventVersionCreation": true
             },
             "-type": {
               "maximumLength": 999,
@@ -394,17 +395,21 @@
               "mutable": false,
               "nullable": false,
               "onCreateExpression": "nowUTCTimestamp",
+              "preventVersionCreation": true,
               "type": "DateTime"
             },
             "updateDateTime": {
+              "type": "DateTime",
               "minimum": 0,
               "nullable": false,
-              "type": "DateTime",
-              "onUpdateExpression": "modelConfiguration.updateStrategy === 'migrate' && oldDocument ? oldDocument[name] : nowUTCTimestamp",
+              "onUpdateExpression": {
+                "__evaluate__": "`userContext.name === '${self.couchdb.admin.name}' && oldDocument ? oldDocument[name] : nowUTCTimestamp`"
+              },
+              "preventVersionCreation": true,
               "runUpdateHookAlways": true,
               "constraintExpression": {
                 "evaluate": {
-                  "__evaluate__": "`modelConfiguration.updateStrategy === 'migrate' && oldDocument ? true : newValue > ${nowUTCTimestamp}`"
+                  "__evaluate__": "`userContext.name === '${self.couchdb.admin.name}' && oldDocument ? true : newValue > ${nowUTCTimestamp}`"
                 }
               }
             }
@@ -413,8 +418,9 @@
             "lastUser": {
               "nullable": false,
               "onUpdateExpression": {
-                "__evaluate__": "`userContext.name || '${self.couchdb.admin.name}'`"
+                "__evaluate__": "`userContext.name === '${self.couchdb.admin.name}' && oldDocument ? oldDocument[name] : (userContext.name || 'unknown')`"
               },
+              "preventVersionCreation": true,
               "runUpdateHookAlways": true
             }
           }
