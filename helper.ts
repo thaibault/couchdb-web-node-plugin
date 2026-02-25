@@ -848,9 +848,8 @@ export const extendModel = (
                     models[modelName][extendPropertyName] as Array<string>
                 )
         else
-            (
-                models[modelName][extendPropertyName] as unknown as string
-            ) = '_base'
+            (models[modelName][extendPropertyName] as unknown as string) =
+                '_base'
 
     if (Object.prototype.hasOwnProperty.call(
         models[modelName], extendPropertyName
@@ -891,8 +890,8 @@ export const extendModels = (
         ))
             throw new Error(
                 'Model names have to match ' +
-                `"${typePattern.public}" or "${typePattern.private}"` +
-                ` for private one (given name: "${modelName}").`
+                `"${typePattern.public}" or "${typePattern.private}" ` +
+                `for private one (given name: "${modelName}").`
             )
 
         models[modelName] = extendModel(

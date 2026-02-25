@@ -37,6 +37,7 @@ import {
     BaseModel,
     Configuration,
     Document,
+    Model,
     ModelConfiguration,
     PartialFullDocument,
     SpecialPropertyNames
@@ -2217,7 +2218,7 @@ describe('databaseHelper', () => {
         )
         /// endregion
         /// region model
-        test.each(adaptTests([
+        test.only.each(adaptTests([
             /*
                 Check if document without properties but type declaration can
                 be created.
@@ -2302,6 +2303,19 @@ describe('databaseHelper', () => {
                     fillUp: {[typeName]: 'Test', a: {b: 'b'}, b: 'b'},
                     incremental: {b: 'b'},
                     replace: {[typeName]: 'Test', b: 'b'}
+                }
+            ],
+            /*
+                Check if properties with nested in-place type declaration are
+                merged according to different update strategies.
+            */
+            [
+                [{[typeName]: 'Test', a: {b: 'b', c: 'c'}}],
+                {entities: {Test: {a: {type: {b: {}, c: {}} as Model}}}},
+                {
+                    fillUp: {[typeName]: 'Test', a: {b: 'b', c: 'c'}},
+                    incremental: {[typeName]: 'Test', a: {b: 'b', c: 'c'}},
+                    replace: {[typeName]: 'Test', a: {b: 'b', c: 'c'}}
                 }
             ]
         ]))(

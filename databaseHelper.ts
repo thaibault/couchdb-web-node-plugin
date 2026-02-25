@@ -1076,6 +1076,11 @@ export const validateDocumentUpdate = <
                                 )?.message ??
                                 'unknown'
                             )
+
+                            console.log()
+                            console.log('TODO', errorMessage)
+                            console.log()
+
                             if (types.length === 1)
                                 throwError(
                                     `NestedType: Under key "${name}" isn't ` +
