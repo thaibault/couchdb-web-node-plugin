@@ -1447,7 +1447,7 @@ export const validateDocumentUpdate = <
                 propertySpecification.updateStrategy || updateStrategy
             if (!oldDocument)
                 for (const type of [
-                    'onCreateExecution', 'onCreateExpression'
+                    'createExecution', 'createExpression'
                 ] as const)
                     if (Object.prototype.hasOwnProperty.call(
                         propertySpecification, type
@@ -1592,7 +1592,7 @@ export const validateDocumentUpdate = <
             }
 
             for (const type of [
-                'onUpdateExecution', 'onUpdateExpression'
+                'updateExecution', 'updateExpression'
             ] as const)
                 if (Object.prototype.hasOwnProperty.call(
                     propertySpecification, type
@@ -1802,7 +1802,7 @@ export const validateDocumentUpdate = <
                             AdditionalPropertiesType
                         >
                     >(
-                        model[type as '_onUpdateExpression'],
+                        model[type as '_updateExpression'],
                         type.endsWith('Expression'),
                         {
                             checkPropertyContent,

@@ -564,12 +564,12 @@ describe('databaseHelper', () => {
             */
             [
                 [{[typeName]: 'Test', a: ''}],
-                {entities: {Test: {a: {onCreateExpression: '+'}}}},
+                {entities: {Test: {a: {createExpression: '+'}}}},
                 'Compilation'
             ],
             [
                 [{[typeName]: 'Test', a: ''}],
-                {entities: {Test: {a: {onCreateExecution: 'return +'}}}},
+                {entities: {Test: {a: {createExecution: 'return +'}}}},
                 'Compilation'
             ],
             /*
@@ -580,11 +580,7 @@ describe('databaseHelper', () => {
                 [{[typeName]: 'Test', a: ''}],
                 {
                     entities: {
-                        Test: {
-                            a: {
-                                onCreateExpression: 'undefinedVariableName'
-                            }
-                        }
+                        Test: {a: {createExpression: 'undefinedVariableName'}}
                     }
                 },
                 'Runtime'
@@ -595,8 +591,7 @@ describe('databaseHelper', () => {
                     entities: {
                         Test: {
                             a: {
-                                onCreateExecution:
-                                    'return undefinedVariableName'
+                                createExecution: 'return undefinedVariableName'
                             }
                         }
                     }
@@ -611,12 +606,12 @@ describe('databaseHelper', () => {
             */
             [
                 [{[typeName]: 'Test', a: ''}],
-                {entities: {Test: {a: {onUpdateExpression: '+'}}}},
+                {entities: {Test: {a: {updateExpression: '+'}}}},
                 'Compilation'
             ],
             [
                 [{[typeName]: 'Test', a: ''}],
-                {entities: {Test: {a: {onUpdateExecution: 'return +'}}}},
+                {entities: {Test: {a: {updateExecution: 'return +'}}}},
                 'Compilation'
             ],
             /*
@@ -627,11 +622,7 @@ describe('databaseHelper', () => {
                 [{[typeName]: 'Test', a: ''}],
                 {
                     entities: {
-                        Test: {
-                            a: {
-                                onUpdateExpression: 'undefinedVariableName'
-                            }
-                        }
+                        Test: {a: {updateExpression: 'undefinedVariableName'}}
                     }
                 },
                 'Runtime'
@@ -642,8 +633,7 @@ describe('databaseHelper', () => {
                     entities: {
                         Test: {
                             a: {
-                                onUpdateExecution:
-                                    'return undefinedVariableName'
+                                updateExecution: 'return undefinedVariableName'
                             }
                         }
                     }
@@ -1253,11 +1243,7 @@ describe('databaseHelper', () => {
                 {
                     entities: {
                         Test: {
-                            a: {
-                                constraintExpression: {
-                                    evaluation: 'false'
-                                }
-                            }
+                            a: {constraintExpression: {evaluation: 'false'}}
                         }
                     }
                 },
@@ -1282,13 +1268,7 @@ describe('databaseHelper', () => {
                 [{[typeName]: 'Test', a: 'b'}],
                 {
                     entities: {
-                        Test: {
-                            a: {
-                                constraintExpression: {
-                                    evaluation: '+'
-                                }
-                            }
-                        }
+                        Test: {a: {constraintExpression: {evaluation: '+'}}}
                     }
                 },
                 'Compilation'
@@ -2335,7 +2315,7 @@ describe('databaseHelper', () => {
             // region on create
             [
                 [{[typeName]: 'Test', a: ''}],
-                {entities: {Test: {a: {onCreateExpression: `'2'`}}}},
+                {entities: {Test: {a: {createExpression: `'2'`}}}},
                 {
                     fillUp: {[typeName]: 'Test', a: '2'},
                     incremental: {[typeName]: 'Test', a: '2'},
@@ -2358,7 +2338,7 @@ describe('databaseHelper', () => {
                         Test: {
                             [attachmentName]: {
                                 test: {
-                                    onCreateExpression: `
+                                    createExpression: `
                                         (
                                             attachmentsTarget[name].data +=
                                                 ' footer'
@@ -2425,7 +2405,7 @@ describe('databaseHelper', () => {
                         Test: {
                             [attachmentName]: {
                                 test: {
-                                    onCreateExpression: `
+                                    createExpression: `
                                         (
                                             attachmentsTarget[name].data +=
                                                 ' footer'
@@ -2471,7 +2451,7 @@ describe('databaseHelper', () => {
             ],
             [
                 [{[typeName]: 'Test', a: ''}],
-                {entities: {Test: {a: {onCreateExecution: `return '2'`}}}},
+                {entities: {Test: {a: {createExecution: `return '2'`}}}},
                 {
                     fillUp: {[typeName]: 'Test', a: '2'},
                     incremental: {[typeName]: 'Test', a: '2'},
@@ -2486,7 +2466,7 @@ describe('databaseHelper', () => {
                 {
                     entities: {
                         Test: {
-                            a: {onCreateExecution: `return '2'`},
+                            a: {createExecution: `return '2'`},
                             b: {}
                         }
                     }
@@ -2501,7 +2481,7 @@ describe('databaseHelper', () => {
             // region on update
             [
                 [{[typeName]: 'Test', a: ''}],
-                {entities: {Test: {a: {onUpdateExpression: `'2'`}}}},
+                {entities: {Test: {a: {updateExpression: `'2'`}}}},
                 {
                     fillUp: {[typeName]: 'Test', a: '2'},
                     incremental: {[typeName]: 'Test', a: '2'},
@@ -2510,7 +2490,7 @@ describe('databaseHelper', () => {
             ],
             [
                 [{[typeName]: 'Test', a: ''}],
-                {entities: {Test: {a: {onUpdateExecution: `return '2'`}}}},
+                {entities: {Test: {a: {updateExecution: `return '2'`}}}},
                 {
                     fillUp: {[typeName]: 'Test', a: '2'},
                     incremental: {[typeName]: 'Test', a: '2'},
@@ -2525,7 +2505,7 @@ describe('databaseHelper', () => {
                 {
                     entities: {
                         Test: {
-                            a: {onUpdateExpression: `'2'`},
+                            a: {updateExpression: `'2'`},
                             b: {emptyEqualsNull: false}
                         }
                     }
@@ -2553,7 +2533,7 @@ describe('databaseHelper', () => {
                         Test: {
                             [attachmentName]: {
                                 test: {
-                                    onUpdateExpression: `
+                                    updateExpression: `
                                         (
                                             attachmentsTarget[name].data +=
                                                 ' footer'
@@ -2621,7 +2601,7 @@ describe('databaseHelper', () => {
                         Test: {
                             [attachmentName]: {
                                 test: {
-                                    onUpdateExpression: `
+                                    updateExpression: `
                                         (
                                             attachmentsTarget[name].data +=
                                                 ' footer'
@@ -2675,7 +2655,7 @@ describe('databaseHelper', () => {
                         Test: {
                             [attachmentName]: {
                                 data: {
-                                    onUpdateExpression: `
+                                    updateExpression: `
                                         (
                                             attachmentsTarget[name].data +=
                                                 ' footer'
@@ -4060,13 +4040,7 @@ describe('databaseHelper', () => {
                 [{[typeName]: 'Test', a: 'b'}],
                 {
                     entities: {
-                        Test: {
-                            a: {
-                                constraintExpression: {
-                                    evaluation: 'true'
-                                }
-                            }
-                        }
+                        Test: {a: {constraintExpression: {evaluation: 'true'}}}
                     }
                 },
                 {

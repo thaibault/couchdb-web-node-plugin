@@ -222,10 +222,10 @@ export interface BasePropertySpecification<
     constraintExecution?: Constraint
     constraintExpression?: Constraint
 
-    onCreateExecution?: string
-    onCreateExpression?: string
-    onUpdateExecution?: string
-    onUpdateExpression?: string
+    createExecution?: string
+    createExpression?: string
+    updateExecution?: string
+    updateExpression?: string
     runUpdateHookAlways?: boolean
     // endregion
     // region validation
@@ -319,8 +319,8 @@ export interface BaseModel<
     _oldType?: Array<string> | string
     _type?: Array<string> | string
 
-    _onUpdateExecution?: string
-    _onUpdateExpression?: string
+    _updateExecution?: string
+    _updateExpression?: string
 
     _id: PropertySpecification<string, AdditionalSpecifications>
     _rev: PropertySpecification<string, AdditionalSpecifications>
@@ -432,8 +432,8 @@ export interface SpecialPropertyNames {
     oldType: '_oldType'
 
     update: {
-        execution: '_onUpdateExecution'
-        expression: '_onUpdateExpression'
+        execution: '_updateExecution'
+        expression: '_updateExpression'
     }
 }
 export interface PropertyNameConfiguration {
