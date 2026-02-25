@@ -391,10 +391,14 @@
           },
           "_timeTrackable": {
             "creationDateTime": {
+              "default": {
+                "#": "NOTE: A default value next to create expression makes sense when migrating to time trackable entities. This way the creation date time will be set for existing documents as well.",
+                "__evaluate__": "nowUTCTimestamp"
+              },
               "minimum": 1,
               "mutable": false,
               "nullable": false,
-              "onCreateExpression": "nowUTCTimestamp",
+              "createExpression": "nowUTCTimestamp",
               "preventVersionCreation": true,
               "type": "DateTime"
             },
@@ -402,7 +406,7 @@
               "type": "DateTime",
               "minimum": 0,
               "nullable": false,
-              "onUpdateExpression": {
+              "updateExpression": {
                 "__evaluate__": "`userContext.name === '${self.couchdb.admin.name}' && oldDocument ? oldDocument[name] : nowUTCTimestamp`"
               },
               "preventVersionCreation": true,
@@ -417,7 +421,7 @@
           "_userTrackable": {
             "lastUser": {
               "nullable": false,
-              "onUpdateExpression": {
+              "updateExpression": {
                 "__evaluate__": "`userContext.name === '${self.couchdb.admin.name}' && oldDocument ? oldDocument[name] : (userContext.name || 'unknown')`"
               },
               "preventVersionCreation": true,
@@ -470,8 +474,8 @@
               "updateStrategy": "_updateStrategy",
               "type": "-type",
               "update": {
-                "execution": "_onUpdateExecution",
-                "expression": "_onUpdateExpression"
+                "execution": "_updateExecution",
+                "expression": "_updateExpression"
               }
             },
             "typePattern": {
