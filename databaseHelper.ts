@@ -1445,7 +1445,17 @@ export const validateDocumentUpdate = <
         ) => {
             const localUpdateStrategy =
                 propertySpecification.updateStrategy || updateStrategy
-            if (!oldDocument)
+
+            if (
+                !oldDocument ||
+                !(
+                    Object.prototype.hasOwnProperty.call(newDocument, name) ||
+                    propertySpecification.nullable ||
+                    Object.prototype.hasOwnProperty.call(
+                        propertySpecification, 'default'
+                    )
+                )
+            )
                 for (const type of [
                     'createExecution', 'createExpression'
                 ] as const)
