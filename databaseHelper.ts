@@ -1041,8 +1041,12 @@ export const validateDocumentUpdate = <
             for (const type of types)
                 if (
                     typeof type === 'string' &&
-                    Object.prototype.hasOwnProperty.call(models, type)
+                    Object.prototype.hasOwnProperty.call(models, type) ||
+                    typeof type === 'object'
                 ) {
+                    const modelName =
+                        typeof type === 'string' ? type : 'in-place'
+
                     if (
                         typeof newValue === 'object' &&
                         Object.getPrototypeOf(newValue) === Object.prototype
@@ -1053,13 +1057,15 @@ export const validateDocumentUpdate = <
                             > |
                             undefined
                         )
+
                         try {
                             result = checkDocument(
                                 newValue as PartialFullDocumentType,
                                 oldValue as null | PartialFullDocumentType,
-                                // TODO forward in-place model if found.
-                                type,
-                                models[type],
+                                modelName,
+                                typeof type === 'string' ?
+                                    models[type] :
+                                    (type as ModelType),
                                 parentNames.concat(name),
                                 localUpdateStrategy
                             )
@@ -1073,7 +1079,7 @@ export const validateDocumentUpdate = <
                             if (types.length === 1)
                                 throwError(
                                     `NestedType: Under key "${name}" isn't ` +
-                                    `of type "${type}" (given ` +
+                                    `of type "${modelName}" (given ` +
                                     `"${serialize(newValue)}" of type ` +
                                     `${typeof newValue}) Issue is ` +
                                     `"${errorMessage}"${pathDescription}.`
@@ -1081,7 +1087,7 @@ export const validateDocumentUpdate = <
                             else
                                 log.debug(
                                     `Tried to match "${serialize(newValue)}"`,
-                                    `with type "${type}". Got error:`,
+                                    `with type "${modelName}". Got error:`,
                                     `"${errorMessage}"`
                                 )
                         }
@@ -1099,8 +1105,8 @@ export const validateDocumentUpdate = <
                     } else if (types.length === 1)
                         throwError(
                             `NestedType: Under key "${name}" isn't of type ` +
-                            `"${type}" (given "${serialize(newValue)}" of ` +
-                            `type ${typeof newValue})${pathDescription}.`
+                            `"${modelName}" (given "${serialize(newValue)}" ` +
+                            `of type ${typeof newValue})${pathDescription}.`
                         )
                 } else if (type === 'DateTime') {
                     const initialNewValue: unknown = newValue
@@ -1186,8 +1192,14 @@ export const validateDocumentUpdate = <
             if (!typeMatched)
                 throwError(
                     'PropertyType: None of the specified types "' +
-                    `${types.join('", "')}" for property "${name}" ` +
-                    `matches value "` +
+                    (
+                        types
+                            .map((type) =>
+                                typeof type === 'string' ? type : 'in-place'
+                            )
+                            .join('", "')
+                    ) +
+                    `" for property "${name}" matches value "` +
                     serialize(newValue)
                         .replace(/^"/, '')
                         .replace(/"$/, '') +
