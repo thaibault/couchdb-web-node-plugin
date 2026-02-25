@@ -96,7 +96,7 @@
     "rimraf": "^6.1.3",
     "typescript-eslint": "^8.56.1",
     "web-node": "^1.0.571",
-    "weboptimizer": "^2.0.1649"
+    "weboptimizer": "^2.0.1650"
   },
   "peerDependencies": {
     "@babel/runtime": "*",
@@ -391,14 +391,10 @@
           },
           "_timeTrackable": {
             "creationDateTime": {
-              "default": {
-                "#": "NOTE: A default value next to create expression makes sense when migrating to time trackable entities. This way the creation date time will be set for existing documents as well.",
-                "__evaluate__": "nowUTCTimestamp"
-              },
+              "createExpression": "nowUTCTimestamp",
               "minimum": 1,
               "mutable": false,
               "nullable": false,
-              "createExpression": "nowUTCTimestamp",
               "preventVersionCreation": true,
               "type": "DateTime"
             },
