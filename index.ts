@@ -701,6 +701,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
     delete (modelConfiguration as {entities?: Models}).entities
 
     const models = applyModelsInheritance(configuration.couchdb.model)
+
     if (configuration.couchdb.model.updateValidation) {
         // NOTE: We import pre-transpiled JavaScript code here.
         const databaseHelperCode: string = await fileSystem.readFile(
