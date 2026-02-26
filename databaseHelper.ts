@@ -1056,7 +1056,7 @@ export const validateDocumentUpdate = <
                                 ObjectType, AdditionalPropertiesType
                             > |
                             undefined
-                        )
+                            )
 
                         try {
                             result = checkDocument(
@@ -1076,10 +1076,6 @@ export const validateDocumentUpdate = <
                                 )?.message ??
                                 'unknown'
                             )
-
-                            console.log()
-                            console.log('TODO', errorMessage)
-                            console.log()
 
                             if (types.length === 1)
                                 throwError(
@@ -1166,9 +1162,10 @@ export const validateDocumentUpdate = <
                 else if (
                     typeof type === 'string' && type.startsWith('foreignKey:')
                 ) {
-                    const foreignKeyType: string =
-                        models[type.substring('foreignKey:'.length)][idName]
-                            .type as string
+                    const foreignKeyType = (
+                        models[type.substring('foreignKey:'.length)][idName] as
+                            PropertySpecification
+                    ).type as string
                     if (foreignKeyType === typeof newValue) {
                         typeMatched = true
                         break

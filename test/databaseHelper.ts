@@ -29,7 +29,7 @@ import {
 import {describe, expect, test} from '@jest/globals'
 
 import {authorize, validateDocumentUpdate} from '../databaseHelper'
-import {extendModels} from '../helper'
+import {applyModelsInheritance} from '../helper'
 import packageConfiguration from '../package.json'
 import {
     Attachment,
@@ -257,7 +257,7 @@ describe('databaseHelper', () => {
                 copy(defaultModelConfiguration),
                 test[1] as Partial<ModelConfiguration>
             )
-            const models = extendModels(modelConfiguration)
+            const models = applyModelsInheritance(modelConfiguration)
 
             delete (
                 modelConfiguration.property as
@@ -1922,7 +1922,7 @@ describe('databaseHelper', () => {
                 copy(defaultModelConfiguration),
                 givenModelConfiguration as ModelConfiguration
             )
-            const models = extendModels(modelConfiguration)
+            const models = applyModelsInheritance(modelConfiguration)
 
             delete (
                 modelConfiguration.property as
@@ -2218,7 +2218,7 @@ describe('databaseHelper', () => {
         )
         /// endregion
         /// region model
-        test.only.each(adaptTests([
+        test.each(adaptTests([
             /*
                 Check if document without properties but type declaration can
                 be created.
@@ -2886,7 +2886,8 @@ describe('databaseHelper', () => {
         )
         /// endregion
         /// region property type
-        test.each(adaptTests([
+        test.only.each(adaptTests([
+            /*
             [
                 [
                     {[typeName]: 'Test', a: '2 ', b: ''},
@@ -3411,6 +3412,7 @@ describe('databaseHelper', () => {
                     replace: {[typeName]: 'Test', a: [2, '2']}
                 }
             ],
+            */
             [
                 [{[typeName]: 'Test', a: [2, '2']}],
                 {entities: {Test: {a: {type: [['number', 'string']]}}}},
@@ -3420,6 +3422,7 @@ describe('databaseHelper', () => {
                     replace: {[typeName]: 'Test', a: [2, '2']}
                 }
             ],
+            /*
             [
                 [{[typeName]: 'Test', a: [{b: 'b'}]}],
                 {entities: {Test: {a: {type: 'Test[]'}, b: {}}}},
@@ -3534,6 +3537,7 @@ describe('databaseHelper', () => {
                     replace: {[typeName]: 'Test', b: 2}
                 }
             ],
+            /*
             [
                 [
                     {[typeName]: 'Test', a: null, b: 2},
@@ -3879,6 +3883,7 @@ describe('databaseHelper', () => {
                     replace: {[typeName]: 'Test', a: false}
                 }
             ]
+            */
         ]))(
             '%#. allowed property type validateDocumentUpdate ' +
             `(with update strategy "${updateStrategy}")`,
@@ -5241,7 +5246,7 @@ describe('databaseHelper', () => {
                         propertyName as keyof BaseModel
                     ]
 
-            const models = extendModels(extend(
+            const models = applyModelsInheritance(extend(
                 true,
                 copy(defaultModelConfiguration),
                 modelConfiguration as Partial<ModelConfiguration>

@@ -58,7 +58,7 @@ import {
     PropertySpecification,
     PutDocument,
     Services,
-    SpecialPropertyNames
+    SpecialPropertyNames, TypeSpecification
 } from './type'
 // endregion
 /*
@@ -699,7 +699,7 @@ export const determineModelRolesMapping = (
         allowedRole: rolePropertyName, attachment: attachmentsPropertyName
     } = modelConfiguration.property.name.special
     const modelRolesMapping: ModelRolesMapping = {}
-    const models: Models = extendModels(modelConfiguration)
+    const models: Models = applyModelsInheritance(modelConfiguration)
 
     for (const [modelName, model] of Object.entries(models))
         if (model[rolePropertyName]) {
@@ -822,99 +822,82 @@ export const determineGenericIndexablePropertyNames = (
 }
 /**
  * Extend given model with all specified one.
- * @param modelName - Name of model to extend.
- * @param models - Pool of models to extend from.
- * @param extendPropertyName - Property name which indicates model
- * inheritance.
+ * @param model - Model to extend.
+ * @param modelConfiguration - Model specification object.
  * @returns Given model in extended version.
  */
-export const extendModel = (
-    modelName: string,
-    models: Mapping<Partial<Model>>,
-    extendPropertyName: SpecialPropertyNames['extend'] = '_extends'
+export const applyModelInheritance = (
+    model: Model, modelConfiguration: ModelConfiguration
 ): Partial<Model> => {
-    if (modelName === '_base')
-        return models[modelName] as Model
+    const models = modelConfiguration.entities
+
+    const extendPropertyName =
+        modelConfiguration.property.name.special.extend
 
     if (Object.prototype.hasOwnProperty.call(models, '_base'))
         if (
-            Object.prototype.hasOwnProperty.call(
-                models[modelName], extendPropertyName
-            ) &&
-            models[modelName][extendPropertyName]
+            Object.prototype.hasOwnProperty.call(model, extendPropertyName) &&
+            model[extendPropertyName] &&
+            !([] as Array<string>).concat(model[extendPropertyName])
+                .includes('_base')
         )
-            (models[modelName][extendPropertyName] as Array<string>) =
-                ['_base'].concat(
-                    models[modelName][extendPropertyName] as Array<string>
-                )
+            (model[extendPropertyName] as Array<string>) =
+                ['_base'].concat(model[extendPropertyName] as Array<string>)
         else
-            (models[modelName][extendPropertyName] as unknown as string) =
-                '_base'
+            (model[extendPropertyName] as unknown as string) = '_base'
 
-    if (Object.prototype.hasOwnProperty.call(
-        models[modelName], extendPropertyName
-    )) {
-        for (const modelNameToExtend of ([] as Array<string>).concat(
-            models[modelName][extendPropertyName] as Array<string>
-        ))
-            models[modelName] = extend(
-                true,
-                copy(extendModel(
-                    modelNameToExtend, models, extendPropertyName
-                )),
-                models[modelName]
+    if (Object.prototype.hasOwnProperty.call(model, extendPropertyName)) {
+        const originallyDeclaredExtensions =
+            ([] as Array<string>).concat(
+                model[extendPropertyName] as Array<string>
             )
 
-        delete models[modelName][extendPropertyName]
+        for (const modelNameToExtend of originallyDeclaredExtensions) {
+            if (modelNameToExtend !== '_base')
+                applyModelInheritance(
+                    models[modelNameToExtend], modelConfiguration
+                )
+
+            extend(
+                true,
+                model,
+                models[modelNameToExtend],
+                model
+            )
+            model[extendPropertyName] = originallyDeclaredExtensions
+        }
+
+        delete model[extendPropertyName]
     }
 
-    return models[modelName] as Model
+    applyDefaultPropertyConfigurations(model, modelConfiguration)
+
+    return model
 }
 /**
- * Extend default specification with specific one.
- * @param modelConfiguration - Model specification object.
- * @returns Models with extended specific specifications.
+ * Apply default property definitions to given model.
+ * @param model - Model to extends its properties.
+ * @param modelConfiguration - Model configuration to take into account.
+ * @returns Extended model.
  */
-export const extendModels = (
-    modelConfiguration: ModelConfiguration
-): Models => {
+export const applyDefaultPropertyConfigurations = (
+    model: Model, modelConfiguration: ModelConfiguration
+) => {
     const specialNames = modelConfiguration.property.name.special
-    const models: Models = {}
 
-    const {typePattern} = modelConfiguration.property.name
-
-    for (const modelName of Object.keys(modelConfiguration.entities)) {
-        if (!(
-            new RegExp(typePattern.public).test(modelName) ||
-            (new RegExp(typePattern.private)).test(modelName)
-        ))
-            throw new Error(
-                'Model names have to match ' +
-                `"${typePattern.public}" or "${typePattern.private}" ` +
-                `for private one (given name: "${modelName}").`
-            )
-
-        models[modelName] = extendModel(
-            modelName, modelConfiguration.entities, specialNames.extend
-        ) as Model
-    }
-
-    for (const model of Object.values(models))
-        for (const [propertyName, property] of Object.entries(model))
-            if (propertyName === specialNames.attachment) {
-                const fileSpecifications =
-                    property as Mapping<FileSpecification>
-                for (const [type, value] of Object.entries(
-                    fileSpecifications
-                ))
-                    fileSpecifications[type] = extend<FileSpecification>(
-                        true,
-                        copy(
-                            modelConfiguration.property.defaultSpecification
-                        ) as FileSpecification,
-                        value
-                    )
-            } else if (!([
+    for (const [name, propertySpecification] of Object.entries(model))
+        if (name === specialNames.attachment) {
+            const fileSpecifications =
+                propertySpecification as Mapping<FileSpecification>
+            for (const [type, value] of Object.entries(fileSpecifications))
+                fileSpecifications[type] = extend<FileSpecification>(
+                    true,
+                    copy(modelConfiguration.property.defaultSpecification) as
+                        FileSpecification,
+                    value
+                )
+        } else if (
+            !([
                 specialNames.allowedRole,
                 specialNames.constraint.execution,
                 specialNames.constraint.expression,
@@ -922,18 +905,54 @@ export const extendModels = (
                 specialNames.maximumAggregatedSize,
                 specialNames.minimumAggregatedSize,
                 specialNames.oldType
-            ] as Array<keyof BaseModel>).includes(
-                propertyName as keyof BaseModel
-            ))
-                (
-                    model[propertyName as keyof BaseModel] as
-                        PropertySpecification
-                ) =
-                    extend(
-                        true,
-                        copy(modelConfiguration.property.defaultSpecification),
-                        property as PropertySpecification
-                    )
+            ] as Array<keyof BaseModel>)
+                .includes(name as keyof BaseModel)
+        ) {
+            const property = extend(
+                true,
+                copy(modelConfiguration.property.defaultSpecification),
+                propertySpecification as PropertySpecification
+            )
+            ;(model[name as keyof BaseModel] as PropertySpecification) =
+                property
+
+            const types =
+                ([] as Array<TypeSpecification>)
+                    .concat(property.type as TypeSpecification)
+            for (const type of types)
+                if (typeof type === 'object')
+                    property.type =
+                        applyModelInheritance(type, modelConfiguration)
+        }
+
+    return model
+}
+/**
+ * Extend default specification with specific one.
+ * @param modelConfiguration - Model specification object.
+ * @returns Models with extended specific specifications.
+ */
+export const applyModelsInheritance = (
+    modelConfiguration: ModelConfiguration
+): Models => {
+    const models: Models = modelConfiguration.entities
+
+    const {typePattern} = modelConfiguration.property.name
+
+    for (const modelName of Object.keys(models)) {
+        if (!(
+            new RegExp(typePattern.public).test(modelName) ||
+            new RegExp(typePattern.private).test(modelName)
+        ))
+            throw new Error(
+                'Model names have to match ' +
+                `"${typePattern.public}" or "${typePattern.private}" ` +
+                `for private one (given name: "${modelName}").`
+            )
+
+        if (modelName !== '_base')
+            applyModelInheritance(models[modelName], modelConfiguration)
+    }
 
     return models
 }
