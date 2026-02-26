@@ -25,8 +25,9 @@ import {
     determineModelRolesMapping,
     determineGenericIndexablePropertyNames,
     ensureValidationDocumentPresence,
-    extendModel,
-    extendModels,
+    applyDefaultPropertyConfigurations,
+    applyModelInheritance,
+    applyModelsInheritance,
     mayStripRepresentation,
     normalizeRoles
 } from '../helper'
@@ -48,6 +49,11 @@ describe('helper', (): void => {
         packageConfiguration.webNode as unknown as Configuration
     const specialNames: SpecialPropertyNames =
         configuration.couchdb.model.property.name.special
+
+    const mockModelConfiguration: ModelConfiguration =
+        copy(configuration.couchdb.model)
+    mockModelConfiguration.entities = {}
+    const {defaultSpecification} = mockModelConfiguration.property
     // endregion
     // region tests
     testEach<typeof mayStripRepresentation>(
@@ -90,10 +96,6 @@ describe('helper', (): void => {
         ]
     )
     /// region model
-    const mockModelConfiguration: ModelConfiguration =
-        copy(configuration.couchdb.model)
-    mockModelConfiguration.entities = {}
-
     testEach<typeof determineModelRolesMapping>(
         'determineModelRolesMapping',
         determineModelRolesMapping,
@@ -184,61 +186,140 @@ describe('helper', (): void => {
             model as Model
         ])
     )
-    testEach<typeof extendModel>(
-        'extendModel',
-        extendModel,
+    testEach<typeof applyDefaultPropertyConfigurations>(
+        'applyDefaultPropertyConfigurations',
+        applyDefaultPropertyConfigurations,
 
         ...[
-            [{}, 'A', {A: {}}],
+            [{}, {}, {}],
             [
-                {a: {}, b: {}},
-                'Test',
-                {
-                    _baseTest: {b: {}},
-                    Test: {a: {}, [specialNames.extend]: '_baseTest'}
-                }
+                {a: {
+                    emptyEqualsNull: true,
+                    maximumAggregatedSize: 100000000,
+                    maximumSize: 10000000,
+                    minimumAggregatedSize: 0,
+                    minimumLength: 0,
+                    minimumNumber: 0,
+                    minimumSize: 0,
+                    mutable: true,
+                    nullable: true,
+                    trim: true,
+                    type: 'string',
+                    writable: true
+                }},
+                {a: {}},
+                {}
+            ]
+        ].map(([expected, model, modelConfiguration]): [
+            Model, Model, ModelConfiguration
+        ] => [
+            expected as Array<string>,
+            model,
+            extend(
+                true,
+                copy(mockModelConfiguration),
+                modelConfiguration as ModelConfiguration
+            ) as ModelConfiguration
+        ]) as Array<[
+            ReturnType<typeof applyDefaultPropertyConfigurations>,
+            ...Parameters<typeof applyDefaultPropertyConfigurations>
+        ]>
+    )
+    testEach<typeof applyModelInheritance>(
+        'applyModelInheritance',
+        applyModelInheritance,
+
+        ...[
+            [{}, {}, {}],
+            [{}, {}, {A: {}}],
+            [
+                {a: {...defaultSpecification}, b: {...defaultSpecification}},
+                {a: {}, [specialNames.extend]: '_baseTest'},
+                {_baseTest: {b: {}}}
             ],
             [
-                {a: {}, b: {}},
-                'Test',
-                {
-                    baseTest: {b: {}},
-                    Test: {a: {}, [specialNames.extend]: 'baseTest'}
-                }
+                {a: {...defaultSpecification}, b: {...defaultSpecification}},
+                {a: {}, [specialNames.extend]: 'baseTest'},
+                {baseTest: {b: {}}}
             ],
             [
-                {a: {}, b: {}, c: {}},
-                'C',
+                {
+                    a: {...defaultSpecification},
+                    b: {...defaultSpecification},
+                    c: {...defaultSpecification}
+                },
+                {c: {}, [specialNames.extend]: ['A', 'B']},
+                {A: {a: {}}, B: {b: {}}}
+            ],
+            [
+                {
+                    a: {...defaultSpecification},
+                    b: {...defaultSpecification},
+                    c: {...defaultSpecification}
+                },
+                {c: {}, [specialNames.extend]: 'B'},
                 {
                     A: {a: {}},
-                    B: {b: {}},
-                    C: {c: {}, [specialNames.extend]: ['A', 'B']}
+                    B: {b: {}, [specialNames.extend]: 'A'}
                 }
             ],
             [
-                {a: {}, b: {}, c: {}},
-                'C',
                 {
-                    A: {a: {}},
-                    B: {b: {}, [specialNames.extend]: 'A'},
-                    C: {c: {}, [specialNames.extend]: 'B'}
-                }
-            ],
-            [
-                {a: {}, b: {}, c: {}, d: {type: 'number'}},
-                'C',
+                    a: {...defaultSpecification},
+                    b: {...defaultSpecification},
+                    c: {...defaultSpecification},
+                    d: {...defaultSpecification, type: 'number'}
+                },
+                {c: {}, [specialNames.extend]: 'B'},
                 {
                     _base: {d: {type: 'number'}},
                     A: {a: {}},
-                    B: {b: {}, [specialNames.extend]: 'A'},
-                    C: {c: {}, [specialNames.extend]: 'B'}
+                    B: {b: {}, [specialNames.extend]: 'A'}
+                }
+            ],
+            [
+                {
+                    [specialNames.type]: 'A',
+                    a: {
+                        ...defaultSpecification,
+                        type: {
+                            inPlaceProperty: {...defaultSpecification},
+                            b: {...defaultSpecification},
+                            c: {...defaultSpecification},
+                            d: {...defaultSpecification, type: 'number'}
+                        }
+                    },
+                    d: {...defaultSpecification, type: 'number'}
+                },
+                {
+                    [specialNames.type]: 'A',
+                    a: {type: {
+                        [specialNames.extend]: 'B',
+                        inPlaceProperty: {}
+                    }}
+                },
+                {
+                    _base: {d: {type: 'number'}},
+                    B: {b: {}, [specialNames.extend]: 'C'},
+                    C: {c: {}}
                 }
             ]
-        ] as Array<[
-            ReturnType<typeof extendModel>, ...Parameters<typeof extendModel>
+        ].map(([expected, model, models]): [
+            object, Model, ModelConfiguration
+        ] => [
+            expected,
+            model,
+            extend(
+                true,
+                copy(mockModelConfiguration),
+                {entities: models as unknown as Models}
+            ) as ModelConfiguration
+        ]) as Array<[
+            ReturnType<typeof applyModelInheritance>,
+            ...Parameters<typeof applyModelInheritance>
         ]>
     )
-    test('extendModels', (): void => {
+    test('applyModelsInheritance', (): void => {
         const modelConfiguration: ModelConfiguration =
             copy(configuration.couchdb.model)
         modelConfiguration.entities = {}
@@ -291,7 +372,7 @@ describe('helper', (): void => {
                 }
             ]
         ] as const)
-            expect(extendModels(
+            expect(applyModelsInheritance(
                 extend(
                     true,
                     copy(modelConfiguration),
@@ -299,7 +380,7 @@ describe('helper', (): void => {
                 )
             )).toStrictEqual(expected)
 
-        expect((): Models => extendModels(
+        expect((): Models => applyModelsInheritance(
             extend(
                 true,
                 copy(modelConfiguration),
@@ -307,7 +388,7 @@ describe('helper', (): void => {
             )
         )).toThrow()
 
-        expect(extendModels(
+        expect(applyModelsInheritance(
             extend(
                 true,
                 copy(modelConfiguration),

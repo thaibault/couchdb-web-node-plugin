@@ -49,7 +49,7 @@ import {
     determineModelRolesMapping,
     determineGenericIndexablePropertyNames,
     ensureValidationDocumentPresence,
-    extendModels,
+    applyModelsInheritance,
     getConnectorOptions,
     getEffectiveURL, getPouchDBPlugin,
     initializeConnection,
@@ -210,7 +210,7 @@ export const preLoadService = async ({
         {defaultSpecification?: PropertySpecification}
     ).defaultSpecification
     delete (modelConfiguration as {entities?: Models}).entities
-    const models = extendModels(configuration.model)
+    const models = applyModelsInheritance(configuration.model)
 
     // Export validate document function to be used by other plugins.
     couchdb.validateDocument = (
@@ -700,7 +700,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
     ).defaultSpecification
     delete (modelConfiguration as {entities?: Models}).entities
 
-    const models = extendModels(configuration.couchdb.model)
+    const models = applyModelsInheritance(configuration.couchdb.model)
     if (configuration.couchdb.model.updateValidation) {
         // NOTE: We import pre-transpiled JavaScript code here.
         const databaseHelperCode: string = await fileSystem.readFile(

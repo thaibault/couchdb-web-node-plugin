@@ -29,7 +29,7 @@ import {
 import {describe, expect, test} from '@jest/globals'
 
 import {authorize, validateDocumentUpdate} from '../databaseHelper'
-import {extendModels} from '../helper'
+import {applyModelsInheritance} from '../helper'
 import packageConfiguration from '../package.json'
 import {
     Attachment,
@@ -37,6 +37,7 @@ import {
     BaseModel,
     Configuration,
     Document,
+    Model,
     ModelConfiguration,
     PartialFullDocument,
     SpecialPropertyNames
@@ -256,7 +257,7 @@ describe('databaseHelper', () => {
                 copy(defaultModelConfiguration),
                 test[1] as Partial<ModelConfiguration>
             )
-            const models = extendModels(modelConfiguration)
+            const models = applyModelsInheritance(modelConfiguration)
 
             delete (
                 modelConfiguration.property as
@@ -1921,7 +1922,7 @@ describe('databaseHelper', () => {
                 copy(defaultModelConfiguration),
                 givenModelConfiguration as ModelConfiguration
             )
-            const models = extendModels(modelConfiguration)
+            const models = applyModelsInheritance(modelConfiguration)
 
             delete (
                 modelConfiguration.property as
@@ -2302,6 +2303,19 @@ describe('databaseHelper', () => {
                     fillUp: {[typeName]: 'Test', a: {b: 'b'}, b: 'b'},
                     incremental: {b: 'b'},
                     replace: {[typeName]: 'Test', b: 'b'}
+                }
+            ],
+            /*
+                Check if properties with nested in-place type declaration are
+                merged according to different update strategies.
+            */
+            [
+                [{[typeName]: 'Test', a: {b: 'b', c: 'c'}}],
+                {entities: {Test: {a: {type: {b: {}, c: {}} as Model}}}},
+                {
+                    fillUp: {[typeName]: 'Test', a: {b: 'b', c: 'c'}},
+                    incremental: {[typeName]: 'Test', a: {b: 'b', c: 'c'}},
+                    replace: {[typeName]: 'Test', a: {b: 'b', c: 'c'}}
                 }
             ]
         ]))(
@@ -5227,7 +5241,7 @@ describe('databaseHelper', () => {
                         propertyName as keyof BaseModel
                     ]
 
-            const models = extendModels(extend(
+            const models = applyModelsInheritance(extend(
                 true,
                 copy(defaultModelConfiguration),
                 modelConfiguration as Partial<ModelConfiguration>

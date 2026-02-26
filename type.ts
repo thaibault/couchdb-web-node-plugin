@@ -187,7 +187,12 @@ export const PrimitiveTypes = [
     'string'
 ] as const
 export type PrimitiveType = typeof PrimitiveTypes[number]
-export type Type = boolean | number | string // | 'any' | PrimitiveType
+export type Type =
+    boolean |
+    number |
+    string |
+    Model
+    // | 'any' | PrimitiveType
 export type TypeSpecification = Array<Type> | Array<Array<Type>> | Type
 
 export type ConstraintKey =
@@ -322,8 +327,8 @@ export interface BaseModel<
     _updateExecution?: string
     _updateExpression?: string
 
-    _id: PropertySpecification<string, AdditionalSpecifications>
-    _rev: PropertySpecification<string, AdditionalSpecifications>
+    _id?: PropertySpecification<string, AdditionalSpecifications>
+    _rev?: PropertySpecification<string, AdditionalSpecifications>
 
     _updateStrategy?: UpdateStrategy
 }
