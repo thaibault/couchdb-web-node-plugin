@@ -2886,8 +2886,7 @@ describe('databaseHelper', () => {
         )
         /// endregion
         /// region property type
-        test.only.each(adaptTests([
-            /*
+        test.each(adaptTests([
             [
                 [
                     {[typeName]: 'Test', a: '2 ', b: ''},
@@ -3412,7 +3411,6 @@ describe('databaseHelper', () => {
                     replace: {[typeName]: 'Test', a: [2, '2']}
                 }
             ],
-            */
             [
                 [{[typeName]: 'Test', a: [2, '2']}],
                 {entities: {Test: {a: {type: [['number', 'string']]}}}},
@@ -3422,7 +3420,6 @@ describe('databaseHelper', () => {
                     replace: {[typeName]: 'Test', a: [2, '2']}
                 }
             ],
-            /*
             [
                 [{[typeName]: 'Test', a: [{b: 'b'}]}],
                 {entities: {Test: {a: {type: 'Test[]'}, b: {}}}},
@@ -3537,7 +3534,6 @@ describe('databaseHelper', () => {
                     replace: {[typeName]: 'Test', b: 2}
                 }
             ],
-            /*
             [
                 [
                     {[typeName]: 'Test', a: null, b: 2},
@@ -3883,7 +3879,6 @@ describe('databaseHelper', () => {
                     replace: {[typeName]: 'Test', a: false}
                 }
             ]
-            */
         ]))(
             '%#. allowed property type validateDocumentUpdate ' +
             `(with update strategy "${updateStrategy}")`,

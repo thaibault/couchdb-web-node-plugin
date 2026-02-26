@@ -920,7 +920,7 @@ export const applyDefaultPropertyConfigurations = (
                 ([] as Array<TypeSpecification>)
                     .concat(property.type as TypeSpecification)
             for (const type of types)
-                if (typeof type === 'object')
+                if (!Array.isArray(type) && typeof type === 'object')
                     property.type =
                         applyModelInheritance(type, modelConfiguration)
         }
@@ -946,8 +946,8 @@ export const applyModelsInheritance = (
         ))
             throw new Error(
                 'Model names have to match ' +
-                `"${typePattern.public}" or "${typePattern.private}" ` +
-                `for private one (given name: "${modelName}").`
+                `"${typePattern.public}" or "${typePattern.private}" for ` +
+                `xprivate one (given name: "${modelName}").`
             )
 
         if (modelName !== '_base')

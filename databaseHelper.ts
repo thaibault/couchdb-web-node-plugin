@@ -2202,7 +2202,7 @@ export const validateDocumentUpdate = <
                     continue
                 }
 
-                let propertySpecification:(
+                let propertySpecification: (
                     typeof model[keyof ObjectType] |
                     PropertySpecification<
                         AdditionalPropertiesType, AdditionalSpecifications
