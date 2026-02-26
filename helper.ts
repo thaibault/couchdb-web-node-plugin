@@ -864,6 +864,7 @@ export const applyModelInheritance = (
                 models[modelNameToExtend],
                 model
             )
+
             model[extendPropertyName] = originallyDeclaredExtensions
         }
 
