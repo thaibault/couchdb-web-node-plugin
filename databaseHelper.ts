@@ -859,6 +859,7 @@ export const validateDocumentUpdate = <
             parentNames.length ? ` in "${parentNames.join('" -> "')}"` : ''
         let changedPath: Array<string> = []
 
+
         if (Object.prototype.hasOwnProperty.call(
             model, specialNames.updateStrategy
         ))
@@ -1076,10 +1077,6 @@ export const validateDocumentUpdate = <
                                 )?.message ??
                                 'unknown'
                             )
-
-                            console.log()
-                            console.log(errorMessage)
-                            console.log()
 
                             if (types.length === 1)
                                 throwError(
@@ -1469,6 +1466,7 @@ export const validateDocumentUpdate = <
             if (
                 !oldDocument ||
                 !(
+                    Object.prototype.hasOwnProperty.call(oldDocument, name) ||
                     Object.prototype.hasOwnProperty.call(newDocument, name) ||
                     propertySpecification.nullable ||
                     Object.prototype.hasOwnProperty.call(
