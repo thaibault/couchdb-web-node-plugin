@@ -347,11 +347,7 @@ export const getConnectorOptions = (
         which is than accepted by pouchdb's api.
     */
     const getOptions = (options: RequestInit = {}) => {
-        options = extend(
-            true,
-            copy(configuration.fetch),
-            options
-        )
+        options = extend(true, copy(configuration.fetch), options)
 
         if (
             Array.isArray(abortControllerStack) &&
@@ -824,10 +820,12 @@ export const determineGenericIndexablePropertyNames = (
  * Extend given model with all specified one.
  * @param model - Model to extend.
  * @param modelConfiguration - Model specification object.
+ * @param _name - Model name to extend. Only needed for debugging purposes.
  * @returns Given model in extended version.
  */
 export const applyModelInheritance = (
-    model: Model, modelConfiguration: ModelConfiguration
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    model: Model, modelConfiguration: ModelConfiguration, _name = 'in-place'
 ): Partial<Model> => {
     const models = modelConfiguration.entities
 
@@ -855,15 +853,18 @@ export const applyModelInheritance = (
         for (const modelNameToExtend of originallyDeclaredExtensions) {
             if (modelNameToExtend !== '_base')
                 applyModelInheritance(
-                    models[modelNameToExtend], modelConfiguration
+                    models[modelNameToExtend],
+                    modelConfiguration,
+                    modelNameToExtend
                 )
 
-            extend(
-                true,
-                model,
-                models[modelNameToExtend],
-                model
-            )
+            /*
+                NOTE: We need to merge into model to change the given object
+                in-place. Furthermore, we have to copy the initial model before
+                merging it finally to avoid having the inherited overwrites in
+                the final model object as well.
+             */
+            extend(true, model, models[modelNameToExtend], copy(model))
 
             model[extendPropertyName] = originallyDeclaredExtensions
         }
@@ -922,8 +923,9 @@ export const applyDefaultPropertyConfigurations = (
                     .concat(property.type as TypeSpecification)
             for (const type of types)
                 if (!Array.isArray(type) && typeof type === 'object')
-                    property.type =
-                        applyModelInheritance(type, modelConfiguration)
+                    property.type = applyModelInheritance(
+                        type, modelConfiguration
+                    )
         }
 
     return model
@@ -952,7 +954,9 @@ export const applyModelsInheritance = (
             )
 
         if (modelName !== '_base')
-            applyModelInheritance(models[modelName], modelConfiguration)
+            applyModelInheritance(
+                models[modelName], modelConfiguration, modelName
+            )
     }
 
     return models
