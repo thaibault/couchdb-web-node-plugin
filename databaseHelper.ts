@@ -1081,10 +1081,11 @@ export const validateDocumentUpdate = <
                             if (types.length === 1)
                                 throwError(
                                     `NestedType: Under key "${name}" isn't ` +
-                                    `of type "${modelName}" (given ` +
+                                    `of type "${modelName}": ` +
+                                    `"${errorMessage}" (given ` +
                                     `"${serialize(newValue)}" of type ` +
                                     `${typeof newValue}) Issue is ` +
-                                    `"${errorMessage}"${pathDescription}.`
+                                    `${pathDescription}.`
                                 )
                             else
                                 log.debug(
@@ -1618,6 +1619,7 @@ export const validateDocumentUpdate = <
                 )
                     (newDocument[name] as null) = null
             }
+
 
             for (const type of [
                 'updateExecution', 'updateExpression'
