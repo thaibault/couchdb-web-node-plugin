@@ -397,7 +397,7 @@
               "minimum": 0,
               "nullable": false,
               "updateExpression": {
-                "__evaluate__": "`userContext.name === '${self.couchdb.admin.name}' && oldDocument && oldDocument[name] ? oldDocument[name] : nowUTCTimestamp`"
+                "__evaluate__": "`(userContext.name === '${self.couchdb.admin.name}' || updateStrategy === 'migrate') && oldDocument && oldDocument[name] ? oldDocument[name] : nowUTCTimestamp`"
               },
               "preventVersionCreation": true,
               "runUpdateHookAlways": true,
@@ -412,7 +412,7 @@
             "lastUser": {
               "nullable": false,
               "updateExpression": {
-                "__evaluate__": "`((userContext.name === '${self.couchdb.admin.name}' && oldDocument) ? oldDocument[name] : userContext.name) || 'unknown'`"
+                "__evaluate__": "`(((userContext.name === '${self.couchdb.admin.name}' || updateStrategy === 'migrate') && oldDocument) ? oldDocument[name] : userContext.name) || 'unknown'`"
               },
               "preventVersionCreation": true,
               "runUpdateHookAlways": true
