@@ -692,7 +692,7 @@ export const determineModelRolesMapping = (
     modelConfiguration: ModelConfiguration
 ): ModelRolesMapping => {
     const {
-        allowedRole: rolePropertyName, attachment: attachmentsPropertyName
+        role: rolePropertyName, attachment: attachmentsPropertyName
     } = modelConfiguration.property.name.special
     const modelRolesMapping: ModelRolesMapping = {}
     const models: Models = applyModelsInheritance(modelConfiguration)
@@ -714,17 +714,17 @@ export const determineModelRolesMapping = (
                         ] of Object.entries(property))
                             if (
                                 (fileSpecification as PropertySpecification)
-                                    .allowedRoles
+                                    .roles
                             )
                                 modelRolesMapping[modelName].attachments[
                                     fileDescription
                                 ] = normalizeRoles(
                                     (fileSpecification as PropertySpecification)
-                                        .allowedRoles as Roles
+                                        .roles as Roles
                                 )
-                    } else if (property.allowedRoles)
+                    } else if (property.roles)
                         modelRolesMapping[modelName].properties[name] =
-                            normalizeRoles(property.allowedRoles as Roles)
+                            normalizeRoles(property.roles as Roles)
         }
 
     return modelRolesMapping
@@ -768,7 +768,7 @@ export const determineGenericIndexablePropertyNames = (
                     modelConfiguration.property.name.reserved.concat(
                         specialNames.additional,
 
-                        specialNames.allowedRole,
+                        specialNames.role,
 
                         specialNames.attachment,
 
@@ -900,7 +900,7 @@ export const applyDefaultPropertyConfigurations = (
                 )
         } else if (
             !([
-                specialNames.allowedRole,
+                specialNames.role,
                 specialNames.constraint.execution,
                 specialNames.constraint.expression,
                 specialNames.extend,
