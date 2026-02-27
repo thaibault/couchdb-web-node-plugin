@@ -1077,6 +1077,10 @@ export const validateDocumentUpdate = <
                                 'unknown'
                             )
 
+                            console.log()
+                            console.log(errorMessage)
+                            console.log()
+
                             if (types.length === 1)
                                 throwError(
                                     `NestedType: Under key "${name}" isn't ` +
@@ -1416,8 +1420,10 @@ export const validateDocumentUpdate = <
                 } else if (localUpdateStrategy !== 'migrate')
                     throwError(
                         `Immutable: Property "${String(name)}" is not ` +
-                        `writable (old document "${serialize(oldDocument)}")` +
-                        `${pathDescription}.`
+                        `writable. Trying to update from ` +
+                        `"${String(oldDocument[name])}" to ` +
+                        `"${String(value)}" (old document ` +
+                        `"${serialize(oldDocument)}")${pathDescription}.`
                     )
             // endregion
             // region nullable
