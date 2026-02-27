@@ -372,7 +372,7 @@
             }
           },
           "_materializedView": {
-            "_allowedRoles": []
+            "_roles": []
           },
           "_stringMapping": {
             "_additional": {
@@ -438,7 +438,7 @@
             "reserved": [],
             "special": {
               "additional": "_additional",
-              "allowedRole": "_allowedRoles",
+              "role": "_roles",
               "attachment": "_attachments",
               "conflict": "_conflicts",
               "constraint": {

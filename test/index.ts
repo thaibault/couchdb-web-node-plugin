@@ -75,7 +75,7 @@ describe('index', (): void => {
     } as LocalDatabaseConfiguration
     config.attachAutoRestarter = false
     ;(config.model.entities.TestModel as Model) = {
-        _allowedRoles: 'users',
+        _roles: 'users',
         _attachments: {
             'file.txt': {
                 default: {
@@ -93,10 +93,10 @@ describe('index', (): void => {
         writableProperty: {}
     } as unknown as Model
     ;(config.model.entities.SensibelTestModel as Model) = {
-        _allowedRoles: 'users',
+        _roles: 'users',
         _attachments: {
             'secureFile.txt': {
-                allowedRoles: 'admin',
+                roles: 'admin',
                 default: {
                     'secureFile.txt': {
                         // eslint-disable-next-line camelcase
@@ -110,18 +110,18 @@ describe('index', (): void => {
             }
         },
         readonlyProperty: {
-            allowedRoles: {
+            roles: {
                 read: 'users',
                 write: []
             },
             default: 'readonlyValue'
         },
         secureProperty: {
-            allowedRoles: 'admin',
+            roles: 'admin',
             default: 'secureValue'
         },
         writableProperty: {
-            allowedRoles: 'users'
+            roles: 'users'
         }
     } as unknown as Model
 

@@ -546,7 +546,7 @@ export const validateDocumentUpdate = <
     const specialPropertyNames: Array<keyof BaseModelType> = [
         specialNames.additional,
 
-        specialNames.allowedRole,
+        specialNames.role,
 
         specialNames.constraint.execution,
         specialNames.constraint.expression,

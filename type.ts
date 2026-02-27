@@ -212,7 +212,7 @@ export type Pattern = Array<RegExp | string> | RegExp | string
 export interface BasePropertySpecification<
     Type, AdditionalSpecifications extends object
 > {
-    allowedRoles?: Roles
+    roles?: Roles
 
     updateStrategy?: UpdateStrategy
     preventVersionCreation?: boolean
@@ -304,7 +304,7 @@ export interface BaseModel<
         AdditionalPropertiesType, AdditionalSpecifications
     >
 
-    _allowedRoles?: Roles
+    _roles?: Roles
 
     _attachments?:
         Mapping<FileSpecification<AttachmentType, AdditionalSpecifications>> |
@@ -405,7 +405,7 @@ export type PartialFullDocument<
 
 export interface SpecialPropertyNames {
     additional: '_additional'
-    allowedRole: '_allowedRoles'
+    role: '_roles'
     attachment: '_attachments'
     conflict: '_conflicts'
     deleted: '_deleted'
