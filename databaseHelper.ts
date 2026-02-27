@@ -1349,7 +1349,10 @@ export const validateDocumentUpdate = <
             )
 
             if (
-                !propertySpecification.preventVersionCreation &&
+                (
+                    !propertySpecification.preventVersionCreation ||
+                    updateStrategy === 'migrate'
+                ) &&
                 serialize(newValue) !== serialize(oldValue)
             )
                 changedPath = parentNames.concat(name, 'value updated')
@@ -2410,7 +2413,8 @@ export const validateDocumentUpdate = <
                     }
                     //// endregion
                     if (!(
-                        propertySpecification.preventVersionCreation ||
+                        propertySpecification.preventVersionCreation &&
+                        updateStrategy !== 'migrate' ||
                         localOldDocument &&
                         Object.prototype.hasOwnProperty.call(
                             localOldDocument, name

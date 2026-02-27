@@ -1042,7 +1042,13 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                     else
                         throw result
                 try {
-                    await couchdb.connection.put(newDocument)
+                    if (newDocument[idName] === 'abda') {
+                        console.log(
+                            'TODO abda migration result', result, newDocument
+                        )
+                        console.log(await couchdb.connection.put(newDocument))
+                    } else
+                        await couchdb.connection.put(newDocument)
                 } catch (error) {
                     throw new Error(
                         `Replacing auto migrated document ` +
