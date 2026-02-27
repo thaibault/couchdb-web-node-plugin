@@ -597,6 +597,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
             }
     }
     // endregion
+
     await initializeConnection(services, configuration)
 
     // region ensure presence of database security settings
@@ -700,7 +701,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
     ).defaultSpecification
     delete (modelConfiguration as {entities?: Models}).entities
 
-    const models = applyModelsInheritance(configuration.couchdb.model)
+    const models = configuration.couchdb.model.entities
 
     if (configuration.couchdb.model.updateValidation) {
         // NOTE: We import pre-transpiled JavaScript code here.
@@ -782,7 +783,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                 ] as Array<string>).includes(name)) {
                     for (const constraint of (
                         [] as Array<Constraint>
-                    ).concat(specification as unknown as Array<Constraint>))
+                    ).concat(specification as Array<Constraint>))
                         if (constraint.description)
                             /*
                                 eslint-disable
