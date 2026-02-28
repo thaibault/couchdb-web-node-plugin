@@ -53,7 +53,7 @@ describe('helper', (): void => {
     const mockModelConfiguration: ModelConfiguration =
         copy(configuration.couchdb.model)
     mockModelConfiguration.entities = {}
-    const {defaultSpecification} = mockModelConfiguration.property
+    const {defaultDefinition} = mockModelConfiguration.property
     // endregion
     // region tests
     testEach<typeof mayStripRepresentation>(
@@ -233,29 +233,29 @@ describe('helper', (): void => {
             [{}, {}, {}],
             [{}, {}, {A: {}}],
             [
-                {a: {...defaultSpecification}, b: {...defaultSpecification}},
+                {a: {...defaultDefinition}, b: {...defaultDefinition}},
                 {a: {}, [specialNames.extend]: '_baseTest'},
                 {_baseTest: {b: {}}}
             ],
             [
-                {a: {...defaultSpecification}, b: {...defaultSpecification}},
+                {a: {...defaultDefinition}, b: {...defaultDefinition}},
                 {a: {}, [specialNames.extend]: 'baseTest'},
                 {baseTest: {b: {}}}
             ],
             [
                 {
-                    a: {...defaultSpecification},
-                    b: {...defaultSpecification},
-                    c: {...defaultSpecification}
+                    a: {...defaultDefinition},
+                    b: {...defaultDefinition},
+                    c: {...defaultDefinition}
                 },
                 {c: {}, [specialNames.extend]: ['A', 'B']},
                 {A: {a: {}}, B: {b: {}}}
             ],
             [
                 {
-                    a: {...defaultSpecification},
-                    b: {...defaultSpecification},
-                    c: {...defaultSpecification}
+                    a: {...defaultDefinition},
+                    b: {...defaultDefinition},
+                    c: {...defaultDefinition}
                 },
                 {c: {}, [specialNames.extend]: 'B'},
                 {
@@ -265,10 +265,10 @@ describe('helper', (): void => {
             ],
             [
                 {
-                    a: {...defaultSpecification},
-                    b: {...defaultSpecification},
-                    c: {...defaultSpecification},
-                    d: {...defaultSpecification, type: 'number'}
+                    a: {...defaultDefinition},
+                    b: {...defaultDefinition},
+                    c: {...defaultDefinition},
+                    d: {...defaultDefinition, type: 'number'}
                 },
                 {c: {}, [specialNames.extend]: 'B'},
                 {
@@ -281,15 +281,15 @@ describe('helper', (): void => {
                 {
                     [specialNames.type]: 'A',
                     a: {
-                        ...defaultSpecification,
+                        ...defaultDefinition,
                         type: {
-                            inPlaceProperty: {...defaultSpecification},
-                            b: {...defaultSpecification},
-                            c: {...defaultSpecification},
-                            d: {...defaultSpecification, type: 'number'}
+                            inPlaceProperty: {...defaultDefinition},
+                            b: {...defaultDefinition},
+                            c: {...defaultDefinition},
+                            d: {...defaultDefinition, type: 'number'}
                         }
                     },
-                    d: {...defaultSpecification, type: 'number'}
+                    d: {...defaultDefinition, type: 'number'}
                 },
                 {
                     [specialNames.type]: 'A',
@@ -323,7 +323,7 @@ describe('helper', (): void => {
         const modelConfiguration: ModelConfiguration =
             copy(configuration.couchdb.model)
         modelConfiguration.entities = {}
-        modelConfiguration.property.defaultSpecification = {}
+        modelConfiguration.property.defaultDefinition = {}
 
         for (const [expected, parameter] of [
             [{}, {}],
@@ -356,7 +356,7 @@ describe('helper', (): void => {
                     Test: {a: {maximum: 3}}
                 },
                 {
-                    property: {defaultSpecification: {maximum: 3}},
+                    property: {defaultDefinition: {maximum: 3}},
                     entities: {_base: {}, Test: {a: {}}}
                 }
             ],
@@ -368,7 +368,7 @@ describe('helper', (): void => {
                 {Test: {[specialNames.attachment]: {a: {minimum: 1}}}},
                 {
                     entities: {Test: {[specialNames.attachment]: {a: {}}}},
-                    property: {defaultSpecification: {minimum: 1}}
+                    property: {defaultDefinition: {minimum: 1}}
                 }
             ]
         ] as const)

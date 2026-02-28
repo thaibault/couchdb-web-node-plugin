@@ -193,7 +193,7 @@ export type Type =
     string |
     Model
     // | 'any' | PrimitiveType
-export type TypeSpecification = Array<Type> | Array<Array<Type>> | Type
+export type TypeDefinition = Array<Type> | Array<Array<Type>> | Type
 
 export type ConstraintKey =
     'arrayConstraintExecution' |
@@ -209,8 +209,8 @@ export interface SelectionOption {
 export type NormalizedSelection = Array<SelectionOption>
 export type Selection = Array<SelectionOption> | Array<Primitive> | Mapping
 export type Pattern = Array<RegExp | string> | RegExp | string
-export interface BasePropertySpecification<
-    Type, AdditionalSpecifications extends object
+export interface BasePropertyDefinition<
+    Type, AdditionalDefinition extends object
 > {
     roles?: Roles
 
@@ -261,7 +261,7 @@ export interface BasePropertySpecification<
 
     selection?: Selection
 
-    type?: TypeSpecification
+    type?: TypeDefinition
     // endregion
     // region simple transformation
     emptyEqualsNull?: boolean
@@ -280,34 +280,34 @@ export interface BasePropertySpecification<
 
     value?: Type
 
-    additionalSpecifications?: AdditionalSpecifications
+    additionalDefinition?: AdditionalDefinition
 }
-export interface PropertySpecification<
-    Type = unknown, AdditionalSpecifications extends object = object
-> extends BasePropertySpecification<Type, AdditionalSpecifications> {
+export interface PropertyDefinition<
+    Type = unknown, AdditionalDefinition extends object = object
+> extends BasePropertyDefinition<Type, AdditionalDefinition> {
     default?: Type
 }
 
-export interface FileSpecification<
+export interface FileDefinition<
     Type extends Attachment = Attachment,
-    AdditionalSpecifications extends object = object
-> extends BasePropertySpecification<Type, AdditionalSpecifications> {
+    AdditionalDefinition extends object = object
+> extends BasePropertyDefinition<Type, AdditionalDefinition> {
     default?: Mapping<Type>
-    fileName?: PropertySpecification<string, AdditionalSpecifications>
+    fileName?: PropertyDefinition<string, AdditionalDefinition>
 }
 export interface BaseModel<
     AttachmentType extends Attachment = Attachment,
-    AdditionalSpecifications extends object = object,
+    AdditionalDefinition extends object = object,
     AdditionalPropertiesType = unknown
 > {
-    _additional?: PropertySpecification<
-        AdditionalPropertiesType, AdditionalSpecifications
+    _additional?: PropertyDefinition<
+        AdditionalPropertiesType, AdditionalDefinition
     >
 
     _roles?: Roles
 
     _attachments?:
-        Mapping<FileSpecification<AttachmentType, AdditionalSpecifications>> |
+        Mapping<FileDefinition<AttachmentType, AdditionalDefinition>> |
         null
 
     _constraintExecutions?: Array<Constraint> | Constraint
@@ -327,29 +327,29 @@ export interface BaseModel<
     _updateExecution?: string
     _updateExpression?: string
 
-    _id?: PropertySpecification<string, AdditionalSpecifications>
-    _rev?: PropertySpecification<string, AdditionalSpecifications>
+    _id?: PropertyDefinition<string, AdditionalDefinition>
+    _rev?: PropertyDefinition<string, AdditionalDefinition>
 
     _updateStrategy?: UpdateStrategy
 }
 export type Model<
     Type extends object | undefined = object,
     AttachmentType extends Attachment = Attachment,
-    AdditionalSpecifications extends object = object,
+    AdditionalDefinition extends object = object,
     AdditionalPropertiesType = unknown
 > =
     BaseModel<
-        AttachmentType, AdditionalSpecifications, AdditionalPropertiesType
+        AttachmentType, AdditionalDefinition, AdditionalPropertiesType
     > &
     {
-        [Property in keyof Type]: PropertySpecification<
+        [Property in keyof Type]: PropertyDefinition<
             Type[Property] extends Array<unknown> ?
                 (
                     Type[Property][number] extends object | undefined ?
                         Array<Model<
                             Type[Property][number],
                             AttachmentType,
-                            AdditionalSpecifications,
+                            AdditionalDefinition,
                             AdditionalPropertiesType
                         >> :
                         Type[Property]
@@ -361,21 +361,21 @@ export type Model<
                             Model<
                                 Type[Property],
                                 AttachmentType,
-                                AdditionalSpecifications,
+                                AdditionalDefinition,
                                 AdditionalPropertiesType
                             >
                     ) :
                     Type[Property],
-            AdditionalSpecifications
+            AdditionalDefinition
         >
     }
 export type Models<
     Type extends object = object,
     AttachmentType extends Attachment = Attachment,
-    AdditionalSpecifications extends object = object,
+    AdditionalDefinition extends object = object,
     AdditionalPropertiesType = unknown
 > = Mapping<Model<
-    Type, AttachmentType, AdditionalSpecifications, AdditionalPropertiesType
+    Type, AttachmentType, AdditionalDefinition, AdditionalPropertiesType
 >>
 
 export type UpdateStrategy = 'fillUp' | 'incremental' | 'migrate' | 'replace'
@@ -451,12 +451,12 @@ export interface PropertyNameConfiguration {
     validatedDocumentsCache: string
 }
 export interface BaseModelConfiguration<
-    Type, AdditionalSpecifications extends object
+    Type, AdditionalDefinition extends object
 > {
     dateTimeFormat: 'iso' | 'iso8601' | 'number'
     property: {
-        defaultSpecification: PropertySpecification<
-            Type, AdditionalSpecifications
+        defaultDefinition: PropertyDefinition<
+            Type, AdditionalDefinition
         >
         name: PropertyNameConfiguration
     }
@@ -465,14 +465,14 @@ export interface BaseModelConfiguration<
 export interface ModelConfiguration<
     Type extends object = object,
     AttachmentType extends Attachment = Attachment,
-    AdditionalSpecifications extends object = object,
+    AdditionalDefinition extends object = object,
     AdditionalPropertiesType = unknown
-> extends BaseModelConfiguration<Type, AdditionalSpecifications> {
+> extends BaseModelConfiguration<Type, AdditionalDefinition> {
     autoMigrationPath: string
     entities: Models<
         Type,
         AttachmentType,
-        AdditionalSpecifications,
+        AdditionalDefinition,
         AdditionalPropertiesType
     >
     triggerInitialCompaction: boolean
@@ -540,7 +540,7 @@ export type ConnectorConfiguration =
 export interface CoreConfiguration<
     Type extends object = Mapping<unknown>,
     AttachmentType extends Attachment = Attachment,
-    AdditionalSpecifications extends object = object,
+    AdditionalDefinition extends object = object,
     AdditionalPropertiesType = unknown
 > {
     attachAutoRestarter: boolean
@@ -591,7 +591,7 @@ export interface CoreConfiguration<
     model: ModelConfiguration<
         Type,
         AttachmentType,
-        AdditionalSpecifications,
+        AdditionalDefinition,
         AdditionalPropertiesType
     >
 
@@ -750,7 +750,7 @@ export interface RuntimeErrorData<
 export interface BasicScope<
     Type extends object,
     AttachmentType extends Attachment,
-    AdditionalSpecifications extends object,
+    AdditionalDefinition extends object,
     AdditionalPropertiesType
 > {
     attachmentWithPrefixExists: (namePrefix: string) => boolean
@@ -763,7 +763,7 @@ export interface BasicScope<
         model: Model<
             Type,
             AttachmentType,
-            AdditionalSpecifications,
+            AdditionalDefinition,
             AdditionalPropertiesType
         >,
         parentNames: Array<string>
@@ -795,11 +795,11 @@ export interface BasicScope<
     specialNames: SpecialPropertyNames
     typeName: string
 
-    modelConfiguration: BaseModelConfiguration<Type, AdditionalSpecifications>
+    modelConfiguration: BaseModelConfiguration<Type, AdditionalDefinition>
     models: Models<
         Type,
         AttachmentType,
-        AdditionalSpecifications,
+        AdditionalDefinition,
         AdditionalPropertiesType
     >
 
@@ -816,22 +816,20 @@ export interface CommonScope<
     ObjectType extends object,
     Type,
     AttachmentType extends Attachment,
-    AdditionalSpecifications extends object,
+    AdditionalDefinition extends object,
     AdditionalPropertiesType
 > {
     checkPropertyContent: (
         newValue: Type,
         name: string,
-        propertySpecification: PropertySpecification<
-            Type, AdditionalSpecifications
-        >,
+        propertyDefinition: PropertyDefinition<Type, AdditionalDefinition>,
         oldValue: Type
     ) => CheckedPropertyResult<Type>
 
     model: Model<
         ObjectType,
         AttachmentType,
-        AdditionalSpecifications,
+        AdditionalDefinition,
         AdditionalPropertiesType
     >
     modelName: string
@@ -851,13 +849,13 @@ export interface PropertyScope<
     Type,
     PropertyType,
     AttachmentType extends Attachment,
-    AdditionalSpecifications extends object,
+    AdditionalDefinition extends object,
     AdditionalPropertiesType
 > extends CommonScope<
     ObjectType,
     PropertyType,
     AttachmentType,
-    AdditionalSpecifications,
+    AdditionalDefinition,
     AdditionalPropertiesType
 > {
     name: string
@@ -865,8 +863,8 @@ export interface PropertyScope<
     newValue: Type
     oldValue?: Type
 
-    propertySpecification: PropertySpecification<
-        Type, AdditionalSpecifications
+    propertyDefinition: PropertyDefinition<
+        Type, AdditionalDefinition
     >,
 
     attachmentsTarget?: Mapping<AttachmentType | null>
@@ -877,20 +875,20 @@ export interface EvaluationResult<
     Type,
     PropertyType,
     AttachmentType extends Attachment,
-    AdditionalSpecifications extends object,
+    AdditionalDefinition extends object,
     AdditionalPropertiesType,
     Scope = (
         BasicScope<
             ObjectType,
             AttachmentType,
-            AdditionalSpecifications,
+            AdditionalDefinition,
             AdditionalPropertiesType
         > &
         CommonScope<
             ObjectType,
             PropertyType,
             AttachmentType,
-            AdditionalSpecifications,
+            AdditionalDefinition,
             AdditionalPropertiesType
         >
     )
@@ -930,7 +928,7 @@ export interface InitializeExpressPouchDBStateData {
 export type Migrator<
     Type extends object = object,
     AttachmentType extends Attachment = Attachment,
-    AdditionalSpecifications extends object = object,
+    AdditionalDefinition extends object = object,
     AdditionalPropertiesType = unknown
 > = (
     document: Document,
@@ -947,19 +945,19 @@ export type Migrator<
             migrators: Mapping<Migrator<
                 Type,
                 AttachmentType,
-                AdditionalSpecifications,
+                AdditionalDefinition,
                 AdditionalPropertiesType
             >>
             models: Models<
                 Type,
                 AttachmentType,
-                AdditionalSpecifications,
+                AdditionalDefinition,
                 AdditionalPropertiesType
             >
             modelConfiguration: ModelConfiguration<
                 Type,
                 AttachmentType,
-                AdditionalSpecifications,
+                AdditionalDefinition,
                 AdditionalPropertiesType
             >
 

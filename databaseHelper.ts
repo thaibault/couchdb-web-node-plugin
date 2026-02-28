@@ -24,7 +24,7 @@ import {
     Attachment,
     BaseModel,
     BaseModelConfiguration,
-    BasePropertySpecification,
+    BasePropertyDefinition,
     BasicScope,
     CheckedDocumentResult,
     CheckedPropertyResult,
@@ -41,20 +41,20 @@ import {
     EvaluationError,
     EvaluationErrorData,
     EvaluationResult,
-    FileSpecification,
+    FileDefinition,
     FullAttachment,
     Model,
     Models,
     NormalizedModelRoles, NormalizedRoles,
     PartialFullDocument,
     PropertyScope,
-    PropertySpecification,
+    PropertyDefinition,
     RuntimeErrorData,
     SecuritySettings,
     SelectionOption,
     SpecialPropertyNames,
     StubAttachment,
-    TypeSpecification,
+    TypeDefinition,
     UpdateStrategy,
     UserContext
 } from './type'
@@ -357,7 +357,7 @@ export const authorize = (
 export const validateDocumentUpdate = <
     ObjectType extends object = object,
     AttachmentType extends Attachment = Attachment,
-    AdditionalSpecifications extends object = Mapping<unknown>,
+    AdditionalDefinition extends object = Mapping<unknown>,
     AdditionalPropertiesType = unknown
 >(
         newDocument: PartialFullDocument<ObjectType, AdditionalPropertiesType>,
@@ -367,12 +367,12 @@ export const validateDocumentUpdate = <
         userContext: Partial<UserContext>,
         securitySettings: Partial<SecuritySettings>,
         modelConfiguration: BaseModelConfiguration<
-            ObjectType, AdditionalSpecifications
+            ObjectType, AdditionalDefinition
         >,
         models: Models<
             ObjectType,
             AttachmentType,
-            AdditionalSpecifications,
+            AdditionalDefinition,
             AdditionalPropertiesType
         > = {},
         checkPublicModelType = true,
@@ -392,12 +392,12 @@ export const validateDocumentUpdate = <
         AdditionalPropertiesType | AttachmentType | ValueOf<ObjectType> | null
 
     type BaseModelType = BaseModel<
-        AttachmentType, AdditionalSpecifications, AdditionalPropertiesType
+        AttachmentType, AdditionalDefinition, AdditionalPropertiesType
     >
     type ModelType = Model<
         ObjectType,
         AttachmentType,
-        AdditionalSpecifications,
+        AdditionalDefinition,
         AdditionalPropertiesType
     >
 
@@ -589,7 +589,7 @@ export const validateDocumentUpdate = <
         Type | undefined,
         PropertyName,
         AttachmentType,
-        AdditionalSpecifications,
+        AdditionalDefinition,
         AdditionalPropertiesType,
         typeof BASIC_SCOPE &
         {code: string} &
@@ -631,7 +631,7 @@ export const validateDocumentUpdate = <
                 Type | undefined,
                 PropertyName,
                 AttachmentType,
-                AdditionalSpecifications,
+                AdditionalDefinition,
                 AdditionalPropertiesType,
                 CurrentScope
             > = {code, result: undefined, scope}
@@ -665,8 +665,8 @@ export const validateDocumentUpdate = <
     const fileNameMatchesModelType = (
         typeName: string,
         fileName: string,
-        fileType: FileSpecification<
-            AttachmentType, AdditionalSpecifications
+        fileType: FileDefinition<
+            AttachmentType, AdditionalDefinition
         >
     ): boolean => {
         if (fileType.fileName) {
@@ -873,9 +873,9 @@ export const validateDocumentUpdate = <
             delete localNewDocument[specialNames.updateStrategy]
         }
 
-        let additionalPropertySpecification:(
-            PropertySpecification<
-                AdditionalPropertiesType, AdditionalSpecifications
+        let additionalPropertyDefinition: (
+            PropertyDefinition<
+                AdditionalPropertiesType, AdditionalDefinition
             > |
             undefined
         ) = undefined
@@ -885,33 +885,31 @@ export const validateDocumentUpdate = <
             ) &&
             model[specialNames.additional]
         )
-            additionalPropertySpecification =
-                model[specialNames.additional] as AdditionalSpecifications
+            additionalPropertyDefinition =
+                model[specialNames.additional] as AdditionalDefinition
         // region document specific functions
         const checkPropertyConstraints = <Type extends PropertyValue>(
             newValue: Type,
             name: string,
-            propertySpecification: PropertySpecification<
-                Type, AdditionalSpecifications
-            >,
+            propertyDefinition: PropertyDefinition<Type, AdditionalDefinition>,
             oldValue?: Type,
             types: Array<ConstraintKey> = [
                 'constraintExecution', 'constraintExpression'
             ]
         ) => {
             const localUpdateStrategy: UpdateStrategy =
-                propertySpecification.updateStrategy || updateStrategy
+                propertyDefinition.updateStrategy || updateStrategy
 
             for (const type of types)
                 if (Object.prototype.hasOwnProperty.call(
-                    propertySpecification, type
+                    propertyDefinition, type
                 )) {
                     type Scope = PropertyScope<
                         ObjectType,
                         Type,
                         PropertyValue,
                         AttachmentType,
-                        AdditionalSpecifications,
+                        AdditionalDefinition,
                         AdditionalPropertiesType
                     >
 
@@ -921,7 +919,7 @@ export const validateDocumentUpdate = <
                             boolean | undefined,
                             PropertyValue,
                             AttachmentType,
-                            AdditionalSpecifications,
+                            AdditionalDefinition,
                             AdditionalPropertiesType,
                             Scope
                         > |
@@ -930,7 +928,7 @@ export const validateDocumentUpdate = <
                     try {
                         result = evaluate<boolean, Scope>(
                             // @ts-expect-error "prop...S..[type]" is optional.
-                            propertySpecification[type].evaluation,
+                            propertyDefinition[type].evaluation,
                             type.endsWith('Expression'),
                             {
                                 checkPropertyContent,
@@ -948,7 +946,7 @@ export const validateDocumentUpdate = <
                                 parentNames,
                                 pathDescription,
 
-                                propertySpecification,
+                                propertyDefinition: propertyDefinition,
 
                                 updateStrategy: localUpdateStrategy
                             }
@@ -990,7 +988,7 @@ export const validateDocumentUpdate = <
 
                     if (result && !result.result) {
                         const description = determineTrimmedString(
-                            propertySpecification[type]?.description
+                            propertyDefinition[type]?.description
                         )
 
                         throwError(
@@ -1024,18 +1022,16 @@ export const validateDocumentUpdate = <
         const checkPropertyContent = <Type extends PropertyValue>(
             newValue: Type,
             name: string,
-            propertySpecification: PropertySpecification<
-                Type, AdditionalSpecifications
-            >,
+            propertyDefinition: PropertyDefinition<Type, AdditionalDefinition>,
             oldValue?: Type
         ): CheckedPropertyResult<Type> => {
             const localUpdateStrategy: UpdateStrategy =
-                propertySpecification.updateStrategy || updateStrategy
+                propertyDefinition.updateStrategy || updateStrategy
 
             let changedPath: Array<string> = []
             // region type
-            const types = ([] as Array<TypeSpecification>).concat(
-                propertySpecification.type ? propertySpecification.type : []
+            const types = ([] as Array<TypeDefinition>).concat(
+                propertyDefinition.type ? propertyDefinition.type : []
             )
             // Derive nested type definition if possible.
             let typeMatched = false
@@ -1165,7 +1161,7 @@ export const validateDocumentUpdate = <
                 ) {
                     const foreignKeyType = (
                         models[type.substring('foreignKey:'.length)][idName] as
-                            PropertySpecification
+                            PropertyDefinition
                     ).type as string
                     if (foreignKeyType === typeof newValue) {
                         typeMatched = true
@@ -1213,13 +1209,13 @@ export const validateDocumentUpdate = <
             // region range
             if (typeof newValue === 'string') {
                 if (
-                    typeof propertySpecification.minimumLength === 'number' &&
-                    newValue.length < propertySpecification.minimumLength
+                    typeof propertyDefinition.minimumLength === 'number' &&
+                    newValue.length < propertyDefinition.minimumLength
                 )
                     throwError(
                         `MinimalLength: Property "${name}" must have ` +
                         'minimal length ' +
-                        (propertySpecification.minimumLength as
+                        (propertyDefinition.minimumLength as
                             unknown as
                             string
                         ) +
@@ -1228,14 +1224,14 @@ export const validateDocumentUpdate = <
                         `${pathDescription}.`
                     )
                 if (
-                    typeof propertySpecification.maximumLength === 'number' &&
-                    newValue.length > propertySpecification.maximumLength
+                    typeof propertyDefinition.maximumLength === 'number' &&
+                    newValue.length > propertyDefinition.maximumLength
                 )
                     throwError(
                         `MaximalLength: Property "${name}" must have ` +
                         'maximal length ' +
                         (
-                            propertySpecification.maximumLength as
+                            propertyDefinition.maximumLength as
                                 unknown as
                                 string
                         ) +
@@ -1246,17 +1242,17 @@ export const validateDocumentUpdate = <
             }
             if (typeof newValue === 'number') {
                 if (
-                    typeof propertySpecification.minimum === 'number' &&
-                    newValue < propertySpecification.minimum
+                    typeof propertyDefinition.minimum === 'number' &&
+                    newValue < propertyDefinition.minimum
                 )
                     throwError(
                         `Minimum: Property "${name}" (type ` +
                         ([] as Array<string>)
-                            .concat(propertySpecification.type as string)
+                            .concat(propertyDefinition.type as string)
                             .join(' or ') +
                         ') must satisfy a minimum of ' +
                         (
-                            propertySpecification.minimum as
+                            propertyDefinition.minimum as
                                 unknown as
                                 string
                         ) +
@@ -1264,17 +1260,17 @@ export const validateDocumentUpdate = <
                         `${pathDescription}.`
                     )
                 if (
-                    typeof propertySpecification.maximum === 'number' &&
-                    newValue > propertySpecification.maximum
+                    typeof propertyDefinition.maximum === 'number' &&
+                    newValue > propertyDefinition.maximum
                 )
                     throwError(
                         `Maximum: Property "${name}" (type ` +
                         ([] as Array<string>)
-                            .concat(propertySpecification.type as string)
+                            .concat(propertyDefinition.type as string)
                             .join(' or ') +
                         ') must satisfy a maximum of ' +
                         (
-                            propertySpecification.maximum as
+                            propertyDefinition.maximum as
                                 unknown as
                                 string
                         ) +
@@ -1284,10 +1280,10 @@ export const validateDocumentUpdate = <
             }
             // endregion
             // region selection
-            if (propertySpecification.selection) {
+            if (propertyDefinition.selection) {
                 let selection =
-                    Array.isArray(propertySpecification.selection) ?
-                        propertySpecification.selection.map(
+                    Array.isArray(propertyDefinition.selection) ?
+                        propertyDefinition.selection.map(
                             (value: unknown): unknown =>
                                 (
                                     value as SelectionOption | undefined
@@ -1295,9 +1291,9 @@ export const validateDocumentUpdate = <
                                     value :
                                     (value as SelectionOption).value
                         ) :
-                        Object.keys(propertySpecification.selection)
+                        Object.keys(propertyDefinition.selection)
 
-                if (propertySpecification.type === 'DateTime')
+                if (propertyDefinition.type === 'DateTime')
                     selection =
                         (selection as Array<Date | null | number | string>)
                             .map(normalizeDateTime)
@@ -1306,7 +1302,7 @@ export const validateDocumentUpdate = <
                     throwError(
                         `Selection: Property "${name}" (type ` +
                         ([] as Array<string>)
-                            .concat(propertySpecification.type as string)
+                            .concat(propertyDefinition.type as string)
                             .join(' or ') +
                         `) should be one of "${selection.join('", "')}". ` +
                         `But is "${newValue as string}"${pathDescription}.`
@@ -1314,10 +1310,10 @@ export const validateDocumentUpdate = <
             }
             // endregion
             // region pattern
-            if (propertySpecification.pattern) {
+            if (propertyDefinition.pattern) {
                 const patterns = (
                     [] as Array<RegExp | string>
-                ).concat(propertySpecification.pattern)
+                ).concat(propertyDefinition.pattern)
                 let matched = false
                 for (const pattern of patterns)
                     if (new RegExp(pattern).test(newValue as string)) {
@@ -1332,10 +1328,10 @@ export const validateDocumentUpdate = <
                         `"${newValue as string}")${pathDescription}.`
                     )
             }
-            if (propertySpecification.invertedPattern)
+            if (propertyDefinition.invertedPattern)
                 for (const pattern of (
                     [] as Array<RegExp | string>
-                ).concat(propertySpecification.invertedPattern))
+                ).concat(propertyDefinition.invertedPattern))
                     if (new RegExp(pattern).test(newValue as string))
                         throwError(
                             `InvertedPatternMatch: Property "${name}" ` +
@@ -1345,12 +1341,12 @@ export const validateDocumentUpdate = <
                         )
             // endregion
             checkPropertyConstraints<Type>(
-                newValue, name, propertySpecification, oldValue
+                newValue, name, propertyDefinition, oldValue
             )
 
             if (
                 (
-                    !propertySpecification.preventVersionCreation ||
+                    !propertyDefinition.preventVersionCreation ||
                     updateStrategy === 'migrate'
                 ) &&
                 serialize(newValue) !== serialize(oldValue)
@@ -1362,8 +1358,8 @@ export const validateDocumentUpdate = <
         const checkPropertyWriteableMutableNullable = <
             Type extends PropertyValue
         >(
-                propertySpecification: BasePropertySpecification<
-                    Type, AdditionalSpecifications
+                propertyDefinition: BasePropertyDefinition<
+                    Type, AdditionalDefinition
                 >,
                 newDocument: PartialFullDocumentType,
                 oldDocument: null | PartialFullDocumentType,
@@ -1371,10 +1367,10 @@ export const validateDocumentUpdate = <
                 pathDescription: string
             ): boolean => {
             const localUpdateStrategy: UpdateStrategy =
-                propertySpecification.updateStrategy || updateStrategy
+                propertyDefinition.updateStrategy || updateStrategy
             const value = newDocument[name] as Type
             // region writable
-            if (!propertySpecification.writable)
+            if (!propertyDefinition.writable)
                 if (oldDocument)
                     if (
                         Object.prototype.hasOwnProperty.call(
@@ -1403,7 +1399,7 @@ export const validateDocumentUpdate = <
             // endregion
             // region mutable
             if (
-                !propertySpecification.mutable &&
+                !propertyDefinition.mutable &&
                 oldDocument &&
                 Object.prototype.hasOwnProperty.call(oldDocument, name)
             )
@@ -1428,7 +1424,7 @@ export const validateDocumentUpdate = <
             // endregion
             // region nullable
             if (value === null)
-                if (propertySpecification.nullable) {
+                if (propertyDefinition.nullable) {
                     if (
                         localUpdateStrategy !== 'incremental' ||
                         !oldDocument ||
@@ -1455,25 +1451,23 @@ export const validateDocumentUpdate = <
         }
         /// region create hook
         const runCreatePropertyHook = <Type extends PropertyValue>(
-            propertySpecification: PropertySpecification<
-                Type, AdditionalSpecifications
-            >,
+            propertyDefinition: PropertyDefinition<Type, AdditionalDefinition>,
             newDocument: PartialFullDocumentType,
             oldDocument: null | PartialFullDocumentType,
             name: (keyof Attachments) | (keyof PartialFullDocumentType),
             attachmentsTarget?: Attachments
         ) => {
             const localUpdateStrategy =
-                propertySpecification.updateStrategy || updateStrategy
+                propertyDefinition.updateStrategy || updateStrategy
 
             if (
                 !oldDocument ||
                 !(
                     Object.prototype.hasOwnProperty.call(oldDocument, name) ||
                     Object.prototype.hasOwnProperty.call(newDocument, name) ||
-                    propertySpecification.nullable ||
+                    propertyDefinition.nullable ||
                     Object.prototype.hasOwnProperty.call(
-                        propertySpecification, 'default'
+                        propertyDefinition, 'default'
                     )
                 )
             )
@@ -1481,14 +1475,14 @@ export const validateDocumentUpdate = <
                     'createExecution', 'createExpression'
                 ] as const)
                     if (Object.prototype.hasOwnProperty.call(
-                        propertySpecification, type
+                        propertyDefinition, type
                     )) {
                         type Scope = PropertyScope<
                             ObjectType,
                             null | Type | undefined,
                             PropertyValue,
                             AttachmentType,
-                            AdditionalSpecifications,
+                            AdditionalDefinition,
                             AdditionalPropertiesType
                         >
 
@@ -1498,7 +1492,7 @@ export const validateDocumentUpdate = <
                                 null | Type | undefined,
                                 PropertyValue,
                                 AttachmentType,
-                                AdditionalSpecifications,
+                                AdditionalDefinition,
                                 AdditionalPropertiesType,
                                 Scope
                             > |
@@ -1507,7 +1501,7 @@ export const validateDocumentUpdate = <
 
                         try {
                             result = evaluate<null | Type | undefined, Scope>(
-                                propertySpecification[type],
+                                propertyDefinition[type],
                                 type.endsWith('Expression'),
                                 {
                                     attachmentsTarget,
@@ -1528,7 +1522,7 @@ export const validateDocumentUpdate = <
                                     parentNames,
                                     pathDescription,
 
-                                    propertySpecification,
+                                    propertyDefinition: propertyDefinition,
 
                                     updateStrategy: localUpdateStrategy
                                 }
@@ -1581,33 +1575,31 @@ export const validateDocumentUpdate = <
         /// endregion
         /// region update hook
         const runUpdatePropertyHook = <Type extends PropertyValue>(
-            propertySpecification: PropertySpecification<
-                Type, AdditionalSpecifications
-            >,
+            propertyDefinition: PropertyDefinition<Type, AdditionalDefinition>,
             newDocument: PartialFullDocumentType,
             oldDocument: null | PartialFullDocumentType,
             name: (keyof Attachments) | (keyof PartialFullDocumentType),
             attachmentsTarget?: Attachments
         ) => {
             const localUpdateStrategy =
-                propertySpecification.updateStrategy || updateStrategy
+                propertyDefinition.updateStrategy || updateStrategy
 
             if (!attachmentsTarget) {
                 if (!(
-                    propertySpecification.runUpdateHookAlways ||
+                    propertyDefinition.runUpdateHookAlways ||
                     Object.prototype.hasOwnProperty.call(newDocument, name)
                 ))
                     return
 
                 if (
-                    propertySpecification.trim &&
+                    propertyDefinition.trim &&
                     typeof newDocument[name] === 'string'
                 )
                     (newDocument[name] as string) =
                         (newDocument[name] as string).trim()
 
                 if (
-                    propertySpecification.emptyEqualsNull &&
+                    propertyDefinition.emptyEqualsNull &&
                     (
                         newDocument[name] === '' ||
                         Array.isArray(newDocument[name]) &&
@@ -1627,7 +1619,7 @@ export const validateDocumentUpdate = <
                 'updateExecution', 'updateExpression'
             ] as const)
                 if (Object.prototype.hasOwnProperty.call(
-                    propertySpecification, type
+                    propertyDefinition, type
                 ))
                     try {
                         const result = evaluate<
@@ -1637,11 +1629,11 @@ export const validateDocumentUpdate = <
                                 Type,
                                 PropertyValue,
                                 AttachmentType,
-                                AdditionalSpecifications,
+                                AdditionalDefinition,
                                 AdditionalPropertiesType
                             >
                         >(
-                            propertySpecification[type],
+                            propertyDefinition[type],
                             type.endsWith('Expression'),
                             {
                                 attachmentsTarget,
@@ -1665,7 +1657,7 @@ export const validateDocumentUpdate = <
                                 parentNames,
                                 pathDescription,
 
-                                propertySpecification,
+                                propertyDefinition: propertyDefinition,
 
                                 updateStrategy: localUpdateStrategy
                             }
@@ -1749,7 +1741,7 @@ export const validateDocumentUpdate = <
                                 ObjectType,
                                 PropertyValue,
                                 AttachmentType,
-                                AdditionalSpecifications,
+                                AdditionalDefinition,
                                 AdditionalPropertiesType
                             >
                         >(
@@ -1830,7 +1822,7 @@ export const validateDocumentUpdate = <
                             ObjectType,
                             PropertyValue,
                             AttachmentType,
-                            AdditionalSpecifications,
+                            AdditionalDefinition,
                             AdditionalPropertiesType
                         >
                     >(
@@ -1896,7 +1888,7 @@ export const validateDocumentUpdate = <
                 }
             }
         // endregion
-        const additionalPropertyNames = additionalPropertySpecification ?
+        const additionalPropertyNames = additionalPropertyDefinition ?
             (Object.keys(localNewDocument) as Array<keyof ObjectType>).filter(
                 (name: keyof ObjectType): boolean =>
                     !specifiedPropertyNames.includes(name)
@@ -1910,8 +1902,8 @@ export const validateDocumentUpdate = <
                 // region attachment
                 for (const [type, property] of Object.entries(
                     model[specialNames.attachment] as
-                        FileSpecification<
-                            AttachmentType, AdditionalSpecifications
+                        FileDefinition<
+                            AttachmentType, AdditionalDefinition
                         >
                 )) {
                     if (!localNewDocument[specialNames.attachment])
@@ -1937,9 +1929,9 @@ export const validateDocumentUpdate = <
                                 fileNameMatchesModelType(
                                     type,
                                     fileName,
-                                    property as FileSpecification<
+                                    property as FileDefinition<
                                         AttachmentType,
-                                        AdditionalSpecifications
+                                        AdditionalDefinition
                                     >
                                 )
                             )
@@ -1980,25 +1972,25 @@ export const validateDocumentUpdate = <
                                 fileNameMatchesModelType(
                                     type,
                                     fileName,
-                                    property as FileSpecification<
+                                    property as FileDefinition<
                                         AttachmentType,
-                                        AdditionalSpecifications
+                                        AdditionalDefinition
                                     >
                                 )
                             )
                     }
 
-                    const propertySpecification = property as
-                        PropertySpecification<
-                            AttachmentType, AdditionalSpecifications
+                    const propertyDefinition = property as
+                        PropertyDefinition<
+                            AttachmentType, AdditionalDefinition
                         >
                     updateStrategy =
-                        propertySpecification.updateStrategy ||
+                        propertyDefinition.updateStrategy ||
                         updateStrategy
 
                     for (const fileName of newFileNames)
                         runCreatePropertyHook<AttachmentType>(
-                            propertySpecification,
+                            propertyDefinition,
                             localNewDocument,
                             localOldDocument && localOldDocument[name] ?
                                 localOldDocument[name] as
@@ -2010,7 +2002,7 @@ export const validateDocumentUpdate = <
 
                     for (const fileName of newFileNames)
                         runUpdatePropertyHook<AttachmentType>(
-                            propertySpecification,
+                            propertyDefinition,
                             localNewDocument,
                             localOldDocument && localOldDocument[name] ?
                                 localOldDocument[name] as
@@ -2020,9 +2012,9 @@ export const validateDocumentUpdate = <
                             newAttachments
                         )
 
-                    if (typeof propertySpecification.default === 'undefined') {
+                    if (typeof propertyDefinition.default === 'undefined') {
                         if (!(
-                            propertySpecification.nullable ||
+                            propertyDefinition.nullable ||
                             newFileNames.length > 0 ||
                             oldFileNames.length > 0
                         ))
@@ -2049,13 +2041,13 @@ export const validateDocumentUpdate = <
                     } else if (newFileNames.length === 0)
                         if (oldFileNames.length === 0) {
                             for (
-                                const fileName in propertySpecification.default
+                                const fileName in propertyDefinition.default
                             )
                                 if (Object.prototype.hasOwnProperty.call(
-                                    propertySpecification.default, fileName
+                                    propertyDefinition.default, fileName
                                 )) {
                                     newAttachments[fileName] =
-                                        propertySpecification.default[
+                                        propertyDefinition.default[
                                             fileName
                                         ] as AttachmentType
                                     changedPath = parentNames.concat(
@@ -2071,34 +2063,34 @@ export const validateDocumentUpdate = <
                 }
                 // endregion
             else {
-                const propertySpecification = (
+                const propertyDefinition = (
                     specifiedPropertyNames.includes(name) ?
                         model[name] :
-                        additionalPropertySpecification
-                ) as PropertySpecification<
-                    ValueOf<ObjectType>, AdditionalSpecifications
+                        additionalPropertyDefinition
+                ) as PropertyDefinition<
+                    ValueOf<ObjectType>, AdditionalDefinition
                 >
                 updateStrategy =
-                    propertySpecification.updateStrategy || updateStrategy
+                    propertyDefinition.updateStrategy || updateStrategy
 
                 runCreatePropertyHook<ValueOf<ObjectType>>(
-                    propertySpecification,
+                    propertyDefinition,
                     localNewDocument,
                     localOldDocument,
                     name
                 )
                 runUpdatePropertyHook<ValueOf<ObjectType>>(
-                    propertySpecification,
+                    propertyDefinition,
                     localNewDocument,
                     localOldDocument,
                     name
                 )
 
                 if ([null, undefined].includes(
-                    propertySpecification.default as null
+                    propertyDefinition.default as null
                 )) {
                     if (!(
-                        propertySpecification.nullable ||
+                        propertyDefinition.nullable ||
                         (
                             Object.prototype.hasOwnProperty.call(
                                 localNewDocument, name
@@ -2145,7 +2137,7 @@ export const validateDocumentUpdate = <
                             localNewDocument[name] = localOldDocument[name]
                         else if (updateStrategy === 'migrate') {
                             localNewDocument[name] =
-                                propertySpecification.default as
+                                propertyDefinition.default as
                                     typeof localNewDocument[keyof ObjectType]
                             changedPath = parentNames.concat(
                                 String(name), 'migrate default value'
@@ -2153,7 +2145,7 @@ export const validateDocumentUpdate = <
                         }
                     } else {
                         localNewDocument[name] =
-                            propertySpecification.default as
+                            propertyDefinition.default as
                                 typeof localNewDocument[keyof ObjectType]
 
                         changedPath = changedPath.concat(
@@ -2210,20 +2202,20 @@ export const validateDocumentUpdate = <
                     continue
                 }
 
-                let propertySpecification: (
+                let propertyDefinition: (
                     typeof model[keyof ObjectType] |
-                    PropertySpecification<
-                        AdditionalPropertiesType, AdditionalSpecifications
+                    PropertyDefinition<
+                        AdditionalPropertiesType, AdditionalDefinition
                     > |
                     undefined
                 )
 
                 if (Object.prototype.hasOwnProperty.call(model, name))
-                    propertySpecification = model[name]
-                else if (additionalPropertySpecification)
-                    (propertySpecification as PropertySpecification<
-                        AdditionalPropertiesType, AdditionalSpecifications
-                    >) = additionalPropertySpecification
+                    propertyDefinition = model[name]
+                else if (additionalPropertyDefinition)
+                    (propertyDefinition as PropertyDefinition<
+                        AdditionalPropertiesType, AdditionalDefinition
+                    >) = additionalPropertyDefinition
                 else if (updateStrategy === 'migrate') {
                     delete localNewDocument[name]
 
@@ -2239,7 +2231,7 @@ export const validateDocumentUpdate = <
                     )
 
                 // NOTE: Only needed to avoid type check errors.
-                if (!propertySpecification)
+                if (!propertyDefinition)
                     continue
 
                 // region check writable/mutable/nullable
@@ -2254,8 +2246,8 @@ export const validateDocumentUpdate = <
                                 const file = (
                                     model[specialNames.attachment] as
                                         Attachments
-                                )[type] as FileSpecification<
-                                    AttachmentType, AdditionalSpecifications
+                                )[type] as FileDefinition<
+                                    AttachmentType, AdditionalDefinition
                                 >
                                 if (fileNameMatchesModelType(
                                     type, fileName, file
@@ -2278,8 +2270,8 @@ export const validateDocumentUpdate = <
                 } else if (checkPropertyWriteableMutableNullable<
                     AdditionalPropertiesType | ValueOf<ObjectType>
                 >(
-                    propertySpecification as PropertySpecification<
-                        AdditionalPropertiesType, AdditionalSpecifications
+                    propertyDefinition as PropertyDefinition<
+                        AdditionalPropertiesType, AdditionalDefinition
                     >,
                     localNewDocument,
                     localOldDocument,
@@ -2289,11 +2281,11 @@ export const validateDocumentUpdate = <
                     continue
                 // endregion
                 const isArrayType = (
-                    typeof propertySpecification.type === 'string' &&
-                    propertySpecification.type.endsWith('[]') ||
-                    Array.isArray(propertySpecification.type) &&
-                    propertySpecification.type.length &&
-                    Array.isArray(propertySpecification.type[0])
+                    typeof propertyDefinition.type === 'string' &&
+                    propertyDefinition.type.endsWith('[]') ||
+                    Array.isArray(propertyDefinition.type) &&
+                    propertyDefinition.type.length &&
+                    Array.isArray(propertyDefinition.type[0])
                 )
                 if (
                     isArrayType &&
@@ -2305,30 +2297,30 @@ export const validateDocumentUpdate = <
                         throwError(
                             `PropertyType: Property "${String(name)}" isn't ` +
                             `of type "array -> ` +
-                            `${propertySpecification.type as string}" (given` +
+                            `${propertyDefinition.type as string}" (given` +
                             `"${serialize(newProperty)}")${pathDescription}.`
                         )
                     else if (
-                        typeof propertySpecification.minimumNumber ===
+                        typeof propertyDefinition.minimumNumber ===
                             'number' &&
                         newProperty.length <
-                            propertySpecification.minimumNumber
+                            propertyDefinition.minimumNumber
                     )
                         throwError(
                             `MinimumArrayLength: Property "${String(name)}" ` +
                             `(array of length ${String(newProperty.length)})` +
                             ` doesn't fulfill minimum array length of ` +
                             (
-                                propertySpecification.minimumNumber as
+                                propertyDefinition.minimumNumber as
                                     unknown as
                                     string
                             ) +
                             `${pathDescription}.`
                         )
                     else if (
-                        typeof propertySpecification.maximumNumber ===
+                        typeof propertyDefinition.maximumNumber ===
                             'number' &&
-                        propertySpecification.maximumNumber <
+                        propertyDefinition.maximumNumber <
                             newProperty.length
                     )
                         throwError(
@@ -2336,7 +2328,7 @@ export const validateDocumentUpdate = <
                             `(array of length ${String(newProperty.length)})` +
                             ` doesn't fulfill maximum array length of ` +
                             (
-                                propertySpecification.maximumNumber as
+                                propertyDefinition.maximumNumber as
                                     unknown as
                                     string
                             ) +
@@ -2346,8 +2338,8 @@ export const validateDocumentUpdate = <
                     checkPropertyConstraints<PropertyValue>(
                         newProperty as PropertyValue,
                         String(name),
-                        propertySpecification as PropertySpecification<
-                            AdditionalPropertiesType, AdditionalSpecifications
+                        propertyDefinition as PropertyDefinition<
+                            AdditionalPropertiesType, AdditionalDefinition
                         >,
                         localOldDocument &&
                         Object.prototype.hasOwnProperty.call(
@@ -2361,36 +2353,35 @@ export const validateDocumentUpdate = <
                         ]
                     )
                     /// region check/migrate array content
-                    const propertySpecificationCopy =
-                        {} as PropertySpecification<
-                            ValueOf<ObjectType>, AdditionalSpecifications
-                        >
-                    for (const key in propertySpecification)
+                    const propertyDefinitionCopy = {} as PropertyDefinition<
+                        ValueOf<ObjectType>, AdditionalDefinition
+                    >
+                    for (const key in propertyDefinition)
                         if (Object.prototype.hasOwnProperty.call(
-                            propertySpecification, key
+                            propertyDefinition, key
                         ))
                             if (key === 'type') {
                                 const type =
-                                    propertySpecification[key] as
+                                    propertyDefinition[key] as
                                         Array<string> | string
-                                if (Array.isArray(propertySpecification[key]))
-                                    propertySpecificationCopy[key] = (
+                                if (Array.isArray(propertyDefinition[key]))
+                                    propertyDefinitionCopy[key] = (
                                         type as Array<string>
                                     )[0]
                                 else
-                                    propertySpecificationCopy[key] = [(
+                                    propertyDefinitionCopy[key] = [(
                                         type as string
                                     ).substring(0, type.length - '[]'.length)]
                             } else
-                                (propertySpecificationCopy[
-                                    key as keyof PropertySpecification<
+                                (propertyDefinitionCopy[
+                                    key as keyof PropertyDefinition<
                                         ValueOf<ObjectType>,
-                                        AdditionalSpecifications
+                                        AdditionalDefinition
                                     >
-                                ] as Primitive) = propertySpecification[
-                                    key as keyof PropertySpecification<
+                                ] as Primitive) = propertyDefinition[
+                                    key as keyof PropertyDefinition<
                                         ValueOf<ObjectType>,
-                                        AdditionalSpecifications
+                                        AdditionalDefinition
                                     >
                                 ] as Primitive
                     //// region check each array item
@@ -2401,7 +2392,7 @@ export const validateDocumentUpdate = <
                         >(
                             value as ValueOf<ObjectType>,
                             `${String(index + 1)}. value in "${String(name)}"`,
-                            propertySpecificationCopy,
+                            propertyDefinitionCopy,
                             undefined
                         ).newValue as DocumentContent
                         if ([null, undefined].includes(
@@ -2413,7 +2404,7 @@ export const validateDocumentUpdate = <
                     }
                     //// endregion
                     if (!(
-                        propertySpecification.preventVersionCreation &&
+                        propertyDefinition.preventVersionCreation &&
                         updateStrategy !== 'migrate' ||
                         localOldDocument &&
                         Object.prototype.hasOwnProperty.call(
@@ -2446,8 +2437,8 @@ export const validateDocumentUpdate = <
                         checkPropertyContent<ValueOf<ObjectType>>(
                             newValue,
                             String(name),
-                            propertySpecification as PropertySpecification<
-                                ValueOf<ObjectType>, AdditionalSpecifications
+                            propertyDefinition as PropertyDefinition<
+                                ValueOf<ObjectType>, AdditionalDefinition
                             >,
                             oldValue as ValueOf<ObjectType>
                         )
@@ -2487,7 +2478,7 @@ export const validateDocumentUpdate = <
                         ObjectType,
                         PropertyValue,
                         AttachmentType,
-                        AdditionalSpecifications,
+                        AdditionalDefinition,
                         AdditionalPropertiesType
                     >
 
@@ -2497,7 +2488,7 @@ export const validateDocumentUpdate = <
                             boolean | undefined,
                             PropertyValue,
                             AttachmentType,
-                            AdditionalSpecifications,
+                            AdditionalDefinition,
                             AdditionalPropertiesType,
                             Scope
                         > |
@@ -2599,7 +2590,7 @@ export const validateDocumentUpdate = <
         )) {
             const attachmentModel =
                 model[specialNames.attachment] as Mapping<
-                    FileSpecification<AttachmentType, AdditionalSpecifications
+                    FileDefinition<AttachmentType, AdditionalDefinition
                 >>
 
             const newAttachments =
@@ -2751,8 +2742,8 @@ export const validateDocumentUpdate = <
 
             let sumOfAggregatedSizes = 0
             for (const type of Object.keys(attachmentToTypeMapping)) {
-                const specification: FileSpecification<
-                    AttachmentType, AdditionalSpecifications
+                const specification: FileDefinition<
+                    AttachmentType, AdditionalDefinition
                 > = attachmentModel[type]
 
                 if (!Object.prototype.hasOwnProperty.call(
@@ -2993,9 +2984,9 @@ export const validateDocumentUpdate = <
         if (localOldDocument) {
             // region fill up old additional properties if desired
             if (
-                additionalPropertySpecification &&
+                additionalPropertyDefinition &&
                 (
-                    additionalPropertySpecification.updateStrategy ||
+                    additionalPropertyDefinition.updateStrategy ||
                     updateStrategy
                 ) === 'fillUp'
             )
@@ -3024,7 +3015,7 @@ export const validateDocumentUpdate = <
     const BASIC_SCOPE: BasicScope<
         ObjectType,
         AttachmentType,
-        AdditionalSpecifications,
+        AdditionalDefinition,
         AdditionalPropertiesType
     > = {
         attachmentWithPrefixExists,

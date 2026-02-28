@@ -96,7 +96,7 @@
     "rimraf": "^6.1.3",
     "typescript-eslint": "^8.56.1",
     "web-node": "^1.0.571",
-    "weboptimizer": "^2.0.1650"
+    "weboptimizer": "^2.0.1651"
   },
   "peerDependencies": {
     "@babel/runtime": "*",
@@ -420,7 +420,7 @@
           }
         },
         "property": {
-          "defaultSpecification": {
+          "defaultDefinition": {
             "emptyEqualsNull": true,
             "maximumAggregatedSize": 100000000,
             "minimumAggregatedSize": 0,
