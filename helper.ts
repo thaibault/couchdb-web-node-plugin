@@ -46,7 +46,7 @@ import {
     DatabaseResponse,
     DeleteIndexOptions,
     Document,
-    FileSpecification,
+    FileDefinition,
     FullDocument,
     Index,
     InPlaceRunner,
@@ -55,10 +55,10 @@ import {
     Models,
     NormalizedRoles,
     PartialFullDocument,
-    PropertySpecification,
+    PropertyDefinition,
     PutDocument,
     Services,
-    SpecialPropertyNames, TypeSpecification
+    SpecialPropertyNames, TypeDefinition
 } from './type'
 // endregion
 /*
@@ -710,16 +710,13 @@ export const determineModelRolesMapping = (
                     if (name === attachmentsPropertyName) {
                         modelRolesMapping[modelName].attachments = {}
                         for (const [
-                            fileDescription, fileSpecification
+                            fileDescription, fileDefinition
                         ] of Object.entries(property))
-                            if (
-                                (fileSpecification as PropertySpecification)
-                                    .roles
-                            )
+                            if ((fileDefinition as PropertyDefinition).roles)
                                 modelRolesMapping[modelName].attachments[
                                     fileDescription
                                 ] = normalizeRoles(
-                                    (fileSpecification as PropertySpecification)
+                                    (fileDefinition as PropertyDefinition)
                                         .roles as Roles
                                 )
                     } else if (property.roles)
@@ -734,9 +731,9 @@ export const determineModelRolesMapping = (
  * @param value - Value to analyze.
  * @returns Boolean indicating the case.
  */
-export const isPropertySpecification = (
+export const isPropertyDefinition = (
     value: ValueOf<Model>
-): value is PropertySpecification =>
+): value is PropertyDefinition =>
     isObject(value)
 /**
  * Determines all property names which are indexable in a generic manner.
@@ -754,12 +751,12 @@ export const determineGenericIndexablePropertyNames = (
             const specification = model[name]
 
             return (
-                isPropertySpecification(specification) &&
+                isPropertyDefinition(specification) &&
                 Object.prototype.hasOwnProperty.call(
                     specification, 'index'
                 ) &&
                 specification.index ||
-                isPropertySpecification(specification) &&
+                isPropertyDefinition(specification) &&
                 !(
                     Object.prototype.hasOwnProperty.call(
                         specification, 'index'
@@ -887,15 +884,15 @@ export const applyDefaultPropertyConfigurations = (
 ) => {
     const specialNames = modelConfiguration.property.name.special
 
-    for (const [name, propertySpecification] of Object.entries(model))
+    for (const [name, propertyDefinition] of Object.entries(model))
         if (name === specialNames.attachment) {
-            const fileSpecifications =
-                propertySpecification as Mapping<FileSpecification>
-            for (const [type, value] of Object.entries(fileSpecifications))
-                fileSpecifications[type] = extend<FileSpecification>(
+            const fileDefinition =
+                propertyDefinition as Mapping<FileDefinition>
+            for (const [type, value] of Object.entries(fileDefinition))
+                fileDefinition[type] = extend<FileDefinition>(
                     true,
-                    copy(modelConfiguration.property.defaultSpecification) as
-                        FileSpecification,
+                    copy(modelConfiguration.property.defaultDefinition) as
+                        FileDefinition,
                     value
                 )
         } else if (
@@ -912,15 +909,15 @@ export const applyDefaultPropertyConfigurations = (
         ) {
             const property = extend(
                 true,
-                copy(modelConfiguration.property.defaultSpecification),
-                propertySpecification as PropertySpecification
+                copy(modelConfiguration.property.defaultDefinition),
+                propertyDefinition as PropertyDefinition
             )
-            ;(model[name as keyof BaseModel] as PropertySpecification) =
+            ;(model[name as keyof BaseModel] as PropertyDefinition) =
                 property
 
             const types =
-                ([] as Array<TypeSpecification>)
-                    .concat(property.type as TypeSpecification)
+                ([] as Array<TypeDefinition>)
+                    .concat(property.type as TypeDefinition)
             for (const type of types)
                 if (!Array.isArray(type) && typeof type === 'object')
                     property.type = applyModelInheritance(

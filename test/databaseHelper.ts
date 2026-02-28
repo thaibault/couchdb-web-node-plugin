@@ -262,7 +262,7 @@ describe('databaseHelper', () => {
             delete (
                 modelConfiguration.property as
                     Partial<ModelConfiguration['property']>
-            ).defaultSpecification
+            ).defaultDefinition
             delete (modelConfiguration as Partial<ModelConfiguration>)
                 .entities
 
@@ -1927,7 +1927,7 @@ describe('databaseHelper', () => {
             delete (
                 modelConfiguration.property as
                     Partial<ModelConfiguration['property']>
-            ).defaultSpecification
+            ).defaultDefinition
             delete (modelConfiguration as Partial<ModelConfiguration>)
                 .entities
 
@@ -5255,7 +5255,7 @@ describe('databaseHelper', () => {
             delete (
                 testModelConfiguration.property as
                     Partial<ModelConfiguration['property']>
-            ).defaultSpecification
+            ).defaultDefinition
             delete (testModelConfiguration as Partial<ModelConfiguration>)
                 .entities
 

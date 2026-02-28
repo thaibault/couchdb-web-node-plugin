@@ -71,7 +71,7 @@ import {
     InPlaceRunner,
     Migrator,
     Models,
-    PropertySpecification,
+    PropertyDefinition,
     BinaryRunner,
     Services,
     ServicesState,
@@ -207,8 +207,8 @@ export const preLoadService = async ({
 
     const modelConfiguration = copy(configuration.model)
     delete (modelConfiguration.property as
-        {defaultSpecification?: PropertySpecification}
-    ).defaultSpecification
+        {defaultDefinition?: PropertyDefinition}
+    ).defaultDefinition
     delete (modelConfiguration as {entities?: Models}).entities
     const models = applyModelsInheritance(configuration.model)
 
@@ -697,8 +697,8 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
     const modelConfiguration = copy(configuration.couchdb.model)
 
     delete (modelConfiguration.property as
-        {defaultSpecification?: PropertySpecification}
-    ).defaultSpecification
+        {defaultDefinition?: PropertyDefinition}
+    ).defaultDefinition
     delete (modelConfiguration as {entities?: Models}).entities
 
     const models = configuration.couchdb.model.entities
@@ -815,7 +815,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                     ] as const)
                         if (isObject(specification)) {
                             const constraint: (Constraint | null | undefined) =
-                                (specification as PropertySpecification)[
+                                (specification as PropertyDefinition)[
                                     type
                                 ]
 
