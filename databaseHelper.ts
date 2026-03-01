@@ -1033,7 +1033,7 @@ export const validateDocumentUpdate = <
             const types = ([] as Array<TypeDefinition>).concat(
                 propertyDefinition.type ? propertyDefinition.type : []
             )
-            // Derive nested type definition if possible.
+            let nestedObjectTypeMatched = false
             let typeMatched = false
             for (const type of types)
                 if (
@@ -1097,6 +1097,7 @@ export const validateDocumentUpdate = <
                             if (serialize(newValue) === serialize({}))
                                 return {newValue: undefined, changedPath}
 
+                            nestedObjectTypeMatched = true
                             typeMatched = true
                             break
                         }
@@ -1345,6 +1346,8 @@ export const validateDocumentUpdate = <
             )
 
             if (
+                // NOTE: Nested object should formulate its changed path than.
+                !nestedObjectTypeMatched &&
                 (
                     !propertyDefinition.preventVersionCreation ||
                     updateStrategy === 'migrate'
