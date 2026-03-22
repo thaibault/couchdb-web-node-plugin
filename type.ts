@@ -563,6 +563,7 @@ export interface CoreConfiguration<
     }
     numberOfParallelChangesRunner: number
 
+    removeDanglingForeignKeysChangesStream: ChangesStreamOptions
     updateMaterializedViewsChangesStream: ChangesStreamOptions
 
     connector: ConnectorConfiguration
@@ -571,6 +572,8 @@ export interface CoreConfiguration<
         _users: SecuritySettings
         [key: string]: SecuritySettings
     }
+
+    removeDanglingForeignKeys: boolean
 
     createGenericFlatIndex: boolean
     databaseName: string
@@ -626,8 +629,13 @@ export interface CouchDB<Type extends object = Mapping<unknown>> {
     lastChangesSequenceIdentifier?: number | string
 
     reinitializeMaterializedViews?: () => Promise<void>
+
     updateMaterializedViewsChangesStream?: ChangesStream
     lastUpdateMaterializedViewsChangesSequenceIdentifier?: number | string
+
+    removeDanglingForeignKeysChangesStream?: ChangesStream
+    lastRemoveDanglingForeignKeysChangesSequenceIdentifier?: number | string
+
 
     backendConnector: Connector
     connection: Connection<Type>
