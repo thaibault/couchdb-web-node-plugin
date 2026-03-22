@@ -1164,6 +1164,7 @@ export const postLoadService = (state: State): Promise<void> => {
         configuration.numberOfParallelChangesRunner
     )
     const initialize = async (): Promise<void> => {
+        // region generic changes stream
         if (couchdb.changesStream as unknown as boolean)
             couchdb.changesStream.cancel()
 
@@ -1176,6 +1177,10 @@ export const postLoadService = (state: State): Promise<void> => {
             `"${String(changesConfiguration.since)}".`
         )
 
+        couchdb.changesStream =
+            couchdb.connection.changes(changesConfiguration)
+        // endregion
+        // region materialized views changes stream
         if (Object.keys(configuration.materializedViews).length) {
             const updateMaterializedViewsChangesConfiguration =
                 configuration.updateMaterializedViewsChangesStream
@@ -1217,10 +1222,33 @@ export const postLoadService = (state: State): Promise<void> => {
                     updateMaterializedViewsChangesConfiguration
                 )
         }
+        // endregion
+        // region foreign key changes stream
+        if (configuration.removeDanglingForeignKeys) {
+            const removeDanglingForeignKeysChangesConfiguration =
+                configuration.removeDanglingForeignKeysChangesStream
+            if (
+                couchdb
+                    .lastRemoveDanglingForeignKeysChangesSequenceIdentifier !==
+                undefined
+            )
+                removeDanglingForeignKeysChangesConfiguration.since =
+                    couchdb
+                        .lastRemoveDanglingForeignKeysChangesSequenceIdentifier
 
-        couchdb.changesStream =
-            couchdb.connection.changes(changesConfiguration)
+            log.info(
+                'Initialize changes stream for remove dangling foreign keys',
+                'since "' +
+                String(removeDanglingForeignKeysChangesConfiguration.since) +
+                '".'
+            )
 
+            couchdb.removeDanglingForeignKeysChangesStream =
+                couchdb.connection.changes(
+                    removeDanglingForeignKeysChangesConfiguration
+                )
+        }
+        // endregion
         const changesErrorHandler = async (
             error: DatabaseError
         ): Promise<void> => {
@@ -1238,6 +1266,8 @@ export const postLoadService = (state: State): Promise<void> => {
 
                 numberOfErrorsThrough = 0
                 couchdb.changesStream.cancel()
+                couchdb.removeDanglingForeignKeysChangesStream?.cancel()
+                couchdb.updateMaterializedViewsChangesStream?.cancel()
 
                 await couchdb.server.restart(state)
             } else {
@@ -1268,6 +1298,10 @@ export const postLoadService = (state: State): Promise<void> => {
         }
 
         void couchdb.changesStream.on('error', changesErrorHandler)
+        if (couchdb.removeDanglingForeignKeysChangesStream)
+            void couchdb.removeDanglingForeignKeysChangesStream.on(
+                'error', changesErrorHandler
+            )
         if (couchdb.updateMaterializedViewsChangesStream)
             void couchdb.updateMaterializedViewsChangesStream.on(
                 'error', changesErrorHandler
@@ -1308,6 +1342,16 @@ export const postLoadService = (state: State): Promise<void> => {
                 } finally {
                     changesRunnerSemaphore.release()
                 }
+            }
+        )
+
+        void couchdb.removeDanglingForeignKeysChangesStream?.on(
+            'change',
+            async (change: ChangesResponseChange) => {
+                numberOfErrorsThrough = 0
+
+                console.log('TODO remove dangling files', change)
+                await Promise.resolve()
             }
         )
 
