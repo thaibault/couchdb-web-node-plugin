@@ -123,6 +123,7 @@ export type Document<Type extends object = PlainObject> =
     PouchDB.Core.Document<Type>
 export type ExistingDocument<Type extends object = PlainObject> =
     PouchDB.Core.ExistingDocument<Type>
+export type DocumentDeleteMeta = PouchDB.Core.IdMeta & {_deleted: boolean}
 export type DocumentGetMeta = PouchDB.Core.GetMeta
 export type DocumentIDMeta = PouchDB.Core.IdMeta
 export type DocumentRevisionIDMeta = PouchDB.Core.RevisionIdMeta
