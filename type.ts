@@ -631,6 +631,9 @@ export interface CouchDB<Type extends object = Mapping<unknown>> {
 
     reinitializeMaterializedViews?: () => Promise<void>
 
+    foreignKeys: Mapping<Array<[string, string]>>
+    removeDanglingForeignKeys?: () => Promise<void>
+
     updateMaterializedViewsChangesStream?: ChangesStream
     lastUpdateMaterializedViewsChangesSequenceIdentifier?: number | string
 
