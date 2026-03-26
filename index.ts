@@ -20,6 +20,7 @@
 import {
     copy,
     evaluate,
+    evaluateSelectorUntilLastObject,
     File,
     globalContext,
     isDirectory,
@@ -1513,8 +1514,8 @@ export const postLoadService = (state: State): Promise<void> => {
                     for (const selector of couchdb.foreignKeys.static[
                         change.doc[specialNames.type]
                     ]) {
-                        const reference = getSubstructure(change.doc, selector)
-                        
+                        const reference = evaluateSelectorUntilLastObject(selector, change.doc)
+
                     }
             }
         )
