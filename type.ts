@@ -641,7 +641,7 @@ export interface CouchDB<Type extends object = Mapping<unknown>> {
 
     removeDanglingForeignKeysChangesStream?: ChangesStream
     lastRemoveDanglingForeignKeysChangesSequenceIdentifier?: number | string
-    updateForeignKeysChangesStream: ChangesStream
+    updateForeignKeysChangesStream?: ChangesStream
     lastUpdateForeignKeysChangesSequenceIdentifier?: number | string
 
     backendConnector: Connector

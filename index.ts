@@ -20,7 +20,7 @@
 import {
     copy,
     evaluate,
-    evaluateSelectorUntilLastObject,
+    evaluateSelector,
     File,
     globalContext,
     isDirectory,
@@ -1514,8 +1514,13 @@ export const postLoadService = (state: State): Promise<void> => {
                     for (const selector of couchdb.foreignKeys.static[
                         change.doc[specialNames.type]
                     ]) {
-                        const reference = evaluateSelectorUntilLastObject(selector, change.doc)
+                        const value = evaluateSelector(
+                            selector, change.doc
+                        )
+                        if (Array.isArray(value))
 
+                        else
+                            couchdb.foreignKeys.runtime
                     }
             }
         )
