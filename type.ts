@@ -624,6 +624,17 @@ export type Configuration<ConfigurationType = Mapping<unknown>> =
     BaseConfiguration<{couchdb: CoreConfiguration}> &
     ConfigurationType
 //// endregion
+export interface StaticForeignKey {
+    propertySelector: Array<string>
+    targetModelName: string
+}
+export type StaticForeignKeys = Array<StaticForeignKey>
+export interface RuntimeForeignKey {
+    propertySelector: Array<string>
+    id: string
+}
+export type RuntimeForeignKeys = Array<RuntimeForeignKey>
+
 export interface CouchDB<Type extends object = Mapping<unknown>> {
     changesStream: ChangesStream
     lastChangesSequenceIdentifier?: number | string
@@ -631,8 +642,21 @@ export interface CouchDB<Type extends object = Mapping<unknown>> {
     reinitializeMaterializedViews?: () => Promise<void>
 
     foreignKeys: {
-        static: Mapping<Array<[string, string]>>
-        runtime: Mapping<Array<{propertyName: string; id: string}>>
+        /*
+            Mapping from model type to tuple with referenced model type and
+            property selector:
+
+            Model Name -> List of selector to property & target model name
+        */
+        static: Mapping<StaticForeignKeys>
+        /*
+            Mapping from document id having references to list of tuples with
+            property selector and referenced id:
+
+            ID of document having referencing ids ->
+                List of selector to property & referencing ID
+        */
+        runtime: Mapping<RuntimeForeignKeys>
     }
     removeDanglingForeignKeys?: () => Promise<void>
 

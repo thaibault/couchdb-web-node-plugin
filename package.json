@@ -82,7 +82,7 @@
     "@types/webpack-env": "^1.18.8",
     "@typescript-eslint/eslint-plugin": "^8.57.2",
     "@typescript-eslint/parser": "^8.57.2",
-    "clientnode": "^4.0.1366",
+    "clientnode": "^4.0.1367",
     "documentation-website": "^1.0.401",
     "eslint": "^10.1.0",
     "eslint-config-google": "^0.14.0",
