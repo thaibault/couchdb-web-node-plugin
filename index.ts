@@ -407,8 +407,14 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                         evaluateSelectorUntilLastObject<Mapping<unknown>>(
                             selector, document
                         )
+                    console.log()
+                    console.log('TODO JAU', document, selector, lastKey, object)
+                    console.log()
                     const key = lastKey as unknown as string
                     const value = object[key] as string
+
+                    if (!value)
+                        continue
 
                     if (Array.isArray(value)) {
                         for (const id of value as Array<string>)

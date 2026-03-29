@@ -22,7 +22,7 @@ import PouchDBFindPlugin from 'pouchdb-find'
 import {pluginAPI} from 'web-node'
 import webNodePackageConfiguration from 'web-node/package.json'
 
-import {beforeAll, describe, expect, jest, test} from '@jest/globals'
+import {afterAll, beforeAll, describe, expect, jest, test} from '@jest/globals'
 
 import {
     getConnectorOptions, getEffectiveURL, getPouchDBPlugin, waitWithTimeout
@@ -92,13 +92,12 @@ describe('crud', (): void => {
             }
         },
         writableProperty: {},
-        test2Reference: {
-            [typeName]: 'foreignKey:Test2Model'
-        }
+        test2Reference: {type: 'foreignKey:Test2Model'},
+        sub: {type: {test2References: {type: 'foreignKey:Test2Model[]'}}}
     } as unknown as Model
-    ;(config.model.entities.Test2Model as Model) = {
-        _roles: 'users'
-    } as unknown as Model
+    ;(config.model.entities.Test2Model as Model) = {_roles: 'users'} as
+        unknown as
+        Model
     ;(config.model.entities.SensibelTestModel as Model) = {
         _roles: 'users',
         _attachments: {
@@ -181,145 +180,201 @@ describe('crud', (): void => {
         client.installCouchDBWebNodePlugin('test')
         // endregion
     })
+    afterAll(async () => {
+        await waitWithTimeout(
+            client.close(),
+            config.closeTimeoutInSeconds,
+            'test client connection to close'
+        )
+        state.hook = 'shouldExit'
+        await expect(shouldExit(state)).resolves.toBeUndefined()
+    })
     // endregion
     test('authorization', async (): Promise<void> => {
-        try {
-            const data: Mapping =
-                {[typeName]: 'TestModel', writableProperty: 'test'}
-            let {id, rev: revision} = await client.post(data)
-            const sensibelData: Mapping =
-                {[typeName]: 'SensibelTestModel', writableProperty: 'test'}
-            const {id: sensibelID, rev: sensibelRevision} =
-                await client.post(sensibelData)
-            // region test reading properties
-            /// region id
-            await expect(client.get(id))
-                .resolves.toHaveProperty('writableProperty')
-            await expect(client.get(sensibelID))
-                .rejects.toHaveProperty('error', 'unauthorized')
-            /// endregion
-            /// region find
-            const fetchResult = (await client.find({
-                fields: ['readonlyProperty', 'writableProperty'],
-                selector: {[idName]: sensibelID}
-            })).docs[0]
-            expect(fetchResult)
-                .toHaveProperty('readonlyProperty', 'readonlyValue')
-            expect(fetchResult)
-                .toHaveProperty('writableProperty', 'test')
+        const data: Mapping =
+            {[typeName]: 'TestModel', writableProperty: 'test'}
+        let {id, rev: revision} = await client.post(data)
+        const sensibelData: Mapping =
+            {[typeName]: 'SensibelTestModel', writableProperty: 'test'}
+        const {id: sensibelID, rev: sensibelRevision} =
+            await client.post(sensibelData)
+        // region test reading properties
+        /// region id
+        await expect(client.get(id))
+            .resolves.toHaveProperty('writableProperty')
+        await expect(client.get(sensibelID))
+            .rejects.toHaveProperty('error', 'unauthorized')
+        /// endregion
+        /// region find
+        const fetchResult = (await client.find({
+            fields: ['readonlyProperty', 'writableProperty'],
+            selector: {[idName]: sensibelID}
+        })).docs[0]
+        expect(fetchResult)
+            .toHaveProperty('readonlyProperty', 'readonlyValue')
+        expect(fetchResult)
+            .toHaveProperty('writableProperty', 'test')
 
-            await expect(client.find({
-                fields: ['secureProperty'], selector: {[idName]: sensibelID}
-            })).rejects.toHaveProperty('error', 'unauthorized')
-            /// endregion
-            /// region allDocs
-            await expect(client.allDocs()).resolves.toBeDefined()
+        await expect(client.find({
+            fields: ['secureProperty'], selector: {[idName]: sensibelID}
+        })).rejects.toHaveProperty('error', 'unauthorized')
+        /// endregion
+        /// region allDocs
+        await expect(client.allDocs()).resolves.toBeDefined()
 
+        // eslint-disable-next-line camelcase
+        await expect(client.allDocs({include_docs: true}))
+            .rejects.toHaveProperty('error', 'unauthorized')
+        /// endregion
+        /// region changes
+        const {results: validResults} = await client.changes({since: 0})
+        expect(validResults[validResults.length - 1])
+            .not.toHaveProperty('error')
+
+        const {results: invalidResults} =
             // eslint-disable-next-line camelcase
-            await expect(client.allDocs({include_docs: true}))
-                .rejects.toHaveProperty('error', 'unauthorized')
-            /// endregion
-            /// region changes
-            const {results: validResults} = await client.changes({since: 0})
-            expect(validResults[validResults.length - 1])
-                .not.toHaveProperty('error')
+            await client.changes({include_docs: true, since: 0})
+        expect(invalidResults[invalidResults.length - 1])
+            .toHaveProperty('error.error', 'unauthorized')
 
-            const {results: invalidResults} =
-                // eslint-disable-next-line camelcase
-                await client.changes({include_docs: true, since: 0})
-            expect(invalidResults[invalidResults.length - 1])
-                .toHaveProperty('error.error', 'unauthorized')
+        const validChangesStream = client.changes({live: true, since: 0})
+        await validChangesStream.on('change', (change): void => {
+            if (change.id === sensibelID) {
+                expect(change).not.toHaveProperty('error')
+                validChangesStream.cancel()
+            }
+        })
+        const invalidChangesStream =
+            // eslint-disable-next-line camelcase
+            client.changes({include_docs: true, live: true, since: 0})
+        await invalidChangesStream.on('change', (change): void => {
+            if (change.id === sensibelID) {
+                expect(change).toHaveProperty('error')
+                invalidChangesStream.cancel()
+            }
+        })
+        /// endregion
+        /// region attachments
+        await expect(client.getAttachment(id, 'file.txt'))
+            .resolves.toHaveProperty('type')
+        await expect(client.getAttachment(sensibelID, 'secureFile.txt'))
+            .rejects.toBeDefined()
+        /// endregion
+        // endregion
+        // region test writing properties
+        /// region post
+        sensibelData.readonlyProperty = 'notAllowedChangedValue'
+        await expect(client.post(sensibelData))
+            .rejects.toHaveProperty('error', 'unauthorized')
+        /// endregion
+        /// region put
+        sensibelData[idName] = sensibelID
+        sensibelData[revisionName] = sensibelRevision
 
-            const validChangesStream = client.changes({live: true, since: 0})
-            await validChangesStream.on('change', (change): void => {
-                if (change.id === sensibelID) {
-                    expect(change).not.toHaveProperty('error')
-                    validChangesStream.cancel()
-                }
-            })
-            const invalidChangesStream =
-                // eslint-disable-next-line camelcase
-                client.changes({include_docs: true, live: true, since: 0})
-            await invalidChangesStream.on('change', (change): void => {
-                if (change.id === sensibelID) {
-                    expect(change).toHaveProperty('error')
-                    invalidChangesStream.cancel()
-                }
-            })
-            /// endregion
-            /// region attachments
-            await expect(client.getAttachment(id, 'file.txt'))
-                .resolves.toHaveProperty('type')
-            await expect(client.getAttachment(sensibelID, 'secureFile.txt'))
-                .rejects.toBeDefined()
-            /// endregion
-            // endregion
-            // region test writing properties
-            /// region post
-            sensibelData.readonlyProperty = 'notAllowedChangedValue'
-            await expect(client.post(sensibelData))
-                .rejects.toHaveProperty('error', 'unauthorized')
-            /// endregion
-            /// region put
-            sensibelData[idName] = sensibelID
-            sensibelData[revisionName] = sensibelRevision
+        await expect(client.put(sensibelData))
+            .rejects.toHaveProperty('error', 'unauthorized')
+        /// endregion
+        /// region putAttachment
+        const putAttachmentResult = await client.putAttachment(
+            id,
+            'file.txt',
+            revision,
+            Buffer.from('Is there life outside Earth?', 'binary')
+                .toString('base64'),
+            'text/plain'
+        )
+        expect(putAttachmentResult).toHaveProperty('ok', true)
+        revision = putAttachmentResult.rev
+        await expect(client.putAttachment(
+            sensibelID,
+            'secureFile.txt',
+            sensibelRevision,
+            Buffer.from('No!', 'binary').toString('base64'),
+            'text/plain'
+        )).rejects.toHaveProperty('error', 'unauthorized')
+        /// endregion
+        /// region removeAttachment
+        const removeAttachmentResult =
+            await client.removeAttachment(id, 'file.txt', revision)
+        expect(removeAttachmentResult).toHaveProperty('ok', true)
+        revision = removeAttachmentResult.rev
+        await expect(client.removeAttachment(
+            sensibelID, 'secureFile.txt', sensibelRevision
+        )).rejects.toHaveProperty('error', 'unauthorized')
+        /// endregion
+        /// region bulkDocs
+        expect((await client.bulkDocs([sensibelData]))[0])
+            .toHaveProperty('error', 'unauthorized')
+        /// endregion
+        /// region delete
+        await expect(client.remove(id, revision))
+            .resolves.toHaveProperty('ok', true)
+        await expect(client.remove(sensibelID, sensibelRevision))
+            .rejects.toHaveProperty('error', 'unauthorized')
+        /// endregion
+        // endregion
+    })
+    test.only('referential integrity', async (): Promise<void> => {
+        const {static: staticReferences, runtime: runtimeReferences} =
+            state.services.couchdb.foreignKeys
 
-            await expect(client.put(sensibelData))
-                .rejects.toHaveProperty('error', 'unauthorized')
-            /// endregion
-            /// region putAttachment
-            const putAttachmentResult = await client.putAttachment(
-                id,
-                'file.txt',
-                revision,
-                Buffer.from('Is there life outside Earth?', 'binary')
-                    .toString('base64'),
-                'text/plain'
-            )
-            expect(putAttachmentResult).toHaveProperty('ok', true)
-            revision = putAttachmentResult.rev
-            await expect(client.putAttachment(
-                sensibelID,
-                'secureFile.txt',
-                sensibelRevision,
-                Buffer.from('No!', 'binary').toString('base64'),
-                'text/plain'
-            )).rejects.toHaveProperty('error', 'unauthorized')
-            /// endregion
-            /// region removeAttachment
-            const removeAttachmentResult =
-                await client.removeAttachment(id, 'file.txt', revision)
-            expect(removeAttachmentResult).toHaveProperty('ok', true)
-            revision = removeAttachmentResult.rev
-            await expect(client.removeAttachment(
-                sensibelID, 'secureFile.txt', sensibelRevision
-            )).rejects.toHaveProperty('error', 'unauthorized')
-            /// endregion
-            /// region bulkDocs
-            expect((await client.bulkDocs([sensibelData]))[0])
-                .toHaveProperty('error', 'unauthorized')
-            /// endregion
-            /// region delete
-            await expect(client.remove(id, revision))
-                .resolves.toHaveProperty('ok', true)
-            await expect(client.remove(sensibelID, sensibelRevision))
-                .rejects.toHaveProperty('error', 'unauthorized')
-            /// endregion
-            // endregion
-            // region testing referential integrity
-            // endregion
-        // eslint-disable-next-line no-useless-catch
-        } catch (error) {
-            throw error
-        } finally {
-            await waitWithTimeout(
-                client.close(),
-                config.closeTimeoutInSeconds,
-                'test client connection to close'
-            )
-            state.hook = 'shouldExit'
-            await expect(shouldExit(state)).resolves.toBeUndefined()
-        }
+        expect(staticReferences.TestModel).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    targetModelName: 'Test2Model',
+                    propertySelector: ['test2Reference']
+                }),
+                expect.objectContaining({
+                    targetModelName: 'Test2Model',
+                    propertySelector: ['sub', 'test2References']
+                })
+            ])
+        )
+
+        // Create a reference from "TestModel" to "Test2Model".
+        const {id: test2ID} = await client.post({[typeName]: 'Test2Model'})
+        const {id: testID, rev: testRevision} = await client.post(
+            {[typeName]: 'TestModel', test2Reference: test2ID}
+        )
+
+        await state.services.couchdb.removeDanglingForeignKeys?.()
+
+        expect(runtimeReferences[test2ID]).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    propertySelector: ['test2Reference'],
+                    id: testID
+                })
+            ])
+        )
+
+        await client.put({
+            [idName]: testID,
+            [revisionName]: testRevision,
+            sub: {test2References: [test2ID]}
+        })
+
+        // Wait until changes stream has been digested.
+        console.log('Runtime', JSON.stringify(runtimeReferences))
+
+        /*
+        // TODO should match:
+        expect(runtimeReferences[test2ID]).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    propertySelector: ['test2Reference'],
+                    id: testID
+                }),
+                expect.objectContaining({
+                    propertySelector: ['sub', 'test2References'],
+                    id: testID
+                })
+            ])
+        )
+        */
+
+        // TODO
+        console.log(testID, test2ID)
     })
     // endregion
 })
