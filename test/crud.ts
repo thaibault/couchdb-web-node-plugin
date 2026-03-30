@@ -325,16 +325,16 @@ describe('crud', (): void => {
             const {foreignKeys} = state.services.couchdb
 
             expect(foreignKeys.static.TestModel).toEqual(
-                expect.arrayContaining([
-                    expect.objectContaining({
+                [
+                    {
                         targetModelName: 'Test2Model',
                         propertySelector: ['test2Reference']
-                    }),
-                    expect.objectContaining({
+                    },
+                    {
                         targetModelName: 'Test2Model',
                         propertySelector: ['sub', 'test2References']
-                    })
-                ])
+                    }
+                ]
             )
 
             // Create a references from "TestModel" to "Test2Model".
@@ -346,14 +346,14 @@ describe('crud', (): void => {
             await state.services.couchdb.removeDanglingForeignKeys?.()
 
             // Check whether reference got grabbed.
-            expect(foreignKeys.runtime[test2ID]).toEqual(
-                expect.arrayContaining([
-                    expect.objectContaining({
+            expect(foreignKeys.runtime).toEqual({
+                [test2ID]: [
+                    {
                         propertySelector: ['test2Reference'],
                         id: testID
-                    })
-                ])
-            )
+                    }
+                ]
+            })
 
             await client.put({
                 [idName]: testID,
@@ -366,44 +366,41 @@ describe('crud', (): void => {
                 Check whether further added references in lists got grabbed as
                 well.
             */
-            expect(foreignKeys.runtime[test2ID]).toEqual(
-                expect.arrayContaining([
-                    expect.objectContaining({
+            expect(foreignKeys.runtime).toEqual({
+                [test2ID]: [
+                    {
                         propertySelector: ['test2Reference'],
                         id: testID
-                    }),
-                    expect.objectContaining({
+                    },
+                    {
                         propertySelector: ['sub', 'test2References'],
                         id: testID
-                    })
-                ])
-            )
-            expect(foreignKeys.runtime[test2ID2]).toEqual(
-                expect.arrayContaining([
-                    expect.objectContaining({
+                    }
+                ],
+                [test2ID2]: [
+                    {
                         propertySelector: ['sub', 'test2References'],
                         id: testID
-                    })
-                ])
-            )
+                    }
+                ]
+            })
 
             await client.remove(test2ID2)
             await state.services.couchdb.removeDanglingForeignKeys?.()
+
+            /*
+                Check whether removed documents results in removed references
+                as well.
+            */
+            expect(foreignKeys.runtime).not.toHaveProperty(test2ID2)
+
             const updatedTestDocument = (await client.find({
                 selector: {[idName]: testID},
                 fields: ['sub.test2References']
             })).docs[0]
-
-            /*
-                Check whether removed documents results in removed references as
-                well.
-            */
-            expect(foreignKeys.runtime).not.toHaveProperty(test2ID2)
-            expect(updatedTestDocument).toEqual(
-                expect.objectContaining({
-                    sub: {test2References: [test2ID]}
-                })
-            )
+            expect(updatedTestDocument).toEqual({
+                sub: {test2References: [test2ID]}
+            })
 
             await client.remove(testID)
             await client.remove(test2ID)
@@ -427,25 +424,36 @@ describe('crud', (): void => {
             const {id: test2ID} = await client.post({[typeName]: 'Test2Model'})
             const {id: test2ID2} =
                 await client.post({[typeName]: 'Test2Model'})
-            const {id: testID, rev: testRevision} = await client.post({
+            const {id: testID} = await client.post({
                 [typeName]: 'TestModel',
                 test2Reference: test2ID,
                 sub: {test2References: [test2ID, test2ID2]}
             })
 
-            // NOTE: We have to wait for changes listener to run through.
-            await timeout()
-            await timeout()
+            const waitForStabilization = async (getter: () => unknown) => {
+                let maySetteled = false
+                /*
+                    eslint-disable @typescript-eslint/no-unnecessary-condition
+                */
+                while (true) {
+                    const lastValue = getter()
 
-            console.log(
-                'Runtime 1',
-                couchdb.lastRemoveDanglingForeignKeysChangesSequenceIdentifier,
-                couchdb.lastUpdateForeignKeysChangesSequenceIdentifier,
-                JSON.stringify(foreignKeys.runtime)
+                    for (let count = 0; count < 10; count++)
+                        await timeout()
+
+                    if (lastValue === getter())
+                        if (maySetteled)
+                            break
+                        else
+                            maySetteled = true
+                }
+                /* eslint-enable @typescript-eslint/no-unnecessary-condition */
+            }
+            await waitForStabilization(() =>
+                couchdb.lastUpdateForeignKeysChangesSequenceIdentifier
             )
 
-            // TODO
-            {
+            expect(foreignKeys.runtime).toEqual({
                 [test2ID]: [
                     {
                         propertySelector: ['test2Reference'],
@@ -462,9 +470,55 @@ describe('crud', (): void => {
                         id: testID
                     }
                 ]
-            }
+            })
 
-            expect(foreignKeys.runtime).toBeDefined()
+            await client.remove(test2ID2)
+
+            await Promise.all([
+                waitForStabilization(() =>
+                    couchdb.lastUpdateForeignKeysChangesSequenceIdentifier
+                ),
+                waitForStabilization(() =>
+                    couchdb
+                        .lastRemoveDanglingForeignKeysChangesSequenceIdentifier
+                )
+            ])
+
+            /*
+                Check whether removed documents results in removed references
+                as well.
+            */
+            expect(foreignKeys.runtime).not.toHaveProperty(test2ID2)
+
+            const updatedTestDocument = (await client.find({
+                selector: {[idName]: testID},
+                fields: ['sub.test2References']
+            })).docs[0]
+
+            expect(updatedTestDocument).toEqual({
+                sub: {test2References: [test2ID]}
+            })
+
+            console.log(
+                'Runtime 1',
+                JSON.stringify(foreignKeys.runtime, null, 2)
+            )
+            return
+
+            await client.remove(testID)
+            await client.remove(test2ID)
+
+            await Promise.all([
+                waitForStabilization(() =>
+                    couchdb.lastUpdateForeignKeysChangesSequenceIdentifier
+                ),
+                waitForStabilization(() =>
+                    couchdb
+                        .lastRemoveDanglingForeignKeysChangesSequenceIdentifier
+                )
+            ])
+
+            expect(foreignKeys.runtime).toMatchObject({})
         }
     )
     // endregion

@@ -1533,14 +1533,14 @@ export const postLoadService = async (state: State): Promise<void> => {
                 numberOfErrorsThrough = 0
 
                 /*
-                    We clear all references to this document since we will
-                    build up them again afterward.
+                    We clear all references to this document since we build
+                    them up again afterward.
                 */
                 for (const [documentID, runtimeForeignKeys] of Object.entries(
                     couchdb.foreignKeys.runtime
                 ))
                     couchdb.foreignKeys.runtime[documentID] =
-                        runtimeForeignKeys.filter(({id}) => id !== documentID)
+                        runtimeForeignKeys.filter(({id}) => id !== change.id)
 
                 if (!change.deleted && change.doc)
                     for (const {propertySelector} of couchdb.foreignKeys.static[
@@ -1579,15 +1579,26 @@ export const postLoadService = async (state: State): Promise<void> => {
                     Object.prototype.hasOwnProperty.call(
                         couchdb.foreignKeys.runtime, change.id
                     )
-                )
+                ) {
                     for (const {propertySelector, id} of
                         couchdb.foreignKeys.runtime[change.id]
                     ) {
                         const selector = propertySelector.join('.')
-                        const document = (await couchdb.connection.find({
+                        const documents = (await couchdb.connection.find({
                             selector: {[specialNames.id]: id},
-                            fields: [selector]
-                        })).docs[0]
+                            fields: [specialNames.id, selector]
+                        })).docs
+
+                        if (documents.length === 0) {
+                            log.warn(
+                                `Could not find document with id "${id}"`,
+                                'remembered as foreign key source.'
+                            )
+                            continue
+                        }
+
+                        const document = documents[0]
+
                         const [object, lastKey] =
                             evaluateSelectorUntilLastObject(selector, document)
                         const key = lastKey as unknown as string
@@ -1606,8 +1617,20 @@ export const postLoadService = async (state: State): Promise<void> => {
                         else
                             object[key] = null
 
-                        await couchdb.connection.put(document)
+                        document[specialNames.revision] = '0-latest'
+                        try {
+                            await couchdb.connection.put(document)
+                        } catch (error) {
+                            log.warn(
+                                'Could not remove dangling foreign key',
+                                'relation:',
+                                error
+                            )
+                        }
                     }
+
+                    delete couchdb.foreignKeys.runtime[change.id]
+                }
 
                 couchdb
                     .lastRemoveDanglingForeignKeysChangesSequenceIdentifier =
