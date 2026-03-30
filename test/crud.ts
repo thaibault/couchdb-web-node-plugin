@@ -14,7 +14,7 @@
     endregion
 */
 // region imports
-import {copy, Mapping} from 'clientnode'
+import {copy, Mapping, timeout} from 'clientnode'
 import {Express} from 'express-serve-static-core'
 import PouchDB from 'pouchdb-node'
 import PouchDBHTTPAdapter from 'pouchdb-adapter-http'
@@ -27,7 +27,12 @@ import {afterAll, beforeAll, describe, expect, jest, test} from '@jest/globals'
 import {
     getConnectorOptions, getEffectiveURL, getPouchDBPlugin, waitWithTimeout
 } from '../helper'
-import {loadService, preLoadService, shouldExit} from '../index'
+import {
+    loadService,
+    postLoadService,
+    preLoadService,
+    shouldExit
+} from '../index'
 import expressUtilities from '../loadExpress'
 import packageConfiguration from '../package.json'
 import {
@@ -314,67 +319,141 @@ describe('crud', (): void => {
         /// endregion
         // endregion
     })
-    test.only('referential integrity', async (): Promise<void> => {
-        const {static: staticReferences, runtime: runtimeReferences} =
-            state.services.couchdb.foreignKeys
+    test(
+        'referential integrity due to initialization',
+        async (): Promise<void> => {
+            const {foreignKeys} = state.services.couchdb
 
-        expect(staticReferences.TestModel).toEqual(
-            expect.arrayContaining([
+            expect(foreignKeys.static.TestModel).toEqual(
+                expect.arrayContaining([
+                    expect.objectContaining({
+                        targetModelName: 'Test2Model',
+                        propertySelector: ['test2Reference']
+                    }),
+                    expect.objectContaining({
+                        targetModelName: 'Test2Model',
+                        propertySelector: ['sub', 'test2References']
+                    })
+                ])
+            )
+
+            // Create a references from "TestModel" to "Test2Model".
+            const {id: test2ID} = await client.post({[typeName]: 'Test2Model'})
+            const {id: test2ID2} = await client.post({[typeName]: 'Test2Model'})
+            const {id: testID, rev: testRevision} = await client.post(
+                {[typeName]: 'TestModel', test2Reference: test2ID}
+            )
+            await state.services.couchdb.removeDanglingForeignKeys?.()
+
+            // Check whether reference got grabbed.
+            expect(foreignKeys.runtime[test2ID]).toEqual(
+                expect.arrayContaining([
+                    expect.objectContaining({
+                        propertySelector: ['test2Reference'],
+                        id: testID
+                    })
+                ])
+            )
+
+            await client.put({
+                [idName]: testID,
+                [revisionName]: testRevision,
+                sub: {test2References: [test2ID, test2ID2]}
+            })
+            await state.services.couchdb.removeDanglingForeignKeys?.()
+
+            /*
+                Check whether further added references in lists got grabbed as
+                well.
+            */
+            expect(foreignKeys.runtime[test2ID]).toEqual(
+                expect.arrayContaining([
+                    expect.objectContaining({
+                        propertySelector: ['test2Reference'],
+                        id: testID
+                    }),
+                    expect.objectContaining({
+                        propertySelector: ['sub', 'test2References'],
+                        id: testID
+                    })
+                ])
+            )
+            expect(foreignKeys.runtime[test2ID2]).toEqual(
+                expect.arrayContaining([
+                    expect.objectContaining({
+                        propertySelector: ['sub', 'test2References'],
+                        id: testID
+                    })
+                ])
+            )
+
+            await client.remove(test2ID2)
+            await state.services.couchdb.removeDanglingForeignKeys?.()
+            const updatedTestDocument = (await client.find({
+                selector: {[idName]: testID},
+                fields: ['sub.test2References']
+            })).docs[0]
+
+            /*
+                Check whether removed documents results in removed references as
+                well.
+            */
+            expect(foreignKeys.runtime).not.toHaveProperty(test2ID2)
+            expect(updatedTestDocument).toEqual(
                 expect.objectContaining({
-                    targetModelName: 'Test2Model',
-                    propertySelector: ['test2Reference']
-                }),
-                expect.objectContaining({
-                    targetModelName: 'Test2Model',
-                    propertySelector: ['sub', 'test2References']
+                    sub: {test2References: [test2ID]}
                 })
-            ])
-        )
+            )
 
-        // Create a reference from "TestModel" to "Test2Model".
-        const {id: test2ID} = await client.post({[typeName]: 'Test2Model'})
-        const {id: testID, rev: testRevision} = await client.post(
-            {[typeName]: 'TestModel', test2Reference: test2ID}
-        )
+            await client.remove(testID)
+            await client.remove(test2ID)
+            await state.services.couchdb.removeDanglingForeignKeys?.()
 
-        await state.services.couchdb.removeDanglingForeignKeys?.()
+            expect(foreignKeys.runtime).toMatchObject({})
+        }
+    )
+    // TODO
+    test.only(
+        'referential integrity during runtime',
+        async (): Promise<void> => {
+            const {
+                foreignKeys,
+                lastRemoveDanglingForeignKeysChangesSequenceIdentifier,
+                lastUpdateForeignKeysChangesSequenceIdentifier
+            } = state.services.couchdb
 
-        expect(runtimeReferences[test2ID]).toEqual(
-            expect.arrayContaining([
-                expect.objectContaining({
-                    propertySelector: ['test2Reference'],
-                    id: testID
-                })
-            ])
-        )
+            config.attachAutoRestarter = false
+            state.hook = 'postLoadService'
+            await postLoadService(state)
 
-        await client.put({
-            [idName]: testID,
-            [revisionName]: testRevision,
-            sub: {test2References: [test2ID]}
-        })
+            // Create a references from "TestModel" to "Test2Model".
+            const {id: test2ID} = await client.post({[typeName]: 'Test2Model'})
+            const {id: test2ID2} =
+                await client.post({[typeName]: 'Test2Model'})
+            const {id: testID, rev: testRevision} = await client.post({
+                [typeName]: 'TestModel',
+                test2Reference: test2ID,
+                sub: {test2References: [test2ID, test2ID2]}
+            })
 
-        // Wait until changes stream has been digested.
-        console.log('Runtime', JSON.stringify(runtimeReferences))
+            console.log(
+                'Runtime 1',
+                lastRemoveDanglingForeignKeysChangesSequenceIdentifier,
+                lastUpdateForeignKeysChangesSequenceIdentifier,
+                foreignKeys.runtime
+            )
 
-        /*
-        // TODO should match:
-        expect(runtimeReferences[test2ID]).toEqual(
-            expect.arrayContaining([
-                expect.objectContaining({
-                    propertySelector: ['test2Reference'],
-                    id: testID
-                }),
-                expect.objectContaining({
-                    propertySelector: ['sub', 'test2References'],
-                    id: testID
-                })
-            ])
-        )
-        */
+            await timeout()
 
-        // TODO
-        console.log(testID, test2ID)
-    })
+            console.log(
+                'Runtime 2',
+                lastRemoveDanglingForeignKeysChangesSequenceIdentifier,
+                lastUpdateForeignKeysChangesSequenceIdentifier,
+                foreignKeys.runtime
+            )
+
+            expect(foreignKeys.runtime).toBeDefined()
+        }
+    )
     // endregion
 })

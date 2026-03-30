@@ -384,6 +384,23 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
             couchdb.foreignKeys.static[modelName] = foreignKeySelectors
     }
     couchdb.removeDanglingForeignKeys = async () => {
+        couchdb.foreignKeys.runtime = {}
+
+        const addReference = (
+            id: string, selector: string, targetID: string
+        ) => {
+            if (Array.isArray(couchdb.foreignKeys.runtime[id]))
+                couchdb.foreignKeys.runtime[id].push({
+                    propertySelector: selector.split('.'),
+                    id: targetID
+                })
+            else
+                couchdb.foreignKeys.runtime[id] = [{
+                    propertySelector: selector.split('.'),
+                    id: targetID
+                }]
+        }
+
         for (const [modelName, staticForeignKeys] of Object.entries(
             couchdb.foreignKeys.static
         )) {
@@ -407,19 +424,16 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                         evaluateSelectorUntilLastObject<Mapping<unknown>>(
                             selector, document
                         )
-                    console.log()
-                    console.log('TODO JAU', document, selector, lastKey, object)
-                    console.log()
                     const key = lastKey as unknown as string
                     const value = object[key] as string
 
                     if (!value)
                         continue
 
-                    if (Array.isArray(value)) {
+                    if (Array.isArray(value))
                         for (const id of value as Array<string>)
                             if ((await couchdb.connection.find(
-                                {selector: {[idName as string]: value}}
+                                {selector: {[idName as string]: id}}
                             )).docs.length === 0) {
                                 log.info(
                                     'Found dangling document reference',
@@ -432,8 +446,11 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                                 object[key] = value
                                     .filter((givenID) => givenID !== id)
                                 await couchdb.connection.put(document)
-                            }
-                    } else if ((await couchdb.connection.find(
+                            } else
+                                addReference(
+                                    id, selector, document[idName] as string
+                                )
+                    else if ((await couchdb.connection.find(
                         {selector: {[idName as string]: value}}
                     )).docs.length === 0) {
                         log.info(
@@ -446,18 +463,10 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
 
                         object[key] = null
                         await couchdb.connection.put(document)
-                    } else if (Array.isArray(
-                        couchdb.foreignKeys.runtime[value]
-                    ))
-                        couchdb.foreignKeys.runtime[value].push({
-                            propertySelector: selector.split('.'),
-                            id: document[idName] as string
-                        })
-                    else
-                        couchdb.foreignKeys.runtime[value] = [{
-                            propertySelector: selector.split('.'),
-                            id: document[idName] as string
-                        }]
+                    } else
+                        addReference(
+                            value, selector, document[idName] as string
+                        )
                 }
         }
     }
@@ -1353,6 +1362,12 @@ export const postLoadService = (state: State): Promise<void> => {
                 )
         }
         // endregion
+        console.log()
+        console.log(
+            'TODO initialize changes stream',
+            Object.keys(couchdb.foreignKeys.static)
+        )
+        console.log()
         // region foreign key changes stream
         if (Object.keys(couchdb.foreignKeys.static).length > 0) {
             const updateForeignKeysChangesConfiguration =
