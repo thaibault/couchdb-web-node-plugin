@@ -433,21 +433,36 @@ describe('crud', (): void => {
                 sub: {test2References: [test2ID, test2ID2]}
             })
 
+            // NOTE: We have to wait for changes listener to run through.
+            await timeout()
+            await timeout()
+
             console.log(
                 'Runtime 1',
                 couchdb.lastRemoveDanglingForeignKeysChangesSequenceIdentifier,
                 couchdb.lastUpdateForeignKeysChangesSequenceIdentifier,
-                foreignKeys.runtime
+                JSON.stringify(foreignKeys.runtime)
             )
 
-            await timeout()
-
-            console.log(
-                'Runtime 2',
-                couchdb.lastRemoveDanglingForeignKeysChangesSequenceIdentifier,
-                couchdb.lastUpdateForeignKeysChangesSequenceIdentifier,
-                foreignKeys.runtime
-            )
+            // TODO
+            {
+                [test2ID]: [
+                    {
+                        propertySelector: ['test2Reference'],
+                        id: testID
+                    },
+                    {
+                        propertySelector: ['sub', 'test2References'],
+                        id: testID
+                    }
+                ],
+                [test2ID2]: [
+                    {
+                        propertySelector: ['sub', 'test2References'],
+                        id: testID
+                    }
+                ]
+            }
 
             expect(foreignKeys.runtime).toBeDefined()
         }

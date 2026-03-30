@@ -1275,7 +1275,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
  * @param state - Application state.
  * @returns Promise resolving to nothing.
  */
-export const postLoadService = (state: State): Promise<void> => {
+export const postLoadService = async (state: State): Promise<void> => {
     const {configuration: {couchdb: configuration}, pluginAPI, services} =
         state
     const {couchdb} = services
@@ -1365,24 +1365,13 @@ export const postLoadService = (state: State): Promise<void> => {
         // region foreign key changes stream
         if (Object.keys(couchdb.foreignKeys.static).length > 0) {
             const updateForeignKeysChangesConfiguration =
-                configuration.removeDanglingForeignKeysChangesStream
+                configuration.updateForeignKeysChangesStream
             if (
                 couchdb.lastUpdateForeignKeysChangesSequenceIdentifier !==
-                undefined
+                    undefined
             )
                 updateForeignKeysChangesConfiguration.since =
                     couchdb.lastUpdateForeignKeysChangesSequenceIdentifier
-            const removeDanglingForeignKeysChangesConfiguration =
-                configuration.removeDanglingForeignKeysChangesStream
-            if (
-                couchdb
-                    .lastRemoveDanglingForeignKeysChangesSequenceIdentifier !==
-                undefined
-            )
-                removeDanglingForeignKeysChangesConfiguration.since =
-                    couchdb
-                        .lastRemoveDanglingForeignKeysChangesSequenceIdentifier
-
             updateForeignKeysChangesConfiguration.selector = {
                 $or: Object
                     .keys(couchdb.foreignKeys.static)
@@ -1390,17 +1379,6 @@ export const postLoadService = (state: State): Promise<void> => {
                         {[specialNames.type]: name}
                     ))
             }
-
-            removeDanglingForeignKeysChangesConfiguration.selector = {
-                $or: Object
-                    .values(couchdb.foreignKeys.static)
-                    .flatMap((staticForeignKeys) =>
-                        staticForeignKeys.map(({targetModelName}) =>
-                            ({[specialNames.type]: targetModelName})
-                        )
-                    )
-            }
-
             log.info(
                 'Initialize changes stream to update foreign keys since',
                 `"${String(updateForeignKeysChangesConfiguration.since)}"`,
@@ -1413,6 +1391,28 @@ export const postLoadService = (state: State): Promise<void> => {
                     updateForeignKeysChangesConfiguration
                 )
 
+            const removeDanglingForeignKeysChangesConfiguration =
+                configuration.removeDanglingForeignKeysChangesStream
+            if (
+                couchdb
+                    .lastRemoveDanglingForeignKeysChangesSequenceIdentifier !==
+                    undefined
+            )
+                removeDanglingForeignKeysChangesConfiguration.since =
+                    couchdb
+                        .lastRemoveDanglingForeignKeysChangesSequenceIdentifier
+            removeDanglingForeignKeysChangesConfiguration.selector = {
+                $or: Array.from(new Set(Object
+                    .values(couchdb.foreignKeys.static)
+                    .flatMap((staticForeignKeys) =>
+                        staticForeignKeys.map(({targetModelName}) =>
+                            targetModelName
+                        )
+                    )
+                )).map((targetModelName) =>
+                    ({[specialNames.type]: targetModelName})
+                )
+            }
             log.info(
                 'Initialize changes stream to remove dangling foreign keys',
                 'since "' +
@@ -1504,8 +1504,6 @@ export const postLoadService = (state: State): Promise<void> => {
             hook: 'couchdbInitializeChangesStream'
         })
 
-        log.info('Changes stream initialized.')
-
         void couchdb.changesStream.on(
             'change',
             async (change: ChangesResponseChange) => {
@@ -1566,6 +1564,9 @@ export const postLoadService = (state: State): Promise<void> => {
                                 })
                             }
                     }
+
+                couchdb.lastUpdateForeignKeysChangesSequenceIdentifier =
+                    change.seq
             }
         )
         void couchdb.removeDanglingForeignKeysChangesStream?.on(
@@ -1607,6 +1608,10 @@ export const postLoadService = (state: State): Promise<void> => {
 
                         await couchdb.connection.put(document)
                     }
+
+                couchdb
+                    .lastRemoveDanglingForeignKeysChangesSequenceIdentifier =
+                        change.seq
             }
         )
 
@@ -1663,14 +1668,21 @@ export const postLoadService = (state: State): Promise<void> => {
                         void updateMaterializedViewsLock.release(id)
                     }
                 }
+
+                couchdb.lastUpdateMaterializedViewsChangesSequenceIdentifier =
+                    change.seq
             }
         )
+
+        log.info('Changes stream initialized.')
     }
 
-    if (configuration.attachAutoRestarter)
+    if (configuration.attachAutoRestarter) {
         void initialize()
+        // Make sure that all listener have been assigned.
+        await timeout()
+    }
     // endregion
-    return Promise.resolve()
 }
 /**
  * Triggered when application will be closed soon.
