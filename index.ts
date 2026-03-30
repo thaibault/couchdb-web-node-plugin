@@ -1362,12 +1362,6 @@ export const postLoadService = (state: State): Promise<void> => {
                 )
         }
         // endregion
-        console.log()
-        console.log(
-            'TODO initialize changes stream',
-            Object.keys(couchdb.foreignKeys.static)
-        )
-        console.log()
         // region foreign key changes stream
         if (Object.keys(couchdb.foreignKeys.static).length > 0) {
             const updateForeignKeysChangesConfiguration =

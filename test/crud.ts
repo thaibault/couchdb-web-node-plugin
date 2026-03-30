@@ -416,13 +416,10 @@ describe('crud', (): void => {
     test.only(
         'referential integrity during runtime',
         async (): Promise<void> => {
-            const {
-                foreignKeys,
-                lastRemoveDanglingForeignKeysChangesSequenceIdentifier,
-                lastUpdateForeignKeysChangesSequenceIdentifier
-            } = state.services.couchdb
+            const {couchdb} = state.services
+            const {foreignKeys} = couchdb
 
-            config.attachAutoRestarter = false
+            config.attachAutoRestarter = true
             state.hook = 'postLoadService'
             await postLoadService(state)
 
@@ -438,8 +435,8 @@ describe('crud', (): void => {
 
             console.log(
                 'Runtime 1',
-                lastRemoveDanglingForeignKeysChangesSequenceIdentifier,
-                lastUpdateForeignKeysChangesSequenceIdentifier,
+                couchdb.lastRemoveDanglingForeignKeysChangesSequenceIdentifier,
+                couchdb.lastUpdateForeignKeysChangesSequenceIdentifier,
                 foreignKeys.runtime
             )
 
@@ -447,8 +444,8 @@ describe('crud', (): void => {
 
             console.log(
                 'Runtime 2',
-                lastRemoveDanglingForeignKeysChangesSequenceIdentifier,
-                lastUpdateForeignKeysChangesSequenceIdentifier,
+                couchdb.lastRemoveDanglingForeignKeysChangesSequenceIdentifier,
+                couchdb.lastUpdateForeignKeysChangesSequenceIdentifier,
                 foreignKeys.runtime
             )
 
