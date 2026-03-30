@@ -565,6 +565,7 @@ export interface CoreConfiguration<
     numberOfParallelChangesRunner: number
 
     removeDanglingForeignKeysChangesStream: ChangesStreamOptions
+    updateForeignKeysChangesStream: ChangesStreamOptions
     updateMaterializedViewsChangesStream: ChangesStreamOptions
 
     connector: ConnectorConfiguration
@@ -573,8 +574,6 @@ export interface CoreConfiguration<
         _users: SecuritySettings
         [key: string]: SecuritySettings
     }
-
-    removeDanglingForeignKeys: boolean
 
     createGenericFlatIndex: boolean
     databaseName: string
@@ -625,18 +624,49 @@ export type Configuration<ConfigurationType = Mapping<unknown>> =
     BaseConfiguration<{couchdb: CoreConfiguration}> &
     ConfigurationType
 //// endregion
+export interface StaticForeignKey {
+    propertySelector: Array<string>
+    targetModelName: string
+}
+export type StaticForeignKeys = Array<StaticForeignKey>
+export interface RuntimeForeignKey {
+    propertySelector: Array<string>
+    id: string
+}
+export type RuntimeForeignKeys = Array<RuntimeForeignKey>
+
 export interface CouchDB<Type extends object = Mapping<unknown>> {
     changesStream: ChangesStream
     lastChangesSequenceIdentifier?: number | string
 
     reinitializeMaterializedViews?: () => Promise<void>
 
+    foreignKeys: {
+        /*
+            Mapping from model type to tuple with referenced model type and
+            property selector:
+
+            Model Name -> List of selector to property & target model name
+        */
+        static: Mapping<StaticForeignKeys>
+        /*
+            Mapping from document id having references to list of tuples with
+            property selector and referenced id:
+
+            ID of document having referencing ids ->
+                List of selector to property & referencing ID
+        */
+        runtime: Mapping<RuntimeForeignKeys>
+    }
+    removeDanglingForeignKeys?: () => Promise<void>
+
     updateMaterializedViewsChangesStream?: ChangesStream
     lastUpdateMaterializedViewsChangesSequenceIdentifier?: number | string
 
     removeDanglingForeignKeysChangesStream?: ChangesStream
     lastRemoveDanglingForeignKeysChangesSequenceIdentifier?: number | string
-
+    updateForeignKeysChangesStream?: ChangesStream
+    lastUpdateForeignKeysChangesSequenceIdentifier?: number | string
 
     backendConnector: Connector
     connection: Connection<Type>

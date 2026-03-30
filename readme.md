@@ -33,3 +33,33 @@ Use case
 
 PouchDB with model specification/checking, user authentication and right
 management as web-node plugin.
+
+Foreign Key management
+----------------------
+
+The plugin provides a foreign key management for PouchDB. It allows to define
+foreign keys in the model specification and automatically checks the existence 
+of the referenced documents when creating or updating documents. It also
+provides a way to automatically delete or update the referenced documents when
+the referencing document is deleted or updated.
+
+### Mechanism
+
+#### Initialization
+
+During application start the plugin analyzes the model specification and
+creates a map of model types to properties that are defined as foreign keys and
+which model type they reference.
+
+It than goes through all documents having referencing properties and checks if
+the referenced documents exist. If not, it deletes the reference and if yes, it
+stores the reference in an internal map of referenced documents to referencing
+documents.
+
+#### Document creation and update
+
+When creating or updating a document, the plugin checks if the document has
+referencing properties. If yes, it checks if the referenced documents exist. If
+not, it deletes the reference and if yes, it stores the reference in the
+internal map of referenced documents to referencing documents. It also removes
+references from the internal map if they are no longer present.

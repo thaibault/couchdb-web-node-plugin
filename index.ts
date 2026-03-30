@@ -20,6 +20,8 @@
 import {
     copy,
     evaluate,
+    evaluateSelector,
+    evaluateSelectorUntilLastObject,
     File,
     globalContext,
     isDirectory,
@@ -69,14 +71,17 @@ import {
     FullDocument,
     Index,
     InPlaceRunner,
+    LocalDatabaseConfiguration,
+    MaterializedViewDocument,
     Migrator,
+    Model,
     Models,
     PropertyDefinition,
     BinaryRunner,
     Services,
     ServicesState,
     State,
-    MaterializedViewDocument, LocalDatabaseConfiguration
+    StaticForeignKeys
 } from './type'
 // endregion
 /**
@@ -293,7 +298,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
     let promise: null | Promise<ProcessCloseReason | undefined> = null
     const {couchdb} = services
 
-    // region create/reinitialize materialized views
+    // region add create/reinitialize materialized views functionality
     couchdb.reinitializeMaterializedViews = async () => {
         for (const [id, viewConfiguration] of Object.entries(
             configuration.couchdb.materializedViews
@@ -333,7 +338,139 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
         }
     }
     // endregion
+    // region add remove dangling foreign keys functionality
+    couchdb.foreignKeys = {
+        static: {},
+        runtime: {}
+    }
+    const determineForeignKeySelectors = (
+        model: Model, path: Array<string> = []
+    ): StaticForeignKeys => {
+        let result: StaticForeignKeys = []
+        for (const [name, property] of Object.entries(model))
+            if (typeof property.type === 'string') {
+                if (Object.prototype.hasOwnProperty.call(
+                    configuration.couchdb.model.entities, property.type
+                ))
+                    result = result.concat(determineForeignKeySelectors(
+                        configuration.couchdb.model.entities[property.type],
+                        path.concat(name)
+                    ))
+                else if ((property.type as string).startsWith('foreignKey:')) {
+                    let foreignModelName = (property.type as string)
+                        .substring('foreignKey:'.length)
+                    if (foreignModelName.endsWith('[]'))
+                        foreignModelName = foreignModelName.substring(
+                            0, foreignModelName.length - 2
+                        )
 
+                    result.push({
+                        targetModelName: foreignModelName,
+                        propertySelector: path.concat(name)
+                    })
+                }
+            } else if (isObject(property.type))
+                result = result.concat(determineForeignKeySelectors(
+                    property.type as Model, path.concat(name)
+                ))
+
+        return result
+    }
+    for (const [modelName, model] of Object.entries(
+        configuration.couchdb.model.entities
+    )) {
+        const foreignKeySelectors = determineForeignKeySelectors(model)
+        if (foreignKeySelectors.length > 0)
+            couchdb.foreignKeys.static[modelName] = foreignKeySelectors
+    }
+    couchdb.removeDanglingForeignKeys = async () => {
+        couchdb.foreignKeys.runtime = {}
+
+        const addReference = (
+            id: string, selector: string, targetID: string
+        ) => {
+            if (Array.isArray(couchdb.foreignKeys.runtime[id]))
+                couchdb.foreignKeys.runtime[id].push({
+                    propertySelector: selector.split('.'),
+                    id: targetID
+                })
+            else
+                couchdb.foreignKeys.runtime[id] = [{
+                    propertySelector: selector.split('.'),
+                    id: targetID
+                }]
+        }
+
+        for (const [modelName, staticForeignKeys] of Object.entries(
+            couchdb.foreignKeys.static
+        )) {
+            const selectors = staticForeignKeys.map(
+                ({propertySelector}) => propertySelector.join('.')
+            )
+            const query = {
+                selector: {$and: [
+                    {[typeName]: modelName},
+                    {$or: selectors.map((selector) =>
+                        ({[selector]: {$exists: true}})
+                    )}
+                ]},
+                fields: ([idName] as Array<string>).concat(selectors)
+            }
+            for (const document of (
+                await couchdb.connection.find(query)
+            ).docs as Array<Mapping<Array<string> | string>>)
+                for (const selector of selectors) {
+                    const [object, lastKey] =
+                        evaluateSelectorUntilLastObject<Mapping<unknown>>(
+                            selector, document
+                        )
+                    const key = lastKey as unknown as string
+                    const value = object[key] as string
+
+                    if (!value)
+                        continue
+
+                    if (Array.isArray(value))
+                        for (const id of value as Array<string>)
+                            if ((await couchdb.connection.find(
+                                {selector: {[idName as string]: id}}
+                            )).docs.length === 0) {
+                                log.info(
+                                    'Found dangling document reference',
+                                    `(${id}) in document`,
+                                    `${represent(document)} of type`,
+                                    `"${modelName}" in array of property`,
+                                    `"${selector}". Removing the reference.`
+                                )
+
+                                object[key] = value
+                                    .filter((givenID) => givenID !== id)
+                                await couchdb.connection.put(document)
+                            } else
+                                addReference(
+                                    id, selector, document[idName] as string
+                                )
+                    else if ((await couchdb.connection.find(
+                        {selector: {[idName as string]: value}}
+                    )).docs.length === 0) {
+                        log.info(
+                            'Found dangling document reference',
+                            `(${value}) in document`,
+                            `${represent(document)} of type`,
+                            `"${modelName}" in property "${selector}".`,
+                            'Removing the reference.'
+                        )
+
+                        object[key] = null
+                        await couchdb.connection.put(document)
+                    } else
+                        addReference(
+                            value, selector, document[idName] as string
+                        )
+                }
+        }
+    }
+    // endregion
     if (Object.prototype.hasOwnProperty.call(couchdb.server, 'runner')) {
         await start(
             state,
@@ -479,7 +616,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
             try {
                 await userDatabaseConnection.get(`org.couchdb.user:${name}`)
             } catch (error) {
-                if ((error as { name: string }).name === 'not_found') {
+                if ((error as {name: string}).name === 'not_found') {
                     log.info(`Create missing database user "${name}".`)
 
                     try {
@@ -1117,6 +1254,8 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
         // endregion
     // endregion
     await couchdb.reinitializeMaterializedViews()
+    if (Object.keys(couchdb.foreignKeys.static).length > 0)
+        await couchdb.removeDanglingForeignKeys()
     // region initial compaction
     if (configuration.couchdb.model.triggerInitialCompaction)
         try {
@@ -1136,7 +1275,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
  * @param state - Application state.
  * @returns Promise resolving to nothing.
  */
-export const postLoadService = (state: State): Promise<void> => {
+export const postLoadService = async (state: State): Promise<void> => {
     const {configuration: {couchdb: configuration}, pluginAPI, services} =
         state
     const {couchdb} = services
@@ -1224,25 +1363,66 @@ export const postLoadService = (state: State): Promise<void> => {
         }
         // endregion
         // region foreign key changes stream
-        if (configuration.removeDanglingForeignKeys) {
+        if (Object.keys(couchdb.foreignKeys.static).length > 0) {
+            const updateForeignKeysChangesConfiguration =
+                configuration.updateForeignKeysChangesStream
+            if (
+                couchdb.lastUpdateForeignKeysChangesSequenceIdentifier !==
+                    undefined
+            )
+                updateForeignKeysChangesConfiguration.since =
+                    couchdb.lastUpdateForeignKeysChangesSequenceIdentifier
+            updateForeignKeysChangesConfiguration.selector = {
+                $or: Object
+                    .keys(couchdb.foreignKeys.static)
+                    .map((name) => (
+                        {[specialNames.type]: name}
+                    ))
+            }
+            log.info(
+                'Initialize changes stream to update foreign keys since',
+                `"${String(updateForeignKeysChangesConfiguration.since)}"`,
+                'with selector "' +
+                represent(updateForeignKeysChangesConfiguration.selector) +
+                '".'
+            )
+            couchdb.updateForeignKeysChangesStream =
+                couchdb.connection.changes(
+                    updateForeignKeysChangesConfiguration
+                )
+
             const removeDanglingForeignKeysChangesConfiguration =
                 configuration.removeDanglingForeignKeysChangesStream
             if (
                 couchdb
                     .lastRemoveDanglingForeignKeysChangesSequenceIdentifier !==
-                undefined
+                    undefined
             )
                 removeDanglingForeignKeysChangesConfiguration.since =
                     couchdb
                         .lastRemoveDanglingForeignKeysChangesSequenceIdentifier
-
+            removeDanglingForeignKeysChangesConfiguration.selector = {
+                $or: Array.from(new Set(Object
+                    .values(couchdb.foreignKeys.static)
+                    .flatMap((staticForeignKeys) =>
+                        staticForeignKeys.map(({targetModelName}) =>
+                            targetModelName
+                        )
+                    )
+                )).map((targetModelName) =>
+                    ({[specialNames.type]: targetModelName})
+                )
+            }
             log.info(
-                'Initialize changes stream for remove dangling foreign keys',
+                'Initialize changes stream to remove dangling foreign keys',
                 'since "' +
                 String(removeDanglingForeignKeysChangesConfiguration.since) +
+                '" with selector "' +
+                represent(
+                    removeDanglingForeignKeysChangesConfiguration.selector
+                ) +
                 '".'
             )
-
             couchdb.removeDanglingForeignKeysChangesStream =
                 couchdb.connection.changes(
                     removeDanglingForeignKeysChangesConfiguration
@@ -1298,6 +1478,10 @@ export const postLoadService = (state: State): Promise<void> => {
         }
 
         void couchdb.changesStream.on('error', changesErrorHandler)
+        if (couchdb.updateForeignKeysChangesStream)
+            void couchdb.updateForeignKeysChangesStream.on(
+                'error', changesErrorHandler
+            )
         if (couchdb.removeDanglingForeignKeysChangesStream)
             void couchdb.removeDanglingForeignKeysChangesStream.on(
                 'error', changesErrorHandler
@@ -1319,8 +1503,6 @@ export const postLoadService = (state: State): Promise<void> => {
             },
             hook: 'couchdbInitializeChangesStream'
         })
-
-        log.info('Changes stream initialized.')
 
         void couchdb.changesStream.on(
             'change',
@@ -1345,13 +1527,114 @@ export const postLoadService = (state: State): Promise<void> => {
             }
         )
 
+        void couchdb.updateForeignKeysChangesStream?.on(
+            'change',
+            (change: ChangesResponseChange) => {
+                numberOfErrorsThrough = 0
+
+                /*
+                    We clear all references to this document since we build
+                    them up again afterward.
+                */
+                for (const [documentID, runtimeForeignKeys] of Object.entries(
+                    couchdb.foreignKeys.runtime
+                ))
+                    couchdb.foreignKeys.runtime[documentID] =
+                        runtimeForeignKeys.filter(({id}) => id !== change.id)
+
+                if (!change.deleted && change.doc)
+                    for (const {propertySelector} of couchdb.foreignKeys.static[
+                        change.doc[specialNames.type] as string
+                    ]) {
+                        const documentIDs = ([] as Array<string>).concat(
+                            evaluateSelector(propertySelector, change.doc)
+                        )
+
+                        for (const documentID of documentIDs)
+                            if (documentID) {
+                                if (!Object.prototype.hasOwnProperty.call(
+                                    couchdb.foreignKeys.runtime, documentID
+                                ))
+                                    couchdb.foreignKeys.runtime[documentID] =
+                                        []
+
+                                couchdb.foreignKeys.runtime[documentID].push({
+                                    propertySelector,
+                                    id: change.id
+                                })
+                            }
+                    }
+
+                couchdb.lastUpdateForeignKeysChangesSequenceIdentifier =
+                    change.seq
+            }
+        )
         void couchdb.removeDanglingForeignKeysChangesStream?.on(
             'change',
             async (change: ChangesResponseChange) => {
                 numberOfErrorsThrough = 0
 
-                console.log('TODO remove dangling files', change)
-                await Promise.resolve()
+                if (
+                    change.deleted &&
+                    Object.prototype.hasOwnProperty.call(
+                        couchdb.foreignKeys.runtime, change.id
+                    )
+                ) {
+                    for (const {propertySelector, id} of
+                        couchdb.foreignKeys.runtime[change.id]
+                    ) {
+                        const selector = propertySelector.join('.')
+                        const documents = (await couchdb.connection.find({
+                            selector: {[specialNames.id]: id},
+                            fields: [specialNames.id, selector]
+                        })).docs
+
+                        if (documents.length === 0) {
+                            log.warn(
+                                `Could not find document with id "${id}"`,
+                                'remembered as foreign key source.'
+                            )
+                            continue
+                        }
+
+                        const document = documents[0]
+
+                        const [object, lastKey] =
+                            evaluateSelectorUntilLastObject(selector, document)
+                        const key = lastKey as unknown as string
+                        const value = object[key]
+
+                        log.info(
+                            'Found dangling document reference',
+                            `(${change.id}) in document`,
+                            `${represent(document)} in property`,
+                            `"${selector}". Removing the reference.`
+                        )
+
+                        if (Array.isArray(value))
+                            object[key] = value
+                                .filter((id) => id !== change.id)
+                        else
+                            object[key] = null
+
+                        document[specialNames.revision] = '0-latest'
+                        try {
+                            await couchdb.connection.put(document)
+                        } catch (error) {
+                            log.warn(
+                                'Could not remove dangling foreign key',
+                                'relation:',
+                                error
+                            )
+                        }
+                    }
+
+                    delete couchdb.foreignKeys.runtime[change.id]
+                }
+
+                couchdb
+                    .lastRemoveDanglingForeignKeysChangesSequenceIdentifier =
+                        change.seq
             }
         )
 
@@ -1408,14 +1691,21 @@ export const postLoadService = (state: State): Promise<void> => {
                         void updateMaterializedViewsLock.release(id)
                     }
                 }
+
+                couchdb.lastUpdateMaterializedViewsChangesSequenceIdentifier =
+                    change.seq
             }
         )
+
+        log.info('Changes stream initialized.')
     }
 
-    if (configuration.attachAutoRestarter)
+    if (configuration.attachAutoRestarter) {
         void initialize()
+        // Make sure that all listener have been assigned.
+        await timeout()
+    }
     // endregion
-    return Promise.resolve()
 }
 /**
  * Triggered when application will be closed soon.
