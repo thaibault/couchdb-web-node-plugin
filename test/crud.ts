@@ -409,8 +409,7 @@ describe('crud', (): void => {
             expect(foreignKeys.runtime).toMatchObject({})
         }
     )
-    // TODO
-    test.only(
+    test(
         'referential integrity during runtime',
         async (): Promise<void> => {
             const {couchdb} = state.services
@@ -498,12 +497,6 @@ describe('crud', (): void => {
             expect(updatedTestDocument).toEqual({
                 sub: {test2References: [test2ID]}
             })
-
-            console.log(
-                'Runtime 1',
-                JSON.stringify(foreignKeys.runtime, null, 2)
-            )
-            return
 
             await client.remove(testID)
             await client.remove(test2ID)
