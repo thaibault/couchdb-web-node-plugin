@@ -1653,9 +1653,7 @@ export const validateDocumentUpdate = <
 
                                 newValue: newDocument[name] as Type,
                                 oldValue:
-                                    oldDocument &&
-                                    oldDocument[name] as Type ||
-                                    undefined,
+                                    (oldDocument && oldDocument[name]) as Type,
 
                                 parentNames,
                                 pathDescription,
