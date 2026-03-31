@@ -1529,7 +1529,7 @@ export const postLoadService = async (state: State): Promise<void> => {
 
         void couchdb.updateForeignKeysChangesStream?.on(
             'change',
-            (change: ChangesResponseChange) => {
+            async (change: ChangesResponseChange) => {
                 numberOfErrorsThrough = 0
 
                 /*
@@ -1542,28 +1542,70 @@ export const postLoadService = async (state: State): Promise<void> => {
                     couchdb.foreignKeys.runtime[documentID] =
                         runtimeForeignKeys.filter(({id}) => id !== change.id)
 
-                if (!change.deleted && change.doc)
-                    for (const {propertySelector} of couchdb.foreignKeys.static[
-                        change.doc[specialNames.type] as string
-                    ]) {
-                        const documentIDs = ([] as Array<string>).concat(
-                            evaluateSelector(propertySelector, change.doc)
+                if (!change.deleted) {
+                    let documents = (await couchdb.connection.find({
+                        selector: {[specialNames.id]: change.id},
+                        fields: [specialNames.type]
+                    })).docs
+
+                    if (documents.length === 0)
+                        log.warn(
+                            `Could not find document with id "${change.id}"`,
+                            'remembered as foreign key source.'
                         )
+                    else {
+                        const document = documents[0]
 
-                        for (const documentID of documentIDs)
-                            if (documentID) {
-                                if (!Object.prototype.hasOwnProperty.call(
-                                    couchdb.foreignKeys.runtime, documentID
-                                ))
-                                    couchdb.foreignKeys.runtime[documentID] =
-                                        []
+                        const selectors: Array<Array<string>> =
+                            couchdb.foreignKeys.static[document[
+                                specialNames.type
+                            ] as string].map(({propertySelector}) =>
+                                propertySelector
+                            )
 
-                                couchdb.foreignKeys.runtime[documentID].push({
-                                    propertySelector,
-                                    id: change.id
-                                })
+                        documents = (await couchdb.connection.find({
+                            selector: {[specialNames.id]: change.id},
+                            fields: selectors.map((selector) =>
+                                selector.join('.')
+                            )
+                        })).docs
+
+                        if (documents.length === 0)
+                            log.warn(
+                                'Could not find document with id',
+                                `"${change.id}" remembered as foreign`,
+                                'key source.'
+                            )
+                        else {
+                            const document = documents[0]
+
+                            for (const selector of selectors) {
+                                const documentIDs =
+                                    ([] as Array<string>).concat(
+                                        evaluateSelector(selector, document)
+                                    )
+
+                                for (const documentID of documentIDs)
+                                    if (documentID) {
+                                        if (!Object.prototype.hasOwnProperty
+                                            .call(
+                                                couchdb.foreignKeys.runtime,
+                                                documentID
+                                            )
+                                        )
+                                            couchdb.foreignKeys
+                                                .runtime[documentID] = []
+
+                                        couchdb.foreignKeys.runtime[documentID]
+                                            .push({
+                                                propertySelector: selector,
+                                                id: change.id
+                                            })
+                                    }
                             }
+                        }
                     }
+                }
 
                 couchdb.lastUpdateForeignKeysChangesSequenceIdentifier =
                     change.seq
