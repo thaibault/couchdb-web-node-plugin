@@ -80,8 +80,8 @@
     "@types/pouchdb-adapter-memory": "^6.1.6",
     "@types/pouchdb-node": "^6.1.7",
     "@types/webpack-env": "^1.18.8",
-    "@typescript-eslint/eslint-plugin": "^8.57.2",
-    "@typescript-eslint/parser": "^8.57.2",
+    "@typescript-eslint/eslint-plugin": "^8.58.0",
+    "@typescript-eslint/parser": "^8.58.0",
     "clientnode": "^4.0.1369",
     "documentation-website": "^1.0.401",
     "eslint": "^10.1.0",
@@ -95,7 +95,7 @@
     "node-fetch": "^3.3.2",
     "pouchdb-adapter-memory": "^9.0.0",
     "rimraf": "^6.1.3",
-    "typescript-eslint": "^8.57.2",
+    "typescript-eslint": "^8.58.0",
     "web-node": "^1.0.577",
     "weboptimizer": "^3.0.16"
   },
@@ -259,7 +259,7 @@
         "timeout": false
       },
       "updateForeignKeysChangesStream": {
-        "include_docs": true,
+        "include_docs": false,
         "live": true,
         "return_docs": false,
         "since": "now",
