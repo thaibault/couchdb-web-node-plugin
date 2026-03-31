@@ -56,7 +56,7 @@ import {
     StubAttachment,
     TypeDefinition,
     UpdateStrategy,
-    UserContext
+    UserContext, Type
 } from './type'
 // endregion
 /**
@@ -543,7 +543,7 @@ export const validateDocumentUpdate = <
     /// endregion
     // endregion
 
-    const specialPropertyNames: Array<keyof BaseModelType> = [
+    const specialPropertyNames = [
         specialNames.additional,
 
         specialNames.role,
@@ -564,7 +564,8 @@ export const validateDocumentUpdate = <
         specialNames.update.execution,
         specialNames.update.expression,
 
-        specialNames.updateStrategy
+        specialNames.updateStrategy,
+        specialNames.ignoreIfNoOldDocument
     ]
     // region functions
     /// region generic functions
@@ -853,7 +854,8 @@ export const validateDocumentUpdate = <
         modelName: string,
         model: ModelType,
         parentNames: Array<string> = [],
-        updateStrategy: UpdateStrategy = modelConfiguration.updateStrategy
+        updateStrategy: UpdateStrategy = modelConfiguration.updateStrategy,
+        ignoreIfNoOldDocument = false
     ): CheckedDocumentResult<ObjectType, AdditionalPropertiesType> => {
         const pathDescription =
             parentNames.length ? ` in "${parentNames.join('" -> "')}"` : ''
@@ -872,6 +874,20 @@ export const validateDocumentUpdate = <
                 localNewDocument[specialNames.updateStrategy] as UpdateStrategy
             delete localNewDocument[specialNames.updateStrategy]
         }
+        if (Object.prototype.hasOwnProperty.call(
+            newDocument, specialNames.ignoreIfNoOldDocument
+        )) {
+            ignoreIfNoOldDocument =
+                localNewDocument[specialNames.ignoreIfNoOldDocument] as boolean
+            delete localNewDocument[specialNames.ignoreIfNoOldDocument]
+        }
+
+        if (ignoreIfNoOldDocument && !oldDocument)
+            throwError(
+                'NoChange: No old data given to an update request. ' +
+                'A deletion might happened before due to a race condition. ' +
+                'Update will be ignored.'
+            )
 
         let additionalPropertyDefinition: (
             PropertyDefinition<
@@ -948,7 +964,8 @@ export const validateDocumentUpdate = <
 
                                 propertyDefinition: propertyDefinition,
 
-                                updateStrategy: localUpdateStrategy
+                                updateStrategy: localUpdateStrategy,
+                                ignoreIfNoOldDocument
                             }
                         )
                     } catch (error) {
@@ -1527,7 +1544,8 @@ export const validateDocumentUpdate = <
 
                                     propertyDefinition: propertyDefinition,
 
-                                    updateStrategy: localUpdateStrategy
+                                    updateStrategy: localUpdateStrategy,
+                                    ignoreIfNoOldDocument
                                 }
                             )
                         } catch (error) {
@@ -1660,7 +1678,8 @@ export const validateDocumentUpdate = <
 
                                 propertyDefinition: propertyDefinition,
 
-                                updateStrategy: localUpdateStrategy
+                                updateStrategy: localUpdateStrategy,
+                                ignoreIfNoOldDocument
                             }
                         )
 
@@ -1708,9 +1727,7 @@ export const validateDocumentUpdate = <
             Object.keys(model) as Array<keyof PartialFullDocumentType>
         )
             .filter((name) =>
-                !specialPropertyNames.includes(
-                    name as string as keyof BaseModelType
-                )
+                !specialPropertyNames.includes(name as keyof Type)
             ) as Array<keyof ObjectType>
         // region migrate old model specific property names
         if (updateStrategy === 'migrate')
@@ -1761,7 +1778,8 @@ export const validateDocumentUpdate = <
                                 parentNames,
                                 pathDescription,
 
-                                updateStrategy
+                                updateStrategy,
+                                ignoreIfNoOldDocument
                             }
                         ).result
                     } catch (error) {
@@ -1842,7 +1860,8 @@ export const validateDocumentUpdate = <
                             parentNames,
                             pathDescription,
 
-                            updateStrategy
+                            updateStrategy,
+                            ignoreIfNoOldDocument
                         }
                     ).result
                 } catch (error) {
@@ -2513,7 +2532,8 @@ export const validateDocumentUpdate = <
                                 parentNames,
                                 pathDescription,
 
-                                updateStrategy
+                                updateStrategy,
+                                ignoreIfNoOldDocument
                             }
                         )
                     } catch (error) {

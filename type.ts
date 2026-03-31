@@ -383,14 +383,18 @@ export type UpdateStrategy = 'fillUp' | 'incremental' | 'migrate' | 'replace'
 
 export type DocumentContent =
     Array<DocumentContent> | PlainObject | Primitive
-export interface DocumentStrategyMeta {_updateStrategy?: UpdateStrategy}
+export interface DocumentUpdateStrategyMeta {_updateStrategy?: UpdateStrategy}
+export interface DocumentIgnoreIfNoOldDocumentMeta {
+    ignoreIfNoOldDocument: boolean
+}
 export interface DocumentTypeMeta {'-type': string}
 export type BaseDocument =
     Omit<ChangesMeta, '_attachments'> &
     Omit<DocumentGetMeta, '_attachments'> &
     DocumentIDMeta &
     DocumentRevisionIDMeta &
-    DocumentStrategyMeta &
+    DocumentUpdateStrategyMeta &
+    DocumentIgnoreIfNoOldDocumentMeta &
     DocumentTypeMeta &
     {_attachments?: Attachments | null}
 export type FullDocument<
@@ -417,6 +421,7 @@ export interface SpecialPropertyNames {
     revisions: '_revisions'
     revisionsInformation: '_revs_info'
     updateStrategy: '_updateStrategy'
+    ignoreIfNoOldDocument: '_ignoreIfNoOldDocument'
     type: '-type'
 
     constraint: {
@@ -882,6 +887,7 @@ export interface CommonScope<
     pathDescription: string
 
     updateStrategy: UpdateStrategy
+    ignoreIfNoOldDocument: boolean
 }
 export interface PropertyScope<
     ObjectType extends object,
