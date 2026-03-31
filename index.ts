@@ -1504,29 +1504,6 @@ export const postLoadService = async (state: State): Promise<void> => {
             hook: 'couchdbInitializeChangesStream'
         })
 
-        void couchdb.changesStream.on(
-            'change',
-            async (change: ChangesResponseChange) => {
-                numberOfErrorsThrough = 0
-
-                await changesRunnerSemaphore.acquire()
-
-                try {
-                    await pluginAPI.callStack<State<ChangesResponseChange>>({
-                        ...state, data: change, hook: 'couchdbChange'
-                    })
-                    couchdb.lastChangesSequenceIdentifier = change.seq
-                } catch (error) {
-                    log.error(
-                        'An error occurred during on change database hook:',
-                        error
-                    )
-                } finally {
-                    changesRunnerSemaphore.release()
-                }
-            }
-        )
-
         void couchdb.updateForeignKeysChangesStream?.on(
             'change',
             async (change: ChangesResponseChange) => {
@@ -1736,6 +1713,29 @@ export const postLoadService = async (state: State): Promise<void> => {
 
                 couchdb.lastUpdateMaterializedViewsChangesSequenceIdentifier =
                     change.seq
+            }
+        )
+
+        void couchdb.changesStream.on(
+            'change',
+            async (change: ChangesResponseChange) => {
+                numberOfErrorsThrough = 0
+
+                await changesRunnerSemaphore.acquire()
+
+                try {
+                    await pluginAPI.callStack<State<ChangesResponseChange>>({
+                        ...state, data: change, hook: 'couchdbChange'
+                    })
+                    couchdb.lastChangesSequenceIdentifier = change.seq
+                } catch (error) {
+                    log.error(
+                        'An error occurred during on change database hook:',
+                        error
+                    )
+                } finally {
+                    changesRunnerSemaphore.release()
+                }
             }
         )
 
