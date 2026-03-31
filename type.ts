@@ -385,7 +385,7 @@ export type DocumentContent =
     Array<DocumentContent> | PlainObject | Primitive
 export interface DocumentUpdateStrategyMeta {_updateStrategy?: UpdateStrategy}
 export interface DocumentIgnoreIfNoOldDocumentMeta {
-    ignoreIfNoOldDocument: boolean
+    _ignoreIfNoOldDocument: boolean
 }
 export interface DocumentTypeMeta {'-type': string}
 export type BaseDocument =
