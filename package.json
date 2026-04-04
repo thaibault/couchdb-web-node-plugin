@@ -76,7 +76,7 @@
     "@stylistic/eslint-plugin": "^5.10.0",
     "@types/ejs": "^3.1.5",
     "@types/express": "^5.0.6",
-    "@types/node": "^25.5.0",
+    "@types/node": "^25.5.2",
     "@types/pouchdb-adapter-memory": "^6.1.6",
     "@types/pouchdb-node": "^6.1.7",
     "@types/webpack-env": "^1.18.8",
@@ -84,9 +84,9 @@
     "@typescript-eslint/parser": "^8.58.0",
     "clientnode": "^4.0.1370",
     "documentation-website": "^1.0.401",
-    "eslint": "^10.1.0",
+    "eslint": "^10.2.0",
     "eslint-config-google": "^0.14.0",
-    "eslint-plugin-jsdoc": "^62.8.1",
+    "eslint-plugin-jsdoc": "^62.9.0",
     "express": "^5.2.1",
     "express-pouchdb": "^4.2.0",
     "jest": "^30.3.0",
@@ -414,7 +414,7 @@
               "minimum": 0,
               "nullable": false,
               "updateExpression": {
-                "__evaluate__": "`(userContext.name === '${self.couchdb.admin.name}' || updateStrategy === 'migrate') && oldDocument && oldDocument[name] ? oldDocument[name] : nowUTCTimestamp`"
+                "__evaluate__": "`(['${self.couchdb.admin.name}', null].includes(userContext.name) || updateStrategy === 'migrate') && oldDocument && oldDocument[name] ? oldDocument[name] : nowUTCTimestamp`"
               },
               "preventVersionCreation": true,
               "runUpdateHookAlways": true,
@@ -429,7 +429,7 @@
             "lastUser": {
               "nullable": false,
               "updateExpression": {
-                "__evaluate__": "`(((userContext.name === '${self.couchdb.admin.name}' || updateStrategy === 'migrate') && oldDocument) ? oldDocument[name] : userContext.name) || 'unknown'`"
+                "__evaluate__": "`(((['${self.couchdb.admin.name}', null].includes(userContext.name) || updateStrategy === 'migrate') && oldDocument) ? oldDocument[name] : userContext.name) || 'unknown'`"
               },
               "preventVersionCreation": true,
               "runUpdateHookAlways": true
