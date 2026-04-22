@@ -58,7 +58,7 @@
     "test": "yarn build:databaseHelper && weboptimizer test",
     "test:coverage": "weboptimizer test:coverage",
     "test:coverage:report": "weboptimizer test:coverage:report",
-    "update:documentation": "documentation-website",
+    "update:documentation": "web-documentation",
     "watch": "weboptimizer build --watch"
   },
   "dependencies": {
@@ -83,7 +83,7 @@
     "@typescript-eslint/eslint-plugin": "^8.58.0",
     "@typescript-eslint/parser": "^8.58.0",
     "clientnode": "^4.0.1372",
-    "documentation-website": "^1.0.401",
+    "web-documentation": "^1.0.0",
     "eslint": "^10.2.0",
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-jsdoc": "^62.9.0",
