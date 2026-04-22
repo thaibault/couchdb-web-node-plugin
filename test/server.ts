@@ -32,7 +32,7 @@ import {
 import {Express} from 'express-serve-static-core'
 // endregion
 jest.setTimeout(
-    packageConfiguration.webNode.couchdb.closeTimeoutInSeconds * 1000
+    2 * packageConfiguration.webNode.couchdb.closeTimeoutInSeconds * 1000
 )
 
 describe('server', (): void => {

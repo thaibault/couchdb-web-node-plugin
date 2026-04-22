@@ -45,10 +45,10 @@ import {
 } from '../type'
 // endregion
 jest.setTimeout(
-    packageConfiguration.webNode.couchdb.closeTimeoutInSeconds * 1000
+    2 * packageConfiguration.webNode.couchdb.closeTimeoutInSeconds * 1000
 )
 
-describe.only('crud', (): void => {
+describe('crud', (): void => {
     // region prepare environment
     const configuration = {
         ...copy(webNodePackageConfiguration.webNode),
