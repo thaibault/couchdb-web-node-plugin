@@ -48,7 +48,7 @@ jest.setTimeout(
     packageConfiguration.webNode.couchdb.closeTimeoutInSeconds * 1000
 )
 
-describe('crud', (): void => {
+describe.only('crud', (): void => {
     // region prepare environment
     const configuration = {
         ...copy(webNodePackageConfiguration.webNode),
@@ -61,6 +61,7 @@ describe('crud', (): void => {
     const {id: idName, revision: revisionName, type: typeName} =
         config.model.property.name.special
 
+    config.closeTimeoutInSeconds = 10
     config.connector.fetch.timeout = config.closeTimeoutInSeconds * 1000
     config.databaseName = 'index-test'
     config.security[config.databaseName] = {
