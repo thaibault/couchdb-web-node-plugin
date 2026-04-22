@@ -103,7 +103,7 @@ export const authorize = (
     const throwError = <DataType = Mapping<unknown>>(
         message: string,
         type = 'forbidden',
-        additionalErrorData: Partial<DataType> = {} as Partial<DataType>
+        additionalErrorData: Partial<DataType> = {}
     ): never => {
         /*
             eslint-disable no-throw-literal,@typescript-eslint/only-throw-error
@@ -405,7 +405,7 @@ export const validateDocumentUpdate = <
     const throwError = <DataType = Mapping<unknown>>(
         message: string,
         type = 'forbidden',
-        additionalErrorData: Partial<DataType> = {} as Partial<DataType>
+        additionalErrorData: Partial<DataType> = {}
     ): never => {
         /*
             eslint-disable no-throw-literal,@typescript-eslint/only-throw-error
@@ -730,7 +730,7 @@ export const validateDocumentUpdate = <
             value = new Date(
                 typeof value === 'number' && !isNaN(value) ?
                     value * 1000 :
-                    value as Date | string
+                    value
             )
             try {
                 // Use ISO 8601 format to save date as string.
@@ -901,8 +901,7 @@ export const validateDocumentUpdate = <
             ) &&
             model[specialNames.additional]
         )
-            additionalPropertyDefinition =
-                model[specialNames.additional] as AdditionalDefinition
+            additionalPropertyDefinition = model[specialNames.additional]
         // region document specific functions
         const checkPropertyConstraints = <Type extends PropertyValue>(
             newValue: Type,
@@ -2013,8 +2012,7 @@ export const validateDocumentUpdate = <
                             propertyDefinition,
                             localNewDocument,
                             localOldDocument && localOldDocument[name] ?
-                                localOldDocument[name] as
-                                    PartialFullDocumentType :
+                                localOldDocument[name] :
                                 null,
                             fileName,
                             newAttachments
@@ -2025,8 +2023,7 @@ export const validateDocumentUpdate = <
                             propertyDefinition,
                             localNewDocument,
                             localOldDocument && localOldDocument[name] ?
-                                localOldDocument[name] as
-                                    PartialFullDocumentType :
+                                localOldDocument[name] :
                                 null,
                             fileName,
                             newAttachments
