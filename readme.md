@@ -25,7 +25,7 @@ Project status
 
 [![code coverage](https://img.shields.io/coverallsCoverage/github/thaibault/couchdb-web-node-plugin?label=code%20coverage&style=for-the-badge)](https://coveralls.io/github/thaibault/couchdb-web-node-plugin)
 
-[![deploy documentation website](https://img.shields.io/github/actions/workflow/status/thaibault/couchdb-web-node-plugin/deploy-documentation-website.yaml?label=deploy%20documentation%20website&style=for-the-badge)](https://github.com/thaibault/couchdb-web-node-plugin/actions/workflows/deploy-documentation-website.yaml)
+[![deploy web documentation](https://img.shields.io/github/actions/workflow/status/thaibault/couchdb-web-node-plugin/deploy-web-documentation.yaml?label=deploy%20web%20documentation&style=for-the-badge)](https://github.com/thaibault/couchdb-web-node-plugin/actions/workflows/deploy-web-documentation.yaml)
 [![documentation website](https://img.shields.io/website-up-down-green-red/https/torben.website/couchdb-web-node-plugin.svg?label=documentation-website&style=for-the-badge)](https://torben.website/couchdb-web-node-plugin)
 
 Use case
