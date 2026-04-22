@@ -45,7 +45,6 @@ describe('server', (): void => {
         Configuration
     const config = configuration.couchdb
 
-    config.closeTimeoutInSeconds = 10
     config.connector.fetch.timeout = config.closeTimeoutInSeconds * 1000
     config.databaseName = 'server-test'
     // endregion
