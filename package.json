@@ -143,7 +143,7 @@
   "webNode": {
     "couchdb": {
       "attachAutoRestarter": true,
-      "closeTimeoutInSeconds": 30,
+      "closeTimeoutInSeconds": 120,
       "runner": {
         "memoryInMegaByte": "default",
         "nodePath": "/usr/bin/node",

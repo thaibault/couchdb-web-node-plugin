@@ -61,7 +61,6 @@ describe('crud', (): void => {
     const {id: idName, revision: revisionName, type: typeName} =
         config.model.property.name.special
 
-    config.closeTimeoutInSeconds = 10
     config.connector.fetch.timeout = config.closeTimeoutInSeconds * 1000
     config.databaseName = 'index-test'
     config.security[config.databaseName] = {
