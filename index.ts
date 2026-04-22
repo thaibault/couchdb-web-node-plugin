@@ -186,10 +186,18 @@ export const preLoadService = async ({
             {
                 prefix:
                     resolve(String(
+                        /*
+                            eslint-disable
+                            @typescript-eslint/no-unnecessary-type-assertion
+                        */
                         (couchdb.server.runner.configuration as
                             BinaryRunner['configuration']
                         ).values['couchdb/database_dir'] as
                             number | string
+                        /*
+                            eslint-enable
+                            @typescript-eslint/no-unnecessary-type-assertion
+                        */
                     )) +
                     '/'
             } :

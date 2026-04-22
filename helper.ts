@@ -17,7 +17,6 @@
 import {
     copy,
     extend,
-    FirstParameter,
     format,
     isObject,
     Logger,
@@ -121,7 +120,7 @@ export const getPouchDBPlugin = (configuration: CoreConfiguration) => {
                     isObject(firstParameter) &&
                     idName in firstParameter
                 ) ?
-                    [firstParameter as PartialFullDocument] :
+                    [firstParameter] :
                     firstParameter as Array<PartialFullDocument>
 
                 const chunkSize =
@@ -133,7 +132,7 @@ export const getPouchDBPlugin = (configuration: CoreConfiguration) => {
 
                     const result = await nativeBulkDocs.call(
                         this,
-                        chunk as FirstParameter<Connection['bulkDocs']>,
+                        chunk,
                         ...parameters as
                             [SecondParameter<Connection['bulkDocs']>]
                     )
@@ -194,12 +193,10 @@ export const getPouchDBPlugin = (configuration: CoreConfiguration) => {
                     const retriedResults: Array<
                         DatabaseError | DatabaseResponse
                     > = await this.bulkDocs(
-                        data as Array<PutDocument<Mapping<unknown>>>,
+                        data,
                         ...parameters as
                             [SecondParameter<Connection['bulkDocs']>]
-                    ) as
-                        unknown as
-                        Array<DatabaseError | DatabaseResponse>
+                    )
                     for (const retriedResult of retriedResults)
                         results[conflictingIndexes.shift() as number] =
                             retriedResult
@@ -721,7 +718,7 @@ export const determineModelRolesMapping = (
                                 )
                     } else if (property.roles)
                         modelRolesMapping[modelName].properties[name] =
-                            normalizeRoles(property.roles as Roles)
+                            normalizeRoles(property.roles)
         }
 
     return modelRolesMapping
@@ -821,7 +818,6 @@ export const determineGenericIndexablePropertyNames = (
  * @returns Given model in extended version.
  */
 export const applyModelInheritance = (
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     model: Model, modelConfiguration: ModelConfiguration, _name = 'in-place'
 ): Partial<Model> => {
     const models = modelConfiguration.entities
@@ -891,8 +887,7 @@ export const applyDefaultPropertyConfigurations = (
             for (const [type, value] of Object.entries(fileDefinition))
                 fileDefinition[type] = extend<FileDefinition>(
                     true,
-                    copy(modelConfiguration.property.defaultDefinition) as
-                        FileDefinition,
+                    copy(modelConfiguration.property.defaultDefinition),
                     value
                 )
         } else if (
@@ -915,9 +910,7 @@ export const applyDefaultPropertyConfigurations = (
             ;(model[name as keyof BaseModel] as PropertyDefinition) =
                 property
 
-            const types =
-                ([] as Array<TypeDefinition>)
-                    .concat(property.type as TypeDefinition)
+            const types = ([] as Array<TypeDefinition>).concat(property.type)
             for (const type of types)
                 if (!Array.isArray(type) && typeof type === 'object')
                     property.type = applyModelInheritance(
