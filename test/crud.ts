@@ -193,6 +193,11 @@ describe('crud', (): void => {
         )
         state.hook = 'shouldExit'
         await expect(shouldExit(state)).resolves.toBeUndefined()
+        /*
+            NOTE: Express and pouchdb needs some additional time to close open
+            handlers.
+        */
+        await timeout(config.closeTimeoutInSeconds * 1000)
     })
     // endregion
     test('authorization', async (): Promise<void> => {
