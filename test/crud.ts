@@ -45,7 +45,7 @@ import {
 } from '../type'
 // endregion
 jest.setTimeout(
-    packageConfiguration.webNode.couchdb.closeTimeoutInSeconds * 1000
+    2 * packageConfiguration.webNode.couchdb.closeTimeoutInSeconds * 1000
 )
 
 describe('crud', (): void => {
@@ -61,6 +61,7 @@ describe('crud', (): void => {
     const {id: idName, revision: revisionName, type: typeName} =
         config.model.property.name.special
 
+    config.closeTimeoutInSeconds = 10
     config.connector.fetch.timeout = config.closeTimeoutInSeconds * 1000
     config.databaseName = 'index-test'
     config.security[config.databaseName] = {
@@ -192,6 +193,11 @@ describe('crud', (): void => {
         )
         state.hook = 'shouldExit'
         await expect(shouldExit(state)).resolves.toBeUndefined()
+        /*
+            NOTE: Express and pouchdb needs some additional time to close open
+            handlers.
+        */
+        await timeout(config.closeTimeoutInSeconds * 1000)
     })
     // endregion
     test('authorization', async (): Promise<void> => {

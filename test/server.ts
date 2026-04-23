@@ -32,7 +32,7 @@ import {
 import {Express} from 'express-serve-static-core'
 // endregion
 jest.setTimeout(
-    packageConfiguration.webNode.couchdb.closeTimeoutInSeconds * 1000
+    2 * packageConfiguration.webNode.couchdb.closeTimeoutInSeconds * 1000
 )
 
 describe('server', (): void => {
@@ -45,6 +45,7 @@ describe('server', (): void => {
         Configuration
     const config = configuration.couchdb
 
+    config.closeTimeoutInSeconds = 10
     config.connector.fetch.timeout = config.closeTimeoutInSeconds * 1000
     config.databaseName = 'server-test'
     // endregion
