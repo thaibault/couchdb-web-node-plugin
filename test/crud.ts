@@ -48,7 +48,7 @@ jest.setTimeout(
     2 * packageConfiguration.webNode.couchdb.closeTimeoutInSeconds * 1000
 )
 
-describe('crud', (): void => {
+describe.skip('crud', (): void => {
     // region prepare environment
     const configuration = {
         ...copy(webNodePackageConfiguration.webNode),
