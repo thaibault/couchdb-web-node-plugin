@@ -136,8 +136,7 @@
     "pouchdb-system-db@npm:4.2.0": "patch:pouchdb-system-db@npm%3A4.2.0#~/.yarn/patches/pouchdb-system-db-npm-4.2.0-317901bdb4.patch"
   },
   "sideEffects": false,
-  "documentationWebsite": {
-    "name": "couchdb-web-node-plugin",
+  "webDocumentation": {
     "trackingCode": "UA-40192634-21"
   },
   "webNode": {
