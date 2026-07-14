@@ -568,15 +568,18 @@
         "node-fetch$": "pouchdb-node/node_modules/node-fetch/lib/index.js"
       },
       "optimizer": {
-        "babelMinify": {
-          "bundle": {
-            "transform": {
+        "terser": {
+          "terserOptions": {
+            "compress": {
               "#": "To provide a logging output we need to exclude this feature.",
-              "removeConsole": false
+              "drop_console": {
+                "__evaluate__": "false"
+              },
+              "drop_debugger": {
+                "__evaluate__": "false"
+              }
             }
-          },
-          "#": "Avoids \"Couldn't find intersection\" build error.",
-          "module": false
+          }
         }
       },
       "skipParseRegularExpressions": {
