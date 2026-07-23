@@ -15,7 +15,7 @@
 */
 // region imports
 import {
-    currentRequire, FirstParameter, Logger, Mapping, Primitive, ValueOf
+    FirstParameter, getCurrentRequire, Logger, Mapping, Primitive, ValueOf
 } from 'clientnode'
 
 import packageConfiguration from './package.json'
@@ -59,6 +59,7 @@ import {
     UserContext, Type
 } from './type'
 // endregion
+export const currentRequire = await getCurrentRequire()
 /**
  * WebNode plugin interface with all provided hooks.
  */
