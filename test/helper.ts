@@ -16,7 +16,7 @@
 // region imports
 import {copy, extend, timeout} from 'clientnode'
 import {
-    testEach, testEachPromiseAgainstSameExpectation, TEST_UNDEFINED_SYMBOL
+    testEach, testEachResolvedPromiseAgainstSameExpectation, TEST_UNDEFINED_SYMBOL
 } from 'clientnode/test-helper'
 
 import {describe, expect, test} from '@jest/globals'
@@ -72,7 +72,7 @@ describe('helper', (): void => {
             15
         ]
     )
-    testEachPromiseAgainstSameExpectation<
+    testEachResolvedPromiseAgainstSameExpectation<
         typeof ensureValidationDocumentPresence
     >(
         'ensureValidationDocumentPresence',
