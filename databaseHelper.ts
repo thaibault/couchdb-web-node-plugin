@@ -14,12 +14,9 @@
     endregion
 */
 // region imports
-import {
-    FirstParameter, getCurrentRequire, Logger, Mapping, Primitive, ValueOf
-} from 'clientnode'
+import type {FirstParameter, Mapping, Primitive, ValueOf} from 'clientnode'
 
-import packageConfiguration from './package.json'
-import {
+import type {
     ModelRolesMapping,
     Attachment,
     BaseModel,
@@ -58,6 +55,10 @@ import {
     UpdateStrategy,
     UserContext, Type
 } from './type'
+
+import {getCurrentRequire, Logger} from 'clientnode'
+
+import packageConfiguration from './package.json' with {type: 'json'}
 // endregion
 export const currentRequire = await getCurrentRequire()
 /**

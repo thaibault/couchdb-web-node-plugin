@@ -14,6 +14,8 @@
     endregion
 */
 // region imports
+import type {Configuration, ServicePromises, Services} from '../type'
+
 import {copy} from 'clientnode'
 import {pluginAPI} from 'web-node'
 import webNodePackageConfiguration from 'web-node/package.json'
@@ -23,7 +25,6 @@ import {
     loadService, postLoadService, preLoadService, shouldExit
 } from '../index'
 import packageConfiguration from '../package.json'
-import {Configuration, ServicePromises, Services} from '../type'
 // endregion
 describe('index', (): void => {
     // region prepare environment

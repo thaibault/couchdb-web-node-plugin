@@ -17,34 +17,56 @@
     endregion
 */
 // region imports
+import type {File, Mapping, PlainObject, ProcessCloseReason} from 'clientnode'
+import type {PluginPromises} from 'web-node/type'
+
+import type {
+    ChangesResponseChange,
+    ChangesStream,
+    Connection,
+    Constraint,
+    DatabaseError,
+    Document,
+    FullDocument,
+    Index,
+    InPlaceRunner,
+    LocalDatabaseConfiguration,
+    MaterializedViewDocument,
+    Migrator,
+    Model,
+    Models,
+    PluginHandler,
+    PropertyDefinition,
+    BinaryRunner,
+    Services,
+    ServicesState,
+    State,
+    StaticForeignKeys
+} from './type'
+
 import {
     copy,
     evaluate,
     evaluateSelector,
     evaluateSelectorUntilLastObject,
-    File,
     globalContext,
     isDirectory,
     isFile,
     isObject,
     Lock,
-    Mapping,
     NOOP,
-    PlainObject,
-    ProcessCloseReason,
     represent,
     Semaphore,
     timeout,
     UTILITY_SCOPE,
     walkDirectoryRecursively
 } from 'clientnode'
-import {promises as fileSystem} from 'fs'
+import {readFile, unlink} from 'fs/promises'
 import {basename, extname, resolve} from 'path'
 import PouchDBMemoryPlugin from 'pouchdb-adapter-memory'
 import PouchDBFindPlugin from 'pouchdb-find'
 import PouchDB from 'pouchdb-node'
 import PouchDBValidationPlugin from 'pouchdb-validation'
-import {PluginHandler, PluginPromises} from 'web-node/type'
 
 import databaseHelper, {validateDocumentUpdate} from './databaseHelper'
 import {
@@ -61,28 +83,6 @@ import {
     waitWithTimeout
 } from './helper'
 import {restart, start, stop} from './server'
-import {
-    ChangesResponseChange,
-    ChangesStream,
-    Connection,
-    Constraint,
-    DatabaseError,
-    Document,
-    FullDocument,
-    Index,
-    InPlaceRunner,
-    LocalDatabaseConfiguration,
-    MaterializedViewDocument,
-    Migrator,
-    Model,
-    Models,
-    PropertyDefinition,
-    BinaryRunner,
-    Services,
-    ServicesState,
-    State,
-    StaticForeignKeys
-} from './type'
 // endregion
 /**
  * Launches an application server und triggers all some pluginable hooks on
@@ -850,7 +850,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
 
     if (configuration.couchdb.model.updateValidation) {
         // NOTE: We import pre-transpiled JavaScript code here.
-        const databaseHelperCode: string = await fileSystem.readFile(
+        const databaseHelperCode: string = await readFile(
             eval(`require.resolve('./databaseHelper')`) as string,
             {encoding: configuration.core.encoding, flag: 'r'}
         )
@@ -1011,7 +1011,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                     let documents: Array<Document>
                     try {
                         documents = ([] as Array<Document>).concat(
-                            JSON.parse(await fileSystem.readFile(
+                            JSON.parse(await readFile(
                                 file.path,
                                 {
                                     encoding: configuration.core.encoding,
@@ -1773,8 +1773,13 @@ export const shouldExit = async (
 
     const logFilePath = 'log.txt'
     if (await isFile(logFilePath))
-        await fileSystem.unlink(logFilePath)
+        await unlink(logFilePath)
 }
 
-export const database = module.exports satisfies PluginHandler
+export const database = {
+    preLoadService,
+    loadService,
+    postLoadService,
+    shouldExit
+} as PluginHandler
 export default database

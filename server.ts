@@ -14,14 +14,8 @@
     endregion
 */
 // region imports
-import {ChildProcess, spawn as spawnChildProcess} from 'child_process'
-import {
-    checkReachability,
-    checkUnreachability,
-    CLOSE_EVENT_NAMES,
-    getProcessCloseHandler,
-    globalContext,
-    Logger,
+import type {ChildProcess} from 'child_process'
+import type {
     Mapping,
     PlainObject,
     ProcessCloseCallback,
@@ -29,28 +23,14 @@ import {
     ProcessErrorCallback,
     SecondParameter
 } from 'clientnode'
-import {jsonParser, sendError, sendJSON} from 'express-pouchdb/lib/utils'
-import {Express} from 'express-serve-static-core'
-import {
+import type {Express} from 'express-serve-static-core'
+import type {
     IncomingMessage as IncomingHTTPMessage,
     Server as HTTPServer,
     ServerResponse as HTTP1ServerResponse
 } from 'http'
-import {
-    mkdirp as makeDirectorPath, mkdirpSync as makeDirectorPathSync
-} from 'mkdirp'
-import nodeFetch from 'node-fetch'
-import {promises as fileSystem} from 'fs'
-import {dirname, resolve} from 'path'
 
-import {authorize} from './databaseHelper'
-import {
-    determineModelRolesMapping,
-    getEffectiveURL,
-    initializeConnection,
-    waitWithTimeout
-} from './helper'
-import {
+import type {
     BinaryRunner,
     ChangesResponse,
     ChangesResponseChange,
@@ -67,6 +47,31 @@ import {
     State,
     UserContext, InitializeExpressPouchDBStateData, LocalDatabaseConfiguration
 } from './type'
+
+import {spawn as spawnChildProcess} from 'child_process'
+import {
+    checkReachability,
+    checkUnreachability,
+    CLOSE_EVENT_NAMES,
+    getProcessCloseHandler,
+    globalContext,
+    Logger
+} from 'clientnode'
+import {jsonParser, sendError, sendJSON} from 'express-pouchdb/lib/utils'
+import {
+    mkdirp as makeDirectorPath, mkdirpSync as makeDirectorPathSync
+} from 'mkdirp'
+import nodeFetch from 'node-fetch'
+import {mkdir, writeFile} from 'fs/promises'
+import {dirname, resolve} from 'path'
+
+import {authorize} from './databaseHelper'
+import {
+    determineModelRolesMapping,
+    getEffectiveURL,
+    initializeConnection,
+    waitWithTimeout
+} from './helper'
 // endregion
 globalContext.fetch = nodeFetch as unknown as typeof fetch
 
@@ -597,7 +602,7 @@ export const start = async (
     // region create configuration file if needed
     if (runner.configurationFile) {
         try {
-            await fileSystem.mkdir(
+            await mkdir(
                 dirname(runner.configurationFile.path), {recursive: true}
             )
         } catch (error) {
@@ -605,7 +610,7 @@ export const start = async (
                 throw error
         }
 
-        await fileSystem.writeFile(
+        await writeFile(
             runner.configurationFile.path,
             runner.configurationFile.content,
             {encoding: configuration.core.encoding}
