@@ -3129,5 +3129,8 @@ export const validateDocumentUpdate = <
     return result.newDocument
 }
 
-export const databaseHelper = module.exports
+export const databaseHelper = {
+    authorize,
+    validateDocumentUpdate
+}
 export default databaseHelper

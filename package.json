@@ -546,10 +546,6 @@
         }
       }
     },
-    "exportFormat": {
-      "external": "commonjs2",
-      "self": "commonjs2"
-    },
     "generic": {
       "testCommandLine": "NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" jest --config node_modules/weboptimizer/jest.json --noStackTrace --runInBand --test-regex"
     },
