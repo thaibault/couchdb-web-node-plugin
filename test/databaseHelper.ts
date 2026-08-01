@@ -8,20 +8,31 @@
     License
     -------
 
-    This library written by Torben Sickert stand under a creative commons
+    This library written by Torben Sickert stands under a creative commons
     naming 3.0 unported license.
     See https://creativecommons.org/licenses/by/3.0/deed.de
     endregion
 */
 // region imports
-import {
-    copy,
-    extend,
+import type {
     FirstParameter,
     PlainObject,
     RecursivePartial,
     SecondParameter
 } from 'clientnode'
+
+import type {
+    Attachment,
+    BaseModel,
+    Configuration,
+    Document,
+    Model,
+    ModelConfiguration,
+    PartialFullDocument,
+    SpecialPropertyNames
+} from '../type'
+
+import {copy, extend} from 'clientnode'
 import {
     TEST_THROW_SYMBOL, testEachAgainstSameExpectation
 } from 'clientnode/test-helper'
@@ -31,17 +42,6 @@ import {describe, expect, test} from '@jest/globals'
 import {authorize, validateDocumentUpdate} from '../databaseHelper'
 import {applyModelsInheritance} from '../helper'
 import packageConfiguration from '../package.json'
-import {
-    Attachment,
-    Attachments,
-    BaseModel,
-    Configuration,
-    Document,
-    Model,
-    ModelConfiguration,
-    PartialFullDocument,
-    SpecialPropertyNames
-} from '../type'
 // endregion
 describe('databaseHelper', () => {
     // region prepare environment
@@ -1402,7 +1402,7 @@ describe('databaseHelper', () => {
         test.each([
             // Non specified attachments aren't allowed.
             [
-                [{[typeName]: 'Test', [attachmentName]: {} as Attachments}],
+                [{[typeName]: 'Test', [attachmentName]: {}}],
                 {entities: {Test: {}}},
                 'Property'
             ],

@@ -8,28 +8,31 @@
     License
     -------
 
-    This library written by Torben Sickert stand under a creative commons
+    This library written by Torben Sickert stands under a creative commons
     naming 3.0 unported license.
     See https://creativecommons.org/licenses/by/3.0/deed.de
     endregion
 */
 // region imports
+import type {
+    Configuration, CouchDB, InPlaceRunner, LocalDatabaseConfiguration, State
+} from '../type'
+import type {Express} from 'express-serve-static-core'
+
 import {copy, NOOP} from 'clientnode'
 import PouchDBMemoryPlugin from 'pouchdb-adapter-memory'
 import PouchDBFindPlugin from 'pouchdb-find'
 import PouchDB from 'pouchdb-node'
 import {pluginAPI} from 'web-node'
-import webNodePackageConfiguration from 'web-node/package.json'
+import webNodePackageConfiguration from 'web-node/package.json' with {
+    type: 'json'
+}
 
 import {describe, expect, jest, test} from '@jest/globals'
 
 import expressUtilities from '../loadExpress'
 import packageConfiguration from '../package.json'
 import {restart, start, stop} from '../server'
-import {
-    Configuration, CouchDB, InPlaceRunner, LocalDatabaseConfiguration, State
-} from '../type'
-import {Express} from 'express-serve-static-core'
 // endregion
 jest.setTimeout(
     2 * packageConfiguration.webNode.couchdb.closeTimeoutInSeconds * 1000

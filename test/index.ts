@@ -8,12 +8,14 @@
     License
     -------
 
-    This library written by Torben Sickert stand under a creative commons
+    This library written by Torben Sickert stands under a creative commons
     naming 3.0 unported license.
     See https://creativecommons.org/licenses/by/3.0/deed.de
     endregion
 */
 // region imports
+import type {Configuration, ServicePromises, Services} from '../type'
+
 import {copy} from 'clientnode'
 import {pluginAPI} from 'web-node'
 import webNodePackageConfiguration from 'web-node/package.json'
@@ -23,7 +25,6 @@ import {
     loadService, postLoadService, preLoadService, shouldExit
 } from '../index'
 import packageConfiguration from '../package.json'
-import {Configuration, ServicePromises, Services} from '../type'
 // endregion
 describe('index', (): void => {
     // region prepare environment

@@ -8,15 +8,28 @@
     License
     -------
 
-    This library written by Torben Sickert stand under a creative commons
+    This library written by Torben Sickert stands under a creative commons
     naming 3.0 unported license.
     See https://creativecommons.org/licenses/by/3.0/deed.de
     endregion
 */
 // region imports
+import type {
+    ModelRolesMapping,
+    Configuration,
+    Connection,
+    DatabaseResponse,
+    ModelConfiguration,
+    Model,
+    Models,
+    SpecialPropertyNames
+} from '../type'
+
 import {copy, extend, timeout} from 'clientnode'
 import {
-    testEach, testEachPromiseAgainstSameExpectation, TEST_UNDEFINED_SYMBOL
+    testEach,
+    testEachResolvedPromiseAgainstSameExpectation,
+    TEST_UNDEFINED_SYMBOL
 } from 'clientnode/test-helper'
 
 import {describe, expect, test} from '@jest/globals'
@@ -32,16 +45,6 @@ import {
     normalizeRoles
 } from '../helper'
 import packageConfiguration from '../package.json'
-import {
-    ModelRolesMapping,
-    Configuration,
-    Connection,
-    DatabaseResponse,
-    ModelConfiguration,
-    Model,
-    Models,
-    SpecialPropertyNames
-} from '../type'
 // endregion
 describe('helper', (): void => {
     // region prepare environment
@@ -72,7 +75,7 @@ describe('helper', (): void => {
             15
         ]
     )
-    testEachPromiseAgainstSameExpectation<
+    testEachResolvedPromiseAgainstSameExpectation<
         typeof ensureValidationDocumentPresence
     >(
         'ensureValidationDocumentPresence',
@@ -384,7 +387,7 @@ describe('helper', (): void => {
             extend(
                 true,
                 copy(modelConfiguration),
-                {entities: {a: {} as Model}} as Partial<ModelConfiguration>
+                {entities: {a: {}}} as Partial<ModelConfiguration>
             )
         )).toThrow()
 

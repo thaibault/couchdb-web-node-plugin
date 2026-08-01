@@ -8,14 +8,25 @@
     License
     -------
 
-    This library written by Torben Sickert stand under a creative commons
+    This library written by Torben Sickert stands under a creative commons
     naming 3.0 unported license.
     See https://creativecommons.org/licenses/by/3.0/deed.de
     endregion
 */
 // region imports
-import {copy, Mapping, timeout} from 'clientnode'
-import {Express} from 'express-serve-static-core'
+import type {Mapping} from 'clientnode'
+import type {Express} from 'express-serve-static-core'
+
+import type {
+    Configuration,
+    Connection,
+    LocalDatabaseConfiguration,
+    Model,
+    Services,
+    State
+} from '../type'
+
+import {copy, timeout} from 'clientnode'
 import PouchDB from 'pouchdb-node'
 import PouchDBHTTPAdapter from 'pouchdb-adapter-http'
 import PouchDBFindPlugin from 'pouchdb-find'
@@ -28,21 +39,10 @@ import {
     getConnectorOptions, getEffectiveURL, getPouchDBPlugin, waitWithTimeout
 } from '../helper'
 import {
-    loadService,
-    postLoadService,
-    preLoadService,
-    shouldExit
+    loadService, postLoadService, preLoadService, shouldExit
 } from '../index'
 import expressUtilities from '../loadExpress'
 import packageConfiguration from '../package.json'
-import {
-    Configuration,
-    Connection,
-    LocalDatabaseConfiguration,
-    Model,
-    Services,
-    State
-} from '../type'
 // endregion
 jest.setTimeout(
     2 * packageConfiguration.webNode.couchdb.closeTimeoutInSeconds * 1000
@@ -100,9 +100,7 @@ jest.setTimeout(
         test2Reference: {type: 'foreignKey:Test2Model'},
         sub: {type: {test2References: {type: 'foreignKey:Test2Model[]'}}}
     } as unknown as Model
-    ;(config.model.entities.Test2Model as Model) = {_roles: 'users'} as
-        unknown as
-        Model
+    ;(config.model.entities.Test2Model as Model) = {_roles: 'users'}
     ;(config.model.entities.SensibelTestModel as Model) = {
         _roles: 'users',
         _attachments: {

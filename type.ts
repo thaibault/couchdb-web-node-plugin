@@ -8,14 +8,14 @@
     License
     -------
 
-    This library written by Torben Sickert stand under a creative commons
+    This library written by Torben Sickert stands under a creative commons
     naming 3.0 unported license.
     See https://creativecommons.org/licenses/by/3.0/deed.de
     endregion
 */
 // region imports
-import {ChildProcess} from 'child_process'
-import {
+import type {ChildProcess} from 'child_process'
+import type {
     AnyFunction,
     Mapping,
     PlainObject,
@@ -23,13 +23,13 @@ import {
     ProcessCloseReason,
     UTILITY_SCOPE
 } from 'clientnode'
-import {Express} from 'express-serve-static-core'
-import {
+import type {Express} from 'express-serve-static-core'
+import type {
     IncomingMessage as IncomingHTTPMessage,
     Server as HTTPServer,
     ServerResponse as HTTP1ServerResponse
 } from 'http'
-import {
+import type {
     Configuration as BaseConfiguration,
     PluginHandler as BasePluginHandler,
     ServicePromises as BaseServicePromises,

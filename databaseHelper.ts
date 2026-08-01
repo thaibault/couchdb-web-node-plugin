@@ -8,18 +8,15 @@
     License
     -------
 
-    This library written by Torben Sickert stand under a creative commons
+    This library written by Torben Sickert stands under a creative commons
     naming 3.0 unported license.
     See https://creativecommons.org/licenses/by/3.0/deed.de
     endregion
 */
 // region imports
-import {
-    currentRequire, FirstParameter, Logger, Mapping, Primitive, ValueOf
-} from 'clientnode'
+import type {FirstParameter, Mapping, Primitive, ValueOf} from 'clientnode'
 
-import packageConfiguration from './package.json'
-import {
+import type {
     ModelRolesMapping,
     Attachment,
     BaseModel,
@@ -58,7 +55,12 @@ import {
     UpdateStrategy,
     UserContext, Type
 } from './type'
+
+import {getCurrentRequire, Logger} from 'clientnode'
+
+import packageConfiguration from './package.json' with {type: 'json'}
 // endregion
+export const currentRequire = await getCurrentRequire()
 /**
  * WebNode plugin interface with all provided hooks.
  */
@@ -3127,5 +3129,8 @@ export const validateDocumentUpdate = <
     return result.newDocument
 }
 
-export const databaseHelper = module.exports
+export const databaseHelper = {
+    authorize,
+    validateDocumentUpdate
+}
 export default databaseHelper

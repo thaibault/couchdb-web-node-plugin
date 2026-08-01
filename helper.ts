@@ -8,29 +8,15 @@
     License
     -------
 
-    This library written by Torben Sickert stand under a creative commons
+    This library written by Torben Sickert stands under a creative commons
     naming 3.0 unported license.
     See https://creativecommons.org/licenses/by/3.0/deed.de
     endregion
 */
 // region imports
-import {
-    copy,
-    extend,
-    format,
-    isObject,
-    Logger,
-    Mapping,
-    represent,
-    SecondParameter,
-    timeout,
-    ValueOf
-} from 'clientnode'
-import {lastValueFrom, map, retry, timer} from 'rxjs'
-import {fromFetch} from 'rxjs/fetch'
+import type {Mapping, SecondParameter, ValueOf} from 'clientnode'
 
-import packageConfiguration from './package.json'
-import {
+import type {
     AbortControllerStack,
     ModelRolesMapping,
     Roles,
@@ -59,6 +45,20 @@ import {
     Services,
     SpecialPropertyNames, TypeDefinition
 } from './type'
+
+import {
+    copy,
+    extend,
+    format,
+    isObject,
+    Logger,
+    represent,
+    timeout
+} from 'clientnode'
+import {lastValueFrom, map, retry, timer} from 'rxjs'
+import {fromFetch} from 'rxjs/fetch'
+
+import packageConfiguration from './package.json' with {type: 'json'}
 // endregion
 /*
     Token to provide to "bulkDocs" method call to indicate id determination
