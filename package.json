@@ -46,8 +46,10 @@
     "url": "https://github.com/thaibault/couchdb-web-node-plugin.git"
   },
   "scripts": {
-    "build": "weboptimizer build:types && yarn build:database-helper && weboptimizer build",
+    "build": "yarn build:types && yarn build:database-helper && yarn build:plain",
     "build:database-helper": "weboptimizer build '{__reference__: \"target:databaseHelper\"}'",
+    "build:plain": "weboptimizer build:types",
+    "build:types": "weboptimizer build",
     "check:types": "weboptimizer check:types",
     "clear": "weboptimizer clear && rimraf log.txt",
     "document": "weboptimizer document",
@@ -540,6 +542,7 @@
     }
   },
   "webOptimizer": {
+    "#": "TODO remove when migrated to weboptimizers cjs compatibility.",
     "buildContext": {
       "types": {
         "default": {
