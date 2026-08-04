@@ -828,7 +828,6 @@ export interface BasicScope<
         name: keyof object,
         document: PartialFullDocument<Type, AdditionalPropertiesType>
     ) => boolean
-    require: null | typeof require
     serialize: (value: unknown) => string
 
     id: string
