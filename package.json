@@ -48,8 +48,8 @@
   "scripts": {
     "build": "yarn build:types && yarn build:database-helper && yarn build:plain",
     "build:database-helper": "weboptimizer build '{__reference__: \"target:databaseHelper\"}'",
-    "build:plain": "weboptimizer build:types",
-    "build:types": "weboptimizer build",
+    "build:plain": "weboptimizer build",
+    "build:types": "weboptimizer build:types",
     "check:types": "weboptimizer check:types",
     "clear": "weboptimizer clear && rimraf log.txt",
     "document": "weboptimizer document",
