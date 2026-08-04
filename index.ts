@@ -63,6 +63,7 @@ import {
 } from 'clientnode'
 import {readFile, unlink} from 'fs/promises'
 import {basename, extname, resolve} from 'path'
+import {fileURLToPath} from 'url'
 import PouchDBMemoryPlugin from 'pouchdb-adapter-memory'
 import PouchDBFindPlugin from 'pouchdb-find'
 import PouchDB from 'pouchdb-node'
@@ -849,10 +850,16 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
     const models = configuration.couchdb.model.entities
 
     if (configuration.couchdb.model.updateValidation) {
-        // NOTE: We import pre-transpiled JavaScript code here.
+        /*
+            NOTE: We import pre-transpiled JavaScript code here. The module
+            specifier is kept in a variable so the bundler does not statically
+            resolve and emit the referenced source file (which would overwrite
+            our own source file since build output and sources share the same
+            directory). Resolution is therefore deferred to runtime.
+        */
+        const databaseHelperModuleName = './databaseHelper.js'
         const databaseHelperCode: string = await readFile(
-            import.meta.resolve('./databaseHelper')
-                .replace(/^file:\/\/(.+\.js)\?.+$/, '$1'),
+            fileURLToPath(import.meta.resolve(databaseHelperModuleName)),
             {encoding: configuration.core.encoding, flag: 'r'}
         )
         // region generate/update authentication/validation code
