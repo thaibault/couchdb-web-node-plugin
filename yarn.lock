@@ -4990,7 +4990,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"clientnode@npm:4.0.1482, clientnode@npm:^4.0.1482":
+"clientnode@npm:4.0.1482":
   version: 4.0.1482
   resolution: "clientnode@npm:4.0.1482"
   peerDependencies:
@@ -5005,6 +5005,24 @@ __metadata:
     prop-types:
       optional: true
   checksum: 10c0/ee5c72fb47cb010bd72d4b99d06d0f823d5ffaf87d2acd0e50d074410a36eeeb1922957bc2e955e8e12b81ab400e7a381fde00a29797d3d44739f8ce288b05aa
+  languageName: node
+  linkType: hard
+
+"clientnode@npm:^4.0.1483":
+  version: 4.0.1483
+  resolution: "clientnode@npm:4.0.1483"
+  peerDependencies:
+    "@types/prop-types": "*"
+    node-fetch: "*"
+    prop-types: "*"
+  peerDependenciesMeta:
+    "@types/prop-types":
+      optional: true
+    node-fetch:
+      optional: true
+    prop-types:
+      optional: true
+  checksum: 10c0/a4f08c152d84431e9aaa29c7e4a5bc02ed261fdbba272be38057c451b97c69b0a6e37b92e3f4b807300d8d1ce4e79f8149da619a8c8675c9c25c03ec61895a78
   languageName: node
   linkType: hard
 
@@ -5359,7 +5377,7 @@ __metadata:
     "@types/webpack-env": "npm:^1.18.8"
     "@typescript-eslint/eslint-plugin": "npm:^8.66.0"
     "@typescript-eslint/parser": "npm:^8.66.0"
-    clientnode: "npm:^4.0.1482"
+    clientnode: "npm:^4.0.1483"
     eslint: "npm:^10.8.0"
     eslint-config-google: "npm:^0.14.0"
     eslint-plugin-jsdoc: "npm:^63.3.3"
@@ -5380,7 +5398,7 @@ __metadata:
     typescript-eslint: "npm:^8.66.0"
     web-documentation: "npm:^1.0.45"
     web-node: "npm:^1.0.585"
-    weboptimizer: "npm:^4.0.49"
+    weboptimizer: "npm:^4.0.50"
   peerDependencies:
     clientnode: "*"
     express: "*"
@@ -12792,9 +12810,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"weboptimizer@npm:^4.0.49":
-  version: 4.0.49
-  resolution: "weboptimizer@npm:4.0.49"
+"weboptimizer@npm:^4.0.50":
+  version: 4.0.50
+  resolution: "weboptimizer@npm:4.0.50"
   dependencies:
     "@babel/core": "npm:^8.0.1"
     "@babel/plugin-proposal-decorators": "npm:^8.0.2"
@@ -12942,7 +12960,7 @@ __metadata:
       optional: true
   bin:
     weboptimizer: index.js
-  checksum: 10c0/04738d739715abc003f1503f0f22a30b86d39c1452d9cacb061abbca55f69df6675ea0ad60e9bf8506e20c9ff326599456512edf77916593dc78a811ad098e49
+  checksum: 10c0/e9a0301a87d1ab6dcd3a599c5ca4a19823b45c9cfaa5c5363d1d9de02b60fa8f16938a1550188c75b361fb17ca06b1bcb2a3a4645478b0c15e93639b3c97af68
   languageName: node
   linkType: hard
 
