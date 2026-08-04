@@ -42,7 +42,8 @@ import type {
     FullAttachment,
     Model,
     Models,
-    NormalizedModelRoles, NormalizedRoles,
+    NormalizedModelRoles,
+    NormalizedRoles,
     PartialFullDocument,
     PropertyScope,
     PropertyDefinition,
@@ -56,11 +57,10 @@ import type {
     UserContext, Type
 } from './type'
 
-import {getCurrentRequire, Logger} from 'clientnode'
+import {Logger} from 'clientnode'
 
 import packageConfiguration from './package.json' with {type: 'json'}
 // endregion
-export const currentRequire = await getCurrentRequire()
 /**
  * WebNode plugin interface with all provided hooks.
  */
@@ -3045,7 +3045,6 @@ export const validateDocumentUpdate = <
         getEffectiveValue,
         getFileNameByPrefix,
         isDefinedPropertyValue,
-        require: currentRequire,
         serialize,
 
         id,

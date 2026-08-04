@@ -30,6 +30,7 @@
   },
   "files": [
     "databaseHelper.d.ts",
+    "databaseHelper.cjs",
     "databaseHelper.js",
     "helper.d.ts",
     "index.d.ts",
@@ -45,8 +46,8 @@
     "url": "https://github.com/thaibault/couchdb-web-node-plugin.git"
   },
   "scripts": {
-    "build": "weboptimizer build:types && yarn build:databaseHelper && weboptimizer build",
-    "build:databaseHelper": "weboptimizer build '{__reference__: \"target:databaseHelper\"}'",
+    "build": "weboptimizer build:types && yarn build:database-helper && weboptimizer build",
+    "build:database-helper": "weboptimizer build '{__reference__: \"target:databaseHelper\"}'",
     "check:types": "weboptimizer check:types",
     "clear": "weboptimizer clear && rimraf log.txt",
     "document": "weboptimizer document",
@@ -55,7 +56,7 @@
     "report:coverage": "nyc report --reporter=text-lcov | coveralls",
     "serve": "yarn build && yarn start",
     "start": "web-node '{plugin: {hotReloading: true}}'",
-    "test": "yarn build:databaseHelper && weboptimizer test",
+    "test": "yarn build:database-helper && weboptimizer test",
     "test:coverage": "weboptimizer test:coverage",
     "test:coverage:report": "weboptimizer test:coverage:report",
     "update:documentation": "web-documentation",
@@ -539,13 +540,16 @@
     }
   },
   "webOptimizer": {
-    "assetPattern": {
-      "javaScript": {
-        "excludeFilePathRegularExpression": {
-          "__evaluate__": "2 < self.givenCommandLineArguments.length && self.givenCommandLineArguments[2].startsWith('test') ? '^$' : '.+'"
+    "buildContext": {
+      "types": {
+        "default": {
+          "filePathPattern": {
+            "__evaluate__": "`^${string.maskForRegularExpression(self.path.target.asset.javaScript)}.+(?:\\\\.[^.]+(?:\\\\.map)?)?\\\\.c?js$`"
+          }
         }
       }
     },
+
     "generic": {
       "testCommandLine": "NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" jest --config node_modules/weboptimizer/jest.json --noStackTrace --runInBand --test-regex"
     },
@@ -583,6 +587,27 @@
       "payload": "node"
     },
     "target:databaseHelper": {
+      "buildContext": {
+        "types": {
+          "default": {
+            "outputExtension": "cjs"
+          },
+          "javaScript": {
+            "extension": "cjs"
+          }
+        }
+      },
+      "exportFormat": {
+        "external": "commonjs2",
+        "self": "commonjs2"
+      },
+      "files": {
+        "compose": {
+          "javaScript": {
+            "__evaluate__": "`${path.resolve(self.path.target.asset.javaScript, '[name]')}.cjs?${self.hashAlgorithm}=[chunkhash]`"
+          }
+        }
+      },
       "injection": {
         "entry": {
           "__evaluate__": "{databaseHelper: './databaseHelper'}"
@@ -591,6 +616,11 @@
       "inPlace": {
         "externalLibrary": {
           "normal": true
+        }
+      },
+      "webpack": {
+        "experiments": {
+          "outputModule": false
         }
       }
     },

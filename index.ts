@@ -851,7 +851,8 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
     if (configuration.couchdb.model.updateValidation) {
         // NOTE: We import pre-transpiled JavaScript code here.
         const databaseHelperCode: string = await readFile(
-            eval(`require.resolve('./databaseHelper')`) as string,
+            import.meta.resolve('./databaseHelper')
+                .replace(/^file:\/\/(.+\.js)\?.+$/, '$1'),
             {encoding: configuration.core.encoding, flag: 'r'}
         )
         // region generate/update authentication/validation code
@@ -883,6 +884,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                 can interact here easily.
             */
             const code: string = 'function(...parameters) {\n' +
+                `    try {require('helper')} catch (e) {console.log(e)};` +
                 `    return require('helper').${type.methodName}` +
                     `(...parameters.concat([${type.serializedParameter}]` +
                     '))\n' +
@@ -1064,19 +1066,8 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                         )
                     }
                 } else if (['.js'].includes(extname(file.name)))
-                    // region collect script migrators
-                    migrators[file.path] = (
-                        eval(`require('${file.path}')`) as
-                            {default: Migrator}
-                    ).default
-                    // endregion
-                else if (['.mjs'].includes(extname(file.name)))
-                    // region collect module migrators
-                    migrators[file.path] = (
-                        (await eval(`import('${file.path}')`)) as
-                            {default: Migrator}
-                    ).default
-                    // endregion
+                    migrators[file.path] = (await import(file.path)).default as
+                        Migrator
             }
         // region ensure all constraints to have a consistent initial state
         for (const retrievedDocument of (
