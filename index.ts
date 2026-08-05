@@ -857,7 +857,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
             our own source file since build output and sources share the same
             directory). Resolution is therefore deferred to runtime.
         */
-        const databaseHelperModuleName = './databaseHelper.js'
+        const databaseHelperModuleName = './databaseHelper.cjs'
         const databaseHelperCode: string = await readFile(
             fileURLToPath(import.meta.resolve(databaseHelperModuleName)),
             {encoding: configuration.core.encoding, flag: 'r'}
@@ -889,9 +889,10 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
             /*
                 NOTE: This code should be widely supported since no transpiler
                 can interact here easily.
+                NOTE: The "require" function is provided by the couchdb
+                environment and not a node commonjs module loading method.
             */
             const code: string = 'function(...parameters) {\n' +
-                `    try {require('helper')} catch (e) {console.log(e)};` +
                 `    return require('helper').${type.methodName}` +
                     `(...parameters.concat([${type.serializedParameter}]` +
                     '))\n' +
