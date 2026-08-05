@@ -198,7 +198,7 @@ jest.setTimeout(
         await timeout(config.closeTimeoutInSeconds * 1000)
     })
     // endregion
-    test.only('authorization', async (): Promise<void> => {
+    test('authorization', async (): Promise<void> => {
         const data: Mapping =
             {[typeName]: 'TestModel', writableProperty: 'test'}
         let {id, rev: revision} = await client.post(data)
