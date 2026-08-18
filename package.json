@@ -24,10 +24,15 @@
   },
   "license": "CC-BY-3.0",
   "author": {
-    "name": "Torben Sickert",
     "email": "info@torben.website",
+    "name": "Torben Sickert",
     "url": "https://torben.website"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thaibault/couchdb-web-node-plugin.git"
+  },
+  "type": "module",
   "files": [
     "databaseHelper.d.ts",
     "databaseHelper.cjs",
@@ -41,10 +46,7 @@
     "type.d.ts",
     "type.js"
   ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/thaibault/couchdb-web-node-plugin.git"
-  },
+  "sideEffects": false,
   "scripts": {
     "build": "yarn build:types && yarn build:database-helper && yarn build:plain",
     "build:database-helper": "weboptimizer build '{__reference__: \"target:databaseHelper\"}'",
@@ -121,134 +123,28 @@
       "optional": true
     }
   },
+  "resolutions": {
+    "colors": "1.4.0",
+    "globals@npm:^11.1.0": "patch:globals@npm%3A11.12.0#~/.yarn/patches/globals-npm-11.12.0-1fa7f41a6c.patch",
+    "globals@npm:^14.0.0": "patch:globals@npm%3A11.12.0#~/.yarn/patches/globals-npm-11.12.0-1fa7f41a6c.patch",
+    "globals@npm:^9.18.0": "patch:globals@npm%3A11.12.0#~/.yarn/patches/globals-npm-11.12.0-1fa7f41a6c.patch",
+    "pouchdb-system-db@npm:4.2.0": "patch:pouchdb-system-db@npm%3A4.2.0#~/.yarn/patches/pouchdb-system-db-npm-4.2.0-317901bdb4.patch"
+  },
   "engines": {
     "node": ">=24",
     "npm": ">=11",
     "yarn": ">=4"
   },
-  "type": "module",
-  "resolutions": {
-    "colors": "1.4.0",
-    "globals@npm:^9.18.0": "patch:globals@npm%3A11.12.0#~/.yarn/patches/globals-npm-11.12.0-1fa7f41a6c.patch",
-    "globals@npm:^11.1.0": "patch:globals@npm%3A11.12.0#~/.yarn/patches/globals-npm-11.12.0-1fa7f41a6c.patch",
-    "globals@npm:^14.0.0": "patch:globals@npm%3A11.12.0#~/.yarn/patches/globals-npm-11.12.0-1fa7f41a6c.patch",
-    "pouchdb-system-db@npm:4.2.0": "patch:pouchdb-system-db@npm%3A4.2.0#~/.yarn/patches/pouchdb-system-db-npm-4.2.0-317901bdb4.patch"
-  },
-  "sideEffects": false,
   "webDocumentation": {
     "trackingCode": "UA-40192634-21"
   },
   "webNode": {
     "couchdb": {
-      "attachAutoRestarter": true,
-      "closeTimeoutInSeconds": 120,
-      "runner": {
-        "memoryInMegaByte": "default",
-        "nodePath": "/usr/bin/node",
-        "host": "0.0.0.0",
-        "port": 5984,
-        "variants": [
-          {
-            "adminUserConfigurationPath": "_node/couchdb@127.0.0.1/_config/admins",
-            "configuration": {
-              "values": {
-                "couchdb/database_dir": {
-                  "__evaluate__": "path.resolve(self.couchdb.path)"
-                },
-                "couchdb/max_attachment_chunk_size": "4294967296",
-                "couchdb/os_process_timeout": "25000",
-                "couchdb/view_index_dir": {
-                  "__evaluate__": "path.resolve(self.couchdb.path)"
-                },
-                "couch_httpd_auth/timeout": {
-                  "__evaluate__": "60 ** 2 * 24 * 14"
-                },
-                "chttpd/require_valid_user": true,
-                "httpd/allow_jsonp": false,
-                "httpd/bind_address": {
-                  "__evaluate__": "self.couchdb.runner.host"
-                },
-                "httpd/enable_cors": false,
-                "httpd/host": {
-                  "__evaluate__": "self.couchdb.runner.host"
-                },
-                "httpd/port": {
-                  "__evaluate__": "self.couchdb.runner.port"
-                },
-                "log/file": "/dev/stdout",
-                "log/level": "warning"
-              },
-              "prefixes": [
-                "_node/_local/_config",
-                "_config"
-              ]
-            },
-            "configurationFile": {
-              "content": {
-                "__evaluate__": "`[couchdb]\\ndatabase_dir = ${path.resolve(self.couchdb.path)}\\nview_index_dir = ${path.resolve(self.couchdb.path)}`"
-              },
-              "path": {
-                "__evaluate__": "path.resolve(self.couchdb.path, 'local.ini')"
-              }
-            },
-            "environment": {
-              "ERL_FLAGS": {
-                "__evaluate__": "`-couch_ini /usr/lib/couchdb/etc/default.ini /usr/lib/couchdb/etc/datadirs.ini /etc/couchdb/local.ini ${path.resolve(self.couchdb.path, 'local.ini')}`"
-              }
-            },
-            "locations": "/usr/lib/couchdb/bin/",
-            "names": "couchdb"
-          },
-          {
-            "adminUserConfigurationPath": "_config/admins",
-            "configuration": {
-              "__evaluate__": "self.couchdb.runner.variants[0].configuration"
-            },
-            "arguments": [
-              "--config",
-              {
-                "__evaluate__": "`./${self.couchdb.path}/database.json`"
-              },
-              "--dir",
-              {
-                "__evaluate__": "self.couchdb.runner.variants[0].configuration.values['couchdb/database_dir']"
-              },
-              "#: NOTE: This redundancy seems to be needed to forward ports in docker containers.",
-              "--host",
-              {
-                "__evaluate__": "self.couchdb.runner.host"
-              },
-              "--port",
-              {
-                "__evaluate__": "`${self.couchdb.runner.port}`"
-              }
-            ],
-            "locations": [
-              "node_modules/.bin/",
-              "../.bin/"
-            ],
-            "names": "pouchdb-server"
-          },
-          {
-            "adminUserConfigurationPath": "_config/admins",
-            "configuration": {
-              "configPath": {
-                "__evaluate__": "path.resolve(self.couchdb.path, 'configuration.json')"
-              },
-              "logPath": "/dev/stdout",
-              "prefix": {
-                "__evaluate__": "path.resolve(self.couchdb.path) + '/'"
-              },
-              "skip_setup": false
-            },
-            "packages": [
-              "express",
-              "express-pouchdb"
-            ],
-            "names": "express-pouchdb"
-          }
-        ]
+      "admin": {
+        "name": "admin",
+        "password": "admin"
       },
+      "attachAutoRestarter": true,
       "changesStream": {
         "include_docs": false,
         "live": true,
@@ -256,36 +152,12 @@
         "since": "now",
         "timeout": false
       },
-      "updateForeignKeysChangesStream": {
-        "include_docs": false,
-        "live": true,
-        "return_docs": false,
-        "since": "now",
-        "style": "all_docs",
-        "timeout": false
-      },
-      "removeDanglingForeignKeysChangesStream": {
-        "include_docs": false,
-        "live": true,
-        "return_docs": false,
-        "since": "now",
-        "style": "all_docs",
-        "timeout": false
-      },
-      "updateMaterializedViewsChangesStream": {
-        "include_docs": false,
-        "live": true,
-        "return_docs": false,
-        "since": "now",
-        "style": "all_docs",
-        "timeout": false
-      },
       "changesStreamReinitializer": {
+        "maxmumRetryWaitingTimeInSeconds": 120,
         "retries": 5,
-        "retryWaitingFactorInSeconds": 3,
-        "maxmumRetryWaitingTimeInSeconds": 120
+        "retryWaitingFactorInSeconds": 3
       },
-      "numberOfParallelChangesRunner": 1,
+      "closeTimeoutInSeconds": 120,
       "connector": {
         "fetch": {
           "credentials": "include",
@@ -294,10 +166,10 @@
           }
         },
         "fetchInterceptor": {
-          "numberOfRetries": 5,
-          "retryIntervalInSeconds": 0.2,
           "exponentialBackoff": true,
-          "maximumRetryIntervallInSeconds": 30
+          "maximumRetryIntervallInSeconds": 30,
+          "numberOfRetries": 5,
+          "retryIntervalInSeconds": 0.2
         },
         "skip_setup": false
       },
@@ -309,6 +181,7 @@
       "ensureUserPresence": true,
       "ignoreNoChangeError": true,
       "local": false,
+      "materializedViews": {},
       "maximumNumberOfEntitiesInBulkOperation": 10,
       "maximumRepresentationLength": 1000,
       "maximumRepresentationTryLength": 1000000,
@@ -317,6 +190,15 @@
         "dateTimeFormat": "iso",
         "entities": {
           "_base": {
+            "-type": {
+              "maximumLength": 999,
+              "minimumLength": 1,
+              "mutable": false,
+              "nullable": false,
+              "pattern": {
+                "__evaluate__": "`(?:${self.couchdb.model.property.name.typePattern.public}|${self.couchdb.model.property.name.typePattern.private})`"
+              }
+            },
             "_attachments": {},
             "_deleted": {
               "type": "boolean"
@@ -329,24 +211,15 @@
             "_rev": {
               "mutable": false,
               "preventVersionCreation": true
-            },
-            "-type": {
-              "maximumLength": 999,
-              "minimumLength": 1,
-              "nullable": false,
-              "mutable": false,
-              "pattern": {
-                "__evaluate__": "`(?:${self.couchdb.model.property.name.typePattern.public}|${self.couchdb.model.property.name.typePattern.private})`"
-              }
             }
           },
           "_expressionMapping": {
             "_additional": {
-              "updateStrategy": "replace",
               "constraintExecution": {
                 "description": "`Given value \"${newValue}\" should be able to be compiled as template string: ${(() => { try { new Function(`return \\`${newValue}\\``) } catch (error) { return `${error}` } })()}`",
                 "evaluation": "try { new Function(`return \\`${newValue}\\``) } catch (error) { return false }; return true"
-              }
+              },
+              "updateStrategy": "replace"
             },
             "_extends": "_stringMapping"
           },
@@ -391,11 +264,11 @@
           },
           "_stringMapping": {
             "_additional": {
-              "updateStrategy": "replace",
               "declaration": "Templatedata",
               "description": "String mapped values.",
               "emptyEqualsNull": false,
-              "type": "string"
+              "type": "string",
+              "updateStrategy": "replace"
             }
           },
           "_timeTrackable": {
@@ -408,29 +281,29 @@
               "type": "DateTime"
             },
             "updateDateTime": {
-              "type": "DateTime",
-              "minimum": 0,
-              "nullable": false,
-              "updateExpression": {
-                "__evaluate__": "`(['${self.couchdb.admin.name}', null].includes(userContext.name) || updateStrategy === 'migrate') && oldDocument && oldDocument[name] ? oldDocument[name] : nowUTCTimestamp`"
-              },
-              "preventVersionCreation": true,
-              "runUpdateHookAlways": true,
               "constraintExpression": {
                 "evaluate": {
                   "__evaluate__": "`userContext.name === '${self.couchdb.admin.name}' && oldDocument ? true : newValue > ${nowUTCTimestamp}`"
                 }
+              },
+              "minimum": 0,
+              "nullable": false,
+              "preventVersionCreation": true,
+              "runUpdateHookAlways": true,
+              "type": "DateTime",
+              "updateExpression": {
+                "__evaluate__": "`(['${self.couchdb.admin.name}', null].includes(userContext.name) || updateStrategy === 'migrate') && oldDocument && oldDocument[name] ? oldDocument[name] : nowUTCTimestamp`"
               }
             }
           },
           "_userTrackable": {
             "lastUser": {
               "nullable": false,
+              "preventVersionCreation": true,
+              "runUpdateHookAlways": true,
               "updateExpression": {
                 "__evaluate__": "`(((['${self.couchdb.admin.name}', null].includes(userContext.name) || updateStrategy === 'migrate') && oldDocument) ? oldDocument[name] : userContext.name) || 'unknown'`"
-              },
-              "preventVersionCreation": true,
-              "runUpdateHookAlways": true
+              }
             }
           }
         },
@@ -438,10 +311,10 @@
           "defaultDefinition": {
             "emptyEqualsNull": true,
             "maximumAggregatedSize": 100000000,
+            "maximumSize": 10000000,
             "minimumAggregatedSize": 0,
             "minimumLength": 0,
             "minimumNumber": 0,
-            "maximumSize": 10000000,
             "minimumSize": 0,
             "mutable": true,
             "nullable": true,
@@ -453,7 +326,6 @@
             "reserved": [],
             "special": {
               "additional": "_additional",
-              "role": "_roles",
               "attachment": "_attachments",
               "conflict": "_conflicts",
               "constraint": {
@@ -469,6 +341,7 @@
               "designDocumentNamePrefix": "_design/",
               "extend": "_extends",
               "id": "_id",
+              "ignoreIfNoOldDocument": "_ignoreIfNoOldDocument",
               "localSequence": "_local_seq",
               "maximumAggregatedSize": "_maximumAggregatedSize",
               "minimumAggregatedSize": "_minimumAggregatedSize",
@@ -476,13 +349,13 @@
               "revision": "_rev",
               "revisions": "_revisions",
               "revisionsInformation": "_revs_info",
-              "updateStrategy": "_updateStrategy",
-              "ignoreIfNoOldDocument": "_ignoreIfNoOldDocument",
+              "role": "_roles",
               "type": "-type",
               "update": {
                 "execution": "_updateExecution",
                 "expression": "_updateExpression"
-              }
+              },
+              "updateStrategy": "_updateStrategy"
             },
             "typePattern": {
               "private": "^_[a-z][A-Za-z0-9]+$",
@@ -496,7 +369,123 @@
         "updateStrategy": "fillUp",
         "updateValidation": true
       },
+      "numberOfParallelChangesRunner": 1,
       "path": "database",
+      "removeDanglingForeignKeysChangesStream": {
+        "include_docs": false,
+        "live": true,
+        "return_docs": false,
+        "since": "now",
+        "style": "all_docs",
+        "timeout": false
+      },
+      "runner": {
+        "host": "0.0.0.0",
+        "memoryInMegaByte": "default",
+        "nodePath": "/usr/bin/node",
+        "port": 5984,
+        "variants": [
+          {
+            "adminUserConfigurationPath": "_node/couchdb@127.0.0.1/_config/admins",
+            "configuration": {
+              "prefixes": [
+                "_node/_local/_config",
+                "_config"
+              ],
+              "values": {
+                "chttpd/require_valid_user": true,
+                "couch_httpd_auth/timeout": {
+                  "__evaluate__": "60 ** 2 * 24 * 14"
+                },
+                "couchdb/database_dir": {
+                  "__evaluate__": "path.resolve(self.couchdb.path)"
+                },
+                "couchdb/max_attachment_chunk_size": "4294967296",
+                "couchdb/os_process_timeout": "25000",
+                "couchdb/view_index_dir": {
+                  "__evaluate__": "path.resolve(self.couchdb.path)"
+                },
+                "httpd/allow_jsonp": false,
+                "httpd/bind_address": {
+                  "__evaluate__": "self.couchdb.runner.host"
+                },
+                "httpd/enable_cors": false,
+                "httpd/host": {
+                  "__evaluate__": "self.couchdb.runner.host"
+                },
+                "httpd/port": {
+                  "__evaluate__": "self.couchdb.runner.port"
+                },
+                "log/file": "/dev/stdout",
+                "log/level": "warning"
+              }
+            },
+            "configurationFile": {
+              "content": {
+                "__evaluate__": "`[couchdb]\\ndatabase_dir = ${path.resolve(self.couchdb.path)}\\nview_index_dir = ${path.resolve(self.couchdb.path)}`"
+              },
+              "path": {
+                "__evaluate__": "path.resolve(self.couchdb.path, 'local.ini')"
+              }
+            },
+            "environment": {
+              "ERL_FLAGS": {
+                "__evaluate__": "`-couch_ini /usr/lib/couchdb/etc/default.ini /usr/lib/couchdb/etc/datadirs.ini /etc/couchdb/local.ini ${path.resolve(self.couchdb.path, 'local.ini')}`"
+              }
+            },
+            "locations": "/usr/lib/couchdb/bin/",
+            "names": "couchdb"
+          },
+          {
+            "adminUserConfigurationPath": "_config/admins",
+            "arguments": [
+              "--config",
+              {
+                "__evaluate__": "`./${self.couchdb.path}/database.json`"
+              },
+              "--dir",
+              {
+                "__evaluate__": "self.couchdb.runner.variants[0].configuration.values['couchdb/database_dir']"
+              },
+              "#: NOTE: This redundancy seems to be needed to forward ports in docker containers.",
+              "--host",
+              {
+                "__evaluate__": "self.couchdb.runner.host"
+              },
+              "--port",
+              {
+                "__evaluate__": "`${self.couchdb.runner.port}`"
+              }
+            ],
+            "configuration": {
+              "__evaluate__": "self.couchdb.runner.variants[0].configuration"
+            },
+            "locations": [
+              "node_modules/.bin/",
+              "../.bin/"
+            ],
+            "names": "pouchdb-server"
+          },
+          {
+            "adminUserConfigurationPath": "_config/admins",
+            "configuration": {
+              "configPath": {
+                "__evaluate__": "path.resolve(self.couchdb.path, 'configuration.json')"
+              },
+              "logPath": "/dev/stdout",
+              "prefix": {
+                "__evaluate__": "path.resolve(self.couchdb.path) + '/'"
+              },
+              "skip_setup": false
+            },
+            "names": "express-pouchdb",
+            "packages": [
+              "express",
+              "express-pouchdb"
+            ]
+          }
+        ]
+      },
       "security": {
         "_default": {
           "admins": {
@@ -530,15 +519,26 @@
         }
       },
       "skipLatestRevisionDetermining": true,
+      "updateForeignKeysChangesStream": {
+        "include_docs": false,
+        "live": true,
+        "return_docs": false,
+        "since": "now",
+        "style": "all_docs",
+        "timeout": false
+      },
+      "updateMaterializedViewsChangesStream": {
+        "include_docs": false,
+        "live": true,
+        "return_docs": false,
+        "since": "now",
+        "style": "all_docs",
+        "timeout": false
+      },
       "url": {
         "__evaluate__": "`http://{1}${self.couchdb.runner.host}:${self.couchdb.runner.port}`"
       },
-      "admin": {
-        "name": "admin",
-        "password": "admin"
-      },
-      "users": [],
-      "materializedViews": {}
+      "users": []
     }
   },
   "webOptimizer": {
@@ -573,10 +573,6 @@
       "skipParseRegularExpressions": {
         "__evaluate__": "/(?:(?:bindings\\/bindings)|(?:colors\\/lib\\/(?:colors)|(?:extendStringPrototype))|(?:encoding\\/lib\\/iconv-loader)|(?:global)|(?:module))\\.js(?:\\?.+|$)/"
       }
-    },
-    "targetTechnology": {
-      "boilerplate": "node",
-      "payload": "node"
     },
     "target:databaseHelper": {
       "buildContext": {
@@ -615,6 +611,10 @@
           "outputModule": false
         }
       }
+    },
+    "targetTechnology": {
+      "boilerplate": "node",
+      "payload": "node"
     },
     "test": {
       "injection": {
