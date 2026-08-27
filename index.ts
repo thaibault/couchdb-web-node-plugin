@@ -325,7 +325,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                 if (viewDataConfiguration.initialMapperExpression) {
                     const result = evaluate(
                         viewDataConfiguration.initialMapperExpression,
-                        {data: rawData.docs}
+                        {scope: {data: rawData.docs}}
                     )
 
                     if (result.error)
@@ -1686,11 +1686,11 @@ export const postLoadService = async (state: State): Promise<void> => {
                             if (viewDataConfiguration.updateExpression) {
                                 const result = evaluate(
                                     viewDataConfiguration.updateExpression,
-                                    {
+                                    {scope: {
                                         deleted: false,
                                         ...change,
                                         document: change.doc
-                                    }
+                                    }}
                                 )
 
                                 if (result.error)
