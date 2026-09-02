@@ -1074,8 +1074,10 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                         )
                     }
                 } else if (['.js'].includes(extname(file.name)))
-                    migrators[file.path] = (await import(file.path)).default as
-                        Migrator
+                    migrators[file.path] = (await import(
+                        /* webpackIgnore: true */
+                        file.path
+                    )).default as Migrator
             }
         // region ensure all constraints to have a consistent initial state
         for (const retrievedDocument of (

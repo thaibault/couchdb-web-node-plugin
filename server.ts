@@ -57,7 +57,7 @@ import {
     globalContext,
     Logger
 } from 'clientnode'
-import {jsonParser, sendError, sendJSON} from 'express-pouchdb/lib/utils'
+import {jsonParser, sendError, sendJSON} from 'express-pouchdb/lib/utils.js'
 import {
     mkdirp as makeDirectorPath, mkdirpSync as makeDirectorPathSync
 } from 'mkdirp'

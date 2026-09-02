@@ -1,26 +1,26 @@
  // -*- coding: utf-8 -*-
 /** @module declarations */
 declare module 'express-pouchdb'
-declare module 'express-pouchdb/lib/routes/bulk-get'
-declare module 'express-pouchdb/lib/routes/all-docs'
-declare module 'express-pouchdb/lib/routes/changes'
-declare module 'express-pouchdb/lib/routes/compact'
-declare module 'express-pouchdb/lib/routes/revs-diff'
-declare module 'express-pouchdb/lib/routes/security'
-declare module 'express-pouchdb/lib/routes/view-cleanup'
-declare module 'express-pouchdb/lib/routes/temp-views'
-declare module 'express-pouchdb/lib/routes/find'
-declare module 'express-pouchdb/lib/routes/documents'
-declare module 'express-pouchdb/lib/routes/404'
-declare module 'express-pouchdb/lib/routes/views'
-declare module 'express-pouchdb/lib/routes/ddoc-info'
-declare module 'express-pouchdb/lib/routes/show'
-declare module 'express-pouchdb/lib/routes/list'
-declare module 'express-pouchdb/lib/routes/update'
-declare module 'express-pouchdb/lib/routes/attachments'
-declare module 'express-pouchdb/lib/validation'
+declare module 'express-pouchdb/lib/routes/bulk-get.js'
+declare module 'express-pouchdb/lib/routes/all-docs.js'
+declare module 'express-pouchdb/lib/routes/changes.js'
+declare module 'express-pouchdb/lib/routes/compact.js'
+declare module 'express-pouchdb/lib/routes/revs-diff.js'
+declare module 'express-pouchdb/lib/routes/security.js'
+declare module 'express-pouchdb/lib/routes/view-cleanup.js'
+declare module 'express-pouchdb/lib/routes/temp-views.js'
+declare module 'express-pouchdb/lib/routes/find.js'
+declare module 'express-pouchdb/lib/routes/documents.js'
+declare module 'express-pouchdb/lib/routes/404.js'
+declare module 'express-pouchdb/lib/routes/views.js'
+declare module 'express-pouchdb/lib/routes/ddoc-info.js'
+declare module 'express-pouchdb/lib/routes/show.js'
+declare module 'express-pouchdb/lib/routes/list.js'
+declare module 'express-pouchdb/lib/routes/update.js'
+declare module 'express-pouchdb/lib/routes/attachments.js'
+declare module 'express-pouchdb/lib/validation.js'
 
-declare module 'express-pouchdb/lib/utils' {
+declare module 'express-pouchdb/lib/utils.js' {
     export function jsonParser(
         request: IncomingMessage,
         response: http.ServerResponse,
