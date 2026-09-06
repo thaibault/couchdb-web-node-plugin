@@ -58,9 +58,7 @@ import {
     Logger
 } from 'clientnode'
 import {jsonParser, sendError, sendJSON} from 'express-pouchdb/lib/utils.js'
-import {
-    mkdirp as makeDirectorPath, mkdirpSync as makeDirectorPathSync
-} from 'mkdirp'
+import {mkdirpSync as makeDirectorPathSync} from 'mkdirp'
 import nodeFetch from 'node-fetch'
 import {mkdir, writeFile} from 'fs/promises'
 import {dirname, resolve} from 'path'
@@ -561,16 +559,16 @@ export const initializeExpress = async (
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         module(expressPouchDBInstance)
 
-    if (!isInMemory) {
+    if (!isInMemory)
         /*
             NOTE: Currently needed to use synchronized folder creation to avoid
             having the folder not yet persisted in following execution when
             working on not mounted locations. Seems to be an issue within a
             container environment.
+
+            await makeDirectorPath(resolve(configuration.path))
         */
         makeDirectorPathSync(resolve(configuration.path))
-        await makeDirectorPath(resolve(configuration.path))
-    }
 
     await pluginAPI.callStack<State<InitializeExpressPouchDBStateData>>({
         ...state,
