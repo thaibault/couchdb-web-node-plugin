@@ -86,10 +86,10 @@
     "@types/webpack-env": "^1.18.8",
     "@typescript-eslint/eslint-plugin": "^8.69.0",
     "@typescript-eslint/parser": "^8.69.0",
-    "clientnode": "^4.0.1502",
-    "eslint": "^10.9.1",
+    "clientnode": "^4.0.1510",
+    "eslint": "^10.10.0",
     "eslint-config-google": "^0.14.0",
-    "eslint-plugin-jsdoc": "^64.3.4",
+    "eslint-plugin-jsdoc": "^64.3.6",
     "express": "^5.2.1",
     "express-pouchdb": "^4.2.0",
     "jest": "^30.5.1",
@@ -100,8 +100,8 @@
     "rimraf": "^6.1.3",
     "typescript-eslint": "^8.69.0",
     "web-documentation": "^1.0.52",
-    "web-node": "^1.0.592",
-    "weboptimizer": "^4.0.72"
+    "web-node": "^1.0.604",
+    "weboptimizer": "^4.0.78"
   },
   "peerDependencies": {
     "clientnode": "*",
@@ -609,6 +609,16 @@
       "webpack": {
         "experiments": {
           "outputModule": false
+        },
+        "module": {
+          "#": "NOTE: This bundle is evaluated as a plain (non ECMAScript module) script inside the couchdb / pouchdb validation sandbox, so \"import.meta\" has to be resolved at build time instead of being preserved.",
+          "parser": {
+            "javascript": {
+              "importMeta": {
+                "url": true
+              }
+            }
+          }
         }
       }
     },

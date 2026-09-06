@@ -145,19 +145,20 @@ export const initializeExpress = async (
             ).default ||
             module
         )(
+            /* TODO Use "webpackIgnore: true" */
             (await eval(`import('./loadExpress.js')`)).default as
                 typeof import('./loadExpress')['default']
         )
 
     const expressInstance: Express = express()
     /*
-        These routes take many remaining paths (fallback). We will add
-        these manually after custom routes have been added.
+        These routes take many remaining paths (fallback). We will add these
+        manually after custom routes have been added.
     */
 
     /*
-        We have to overwrite to apply read right authorization on
-        property level:
+        We have to overwrite to apply read right authorization on property
+        level:
 
         'routes/all-docs',
         'routes/changes',
