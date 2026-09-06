@@ -145,9 +145,10 @@ export const initializeExpress = async (
             ).default ||
             module
         )(
-            /* TODO Use "webpackIgnore: true" */
-            (await eval(`import('./loadExpress.js')`)).default as
-                typeof import('./loadExpress')['default']
+            (await import(
+                /* Use "webpackIgnore: true" */
+                './loadExpress.js'
+            )).default
         )
 
     const expressInstance: Express = express()
