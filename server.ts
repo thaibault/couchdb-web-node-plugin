@@ -146,7 +146,7 @@ export const initializeExpress = async (
             module
         )(
             (await import(
-                /* Use "webpackIgnore: true" */
+                /* webpackIgnore: true */
                 './loadExpress.js'
             )).default
         )
