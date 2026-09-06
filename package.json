@@ -547,7 +547,7 @@
     },
     "injection": {
       "entry": {
-        "__evaluate__": "2 < self.givenCommandLineArguments.length && self.givenCommandLineArguments[2].startsWith('test') ? {testBundle: 'test'} : {databaseHelper: './databaseHelper', helper: './helper', index: './index', loadExpress: './loadExpress', type: './type'}"
+        "__evaluate__": "2 < self.givenCommandLineArguments.length && self.givenCommandLineArguments[2].startsWith('test') ? {testBundle: 'test'} : {databaseHelper: './databaseHelper', helper: './helper', index: './index', type: './type'}"
       }
     },
     "module": {
