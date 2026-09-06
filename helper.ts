@@ -373,7 +373,7 @@ export const getConnectorOptions = (
                 numberOfRetries,
                 retryIntervalInSeconds,
                 exponentialBackoff,
-                maximumRetryIntervallInSeconds
+                maximumRetryIntervalInSeconds
             } = configuration.fetchInterceptor
 
             // Provides a retry mechanism with configurable delay mechanism.
@@ -414,7 +414,7 @@ export const getConnectorOptions = (
                                     const now = new Date()
                                     if (now < futureRetryMoment) {
                                         if (
-                                            maximumRetryIntervallInSeconds <
+                                            maximumRetryIntervalInSeconds <
                                             (
                                                 futureRetryMoment.getTime() -
                                                 now.getTime()
@@ -437,7 +437,7 @@ export const getConnectorOptions = (
                                             futureRetryMoment.toUTCString(),
                                             'further in the future than the',
                                             'configured maximum wait time of',
-                                            maximumRetryIntervallInSeconds,
+                                            maximumRetryIntervalInSeconds,
                                             'seconds.'
                                         )
                                     } else
@@ -457,7 +457,7 @@ export const getConnectorOptions = (
 
                         return timer(
                             Math.min(
-                                delayInSeconds, maximumRetryIntervallInSeconds
+                                delayInSeconds, maximumRetryIntervalInSeconds
                             ) *
                             1000
                         )

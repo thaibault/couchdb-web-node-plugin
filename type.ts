@@ -540,7 +540,7 @@ export type ConnectorConfiguration =
             numberOfRetries: number
             retryIntervalInSeconds: number
             exponentialBackoff: boolean
-            maximumRetryIntervallInSeconds: number
+            maximumRetryIntervalInSeconds: number
         }
     }
 export interface CoreConfiguration<

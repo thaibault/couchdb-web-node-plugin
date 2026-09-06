@@ -5855,7 +5855,7 @@ __metadata:
     rxjs: "npm:^7.8.2"
     typescript-eslint: "npm:^8.69.0"
     web-documentation: "npm:^1.0.52"
-    web-node: "npm:^1.0.604"
+    web-node: "npm:^1.0.605"
     weboptimizer: "npm:^4.0.78"
   peerDependencies:
     clientnode: "*"
@@ -13239,14 +13239,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"web-node@npm:^1.0.604":
-  version: 1.0.604
-  resolution: "web-node@npm:1.0.604"
+"web-node@npm:^1.0.605":
+  version: 1.0.605
+  resolution: "web-node@npm:1.0.605"
   peerDependencies:
     clientnode: "*"
   bin:
     web-node: main.js
-  checksum: 10c0/0dd5b98b861847861718dd9bf1d4a2421cf51e7919fc2876fa5fe7f4406eae3f7493e2087f9cbe38ef300fc60c3d34689498abea3930be1a86fa76e59598d4f4
+  checksum: 10c0/caa8acd6cf56954978d4db7573070c7c6e158a24a61a74376e7099e9e8011daec7b0edbf17948de0e754f862216f606bd0fd815af3a2422fdb8efd85a8ad33ed
   languageName: node
   linkType: hard
 
