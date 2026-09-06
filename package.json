@@ -107,7 +107,7 @@
     "clientnode": "*",
     "express": "*",
     "express-pouchdb": "*",
-    "mkdirp": "*",
+    "mkdirp": "^3.0.1",
     "node-fetch": "*",
     "request": "*",
     "web-node": "*"
