@@ -87,7 +87,7 @@
     "@types/webpack-env": "^1.18.8",
     "@typescript-eslint/eslint-plugin": "^8.70.0",
     "@typescript-eslint/parser": "^8.70.0",
-    "clientnode": "^4.0.1514",
+    "clientnode": "^4.0.1515",
     "eslint": "^10.10.0",
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-jsdoc": "^64.3.9",
@@ -101,8 +101,8 @@
     "rimraf": "^6.1.3",
     "typescript-eslint": "^8.70.0",
     "web-documentation": "^1.0.52",
-    "web-node": "^1.0.623",
-    "weboptimizer": "^4.0.79"
+    "web-node": "^1.0.625",
+    "weboptimizer": "^4.0.80"
   },
   "peerDependencies": {
     "clientnode": "*",
@@ -575,6 +575,18 @@
         "__evaluate__": "/(?:(?:bindings\\/bindings)|(?:colors\\/lib\\/(?:colors)|(?:extendStringPrototype))|(?:encoding\\/lib\\/iconv-loader)|(?:global)|(?:module))\\.js(?:\\?.+|$)/"
       }
     },
+    "webpack": {
+      "module": {
+        "parser": {
+          "javascript": {
+            "#": "NOTE: Webpack evaluates \"import.meta\" fields at build time and would inline this bundles source file location on the build machine. Since our bootstrap guard (\"isMainModule\") compares that path against \"process.argv[1]\" at runtime it would never match and the application would exit immediately instead of starting its services. The emitted bundle is a native ECMAScript module, so both fields can safely be preserved for runtime evaluation.",
+            "importMeta": {
+              "url": false
+            }
+          }
+        }
+      }
+    },
     "target:databaseHelper": {
       "buildContext": {
         "types": {
@@ -610,6 +622,14 @@
       "webpack": {
         "experiments": {
           "outputModule": false
+        },
+        "module": {
+          "parser": {
+            "javascript": {
+              "#": "NOTE: Webpack evaluates \"import.meta\" fields at build time and would inline this bundles source file location on the build machine. Since our bootstrap guard (\"isMainModule\") compares that path against \"process.argv[1]\" at runtime it would never match and the application would exit immediately instead of starting its services. The emitted bundle is a native ECMAScript module, so both fields can safely be preserved for runtime evaluation.",
+              "importMeta": true
+            }
+          }
         }
       }
     },
