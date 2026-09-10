@@ -580,9 +580,7 @@
         "parser": {
           "javascript": {
             "#": "NOTE: Webpack evaluates \"import.meta\" fields at build time and would inline this bundles source file location on the build machine. Since our bootstrap guard (\"isMainModule\") compares that path against \"process.argv[1]\" at runtime it would never match and the application would exit immediately instead of starting its services. The emitted bundle is a native ECMAScript module, so both fields can safely be preserved for runtime evaluation.",
-            "importMeta": {
-              "url": false
-            }
+            "importMeta": false
           }
         }
       }
@@ -626,7 +624,7 @@
         "module": {
           "parser": {
             "javascript": {
-              "#": "NOTE: Webpack evaluates \"import.meta\" fields at build time and would inline this bundles source file location on the build machine. Since our bootstrap guard (\"isMainModule\") compares that path against \"process.argv[1]\" at runtime it would never match and the application would exit immediately instead of starting its services. The emitted bundle is a native ECMAScript module, so both fields can safely be preserved for runtime evaluation.",
+              "#": "NOTE: Webpack needs evaluate \"import.meta\" to make it commonjs compatible.",
               "importMeta": true
             }
           }
