@@ -399,14 +399,14 @@ export const getConnectorOptions = (
                                 httpError.headers.get('retry-after')
 
                             if (typeof retryValue === 'string') {
-                                const intervallInSeconds = parseInt(retryValue)
-                                if (String(intervallInSeconds) === retryValue) {
+                                const intervalInSeconds = parseInt(retryValue)
+                                if (String(intervalInSeconds) === retryValue) {
                                     log.info(
                                         `Retry in ${retryValue} seconds`,
                                         'according to given retry value.'
                                     )
                                     // We interpret value as seconds.
-                                    return timer(intervallInSeconds * 1000)
+                                    return timer(intervalInSeconds * 1000)
                                 }
 
                                 const futureRetryMoment = new Date(retryValue)
