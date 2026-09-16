@@ -10,7 +10,8 @@ This library written by Torben Sickert stands under a creative commons naming
 3.0 unported license. See https://creativecommons.org/licenses/by/3.0/deed.de
 endregion -->
 
-Project status
+<!--|deDE:Projektstatus-->
+Project Status
 --------------
 
 [![npm](https://img.shields.io/npm/v/couchdb-web-node-plugin?color=%23d55e5d&label=npm%20package%20version&logoColor=%23d55e5d&style=for-the-badge)](https://www.npmjs.com/package/couchdb-web-node-plugin)
@@ -28,6 +29,7 @@ Project status
 [![deploy web documentation](https://img.shields.io/github/actions/workflow/status/thaibault/couchdb-web-node-plugin/deploy-web-documentation.yaml?label=deploy%20web%20documentation&style=for-the-badge)](https://github.com/thaibault/couchdb-web-node-plugin/actions/workflows/deploy-web-documentation.yaml)
 [![web documentation](https://img.shields.io/website-up-down-green-red/https/torben.website/couchdb-web-node-plugin.svg?label=web-documentation&style=for-the-badge)](https://torben.website/couchdb-web-node-plugin)
 
+<!--|deDE:Verwendung-->
 Use case
 --------
 
