@@ -70,8 +70,6 @@ of the referenced documents when creating or updating documents. It also
 provides a way to automatically delete or update the referenced documents when
 the referencing document is deleted or updated.
 
-### Mechanism
-
 #### Initialization
 
 During application start the plugin analyzes the model specification and
