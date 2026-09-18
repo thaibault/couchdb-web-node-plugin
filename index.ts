@@ -161,7 +161,7 @@ export const preLoadService = async ({
         }
 
         if (!runnerFound)
-            log.info(
+            void log.info(
                 'No couchdb runner found via files in one of the following',
                 `locations: "${triedPaths.join('", "')}". Running pouchdb`,
                 'locally.'
@@ -329,7 +329,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                     )
 
                     if (result.error)
-                        log.warn(
+                        void log.warn(
                             'Could not execute initial expression "' +
                             viewDataConfiguration.initialMapperExpression +
                             `" for property "${name}" in view document`,
@@ -342,7 +342,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                     viewDocument[name] = rawData.docs
             }
 
-            log.info(`Initialize view ${id}:`, represent(viewDocument))
+            void log.info(`Initialize view ${id}:`, represent(viewDocument))
             await couchdb.connection.put(viewDocument)
         }
     }
@@ -444,7 +444,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                             if ((await couchdb.connection.find(
                                 {selector: {[idName as string]: id}}
                             )).docs.length === 0) {
-                                log.info(
+                                void log.info(
                                     'Found dangling document reference',
                                     `(${id}) in document`,
                                     `${represent(document)} of type`,
@@ -462,7 +462,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                     else if ((await couchdb.connection.find(
                         {selector: {[idName as string]: value}}
                     )).docs.length === 0) {
-                        log.info(
+                        void log.info(
                             'Found dangling document reference',
                             `(${value}) in document`,
                             `${represent(document)} of type`,
@@ -528,7 +528,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
     // region ensure presence of global admin user
     if (configuration.couchdb.ensureAdminPresence) {
         const createAdminUser = () => {
-            log.info(
+            void log.info(
                 'No admin user available. Automatically creating admin user',
                 `"${configuration.couchdb.admin.name}".`
             )
@@ -566,7 +566,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                 if ((error as DatabaseError).name === 'not_found')
                     await createAdminUser()
                 else
-                    log.error(
+                    void log.error(
                         `Can't check for admin user or create a new one:`,
                         `"${configuration.couchdb.admin.name}":`,
                         represent(error)
@@ -594,7 +594,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
         try {
             await authenticatedUserDatabaseConnection.allDocs({limit: 1})
         } catch (error) {
-            log.error(
+            void log.error(
                 `Can't login as admin user`,
                 `"${configuration.couchdb.admin.name}":`,
                 represent(error)
@@ -626,7 +626,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                 await userDatabaseConnection.get(`org.couchdb.user:${name}`)
             } catch (error) {
                 if ((error as {name: string}).name === 'not_found') {
-                    log.info(`Create missing database user "${name}".`)
+                    void log.info(`Create missing database user "${name}".`)
 
                     try {
                         await userDatabaseConnection.put({
@@ -684,7 +684,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                         url, {headers: authorizationHeader}
                     )
                 } catch (error) {
-                    log.warn(
+                    void log.warn(
                         `Configuration "${fullPath}" (with desired value`,
                         `[${represent(value)}]) couldn't be determined:`,
                         represent(error)
@@ -704,7 +704,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                                     ]()
                                 )
                             } catch (error) {
-                                log.warn(
+                                void log.warn(
                                     'Error checking current value of',
                                     `"${fullPath}" to be`,
                                     `[${represent(value)}]:`,
@@ -723,19 +723,19 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                                     }
                                 )
                             } catch (error) {
-                                log.error(
+                                void log.error(
                                     `Configuration "${fullPath}" couldn't be`,
                                     `applied to [${represent(value)}]:`,
                                     represent(error)
                                 )
                             }
                         else
-                            log.info(
+                            void log.info(
                                 `Configuration "${fullPath}" is already set`,
                                 `to desired value [${represent(value)}].`
                             )
                     } else
-                        log.info(
+                        void log.info(
                             `Configuration "${fullPath}" does not exist`,
                             `(desired value [${represent(value)}]). Response`,
                             `code is ${String(response.status)}.`
@@ -803,7 +803,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                 }
             }
 
-            log.info(
+            void log.info(
                 `Apply security settings for database "${databaseName}":`,
                 represent(fullSecurityObject)
             )
@@ -830,7 +830,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                 if (!response.ok)
                     throw new Error(response.statusText)
             } catch (error) {
-                log.error(
+                void log.error(
                     `Security object for database "${databaseName}" couldn't`,
                     `be applied:`,
                     represent(error)
@@ -911,7 +911,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
             }
 
             if (configuration.core.debug)
-                log.debug(`${type.name} code: \n\n"${code}" integrated.`)
+                void log.debug(`${type.name} code: \n\n"${code}" integrated.`)
 
             await ensureValidationDocumentPresence(
                 couchdb.connection,
@@ -1052,7 +1052,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                             if ((
                                 error as {forbidden?: string}
                             ).forbidden?.startsWith('NoChange:'))
-                                log.info(
+                                void log.info(
                                     `Including document "${document[idName]}"`,
                                     'of type',
                                     `"${document[typeName] as string}" hasn't`,
@@ -1067,7 +1067,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                             )
                         }
 
-                        log.info(
+                        void log.info(
                             `Including document "${document[idName]}" of`,
                             `type "${document[typeName] as string}" was`,
                             'successful.'
@@ -1142,7 +1142,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                     if (result) {
                         newDocument = result as FullDocument
 
-                        log.info(
+                        void log.info(
                             `Running migrater "${name}" for document`,
                             `"${newDocument[idName]}" (of type`,
                             `"${newDocument[typeName]}") was successful.`
@@ -1173,7 +1173,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                     if (Object.prototype.hasOwnProperty.call(
                         result, 'forbidden'
                     ))
-                        log.warn(
+                        void log.warn(
                             `Document "` +
                             mayStripRepresentation(
                                 document,
@@ -1198,7 +1198,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                     )
                 }
 
-                log.info(
+                void log.info(
                     `Auto migrating document "${newDocument[idName]}" was`,
                     'successful.'
                 )
@@ -1270,7 +1270,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
         try {
             await couchdb.connection.compact()
         } catch (error) {
-            log.warn(
+            void log.warn(
                 `Initial database compaction has failed: ${represent(error)}`
             )
         }
@@ -1320,7 +1320,7 @@ export const postLoadService = async (state: State): Promise<void> => {
         if (couchdb.lastChangesSequenceIdentifier !== undefined)
             changesConfiguration.since = couchdb.lastChangesSequenceIdentifier
 
-        log.info(
+        void log.info(
             'Initialize changes stream since',
             `"${String(changesConfiguration.since)}".`
         )
@@ -1359,7 +1359,7 @@ export const postLoadService = async (state: State): Promise<void> => {
             updateMaterializedViewsChangesConfiguration.selector =
                 updateMaterializedViewsChangesConfigurationSelector
 
-            log.info(
+            void log.info(
                 'Initialize changes stream for views since "' +
                 String(updateMaterializedViewsChangesConfiguration.since) +
                 '".'
@@ -1388,7 +1388,7 @@ export const postLoadService = async (state: State): Promise<void> => {
                         {[specialNames.type]: name}
                     ))
             }
-            log.info(
+            void log.info(
                 'Initialize changes stream to update foreign keys since',
                 `"${String(updateForeignKeysChangesConfiguration.since)}"`,
                 'with selector "' +
@@ -1422,7 +1422,7 @@ export const postLoadService = async (state: State): Promise<void> => {
                     ({[specialNames.type]: targetModelName})
                 )
             }
-            log.info(
+            void log.info(
                 'Initialize changes stream to remove dangling foreign keys',
                 'since "' +
                 String(removeDanglingForeignKeysChangesConfiguration.since) +
@@ -1446,7 +1446,7 @@ export const postLoadService = async (state: State): Promise<void> => {
                 numberOfErrorsThrough >
                 configuration.changesStreamReinitializer.retries
             ) {
-                log.warn(
+                void log.warn(
                     'Observing changes feed throws an error for',
                     `${String(numberOfErrorsThrough)} times through:`,
                     `${represent(error)} Restarting database server and`,
@@ -1469,7 +1469,7 @@ export const postLoadService = async (state: State): Promise<void> => {
                             .maximumRetryWaitingTimeInSeconds
                     )
 
-                log.warn(
+                void log.warn(
                     'Observing changes feed throws an error for',
                     `${String(numberOfErrorsThrough)} of`,
                     String(
@@ -1535,7 +1535,7 @@ export const postLoadService = async (state: State): Promise<void> => {
                     })).docs
 
                     if (documents.length === 0)
-                        log.warn(
+                        void log.warn(
                             `Could not find document with id "${change.id}"`,
                             'remembered as foreign key source.'
                         )
@@ -1557,7 +1557,7 @@ export const postLoadService = async (state: State): Promise<void> => {
                         })).docs
 
                         if (documents.length === 0)
-                            log.warn(
+                            void log.warn(
                                 'Could not find document with id',
                                 `"${change.id}" remembered as foreign`,
                                 'key source.'
@@ -1618,7 +1618,7 @@ export const postLoadService = async (state: State): Promise<void> => {
                         })).docs
 
                         if (documents.length === 0) {
-                            log.warn(
+                            void log.warn(
                                 `Could not find document with id "${id}"`,
                                 'remembered as foreign key source.'
                             )
@@ -1632,7 +1632,7 @@ export const postLoadService = async (state: State): Promise<void> => {
                         const key = lastKey as unknown as string
                         const value = object[key]
 
-                        log.info(
+                        void log.info(
                             'Found dangling document reference',
                             `(${change.id}) in document`,
                             `${represent(document)} in property`,
@@ -1649,7 +1649,7 @@ export const postLoadService = async (state: State): Promise<void> => {
                         try {
                             await couchdb.connection.put(document)
                         } catch (error) {
-                            log.warn(
+                            void log.warn(
                                 'Could not remove dangling foreign key',
                                 'relation:',
                                 error
@@ -1696,7 +1696,7 @@ export const postLoadService = async (state: State): Promise<void> => {
                                 )
 
                                 if (result.error)
-                                    log.warn(
+                                    void log.warn(
                                         'Could not execute update',
                                         'expression "' +
                                         viewDataConfiguration
@@ -1714,7 +1714,7 @@ export const postLoadService = async (state: State): Promise<void> => {
                         if (hasChanges)
                             await couchdb.connection.put(viewDocument)
                     } catch (error) {
-                        log.warn('Updating view failed:', error)
+                        void log.warn('Updating view failed:', error)
                     } finally {
                         void updateMaterializedViewsLock.release(id)
                     }
@@ -1738,7 +1738,7 @@ export const postLoadService = async (state: State): Promise<void> => {
                     })
                     couchdb.lastChangesSequenceIdentifier = change.seq
                 } catch (error) {
-                    log.error(
+                    void log.error(
                         'An error occurred during on change database hook:',
                         error
                     )
@@ -1748,7 +1748,7 @@ export const postLoadService = async (state: State): Promise<void> => {
             }
         )
 
-        log.info('Changes stream initialized.')
+        void log.info('Changes stream initialized.')
     }
 
     if (configuration.attachAutoRestarter) {

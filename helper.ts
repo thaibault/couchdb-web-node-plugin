@@ -92,7 +92,7 @@ export const getPouchDBPlugin = (configuration: CoreConfiguration) => {
                 firstParameter: unknown,
                 ...parameters: Array<unknown>
             ): Promise<Array<DatabaseError | DatabaseResponse>> => {
-                log.debug('BulkDocs called from:', description)
+                void log.debug('BulkDocs called from:', description)
 
                 // Normalize parameter to an array of documents.
                 if (
@@ -401,7 +401,7 @@ export const getConnectorOptions = (
                             if (typeof retryValue === 'string') {
                                 const intervalInSeconds = parseInt(retryValue)
                                 if (String(intervalInSeconds) === retryValue) {
-                                    log.info(
+                                    void log.info(
                                         `Retry in ${retryValue} seconds`,
                                         'according to given retry value.'
                                     )
@@ -421,7 +421,7 @@ export const getConnectorOptions = (
                                             ) /
                                             1000
                                         ) {
-                                            log.info(
+                                            void log.info(
                                                 'Retry at',
                                                 futureRetryMoment
                                                     .toUTCString(),
@@ -432,7 +432,7 @@ export const getConnectorOptions = (
                                             return timer(futureRetryMoment)
                                         }
 
-                                        log.warn(
+                                        void log.warn(
                                             'The recommended retry attempt is',
                                             futureRetryMoment.toUTCString(),
                                             'further in the future than the',
@@ -441,7 +441,7 @@ export const getConnectorOptions = (
                                             'seconds.'
                                         )
                                     } else
-                                        log.warn(
+                                        void log.warn(
                                             'Given retry time recommendation',
                                             'from server is in the past and',
                                             'has to be ignored therefore.'
@@ -539,7 +539,7 @@ export const ensureValidationDocumentPresence = async (
         await databaseConnection.put(newDocument)
 
         if (doLogging)
-            log.info(`${description} updated.`)
+            void log.info(`${description} updated.`)
     } catch (error) {
         if (doLogging)
             if (
@@ -548,9 +548,9 @@ export const ensureValidationDocumentPresence = async (
                 (error as {message: string}).message === 'missing' ||
                 (error as {reason: string}).reason === 'missing'
             )
-                log.info(`${description} not available. Create new one.`)
+                void log.info(`${description} not available. Create new one.`)
             else
-                log.info(
+                void log.info(
                     `${description} couldn't be updated:`,
                     `"${represent(error)}" create new one.`
                 )
@@ -558,7 +558,7 @@ export const ensureValidationDocumentPresence = async (
             await databaseConnection.put(newDocument)
 
             if (doLogging)
-                log.info(`${description} installed/updated.`)
+                void log.info(`${description} installed/updated.`)
         } catch (error) {
             throw new Error(
                 `${description} couldn't be installed/updated: ` +
@@ -669,7 +669,7 @@ export const waitWithTimeout = (
         }),
         timeout(timeoutInSeconds * 1000).then(() => {
             if (timeoutExceeded)
-                log.warn(
+                void log.warn(
                     'Timeout of',
                     `${String(timeoutInSeconds)}.`,
                     `seconds reached while waiting for ${description}.`
