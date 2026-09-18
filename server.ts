@@ -99,7 +99,7 @@ export const initializeExpress = async (
     expressInstance: Express
     expressPouchDBInstance: Express
 }> => {
-    log.info(`Couchdb runner is in-place with: "${name}".`)
+    void log.info(`Couchdb runner is in-place with: "${name}".`)
 
     const specialNames = configuration.model.property.name.special
 
@@ -355,7 +355,7 @@ export const initializeExpress = async (
                                                     {error: unknown}
                                             ).error = error
                                         } catch (error) {
-                                            log.error(error)
+                                            void log.error(error)
                                         }
                                     }
                         }
@@ -651,7 +651,7 @@ export const start = async (
             })
         })
     } else {
-        log.info(`Couchdb runner is: "${name}".`)
+        void log.info(`Couchdb runner is: "${name}".`)
 
         const binaryRunner = runner as BinaryRunner
 
@@ -788,7 +788,7 @@ export const stop = async (
                 time.
             */
             promise.catch((error: unknown) => {
-                log.error(
+                void log.error(
                     'Couchdb connection could not be gracefully closed:',
                     error
                 )

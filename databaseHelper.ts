@@ -381,7 +381,7 @@ export const validateDocumentUpdate = <
         toJSON?: (value: unknown) => string,
         fromJSON?: (value: string) => unknown
     ): PartialFullDocument<ObjectType, AdditionalPropertiesType> => {
-    log.debug(`Got new document`, newDocument, 'to update', oldDocument)
+    void log.debug(`Got new document`, newDocument, 'to update', oldDocument)
 
     type Attachments = Mapping<AttachmentType | null>
 
@@ -1101,7 +1101,7 @@ export const validateDocumentUpdate = <
                                     `"${errorMessage}"${pathDescription}.`
                                 )
                             else
-                                log.debug(
+                                void log.debug(
                                     `Tried to match "${serialize(newValue)}"`,
                                     `with type "${modelName}". Got error:`,
                                     `"${errorMessage}"`
@@ -3120,10 +3120,10 @@ export const validateDocumentUpdate = <
         ] as Set<string>) = new Set([`${id}-${revision}`])
     // endregion
 
-    log.debug(
+    void log.debug(
         `Document has changes in "${result.changedPath.join('.')}".`
     )
-    log.debug('Determined new document:', result.newDocument)
+    void log.debug('Determined new document:', result.newDocument)
 
     return result.newDocument
 }

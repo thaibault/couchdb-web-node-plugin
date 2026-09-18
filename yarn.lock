@@ -5725,9 +5725,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"clientnode@npm:^4.0.1518":
-  version: 4.0.1518
-  resolution: "clientnode@npm:4.0.1518"
+"clientnode@npm:^4.0.1521":
+  version: 4.0.1521
+  resolution: "clientnode@npm:4.0.1521"
   peerDependencies:
     "@types/prop-types": "*"
     node-fetch: "*"
@@ -5739,7 +5739,7 @@ __metadata:
       optional: true
     prop-types:
       optional: true
-  checksum: 10c0/dd8fc5277dc57c2bd333e3590c01e3db7c02b77a40fe64e5869e758267dc350369dd1195709040edc7e304778394e1ecc250f79a0a89302956a5011f544a94b6
+  checksum: 10c0/cd7cd0944c67b6d873713d6777b92ebd04b815e78b4cd22df1457cd324334c2608925a3e6bd33289aeeb472db93e65a9e3bc90703191610fed667d2db68439f2
   languageName: node
   linkType: hard
 
@@ -6101,7 +6101,7 @@ __metadata:
     "@types/webpack-env": "npm:^1.18.8"
     "@typescript-eslint/eslint-plugin": "npm:^8.70.0"
     "@typescript-eslint/parser": "npm:^8.70.0"
-    clientnode: "npm:^4.0.1518"
+    clientnode: "npm:^4.0.1521"
     eslint: "npm:^10.10.0"
     eslint-config-google: "npm:^0.14.0"
     eslint-plugin-jsdoc: "npm:^64.5.0"
