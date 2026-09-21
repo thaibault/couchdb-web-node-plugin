@@ -4,9 +4,9 @@
 'use strict'
 /* !
     region header
-    [Project page](https://torben.website/couchdb-web-node-plugin)
+    [Project page](https://tsickert.com/couchdb-web-node-plugin)
 
-    Copyright Torben Sickert (info["~at~"]torben.website) 16.12.2012
+    Copyright Torben Sickert (info["~at~"]tsickert.com) 16.12.2012
 
     License
     -------
