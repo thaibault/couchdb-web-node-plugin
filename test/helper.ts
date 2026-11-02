@@ -41,7 +41,7 @@ import {
 } from 'clientnode/test-helper'
 
 import {
-    afterAll, beforeAll, beforeEach, describe, expect, test
+    afterAll, beforeAll, beforeEach, describe, expect, jest, test
 } from '@jest/globals'
 
 import {
@@ -158,11 +158,24 @@ describe('helper', (): void => {
         )).rejects.toThrow(/^Description couldn't be installed\/updated: /)
     })
     test('waitWithTimeout', async (): Promise<void> => {
-        await expect(waitWithTimeout(Promise.resolve(), 1, 'test'))
-            .resolves.toBeUndefined()
         await expect(waitWithTimeout(
             new Promise<void>(NOOP), .01, 'never resolving promise'
         )).resolves.toBeUndefined()
+
+        jest.useFakeTimers()
+        try {
+            // Timer has to be cleared if given promise settles in time.
+            await expect(waitWithTimeout(Promise.resolve(), 60, 'test'))
+                .resolves.toBeUndefined()
+            expect(jest.getTimerCount()).toStrictEqual(0)
+
+            await expect(waitWithTimeout(
+                Promise.reject(new Error('failed')), 60, 'test'
+            )).rejects.toThrow('failed')
+            expect(jest.getTimerCount()).toStrictEqual(0)
+        } finally {
+            jest.useRealTimers()
+        }
     })
     test('removeDeprecatedIndexes', async (): Promise<void> => {
         const deletedIndexNames: Array<string> = []
