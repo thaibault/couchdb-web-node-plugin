@@ -129,8 +129,6 @@ describe('index', (): void => {
             const localConfiguration = copy(configuration)
             const config = localConfiguration.couchdb
 
-            // Avoid pending timers of connection close timeouts.
-            config.closeTimeoutInSeconds = .01
             config.ensureAdminPresence = false
             config.ensureSecuritySettingsPresence = false
             config.ensureUserPresence = users.length > 0

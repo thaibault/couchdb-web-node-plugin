@@ -52,6 +52,7 @@ import {
     format,
     isObject,
     Logger,
+    NOOP,
     represent,
     timeout
 } from 'clientnode'
@@ -662,18 +663,31 @@ export const getEffectiveURL = (
 export const waitWithTimeout = (
     promise: Promise<unknown>, timeoutInSeconds: number, description: string
 ): Promise<void> => {
-    let timeoutExceeded = true
+    const timeoutPromise = timeout(timeoutInSeconds * 1000)
+
     return Promise.race([
-        promise.then(() => {
-            timeoutExceeded = false
-        }),
-        timeout(timeoutInSeconds * 1000).then(() => {
-            if (timeoutExceeded)
+        // Clear pending timer to not delay process exit.
+        promise
+            .finally(() => {
+                timeoutPromise.clear()
+            })
+            .then(NOOP),
+        /*
+            NOTE: Settles only if the timeout has been reached so a cleared
+            timer does not win the race against given promise.
+        */
+        new Promise<void>((resolve: () => void): void => {
+            void timeoutPromise.then((cleared: boolean) => {
+                if (cleared)
+                    return
+
                 void log.warn(
                     'Timeout of',
                     `${String(timeoutInSeconds)}.`,
                     `seconds reached while waiting for ${description}.`
                 )
+                resolve()
+            })
         })
     ])
 }
