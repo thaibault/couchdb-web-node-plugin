@@ -62,8 +62,8 @@
     "serve": "yarn build && yarn start",
     "start": "web-node '{plugin: {hotReloading: true}}'",
     "test": "yarn build:database-helper && weboptimizer test",
-    "test:coverage": "weboptimizer test:coverage",
-    "test:coverage:report": "weboptimizer test:coverage:report",
+    "test:coverage": "yarn build:database-helper && weboptimizer test:coverage",
+    "test:coverage:report": "yarn build:database-helper && weboptimizer test:coverage:report",
     "update:documentation": "web-documentation",
     "watch": "weboptimizer build --watch"
   },
