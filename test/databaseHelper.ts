@@ -315,6 +315,15 @@ describe('databaseHelper', () => {
                     {[typeName]: 'Test'}
                 ],
                 'Revision'
+            ],
+            // Ignore updates for already deleted documents.
+            [
+                [{
+                    [typeName]: 'Test',
+                    [specialNames.ignoreIfNoOldDocument]: true
+                }],
+                {entities: {Test: {}}},
+                'NoChange'
             ]
         ] as Array<ForbiddenTest>)(
             '%#. forbidden general environment validateDocumentUpdate ' +
@@ -639,6 +648,40 @@ describe('databaseHelper', () => {
                         }
                     }
                 },
+                'Runtime'
+            ],
+            // endregion
+            // region document hooks
+            [
+                [{[typeName]: 'Test', a: ''}],
+                {entities: {Test: {
+                    [specialNames.create.execution]: 'return +', a: {}
+                }}},
+                'Compilation'
+            ],
+            [
+                [{[typeName]: 'Test', a: ''}],
+                {entities: {Test: {
+                    [specialNames.create.execution]:
+                        'return undefinedVariableName',
+                    a: {}
+                }}},
+                'Runtime'
+            ],
+            [
+                [{[typeName]: 'Test', a: ''}],
+                {entities: {Test: {
+                    [specialNames.update.expression]: '+', a: {}
+                }}},
+                'Compilation'
+            ],
+            [
+                [{[typeName]: 'Test', a: ''}],
+                {entities: {Test: {
+                    [specialNames.update.execution]:
+                        'return undefinedVariableName',
+                    a: {}
+                }}},
                 'Runtime'
             ]
             // endregion
@@ -1391,6 +1434,24 @@ describe('databaseHelper', () => {
                     }
                 },
                 'ConstraintExecutions'
+            ],
+            // Invalid or failing constraint code should lead to an exception.
+            [
+                [{[typeName]: 'Test', a: 'a'}],
+                {entities: {Test: {
+                    _constraintExpressions: [{evaluation: '+'}], a: {}
+                }}},
+                'Compilation'
+            ],
+            [
+                [{[typeName]: 'Test', a: 'a'}],
+                {entities: {Test: {
+                    _constraintExecutions: [
+                        {evaluation: 'return undefinedVariableName'}
+                    ],
+                    a: {}
+                }}},
+                'Runtime'
             ]
         ] as Array<ForbiddenTest>)(
             '%#. forbidden constraint validateDocumentUpdate ' +
@@ -1882,6 +1943,32 @@ describe('databaseHelper', () => {
                     }
                 },
                 'AggregatedMaximumSize'
+            ],
+            // Attachments content type should not match inverted patterns.
+            [
+                [{
+                    [typeName]: 'Test', [attachmentName]: {
+                        /* eslint-disable camelcase */
+                        a: {data: '', content_type: 'text/plain'},
+                        b: {data: '', content_type: 'image/jpg'}
+                        /* eslint-enable camelcase */
+                    }
+                }],
+                {
+                    entities: {
+                        Test: {
+                            [attachmentName]: {
+                                data: {
+                                    fileName: {pattern: /.*/},
+                                    invertedContentTypePattern: [
+                                        /text\/html/, 'image\\/.+'
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                'InvertedAttachmentContentType'
             ]
         ] as Array<ForbiddenTest>)(
             '%#. forbidden attachment validateDocumentUpdate ' +
@@ -2686,6 +2773,55 @@ describe('databaseHelper', () => {
                     fillUp: {[typeName]: 'Test', a: ''},
                     incremental: {a: ''},
                     replace: {[typeName]: 'Test', a: ''}
+                }
+            ],
+            // endregion
+            // region scope helpers
+            [
+                [{
+                    [typeName]: 'Test',
+                    [attachmentName]: {
+                        // eslint-disable-next-line camelcase
+                        test: {content_type: 'text/plain', data: ''}
+                    }
+                }],
+                {entities: {Test: {
+                    [attachmentName]: {test: {}},
+                    a: {createExpression: `[
+                        getFileNameByPrefix('te'),
+                        getFileNameByPrefix(),
+                        getFileNameByPrefix('missing'),
+                        attachmentWithPrefixExists('te'),
+                        attachmentWithPrefixExists('missing'),
+                        getDateTime(1).getTime(),
+                        getDateTime('1970-01-01T00:00:02.000Z').getTime()
+                    ].join()`}
+                }}},
+                {
+                    fillUp: {
+                        [typeName]: 'Test',
+                        [attachmentName]: {
+                            // eslint-disable-next-line camelcase
+                            test: {content_type: 'text/plain', data: ''}
+                        },
+                        a: 'test,test,,true,false,1000,2000'
+                    },
+                    incremental: {
+                        [typeName]: 'Test',
+                        [attachmentName]: {
+                            // eslint-disable-next-line camelcase
+                            test: {content_type: 'text/plain', data: ''}
+                        },
+                        a: 'test,test,,true,false,1000,2000'
+                    },
+                    replace: {
+                        [typeName]: 'Test',
+                        [attachmentName]: {
+                            // eslint-disable-next-line camelcase
+                            test: {content_type: 'text/plain', data: ''}
+                        },
+                        a: 'test,test,,true,false,1000,2000'
+                    }
                 }
             ]
             // endregion
@@ -3997,6 +4133,19 @@ describe('databaseHelper', () => {
                     incremental: {[typeName]: 'Test', a: 2},
                     replace: {[typeName]: 'Test', a: 2}
                 }
+            ],
+            // Date time selections are normalized before comparison.
+            [
+                [{[typeName]: 'Test', a: 10}],
+                {entities: {Test: {a: {
+                    selection: ['1970-01-01T00:00:10.000Z', 20],
+                    type: 'DateTime'
+                }}}},
+                {
+                    fillUp: {[typeName]: 'Test', a: 10},
+                    incremental: {[typeName]: 'Test', a: 10},
+                    replace: {[typeName]: 'Test', a: 10}
+                }
             ]
         ]))(
             '%#. allowed selection validateDocumentUpdate ' +
@@ -5010,6 +5159,39 @@ describe('databaseHelper', () => {
                             a: {data: 'abc', length: 3} as
                                 unknown as
                                 Attachment
+                        }
+                    }
+                }
+            ],
+            // Legacy "contentType" properties are migrated.
+            [
+                [{
+                    [typeName]: 'Test',
+                    [attachmentName]: {test: {
+                        contentType: 'text/plain', data: ''
+                    } as unknown as Attachment}
+                }],
+                {entities: {Test: {[attachmentName]: {test: {}}}}},
+                {
+                    fillUp: {
+                        [typeName]: 'Test',
+                        [attachmentName]: {
+                            // eslint-disable-next-line camelcase
+                            test: {content_type: 'text/plain', data: ''}
+                        }
+                    },
+                    incremental: {
+                        [typeName]: 'Test',
+                        [attachmentName]: {
+                            // eslint-disable-next-line camelcase
+                            test: {content_type: 'text/plain', data: ''}
+                        }
+                    },
+                    replace: {
+                        [typeName]: 'Test',
+                        [attachmentName]: {
+                            // eslint-disable-next-line camelcase
+                            test: {content_type: 'text/plain', data: ''}
                         }
                     }
                 }

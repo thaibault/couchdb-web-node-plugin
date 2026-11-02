@@ -621,44 +621,50 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
             }
         ) as Connection
 
-        for (const {name, password, roles} of configuration.couchdb.users)
-            try {
-                await userDatabaseConnection.get(`org.couchdb.user:${name}`)
-            } catch (error) {
-                if ((error as {name: string}).name === 'not_found') {
-                    void log.info(`Create missing database user "${name}".`)
+        try {
+            for (const {name, password, roles} of configuration.couchdb.users)
+                try {
+                    await userDatabaseConnection.get(
+                        `org.couchdb.user:${name}`
+                    )
+                } catch (error) {
+                    if ((error as {name: string}).name === 'not_found') {
+                        void log.info(
+                            `Create missing database user "${name}".`
+                        )
 
-                    try {
-                        await userDatabaseConnection.put({
-                            [
-                            configuration.couchdb.model.property.name
-                                .special.id
-                            ]: `org.couchdb.user:${name}`,
-                            name,
-                            password,
-                            roles,
-                            type: 'user'
-                        })
-                    } catch (error) {
+                        try {
+                            await userDatabaseConnection.put({
+                                [
+                                configuration.couchdb.model.property.name
+                                    .special.id
+                                ]: `org.couchdb.user:${name}`,
+                                name,
+                                password,
+                                roles,
+                                type: 'user'
+                            })
+                        } catch (error) {
+                            throw new Error(
+                                `Couldn't create missing user "${name}": ` +
+                                represent(error),
+                                {cause: error}
+                            )
+                        }
+                    } else
                         throw new Error(
-                            `Couldn't create missing user "${name}": ` +
+                            `Couldn't check for presence of user "${name}": ` +
                             represent(error),
                             {cause: error}
                         )
-                    }
-                } else
-                    throw new Error(
-                        `Couldn't check for presence of user "${name}": ` +
-                        represent(error),
-                        {cause: error}
-                    )
-            } finally {
-                await waitWithTimeout(
-                    userDatabaseConnection.close(),
-                    configuration.couchdb.closeTimeoutInSeconds,
-                    'user database client connection to close'
-                )
-            }
+                }
+        } finally {
+            await waitWithTimeout(
+                userDatabaseConnection.close(),
+                configuration.couchdb.closeTimeoutInSeconds,
+                'user database client connection to close'
+            )
+        }
     }
     // endregion
 
@@ -697,7 +703,7 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
                         if (typeof response.text === 'function')
                             try {
                                 changeNeeded = (
-                                    value === await response[
+                                    value !== await response[
                                         typeof value === 'string' ?
                                             'text' :
                                             'json'

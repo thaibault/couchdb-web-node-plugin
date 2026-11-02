@@ -414,12 +414,12 @@ export const getConnectorOptions = (
                                     const now = new Date()
                                     if (now < futureRetryMoment) {
                                         if (
-                                            maximumRetryIntervalInSeconds <
                                             (
                                                 futureRetryMoment.getTime() -
                                                 now.getTime()
                                             ) /
-                                            1000
+                                            1000 <
+                                            maximumRetryIntervalInSeconds
                                         ) {
                                             void log.info(
                                                 'Retry at',

@@ -691,11 +691,10 @@ export const validateDocumentUpdate = <
         typeof value === 'number' ? new Date(value * 1000) : new Date(value)
 
     const getFileNameByPrefix = (
-        prefix?: string, attachments?: Attachments
+        prefix?: string, attachments?: Attachments, document = newDocument
     ): null | string => {
         if (!attachments)
-            attachments =
-                newDocument[specialNames.attachment] as Attachments
+            attachments = document[specialNames.attachment] as Attachments
 
         if (prefix) {
             for (const name of Object.keys(attachments))
