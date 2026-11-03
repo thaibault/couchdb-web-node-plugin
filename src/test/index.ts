@@ -26,7 +26,7 @@ import {describe, expect, test} from '@jest/globals'
 import {
     loadService, postLoadService, preLoadService, shouldExit
 } from '../index'
-import packageConfiguration from '../package.json'
+import packageConfiguration from '../../package.json'
 // endregion
 describe('index', (): void => {
     // region prepare environment

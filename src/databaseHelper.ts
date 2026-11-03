@@ -59,7 +59,7 @@ import type {
 
 import {Logger} from 'clientnode'
 
-import packageConfiguration from './package.json' with {type: 'json'}
+import packageConfiguration from '../package.json' with {type: 'json'}
 // endregion
 /**
  * WebNode plugin interface with all provided hooks.

@@ -32,20 +32,34 @@
     "type": "git",
     "url": "git+https://github.com/thaibault/couchdb-web-node-plugin.git"
   },
-  "main": "index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./databaseHelper": "./dist/databaseHelper.js",
+    "./helper": "./dist/helper.js",
+    "./loadExpress": "./dist/loadExpress.js",
+    "./package.json": "./package.json",
+    "./type": "./dist/type.js"
+  },
+  "main": "dist/index.js",
+  "typesVersions": {
+    "*": {
+      "databaseHelper": [
+        "./dist/databaseHelper.d.ts"
+      ],
+      "helper": [
+        "./dist/helper.d.ts"
+      ],
+      "loadExpress": [
+        "./dist/loadExpress.d.ts"
+      ],
+      "type": [
+        "./dist/type.d.ts"
+      ]
+    }
+  },
   "type": "module",
   "files": [
-    "databaseHelper.d.ts",
-    "databaseHelper.cjs",
-    "databaseHelper.js",
-    "helper.d.ts",
-    "index.d.ts",
-    "index.js",
-    "loadExpress.d.ts",
-    "loadExpress.js",
-    "helper.js",
-    "type.d.ts",
-    "type.js"
+    "dist"
   ],
   "sideEffects": false,
   "scripts": {
@@ -61,9 +75,9 @@
     "report:coverage": "nyc report --reporter=text-lcov | coveralls",
     "serve": "yarn build && yarn start",
     "start": "web-node '{plugin: {hotReloading: true}}'",
-    "test": "yarn build:database-helper && weboptimizer test",
-    "test:coverage": "yarn build:database-helper && weboptimizer test:coverage",
-    "test:coverage:report": "yarn build:database-helper && weboptimizer test:coverage:report",
+    "test": "yarn clear && yarn build:database-helper && weboptimizer test",
+    "test:coverage": "yarn clear && yarn build:database-helper && weboptimizer test:coverage",
+    "test:coverage:report": "yarn clear && yarn build:database-helper && weboptimizer test:coverage:report",
     "update:documentation": "web-documentation",
     "watch": "weboptimizer build --watch"
   },
@@ -87,7 +101,7 @@
     "@types/webpack-env": "^1.18.8",
     "@typescript-eslint/eslint-plugin": "^8.72.1",
     "@typescript-eslint/parser": "^8.72.1",
-    "clientnode": "^4.0.1529",
+    "clientnode": "^4.0.1530",
     "eslint": "^10.14.0",
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-jsdoc": "^65.4.2",
@@ -100,9 +114,9 @@
     "pouchdb-adapter-memory": "^9.0.0",
     "rimraf": "^6.1.3",
     "typescript-eslint": "^8.72.1",
-    "web-documentation": "^1.0.68",
-    "web-node": "^1.0.638",
-    "weboptimizer": "^4.0.99"
+    "web-documentation": "^1.0.71",
+    "web-node": "^1.0.639",
+    "weboptimizer": "^4.0.102"
   },
   "peerDependencies": {
     "clientnode": "*",
@@ -583,6 +597,14 @@
             "importMeta": false
           }
         }
+      }
+    },
+    "path": {
+      "source": {
+        "base": "src/"
+      },
+      "target": {
+        "base": "dist/"
       }
     },
     "target:databaseHelper": {

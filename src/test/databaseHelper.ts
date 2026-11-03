@@ -41,7 +41,7 @@ import {describe, expect, test} from '@jest/globals'
 
 import {authorize, validateDocumentUpdate} from '../databaseHelper'
 import {applyModelsInheritance} from '../helper'
-import packageConfiguration from '../package.json'
+import packageConfiguration from '../../package.json'
 // endregion
 describe('databaseHelper', () => {
     // region prepare environment
