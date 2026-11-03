@@ -31,7 +31,7 @@ import webNodePackageConfiguration from 'web-node/package.json' with {
 import {describe, expect, jest, test} from '@jest/globals'
 
 import expressUtilities from '../loadExpress'
-import packageConfiguration from '../package.json'
+import packageConfiguration from '../../package.json'
 import {restart, start, stop} from '../server'
 // endregion
 jest.setTimeout(

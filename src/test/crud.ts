@@ -42,7 +42,7 @@ import {
     loadService, postLoadService, preLoadService, shouldExit
 } from '../index'
 import expressUtilities from '../loadExpress'
-import packageConfiguration from '../package.json'
+import packageConfiguration from '../../package.json'
 // endregion
 jest.setTimeout(
     2 * packageConfiguration.webNode.couchdb.closeTimeoutInSeconds * 1000

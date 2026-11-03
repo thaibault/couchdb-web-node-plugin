@@ -59,7 +59,7 @@ import {
 import {lastValueFrom, map, retry, timer} from 'rxjs'
 import {fromFetch} from 'rxjs/fetch'
 
-import packageConfiguration from './package.json' with {type: 'json'}
+import packageConfiguration from '../package.json' with {type: 'json'}
 // endregion
 /*
     Token to provide to "bulkDocs" method call to indicate id determination

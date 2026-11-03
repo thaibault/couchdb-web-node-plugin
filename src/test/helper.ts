@@ -60,7 +60,7 @@ import {
     mayStripRepresentation,
     normalizeRoles
 } from '../helper'
-import packageConfiguration from '../package.json'
+import packageConfiguration from '../../package.json'
 // endregion
 describe('helper', (): void => {
     // region prepare environment
