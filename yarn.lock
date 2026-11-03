@@ -6325,7 +6325,7 @@ __metadata:
     typescript-eslint: "npm:^8.72.1"
     web-documentation: "npm:^1.0.71"
     web-node: "npm:^1.0.639"
-    weboptimizer: "npm:^4.0.102"
+    weboptimizer: "npm:^4.0.103"
   peerDependencies:
     clientnode: "*"
     express: "*"
@@ -13848,9 +13848,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"weboptimizer@npm:^4.0.102":
-  version: 4.0.102
-  resolution: "weboptimizer@npm:4.0.102"
+"weboptimizer@npm:^4.0.103":
+  version: 4.0.103
+  resolution: "weboptimizer@npm:4.0.103"
   dependencies:
     "@babel/core": "npm:^8.1.0"
     "@babel/plugin-proposal-decorators": "npm:^8.0.2"
@@ -13995,7 +13995,7 @@ __metadata:
       optional: true
   bin:
     weboptimizer: dist/index.js
-  checksum: 10c0/0a0a761e55dd910f696c4f05d28c81cd079987f519e2c96dcd231b84930e6ad87e97f855de2a183ab119be24fe6c687bb7133a8ec7719e88322e8e35a8aabe50
+  checksum: 10c0/8ee5484c503aa255afd9e5acb5685ed13b7a272a06b9e3d01fb64520d9754b8e5339a7a75aa5fe6d669dd3c0bb24aa472a6a8ac3dabd9ba709574bdf7c5da40f
   languageName: node
   linkType: hard
 
