@@ -75,9 +75,9 @@
     "report:coverage": "nyc report --reporter=text-lcov | coveralls",
     "serve": "yarn build && yarn start",
     "start": "web-node '{plugin: {hotReloading: true}}'",
-    "test": "yarn clear && yarn build:database-helper && weboptimizer test",
-    "test:coverage": "yarn clear && yarn build:database-helper && weboptimizer test:coverage",
-    "test:coverage:report": "yarn clear && yarn build:database-helper && weboptimizer test:coverage:report",
+    "test": "yarn build:database-helper && weboptimizer test",
+    "test:coverage": "yarn build:database-helper && weboptimizer test:coverage",
+    "test:coverage:report": "yarn build:database-helper && weboptimizer test:coverage:report",
     "update:documentation": "web-documentation",
     "watch": "weboptimizer build --watch"
   },
@@ -116,7 +116,7 @@
     "typescript-eslint": "^8.72.1",
     "web-documentation": "^1.0.71",
     "web-node": "^1.0.639",
-    "weboptimizer": "^4.0.102"
+    "weboptimizer": "^4.0.103"
   },
   "peerDependencies": {
     "clientnode": "*",
