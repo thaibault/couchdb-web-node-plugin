@@ -116,7 +116,7 @@
     "typescript-eslint": "^8.72.1",
     "web-documentation": "^1.0.72",
     "web-node": "^1.0.639",
-    "weboptimizer": "^4.0.103"
+    "weboptimizer": "^4.0.108"
   },
   "peerDependencies": {
     "clientnode": "*",
