@@ -842,13 +842,17 @@ export const applyModelInheritance = (
     if (Object.prototype.hasOwnProperty.call(models, '_base'))
         if (
             Object.prototype.hasOwnProperty.call(model, extendPropertyName) &&
-            model[extendPropertyName] &&
-            !([] as Array<string>).concat(model[extendPropertyName])
-                .includes('_base')
-        )
-            (model[extendPropertyName] as Array<string>) =
-                ['_base'].concat(model[extendPropertyName] as Array<string>)
-        else
+            model[extendPropertyName]
+        ) {
+            if (
+                !([] as Array<string>).concat(model[extendPropertyName])
+                    .includes('_base')
+            )
+                (model[extendPropertyName] as Array<string>) =
+                    ['_base'].concat(
+                        model[extendPropertyName] as Array<string>
+                    )
+        } else
             (model[extendPropertyName] as unknown as string) = '_base'
 
     if (Object.prototype.hasOwnProperty.call(model, extendPropertyName)) {

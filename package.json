@@ -102,6 +102,7 @@
     "@typescript-eslint/eslint-plugin": "^8.72.1",
     "@typescript-eslint/parser": "^8.72.1",
     "clientnode": "^4.0.1530",
+    "core-js": "^3.51.0",
     "eslint": "^10.14.0",
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-jsdoc": "^65.4.2",
@@ -120,6 +121,7 @@
   },
   "peerDependencies": {
     "clientnode": "*",
+    "core-js": "*",
     "express": "*",
     "express-pouchdb": "*",
     "mkdirp": "^3.0.1",
@@ -192,7 +194,6 @@
       "ensureSecuritySettingsPresence": true,
       "ensureUserPresence": true,
       "ignoreNoChangeError": true,
-      "local": false,
       "materializedViews": {},
       "maximumNumberOfEntitiesInBulkOperation": 10,
       "maximumRepresentationLength": 1000,

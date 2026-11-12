@@ -589,8 +589,6 @@ export interface CoreConfiguration<
     ensureUserPresence: boolean
     ignoreNoChangeError: boolean
 
-    local: boolean
-
     maximumNumberOfEntitiesInBulkOperation: number
 
     maximumRepresentationLength: number
