@@ -4928,7 +4928,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"babel-plugin-istanbul@npm:^8.0.0, babel-plugin-istanbul@npm:^8.0.2":
+"babel-plugin-istanbul@npm:8.0.0":
+  version: 8.0.0
+  resolution: "babel-plugin-istanbul@npm:8.0.0"
+  dependencies:
+    "@babel/helper-plugin-utils": "npm:^7.0.0"
+    "@istanbuljs/load-nyc-config": "npm:^1.0.0"
+    "@istanbuljs/schema": "npm:^0.1.3"
+    istanbul-lib-instrument: "npm:^6.0.2"
+    test-exclude: "npm:^7.0.1"
+  checksum: 10c0/c8afa37f2e9d4fc8ab174636a2ca7fcbf0cc0531ebab80003044b923fe93388b1052c693259af45cf7edf304e448422aee700417ee62d8ddf085e00ff24cbca0
+  languageName: node
+  linkType: hard
+
+"babel-plugin-istanbul@npm:^8.0.0":
   version: 8.0.2
   resolution: "babel-plugin-istanbul@npm:8.0.2"
   dependencies:
@@ -6033,7 +6046,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"commander@npm:^15.0.0":
+"commander@npm:^15.1.0":
   version: 15.1.0
   resolution: "commander@npm:15.1.0"
   checksum: 10c0/dd1013291d3e8779c726313616fa23174abc962182d0894ac73017c55d8b1ffe4a72401d91a1173974050536576896dc5279db07d37f929dbad469a16a12c54e
@@ -6340,7 +6353,7 @@ __metadata:
     typescript-eslint: "npm:^8.72.1"
     web-documentation: "npm:^1.0.72"
     web-node: "npm:^1.0.639"
-    weboptimizer: "npm:^4.0.109"
+    weboptimizer: "npm:^4.0.115"
   peerDependencies:
     clientnode: "*"
     core-js: "*"
@@ -8231,11 +8244,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"html-minifier@npm:^5.0.1":
-  version: 5.0.1
-  resolution: "html-minifier@npm:5.0.1"
+"html-minifier@npm:^5.0.4":
+  version: 5.1.0
+  resolution: "html-minifier@npm:5.1.0"
   dependencies:
-    commander: "npm:^15.0.0"
+    commander: "npm:^15.1.0"
     entities: "npm:^9.0.0"
     lightningcss: "npm:^1.33.0"
     svgo: "npm:^4.1.0"
@@ -8248,7 +8261,7 @@ __metadata:
   bin:
     hm: cli.js
     html-minifier: cli.js
-  checksum: 10c0/4022ae5140219d9b279db71e85a4ee98e0603cfa48997b741a92b1924435b5be44d307c337f55a9e8a7c31ca69b30ec30828dfad55398283b35af6931201b9eb
+  checksum: 10c0/ad5e037459b2b3a20a6e0b0e6a857724be341ea78a1d9a6f1be1f9b24243be65904046a0104616070367756001041114bc04ed33ab99542a49fc28b1eb135253
   languageName: node
   linkType: hard
 
@@ -14079,11 +14092,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"weboptimizer@npm:^4.0.109":
-  version: 4.0.109
-  resolution: "weboptimizer@npm:4.0.109"
+"weboptimizer@npm:^4.0.115":
+  version: 4.0.115
+  resolution: "weboptimizer@npm:4.0.115"
   dependencies:
-    "@babel/core": "npm:^8.1.0"
     "@babel/plugin-proposal-decorators": "npm:^8.0.2"
     "@babel/plugin-transform-class-properties": "npm:^8.0.1"
     "@babel/plugin-transform-proto-to-assign": "npm:^8.0.1"
@@ -14091,17 +14103,16 @@ __metadata:
     "@babel/preset-typescript": "npm:^8.0.7"
     "@typescript/native": "npm:typescript@^7.0.2"
     babel-loader: "npm:^10.1.1"
-    babel-plugin-istanbul: "npm:^8.0.2"
+    babel-plugin-istanbul: "npm:8.0.0"
     babel-plugin-polyfill-corejs3: "npm:^1.0.0"
     babel-plugin-transform-rewrite-imports: "npm:^1.5.4"
     clientnode: "npm:4.0.1531"
-    core-js: "npm:^3.51.0"
     ejs: "npm:^7.0.2"
     exports-loader: "npm:^5.0.0"
     extract-loader: "npm:^5.1.0"
     glob-all: "npm:^3.3.1"
     html-loader: "npm:^5.1.0"
-    html-minifier: "npm:^5.0.1"
+    html-minifier: "npm:^5.0.4"
     html-webpack-plugin: "npm:^5.6.8"
     imports-loader: "npm:^5.0.0"
     jest-environment-jsdom: "npm:^30.5.2"
@@ -14111,18 +14122,23 @@ __metadata:
     webpack-cli: "npm:^7.3.1"
     webpack-sources: "npm:^3.7.0"
   peerDependencies:
+    "@babel/core": ^8.1.0
     "@babel/eslint-parser": "*"
     "@eslint/js": "*"
+    "@stylistic/eslint-plugin": "*"
     "@types/ejs": "*"
     "@types/imagemin": "*"
     "@types/node": "*"
     "@types/webpack-env": "*"
+    "@typescript-eslint/parser": "*"
+    core-js: "*"
     css-loader: "*"
     cssnano: "*"
     eslint: "*"
     eslint-config-google: "*"
     eslint-plugin-jsdoc: "*"
     favicons-webpack-plugin: "*"
+    globals: "*"
     identity-obj-proxy: "*"
     image-minimizer-webpack-plugin: "*"
     imagemin: "*"
@@ -14152,6 +14168,8 @@ __metadata:
       optional: true
     "@eslint/js":
       optional: true
+    "@stylistic/eslint-plugin":
+      optional: true
     "@types/ejs":
       optional: true
     "@types/imagemin":
@@ -14159,8 +14177,6 @@ __metadata:
     "@types/node":
       optional: true
     "@types/webpack-env":
-      optional: true
-    "@typescript-eslint/eslint-plugin":
       optional: true
     "@typescript-eslint/parser":
       optional: true
@@ -14175,6 +14191,8 @@ __metadata:
     eslint-plugin-jsdoc:
       optional: true
     favicons-webpack-plugin:
+      optional: true
+    globals:
       optional: true
     identity-obj-proxy:
       optional: true
@@ -14224,7 +14242,7 @@ __metadata:
       optional: true
   bin:
     weboptimizer: dist/index.js
-  checksum: 10c0/3cacb4bbcb8dbd5e3714a9f2931f759d7bef1c8897071d62bc1b899e788ecfe6b5f5ba61edc1fb425a6d157f88a28db49d9d887ecde85a4ca108d3c9bbbb0614
+  checksum: 10c0/8fbacb88626899ac5bda5890730592e81904fab0ca9eeeb085b7dd3d83e892bc7a8a0c0920cf70da76f60bd5e8fdfc571d9c4f347b3970bfaeb0a3f43e1ee4ab
   languageName: node
   linkType: hard
 
