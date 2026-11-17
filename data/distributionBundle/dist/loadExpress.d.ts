@@ -1,0 +1,24 @@
+import express from 'express';
+export declare const utilities: {
+    express: typeof express;
+    expressPouchDB: any;
+    bulkGet: any;
+    allDocs: any;
+    changes: any;
+    compact: any;
+    revsDiff: any;
+    security: any;
+    viewCleanup: any;
+    tempViews: any;
+    find: any;
+    views: any;
+    ddocInfo: any;
+    show: any;
+    list: any;
+    update: any;
+    attachments: any;
+    documents: any;
+    validation: any;
+    notFoundError: any;
+};
+export default utilities;

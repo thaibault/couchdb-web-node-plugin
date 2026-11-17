@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Home</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Home</h1>
+
+    
+
+
+
+    
+
+
+    <h3>couchdb-web-node-plugin 2.0.862</h3>
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+    <section>
+        <article><!-- !/usr/bin/env markdown
+-*- coding: utf-8 -*-
+region header
+Copyright Torben Sickert (info["~at~"]tsickert.com) 16.12.2012
+
+License
+-------
+
+This library written by Torben Sickert stands under a creative commons naming
+4.0 international license.
+See https://creativecommons.org/licenses/by/4.0/deed.de
+endregion -->
+<!--|deDE:Projektstatus-->
+<!--|frFR:État du projet-->
+<h2>Project status</h2>
+<p><a href="https://www.npmjs.com/package/couchdb-web-node-plugin"><img src="https://img.shields.io/npm/v/couchdb-web-node-plugin?color=%23d55e5d&amp;label=npm%20package%20version&amp;logoColor=%23d55e5d&amp;style=for-the-badge" alt="npm"></a>
+<a href="https://www.npmjs.com/package/couchdb-web-node-plugin"><img src="https://img.shields.io/npm/dy/couchdb-web-node-plugin.svg?style=for-the-badge" alt="npm downloads"></a></p>
+<p><a href="https://github.com/thaibault/couchdb-web-node-plugin/actions/workflows/build.yaml"><img src="https://img.shields.io/github/actions/workflow/status/thaibault/couchdb-web-node-plugin/build.yaml?style=for-the-badge" alt="build"></a>
+<a href="https://github.com/thaibault/couchdb-web-node-plugin/actions/workflows/build-package-and-push.yaml"><img src="https://img.shields.io/github/actions/workflow/status/thaibault/couchdb-web-node-plugin/build-package-and-push.yaml?label=build%20push%20package&amp;style=for-the-badge" alt="build push package"></a></p>
+<p><a href="https://github.com/thaibault/couchdb-web-node-plugin/actions/workflows/check-types.yaml"><img src="https://img.shields.io/github/actions/workflow/status/thaibault/couchdb-web-node-plugin/check-types.yaml?label=check%20types&amp;style=for-the-badge" alt="check types"></a>
+<a href="https://github.com/thaibault/couchdb-web-node-plugin/actions/workflows/lint.yaml"><img src="https://img.shields.io/github/actions/workflow/status/thaibault/couchdb-web-node-plugin/lint.yaml?label=lint&amp;style=for-the-badge" alt="lint"></a>
+<a href="https://github.com/thaibault/couchdb-web-node-plugin/actions/workflows/test-coverage-report.yaml"><img src="https://img.shields.io/github/actions/workflow/status/thaibault/couchdb-web-node-plugin/test-coverage-report.yaml?label=test&amp;style=for-the-badge" alt="test"></a></p>
+<p><a href="https://coveralls.io/github/thaibault/couchdb-web-node-plugin"><img src="https://img.shields.io/coverallsCoverage/github/thaibault/couchdb-web-node-plugin?label=code%20coverage&amp;style=for-the-badge" alt="code coverage"></a></p>
+<p><a href="https://github.com/thaibault/couchdb-web-node-plugin/actions/workflows/deploy-web-documentation.yaml"><img src="https://img.shields.io/github/actions/workflow/status/thaibault/couchdb-web-node-plugin/deploy-web-documentation.yaml?label=deploy%20web%20documentation&amp;style=for-the-badge" alt="deploy web documentation"></a>
+<a href="https://tsickert.com/couchdb-web-node-plugin"><img src="https://img.shields.io/website-up-down-green-red/https/tsickert.com/couchdb-web-node-plugin.svg?label=web-documentation&amp;style=for-the-badge" alt="web documentation"></a></p>
+<!--|deDE:Einsatzmöglichkeiten-->
+<!--|frFR:Cas d'utilisation-->
+<h2>Use case</h2>
+<p>This <a href="https://tsickert.com/web-node">web-node</a> plugin runs a
+<a href="https://couchdb.apache.org">CouchDB</a> compatible database server and
+connects your application via <a href="https://pouchdb.com">PouchDB</a>. You describe
+your data model in the configuration. The plugin turns it into server side
+validation, so every write is checked no matter which client sends it.</p>
+<!--deDE:
+    Dieses [web-node](https://tsickert.com/web-node)-Plugin betreibt einen
+    [CouchDB](https://couchdb.apache.org)-kompatiblen Datenbankserver und
+    verbindet Ihre Anwendung über [PouchDB](https://pouchdb.com). Sie
+    beschreiben Ihr Datenmodell in der Konfiguration. Das Plugin macht daraus
+    eine serverseitige Validierung, sodass jeder Schreibzugriff geprüft wird,
+    egal welcher Client ihn sendet.
+-->
+<!--frFR:
+    Ce plugin [web-node](https://tsickert.com/web-node) exécute un serveur de
+    base de données compatible [CouchDB](https://couchdb.apache.org) et y
+    connecte votre application via [PouchDB](https://pouchdb.com). Vous
+    décrivez votre modèle de données dans la configuration. Le plugin le
+    transforme en validation côté serveur, de sorte que chaque écriture est
+    vérifiée quel que soit le client qui l'envoie.
+-->
+<p>Features included:</p>
+<!--deDE:Enthaltene Funktionen:-->
+<!--frFR:Fonctionnalités incluses:-->
+<ul>
+<li>Starts CouchDB, &quot;pouchdb-server&quot; or an in-process &quot;express-pouchdb&quot;,
+whichever is available.<!--deDE:Startet CouchDB, "pouchdb-server" oder ein im Prozess laufendes "express-pouchdb", je nachdem, was verfügbar ist.--><!--frFR:Démarre CouchDB, "pouchdb-server" ou un "express-pouchdb" dans le processus, selon ce qui est disponible.--></li>
+<li>Declarative model specification with types, constraints, defaults,
+computed values, inheritance and attachments.<!--deDE:Deklarative Modellspezifikation mit Typen, Einschränkungen, Standardwerten, berechneten Werten, Vererbung und Anhängen.--><!--frFR:Spécification déclarative des modèles avec types, contraintes, valeurs par défaut, valeurs calculées, héritage et pièces jointes.--></li>
+<li>Role based read and write permissions per model and property.<!--deDE:Rollenbasierte Lese- und Schreibrechte pro Modell und Eigenschaft.--><!--frFR:Droits de lecture et d'écriture basés sur les rôles par modèle et par propriété.--></li>
+<li>Automatic setup of admin, users, security settings and indexes.<!--deDE:Automatische Einrichtung von Administrator, Benutzern, Sicherheitseinstellungen und Indizes.--><!--frFR:Configuration automatique de l'administrateur, des utilisateurs, des paramètres de sécurité et des index.--></li>
+<li>Foreign keys between documents and materialized views.<!--deDE:Fremdschlüssel zwischen Dokumenten und materialisierte Sichten.--><!--frFR:Clés étrangères entre documents et vues matérialisées.--></li>
+<li>Migration of existing documents when the model changes.<!--deDE:Migration bestehender Dokumente bei Modelländerungen.--><!--frFR:Migration des documents existants lorsque le modèle change.--></li>
+<li>Changes stream with hooks and automatic restart on failures.<!--deDE:Änderungsstrom mit Hooks und automatischem Neustart bei Fehlern.--><!--frFR:Flux de modifications avec hooks et redémarrage automatique en cas d'erreur.--></li>
+</ul>
+<div class="wd-table-of-contents">
+    <h2 id="content">Content<!--deDE:Inhalt--><!--frFR:Contenu--></h2>
+    <!--wd-table-of-contents-->
+</div>
+<h2>Installation</h2>
+<p>Install the plugin next to web-node. web-node discovers every installed
+package whose name ends with &quot;-web-node-plugin&quot; automatically:</p>
+<!--deDE:
+    Installieren Sie das Plugin neben web-node. web-node erkennt jedes
+    installierte Paket, dessen Name auf "-web-node-plugin" endet,
+    automatisch:
+-->
+<!--frFR:
+    Installez le plugin à côté de web-node. web-node détecte automatiquement
+    chaque paquet installé dont le nom se termine par "-web-node-plugin":
+-->
+<pre class="prettyprint source lang-bash"><code>yarn add web-node couchdb-web-node-plugin
+</code></pre>
+<p>You also need one database server. The plugin uses the first one it finds in
+this order:</p>
+<!--deDE:
+    Zusätzlich benötigen Sie einen Datenbankserver. Das Plugin verwendet den
+    ersten, den es in dieser Reihenfolge findet:
+-->
+<!--frFR:
+    Il vous faut également un serveur de base de données. Le plugin utilise
+    le premier qu'il trouve dans cet ordre:
+-->
+<ol>
+<li>CouchDB installed on the system at &quot;/usr/lib/couchdb/bin/couchdb&quot;.<!--deDE:Auf dem System installiertes CouchDB unter "/usr/lib/couchdb/bin/couchdb".--><!--frFR:CouchDB installé sur le système dans "/usr/lib/couchdb/bin/couchdb".--></li>
+<li>&quot;pouchdb-server&quot; installed as dependency.<!--deDE:Als Abhängigkeit installiertes "pouchdb-server".--><!--frFR:"pouchdb-server" installé comme dépendance.--></li>
+<li>&quot;express&quot; and &quot;express-pouchdb&quot; installed as dependencies, running inside
+your application process.<!--deDE:Als Abhängigkeiten installierte "express" und "express-pouchdb", die im Prozess Ihrer Anwendung laufen.--><!--frFR:"express" et "express-pouchdb" installés comme dépendances, exécutés dans le processus de votre application.--></li>
+</ol>
+<pre class="prettyprint source lang-bash"><code>yarn add pouchdb-server
+# or
+yarn add express express-pouchdb
+</code></pre>
+<!--|deDE:Konfiguration-->
+<!--|frFR:Configuration-->
+<h2>Configuration</h2>
+<p>All options live below &quot;webNode.couchdb&quot; in your application's
+&quot;package.json&quot;. The most important ones:</p>
+<!--deDE:
+    Alle Optionen liegen unterhalb von "webNode.couchdb" in der
+    "package.json" Ihrer Anwendung. Die wichtigsten:
+-->
+<!--frFR:
+    Toutes les options se trouvent sous "webNode.couchdb" dans le
+    "package.json" de votre application. Les plus importantes:
+-->
+<pre class="prettyprint source lang-JSON"><code>{
+    &quot;webNode&quot;: {
+        &quot;couchdb&quot;: {
+            &quot;admin&quot;: {&quot;name&quot;: &quot;admin&quot;, &quot;password&quot;: &quot;change-me&quot;},
+            &quot;databaseName&quot;: &quot;main&quot;,
+            &quot;path&quot;: &quot;database&quot;,
+            &quot;runner&quot;: {&quot;host&quot;: &quot;127.0.0.1&quot;, &quot;port&quot;: 5984},
+            &quot;users&quot;: [
+                {&quot;name&quot;: &quot;editor&quot;, &quot;password&quot;: &quot;secret&quot;, &quot;roles&quot;: [&quot;editor&quot;]}
+            ]
+        }
+    }
+}
+</code></pre>
+<ul>
+<li>&quot;admin&quot;: Database administrator, created if missing. Defaults to &quot;admin&quot;
+with password &quot;admin&quot;, so change it for anything public.<!--deDE:"admin": Datenbankadministrator, wird angelegt, falls er fehlt. Standardmäßig "admin" mit Passwort "admin", ändern Sie dies daher für alles Öffentliche.--><!--frFR:"admin": Administrateur de la base de données, créé s'il manque. Par défaut "admin" avec le mot de passe "admin", changez-le donc pour tout usage public.--></li>
+<li>&quot;users&quot;: Additional users with their roles, created if missing.<!--deDE:"users": Zusätzliche Benutzer mit ihren Rollen, werden angelegt, falls sie fehlen.--><!--frFR:"users": Utilisateurs supplémentaires avec leurs rôles, créés s'ils manquent.--></li>
+<li>&quot;databaseName&quot;: Name of the application database. Defaults to &quot;main&quot;.<!--deDE:"databaseName": Name der Anwendungsdatenbank. Standardmäßig "main".--><!--frFR:"databaseName": Nom de la base de données de l'application. Par défaut "main".--></li>
+<li>&quot;path&quot;: Directory holding the database files. Defaults to &quot;database&quot;.<!--deDE:"path": Verzeichnis mit den Datenbankdateien. Standardmäßig "database".--><!--frFR:"path": Répertoire contenant les fichiers de la base de données. Par défaut "database".--></li>
+<li>&quot;runner.host&quot; and &quot;runner.port&quot;: Address of the database server. Default to
+&quot;0.0.0.0&quot; and &quot;5984&quot;.<!--deDE:"runner.host" und "runner.port": Adresse des Datenbankservers. Standardmäßig "0.0.0.0" und "5984".--><!--frFR:"runner.host" et "runner.port": Adresse du serveur de base de données. Par défaut "0.0.0.0" et "5984".--></li>
+<li>&quot;security&quot;: Admin and member roles per database.<!--deDE:"security": Administrator- und Mitgliedsrollen pro Datenbank.--><!--frFR:"security": Rôles d'administrateur et de membre par base de données.--></li>
+<li>&quot;model&quot;: The data model, see below.<!--deDE:"model": Das Datenmodell, siehe unten.--><!--frFR:"model": Le modèle de données, voir ci-dessous.--></li>
+</ul>
+<!--|deDE:Datenmodell-->
+<!--|frFR:Modèle de données-->
+<h2>Data model</h2>
+<p>Models live below &quot;model.entities&quot;. Public model names start with an upper
+case letter, names starting with &quot;_&quot; are abstract models to inherit from.
+Every model inherits from &quot;_base&quot;, which adds the type property &quot;-type&quot;. A
+document's &quot;-type&quot; selects the model it is validated against:</p>
+<!--deDE:
+    Modelle liegen unterhalb von "model.entities". Öffentliche Modellnamen
+    beginnen mit einem Großbuchstaben, Namen mit "_" sind abstrakte Modelle
+    zum Erben. Jedes Modell erbt von "_base", das die Typ-Eigenschaft "-type"
+    hinzufügt. Das "-type" eines Dokuments bestimmt, gegen welches Modell es
+    validiert wird:
+-->
+<!--frFR:
+    Les modèles se trouvent sous "model.entities". Les noms de modèles
+    publics commencent par une majuscule, les noms commençant par "_" sont des
+    modèles abstraits dont on peut hériter. Chaque modèle hérite de "_base",
+    qui ajoute la propriété de type "-type". Le "-type" d'un document
+    détermine le modèle utilisé pour sa validation:
+-->
+<pre class="prettyprint source lang-JSON"><code>{
+    &quot;webNode&quot;: {
+        &quot;couchdb&quot;: {
+            &quot;model&quot;: {
+                &quot;entities&quot;: {
+                    &quot;Author&quot;: {
+                        &quot;_extends&quot;: &quot;_timeTrackable&quot;,
+                        &quot;_roles&quot;: {&quot;read&quot;: [&quot;editor&quot;, &quot;reader&quot;], &quot;write&quot;: [&quot;editor&quot;]},
+                        &quot;name&quot;: {
+                            &quot;maximumLength&quot;: 100,
+                            &quot;minimumLength&quot;: 1,
+                            &quot;nullable&quot;: false
+                        }
+                    },
+                    &quot;Book&quot;: {
+                        &quot;author&quot;: {&quot;type&quot;: &quot;foreignKey:Author&quot;},
+                        &quot;genre&quot;: {&quot;selection&quot;: [&quot;novel&quot;, &quot;poetry&quot;]},
+                        &quot;pages&quot;: {&quot;minimum&quot;: 1, &quot;type&quot;: &quot;integer&quot;},
+                        &quot;title&quot;: {&quot;index&quot;: true, &quot;nullable&quot;: false}
+                    }
+                }
+            }
+        }
+    }
+}
+</code></pre>
+<pre class="prettyprint source lang-JavaScript"><code>await services.couchdb.connection.put({
+    _id: 'dune',
+    '-type': 'Book',
+    title: 'Dune',
+    pages: 412
+})
+</code></pre>
+<p>Frequently used property options:</p>
+<!--deDE:Häufig verwendete Eigenschaftsoptionen:-->
+<!--frFR:Options de propriété fréquemment utilisées:-->
+<ul>
+<li>&quot;type&quot;: &quot;string&quot; (default), &quot;number&quot;, &quot;integer&quot;, &quot;boolean&quot;, &quot;DateTime&quot;,
+another model name or &quot;foreignKey:&lt;Model&gt;&quot;.<!--deDE:"type": "string" (Standard), "number", "integer", "boolean", "DateTime", ein anderer Modellname oder "foreignKey:&lt;Model&gt;".--><!--frFR:"type": "string" (par défaut), "number", "integer", "boolean", "DateTime", un autre nom de modèle ou "foreignKey:&lt;Model&gt;".--></li>
+<li>&quot;nullable&quot;, &quot;mutable&quot;, &quot;writable&quot;, &quot;default&quot;: Presence and mutability.<!--deDE:"nullable", "mutable", "writable", "default": Vorhandensein und Veränderbarkeit.--><!--frFR:"nullable", "mutable", "writable", "default": Présence et mutabilité.--></li>
+<li>&quot;minimum&quot;, &quot;maximum&quot;, &quot;minimumLength&quot;, &quot;maximumLength&quot;, &quot;pattern&quot;,
+&quot;selection&quot;: Value constraints.<!--deDE:"minimum", "maximum", "minimumLength", "maximumLength", "pattern", "selection": Werteinschränkungen.--><!--frFR:"minimum", "maximum", "minimumLength", "maximumLength", "pattern", "selection": Contraintes de valeur.--></li>
+<li>&quot;constraintExpression&quot;, &quot;createExpression&quot;, &quot;updateExpression&quot;: JavaScript
+expressions to validate or compute values.<!--deDE:"constraintExpression", "createExpression", "updateExpression": JavaScript-Ausdrücke zum Validieren oder Berechnen von Werten.--><!--frFR:"constraintExpression", "createExpression", "updateExpression": Expressions JavaScript pour valider ou calculer des valeurs.--></li>
+<li>&quot;roles&quot;: Read and write permissions for a single property.<!--deDE:"roles": Lese- und Schreibrechte für eine einzelne Eigenschaft.--><!--frFR:"roles": Droits de lecture et d'écriture pour une seule propriété.--></li>
+<li>&quot;index&quot;: Creates a database index for the property.<!--deDE:"index": Legt einen Datenbankindex für die Eigenschaft an.--><!--frFR:"index": Crée un index de base de données pour la propriété.--></li>
+</ul>
+<p>The predefined abstract models &quot;_timeTrackable&quot; (creation and update time),
+&quot;_userTrackable&quot; (last editing user), &quot;_interval&quot; and &quot;_location&quot; can be
+extended via &quot;_extends&quot;. JSON files in the folder &quot;migration&quot; are written to
+the database on startup, e.g. to provide initial documents.</p>
+<!--deDE:
+    Die vordefinierten abstrakten Modelle "_timeTrackable" (Erstellungs- und
+    Änderungszeit), "_userTrackable" (letzter bearbeitender Benutzer),
+    "_interval" und "_location" lassen sich über "_extends" erweitern.
+    JSON-Dateien im Ordner "migration" werden beim Start in die Datenbank
+    geschrieben, z. B. um initiale Dokumente bereitzustellen.
+-->
+<!--frFR:
+    Les modèles abstraits prédéfinis "_timeTrackable" (dates de création et de
+    modification), "_userTrackable" (dernier utilisateur ayant modifié),
+    "_interval" et "_location" peuvent être étendus via "_extends". Les
+    fichiers JSON du dossier "migration" sont écrits dans la base de données
+    au démarrage, par exemple pour fournir des documents initiaux.
+-->
+<!--|deDE:Fremdschlüsselverwaltung-->
+<!--|frFR:Gestion des clés étrangères-->
+<h2>Foreign key management</h2>
+<p>The plugin provides a foreign key management for PouchDB. It allows to define
+foreign keys in the model specification and automatically checks the
+existence of the referenced documents when creating or updating documents. It
+also provides a way to automatically delete or update the referenced
+documents when the referencing document is deleted or updated.</p>
+<!--deDE:
+    Das Plugin bietet eine Fremdschlüsselverwaltung für PouchDB. Fremdschlüssel
+    werden in der Modellspezifikation definiert, und beim Anlegen oder
+    Aktualisieren von Dokumenten wird automatisch geprüft, ob die
+    referenzierten Dokumente existieren. Außerdem können referenzierte
+    Dokumente automatisch gelöscht oder aktualisiert werden, wenn das
+    referenzierende Dokument gelöscht oder aktualisiert wird.
+-->
+<!--frFR:
+    Le plugin fournit une gestion des clés étrangères pour PouchDB. Les clés
+    étrangères sont définies dans la spécification du modèle, et l'existence
+    des documents référencés est vérifiée automatiquement lors de la création
+    ou de la mise à jour de documents. Il permet également de supprimer ou de
+    mettre à jour automatiquement les documents référencés lorsque le document
+    référençant est supprimé ou mis à jour.
+-->
+<!--|deDE:Initialisierung-->
+<!--|frFR:Initialisation-->
+<h3>Initialization</h3>
+<p>During application start the plugin analyzes the model specification and
+creates a map of model types to properties that are defined as foreign keys
+and which model type they reference.</p>
+<!--deDE:
+    Beim Start der Anwendung analysiert das Plugin die Modellspezifikation und
+    erstellt eine Zuordnung von Modelltypen zu den Eigenschaften, die als
+    Fremdschlüssel definiert sind, und zu dem Modelltyp, den sie
+    referenzieren.
+-->
+<!--frFR:
+    Au démarrage de l'application, le plugin analyse la spécification du
+    modèle et crée une table associant les types de modèles aux propriétés
+    définies comme clés étrangères et au type de modèle qu'elles référencent.
+-->
+<p>It then goes through all documents having referencing properties and checks
+if the referenced documents exist. If not, it deletes the reference and if
+yes, it stores the reference in an internal map of referenced documents to
+referencing documents.</p>
+<!--deDE:
+    Anschließend durchläuft es alle Dokumente mit referenzierenden
+    Eigenschaften und prüft, ob die referenzierten Dokumente existieren. Falls
+    nicht, wird die Referenz gelöscht, falls ja, wird sie in einer internen
+    Zuordnung von referenzierten zu referenzierenden Dokumenten gespeichert.
+-->
+<!--frFR:
+    Il parcourt ensuite tous les documents ayant des propriétés de référence
+    et vérifie si les documents référencés existent. Si ce n'est pas le cas,
+    la référence est supprimée, sinon elle est enregistrée dans une table
+    interne associant les documents référencés aux documents référençants.
+-->
+<!--|deDE:Anlegen und Aktualisieren von Dokumenten-->
+<!--|frFR:Création et mise à jour de documents-->
+<h3>Document creation and update</h3>
+<p>When creating or updating a document, the plugin checks if the document has
+referencing properties. If yes, it checks if the referenced documents exist.
+If not, it deletes the reference and if yes, it stores the reference in the
+internal map of referenced documents to referencing documents. It also
+removes references from the internal map if they are no longer present.</p>
+<!--deDE:
+    Beim Anlegen oder Aktualisieren eines Dokuments prüft das Plugin, ob das
+    Dokument referenzierende Eigenschaften hat. Falls ja, prüft es, ob die
+    referenzierten Dokumente existieren. Falls nicht, wird die Referenz
+    gelöscht, falls ja, wird sie in der internen Zuordnung von referenzierten
+    zu referenzierenden Dokumenten gespeichert. Nicht mehr vorhandene
+    Referenzen werden außerdem aus der internen Zuordnung entfernt.
+-->
+<!--frFR:
+    Lors de la création ou de la mise à jour d'un document, le plugin vérifie
+    si le document possède des propriétés de référence. Si oui, il vérifie si
+    les documents référencés existent. Si ce n'est pas le cas, la référence
+    est supprimée, sinon elle est enregistrée dans la table interne associant
+    les documents référencés aux documents référençants. Les références qui
+    ne sont plus présentes sont également retirées de cette table.
+-->
+<!--|deDE:Hooks und Dienste-->
+<!--|frFR:Hooks et services-->
+<h2>Hooks and services</h2>
+<ul>
+<li>&quot;services.couchdb.connection&quot;: PouchDB connection to the application
+database.<!--deDE:"services.couchdb.connection": PouchDB-Verbindung zur Anwendungsdatenbank.--><!--frFR:"services.couchdb.connection": Connexion PouchDB à la base de données de l'application.--></li>
+<li>&quot;services.couchdb.validateDocument&quot;: Validates a document against the model
+without writing it.<!--deDE:"services.couchdb.validateDocument": Validiert ein Dokument gegen das Modell, ohne es zu schreiben.--><!--frFR:"services.couchdb.validateDocument": Valide un document par rapport au modèle sans l'écrire.--></li>
+<li>&quot;services.couchdb.server.restart&quot;: Restarts the database server.<!--deDE:"services.couchdb.server.restart": Startet den Datenbankserver neu.--><!--frFR:"services.couchdb.server.restart": Redémarre le serveur de base de données.--></li>
+<li>&quot;couchdbChange&quot;: Hook called for each change in the database.<!--deDE:"couchdbChange": Hook, der bei jeder Änderung in der Datenbank aufgerufen wird.--><!--frFR:"couchdbChange": Hook appelé à chaque modification dans la base de données.--></li>
+<li>&quot;couchdbInitializeChangesStream&quot;: Hook called after the changes stream was
+(re)initialized.<!--deDE:"couchdbInitializeChangesStream": Hook, der nach der (Neu-)Initialisierung des Änderungsstroms aufgerufen wird.--><!--frFR:"couchdbInitializeChangesStream": Hook appelé après la (ré)initialisation du flux de modifications.--></li>
+<li>&quot;restartCouchdb&quot;: Hook called after each database restart.<!--deDE:"restartCouchdb": Hook, der nach jedem Neustart der Datenbank aufgerufen wird.--><!--frFR:"restartCouchdb": Hook appelé après chaque redémarrage de la base de données.--></li>
+<li>&quot;initializeExpressPouchDB&quot; and &quot;onPouchDBFind&quot;: Hooks to extend the
+in-process &quot;express-pouchdb&quot; server.<!--deDE:"initializeExpressPouchDB" und "onPouchDBFind": Hooks zur Erweiterung des im Prozess laufenden "express-pouchdb"-Servers.--><!--frFR:"initializeExpressPouchDB" et "onPouchDBFind": Hooks permettant d'étendre le serveur "express-pouchdb" exécuté dans le processus.--></li>
+</ul>
+<!--|deDE:Entwicklung-->
+<!--|frFR:Développement-->
+<h2>Development</h2>
+<pre class="prettyprint source lang-bash"><code>yarn install
+yarn build
+yarn test
+</code></pre></article>
+    </section>
+
+
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Tue Nov 17 2026 11:28:31 GMT+0100 (Mitteleuropäische Normalzeit)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
