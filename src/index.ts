@@ -857,15 +857,19 @@ export const loadService = async (state: State): Promise<PluginPromises> => {
 
     if (configuration.couchdb.model.updateValidation) {
         /*
-            NOTE: We import pre-transpiled JavaScript code here. The module
-            specifier is kept in a variable so the bundler does not statically
-            resolve and emit the referenced source file (which would overwrite
+            NOTE: We import pre-transpiled JavaScript code here. The path is
+            derived from "import.meta.url" via "path" utilities instead of
+            using "import.meta.resolve": webpack statically resolves any
+            "import.meta.resolve" call whose argument evaluates to a string
+            (even after a minifier inlined a former variable) into a module
+            dependency. That would emit the referenced source file (overwriting
             our own source file since build output and sources share the same
-            directory). Resolution is therefore deferred to runtime.
+            directory) or, when consumed by a bundling application, reference
+            a module which is not part of its bundle. Resolution is therefore
+            deferred to runtime.
         */
-        const databaseHelperModuleName = './databaseHelper.cjs'
         const databaseHelperCode: string = await readFile(
-            fileURLToPath(import.meta.resolve(databaseHelperModuleName)),
+            resolve(fileURLToPath(import.meta.url), '..', 'databaseHelper.cjs'),
             {encoding: configuration.core.encoding, flag: 'r'}
         )
         // region generate/update authentication/validation code
