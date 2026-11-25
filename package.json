@@ -83,7 +83,6 @@
   },
   "dependencies": {
     "pouchdb-adapter-http": "^9.0.0",
-    "pouchdb-authentication": "^1.1.3",
     "pouchdb-find": "^9.0.0",
     "pouchdb-node": "^9.0.0",
     "pouchdb-validation": "^4.2.0",
