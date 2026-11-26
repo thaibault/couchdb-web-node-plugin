@@ -5568,6 +5568,7 @@ __metadata:
     eslint-plugin-jsdoc: "npm:^65.5.4"
     express: "npm:^5.3.0"
     express-pouchdb: "npm:^4.2.0"
+    globals: "npm:^17.14.0"
     jest: "npm:^30.5.2"
     jsdoc: "npm:^4.0.5"
     mkdirp: "npm:^3.0.1"
@@ -7084,17 +7085,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"globals@npm:11.12.0":
+"globals@npm:^11.1.0":
   version: 11.12.0
   resolution: "globals@npm:11.12.0"
   checksum: 10c0/758f9f258e7b19226bd8d4af5d3b0dcf7038780fb23d82e6f98932c44e239f884847f1766e8fa9cc5635ccb3204f7fa7314d4408dd4002a5e8ea827b4018f0a1
   languageName: node
   linkType: hard
 
-"globals@patch:globals@npm%3A11.12.0#~/.yarn/patches/globals-npm-11.12.0-1fa7f41a6c.patch":
-  version: 11.12.0
-  resolution: "globals@patch:globals@npm%3A11.12.0#~/.yarn/patches/globals-npm-11.12.0-1fa7f41a6c.patch::version=11.12.0&hash=9cab59"
-  checksum: 10c0/05677f744b7df7328b3ed129c9da5dd6571c0911521481a06d19f53ada7791b4125fdd33b5b6c01259d07ae952850f672026acac68ac2f094d7e620c3033c066
+"globals@npm:^17.14.0":
+  version: 17.14.0
+  resolution: "globals@npm:17.14.0"
+  checksum: 10c0/422d17c24e87170d4aa566b97a53339ae451c2f4d78512594a7ca951cdb939bc4a85c10071e6dcf77ca63de48713a77f2e71eb9214e44880233dff2090e92731
   languageName: node
   linkType: hard
 
