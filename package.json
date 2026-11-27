@@ -96,7 +96,7 @@
     "@stylistic/eslint-plugin": "^6.0.1",
     "@types/ejs": "^3.1.5",
     "@types/express": "^5.0.6",
-    "@types/node": "^26.6.10",
+    "@types/node": "^26.6.11",
     "@types/pouchdb-adapter-memory": "^6.1.6",
     "@types/pouchdb-node": "^6.1.7",
     "@types/webpack-env": "^1.18.8",
@@ -106,7 +106,7 @@
     "core-js": "^3.51.0",
     "eslint": "^10.15.0",
     "eslint-config-google": "^0.14.0",
-    "eslint-plugin-jsdoc": "^65.5.5",
+    "eslint-plugin-jsdoc": "^65.5.6",
     "express": "^5.3.0",
     "express-pouchdb": "^4.2.0",
     "globals": "^17.14.0",
@@ -117,9 +117,9 @@
     "pouchdb-adapter-memory": "^9.0.0",
     "rimraf": "^6.1.4",
     "typescript-eslint": "^8.74.0",
-    "web-documentation": "^1.0.77",
+    "web-documentation": "^2.0.0",
     "web-node": "^1.0.644",
-    "weboptimizer": "^4.0.125"
+    "weboptimizer": "^4.0.126"
   },
   "peerDependencies": {
     "clientnode": "*",
