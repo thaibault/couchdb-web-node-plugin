@@ -1,1 +1,0 @@
-if(null==l)var l="undefined"==typeof globalThis||null===globalThis?{}:globalThis;var e=["boolean","DateTime","integer","number","string"];export{e as PrimitiveTypes};
